@@ -44,7 +44,9 @@ class PromotionLocationAPIController extends ControllerAPI
             $promotionId = OrbitInput::get('promotion_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
-
+            $mallId = OrbitInput::get('mall_id', null);
+            $is_detail = OrbitInput::get('is_detail', 'n');
+            $mall = null;
 
             $validator = Validator::make(
                 array(
@@ -62,6 +64,10 @@ class PromotionLocationAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
             $prefix = DB::getTablePrefix();
@@ -103,12 +109,14 @@ class PromotionLocationAPIController extends ControllerAPI
 
             // filter news by mall id
             $group_by = '';
-            OrbitInput::get('mall_id', function($mallid) use ($promotionLocation, &$group_by) {
-                $promotionLocation->where(function($q) use ($mallid){
-                                    $q->where('merchants.parent_id', '=', $mallid)
-                                      ->orWhere('merchants.merchant_id', '=', $mallid);
-                                });
-                $group_by = 'mall';
+            OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
+                if ($is_detail != 'y') {
+                    $promotionLocation->where(function($q) use ($mallid){
+                                        $q->where('merchants.parent_id', '=', $mallid)
+                                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                                    });
+                    $group_by = 'mall';
+                }
             });
 
             if ($group_by === 'mall') {
@@ -140,6 +148,7 @@ class PromotionLocationAPIController extends ControllerAPI
                     ->setActivityName('view_promotion_location')
                     ->setActivityNameLong('View Promotion Location Page')
                     ->setObject($promotion)
+                    ->setLocation($mall)
                     ->setModuleName('Promotion')
                     ->setNotes($activityNotes)
                     ->responseOK()

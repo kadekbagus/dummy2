@@ -23,6 +23,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\ResponseProvider;
 use Activity;
 use Coupon;
+use Mall;
 
 class CouponLocationAPIController extends ControllerAPI
 {
@@ -40,7 +41,9 @@ class CouponLocationAPIController extends ControllerAPI
             $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
-
+            $mallId = OrbitInput::get('mall_id', null);
+            $is_detail = OrbitInput::get('is_detail', 'n');
+            $mall = null;
 
             $validator = Validator::make(
                 array(
@@ -58,6 +61,10 @@ class CouponLocationAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
             $prefix = DB::getTablePrefix();
@@ -101,12 +108,14 @@ class CouponLocationAPIController extends ControllerAPI
 
             // filter news by mall id
             $group_by = '';
-            OrbitInput::get('mall_id', function($mallid) use ($couponLocations, &$group_by) {
-                $couponLocations->where(function($q) use ($mallid){
-                                    $q->where('merchants.parent_id', '=', $mallid)
-                                      ->orWhere('merchants.merchant_id', '=', $mallid);
-                                });
-                $group_by = 'mall';
+            OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
+                if ($is_detail != 'y') {
+                    $couponLocations->where(function($q) use ($mallid){
+                                        $q->where('merchants.parent_id', '=', $mallid)
+                                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                                    });
+                    $group_by = 'mall';
+                }
             });
 
             if ($group_by === 'mall') {
@@ -138,6 +147,7 @@ class CouponLocationAPIController extends ControllerAPI
                     ->setActivityName('view_coupon_location')
                     ->setActivityNameLong('View Coupon Location Page')
                     ->setObject($coupon)
+                    ->setLocation($mall)
                     ->setModuleName('Coupon')
                     ->setNotes($activityNotes)
                     ->responseOK()
