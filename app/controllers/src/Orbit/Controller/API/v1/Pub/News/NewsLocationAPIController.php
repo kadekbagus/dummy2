@@ -21,6 +21,7 @@ use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
+use Mall;
 
 class NewsLocationAPIController extends ControllerAPI
 {
@@ -53,7 +54,9 @@ class NewsLocationAPIController extends ControllerAPI
             $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
-
+            $mallId = OrbitInput::get('mall_id', null);
+            $is_detail = OrbitInput::get('is_detail', 'n');
+            $mall = null;
 
             $validator = Validator::make(
                 array(
@@ -71,6 +74,10 @@ class NewsLocationAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
             $prefix = DB::getTablePrefix();
@@ -112,12 +119,15 @@ class NewsLocationAPIController extends ControllerAPI
 
             // filter news by mall id
             $group_by = '';
-            OrbitInput::get('mall_id', function($mallid) use ($newsLocations, &$group_by) {
-                $newsLocations->where(function($q) use ($mallid){
-                                    $q->where('merchants.parent_id', '=', $mallid)
-                                      ->orWhere('merchants.merchant_id', '=', $mallid);
-                                });
-                $group_by = 'mall';
+
+            OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
+                if ($is_detail != 'y') {
+                    $newsLocations->where(function($q) use ($mallid){
+                                        $q->where('merchants.parent_id', '=', $mallid)
+                                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                                    });
+                    $group_by = 'mall';
+                }
             });
 
             if ($group_by === 'mall') {
@@ -150,6 +160,7 @@ class NewsLocationAPIController extends ControllerAPI
                     ->setActivityName('view_news_location')
                     ->setActivityNameLong('View News Location Page')
                     ->setObject($news)
+                    ->setLocation($mall)
                     ->setModuleName('News')
                     ->setNotes($activityNotes)
                     ->responseOK()
