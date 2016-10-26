@@ -331,7 +331,7 @@
                                                             <p style="font-size:18px;font-weight: bold;">{{{ $campaignName }}}</p>
                                                             </div>
                                                             <div style="padding-bottom: 10px;">
-                                                            <img ng-src="{{{ asset($campaignImage) }}}" class="news-logo ng-scope" src="{{{ asset($campaignImage) }}}">
+                                                            <img style="max-width:500px;" ng-src="{{{ asset($campaignImage) }}}" class="news-logo ng-scope" src="{{{ asset($campaignImage) }}}">
                                                             </div>
                                                             <br/><br/>
                                                             <td style="border-radius:3px;color:white;cursor:auto;padding:10px 25px; border-radius: 16px;" align="center" valign="middle" bgcolor="#BA1F00">
