@@ -270,9 +270,7 @@
                                         <tr>
                                             <td style="word-break:break-word;font-size:0px;padding:0 25px;" align="center">
                                                 <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
-                                                    <h1 style="font-size: 1.6em;">
-                        Sudahkah anda mencoba Gotomalls.com ?
-                    </h1>
+                                                    <h1 style="font-size: 1.6em;">{{{ $subject }}}</h1>
                                                 </div>
                                             </td>
                                         </tr>

@@ -35,6 +35,7 @@ class LandingPageShareMail
         $dataView['name'] = $user->user_firstname;
         $dataView['shareUrl'] = Config::get('orbit.landingpage_share_email.share_url');
         $dataView['videoUrl'] = Config::get('orbit.landingpage_share_email.video_url');
+        $dataView['subject']  = Config::get('orbit.landingpage_share_email.subject');
 
         $mailViews = array(
                     'html' => 'emails.landingpage-share-email.landingpage-share-html',
