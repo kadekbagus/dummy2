@@ -329,7 +329,7 @@
                                                         <tr>
                                                             <div style="padding-bottom: 10px;">
                                                                 <a href="{{{ $videoUrl }}}">
-                                                                <img ng-src="{{ asset('emails/video-thumbnail.jpg') }}" class="news-logo ng-scope" src="{{ asset('emails/video-thumbnail.jpg') }}">
+                                                                <img style="max-width:500px;" ng-src="{{ asset('emails/video-thumbnail.jpg') }}" class="news-logo ng-scope" src="{{ asset('emails/video-thumbnail.jpg') }}">
                                                                 </a>
                                                             </div>
                                                             <br/><br/>
