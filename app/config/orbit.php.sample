@@ -634,8 +634,8 @@ return array(
             'mall_portal' => 'X-OMS-Mall',
             'cs_portal' => 'X-OMS-CS',
             'pmp_portal' => 'X-OMS-PMP',
-            'mdm_portal' => 'X-OMS-MDM',
             'admin_portal' => 'X-OMS-Admin',
+            'mdm_portal' => 'X-OMS-MDM',
         ],
 
         /**
@@ -650,7 +650,8 @@ return array(
             'mall_portal' => '4',
             'cs_portal' => '5',
             'pmp_portal' => '6',
-            'admin_portal' => '7'
+            'admin_portal' => '7',
+            'mdm_portal' => '8',
         ],
 
         /**
