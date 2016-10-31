@@ -634,7 +634,8 @@ return array(
             'mall_portal' => 'X-OMS-Mall',
             'cs_portal' => 'X-OMS-CS',
             'pmp_portal' => 'X-OMS-PMP',
-            'admin_portal' => 'X-OMS-Admin'
+            'mdm_portal' => 'X-OMS-MDM',
+            'admin_portal' => 'X-OMS-Admin',
         ],
 
         /**
@@ -1102,6 +1103,7 @@ return array(
                 'Set-X-OMS-Admin',
                 'Set-X-OMS-PMP',
                 'Set-X-OMS-CS',
+                'Set-X-OMS-MDM',
             ],
 
             // No need protocol, just enter domain name
