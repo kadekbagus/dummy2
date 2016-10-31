@@ -634,7 +634,8 @@ return array(
             'mall_portal' => 'X-OMS-Mall',
             'cs_portal' => 'X-OMS-CS',
             'pmp_portal' => 'X-OMS-PMP',
-            'admin_portal' => 'X-OMS-Admin'
+            'mdm_portal' => 'X-OMS-MDM',
+            'admin_portal' => 'X-OMS-Admin',
         ],
 
         /**
@@ -1014,6 +1015,40 @@ return array(
                     'httponly'  => TRUE
                 ),
             ),
+            'mdm_portal' => array(
+                'expire' => 3600,   // 1 hour
+
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-MDM'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-MDM'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-MDM',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
         ),
     ),
 
@@ -1068,6 +1103,7 @@ return array(
                 'Set-X-OMS-Admin',
                 'Set-X-OMS-PMP',
                 'Set-X-OMS-CS',
+                'Set-X-OMS-MDM',
             ],
 
             // No need protocol, just enter domain name
