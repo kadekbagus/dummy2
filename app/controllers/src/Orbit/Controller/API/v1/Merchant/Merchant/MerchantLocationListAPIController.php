@@ -61,11 +61,11 @@ class MerchantLocationListAPIController extends ControllerAPI
                 ),
                 array(
                     'merchant_id' => 'required|orbit.empty.base_merchant',
-                    'sortby' => 'in:location_name',
+                    'sortby' => 'in:location_name,city,country',
                 ),
                 array(
                     'merchant_id.orbit.empty.base_merchant' => 'The merchant you specified is not found',
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: location_name',
+                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: location_name, city, country',
                 )
             );
 
@@ -115,6 +115,8 @@ class MerchantLocationListAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'location_name' => 'merchants.name',
+                    'city' => 'merchants.city',
+                    'country' => 'merchants.country',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
