@@ -23,7 +23,7 @@ use Lang;
 
 class ObjectCIAPIController extends BaseAPIController
 {
-    protected $validRoles = ['super admin', 'consumer', 'guest'];
+    protected $validRoles = ['super admin', 'consumer', 'guest', 'merchant database manager'];
     protected $mall_id = NULL;
 
     public function getFloorList()

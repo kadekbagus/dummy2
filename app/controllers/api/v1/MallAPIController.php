@@ -914,12 +914,22 @@ class MallAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.mall.getsearchmall.before.authz', array($this, $user));
 
+/*
             if (! ACL::create($user)->isAllowed('view_mall')) {
                 Event::fire('orbit.mall.getsearchmall.authz.notallowed', array($this, $user));
                 $viewUserLang = Lang::get('validation.orbit.actionlist.view_mall');
                 $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewUserLang));
                 ACL::throwAccessForbidden($message);
             }
+*/
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'merchant database manager'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             Event::fire('orbit.mall.getsearchmall.after.authz', array($this, $user));
 
             $this->registerCustomValidation();
