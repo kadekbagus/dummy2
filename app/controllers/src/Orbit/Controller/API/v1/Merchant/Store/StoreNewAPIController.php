@@ -9,16 +9,17 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Config;
 use stdClass;
-use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
 use Lang;
 use \Exception;
+use \Event;
 use Orbit\Controller\API\v1\Merchant\Store\StoreHelper;
 use BaseStore;
 
 class StoreNewAPIController extends ControllerAPI
 {
+    protected $newStoreRoles = ['merchant database admin'];
     /**
      * POST - post new store
      *
@@ -37,6 +38,21 @@ class StoreNewAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->newStoreRoles;
+            if (! in_array(strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
             $base_merchant_id = OrbitInput::post('base_merchant_id');
             $mall_id = OrbitInput::post('mall_id');
             $floor_id = OrbitInput::post('floor_id');
@@ -45,8 +61,8 @@ class StoreNewAPIController extends ControllerAPI
             $status = OrbitInput::post('status', 'active');
             $verification_number = OrbitInput::post('verification_number');
             //images and map
-            $images = OrbitInput::files('images');
-            $map = OrbitInput::files('map');
+            $images = OrbitInput::files('pictures');
+            $map = OrbitInput::files('maps');
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -106,6 +122,7 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->verification_number = $verification_number;
             $newstore->save();
 
+            Event::fire('orbit.basestore.postnewstore.after.save', array($this, $newstore));
             $this->response->data = $newstore;
 
             // Commit the changes
