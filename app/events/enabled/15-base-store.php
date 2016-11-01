@@ -52,7 +52,7 @@ Event::listen('orbit.basestore.postnewstore.after.save', function($controller, $
 
         $response = StoreUploadAPIController::create('raw')
                        ->setCalledFrom('basestore.update')
-                       ->postUploadStoreMap();
+                       ->postUploadBaseStoreMap();
 
         if ($response->code !== 0)
         {
@@ -110,7 +110,7 @@ Event::listen('orbit.basestore.postupdatestore.after.save', function($controller
 
         $response = StoreUploadAPIController::create('raw')
                                        ->setCalledFrom('basestore.update')
-                                       ->postUploadStoreMap();
+                                       ->postUploadBaseStoreMap();
 
         if ($response->code !== 0)
         {
