@@ -109,6 +109,33 @@ class StoreListAPIController extends ControllerAPI
                 $store->where('merchants.name', 'like', "%$location_name%");
             });
 
+            // Add new relation based on request
+            OrbitInput::get('with', function ($with) use ($store) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'media') {
+                        $store->with('media');
+                    } elseif ($relation === 'mediaOrig') {
+                        $store->with('mediaOrig');
+                    } elseif ($relation === 'mediaCroppedDefault') {
+                        $store->with('mediaCroppedDefault');
+                    } elseif ($relation === 'mediaResizedDefault') {
+                        $store->with('mediaResizedDefault');
+                    } elseif ($relation === 'mediaImage') {
+                        $store->with('mediaImage');
+                    } elseif ($relation === 'mediaImageOrig') {
+                        $store->with('mediaImageOrig');
+                    } elseif ($relation === 'mediaImageCroppedDefault') {
+                        $store->with('mediaImageCroppedDefault');
+                    } elseif ($relation === 'mediaMap') {
+                        $store->with('mediaMap');
+                    } elseif ($relation === 'mediaMapOrig') {
+                        $store->with('mediaMapOrig');
+                    }
+                }
+            });
+
             $sortByMapping = array(
                 'merchant'      => 'base_merchants.name',
                 'location'      => 'merchants.name',
