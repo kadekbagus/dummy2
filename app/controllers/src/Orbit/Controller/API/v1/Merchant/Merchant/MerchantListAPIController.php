@@ -1,5 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Merchant\Merchant;
 
+use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -10,6 +11,12 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use BaseMerchant;
+use Validator;
+use Lang;
+use DB;
+use Config;
+use stdclass;
+use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 
 class MerchantListAPIController extends ControllerAPI
 {
@@ -22,7 +29,6 @@ class MerchantListAPIController extends ControllerAPI
      */
     public function getSearchMerchant()
     {
-        $limit = FALSE;
         try {
             $httpCode = 200;
 
@@ -36,23 +42,22 @@ class MerchantListAPIController extends ControllerAPI
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->merchantViewRoles;
-            if (! in_array( strtolower($role->role_name), $validRoles)) {
+            if (! in_array(strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
-            $this->registerCustomValidation();
+            $merchantHelper = MerchantHelper::create();
+            $merchantHelper->merchantCustomValidator();
 
             $sort_by = OrbitInput::get('sortby');
-
-            $object_type = OrbitInput::get('object_type');
 
             $validator = Validator::make(
                 array(
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:merchant_name',
+                    'sortby' => 'in:merchant_name,location_number',
                 ),
                 array(
                     'sortby.in' => Lang::get('validation.orbit.empty.merchant_sortby_2'),
@@ -68,12 +73,13 @@ class MerchantListAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $merchants = BaseMerchant::select(
+                    'base_merchants.base_merchant_id',
                     'name',
                     DB::raw("
-                        count(base_store.base_store_id) as location_count
+                            count({$prefix}base_stores.base_store_id) as location_count
                         ")
                 )
-                ->leftJoin('base_stores', 'base_stores.merchant_id', '=', 'base_merchants.base_merchant_id')
+                ->leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                 ->excludeDeleted('base_merchants');
 
             OrbitInput::get('merchant_id', function($data) use ($merchants)
@@ -81,30 +87,32 @@ class MerchantListAPIController extends ControllerAPI
                 $merchants->whereIn('merchants.merchant_id', $data);
             });
 
-            // Filter tenant by name
+            // Filter merchant by name
             OrbitInput::get('name', function($name) use ($merchants)
             {
                 $merchants->whereIn('merchants.name', $name);
             });
 
-            // Filter tenant by matching name pattern
+            // Filter merchant by matching name pattern
             OrbitInput::get('name_like', function($name) use ($merchants)
             {
                 $merchants->where('merchants.name', 'like', "%$name%");
             });
+
+            $merchants->groupBy('base_merchants.base_merchant_id');
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_merchants = clone $merchants;
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
-            $store->take($take);
+            $merchants->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $store->skip($skip);
+            $merchants->skip($skip);
 
             // Default sort by
-            $sortBy = 'merchants.name';
+            $sortBy = 'base_merchants.name';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -112,7 +120,8 @@ class MerchantListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'merchant_name' => 'merchants.name',
+                    'merchant_name' => 'base_merchants.name',
+                    'location_number' => 'location_count'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -128,15 +137,15 @@ class MerchantListAPIController extends ControllerAPI
             });
             $merchants->orderBy($sortBy, $sortMode);
 
-            $totalTenants = RecordCounter::create($_merchants)->count();
-            $listOfTenants = $merchants->get();
+            $totalMerchants = RecordCounter::create($_merchants)->count();
+            $listOfMerchants = $merchants->get();
 
             $data = new stdclass();
-            $data->total_records = $totalTenants;
-            $data->returned_records = count($listOfTenants);
-            $data->records = $listOfTenants;
+            $data->total_records = $totalMerchants;
+            $data->returned_records = count($listOfMerchants);
+            $data->records = $listOfMerchants;
 
-            if ($totalTenants === 0) {
+            if ($totalMerchants === 0) {
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.merchant');
             }
