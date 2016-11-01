@@ -45,20 +45,20 @@ class StoreListAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            // Require authentication
-            $this->checkAuth();
+            // // Require authentication
+            // $this->checkAuth();
 
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
+            // // Try to check access control list, does this user allowed to
+            // // perform this action
+            // $user = $this->api->user;
 
-            // @Todo: Use ACL authentication instead
-            $role = $user->role;
-            $validRoles = $this->storeViewRoles;
-            if (! in_array(strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
-            }
+            // // @Todo: Use ACL authentication instead
+            // $role = $user->role;
+            // $validRoles = $this->storeViewRoles;
+            // if (! in_array(strtolower($role->role_name), $validRoles)) {
+            //     $message = 'Your role are not allowed to access this resource.';
+            //     ACL::throwAccessForbidden($message);
+            // }
 
             $sort_by = OrbitInput::get('sortby', 'merchant');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -87,6 +87,7 @@ class StoreListAPIController extends ControllerAPI
                                 'base_stores.base_store_id',
                                 DB::raw("{$prefix}merchants.merchant_id AS mall_id"),
                                 DB::raw("{$prefix}merchants.name AS location"),
+                                'base_stores.floor_id',
                                 DB::raw("{$prefix}objects.object_name AS floor"),
                                 'base_stores.unit', 'base_stores.phone',
                                 'base_stores.verification_number',
@@ -97,15 +98,15 @@ class StoreListAPIController extends ControllerAPI
                             ->where('base_stores.status', '!=', 'deleted');
 
             // Filter store by merchant name
-            OrbitInput::get('merchant_name_like', function($name) use ($store)
+            OrbitInput::get('merchant_name_like', function($merchant_name) use ($store)
             {
-                $store->where('base_merchants.name', 'like', "%$name%");
+                $store->where('base_merchants.name', 'like', "%$merchant_name%");
             });
 
             // Filter store by location
-            OrbitInput::get('location_name_like', function($name) use ($store)
+            OrbitInput::get('location_name_like', function($location_name) use ($store)
             {
-                $store->where('merchants.name', 'like', "%$name%");
+                $store->where('merchants.name', 'like', "%$location_name%");
             });
 
             $sortByMapping = array(
