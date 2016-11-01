@@ -96,6 +96,18 @@ class StoreListAPIController extends ControllerAPI
                             ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
                             ->where('base_stores.status', '!=', 'deleted');
 
+            // Filter store by merchant name
+            OrbitInput::get('merchant_name_like', function($name) use ($store)
+            {
+                $store->where('base_merchants.name', 'like', "%$name%");
+            });
+
+            // Filter store by location
+            OrbitInput::get('location_name_like', function($name) use ($store)
+            {
+                $store->where('merchants.name', 'like', "%$name%");
+            });
+
             $sortByMapping = array(
                 'merchant'      => 'base_merchants.name',
                 'location'      => 'merchants.name',
