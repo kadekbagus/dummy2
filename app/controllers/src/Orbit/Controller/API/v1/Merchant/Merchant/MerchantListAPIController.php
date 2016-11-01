@@ -20,7 +20,7 @@ use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 
 class MerchantListAPIController extends ControllerAPI
 {
-    protected $merchantViewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign admin','campaign owner', 'campaign employee'];
+    protected $merchantViewRoles = ['super admin', 'merchant database admin'];
 
     /**
      * GET Search Base Merchant
@@ -60,7 +60,7 @@ class MerchantListAPIController extends ControllerAPI
                     'sortby' => 'in:merchant_name,location_number',
                 ),
                 array(
-                    'sortby.in' => Lang::get('validation.orbit.empty.merchant_sortby_2'),
+                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: merchant_name, location_number',
                 )
             );
 
@@ -90,13 +90,13 @@ class MerchantListAPIController extends ControllerAPI
             // Filter merchant by name
             OrbitInput::get('name', function($name) use ($merchants)
             {
-                $merchants->whereIn('merchants.name', $name);
+                $merchants->whereIn('base_merchants.name', $name);
             });
 
             // Filter merchant by matching name pattern
             OrbitInput::get('name_like', function($name) use ($merchants)
             {
-                $merchants->where('merchants.name', 'like', "%$name%");
+                $merchants->where('base_merchants.name', 'like', "%$name%");
             });
 
             $merchants->groupBy('base_merchants.base_merchant_id');
@@ -105,7 +105,7 @@ class MerchantListAPIController extends ControllerAPI
             // skip, and order by
             $_merchants = clone $merchants;
 
-            $take = PaginationNumber::parseTakeFromGet('retailer');
+            $take = PaginationNumber::parseTakeFromGet('merchant');
             $merchants->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
