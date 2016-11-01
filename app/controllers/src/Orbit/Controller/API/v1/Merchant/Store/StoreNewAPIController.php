@@ -32,37 +32,63 @@ class StoreNewAPIController extends ControllerAPI
      */
     public function postNewStore()
     {
-        $store = NULL;
+        $newstore = NULL;
         $user = NULL;
-        $httpCode = 200;
         try {
+            $httpCode = 200;
+
             $base_merchant_id = OrbitInput::post('base_merchant_id');
-            $merchant_id = OrbitInput::post('merchant_id');
+            $mall_id = OrbitInput::post('mall_id');
             $floor_id = OrbitInput::post('floor_id');
             $unit = OrbitInput::post('unit');
             $phone = OrbitInput::post('phone');
             $status = OrbitInput::post('status', 'active');
             $verification_number = OrbitInput::post('verification_number');
+            //images and map
+            $images = OrbitInput::files('images');
+            $map = OrbitInput::files('map');
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
 
-            $validator = Validator::make(
-                array(
-                    'base_merchant_id'   => $base_merchant_id,
-                    'merchant_id'   => $merchant_id,
-                    'floor_id'   => $floor_id,
-                    'status'   => $status,
-                ),
-                array(
-                    'base_merchant_id'   => 'required|orbit.empty.base_merchant',
-                    'merchant_id'   => 'required|orbit.empty.mall',
-                    'floor_id'   => 'orbit.empty.floor:' . $merchant_id,
-                    'status'   => 'in:active,inactive',
-                ),
-                array(
-                )
-            );
+            // generate array validation image
+            $images_validation = $storeHelper->generate_validation_image('store_image', $images, 'orbit.upload.retailer.picture', 3);
+            $map_validation = $storeHelper->generate_validation_image('store_map', $map, 'orbit.upload.retailer.map');
+
+            $validation_data = [
+                'base_merchant_id' => $base_merchant_id,
+                'mall_id'          => $mall_id,
+                'floor_id'         => $floor_id,
+                'status'           => $status,
+            ];
+
+            $validation_error = [
+                'base_merchant_id' => 'required|orbit.empty.base_merchant',
+                'mall_id'          => 'required|orbit.empty.mall',
+                'floor_id'         => 'orbit.empty.floor:' . $mall_id,
+                'status'           => 'in:active,inactive',
+            ];
+
+            $validation_error_message = [
+            ];
+
+            // add validation images
+            if (! empty($images_validation)) {
+                $validation_data += $images_validation['data'];
+                $validation_error += $images_validation['error'];
+                $validation_error_message += $images_validation['error_message'];
+            }
+            // add validation map
+            if (! empty($map_validation)) {
+                $validation_data += $map_validation['data'];
+                $validation_error += $map_validation['error'];
+                $validation_error_message += $map_validation['error_message'];
+            }
+
+            $validator = Validator::make($validation_data, $validation_error, $validation_error_message);
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -70,17 +96,20 @@ class StoreNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $store = new BaseStore();
-            $store->base_merchant_id = $base_merchant_id;
-            $store->merchant_id = $merchant_id;
-            $store->floor_id = $floor_id;
-            $store->unit = $unit;
-            $store->phone = $phone;
-            $store->status = $status;
-            $store->verification_number = $verification_number;
-            $store->save();
+            $newstore = new BaseStore();
+            $newstore->base_merchant_id = $base_merchant_id;
+            $newstore->merchant_id = $mall_id;
+            $newstore->floor_id = $floor_id;
+            $newstore->unit = $unit;
+            $newstore->phone = $phone;
+            $newstore->status = $status;
+            $newstore->verification_number = $verification_number;
+            $newstore->save();
 
-            $this->response->data = $store;
+            $this->response->data = $newstore;
+
+            // Commit the changes
+            $this->commit();
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
