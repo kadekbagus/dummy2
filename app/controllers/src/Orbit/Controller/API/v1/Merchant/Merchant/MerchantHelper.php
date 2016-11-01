@@ -6,6 +6,7 @@
 use Validator;
 use Language;
 use BaseMerchant;
+use App;
 
 class MerchantHelper
 {
@@ -24,38 +25,19 @@ class MerchantHelper
      *
      */
     public function merchantCustomValidator() {
-        // Check language is exists
-        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
-            $lang_name = $value;
-
-            $language = Language::where('status', '=', 'active')
-                            ->where('name', $lang_name)
-                            ->first();
-
-            if (empty($language)) {
-                return FALSE;
-            }
-
-            $this->valid_language = $language;
-            return TRUE;
-        });
-
-        // Check the existance of lucky_draw id
-        Validator::extend('orbit.empty.lucky_draw', function ($attribute, $value, $parameters) {
-            $lucky_draw = LuckyDraw::excludeDeleted()
-                                   ->where('lucky_draw_id', $value)
+        // Check the existance of base merchant id
+        Validator::extend('orbit.empty.base_merchant', function ($attribute, $value, $parameters) {
+            $baseMerchant = BaseMerchant::excludeDeleted()
+                                   ->where('base_merchant_id', $value)
                                    ->first();
 
-            if (empty($lucky_draw)) {
+            if (empty($baseMerchant)) {
                 return FALSE;
             }
 
+            App::instance('orbit.empty.base_merchant', $baseMerchant);
+
             return TRUE;
         });
-    }
-
-    public function getValidLanguage()
-    {
-        return $this->valid_language;
     }
 }
