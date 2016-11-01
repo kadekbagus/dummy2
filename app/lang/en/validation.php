@@ -493,7 +493,7 @@ return array(
             'total_issued_coupons' => 'Number can not be less than current total issued coupons',
         ),
         'file' => array(
-            'max_size' => ':attribute image size is too big, maximum size allowed is :size:unit',
+            'max_size' => ':attribute is too big, maximum size allowed is :size:unit',
             'type' => "File extension \".:ext\" is not allowed" ,
         ),
     ),

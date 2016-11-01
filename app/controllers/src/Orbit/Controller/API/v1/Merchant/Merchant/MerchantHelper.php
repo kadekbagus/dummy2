@@ -4,14 +4,11 @@
  *
  */
 use Validator;
-use Language;
 use BaseMerchant;
 use App;
 
 class MerchantHelper
 {
-    protected $valid_language = NULL;
-
     /**
      * Static method to instantiate the class.
      */

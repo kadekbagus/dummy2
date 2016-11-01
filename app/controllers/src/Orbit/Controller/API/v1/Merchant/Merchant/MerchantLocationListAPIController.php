@@ -24,7 +24,7 @@ class MerchantLocationListAPIController extends ControllerAPI
     protected $merchantViewRoles = ['super admin', 'merchant database admin'];
 
     /**
-     * GET Search Base Merchant
+     * GET Search Base Merchant Locations
      *
      * @author Ahmad Anshori <ahmad@dominopos.com>
      */
