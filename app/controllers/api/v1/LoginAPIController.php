@@ -143,7 +143,7 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
-     * POST - Login for MDM portal, only Super Admin can be allow
+     * POST - Login for MDM portal, only user with role 'Merchant Database Admin' can be login
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      *
@@ -171,7 +171,7 @@ class LoginAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $roles = ['Super Admin'];
+            $roles = ['Merchant Database Admin'];
 
             $user = User::with('role')
                         ->active()
