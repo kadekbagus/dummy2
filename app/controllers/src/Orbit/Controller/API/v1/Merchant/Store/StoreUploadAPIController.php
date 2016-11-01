@@ -668,9 +668,9 @@ class StoreUploadAPIController extends ControllerAPI
     }
 
     /**
-     * Delete logo for a merchant.
+     * Delete map for a base store.
      *
-     * @author Rio Astamal <me@rioastamal.net>
+     * @author Irianto <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -678,36 +678,29 @@ class StoreUploadAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function postDeleteTenantMap()
+    public function postDeleteBaseStoreMap()
     {
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.upload.postdeletetenantmap.before.auth', array($this));
+            // Require authentication
+            $this->checkAuth();
 
-            if (! $this->calledFrom('tenant.new, tenant.update'))
-            {
-                // Require authentication
-                $this->checkAuth();
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
 
-                Event::fire('orbit.upload.postdeletetenantmap.after.auth', array($this));
-
-                // Try to check access control list, does this merchant allowed to
-                // perform this action
-                $user = $this->api->user;
-                Event::fire('orbit.upload.postdeletetenantmap.before.authz', array($this, $user));
-
-                if (! ACL::create($user)->isAllowed('update_mall')) {
-                    Event::fire('orbit.upload.postdeletetenantmap.authz.notallowed', array($this, $user));
-                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_retailer');
-                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
-                    ACL::throwAccessForbidden($message);
-                }
-                Event::fire('orbit.upload.postdeletetenantmap.after.authz', array($this, $user));
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->deleteStoreImageRoles;
+            if (! in_array(strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
             }
 
             // Register custom validation
-            $this->registerCustomValidation();
+            $storeHelper = StoreHelper::create();
+            $storeHelper->storeCustomValidator();
 
             // Application input
             $base_store_id = OrbitInput::post('base_store_id');
@@ -717,13 +710,13 @@ class StoreUploadAPIController extends ControllerAPI
                     'base_store_id'   => $base_store_id,
                 ),
                 array(
-                    'base_store_id'   => 'required|orbit.empty.tenant',
+                    'base_store_id'   => 'required|orbit.empty.base_store',
                 )
             );
 
-            Event::fire('orbit.upload.postdeletetenantmap.before.validation', array($this, $validator));
+            Event::fire('orbit.upload.postdeletebasestoremap.before.validation', array($this, $validator));
 
-            if (! $this->calledFrom('tenant.new,tenant.update')) {
+            if (! $this->calledFrom('basestore.new,basestore.update')) {
                 // Begin database transaction
                 $this->beginTransaction();
             }
@@ -733,16 +726,16 @@ class StoreUploadAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.upload.postdeletetenantmap.after.validation', array($this, $validator));
+            Event::fire('orbit.upload.postdeletebasestoremap.after.validation', array($this, $validator));
 
-            // We already had Product instance on the RegisterCustomValidation
+            // We already had validation base store
             // get it from there no need to re-query the database
-            $merchant = App::make('orbit.empty.tenant');
+            $base_store = $storeHelper->getValidBaseStore();
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $merchant->base_store_id)
-                              ->where('object_name', 'retailer')
-                              ->where('media_name_id', 'retailer_map');
+            // Delete old base_store map
+            $pastMedia = Media::where('object_id', $base_store->base_store_id)
+                              ->where('object_name', 'base_store')
+                              ->where('media_name_id', 'base_store_map');
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
@@ -756,27 +749,26 @@ class StoreUploadAPIController extends ControllerAPI
                 $pastMedia->delete();
             }
 
-            Event::fire('orbit.upload.postdeletetenantmap.before.save', array($this, $merchant));
+            Event::fire('orbit.upload.postdeletebasestoremap.before.save', array($this, $base_store));
 
-            // Update the `logo` field which store the original path of the logo
+            // Update the `map` field which store the original path of the map
             // This is temporary since right now the business rules actually
-            // only allows one logo per merchant
-            $merchant->logo = NULL;
-            $merchant->save();
+            // only allows one map per base_store
+            $base_store->save();
 
-            Event::fire('orbit.upload.postdeletetenantmap.after.save', array($this, $merchant));
+            Event::fire('orbit.upload.postdeletebasestoremap.after.save', array($this, $base_store));
 
-            $this->response->data = $merchant;
+            $this->response->data = $base_store;
             $this->response->message = Lang::get('statuses.orbit.uploaded.retailer.delete_map');
 
-            if (! $this->calledFrom('tenant.new,tenant.update')) {
+            if (! $this->calledFrom('basestore.new,basestore.update')) {
                 // Commit the changes
                 $this->commit();
             }
 
-            Event::fire('orbit.upload.postdeletetenantmap.after.commit', array($this, $merchant));
+            Event::fire('orbit.upload.postdeletebasestoremap.after.commit', array($this, $base_store));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.upload.postdeletetenantmap.access.forbidden', array($this, $e));
+            Event::fire('orbit.upload.postdeletebasestoremap.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -784,12 +776,12 @@ class StoreUploadAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
 
-            if (! $this->calledFrom('tenant.new,tenant.update')) {
+            if (! $this->calledFrom('basestore.new,basestore.update')) {
                 // Rollback the changes
                 $this->rollBack();
             }
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.upload.postdeletetenantmap.invalid.arguments', array($this, $e));
+            Event::fire('orbit.upload.postdeletebasestoremap.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -797,12 +789,12 @@ class StoreUploadAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
 
-            if (! $this->calledFrom('tenant.new,tenant.update')) {
+            if (! $this->calledFrom('basestore.new,basestore.update')) {
                 // Rollback the changes
                 $this->rollBack();
             }
         } catch (QueryException $e) {
-            Event::fire('orbit.upload.postdeletetenantmap.query.error', array($this, $e));
+            Event::fire('orbit.upload.postdeletebasestoremap.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -816,26 +808,26 @@ class StoreUploadAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
 
-            if (! $this->calledFrom('tenant.new,tenant.update')) {
+            if (! $this->calledFrom('basestore.new,basestore.update')) {
                 // Rollback the changes
                 $this->rollBack();
             }
         } catch (Exception $e) {
-            Event::fire('orbit.upload.postdeletetenantmap.general.exception', array($this, $e));
+            Event::fire('orbit.upload.postdeletebasestoremap.general.exception', array($this, $e));
 
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = NULL;
 
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
+            if (! $this->calledFrom('basestore.new, basestore.update')) {
                 // Rollback the changes
                 $this->rollBack();
             }
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.upload.postdeletetenantmap.before.render', array($this, $output));
+        Event::fire('orbit.upload.postdeletebasestoremap.before.render', array($this, $output));
 
         return $output;
     }
