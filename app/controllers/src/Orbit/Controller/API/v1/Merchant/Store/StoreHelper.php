@@ -18,6 +18,7 @@ use Object;
 class StoreHelper
 {
     protected $valid_base_merchant = NULL;
+    protected $valid_base_store = NULL;
     protected $valid_mall = NULL;
     protected $valid_floor = NULL;
     /**
@@ -75,7 +76,22 @@ class StoreHelper
                 return FALSE;
             }
 
-            $valid_base_merchant = $base_merchant;
+            $this->valid_base_merchant = $base_merchant;
+            return TRUE;
+        });
+
+        // exist base store
+        Validator::extend('orbit.empty.base_store', function ($attribute, $value, $parameters) {
+            $base_store = BaseStore::excludeDeleted('base_stores')
+                        ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                        ->where('base_store_id', $value)
+                        ->first();
+
+            if (empty($base_store)) {
+                return FALSE;
+            }
+
+            $this->valid_base_store = $base_store;
             return TRUE;
         });
 
@@ -90,7 +106,7 @@ class StoreHelper
                 return FALSE;
             }
 
-            $valid_mall = $mall;
+            $this->valid_mall = $mall;
             return TRUE;
         });
 
@@ -107,7 +123,7 @@ class StoreHelper
                 return FALSE;
             }
 
-            $valid_floor = $floor;
+            $this->valid_floor = $floor;
             return TRUE;
         });
 
@@ -132,5 +148,25 @@ class StoreHelper
 
             return TRUE;
         });
+    }
+
+    public function getValidBaseStore()
+    {
+        return $this->valid_base_store;
+    }
+
+    public function getValidBaseMerchant()
+    {
+        return $this->valid_base_merchant;
+    }
+
+    public function getValidMall()
+    {
+        return $this->valid_mall;
+    }
+
+    public function getValidFloor()
+    {
+        return $this->valid_floor;
     }
 }
