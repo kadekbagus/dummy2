@@ -85,7 +85,7 @@ class StoreListAPIController extends ControllerAPI
             $store = BaseStore::select('base_merchants.base_merchant_id',
                                 DB::raw("{$prefix}base_merchants.name AS merchant"),
                                 'base_stores.base_store_id',
-                                'merchants.merchant_id',
+                                DB::raw("{$prefix}merchants.merchant_id AS mall_id"),
                                 DB::raw("{$prefix}merchants.name AS location"),
                                 DB::raw("{$prefix}objects.object_name AS floor"),
                                 'base_stores.unit', 'base_stores.phone',
