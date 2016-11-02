@@ -114,6 +114,27 @@ class StoreHelper
             return TRUE;
         });
 
+        // duplicate base store but not me
+        Validator::extend('orbit.exists.base_store_not_me', function ($attribute, $value, $parameters) {
+            $base_store_id = $parameters[0];
+            $mall_id = $parameters[1];
+            $floor_id = $parameters[2];
+            $unit = $value;
+
+            $base_store = BaseStore::excludeDeleted('base_stores')
+                            ->where('base_store_id', '!=', $base_store_id)
+                            ->where('merchant_id', $mall_id)
+                            ->where('floor_id', $floor_id)
+                            ->where('unit', $unit)
+                            ->first();
+
+            if (! empty($base_store)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
         // exist mall
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
             $mall = Mall::excludeDeleted()
