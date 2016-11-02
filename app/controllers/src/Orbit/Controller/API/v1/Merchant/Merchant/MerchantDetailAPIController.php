@@ -10,6 +10,7 @@ use Illuminate\Database\QueryException;
 use Validator;
 use Lang;
 use BaseMerchant;
+use Config;
 
 class MerchantDetailAPIController extends ControllerAPI
 {
