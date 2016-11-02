@@ -83,15 +83,34 @@ class StoreHelper
         // exist base store
         Validator::extend('orbit.empty.base_store', function ($attribute, $value, $parameters) {
             $base_store = BaseStore::excludeDeleted('base_stores')
-                        ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
-                        ->where('base_store_id', $value)
-                        ->first();
+                            ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                            ->where('base_store_id', $value)
+                            ->first();
 
             if (empty($base_store)) {
                 return FALSE;
             }
 
             $this->valid_base_store = $base_store;
+            return TRUE;
+        });
+
+        // duplicate base store
+        Validator::extend('orbit.exists.base_store', function ($attribute, $value, $parameters) {
+            $mall_id = $parameters[0];
+            $floor_id = $parameters[1];
+            $unit = $value;
+
+            $base_store = BaseStore::excludeDeleted('base_stores')
+                            ->where('merchant_id', $mall_id)
+                            ->where('floor_id', $floor_id)
+                            ->where('unit', $unit)
+                            ->first();
+
+            if (! empty($base_store)) {
+                return FALSE;
+            }
+
             return TRUE;
         });
 
