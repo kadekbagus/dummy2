@@ -59,7 +59,8 @@ class BaseMerchant extends Eloquent
 
     public function baseMerchantCategory()
     {
-        return $this->hasMany('BaseMerchantCategory', 'base_merchant_id', 'base_merchant_id');
+        return $this->hasMany('BaseMerchantCategory', 'base_merchant_id', 'base_merchant_id')
+                    ->join('categories', 'categories.category_id', '=', 'base_merchant_category.category_id');
     }
 
     public function baseMerchantTranslation()
@@ -69,7 +70,7 @@ class BaseMerchant extends Eloquent
 
     public function keywords()
     {
-        return $this->hasMany('KeywordObject', 'object_id', 'base_merchant_id')
-                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
+        return $this->hasMany('BaseMerchantKeyword', 'base_merchant_id', 'base_merchant_id')
+                    ->join('keywords', 'keywords.keyword_id', '=', 'base_merchant_keyword.keyword_id');
     }
 }

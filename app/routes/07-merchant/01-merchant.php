@@ -34,13 +34,22 @@ Route::post('/api/v1/merchant/merchant/new', function()
 
 Route::post('/app/v1/merchant/merchant/new', ['as' => 'merchant-api-merchant-new', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantNew_postNewMerchant']);
 
-
 /**
  * New merchant
  */
-Route::post('/api/v1/merchant/merchant/upload-logo', function()
+Route::post('/api/v1/merchant/merchant/update', function()
 {
-    return Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadLogoAPIController::create()->postUploadMerchantLogo();
+    return Orbit\Controller\API\v1\Merchant\Merchant\MerchantUpdateAPIController::create()->postUpdateMerchant();
 });
 
-Route::post('/app/v1/merchant/merchant/upload-logo', ['as' => 'merchant-api-merchant-upload-logo', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantUploadLogo_postUploadMerchantLogo']);
+Route::post('/app/v1/merchant/merchant/update', ['as' => 'merchant-api-merchant-update', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantUpdate_postUpdateMerchant']);
+
+/**
+ * Get merchant detail
+ */
+Route::get('/api/v1/merchant/merchant/detail', function()
+{
+    return Orbit\Controller\API\v1\Merchant\Merchant\MerchantDetailAPIController::create()->getMerchantDetail();
+});
+
+Route::get('/app/v1/merchant/merchant/detail', ['as' => 'merchant-api-merchant-detail', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantDetail_getMerchantDetail']);

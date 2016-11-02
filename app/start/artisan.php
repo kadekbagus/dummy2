@@ -102,7 +102,7 @@ Artisan::add(new ElasticsearchResyncActivityCommand);
 Artisan::add(new UrlShortenerCommand);
 
 // Create User
-Artisan::add(new CreateUser);
+Artisan::add(new CreateUserCommand);
 
 // Insert or update data on settings table
 // @Todo investigate why its error
