@@ -17,16 +17,17 @@ use \Event;
 use Orbit\Controller\API\v1\Merchant\Store\StoreHelper;
 use BaseStore;
 
-class StoreNewAPIController extends ControllerAPI
+class StoreUpdateAPIController extends ControllerAPI
 {
-    protected $newStoreRoles = ['merchant database admin'];
+    protected $updateStoreRoles = ['merchant database admin'];
     /**
-     * POST - post new store
+     * POST - post update store
      *
      * @author Irianto <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
+     * @param string base_store_id - The id of base store
      * @param string base_merchant_id - The id of base merchant
      * @param string mall_id - The id of mall
      * @param string floor_id - The id of floor on the mall
@@ -39,9 +40,9 @@ class StoreNewAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function postNewStore()
+    public function postUpdateStore()
     {
-        $newstore = NULL;
+        $updatestore = NULL;
         $user = NULL;
         try {
             $httpCode = 200;
@@ -55,12 +56,13 @@ class StoreNewAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->newStoreRoles;
+            $validRoles = $this->updateStoreRoles;
             if (! in_array(strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
+            $base_store_id = OrbitInput::post('base_store_id');
             $base_merchant_id = OrbitInput::post('base_merchant_id');
             $mall_id = OrbitInput::post('mall_id');
             $floor_id = OrbitInput::post('floor_id');
@@ -80,6 +82,7 @@ class StoreNewAPIController extends ControllerAPI
             $map_validation = $storeHelper->generate_validation_image('store_map', $map, 'orbit.upload.retailer.map');
 
             $validation_data = [
+                'base_store_id'    => $base_store_id,
                 'base_merchant_id' => $base_merchant_id,
                 'mall_id'          => $mall_id,
                 'floor_id'         => $floor_id,
@@ -88,15 +91,16 @@ class StoreNewAPIController extends ControllerAPI
             ];
 
             $validation_error = [
-                'base_merchant_id' => 'required|orbit.empty.base_merchant',
-                'mall_id'          => 'required|orbit.empty.mall',
+                'base_store_id'    => 'required|orbit.empty.base_store',
+                'base_merchant_id' => 'orbit.empty.base_merchant',
+                'mall_id'          => 'orbit.empty.mall',
                 'floor_id'         => 'orbit.empty.floor:' . $mall_id,
                 'status'           => 'in:active,inactive',
-                'unit'             => 'orbit.exists.base_store:' . $mall_id . ',' . $floor_id,
+                'unit'             => 'orbit.exists.base_store_not_me:' . $base_store_id . ',' . $mall_id . ',' . $floor_id,
             ];
 
             $validation_error_message = [
-                'orbit.exists.base_store' => 'The mall unit on this floor already use',
+                'orbit.exists.base_store_not_me' => 'The mall unit on this floor already use',
             ];
 
             // unit make floor_id is required
@@ -128,18 +132,36 @@ class StoreNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $newstore = new BaseStore();
-            $newstore->base_merchant_id = $base_merchant_id;
-            $newstore->merchant_id = $mall_id;
-            $newstore->floor_id = $floor_id;
-            $newstore->unit = $unit;
-            $newstore->phone = $phone;
-            $newstore->status = $status;
-            $newstore->verification_number = $verification_number;
-            $newstore->save();
+            $updatestore = $storeHelper->getValidBaseStore();
 
-            Event::fire('orbit.basestore.postnewstore.after.save', array($this, $newstore));
-            $this->response->data = $newstore;
+            OrbitInput::post('mall_id', function($mall_id) use ($updatestore) {
+                $updatestore->merchant_id = $mall_id;
+            });
+
+            OrbitInput::post('floor_id', function($floor_id) use ($updatestore) {
+                $updatestore->floor_id = $floor_id;
+            });
+
+            OrbitInput::post('unit', function($unit) use ($updatestore) {
+                $updatestore->unit = $unit;
+            });
+
+            OrbitInput::post('phone', function($phone) use ($updatestore) {
+                $updatestore->phone = $phone;
+            });
+
+            OrbitInput::post('status', function($status) use ($updatestore) {
+                $updatestore->status = $status;
+            });
+
+            OrbitInput::post('verification_number', function($verification_number) use ($updatestore) {
+                $updatestore->verification_number = $verification_number;
+            });
+
+            $updatestore->save();
+
+            Event::fire('orbit.basestore.postupdatestore.after.save', array($this, $updatestore));
+            $this->response->data = $updatestore;
 
             // Commit the changes
             $this->commit();
