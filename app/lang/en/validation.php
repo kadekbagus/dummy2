@@ -343,6 +343,7 @@ return array(
             'tenant_type' => 'Tenant type you specified is not found : the valid values are: tenant, service',
             'floor' => 'The Floor you specified is not found',
             'base_merchant' => 'The Base Merchant you specified is not found',
+            'base_store' => 'The Base Store you specified is not found',
             'mobile_default_lang' => 'Mobile default language must on list languages',
             'account_type'        => 'Account type not exist',
             'campaign'            => 'Campaign you specified is not found',

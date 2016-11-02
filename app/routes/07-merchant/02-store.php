@@ -21,3 +21,23 @@ Route::post('/api/v1/merchant/store/new', function()
 });
 
 Route::post('/app/v1/merchant/store/new', ['as' => 'store-api-store-new', 'uses' => 'IntermediateMerchantAuthController@Store\StoreNew_postNewStore']);
+
+/**
+ * delete store image
+ */
+Route::post('/api/v1/merchant/store/image/delete', function()
+{
+    return Orbit\Controller\API\v1\Merchant\Store\StoreUploadAPIController::create()->postDeleteBaseStoreImage();
+});
+
+Route::post('/app/v1/merchant/store/image/delete', ['as' => 'store-api-store-image-delete', 'uses' => 'IntermediateMerchantAuthController@Store\StoreUpload_postDeleteBaseStoreImage']);
+
+/**
+ * delete store map
+ */
+Route::post('/api/v1/merchant/store/map/delete', function()
+{
+    return Orbit\Controller\API\v1\Merchant\Store\StoreUploadAPIController::create()->postDeleteBaseStoreMap();
+});
+
+Route::post('/app/v1/merchant/store/map/delete', ['as' => 'store-api-store-map-delete', 'uses' => 'IntermediateMerchantAuthController@Store\StoreUpload_postDeleteBaseStoreMap']);

@@ -24,7 +24,7 @@ Event::listen('orbit.basestore.postnewstore.after.save', function($controller, $
     if (! empty($images)) {
         $_POST['base_store_id'] = $base_store->base_store_id;
 
-        // This will be used on UploadAPIController
+        // This will be used on StoreUploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
 
         $response = StoreUploadAPIController::create('raw')
@@ -47,12 +47,12 @@ Event::listen('orbit.basestore.postnewstore.after.save', function($controller, $
     if (! empty($map)) {
         $_POST['base_store_id'] = $base_store->base_store_id;
 
-        // This will be used on UploadAPIController
+        // This will be used on StoreUploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
 
         $response = StoreUploadAPIController::create('raw')
                        ->setCalledFrom('basestore.update')
-                       ->postUploadStoreMap();
+                       ->postUploadBaseStoreMap();
 
         if ($response->code !== 0)
         {
@@ -82,10 +82,10 @@ Event::listen('orbit.basestore.postupdatestore.after.save', function($controller
     if (! empty($images)) {
         $_POST['base_store_id'] = $base_store->base_store_id;
 
-        // This will be used on UploadAPIController
+        // This will be used on StoreUploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
 
-        $response = UploadAPIController::create('raw')
+        $response = StoreUploadAPIController::create('raw')
                                        ->setCalledFrom('basestore.update')
                                        ->postUploadBaseStoreImage();
 
@@ -105,12 +105,12 @@ Event::listen('orbit.basestore.postupdatestore.after.save', function($controller
     if (! empty($map)) {
         $_POST['base_store_id'] = $base_store->base_store_id;
 
-        // This will be used on UploadAPIController
+        // This will be used on StoreUploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
 
-        $response = UploadAPIController::create('raw')
+        $response = StoreUploadAPIController::create('raw')
                                        ->setCalledFrom('basestore.update')
-                                       ->postUploadStoreMap();
+                                       ->postUploadBaseStoreMap();
 
         if ($response->code !== 0)
         {

@@ -87,6 +87,7 @@ class StoreListAPIController extends ControllerAPI
                                 'base_stores.base_store_id',
                                 DB::raw("{$prefix}merchants.merchant_id AS mall_id"),
                                 DB::raw("{$prefix}merchants.name AS location"),
+                                'base_stores.floor_id',
                                 DB::raw("{$prefix}objects.object_name AS floor"),
                                 'base_stores.unit', 'base_stores.phone',
                                 'base_stores.verification_number',
@@ -97,15 +98,42 @@ class StoreListAPIController extends ControllerAPI
                             ->where('base_stores.status', '!=', 'deleted');
 
             // Filter store by merchant name
-            OrbitInput::get('merchant_name_like', function($name) use ($store)
+            OrbitInput::get('merchant_name_like', function($merchant_name) use ($store)
             {
-                $store->where('base_merchants.name', 'like', "%$name%");
+                $store->where('base_merchants.name', 'like', "%$merchant_name%");
             });
 
             // Filter store by location
-            OrbitInput::get('location_name_like', function($name) use ($store)
+            OrbitInput::get('location_name_like', function($location_name) use ($store)
             {
-                $store->where('merchants.name', 'like', "%$name%");
+                $store->where('merchants.name', 'like', "%$location_name%");
+            });
+
+            // Add new relation based on request
+            OrbitInput::get('with', function ($with) use ($store) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'media') {
+                        $store->with('media');
+                    } elseif ($relation === 'mediaOrig') {
+                        $store->with('mediaOrig');
+                    } elseif ($relation === 'mediaCroppedDefault') {
+                        $store->with('mediaCroppedDefault');
+                    } elseif ($relation === 'mediaResizedDefault') {
+                        $store->with('mediaResizedDefault');
+                    } elseif ($relation === 'mediaImage') {
+                        $store->with('mediaImage');
+                    } elseif ($relation === 'mediaImageOrig') {
+                        $store->with('mediaImageOrig');
+                    } elseif ($relation === 'mediaImageCroppedDefault') {
+                        $store->with('mediaImageCroppedDefault');
+                    } elseif ($relation === 'mediaMap') {
+                        $store->with('mediaMap');
+                    } elseif ($relation === 'mediaMapOrig') {
+                        $store->with('mediaMapOrig');
+                    }
+                }
             });
 
             $sortByMapping = array(
