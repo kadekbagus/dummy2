@@ -4,7 +4,7 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class CreateUser extends Command {
+class CreateUserCommand extends Command {
 
     /**
      * The console command name.
@@ -75,7 +75,7 @@ class CreateUser extends Command {
     {
         try {
 
-            $fileName = $this->option('file');
+            $fileName = $this->option('json-file');
             $basefile = basename($fileName);
 
             $data = $this->readJSON($fileName);
@@ -104,7 +104,7 @@ class CreateUser extends Command {
                 ),
                 array(
                     'orbit.exist.email'   => 'Email already exist',
-                    'orbit.exist.role_id' => 'Role id is invalid',
+                    'orbit.exist.role_id' => 'Role name is invalid',
                 )
             );
 
@@ -204,7 +204,7 @@ class CreateUser extends Command {
     protected function getOptions()
     {
         return array(
-            array('file', null, InputOption::VALUE_REQUIRED, 'JSON file.'),
+            array('json-file', null, InputOption::VALUE_REQUIRED, 'JSON file.'),
         );
     }
 
