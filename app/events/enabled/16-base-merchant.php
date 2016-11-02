@@ -31,7 +31,7 @@ Event::listen('orbit.basemerchant.postnewbasemerchant.after.save', function($con
         App::instance('orbit.upload.user', $controller->api->user);
 
         $response = MerchantUploadLogoAPIController::create('raw')
-                                       ->setCalledFrom('tenant.update')
+                                       ->setCalledFrom('merchant.new')
                                        ->postUploadMerchantLogo();
 
         if ($response->code !== 0)
