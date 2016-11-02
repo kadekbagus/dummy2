@@ -23,7 +23,7 @@ use Lang;
 
 class ObjectCIAPIController extends BaseAPIController
 {
-    protected $validRoles = ['super admin', 'consumer', 'guest'];
+    protected $validRoles = ['super admin', 'consumer', 'guest', 'merchant database admin'];
     protected $mall_id = NULL;
 
     public function getFloorList()
@@ -65,7 +65,7 @@ class ObjectCIAPIController extends BaseAPIController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $objects = Object::select('objects.object_name')
+            $objects = Object::select('objects.object_id','objects.object_name')
                 ->active('objects')
                 ->whereHas('mall', function($q) {
                     $q->where('merchants.merchant_id', $this->mall_id);
