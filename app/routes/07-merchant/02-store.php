@@ -41,3 +41,13 @@ Route::post('/api/v1/merchant/store/map/delete', function()
 });
 
 Route::post('/app/v1/merchant/store/map/delete', ['as' => 'store-api-store-map-delete', 'uses' => 'IntermediateMerchantAuthController@Store\StoreUpload_postDeleteBaseStoreMap']);
+
+/**
+ * update store
+ */
+Route::post('/api/v1/merchant/store/update', function()
+{
+    return Orbit\Controller\API\v1\Merchant\Store\StoreUpdateAPIController::create()->postUpdateStore();
+});
+
+Route::post('/app/v1/merchant/store/update', ['as' => 'store-api-store-update', 'uses' => 'IntermediateMerchantAuthController@Store\StoreUpdate_postUpdateStore']);
