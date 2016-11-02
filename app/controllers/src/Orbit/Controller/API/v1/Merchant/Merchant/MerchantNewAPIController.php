@@ -12,10 +12,10 @@ use Lang;
 use BaseMerchant;
 use BaseMerchantCategory;
 use BaseMerchantTranslation;
+use BaseMerchantKeyword;
 use Config;
 use Language;
 use Keyword;
-use KeywordObject;
 use Event;
 
 class MerchantNewAPIController extends ControllerAPI
@@ -195,10 +195,9 @@ class MerchantNewAPIController extends ControllerAPI
                     $tenantKeywords[] = $existKeyword;
                 }
 
-                $newKeywordObject = new KeywordObject();
+                $newKeywordObject = new BaseMerchantKeyword();
+                $newKeywordObject->base_merchant_id = $newBaseMerchant->base_merchant_id;
                 $newKeywordObject->keyword_id = $keyword_id;
-                $newKeywordObject->object_id = $newBaseMerchant->base_merchant_id;
-                $newKeywordObject->object_type = 'base_merchant';
                 $newKeywordObject->save();
 
             }
