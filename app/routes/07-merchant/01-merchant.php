@@ -36,11 +36,11 @@ Route::post('/app/v1/merchant/merchant/new', ['as' => 'merchant-api-merchant-new
 
 
 /**
- * New merchant
+ * Get merchant detail
  */
-Route::post('/api/v1/merchant/merchant/upload-logo', function()
+Route::get('/api/v1/merchant/merchant/detail', function()
 {
-    return Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadLogoAPIController::create()->postUploadMerchantLogo();
+    return Orbit\Controller\API\v1\Merchant\Merchant\MerchantDetailAPIController::create()->getMerchantDetail();
 });
 
-Route::post('/app/v1/merchant/merchant/upload-logo', ['as' => 'merchant-api-merchant-upload-logo', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantUploadLogo_postUploadMerchantLogo']);
+Route::get('/app/v1/merchant/merchant/detail', ['as' => 'merchant-api-merchant-detail', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantDetail_getMerchantDetail']);
