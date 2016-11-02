@@ -138,17 +138,14 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->verification_number = $verification_number;
             $newstore->save();
 
-            $newstore->mall_id = $mall_id;
-
+            // cause not required
             $newstore->floor = '';
             if (! empty($floor_id) || $floor_id !== '') {
                 $newstore->floor = $storeHelper->getValidFloor()->object_name;
             }
 
-            $newstore->location = '';
-            if (! empty($mall_id) || $mall_id !== '') {
-                $newstore->location = $storeHelper->getValidMall()->name;
-            }
+            $newstore->mall_id = $mall_id;
+            $newstore->location = $storeHelper->getValidMall()->name;
 
             Event::fire('orbit.basestore.postnewstore.after.save', array($this, $newstore));
             $this->response->data = $newstore;
