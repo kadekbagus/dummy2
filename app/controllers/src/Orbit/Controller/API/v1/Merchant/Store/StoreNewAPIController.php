@@ -76,6 +76,7 @@ class StoreNewAPIController extends ControllerAPI
                 'mall_id'          => $mall_id,
                 'floor_id'         => $floor_id,
                 'status'           => $status,
+                'unit'             => $unit,
             ];
 
             $validation_error = [
@@ -83,10 +84,17 @@ class StoreNewAPIController extends ControllerAPI
                 'mall_id'          => 'required|orbit.empty.mall',
                 'floor_id'         => 'orbit.empty.floor:' . $mall_id,
                 'status'           => 'in:active,inactive',
+                'unit'             => 'orbit.exists.base_store:' . $mall_id . ',' . $floor_id,
             ];
 
             $validation_error_message = [
+                'orbit.exists.base_store' => 'The mall unit on this floor already use',
             ];
+
+            // unit make floor_id is required
+            if (! empty($unit)) {
+                $validation_error['floor_id'] = 'required|orbit.empty.floor:' . $mall_id;
+            }
 
             // add validation images
             if (! empty($images_validation)) {
