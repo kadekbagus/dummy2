@@ -34,6 +34,15 @@ Route::post('/api/v1/merchant/merchant/new', function()
 
 Route::post('/app/v1/merchant/merchant/new', ['as' => 'merchant-api-merchant-new', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantNew_postNewMerchant']);
 
+/**
+ * New merchant
+ */
+Route::post('/api/v1/merchant/merchant/update', function()
+{
+    return Orbit\Controller\API\v1\Merchant\Merchant\MerchantUpdateAPIController::create()->postUpdateMerchant();
+});
+
+Route::post('/app/v1/merchant/merchant/update', ['as' => 'merchant-api-merchant-update', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantUpdate_postUpdateMerchant']);
 
 /**
  * Get merchant detail

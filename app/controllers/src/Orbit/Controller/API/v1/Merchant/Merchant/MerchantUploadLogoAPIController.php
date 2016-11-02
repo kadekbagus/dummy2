@@ -19,6 +19,7 @@ use Validator;
 use BaseMerchant;
 use Str;
 use Media;
+use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 
 class MerchantUploadLogoAPIController extends ControllerAPI
 {
@@ -38,7 +39,7 @@ class MerchantUploadLogoAPIController extends ControllerAPI
             Event::fire('orbit.upload.postuploadbasemerchantlogo.before.auth', array($this));
 
             // Require authentication
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
+            if (! $this->calledFrom('merchant.new, merchant.update')) {
                 $this->checkAuth();
 
                 Event::fire('orbit.upload.postuploadbasemerchantlogo.after.auth', array($this));
@@ -64,8 +65,8 @@ class MerchantUploadLogoAPIController extends ControllerAPI
             $uploadLogoConfig = Config::get('orbit.upload.retailer.logo');
             $elementName = $uploadLogoConfig['name'];
 
-            // Register custom validation
-            $this->registerCustomValidation();
+            $merchantHelper = MerchantHelper::create();
+            $merchantHelper->merchantCustomValidator();
 
             // Application input
             $merchant_id = OrbitInput::post('merchant_id');
@@ -92,7 +93,7 @@ class MerchantUploadLogoAPIController extends ControllerAPI
             Event::fire('orbit.upload.postuploadbasemerchantlogo.before.validation', array($this, $validator));
 
             // Begin database transaction
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
+            if (! $this->calledFrom('merchant.new, merchant.update')) {
                 $this->beginTransaction();
             }
 
@@ -131,15 +132,6 @@ class MerchantUploadLogoAPIController extends ControllerAPI
             $object_name = 'base_merchant';
             $media_name_id = 'base_merchant_logo';
 
-            // // Set object_name and media name id as each object type (tenant or sevice)
-            // if ($object_type === 'base_merchant') {
-            //     $object_name = 'base_merchant';
-            //     $media_name_id = 'retailer_logo';
-            // } elseif ($object_type === 'service') {
-            //     $object_name = 'service';
-            //     $media_name_id = 'service_logo';
-            // }
-
             // Delete old merchant logo
             $pastMedia = Media::where('object_id', $merchant->base_merchant_id)
                               ->where('object_name', $object_name)
@@ -173,7 +165,7 @@ class MerchantUploadLogoAPIController extends ControllerAPI
             $this->response->message = Lang::get('statuses.orbit.uploaded.retailer.logo');
 
             // Commit the changes
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
+            if (! $this->calledFrom('merchant.new, merchant.update')) {
                 $this->commit();
             }
 
@@ -184,11 +176,11 @@ class MerchantUploadLogoAPIController extends ControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
             $httpCode = 403;
 
             // Rollback the changes
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
+            if (! $this->calledFrom('merchant.new, merchant.update')) {
                 $this->rollBack();
             }
         } catch (InvalidArgsException $e) {
@@ -197,11 +189,11 @@ class MerchantUploadLogoAPIController extends ControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
             $httpCode = 403;
 
             // Rollback the changes
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
+            if (! $this->calledFrom('merchant.new, merchant.update')) {
                 $this->rollBack();
             }
         } catch (QueryException $e) {
@@ -216,11 +208,11 @@ class MerchantUploadLogoAPIController extends ControllerAPI
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
-            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
             $httpCode = 500;
 
             // Rollback the changes
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
+            if (! $this->calledFrom('merchant.new, merchant.update')) {
                 $this->rollBack();
             }
         } catch (Exception $e) {
@@ -229,10 +221,10 @@ class MerchantUploadLogoAPIController extends ControllerAPI
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
 
             // Rollback the changes
-            if (! $this->calledFrom('tenant.new, tenant.update')) {
+            if (! $this->calledFrom('merchant.new, merchant.update')) {
                 $this->rollBack();
             }
         }
@@ -259,18 +251,6 @@ class MerchantUploadLogoAPIController extends ControllerAPI
         $this->calledFrom = $from;
 
         return $this;
-    }
-
-    protected function registerCustomValidation()
-    {
-        // Check the images, we are allowed array of images but not more that one
-        Validator::extend('nomore.than.one', function ($attribute, $value, $parameters) {
-            if (is_array($value['name']) && count($value['name']) > 1) {
-                return FALSE;
-            }
-
-            return TRUE;
-        });
     }
 
     public function saveMetadata($object, $metadata)

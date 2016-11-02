@@ -11,12 +11,13 @@ use Validator;
 use Lang;
 use BaseMerchant;
 use BaseMerchantCategory;
-use BaseMerchantTranslation;
 use BaseMerchantKeyword;
 use Config;
 use Language;
 use Keyword;
 use Event;
+use Category;
+use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 
 class MerchantNewAPIController extends ControllerAPI
 {
@@ -54,14 +55,14 @@ class MerchantNewAPIController extends ControllerAPI
 
             Event::fire('orbit.basemerchant.postnewbasemerchant.after.authz', array($this, $user));
 
-            $this->registerCustomValidation();
+            $merchantHelper = MerchantHelper::create();
+            $merchantHelper->merchantCustomValidator();
 
             $merchantName = OrbitInput::post('merchant_name');
             $websiteUrl = OrbitInput::post('website_url');
             $facebookUrl = OrbitInput::post('facebook_url');
             $categoryIds = OrbitInput::post('category_ids');
             $categoryIds = (array) $categoryIds;
-            $description = OrbitInput::post('description');
             $translations = OrbitInput::post('translations');
             $language = OrbitInput::get('language', 'en');
             $keywords = OrbitInput::post('keywords');
@@ -92,8 +93,8 @@ class MerchantNewAPIController extends ControllerAPI
             }
 
             // validate category_ids
-            if (isset($category_ids) && count($category_ids) > 0) {
-                foreach ($category_ids as $category_id_check) {
+            if (isset($categoryIds) && count($categoryIds) > 0) {
+                foreach ($categoryIds as $category_id_check) {
                     $validator = Validator::make(
                         array(
                             'category_id'   => $category_id_check,
@@ -155,8 +156,8 @@ class MerchantNewAPIController extends ControllerAPI
             $newBaseMerchant->save();
 
             // save translations
-            OrbitInput::post('translations', function($translation_json_string) use ($newBaseMerchant) {
-                $this->validateAndSaveTranslations($newBaseMerchant, $translation_json_string);
+            OrbitInput::post('translations', function($translation_json_string) use ($newBaseMerchant, $merchantHelper) {
+                $merchantHelper->validateAndSaveTranslations($newBaseMerchant, $translation_json_string);
             });
 
             // save base merchant categories
@@ -265,53 +266,4 @@ class MerchantNewAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
-    protected function registerCustomValidation()
-    {
-        // Check existing merchant name
-        Validator::extend('orbit.exist.merchant_name', function ($attribute, $value, $parameters) {
-            $merchant = BaseMerchant::where('name', '=', $value)
-                            ->first();
-
-            if (! empty($merchant)) {
-                return FALSE;
-            }
-
-            return TRUE;
-        });
-
-        // Check the validity of URL
-        Validator::extend('orbit.formaterror.url.web', function ($attribute, $value, $parameters) {
-            $url = 'http://' . $value;
-
-            $pattern = '@^((http:\/\/www\.)|(www\.)|(http:\/\/))[a-zA-Z0-9._-]+\.[a-zA-Z.]{2,5}$@';
-
-            if (! preg_match($pattern, $url)) {
-                return FALSE;
-            }
-
-            return TRUE;
-        });
-    }
-
-    /**
-     * @param object $baseMerchant
-     * @param string $translations_json_string
-     * @throws InvalidArgsException
-     */
-    private function validateAndSaveTranslations($newBaseMerchant, $translations_json_string)
-    {
-        $data = @json_decode($translations_json_string);
-        if (json_last_error() != JSON_ERROR_NONE) {
-            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-        }
-        foreach ($data as $language_id => $translations) {
-            $newBaseMerchantTranslation = new BaseMerchantTranslation();
-            $newBaseMerchantTranslation->base_merchant_id = $newBaseMerchant->base_merchant_id;
-            $newBaseMerchantTranslation->language_id = $language_id;
-            $newBaseMerchantTranslation->description = $translations->description;
-            $newBaseMerchantTranslation->save();
-            $baseMerchantTranslations[] = $newBaseMerchantTranslation;
-        }
-        $newBaseMerchant->translations = $baseMerchantTranslations;
-    }
 }
