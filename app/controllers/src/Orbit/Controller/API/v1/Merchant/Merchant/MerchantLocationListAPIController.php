@@ -91,8 +91,10 @@ class MerchantLocationListAPIController extends ControllerAPI
             // Filter merchant by matching name/city pattern
             OrbitInput::get('keyword', function($keyword) use ($merchantLocations)
             {
-                $merchantLocations->where('merchants.name', 'like', "%$keyword%")
-                    ->orWhere('merchants.city', 'like', "%$keyword%");
+                $merchantLocations->where(function($q) use ($keyword) {
+                    $q->where('merchants.name', 'like', "%$keyword%")
+                        ->orWhere('merchants.city', 'like', "%$keyword%");
+                });
             });
 
             // Clone the query builder which still does not include the take,
