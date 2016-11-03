@@ -498,6 +498,9 @@ return array(
             'max_size' => ':attribute is too big, maximum size allowed is :size:unit',
             'type' => "File extension \".:ext\" is not allowed" ,
         ),
+        'unique' => array(
+            'verification_number' => 'The verification number already used by other',
+        ),
     ),
 
     /*

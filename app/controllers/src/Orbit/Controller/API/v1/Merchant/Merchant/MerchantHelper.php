@@ -8,6 +8,7 @@ use BaseMerchant;
 use BaseMerchantTranslation;
 use Category;
 use App;
+use MerchantLanguage;
 
 class MerchantHelper
 {
@@ -95,20 +96,92 @@ class MerchantHelper
      * @param string $translations_json_string
      * @throws InvalidArgsException
      */
-    public function validateAndSaveTranslations($newBaseMerchant, $translations_json_string)
+    public function validateAndSaveTranslations($baseMerchant, $translations_json_string, $scenario = 'create')
     {
+
+        /*
+         * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
+         *
+         * Having a value of null means deleting the translation
+         *
+         * where MerchantTranslation object is object with keys:
+         *   description, ticket_header, ticket_footer.
+         *
+         * No requirement for including fields. If field not included it means not updated. If field included with
+         * value null it means set to null (use main language content instead).
+         */
+
+        $valid_fields = ['description'];
+        $operations = [];
+
         $data = @json_decode($translations_json_string);
         if (json_last_error() != JSON_ERROR_NONE) {
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
         }
+
         foreach ($data as $language_id => $translations) {
-            $newBaseMerchantTranslation = new BaseMerchantTranslation();
-            $newBaseMerchantTranslation->base_merchant_id = $newBaseMerchant->base_merchant_id;
-            $newBaseMerchantTranslation->language_id = $language_id;
-            $newBaseMerchantTranslation->description = $translations->description;
-            $newBaseMerchantTranslation->save();
-            $baseMerchantTranslations[] = $newBaseMerchantTranslation;
+            $language = MerchantLanguage::excludeDeleted()
+                ->where('language_id', '=', $language_id)
+                ->first();
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+            }
+            $existing_translation = BaseMerchantTranslation::
+                  where('base_merchant_id', '=', $baseMerchant->base_merchant_id)
+                ->where('language_id', '=', $language_id)
+                ->first();
+
+            if ($translations === null) {
+                // deleting, verify exists
+                if (empty($existing_translation)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                }
+                $operations[] = ['delete', $existing_translation];
+            } else {
+                foreach ($translations as $field => $value) {
+                    if (!in_array($field, $valid_fields, TRUE)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                    }
+                    if ($value !== null && !is_string($value)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
+                }
+                if (empty($existing_translation)) {
+                    $operations[] = ['create', $language_id, $translations];
+                } else {
+                    $operations[] = ['update', $existing_translation, $translations];
+                }
+            }
         }
-        $newBaseMerchant->translations = $baseMerchantTranslations;
+
+        foreach ($operations as $operation) {
+            $op = $operation[0];
+            if ($op === 'create') {
+                $newBaseMerchantTranslation = new BaseMerchantTranslation();
+                $newBaseMerchantTranslation->base_merchant_id = $baseMerchant->base_merchant_id;
+                $newBaseMerchantTranslation->language_id = $operation[1];
+                $newBaseMerchantTranslation->description = $operation[2]->description;
+                $newBaseMerchantTranslation->save();
+                $baseMerchantTranslations[] = $newBaseMerchantTranslation;
+
+                $baseMerchant->translations = $baseMerchantTranslations;
+            }
+            elseif ($op === 'update') {
+                /** @var MerchantTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $existing_translation->{$field} = $value;
+                }
+                $existing_translation->save();
+
+                $baseMerchant->setRelation('translation_'. $existing_translation->language_id, $existing_translation);
+            }
+            elseif ($op === 'delete') {
+                /** @var MerchantTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $existing_translation->delete();
+            }
+        }
     }
 }
