@@ -10,7 +10,7 @@ use BaseMerchantCategory;
 use BaseMerchantTranslation;
 use BaseStore;
 use BaseMerchantKeyword;
-use Merchant;
+use Tenant;
 use KeywordObject;
 use CategoryMerchant;
 use MerchantTranslation;
@@ -104,27 +104,26 @@ class StoreSynchronization
                 $base_merchant_id = $store->base_merchant_id;
 
                 //save to orb_merchant
-                $merchant = Merchant::where('merchant_id', $base_store_id)->first();
-
-                if (! is_object($merchant)) {
-                    $merchant = new Merchant;
+                $tenant = Tenant::where('merchant_id', $base_store_id)->first();
+                if (! is_object($tenant)) {
+                    $tenant = new Tenant;
                 }
 
-                $merchant->merchant_id = $base_store_id;
-                $merchant->name = $store->name;
-                $merchant->description = $store->description;
-                $merchant->status = $store->status;
-                $merchant->logo = $store->path;
-                $merchant->object_type = 'tenant';
-                $merchant->parent_id = $store->merchant_id;
-                $merchant->is_mall = 'no';
-                $merchant->is_subscribed = 'Y';
-                $merchant->url = $store->url;
-                $merchant->floor_id = $store->floor_id;
-                $merchant->floor = $store->object_name;
-                $merchant->unit = $store->unit;
-                $merchant->masterbox_number = $store->verification_number;
-                $merchant->get();
+                $tenant->merchant_id = $base_store_id;
+                $tenant->name = $store->name;
+                $tenant->description = $store->description;
+                $tenant->status = $store->status;
+                $tenant->logo = $store->path;
+                $tenant->object_type = 'tenant';
+                $tenant->parent_id = $store->merchant_id;
+                $tenant->is_mall = 'no';
+                $tenant->is_subscribed = 'Y';
+                $tenant->url = $store->url;
+                $tenant->floor_id = empty($store->floor_id) ? 0 : $store->floor_id;
+                $tenant->floor = $store->object_name;
+                $tenant->unit = $store->unit;
+                $tenant->masterbox_number = $store->verification_number;
+                $tenant->save();
 
                 // save to table merchant_translation
                 // delete translation
@@ -261,11 +260,17 @@ class StoreSynchronization
                 $oldFileName = $dt->file_name;
             }
 
+            if ($dt->object_name === 'base_merchant') {
+                $name_long = str_replace('base_merchant_', 'retailer_', $dt->media_name_long);
+            } else {
+                $name_long = str_replace('base_store_', 'retailer_', $dt->media_name_long);
+            }
+
             $newMedia = new Media;
             $newMedia->media_name_id = 'retailer_logo';
-            $newMedia->media_name_long = str_replace('base_merchant_', 'retailer_', $dt->media_name_long);
+            $newMedia->media_name_long = $name_long;
             $newMedia->object_id = $store_id;
-            $newMedia->object_name = 'base_merchant';
+            $newMedia->object_name = 'retailer';
             $newMedia->file_name = $dt->file_name;
             $newMedia->file_extension = $dt->file_extension;
             $newMedia->file_size = $dt->file_size;
