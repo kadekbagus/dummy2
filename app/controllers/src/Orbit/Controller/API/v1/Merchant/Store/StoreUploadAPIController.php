@@ -108,7 +108,7 @@ class StoreUploadAPIController extends ControllerAPI
             $user = App::make('orbit.upload.user');
 
             // Load the orbit configuration for base store upload image
-            $uploadImageConfig = Config::get('orbit.upload.retailer.picture');
+            $uploadImageConfig = Config::get('orbit.upload.base_store.picture');
             $elementName = $uploadImageConfig['name'];
 
             // Register custom validation
@@ -490,7 +490,7 @@ class StoreUploadAPIController extends ControllerAPI
             $user = App::make('orbit.upload.user');
 
             // Load the orbit configuration for merchant upload logo
-            $uploadMapConfig = Config::get('orbit.upload.retailer.map');
+            $uploadMapConfig = Config::get('orbit.upload.base_store.map');
             $elementName = $uploadMapConfig['name'];
 
             // Register custom validation

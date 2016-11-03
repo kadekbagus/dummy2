@@ -98,11 +98,10 @@ class StoreUpdateAPIController extends ControllerAPI
                 'mall_id'          => 'required|orbit.empty.mall',
                 'floor_id'         => 'orbit.empty.floor:' . $mall_id,
                 'status'           => 'in:active,inactive',
-                'unit'             => 'orbit.exists.base_store_not_me:' . $base_store_id . ',' . $mall_id . ',' . $floor_id,
+                'unit'             => 'orbit.exists.base_store:' . $base_store_id . ',' . $mall_id . ',' . $floor_id,
             ];
 
             $validation_error_message = [
-                'orbit.exists.base_store_not_me' => 'The mall unit on this floor already use',
             ];
 
             // unit make floor_id is required
