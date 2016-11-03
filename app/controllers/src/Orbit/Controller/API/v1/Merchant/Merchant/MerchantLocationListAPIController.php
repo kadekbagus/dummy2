@@ -108,7 +108,7 @@ class MerchantLocationListAPIController extends ControllerAPI
             $merchantLocations->skip($skip);
 
             // Default sort by
-            $sortBy = 'base_merchants.name';
+            $sortBy = 'merchants.name';
             // Default sort mode
             $sortMode = 'asc';
 
