@@ -4687,4 +4687,31 @@ return array(
             'Bot' => '\bSogou\b|Baiduspider|DuckDuckBot|Googlebot|facebookexternalhit|AdsBot-Google|Google Keyword Suggestion|Facebot|YandexBot|bingbot|ia_archiver|AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|YandexImages|TurnitinBot|Pingdom|Googlebot-Mobile|AdsBot-Google-Mobile|YahooSeeker/M1A1-R2D2',
         ]
     ],
+
+    'generic_email' => [
+        'sender' => [
+            'sender' => [
+                'email' => 'no-reply@gotomalls.com',
+                'name'  => 'Gotomalls'
+                ]
+            ]
+    ],
+
+    'sync' => [
+        'store' => [
+            // Email need to send before and after the sync process
+            'email' => [
+                'to' => ['marketing@dominopos.com'],
+
+                'pre_sync' => [
+                    'subject' => '[Sync Store] - Sync ID: {{SYNC_ID}} has been started by {{USER_EMAIL}}',
+                ],
+
+                'post_sync' => [
+                    'subject' => '[Sync Store] - Sync ID: {{SYNC_ID}} started by {{USER_EMAIL}} has been completed.'
+                ]
+            ]
+        ]
+    ],
+
 );
