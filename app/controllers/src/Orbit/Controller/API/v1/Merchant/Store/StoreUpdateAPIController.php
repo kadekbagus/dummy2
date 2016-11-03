@@ -67,7 +67,7 @@ class StoreUpdateAPIController extends ControllerAPI
             $base_store_id = OrbitInput::post('base_store_id');
             $base_merchant_id = OrbitInput::post('base_merchant_id');
             $mall_id = OrbitInput::post('mall_id');
-            $floor_id = OrbitInput::post('floor_id');
+            $floor_id = OrbitInput::post('floor_id', '');
             $unit = OrbitInput::post('unit');
             $phone = OrbitInput::post('phone');
             $status = OrbitInput::post('status', 'active');
