@@ -143,7 +143,8 @@ class BaseStore extends Eloquent
                                 'base_stores.floor_id',
                                 'objects.object_name',
                                 'base_stores.unit',
-                                'base_stores.verification_number'
+                                'base_stores.verification_number',
+                                'merchants.name as location_name'
                             )
                             ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
                             ->leftJoin('objects', 'objects.object_id', '=', 'base_stores.floor_id')

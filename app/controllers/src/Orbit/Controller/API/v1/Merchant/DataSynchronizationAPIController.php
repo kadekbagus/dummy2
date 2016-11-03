@@ -55,7 +55,7 @@ class DataSynchronizationAPIController extends ControllerAPI
             Queue::push('Orbit\\Queue\\StoreSynchronization', [
                 'sync_type' => $syncType,
                 'sync_data' => $syncData,
-                'user' => $user
+                'user' => $user->user_id
             ]);
 
         } catch (ACLForbiddenException $e) {
