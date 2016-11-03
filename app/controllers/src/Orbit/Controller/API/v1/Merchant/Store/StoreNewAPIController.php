@@ -92,11 +92,10 @@ class StoreNewAPIController extends ControllerAPI
                 'mall_id'          => 'required|orbit.empty.mall',
                 'floor_id'         => 'orbit.empty.floor:' . $mall_id,
                 'status'           => 'in:active,inactive',
-                'unit'             => 'orbit.exists.base_store:' . $mall_id . ',' . $floor_id,
+                'unit'             => 'orbit.exists.base_store:' . '' . ',' . $mall_id . ',' . $floor_id,
             ];
 
             $validation_error_message = [
-                'orbit.exists.base_store' => 'The mall unit on this floor already use',
             ];
 
             // unit make floor_id is required
@@ -137,6 +136,15 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->status = $status;
             $newstore->verification_number = $verification_number;
             $newstore->save();
+
+            // cause not required
+            $newstore->floor = '';
+            if (! empty($floor_id) || $floor_id !== '') {
+                $newstore->floor = $storeHelper->getValidFloor()->object_name;
+            }
+
+            $newstore->mall_id = $mall_id;
+            $newstore->location = $storeHelper->getValidMall()->name;
 
             Event::fire('orbit.basestore.postnewstore.after.save', array($this, $newstore));
             $this->response->data = $newstore;

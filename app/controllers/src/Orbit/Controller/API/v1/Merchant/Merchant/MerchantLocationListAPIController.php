@@ -83,7 +83,7 @@ class MerchantLocationListAPIController extends ControllerAPI
                     'merchants.city',
                     'merchants.country'
                 )
-                ->leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
+                ->join('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                 ->join('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
                 ->excludeDeleted('base_merchants')
                 ->where('base_merchants.base_merchant_id', $merchantId);
@@ -108,7 +108,7 @@ class MerchantLocationListAPIController extends ControllerAPI
             $merchantLocations->skip($skip);
 
             // Default sort by
-            $sortBy = 'base_merchants.name';
+            $sortBy = 'merchants.name';
             // Default sort mode
             $sortMode = 'asc';
 

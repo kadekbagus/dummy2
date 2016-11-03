@@ -62,7 +62,7 @@ class MerchantUploadLogoAPIController extends ControllerAPI
             }
 
             // Load the orbit configuration for merchant upload logo
-            $uploadLogoConfig = Config::get('orbit.upload.retailer.logo');
+            $uploadLogoConfig = Config::get('orbit.upload.base_store.logo');
             $elementName = $uploadLogoConfig['name'];
 
             $merchantHelper = MerchantHelper::create();
