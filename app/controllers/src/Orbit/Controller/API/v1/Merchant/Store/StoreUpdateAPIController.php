@@ -84,21 +84,23 @@ class StoreUpdateAPIController extends ControllerAPI
             $map_validation = $storeHelper->generate_validation_image('store_map', $map, 'orbit.upload.retailer.map');
 
             $validation_data = [
-                'base_store_id'    => $base_store_id,
-                'base_merchant_id' => $base_merchant_id,
-                'mall_id'          => $mall_id,
-                'floor_id'         => $floor_id,
-                'status'           => $status,
-                'unit'             => $unit,
+                'base_store_id'       => $base_store_id,
+                'base_merchant_id'    => $base_merchant_id,
+                'mall_id'             => $mall_id,
+                'floor_id'            => $floor_id,
+                'status'              => $status,
+                'unit'                => $unit,
+                'verification_number' => $verification_number,
             ];
 
             $validation_error = [
-                'base_store_id'    => 'required|orbit.empty.base_store',
-                'base_merchant_id' => 'required|orbit.empty.base_merchant',
-                'mall_id'          => 'required|orbit.empty.mall',
-                'floor_id'         => 'orbit.empty.floor:' . $mall_id,
-                'status'           => 'in:active,inactive',
-                'unit'             => 'orbit.exists.base_store:' . $base_store_id . ',' . $mall_id . ',' . $floor_id,
+                'base_store_id'       => 'required|orbit.empty.base_store',
+                'base_merchant_id'    => 'required|orbit.empty.base_merchant',
+                'mall_id'             => 'required|orbit.empty.mall',
+                'floor_id'            => 'orbit.empty.floor:' . $mall_id,
+                'status'              => 'in:active,inactive',
+                'unit'                => 'orbit.exists.base_store:' . $base_store_id . ',' . $mall_id . ',' . $floor_id,
+                'verification_number' => 'alpha_num|orbit.unique.verification_number:' . $mall_id . ',' . $base_store_id,
             ];
 
             $validation_error_message = [

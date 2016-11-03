@@ -157,7 +157,7 @@ class MerchantNewAPIController extends ControllerAPI
 
             // save translations
             OrbitInput::post('translations', function($translation_json_string) use ($newBaseMerchant, $merchantHelper) {
-                $merchantHelper->validateAndSaveTranslations($newBaseMerchant, $translation_json_string);
+                $merchantHelper->validateAndSaveTranslations($newBaseMerchant, $translation_json_string, $scenario = 'create');
             });
 
             // save base merchant categories

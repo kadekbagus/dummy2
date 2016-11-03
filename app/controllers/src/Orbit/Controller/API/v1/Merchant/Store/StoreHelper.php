@@ -14,6 +14,7 @@ use BaseStore;
 use BaseMerchant;
 use Mall;
 use Object;
+use UserVerificationNumber;
 
 class StoreHelper
 {
@@ -168,6 +169,30 @@ class StoreHelper
             $max_count = $parameters[0];
 
             if (is_array($value['name']) && count($value['name']) > $max_count) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        // Check if the merchant verification number is unique
+        Validator::extend('orbit.unique.verification_number', function ($attribute, $value, $parameters) {
+            // Current Mall
+            $mall_id       = $parameters[0];
+            $base_store_id = $parameters[1];
+
+            // Check the base store which has verification number posted
+            $baseStoreVerificationNumber = BaseStore::excludeDeleted()
+                    ->where('verification_number', $value)
+                    ->where('merchant_id', $mall_id)
+                    ->first();
+
+            // Check verification number tenant with cs verification number
+            $csVerificationNumber = UserVerificationNumber::where('verification_number', $value)
+                    ->where('merchant_id', $mall_id)
+                    ->first();
+
+            if ( (! empty($baseStoreVerificationNumber) && $baseStoreVerificationNumber->base_store_id !== $base_store_id) || ! empty($csVerificationNumber)) {
                 return FALSE;
             }
 
