@@ -11,12 +11,12 @@ use Validator;
 use Lang;
 use BaseMerchant;
 use BaseMerchantCategory;
-use BaseMerchantTranslation;
+use BaseMerchantKeyword;
 use Config;
 use Language;
 use Keyword;
-use KeywordObject;
 use Event;
+use Category;
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 
 class MerchantUpdateAPIController extends ControllerAPI
@@ -43,6 +43,7 @@ class MerchantUpdateAPIController extends ControllerAPI
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
+
             Event::fire('orbit.basemerchant.postupdatebasemerchant.before.authz', array($this, $user));
 
             // @Todo: Use ACL authentication instead
@@ -170,6 +171,44 @@ class MerchantUpdateAPIController extends ControllerAPI
             Event::fire('orbit.basemerchant.postupdatebasemerchant.before.save', array($this, $updatedBaseMerchant));
 
             $updatedBaseMerchant->save();
+
+            OrbitInput::post('keywords', function($keywords) use ($updatedBaseMerchant, $user, $baseMerchantId) {
+                // Delete old data
+                $deleted_keyword_object = BaseMerchantKeyword::where('base_merchant_id', '=', $baseMerchantId)->delete();
+
+                // save Keyword
+                $merchantKeywords = array();
+                foreach ($keywords as $keyword) {
+                    $keyword_id = null;
+
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->first();
+
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = '0';
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
+
+                        $keyword_id = $newKeyword->keyword_id;
+                        $merchantKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $merchantKeywords[] = $existKeyword;
+                    }
+
+                    $newKeywordObject = new BaseMerchantKeyword();
+                    $newKeywordObject->base_merchant_id = $baseMerchantId;
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->save();
+                }
+
+                $updatedBaseMerchant->keywords = $merchantKeywords;
+            });
 
             Event::fire('orbit.basemerchant.postupdatebasemerchant.after.save', array($this, $updatedBaseMerchant));
 
