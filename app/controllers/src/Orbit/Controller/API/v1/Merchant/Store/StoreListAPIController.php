@@ -92,6 +92,7 @@ class StoreListAPIController extends ControllerAPI
                                 DB::raw("{$prefix}objects.object_name AS floor"),
                                 'base_stores.unit', 'base_stores.phone',
                                 'base_stores.verification_number',
+                                'base_stores.status',
                                 'base_stores.created_at')
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                             ->leftJoin('objects', 'base_stores.floor_id', '=', 'objects.object_id')
