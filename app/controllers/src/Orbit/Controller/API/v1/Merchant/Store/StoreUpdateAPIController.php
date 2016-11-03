@@ -16,6 +16,8 @@ use \Exception;
 use \Event;
 use Orbit\Controller\API\v1\Merchant\Store\StoreHelper;
 use BaseStore;
+use Mall;
+use Object;
 
 class StoreUpdateAPIController extends ControllerAPI
 {
@@ -92,15 +94,14 @@ class StoreUpdateAPIController extends ControllerAPI
 
             $validation_error = [
                 'base_store_id'    => 'required|orbit.empty.base_store',
-                'base_merchant_id' => 'orbit.empty.base_merchant',
-                'mall_id'          => 'orbit.empty.mall',
+                'base_merchant_id' => 'required|orbit.empty.base_merchant',
+                'mall_id'          => 'required|orbit.empty.mall',
                 'floor_id'         => 'orbit.empty.floor:' . $mall_id,
                 'status'           => 'in:active,inactive',
-                'unit'             => 'orbit.exists.base_store_not_me:' . $base_store_id . ',' . $mall_id . ',' . $floor_id,
+                'unit'             => 'orbit.exists.base_store:' . $base_store_id . ',' . $mall_id . ',' . $floor_id,
             ];
 
             $validation_error_message = [
-                'orbit.exists.base_store_not_me' => 'The mall unit on this floor already use',
             ];
 
             // unit make floor_id is required
@@ -159,6 +160,26 @@ class StoreUpdateAPIController extends ControllerAPI
             });
 
             $updatestore->save();
+
+            $updatestore->mall_id = $mall_id;
+            $updatestore->location = $storeHelper->getValidMall()->name;
+
+            // cause not required
+            if (! empty($floor_id) || $floor_id !== '') {
+                $updatestore->floor = $storeHelper->getValidFloor()->object_name;
+            } else {
+                $floor = Object::excludeDeleted()
+                            ->where('merchant_id', $updatestore->merchant_id)
+                            ->where('object_id', $updatestore->floor_id)
+                            ->first();
+
+                if (empty($floor)) {
+                    $updatestore->floor = '';
+                } else {
+                    $updatestore->floor = $floor->object_name;
+                }
+            }
+
 
             Event::fire('orbit.basestore.postupdatestore.after.save', array($this, $updatestore));
             $this->response->data = $updatestore;

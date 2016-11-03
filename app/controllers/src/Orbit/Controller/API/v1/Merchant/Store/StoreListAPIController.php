@@ -82,7 +82,8 @@ class StoreListAPIController extends ControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
-            $store = BaseStore::select('base_merchants.base_merchant_id',
+            $store = BaseStore::excludeDeleted('base_stores')
+                            ->select('base_merchants.base_merchant_id',
                                 DB::raw("{$prefix}base_merchants.name AS merchant"),
                                 'base_stores.base_store_id',
                                 DB::raw("{$prefix}merchants.merchant_id AS mall_id"),
@@ -94,8 +95,7 @@ class StoreListAPIController extends ControllerAPI
                                 'base_stores.created_at')
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                             ->leftJoin('objects', 'base_stores.floor_id', '=', 'objects.object_id')
-                            ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
-                            ->where('base_stores.status', '!=', 'deleted');
+                            ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id');
 
             // Filter store by merchant name
             OrbitInput::get('merchant_name_like', function($merchant_name) use ($store)
@@ -107,6 +107,18 @@ class StoreListAPIController extends ControllerAPI
             OrbitInput::get('location_name_like', function($location_name) use ($store)
             {
                 $store->where('merchants.name', 'like', "%$location_name%");
+            });
+
+            // Filter store by base_merchant_id
+            OrbitInput::get('base_merchant_id', function($base_merchant_id) use ($store)
+            {
+                $store->where('base_stores.base_merchant_id', $base_merchant_id);
+            });
+
+            // Filter store by base_store_id
+            OrbitInput::get('base_store_id', function($base_store_id) use ($store)
+            {
+                $store->where('base_stores.base_store_id', $base_store_id);
             });
 
             // Add new relation based on request
@@ -150,7 +162,10 @@ class StoreListAPIController extends ControllerAPI
                 }
             });
 
+            $store = $store->groupBy('base_stores.base_store_id');
             $store = $store->orderBy($sort_by, $sort_mode);
+            // make sure with ordering the unique
+            $store = $store->orderBy('base_stores.base_store_id', 'asc');
 
             $_store = clone $store;
 
