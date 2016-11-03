@@ -63,8 +63,6 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             $baseMerchantId = OrbitInput::post('base_merchant_id');
             $websiteUrl = OrbitInput::post('website_url');
-            $categoryIds = OrbitInput::post('category_ids');
-            $categoryIds = (array) $categoryIds;
             $translations = OrbitInput::post('translations');
             $language = OrbitInput::get('language', 'en');
             $keywords = OrbitInput::post('keywords');
@@ -78,13 +76,11 @@ class MerchantUpdateAPIController extends ControllerAPI
                     'baseMerchantId' => $baseMerchantId,
                     'websiteUrl'     => $websiteUrl,
                     'translations'   => $translations,
-                    'category_ids'   => $categoryIds,
                 ),
                 array(
                     'baseMerchantId' => 'required|orbit.exist.base_merchant_id',
                     'websiteUrl'     => 'orbit.formaterror.url.web',
                     'translations'   => 'required',
-                    'category_ids'   => 'array',
                 ),
                 array(
                     'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid',
@@ -108,36 +104,6 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             OrbitInput::post('facebook_url', function($facebook_url) use ($updatedBaseMerchant) {
                 $updatedBaseMerchant->facebook_url = $facebook_url;
-            });
-
-            OrbitInput::post('category_ids', function($category_ids) use ($updatedBaseMerchant) {
-                // validate category_ids
-                $category_ids = (array) $category_ids;
-                foreach ($category_ids as $category_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'category_id'   => $category_id_check,
-                        ),
-                        array(
-                            'category_id'   => 'orbit.empty.category',
-                        )
-                    );
-
-                    Event::fire('orbit.tenant.postupdatetenant.before.categoryvalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.tenant.postupdatetenant.after.categoryvalidation', array($this, $validator));
-                }
-                // sync new set of category ids
-                $updatedBaseMerchant->categories()->sync($category_ids);
-
-                // reload categories relation
-                $updatedBaseMerchant->load('categories');
             });
 
             // Translations
@@ -171,6 +137,23 @@ class MerchantUpdateAPIController extends ControllerAPI
             Event::fire('orbit.basemerchant.postupdatebasemerchant.before.save', array($this, $updatedBaseMerchant));
 
             $updatedBaseMerchant->save();
+
+            OrbitInput::post('category_ids', function($categoryIds) use ($updatedBaseMerchant, $baseMerchantId) {
+                // Delete old data
+                $deleted_base_category = BaseMerchantCategory::where('base_merchant_id', '=', $baseMerchantId)->delete();
+
+                // save base merchant categories
+                $baseMerchantCategorys = array();
+                foreach ($categoryIds as $category_id) {
+                    $BaseMerchantCategory = new BaseMerchantCategory();
+                    $BaseMerchantCategory->base_merchant_id = $baseMerchantId;
+                    $BaseMerchantCategory->category_id = $category_id;
+                    $BaseMerchantCategory->save();
+                    $baseMerchantCategorys[] = $BaseMerchantCategory;
+                }
+
+                $updatedBaseMerchant->categories = $baseMerchantCategorys;
+            });
 
             OrbitInput::post('keywords', function($keywords) use ($updatedBaseMerchant, $user, $baseMerchantId) {
                 // Delete old data
