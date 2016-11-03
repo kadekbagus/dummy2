@@ -80,11 +80,14 @@ class MerchantLocationListAPIController extends ControllerAPI
             $merchantLocations = BaseMerchant::select(
                     'base_stores.base_store_id',
                     'merchants.name',
+                    'objects.object_name as floor',
+                    'base_stores.unit',
                     'merchants.city',
                     'merchants.country'
                 )
                 ->join('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                 ->join('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
+                ->leftJoin('objects', 'objects.object_id', '=', 'base_stores.floor_id')
                 ->excludeDeleted('base_merchants')
                 ->where('base_merchants.base_merchant_id', $merchantId);
 
