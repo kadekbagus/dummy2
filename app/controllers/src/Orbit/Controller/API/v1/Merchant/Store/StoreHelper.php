@@ -14,6 +14,7 @@ use BaseStore;
 use BaseMerchant;
 use Mall;
 use Object;
+use Tenant;
 use UserVerificationNumber;
 
 class StoreHelper
@@ -103,18 +104,13 @@ class StoreHelper
             $floor_id = $parameters[2];
             $unit = $value;
 
-            $base_store = BaseStore::excludeDeleted('base_stores');
-
-            if ($base_store_id !== '') {
-                $base_store = $base_store->where('base_store_id', '!=', $base_store_id);
-            }
-
-            $base_store = $base_store->where('merchant_id', $mall_id)
+            $base_store = BaseStore::excludeDeleted()
+                           ->where('merchant_id', $mall_id)
                            ->where('floor_id', $floor_id)
                            ->where('unit', $unit)
                            ->first();
 
-            if (! empty($base_store)) {
+            if (! empty($base_store) && $base_store->base_store_id !== $base_store_id) {
                 return FALSE;
             }
 
@@ -187,12 +183,19 @@ class StoreHelper
                     ->where('merchant_id', $mall_id)
                     ->first();
 
+            // Check the tenant which has verification number posted
+            $tenantVerificationNumber = Tenant::excludeDeleted()
+                    ->where('object_type', 'tenant')
+                    ->where('masterbox_number', $value)
+                    ->where('parent_id', $mall_id)
+                    ->first();
+
             // Check verification number tenant with cs verification number
             $csVerificationNumber = UserVerificationNumber::where('verification_number', $value)
                     ->where('merchant_id', $mall_id)
                     ->first();
 
-            if ( (! empty($baseStoreVerificationNumber) && $baseStoreVerificationNumber->base_store_id !== $base_store_id) || ! empty($csVerificationNumber)) {
+            if ((! empty($tenantVerificationNumber) && $tenantVerificationNumber->merchant_id !== $base_store_id) || (! empty($baseStoreVerificationNumber) && $baseStoreVerificationNumber->base_store_id !== $base_store_id) || ! empty($csVerificationNumber)) {
                 return FALSE;
             }
 
