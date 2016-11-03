@@ -62,7 +62,6 @@ class MerchantUpdateAPIController extends ControllerAPI
             $merchantHelper->merchantCustomValidator();
 
             $baseMerchantId = OrbitInput::post('base_merchant_id');
-            $websiteUrl = OrbitInput::post('website_url');
             $translations = OrbitInput::post('translations');
             $language = OrbitInput::get('language', 'en');
             $keywords = OrbitInput::post('keywords');
@@ -74,17 +73,14 @@ class MerchantUpdateAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'baseMerchantId' => $baseMerchantId,
-                    'websiteUrl'     => $websiteUrl,
                     'translations'   => $translations,
                 ),
                 array(
                     'baseMerchantId' => 'required|orbit.exist.base_merchant_id',
-                    'websiteUrl'     => 'orbit.formaterror.url.web',
                     'translations'   => 'required',
                 ),
                 array(
-                    'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid',
-                    'orbit.formaterror.url.web' => 'Website URL is not valid',
+                    'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid'
                )
             );
 
