@@ -51,3 +51,13 @@ Route::post('/api/v1/merchant/store/update', function()
 });
 
 Route::post('/app/v1/merchant/store/update', ['as' => 'store-api-store-update', 'uses' => 'IntermediateMerchantAuthController@Store\StoreUpdate_postUpdateStore']);
+
+/**
+ * data synchronization
+ */
+Route::post('/api/v1/merchant/store-sync', function()
+{
+    return Orbit\Controller\API\v1\Merchant\DataSynchronizationAPIController::create()->postStoreSynchronization();
+});
+
+Route::post('/app/v1/merchant/store-sync', ['as' => 'store-sync', 'uses' => 'IntermediateMerchantAuthController@DataSynchronization_postStoreSynchronization']);

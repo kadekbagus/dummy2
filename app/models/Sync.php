@@ -26,7 +26,7 @@ class Sync extends Eloquent
      */
     public function isCompleted()
     {
-        if ($this->total_sync !== $this->finish_sync) {
+        if ((int) $this->total_sync !== (int) $this->finish_sync) {
             return FALSE;
         }
 

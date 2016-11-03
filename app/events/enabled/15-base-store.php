@@ -40,6 +40,7 @@ Event::listen('orbit.basestore.postnewstore.after.save', function($controller, $
         $base_store->media_image = $response->data;
     }
     $base_store->load('mediaImage');
+    $base_store->load('mediaImageOrig');
 
     // base store map
     $map = OrbitInput::files('maps');
@@ -63,6 +64,7 @@ Event::listen('orbit.basestore.postnewstore.after.save', function($controller, $
         $base_store->media_map = $response->data;
     }
     $base_store->load('mediaMap');
+    $base_store->load('mediaMapOrig');
 });
 
 
@@ -98,6 +100,7 @@ Event::listen('orbit.basestore.postupdatestore.after.save', function($controller
         $base_store->media_image = $response->data;
     }
     $base_store->load('mediaImage');
+    $base_store->load('mediaImageOrig');
 
     // base store map
     $map = OrbitInput::files('maps');
@@ -121,6 +124,7 @@ Event::listen('orbit.basestore.postupdatestore.after.save', function($controller
         $base_store->media_map = $response->data;
     }
     $base_store->load('mediaMap');
+    $base_store->load('mediaMapOrig');
 
 });
 
