@@ -109,6 +109,18 @@ class StoreListAPIController extends ControllerAPI
                 $store->where('merchants.name', 'like', "%$location_name%");
             });
 
+            // Filter store by base_merchant_id
+            OrbitInput::get('base_merchant_id', function($base_merchant_id) use ($store)
+            {
+                $store->where('base_stores.base_merchant_id', $base_merchant_id);
+            });
+
+            // Filter store by base_store_id
+            OrbitInput::get('base_store_id', function($base_store_id) use ($store)
+            {
+                $store->where('base_stores.base_store_id', $base_store_id);
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($store) {
                 $with = (array) $with;
