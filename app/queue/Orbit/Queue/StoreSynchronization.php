@@ -73,7 +73,7 @@ class StoreSynchronization
             DB::beginTransaction();
 
             $newSync = new Sync;
-            $newSync->user_id = $user->user_id;
+            $newSync->user_id = $user['user_id'];
             $newSync->sync_type = 'store';
             $newSync->total_sync = count($stores);
             $newSync->finish_sync = 0;
