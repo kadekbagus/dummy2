@@ -73,16 +73,13 @@ class MerchantNewAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchantName'  => $merchantName,
-                    'websiteUrl'    => $websiteUrl,
+                    'merchantName'  => $merchantName
                 ),
                 array(
-                    'merchantName'  => 'required|orbit.exist.merchant_name',
-                    'websiteUrl'    => 'orbit.formaterror.url.web',
+                    'merchantName'  => 'required|orbit.exist.merchant_name'
                 ),
                 array(
-                    'orbit.exist.merchant_name' => 'Merchant name already exist',
-                    'orbit.formaterror.url.web' => 'Website URL is not valid',
+                    'orbit.exist.merchant_name' => 'Merchant name already exist'
                )
             );
 

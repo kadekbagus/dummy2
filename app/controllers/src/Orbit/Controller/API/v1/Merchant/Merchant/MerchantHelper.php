@@ -3,12 +3,14 @@
  * Helpers for specific Merchant\Merchant Namespace
  *
  */
+use OrbitShop\API\v1\OrbitShopAPI;
 use Validator;
 use BaseMerchant;
 use BaseMerchantTranslation;
 use Category;
 use App;
 use MerchantLanguage;
+use Lang;
 
 class MerchantHelper
 {
