@@ -270,7 +270,10 @@ class StoreSynchronization
                     \Log::info($message);
 
                     foreach ($realpath as $rp) {
-                        @unlink($rp);
+                        $this->debug(sprintf("Starting to unlink in: %s\n", $rp));
+                        if (! unlink($rp)) {
+                            $this->debug("Failed to unlink\n");
+                        }
                     }
                 }
             });
@@ -324,7 +327,7 @@ class StoreSynchronization
             $newMedia->file_size = $dt->file_size;
             $newMedia->mime_type = $dt->mime_type;
             $newMedia->path = $retailerConfig[$type]['path'] . DS . $filename;
-            $newMedia->realpath = realpath($retailerConfig[$type]['path'] . DS . $filename);
+            $newMedia->realpath = $destMediaPath;
             $newMedia->metadata = $dt->metadata;
             $newMedia->modified_by = $dt->modified_by;
             $newMedia->created_at = $dt->created_at;
