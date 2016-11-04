@@ -92,10 +92,12 @@ class StoreListAPIController extends ControllerAPI
                                 DB::raw("{$prefix}objects.object_name AS floor"),
                                 'base_stores.unit', 'base_stores.phone',
                                 'base_stores.verification_number',
+                                'base_stores.status',
                                 'base_stores.created_at')
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                             ->leftJoin('objects', 'base_stores.floor_id', '=', 'objects.object_id')
-                            ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id');
+                            ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
+                            ->groupBy('base_stores.base_store_id');
 
             // Filter store by merchant name
             OrbitInput::get('merchant_name_like', function($merchant_name) use ($store)
@@ -148,6 +150,8 @@ class StoreListAPIController extends ControllerAPI
                 }
             });
 
+            $_store = clone $store;
+
             $sortByMapping = array(
                 'merchant'      => 'base_merchants.name',
                 'location'      => 'merchants.name',
@@ -162,12 +166,8 @@ class StoreListAPIController extends ControllerAPI
                 }
             });
 
-            $store = $store->groupBy('base_stores.base_store_id');
-            $store = $store->orderBy($sort_by, $sort_mode);
-            // make sure with ordering the unique
-            $store = $store->orderBy('base_stores.base_store_id', 'asc');
-
-            $_store = clone $store;
+            $store = $store->orderBy($sort_by, $sort_mode)
+                           ->orderBy('location', 'asc');
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $store->take($take);
@@ -176,7 +176,7 @@ class StoreListAPIController extends ControllerAPI
             $store->skip($skip);
 
             $storeList = $store->get();
-            $count = count($_store->get());
+            $count = RecordCounter::create($_store)->count();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;

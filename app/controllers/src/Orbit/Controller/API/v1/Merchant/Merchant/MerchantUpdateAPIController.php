@@ -11,12 +11,13 @@ use Validator;
 use Lang;
 use BaseMerchant;
 use BaseMerchantCategory;
-use BaseMerchantTranslation;
+use BaseMerchantKeyword;
 use Config;
 use Language;
 use Keyword;
-use KeywordObject;
 use Event;
+use Category;
+use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 
 class MerchantUpdateAPIController extends ControllerAPI
 {
@@ -42,6 +43,7 @@ class MerchantUpdateAPIController extends ControllerAPI
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
+
             Event::fire('orbit.basemerchant.postupdatebasemerchant.before.authz', array($this, $user));
 
             // @Todo: Use ACL authentication instead
@@ -56,11 +58,10 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+            $merchantHelper = MerchantHelper::create();
+            $merchantHelper->merchantCustomValidator();
+
             $baseMerchantId = OrbitInput::post('base_merchant_id');
-            $websiteUrl = OrbitInput::post('website_url');
-            // $facebookUrl = OrbitInput::post('facebook_url');
-            $categoryIds = OrbitInput::post('category_ids');
-            $categoryIds = (array) $categoryIds;
             $translations = OrbitInput::post('translations');
             $language = OrbitInput::get('language', 'en');
             $keywords = OrbitInput::post('keywords');
@@ -72,17 +73,14 @@ class MerchantUpdateAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'baseMerchantId' => $baseMerchantId,
-                    'websiteUrl'     => $websiteUrl,
                     'translations'   => $translations,
                 ),
                 array(
                     'baseMerchantId' => 'required|orbit.exist.base_merchant_id',
-                    'websiteUrl'     => 'orbit.formaterror.url.web',
                     'translations'   => 'required',
                 ),
                 array(
-                    'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid',
-                    'orbit.formaterror.url.web' => 'Website URL is not valid',
+                    'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid'
                )
             );
 
@@ -90,31 +88,6 @@ class MerchantUpdateAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-
-            // validate category_ids
-            if (isset($category_ids) && count($category_ids) > 0) {
-                foreach ($category_ids as $category_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'category_id'   => $category_id_check,
-                        ),
-                        array(
-                            'category_id'   => 'orbit.empty.category',
-                        )
-                    );
-
-                    Event::fire('orbit.basemerchant.postupdatebasemerchant.before.categoryvalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.basemerchant.postupdatebasemerchant.after.categoryvalidation', array($this, $validator));
-                }
             }
 
             Event::fire('orbit.basemerchant.postupdatebasemerchant.after.validation', array($this, $validator));
@@ -129,9 +102,92 @@ class MerchantUpdateAPIController extends ControllerAPI
                 $updatedBaseMerchant->facebook_url = $facebook_url;
             });
 
+            // Translations
+            $idLanguageEnglish = Language::select('language_id')->where('name', '=', 'en')->first();
+
+            // Check for english content
+            $dataTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
+            if (! is_null($dataTranslations)) {
+                // Get english tenant description for saving to default language
+                foreach ($dataTranslations as $key => $val) {
+                    // Validation language id from translation
+                    $language = Language::where('language_id', '=', $key)->first();
+                    if (empty($language)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                    }
+
+                    if ($key === $idLanguageEnglish->language_id) {
+                        $updatedBaseMerchant->description = $val->description;
+                    }
+                }
+            }
+
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedBaseMerchant, $merchantHelper) {
+                $merchantHelper->validateAndSaveTranslations($updatedBaseMerchant, $translation_json_string, $scenario = 'update');
+            });
+
             Event::fire('orbit.basemerchant.postupdatebasemerchant.before.save', array($this, $updatedBaseMerchant));
 
             $updatedBaseMerchant->save();
+
+            OrbitInput::post('category_ids', function($categoryIds) use ($updatedBaseMerchant, $baseMerchantId) {
+                // Delete old data
+                $deleted_base_category = BaseMerchantCategory::where('base_merchant_id', '=', $baseMerchantId)->delete();
+
+                // save base merchant categories
+                $baseMerchantCategorys = array();
+                foreach ($categoryIds as $category_id) {
+                    $BaseMerchantCategory = new BaseMerchantCategory();
+                    $BaseMerchantCategory->base_merchant_id = $baseMerchantId;
+                    $BaseMerchantCategory->category_id = $category_id;
+                    $BaseMerchantCategory->save();
+                    $baseMerchantCategorys[] = $BaseMerchantCategory;
+                }
+
+                $updatedBaseMerchant->categories = $baseMerchantCategorys;
+            });
+
+            OrbitInput::post('keywords', function($keywords) use ($updatedBaseMerchant, $user, $baseMerchantId) {
+                // Delete old data
+                $deleted_keyword_object = BaseMerchantKeyword::where('base_merchant_id', '=', $baseMerchantId)->delete();
+
+                // save Keyword
+                $merchantKeywords = array();
+                foreach ($keywords as $keyword) {
+                    $keyword_id = null;
+
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->first();
+
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = '0';
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
+
+                        $keyword_id = $newKeyword->keyword_id;
+                        $merchantKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $merchantKeywords[] = $existKeyword;
+                    }
+
+                    $newKeywordObject = new BaseMerchantKeyword();
+                    $newKeywordObject->base_merchant_id = $baseMerchantId;
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->save();
+                }
+
+                $updatedBaseMerchant->keywords = $merchantKeywords;
+            });
 
             Event::fire('orbit.basemerchant.postupdatebasemerchant.after.save', array($this, $updatedBaseMerchant));
 
@@ -232,25 +288,4 @@ class MerchantUpdateAPIController extends ControllerAPI
         });
     }
 
-    /**
-     * @param object $baseMerchant
-     * @param string $translations_json_string
-     * @throws InvalidArgsException
-     */
-    private function validateAndSaveTranslations($updatedBaseMerchant, $translations_json_string)
-    {
-        $data = @json_decode($translations_json_string);
-        if (json_last_error() != JSON_ERROR_NONE) {
-            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-        }
-        foreach ($data as $language_id => $translations) {
-            $updatedBaseMerchantTranslation = new BaseMerchantTranslation();
-            $updatedBaseMerchantTranslation->base_merchant_id = $updatedBaseMerchant->base_merchant_id;
-            $updatedBaseMerchantTranslation->language_id = $language_id;
-            $updatedBaseMerchantTranslation->description = $translations->description;
-            $updatedBaseMerchantTranslation->save();
-            $baseMerchantTranslations[] = $updatedBaseMerchantTranslation;
-        }
-        $updatedBaseMerchant->translations = $baseMerchantTranslations;
-    }
 }

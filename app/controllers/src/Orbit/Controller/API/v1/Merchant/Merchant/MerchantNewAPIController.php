@@ -73,16 +73,13 @@ class MerchantNewAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchantName'  => $merchantName,
-                    'websiteUrl'    => $websiteUrl,
+                    'merchantName'  => $merchantName
                 ),
                 array(
-                    'merchantName'  => 'required|orbit.exist.merchant_name',
-                    'websiteUrl'    => 'orbit.formaterror.url.web',
+                    'merchantName'  => 'required|orbit.exist.merchant_name'
                 ),
                 array(
-                    'orbit.exist.merchant_name' => 'Merchant name already exist',
-                    'orbit.formaterror.url.web' => 'Website URL is not valid',
+                    'orbit.exist.merchant_name' => 'Merchant name already exist'
                )
             );
 
@@ -157,7 +154,7 @@ class MerchantNewAPIController extends ControllerAPI
 
             // save translations
             OrbitInput::post('translations', function($translation_json_string) use ($newBaseMerchant, $merchantHelper) {
-                $merchantHelper->validateAndSaveTranslations($newBaseMerchant, $translation_json_string);
+                $merchantHelper->validateAndSaveTranslations($newBaseMerchant, $translation_json_string, $scenario = 'create');
             });
 
             // save base merchant categories

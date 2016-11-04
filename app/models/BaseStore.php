@@ -123,4 +123,37 @@ class BaseStore extends Eloquent
         return $this->mediaOrig()->where('media_name_id', 'base_store_map');
     }
 
+    /**
+     * Get all store data (presync)
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public static function getAllPreSyncStore()
+    {
+        $prefix = DB::getTablePrefix();
+        $stores = static::select('base_stores.base_store_id',
+                                'base_merchants.base_merchant_id',
+                                'base_merchants.name',
+                                'base_merchants.description',
+                                'base_stores.status',
+                                DB::raw("media.path"),
+                                'base_stores.merchant_id',
+                                'base_merchants.url',
+                                'base_stores.floor_id',
+                                'objects.object_name',
+                                'base_stores.unit',
+                                'base_stores.verification_number',
+                                'merchants.name as location_name'
+                            )
+                            ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                            ->leftJoin('objects', 'objects.object_id', '=', 'base_stores.floor_id')
+                            ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
+                            ->leftJoin(DB::raw("(SELECT * FROM {$prefix}media WHERE media_name_id = 'base_merchant_logo' AND object_name = 'base_merchant') AS media"), DB::raw("media.object_id"), '=', 'base_merchants.base_merchant_id')
+                            ->where('base_stores.status', '!=', 'deleted')
+                            ->groupBy('base_stores.base_store_id');
+
+        return $stores;
+    }
+
 }
