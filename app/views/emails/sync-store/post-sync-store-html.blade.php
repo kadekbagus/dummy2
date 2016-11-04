@@ -4,14 +4,12 @@
 </head>
 <body>
     <p>Hello,</p>
-    <p>Sync ID {{ $syncId }} which was started by user {{ $userEmail }} has been completed. The details is as follow:</p>
-    <br/>
+    <p>Sync ID {{ $syncId }} which was started by user {{ $userEmail }} has been completed. The details as follow:</p>
     <p>
-        Start Time : {{ $syncStartDate}} UTC <br/>
-        End Time : {{ $syncEndDate }} UTC <br/>
-        Store to sync : {{ $finishSync }}
+        Start Time: {{ $syncStartDate}} UTC <br/>
+        End Time: {{ $syncEndDate }} UTC <br/>
+        Synced Store(s): {{ $finishSync }} of {{ $totalSync }}
     </p>
-    <br/>
     <p>
        Regards, <br/>
        Mr. Robot

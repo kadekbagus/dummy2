@@ -5,14 +5,11 @@
 <body>
     <p>Hello,</p>
     <p>User {{ $userEmail }} started a store sync process at {{ $syncDate }} UTC. The details as follow:</p>
-    <br/>
     <p>
-        Sync ID : {{ $syncId }} <br/>
-        Store to sync : {{ $totalSync }}
+        Sync ID: {{ $syncId }} <br/>
+        Store(s) to Sync: {{ $totalSync }}
     </p>
-    <br/>
-    <p>Once the sync is completed you will get notified by email</p>
-    <br/>
+    <p>Once the sync is completed you will get notified by email.</p>
     <p>
         Regards,<br/>
         Mr. Robot

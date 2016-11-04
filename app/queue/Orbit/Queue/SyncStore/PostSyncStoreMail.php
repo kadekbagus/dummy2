@@ -74,7 +74,7 @@ class PostSyncStoreMail
 
         Mail::send($mailviews, $data, function($message) use ($data)
         {
-            $emailConf = Config::get('orbit.generic_email.sender.sender');
+            $emailConf = Config::get('orbit.generic_email.sender');
             $from = $emailConf['email'];
             $name = $emailConf['name'];
 

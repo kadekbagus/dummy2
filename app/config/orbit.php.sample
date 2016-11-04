@@ -4690,10 +4690,8 @@ return array(
 
     'generic_email' => [
         'sender' => [
-            'sender' => [
-                'email' => 'no-reply@gotomalls.com',
-                'name'  => 'Gotomalls'
-                ]
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
             ]
     ],
 

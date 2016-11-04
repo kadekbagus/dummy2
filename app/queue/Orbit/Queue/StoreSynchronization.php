@@ -22,6 +22,8 @@ use DB;
 use Carbon\Carbon as Carbon;
 use Orbit\Database\ObjectID;
 use User;
+use Event;
+use Helper\EloquentRecordCounter as RecordCounter;
 
 class StoreSynchronization
 {
@@ -79,13 +81,15 @@ class StoreSynchronization
             $newSync = new Sync;
             $newSync->user_id = $user_id;
             $newSync->sync_type = 'store';
-            $newSync->total_sync = count($stores);
+            $newSync->total_sync = RecordCounter::create($stores)->count();
             $newSync->finish_sync = 0;
             $newSync->save();
 
             $sync_id = $newSync->sync_id;
 
             DB::commit();
+
+            Event::fire('orbit.basestore.sync.begin', $newSync);
 
             $pre_stores = clone $stores;
 
@@ -270,6 +274,8 @@ class StoreSynchronization
                     }
                 }
             });
+
+            Event::fire('orbit.basestore.sync.complete', $newSync);
         } catch (InvalidArgsException $e) {
             \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
