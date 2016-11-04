@@ -271,7 +271,7 @@ class StoreSynchronization
 
                     foreach ($realpath as $rp) {
                         $this->debug(sprintf("Starting to unlink in: %s\n", $rp));
-                        if (! unlink($rp)) {
+                        if (! @unlink($rp)) {
                             $this->debug("Failed to unlink\n");
                         }
                     }
@@ -321,10 +321,9 @@ class StoreSynchronization
             $sourceMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $dt->file_name;
             $destMediaPath = $path . DS . $retailerConfig[$type]['path'] . DS . $filename;
             $this->debug(sprintf("Starting to copy from: %s to %s\n", $sourceMediaPath, $destMediaPath));
-            if (! copy($sourceMediaPath, $destMediaPath)) {
+            if (! @copy($sourceMediaPath, $destMediaPath)) {
                 $this->debug("Failed to copy\n");
             }
-
 
             if ($dt->object_name === 'base_merchant') {
                 $name_long = str_replace('base_merchant_', 'retailer_', $dt->media_name_long);
