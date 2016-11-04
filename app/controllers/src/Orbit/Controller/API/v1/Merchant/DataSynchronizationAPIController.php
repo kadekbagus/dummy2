@@ -33,7 +33,7 @@ class DataSynchronizationAPIController extends ControllerAPI
     {
         try {
             $httpCode = 200;
-            $syncData = OrbitInput::post('store', null);
+            $syncData = OrbitInput::post('ids', null);
             $syncType = OrbitInput::post('type', 'store');
 
             // Require authentication

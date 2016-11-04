@@ -42,12 +42,13 @@ class StoreSynchronization
         $type = $data['sync_type'];
 
         switch ($type) {
+            default:
             case 'store':
-                $this->syncStore($data);
+                $this->syncStore($data, 'store');
                 break;
 
-            default:
-                $this->syncStore($data);
+            case 'merchant':
+                $this->syncStore($data, 'merchant');
                 break;
         }
 
@@ -61,7 +62,7 @@ class StoreSynchronization
         return DB::connection()->getPdo()->quote($arg);
     }
 
-    protected function syncStore($data) {
+    protected function syncStore($data, $type) {
         try {
             $prefix = DB::getTablePrefix();
             $sync_data = $data['sync_data'];
@@ -73,7 +74,18 @@ class StoreSynchronization
             $stores = BaseStore::getAllPreSyncStore();
 
             if (is_array($sync_data)) {
-                $stores = $stores->whereIn('base_stores.base_store_id', $sync_data);
+                switch ($type) {
+                    case 'merchant':
+                        $filter = 'base_merchants.base_merchant_id';
+                        break;
+
+                    default:
+                    case 'store':
+                        $filter = 'base_stores.base_store_id';
+                        break;
+                }
+
+                $stores->whereIn($filter, $sync_data);
             }
 
             DB::beginTransaction();
