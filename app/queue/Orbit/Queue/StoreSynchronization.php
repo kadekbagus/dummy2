@@ -299,8 +299,10 @@ class StoreSynchronization
             if ($oldFileName != $dt->file_name) {
                 $sourceMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $dt->file_name;
                 $destMediaPath = $path . DS . $retailerConfig[$type]['path'] . DS . $dt->file_name;
-                @copy($sourceMediaPath, $destMediaPath);
-
+                $this->debug(sprintf("Starting to copy from: %s to %s\n", $sourceMediaPath, $destMediaPath));
+                if (! copy($sourceMediaPath, $destMediaPath)) {
+                    $this->debug("Failed to copy\n");
+                }
                 $oldFileName = $dt->file_name;
             }
 
