@@ -299,8 +299,23 @@ class StoreSynchronization
 
         foreach ($data as $dt) {
             $filename = $dt->file_name;
-            if ($type === 'logo') {
-                $filename = $store_id . '-' . $dt->file_name;
+            switch ($type) {
+                case 'logo':
+                    $filename = $store_id . '-' . $dt->file_name;
+                    $nameid = "retailer_logo";
+                    break;
+
+                case 'picture':
+                    $nameid = "retailer_image";
+                    break;
+
+                case 'map':
+                    $nameid = "retailer_map";
+                    break;
+
+                default:
+                    $nameid = "";
+                    break;
             }
 
             $sourceMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $dt->file_name;
@@ -318,7 +333,7 @@ class StoreSynchronization
             }
 
             $newMedia = new Media;
-            $newMedia->media_name_id = 'retailer_logo';
+            $newMedia->media_name_id = $nameid;
             $newMedia->media_name_long = $name_long;
             $newMedia->object_id = $store_id;
             $newMedia->object_name = 'retailer';
