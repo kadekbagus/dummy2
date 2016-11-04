@@ -19,7 +19,6 @@ use stdclass;
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 use App;
 use \Queue;
-use OrbitShop\API\v1\OrbitShopAPI;
 
 class DataSynchronizationAPIController extends ControllerAPI
 {
