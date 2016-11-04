@@ -42,12 +42,13 @@ class StoreSynchronization
         $type = $data['sync_type'];
 
         switch ($type) {
+            default:
             case 'store':
-                $this->syncStore($data);
+                $this->syncStore($data, 'store');
                 break;
 
-            default:
-                $this->syncStore($data);
+            case 'merchant':
+                $this->syncStore($data, 'merchant');
                 break;
         }
 
@@ -61,7 +62,7 @@ class StoreSynchronization
         return DB::connection()->getPdo()->quote($arg);
     }
 
-    protected function syncStore($data) {
+    protected function syncStore($data, $type) {
         try {
             $prefix = DB::getTablePrefix();
             $sync_data = $data['sync_data'];
@@ -73,7 +74,18 @@ class StoreSynchronization
             $stores = BaseStore::getAllPreSyncStore();
 
             if (is_array($sync_data)) {
-                $stores = $stores->whereIn('base_stores.base_store_id', $sync_data);
+                switch ($type) {
+                    case 'merchant':
+                        $filter = 'base_merchants.base_merchant_id';
+                        break;
+
+                    default:
+                    case 'store':
+                        $filter = 'base_stores.base_store_id';
+                        break;
+                }
+
+                $stores->whereIn($filter, $sync_data);
             }
 
             DB::beginTransaction();
@@ -227,21 +239,23 @@ class StoreSynchronization
                                 ->where('media_name_id', 'base_merchant_logo')
                                 ->where('object_id', $base_merchant_id)
                                 ->get();
-                    $this->updateMedia('logo', $logo, $base_store_id);
+                    $logo_image = $this->updateMedia('logo', $logo, $base_store_id);
 
                     // copy picture from base_store directory to retailer directory
                     $pic = Media::where('object_name', 'base_store')
                                 ->where('media_name_id', 'base_store_image')
                                 ->where('object_id', $base_store_id)
                                 ->get();
-                    $this->updateMedia('picture', $pic, $base_store_id);
+                    $pic_image = $this->updateMedia('picture', $pic, $base_store_id);
 
                     // copy map from base_store directory to retailer directory
                     $map = Media::where('object_name', 'base_store')
                                 ->where('media_name_id', 'base_store_map')
                                 ->where('object_id', $base_store_id)
                                 ->get();
-                    $this->updateMedia('map', $map, $base_store_id);
+                    $map_image = $this->updateMedia('map', $map, $base_store_id);
+
+                    $images = array_merge($logo_image, $pic_image, $map_image);
 
                     // get presync data
                     $presync = PreSync::where('sync_id', $sync_id)
@@ -269,8 +283,12 @@ class StoreSynchronization
                     $this->debug($message . "\n");
                     \Log::info($message);
 
-                    foreach ($realpath as $rp) {
-                        @unlink($rp);
+                    $delete_images = array_diff($realpath, $images);
+                    foreach ($delete_images as $rp) {
+                        $this->debug(sprintf("Starting to unlink in: %s\n", $rp));
+                        if (! @unlink($rp)) {
+                            $this->debug("Failed to unlink\n");
+                        }
                     }
                 }
             });
@@ -293,15 +311,34 @@ class StoreSynchronization
 
         $baseConfig = Config::get('orbit.upload.base_store');
         $retailerConfig = Config::get('orbit.upload.retailer');
-        $oldFileName = '';
+        $images = array();
 
         foreach ($data as $dt) {
-            if ($oldFileName != $dt->file_name) {
-                $sourceMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $dt->file_name;
-                $destMediaPath = $path . DS . $retailerConfig[$type]['path'] . DS . $dt->file_name;
-                @copy($sourceMediaPath, $destMediaPath);
+            $filename = $dt->file_name;
+            switch ($type) {
+                case 'logo':
+                    $filename = $store_id . '-' . $dt->file_name;
+                    $nameid = "retailer_logo";
+                    break;
 
-                $oldFileName = $dt->file_name;
+                case 'picture':
+                    $nameid = "retailer_image";
+                    break;
+
+                case 'map':
+                    $nameid = "retailer_map";
+                    break;
+
+                default:
+                    $nameid = "";
+                    break;
+            }
+
+            $sourceMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $dt->file_name;
+            $destMediaPath = $path . DS . $retailerConfig[$type]['path'] . DS . $filename;
+            $this->debug(sprintf("Starting to copy from: %s to %s\n", $sourceMediaPath, $destMediaPath));
+            if (! @copy($sourceMediaPath, $destMediaPath)) {
+                $this->debug("Failed to copy\n");
             }
 
             if ($dt->object_name === 'base_merchant') {
@@ -311,22 +348,26 @@ class StoreSynchronization
             }
 
             $newMedia = new Media;
-            $newMedia->media_name_id = 'retailer_logo';
+            $newMedia->media_name_id = $nameid;
             $newMedia->media_name_long = $name_long;
             $newMedia->object_id = $store_id;
             $newMedia->object_name = 'retailer';
-            $newMedia->file_name = $dt->file_name;
+            $newMedia->file_name = $filename;
             $newMedia->file_extension = $dt->file_extension;
             $newMedia->file_size = $dt->file_size;
             $newMedia->mime_type = $dt->mime_type;
-            $newMedia->path = $retailerConfig[$type]['path'] . DS . $dt->file_name;
-            $newMedia->realpath = realpath($retailerConfig[$type]['path'] . DS . $dt->file_name);
+            $newMedia->path = $retailerConfig[$type]['path'] . DS . $filename;
+            $newMedia->realpath = $destMediaPath;
             $newMedia->metadata = $dt->metadata;
             $newMedia->modified_by = $dt->modified_by;
             $newMedia->created_at = $dt->created_at;
             $newMedia->updated_at = $dt->updated_at;
             $newMedia->save();
+
+            $images[] = $newMedia->realpath;
         }
+
+        return $images;
     }
 
     protected function debug($message = '')

@@ -33,7 +33,7 @@ class DataSynchronizationAPIController extends ControllerAPI
     {
         try {
             $httpCode = 200;
-            $syncData = OrbitInput::post('store', 'all');
+            $syncData = OrbitInput::post('ids', null);
             $syncType = OrbitInput::post('type', 'store');
 
             // Require authentication
@@ -49,6 +49,11 @@ class DataSynchronizationAPIController extends ControllerAPI
             if (! in_array(strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
+            }
+
+            if (empty($syncData)) {
+                $message = 'Store is required';
+                OrbitShopAPI::throwInvalidArgument($message);
             }
 
             // queue for data synchronization
