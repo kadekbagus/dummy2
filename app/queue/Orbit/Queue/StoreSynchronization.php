@@ -227,21 +227,23 @@ class StoreSynchronization
                                 ->where('media_name_id', 'base_merchant_logo')
                                 ->where('object_id', $base_merchant_id)
                                 ->get();
-                    $this->updateMedia('logo', $logo, $base_store_id);
+                    $logo_image = $this->updateMedia('logo', $logo, $base_store_id);
 
                     // copy picture from base_store directory to retailer directory
                     $pic = Media::where('object_name', 'base_store')
                                 ->where('media_name_id', 'base_store_image')
                                 ->where('object_id', $base_store_id)
                                 ->get();
-                    $this->updateMedia('picture', $pic, $base_store_id);
+                    $pic_image = $this->updateMedia('picture', $pic, $base_store_id);
 
                     // copy map from base_store directory to retailer directory
                     $map = Media::where('object_name', 'base_store')
                                 ->where('media_name_id', 'base_store_map')
                                 ->where('object_id', $base_store_id)
                                 ->get();
-                    $this->updateMedia('map', $map, $base_store_id);
+                    $map_image = $this->updateMedia('map', $map, $base_store_id);
+
+                    $images = array_merge($logo_image, $pic_image, $map_image);
 
                     // get presync data
                     $presync = PreSync::where('sync_id', $sync_id)
@@ -269,7 +271,8 @@ class StoreSynchronization
                     $this->debug($message . "\n");
                     \Log::info($message);
 
-                    foreach ($realpath as $rp) {
+                    $delete_images = array_diff($realpath, $images);
+                    foreach ($delete_images as $rp) {
                         $this->debug(sprintf("Starting to unlink in: %s\n", $rp));
                         if (! @unlink($rp)) {
                             $this->debug("Failed to unlink\n");
@@ -296,6 +299,7 @@ class StoreSynchronization
 
         $baseConfig = Config::get('orbit.upload.base_store');
         $retailerConfig = Config::get('orbit.upload.retailer');
+        $images = array();
 
         foreach ($data as $dt) {
             $filename = $dt->file_name;
@@ -347,7 +351,11 @@ class StoreSynchronization
             $newMedia->created_at = $dt->created_at;
             $newMedia->updated_at = $dt->updated_at;
             $newMedia->save();
+
+            $images[] = $newMedia->realpath;
         }
+
+        return $images;
     }
 
     protected function debug($message = '')
