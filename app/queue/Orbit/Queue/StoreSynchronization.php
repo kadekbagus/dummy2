@@ -293,18 +293,20 @@ class StoreSynchronization
 
         $baseConfig = Config::get('orbit.upload.base_store');
         $retailerConfig = Config::get('orbit.upload.retailer');
-        $oldFileName = '';
 
         foreach ($data as $dt) {
-            if ($oldFileName != $dt->file_name) {
-                $sourceMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $dt->file_name;
-                $destMediaPath = $path . DS . $retailerConfig[$type]['path'] . DS . $dt->file_name;
-                $this->debug(sprintf("Starting to copy from: %s to %s\n", $sourceMediaPath, $destMediaPath));
-                if (! copy($sourceMediaPath, $destMediaPath)) {
-                    $this->debug("Failed to copy\n");
-                }
-                $oldFileName = $dt->file_name;
+            $filename = $dt->file_name;
+            if ($type === 'logo') {
+                $filename = $store_id . '-' . $dt->file_name;
             }
+
+            $sourceMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $dt->file_name;
+            $destMediaPath = $path . DS . $retailerConfig[$type]['path'] . DS . $filename;
+            $this->debug(sprintf("Starting to copy from: %s to %s\n", $sourceMediaPath, $destMediaPath));
+            if (! copy($sourceMediaPath, $destMediaPath)) {
+                $this->debug("Failed to copy\n");
+            }
+
 
             if ($dt->object_name === 'base_merchant') {
                 $name_long = str_replace('base_merchant_', 'retailer_', $dt->media_name_long);
@@ -317,12 +319,12 @@ class StoreSynchronization
             $newMedia->media_name_long = $name_long;
             $newMedia->object_id = $store_id;
             $newMedia->object_name = 'retailer';
-            $newMedia->file_name = $dt->file_name;
+            $newMedia->file_name = $filename;
             $newMedia->file_extension = $dt->file_extension;
             $newMedia->file_size = $dt->file_size;
             $newMedia->mime_type = $dt->mime_type;
-            $newMedia->path = $retailerConfig[$type]['path'] . DS . $dt->file_name;
-            $newMedia->realpath = realpath($retailerConfig[$type]['path'] . DS . $dt->file_name);
+            $newMedia->path = $retailerConfig[$type]['path'] . DS . $filename;
+            $newMedia->realpath = realpath($retailerConfig[$type]['path'] . DS . $filename);
             $newMedia->metadata = $dt->metadata;
             $newMedia->modified_by = $dt->modified_by;
             $newMedia->created_at = $dt->created_at;
