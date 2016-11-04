@@ -84,8 +84,11 @@ class StoreHelper
 
         // exist base store
         Validator::extend('orbit.empty.base_store', function ($attribute, $value, $parameters) {
+            $prefix = DB::getTablePrefix();
             $base_store = BaseStore::excludeDeleted('base_stores')
                             ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                            ->selectRaw("{$prefix}base_stores.*, {$prefix}base_merchants.base_merchant_id,
+                                {$prefix}base_merchants.name, {$prefix}base_merchants.name, {$prefix}base_merchants.description")
                             ->where('base_store_id', $value)
                             ->first();
 
