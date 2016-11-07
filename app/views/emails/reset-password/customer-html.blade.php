@@ -21,8 +21,8 @@
         <p style="line-height:1.2em;padding-top:1em;padding-bottom:1em;"><i>If you didn't ask to change your password, don't worry! Your password is still safe and just ignore this email.</i></p>
 
         <div id="regards" style="padding-top:1em;">
-        <span style="line-height:1em;float:left;">Cheers,
-            <img style="display:block;padding-top:0.7em" alt="Orbit Team" src="{{ asset('emails/orbit-team.png') }}">
+        <span style="line-height:1em;float:left;">Cheers,<br/>
+            Gotomalls Team
         </span>
         <span style="float:right;width:100px;">
             <img style="padding-top:0.7em;max-width:100%;max-height:100%" alt="GotoMalls" src="{{ asset('emails/orbit-gotomalls-footer.png') }}">
