@@ -113,13 +113,12 @@ class ResetPasswordLinkAPIController extends ControllerAPI
                 'text' => 'emails.reset-password.customer-text'
             );
 
-            Mail::queue($mailviews, $data, function($message)
+            Mail::queue($mailviews, $data, function($message) use ($email)
             {
                 $emailconf = Config::get('orbit.reset_password.sender');
                 $from = $emailconf['email'];
                 $name = $emailconf['name'];
 
-                $email = OrbitInput::post('email');
                 $message->from($from, $name)->subject('Password Reset Request');
                 $message->to($email);
             });
