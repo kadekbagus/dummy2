@@ -144,6 +144,7 @@ class MallListAPIController extends ControllerAPI
             $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
             if($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
+                $withscore = '';
                 $sortby = ' {
                                 "_geo_distance": {
                                     "position": {
