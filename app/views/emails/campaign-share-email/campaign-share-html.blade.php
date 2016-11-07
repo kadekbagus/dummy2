@@ -331,9 +331,18 @@
                                                             <p style="font-size:18px;font-weight: bold;">{{{ $campaignName }}}</p>
                                                             </div>
                                                             <div style="padding-bottom: 10px;">
-                                                            <img style="max-width:500px;" ng-src="{{{ asset($campaignImage) }}}" class="news-logo ng-scope" src="{{{ asset($campaignImage) }}}">
+                                                            <img style="max-width:500px;" class="news-logo ng-scope" src="{{{ asset($campaignImage) }}}">
                                                             </div>
-                                                            <br/><br/>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center">
+                                                <table cellpadding="0" cellspacing="0" align="center" border="0">
+                                                    <tbody>
+                                                        <tr>
                                                             <td style="border-radius:3px;color:white;cursor:auto;padding:10px 25px; border-radius: 16px;" align="center" valign="middle" bgcolor="#BA1F00">
                                                                 <a href="{{{ $campaignUrl }}}" style="display:inline-block;text-decoration:none;background:#BA1F00;border-radius:3px;color:white;font-family:Helvetica;font-size:13px;font-weight:normal;margin:0px;">Lihat Sekarang!
                                                                 </a>
