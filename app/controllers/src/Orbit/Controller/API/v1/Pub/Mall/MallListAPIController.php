@@ -99,9 +99,11 @@ class MallListAPIController extends ControllerAPI
                                     "multi_match" : {
                                         "query": "' . $keyword . '",
                                         "fields": [
-                                            "name",
-                                            "address_line",
-                                            "description"
+                                            "name^5",
+                                            "city^4",
+                                            "country^3",
+                                            "address_line^2",
+                                            "description^1"
                                         ]
                                     }
                                   },';
@@ -183,6 +185,7 @@ class MallListAPIController extends ControllerAPI
                                 }
                             },
                             "sort": [
+                                ' . $withscore . '
                                 ' . $sortby . '
                             ]
                         }';
