@@ -144,7 +144,7 @@ class ESActivityUpdateQueue
                 'body' => []
             ];
 
-            $fullCurrentUrl = Request::fullUrl();
+            $fullCurrentUrl = $data['current_url'];
             $urlForTracking = [ $data['referer'], $fullCurrentUrl ];
             $campaignData = CampaignSourceParser::create()
                                                 ->setUrls($urlForTracking)
