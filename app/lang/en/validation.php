@@ -149,6 +149,7 @@ return array(
             'mobile_default_lang'    => 'Cannot remove default supported language',
             'link_mobile_default_lang'=> 'Cannot change default supported language has campaign translation',
             'link_to_tenant'         => 'Link to tenant is not allowed',
+            'base_store'             => 'The mall unit on this floor already use',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',
@@ -203,6 +204,7 @@ return array(
             'user_sortby'          => 'The sort by argument you specified is not valid, the valid values are: status, total_lucky_draw_number, total_usable_coupon, total_redeemed_coupon, username, email, firstname, lastname, registered_date, gender, city, last_visit_shop, last_visit_date, last_spent_amount, mobile_phone, membership_number, join_date, created_at, updated_at, first_visit_date, membership_since',
             'merchant_status'      => 'The merchant status you specified is not found',
             'merchant_sortby'      => 'The sort by argument you specified is not valid, the valid values are: registered_date, merchant_name, merchant_email, merchant_userid, merchant_description, merchantid, merchant_address1, merchant_address2, merchant_address3, merchant_cityid, merchant_city, merchant_countryid, merchant_country, merchant_phone, merchant_fax, merchant_status, merchant_currency, start_date_activity, total_retailer',
+            'merchant_sortby_2'    => 'The sort by argument you specified is not valid, the valid values are: merchant_name',
             'retailer_status'      => 'The retailer status you specified is not found',
             'tenant_status'        => 'The tenant status you specified is not found',
             'retailer_sortby'      => 'The sort by argument for retailer you specified is not valid, the valid values are: registered_date, retailer_name, retailer_email, retailer_userid, retailer_description, retailerid, retailer_address1, retailer_address2, retailer_address3, retailer_cityid, retailer_city, retailer_countryid, retailer_country, retailer_phone, retailer_fax, retailer_status, retailer_currency, contact_person_firstname, merchant_name, retailer_floor, retailer_unit, retailer_object_type, retailer_external_object_id, retailer_created_at, retailer_updated_at',
@@ -341,6 +343,8 @@ return array(
             'mall_status' => 'Mall status you specified is not found',
             'tenant_type' => 'Tenant type you specified is not found : the valid values are: tenant, service',
             'floor' => 'The Floor you specified is not found',
+            'base_merchant' => 'The Base Merchant you specified is not found',
+            'base_store' => 'The Base Store you specified is not found',
             'mobile_default_lang' => 'Mobile default language must on list languages',
             'account_type'        => 'Account type not exist',
             'campaign'            => 'Campaign you specified is not found',
@@ -491,8 +495,11 @@ return array(
             'total_issued_coupons' => 'Number can not be less than current total issued coupons',
         ),
         'file' => array(
-            'max_size' => ':attribute image size is too big, maximum size allowed is :size:unit',
+            'max_size' => ':attribute is too big, maximum size allowed is :size:unit',
             'type' => "File extension \".:ext\" is not allowed" ,
+        ),
+        'unique' => array(
+            'verification_number' => 'The verification number already used by other',
         ),
     ),
 

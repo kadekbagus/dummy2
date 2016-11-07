@@ -101,6 +101,9 @@ Artisan::add(new ElasticsearchResyncActivityCommand);
 // Shorten Coupon Url
 Artisan::add(new UrlShortenerCommand);
 
+// Create User
+Artisan::add(new CreateUserCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
