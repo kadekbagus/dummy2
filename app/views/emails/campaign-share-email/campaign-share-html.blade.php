@@ -128,7 +128,7 @@
                                                 <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-spacing:0px;" align="center" border="0">
                                                     <tbody>
                                                         <tr>
-                                                            <td style="width:600px;"><img alt="Gotomalls Logo" title="" height="auto" src="{{ asset('emails/header-activate.jpg') }}" style="border:none;border-radius:;display:block;outline:none;text-decoration:none;width:100%;height:auto;" width="600">
+                                                            <td style="width:600px;"><img alt="Gotomalls Logo" title="" height="auto" src="{{ asset('emails/header-activate.jpg') }}" style="border:none;border-radius:;display:block;outline:none;text-decoration:none;width:100%;height:auto;" width="100%">
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -331,7 +331,7 @@
                                                             <p style="font-size:18px;font-weight: bold;">{{{ $campaignName }}}</p>
                                                             </div>
                                                             <div style="padding-bottom: 10px;">
-                                                            <img style="max-width:500px;" class="news-logo ng-scope" src="{{{ asset($campaignImage) }}}">
+                                                            <img style="max-width:250px;" class="news-logo ng-scope" src="{{{ asset($campaignImage) }}}">
                                                             </div>
                                                         </tr>
                                                     </tbody>
