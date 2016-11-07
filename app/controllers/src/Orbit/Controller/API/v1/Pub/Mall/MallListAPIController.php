@@ -101,6 +101,7 @@ class MallListAPIController extends ControllerAPI
                                         "fields": [
                                             "name",
                                             "address_line",
+                                            "city",
                                             "description"
                                         ]
                                     }
