@@ -157,9 +157,9 @@ class CampaignReportAPIController extends ControllerAPI
                 mlocation.name AS tenant_name,
                 -- merchants2.name AS mall_name,
                 {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
-                total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
-                total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF( {$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
-                ocds.total_spending AS spending,
+                'N/A' AS daily,
+                'N/A' AS estimated_total,
+                'N/A' AS spending,
                 IFNULL(ocpv.page_views, 0) AS page_views,
                 IFNULL(ocpuc.popup_clicks, 0) AS popup_clicks,
                 (
@@ -251,9 +251,9 @@ class CampaignReportAPIController extends ControllerAPI
                 mlocation.name AS tenant_name,
                 -- merchants2.name AS mall_name,
                 {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
-                total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
-                total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}news.end_date, {$tablePrefix}news.begin_date) + 1) AS estimated_total,
-                ocds.total_spending AS spending,
+                'N/A' AS daily,
+                'N/A' AS estimated_total,
+                'N/A' AS spending,
                 IFNULL(ocpv.page_views, 0) AS page_views,
                 IFNULL(ocpuc.popup_clicks, 0) AS popup_clicks,
                 (
@@ -344,9 +344,9 @@ class CampaignReportAPIController extends ControllerAPI
                 mlocation.name AS tenant_name,
                 -- merchants2.name AS mall_name,
                 {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
-                total_tenant * {$tablePrefix}campaign_price.base_price AS daily,
-                total_tenant * {$tablePrefix}campaign_price.base_price * (DATEDIFF({$tablePrefix}promotions.end_date, {$tablePrefix}promotions.begin_date) + 1) AS estimated_total,
-                ocds.total_spending AS spending,
+                'N/A' AS daily,
+                'N/A' AS estimated_total,
+                'N/A' AS spending,
                 IFNULL(ocpv.page_views, 0) AS page_views,
                 IFNULL(ocpuc.popup_clicks, 0) AS popup_clicks,
                 (
@@ -538,8 +538,8 @@ class CampaignReportAPIController extends ControllerAPI
             $query_sum = array(
                 'COUNT(campaign_id) AS total_records',
                 'SUM(page_views) AS page_views',
-                'SUM(estimated_total) AS estimated_total',
-                'SUM(spending) AS spending'
+                '"N/A" AS estimated_total',
+                '"N/A" AS spending'
             );
 
             $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
@@ -871,7 +871,7 @@ class CampaignReportAPIController extends ControllerAPI
 
             $campaign = CampaignDailySpending::select('date as campaign_date','campaign_id','campaign_type',
                 DB::raw("
-                            sum(total_spending) as spending,
+                            'N/A' as spending,
                             {$this->quote($totalLinkToLocation)} AS total_location,
                             (
                                 SELECT COUNT(DISTINCT user_id)
@@ -934,7 +934,7 @@ class CampaignReportAPIController extends ControllerAPI
             $_campaign = DB::table(DB::raw('(' . $_campaign_sql . ') as b'));
 
             $query_sum = array(
-                'SUM(spending) AS spending',
+                '"N/A" AS spending',
                 'SUM(campaign_pages_views) AS campaign_pages_views',
                 'SUM(popup_clicks) AS popup_clicks'
             );
