@@ -156,7 +156,7 @@ class CampaignReportAPIController extends ControllerAPI
                 IFNULL(total_location, 0) AS total_location,
                 mlocation.name AS tenant_name,
                 -- merchants2.name AS mall_name,
-                {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
+                {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at,
                 'N/A' AS daily,
                 'N/A' AS estimated_total,
                 'N/A' AS spending,
@@ -171,12 +171,6 @@ class CampaignReportAPIController extends ControllerAPI
                 ) as campaign_location_names,
 
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
-                        // Join for get total spending
-                        ->leftJoin(DB::raw("( SELECT campaign_id, sum(total_spending) as total_spending FROM {$tablePrefix}campaign_daily_spendings group by campaign_id ) AS ocds"),
-                        DB::raw('ocds.campaign_id'), '=', 'news.news_id')
-                        // Join for get campaign price
-                        ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
-
                         // Join for get total page views
                         ->leftJoin(DB::raw("
                             (
@@ -250,7 +244,7 @@ class CampaignReportAPIController extends ControllerAPI
                 IFNULL(total_location, 0) AS total_location,
                 mlocation.name AS tenant_name,
                 -- merchants2.name AS mall_name,
-                {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at, {$tablePrefix}campaign_price.base_price,
+                {$tablePrefix}news.begin_date, {$tablePrefix}news.end_date, {$tablePrefix}news.updated_at,
                 'N/A' AS daily,
                 'N/A' AS estimated_total,
                 'N/A' AS spending,
@@ -264,12 +258,6 @@ class CampaignReportAPIController extends ControllerAPI
                     where {$tablePrefix}news_merchant.news_id = {$tablePrefix}news.news_id
                 ) as campaign_location_names,
                 {$tablePrefix}news.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}news.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END  AS campaign_status, {$tablePrefix}campaign_status.order"))
-                        // Join for get total spending
-                        ->leftJoin(DB::raw("( SELECT campaign_id, sum(total_spending) as total_spending FROM {$tablePrefix}campaign_daily_spendings group by campaign_id ) AS ocds"),
-                        DB::raw('ocds.campaign_id'), '=', 'news.news_id')
-                        // Join for get campaign price
-                        ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'news.news_id')
-
                         // Join for get total page views
                         ->leftJoin(DB::raw("
                             (
@@ -343,7 +331,7 @@ class CampaignReportAPIController extends ControllerAPI
                 IFNULL(total_location, 0) AS total_location,
                 mlocation.name AS tenant_name,
                 -- merchants2.name AS mall_name,
-                {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at, {$tablePrefix}campaign_price.base_price,
+                {$tablePrefix}promotions.begin_date, {$tablePrefix}promotions.end_date, {$tablePrefix}promotions.updated_at,
                 'N/A' AS daily,
                 'N/A' AS estimated_total,
                 'N/A' AS spending,
@@ -357,12 +345,6 @@ class CampaignReportAPIController extends ControllerAPI
                 ) as campaign_location_names,
 
                 {$tablePrefix}promotions.status, CASE WHEN {$tablePrefix}campaign_status.campaign_status_name = 'expired' THEN {$tablePrefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$tablePrefix}promotions.end_date < {$this->quote($now)} THEN 'expired' ELSE {$tablePrefix}campaign_status.campaign_status_name END) END AS campaign_status, {$tablePrefix}campaign_status.order"))
-                        // Join for get total spending
-                        ->leftJoin(DB::raw("( SELECT campaign_id, sum(total_spending) as total_spending FROM {$tablePrefix}campaign_daily_spendings group by campaign_id ) AS ocds"),
-                        DB::raw('ocds.campaign_id'), '=', 'promotions.promotion_id')
-                        // Join for get campaign price
-                        ->leftJoin('campaign_price', 'campaign_price.campaign_id', '=', 'promotions.promotion_id')
-                        // Join for get mall name
 
                         // Join for get total page views
                         ->leftJoin(DB::raw("
@@ -452,7 +434,6 @@ class CampaignReportAPIController extends ControllerAPI
                             `begin_date`,
                             `end_date`,
                             `updated_at`,
-                            `base_price`,
                             `daily`,
                             `estimated_total`,
                             `spending`,
