@@ -859,10 +859,12 @@ class CampaignReportAPIController extends ControllerAPI
                             count(campaign_page_view_id) as campaign_pages_views,
                             ifnull(total_click, 0) as popup_clicks,
                             ifnull(unique_users, 0) as unique_users,
+                            {$this->quote($totalLinkToLocation)} AS total_location,
                             'N/A' as spending,
                             IFNULL(ROUND((count(campaign_page_view_id) / ifnull(unique_users, 0)) * 100, 2), 0) as campaign_pages_view_rate,
                             {$tablePrefix}campaign_page_views.*,
-                            " . $locationNames ."
+                            " . $locationNames .",
+                            '" . $campaign_type ."' as campaign_type
                         "))
                         ->join('campaign_group_names','campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
                         ->leftJoin(
