@@ -850,41 +850,47 @@ class CampaignReportAPIController extends ControllerAPI
 
             \DB::beginTransaction();
 
-            $campaign = CampaignDailySpending::select('date as campaign_date','campaign_id','campaign_type',
-                DB::raw("
+            $campaign_id = OrbitInput::get('campaign_id');
+            $campaign_type = OrbitInput::get('campaign_type');
+            $current_mall = OrbitInput::get('current_mall');
+
+            $campaign = CampaignPageView::select(DB::raw("
+                            DATE({$tablePrefix}campaign_page_views.created_at) as campaign_date,
+                            count(campaign_page_view_id) as campaign_pages_views,
+                            ifnull(total_click, 0) as popup_clicks,
+                            ifnull(unique_users, 0) as unique_users,
                             'N/A' as spending,
-                            {$this->quote($totalLinkToLocation)} AS total_location,
-                            (
-                                SELECT COUNT(DISTINCT user_id)
-                                FROM {$tablePrefix}user_signin
-                                WHERE DATE(created_at) = date
-                            ) AS unique_users,
-                            (
-                                SELECT COUNT(ocpv.campaign_page_view_id) AS value
-                                FROM {$tablePrefix}campaign_page_views ocpv
-                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                                WHERE ocpv.campaign_id = {$this->quote($campaign_id)}
-                                AND DATE(ocpv.created_at) = date
-                                AND ocgn.campaign_group_name = {$this->quote($campaigntype)}
-                            ) AS campaign_pages_views,
-                            (
-                                SELECT COUNT(occ.campaign_click_id) AS value
-                                FROM {$tablePrefix}campaign_clicks occ
-                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = occ.campaign_group_name_id
-                                WHERE occ.campaign_id = {$this->quote($campaign_id)}
-                                AND DATE(occ.created_at) = date
-                                AND ocgn.campaign_group_name = {$this->quote($campaigntype)}
-                            ) AS popup_clicks,
-                            (
-                                SELECT IFNULL(ROUND((campaign_pages_views / unique_users) * 100, 2), 0)
-                            ) AS campaign_pages_view_rate,
-                            " . $locationNames . "
-                    ")
-                )
-                ->where('campaign_status', 'activate')
-                ->where('campaign_id', $campaign_id)
-                ->groupBy('date')
-                ;
+                            IFNULL(ROUND((count(campaign_page_view_id) / ifnull(unique_users, 0)) * 100, 2), 0) as campaign_pages_view_rate,
+                            {$tablePrefix}campaign_page_views.*,
+                            " . $locationNames ."
+                        "))
+                        ->join('campaign_group_names','campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
+                        ->leftJoin(
+                                DB::raw("
+                                (
+                                    SELECT COUNT(DISTINCT user_id) AS unique_users, DATE(ous.created_at) as signin_date
+                                    FROM {$tablePrefix}user_signin ous
+                                    group by DATE(created_at)
+                                ) AS user_signin"),
+                                // On
+                                DB::raw("user_signin.signin_date"), '=', DB::raw("DATE({$tablePrefix}campaign_page_views.created_at)")
+                            )
+                        ->leftJoin(
+                                DB::raw("
+                                (
+                                    SELECT COUNT(occ.campaign_click_id) AS total_click, DATE(occ.created_at) as click_date
+                                    FROM {$tablePrefix}campaign_clicks occ
+                                    INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = occ.campaign_group_name_id
+                                    WHERE occ.campaign_id = {$this->quote($campaign_id)}
+                                    AND ocgn.campaign_group_name = {$this->quote($campaign_type)}
+                                    group by click_date
+                                ) AS campaign_click"),
+                                // On
+                                DB::raw("campaign_click.click_date"), '=', DB::raw("DATE({$tablePrefix}campaign_page_views.created_at)")
+                            )
+                        ->where('campaign_id', $campaign_id)
+                        ->where('campaign_group_name', $campaign_type)
+                        ->groupBy(DB::raw("DATE({$tablePrefix}campaign_page_views.created_at)"));
 
             // Filter by mall name
             OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
@@ -897,7 +903,7 @@ class CampaignReportAPIController extends ControllerAPI
             });
 
             if ($start_date != '' && $end_date != ''){
-                $campaign->whereRaw("date between ? and ?", [$start_date, $end_date]);
+                $campaign->whereRaw("DATE({$tablePrefix}campaign_page_views.created_at) between ? and ?", [$start_date, $end_date]);
             }
 
             // Clone the query builder which still does not include the take,
@@ -925,7 +931,7 @@ class CampaignReportAPIController extends ControllerAPI
             // Get info total bottom page
             $totalPageViews = round(isset($total[0]->campaign_pages_views)?$total[0]->campaign_pages_views:0, 2);
             $totalPopupClicks = round(isset($total[0]->popup_clicks)?$total[0]->popup_clicks:0, 2);
-            $totalSpending = isset($total[0]->spending)?$total[0]->spending:0;
+            $totalSpending = 'N/A';
 
             $_campaign->select('campaign_date');
 
