@@ -8,6 +8,8 @@
 
 use Activity;
 use Category;
+use Mall;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 class GTMSearchRecorder
 {
@@ -91,6 +93,12 @@ class GTMSearchRecorder
     public function saveActivity($user)
     {
         if (is_object($user)) {
+            $mall = null;
+            $mallId = OrbitInput::get('mall_id', NULL);
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
+            }
+
             $activity = Activity::mobileci()
                 ->setActivityType($this->type)
                 ->setUser($user)
@@ -98,6 +106,7 @@ class GTMSearchRecorder
                 ->setActivityNameLong($this->nameLong)
                 ->setObjectDisplayName($this->displayName)
                 ->setModuleName($this->moduleName)
+                ->setLocation($mall)
                 ->setNotes($this->notes)
                 ->responseOK()
                 ->save();
