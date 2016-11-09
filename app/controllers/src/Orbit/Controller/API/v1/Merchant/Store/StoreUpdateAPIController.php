@@ -89,7 +89,6 @@ class StoreUpdateAPIController extends ControllerAPI
                 'mall_id'             => $mall_id,
                 'floor_id'            => $floor_id,
                 'status'              => $status,
-                'unit'                => $unit,
                 'verification_number' => $verification_number,
             ];
 
@@ -99,7 +98,6 @@ class StoreUpdateAPIController extends ControllerAPI
                 'mall_id'             => 'required|orbit.empty.mall',
                 'floor_id'            => 'orbit.empty.floor:' . $mall_id,
                 'status'              => 'in:active,inactive',
-                'unit'                => 'orbit.exists.base_store:' . $base_store_id . ',' . $mall_id . ',' . $floor_id,
                 'verification_number' => 'alpha_num|orbit.unique.verification_number:' . $mall_id . ',' . $base_store_id,
             ];
 
