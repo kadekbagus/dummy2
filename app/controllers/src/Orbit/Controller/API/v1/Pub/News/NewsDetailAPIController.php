@@ -158,6 +158,7 @@ class NewsDetailAPIController extends ControllerAPI
                     ->setActivityName('view_landing_page_news_detail')
                     ->setActivityNameLong('View GoToMalls News Detail')
                     ->setObject($news)
+                    ->setLocation($mall)
                     ->setNews($news)
                     ->setModuleName('News')
                     ->setNotes($activityNotes)

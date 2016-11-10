@@ -135,7 +135,7 @@
         <tr>
             <td>Total Spending (IDR)</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalSpending, 0); ?></strong></td>
+            <td><strong><?php echo 'N/A'; ?></strong></td>
         </tr>
 
 
@@ -206,7 +206,7 @@
                     <td><?php echo number_format($row->campaign_pages_views); ?></td>
                     <td><?php echo round($row->campaign_pages_view_rate, 2); ?></td>
                     <td><?php echo number_format($row->popup_clicks); ?></td>
-                    <td><?php echo number_format($row->spending, 0); ?></td>
+                    <td><?php echo 'N/A'; ?></td>
                 </tr>
             <?php endwhile ; ?>
         </tbody>
