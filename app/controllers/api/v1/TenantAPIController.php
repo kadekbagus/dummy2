@@ -1598,6 +1598,7 @@ class TenantAPIController extends ControllerAPI
                 $tenants->addSelect(DB::raw("GROUP_CONCAT(`{$prefix}categories`.`category_name` ORDER BY category_name ASC SEPARATOR ', ') as tenant_categories"))
                         ->leftJoin('category_merchant','category_merchant.merchant_id','=','merchants.merchant_id')
                         ->leftJoin('categories','categories.category_id','=','category_merchant.category_id')
+                        ->where('categories.status', '!=', 'deleted')
                         ->groupBy('merchants.merchant_id');
             }
 
@@ -1976,6 +1977,12 @@ class TenantAPIController extends ControllerAPI
                         $tenants->with('translations');
                     } elseif ($relation === 'keywords') {
                         $tenants->with('keywords');
+                    } elseif ($relation === 'categories') {
+                        $tenants->with([
+                            'categories' => function($q) {
+                                $q->where('status', 'active');
+                            }
+                        ]);
                     }
                 }
             });
