@@ -999,6 +999,9 @@ class Activity extends Eloquent
             case 'view_landing_page_coupon_detail':
             case 'view_landing_page_news_detail':
             case 'view_landing_page_promotion_detail':
+            case 'view_mall_event_detail':
+            case 'view_mall_promotion_detail':
+            case 'view_mall_coupon_detail':
                 $campaign = new CampaignPageView();
                 $campaign->campaign_id = $this->object_id;
                 $campaign->user_id = $this->user_id;
@@ -1415,6 +1418,18 @@ class Activity extends Eloquent
 
             case 'view_landing_page_promotion_detail':
                 $groupName = 'Promotion';
+                break;
+
+            case 'view_mall_event_detail':
+                $groupName = 'News';
+                break;
+
+            case 'view_mall_promotion_detail':
+                $groupName = 'Promotion';
+                break;
+
+            case 'view_mall_coupon_detail':
+                $groupName = 'Coupon';
                 break;
 
             case 'click_mall_featured_carousel':
