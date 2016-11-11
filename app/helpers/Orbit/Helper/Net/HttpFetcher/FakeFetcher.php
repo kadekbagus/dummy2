@@ -36,9 +36,23 @@ class FakeFetcher implements FetcherInterface
      *
      * @param string $name
      * @param string $value
-     * @return CurlFetcher
+     * @return FakeFetcher
      */
     public function setHeader($name, $value)
+    {
+        // do nothing
+
+        return $this;
+    }
+
+    /**
+     * Set option for the request object
+     *
+     * @param string $option
+     * @param string $value
+     * @return FakeFetcher
+     */
+    public function setOption($option, $value)
     {
         // do nothing
 

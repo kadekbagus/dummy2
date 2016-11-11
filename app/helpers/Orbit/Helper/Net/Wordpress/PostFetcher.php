@@ -32,6 +32,13 @@ class PostFetcher
     protected $fetcher = NULL;
 
     /**
+     * WP-Rest API v2 path
+     *
+     * @var string
+     */
+    protected $wpApipath = '/wp-json/wp/v2';
+
+    /**
      * @param array $baseUrlBlog
      * @return void
      */
@@ -51,7 +58,10 @@ class PostFetcher
         $args = [
             'per_page' => $this->config['take']
         ];
-        $fetchResult = $this->fetcher->getUrl($this->config['base_blog_url'], $args);
+
+        $wpApiUrl = rtrim($this->config['base_blog_url'], '/');
+        $wpApiUrl .= $this->wpApipath . '/posts';
+        $fetchResult = $this->fetcher->getUrl($wpApiUrl, $args);
 
         switch ($outputType) {
             case 'json':

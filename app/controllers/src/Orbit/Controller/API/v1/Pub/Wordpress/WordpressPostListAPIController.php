@@ -17,6 +17,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Activity;
 use stdClass;
+use Mall;
 
 
 class WordpressPostListAPIController extends ControllerAPI
@@ -29,9 +30,19 @@ class WordpressPostListAPIController extends ControllerAPI
      */
     protected $thrownButOK = FALSE;
 
+    /**
+     * Mall object
+     *
+     * @var Mall
+     */
+    protected $mall = FALSE;
+
     public function getPostList()
     {
         $httpCode = 200;
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = NULL;
+        $this->setMallObject();
 
         try {
             $jsonFile = Config::get('orbit.external_calls.wordpress.cache_file');
@@ -58,6 +69,17 @@ class WordpressPostListAPIController extends ControllerAPI
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = $message;
+
+            $activityNotes = sprintf('Total posts returned %s', $data->total_records);
+            $activity->setUser($user)
+                ->setActivityName('view_blog_list')
+                ->setActivityNameLong('View Blog List')
+                ->setObject(NULL)
+                ->setLocation($this->mall)
+                ->setModuleName('Application')
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -96,5 +118,13 @@ class WordpressPostListAPIController extends ControllerAPI
         $data->records = [];
 
         $this->response->data = $data;
+    }
+
+    protected function setMallObject()
+    {
+        $me = $this;
+        OrbitInput::get('mall_id', function($mallId) use ($me) {
+            $me->mall = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+        });
     }
 }

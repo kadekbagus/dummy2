@@ -6,6 +6,7 @@
  */
 interface FetcherInterface
 {
-    public function getUrl($url, $params=[]);
+    public function getUrl($url, array $params=[]);
     public function setHeader($header, $value);
+    public function setOption($option, $value);
 }
