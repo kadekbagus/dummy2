@@ -39,6 +39,6 @@ class WordpressWebHooksPostTest extends TestCase
 
         $decoded = json_decode($response->getContent());
         $this->assertSame(403, $response->getStatusCode());
-        $this->assertSame('Your IP is not allowed to access this resource', $decoded->message);
+        $this->assertSame(sprintf('Access denied from IP %s', $_SERVER['REMOTE_ADDR']), $decoded->message);
     }
 }
