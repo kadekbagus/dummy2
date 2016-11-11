@@ -340,29 +340,31 @@ class PromotionListAPIController extends ControllerAPI
             }
             $data->records = $listOfRec;
 
-            if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                if (is_object($mall)) {
-                    $activityNotes = sprintf('Page viewed:  View mall promotion list');
-                    $activity->setUser($user)
-                        ->setActivityName('view_mall_promotion_list')
-                        ->setActivityNameLong('View mall promotion list')
-                        ->setObject(null)
-                        ->setLocation($mall)
-                        ->setModuleName('Promotion')
-                        ->setNotes($activityNotes)
-                        ->responseOK()
-                        ->save();
-                } else {
-                    $activityNotes = sprintf('Page viewed: Promotion list');
-                    $activity->setUser($user)
-                        ->setActivityName('view_promotions_main_page')
-                        ->setActivityNameLong('View Promotions Main Page')
-                        ->setObject(null)
-                        ->setLocation($mall)
-                        ->setModuleName('Promotion')
-                        ->setNotes($activityNotes)
-                        ->responseOK()
-                        ->save();
+            if (OrbitInput::get('from_homepage', '') !== 'y') {
+                if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                    if (is_object($mall)) {
+                        $activityNotes = sprintf('Page viewed:  View mall promotion list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_mall_promotion_list')
+                            ->setActivityNameLong('View mall promotion list')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('Promotion')
+                            ->setNotes($activityNotes)
+                            ->responseOK()
+                            ->save();
+                    } else {
+                        $activityNotes = sprintf('Page viewed: Promotion list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_promotions_main_page')
+                            ->setActivityNameLong('View Promotions Main Page')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('Promotion')
+                            ->setNotes($activityNotes)
+                            ->responseOK()
+                            ->save();
+                    }
                 }
             }
 
