@@ -20,6 +20,7 @@ use Mail;
 use stdClass;
 use Activity;
 use Orbit\Helper\Util\PaginationNumber;
+use Queue;
 
 class ResetPasswordLinkAPIController extends ControllerAPI
 {
@@ -93,35 +94,10 @@ class ResetPasswordLinkAPIController extends ControllerAPI
                 $token->save();
             }
 
-            // URL Activation link
-            $baseUrl = Config::get('orbit.reset_password.reset_base_url');
-            $tokenUrl = sprintf($baseUrl, $token->token_value, $token->email);
-            $contactInfo = Config::get('orbit.contact_information.customer_service');
-
-            $data = array(
-                'token'             => $token->token_value,
-                'email'             => $email,
-                'first_name'        => $user->user_firstname,
-                'token_url'         => $tokenUrl,
-                'cs_phone'          => $contactInfo['phone'],
-                'cs_email'          => $contactInfo['email'],
-                'cs_office_hour'    => $contactInfo['office_hour']
-            );
-
-            $mailviews = array(
-                'html' => 'emails.reset-password.customer-html',
-                'text' => 'emails.reset-password.customer-text'
-            );
-
-            Mail::queue($mailviews, $data, function($message) use ($email)
-            {
-                $emailconf = Config::get('orbit.reset_password.sender');
-                $from = $emailconf['email'];
-                $name = $emailconf['name'];
-
-                $message->from($from, $name)->subject('Password Reset Request');
-                $message->to($email);
-            });
+            // Send email process to the queue
+            Queue::push('Orbit\\Queue\\ResetPasswordMail', [
+                'tokenId' => $token->token_id,
+            ]);
 
             // Successfull send reset password email
             $activity->setUser($user)

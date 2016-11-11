@@ -308,6 +308,7 @@ class MallNearbyAPIController extends ControllerAPI
                     ->setActivityName('search_landing_page')
                     ->setActivityNameLong('Search On Landing Page')
                     ->setObject(null)
+                    ->setLocation(null)
                     ->setModuleName('Search')
                     ->setNotes($keywordSearch)
                     ->responseOK()
