@@ -4,9 +4,9 @@ use OrbitShop\API\v1\ControllerAPI;
 use Config;
 use stdClass;
 
-class AdvertFooterAPIController extends ControllerAPI
+class AdvertListAPIController extends ControllerAPI
 {
-    public function getFooterAdvert()
+    public function getAdvertList()
     {
         try {
             $staticFooterImage = Config::get('orbit.statics.adverts.footer.image_url', null);
