@@ -4713,6 +4713,36 @@ return array(
     ],
 
     /**
+     * Calls to external service
+     */
+    'external_calls' => [
+        'wordpress' => [
+            // Driver of the HTTP client
+            // Value: 'curl', 'fake'
+            'driver' => 'curl',
+
+            // The base URL of the blog, e.g: https://blog.example.com
+            'base_blog_url' => NULL,
+
+            // Number of posts to take
+            'take' => 6,
+
+            // Default image used when the post does not have image URL
+            'default_image_url' => NULL,
+
+            // Cache file location, the web hooks will write to this file
+            'cache_file' => 'storage/wordpress/post-list.json',
+
+            // When post is made - Wordpress try to call Orbit URLs
+            // For security reason we limit the IPs that able to hit
+            // this URL
+            // Value could be '*' (means all) or an array
+            // e.g: ['127.0.0.1', '192.168.0/24']
+            'web_hooks_allowed_ips' => '*'
+        ]
+    ],
+
+    /**
      * Static placeholders
      */
     'static' => array(
@@ -4723,4 +4753,5 @@ return array(
             ),
         ),
     ),
+
 );
