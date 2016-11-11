@@ -323,31 +323,33 @@ class CouponListAPIController extends ControllerAPI
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
-            if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                if (is_object($mall)) {
-                    $activityNotes = sprintf('Page viewed: View mall coupon list');
-                    $activity->setUser($user)
-                        ->setActivityName('view_mall_coupon_list')
-                        ->setActivityNameLong('View mall coupon list')
-                        ->setObject(null)
-                        ->setLocation($mall)
-                        ->setModuleName('Coupon')
-                        ->setNotes($activityNotes)
-                        ->responseOK()
-                        ->save();
-                } else {
-                    $activityNotes = sprintf('Page viewed: Coupon list');
-                    $activity->setUser($user)
-                        ->setActivityName('view_coupons_main_page')
-                        ->setActivityNameLong('View Coupons Main Page')
-                        ->setObject(null)
-                        ->setLocation($mall)
-                        ->setModuleName('Coupon')
-                        ->setNotes($activityNotes)
-                        ->responseOK()
-                        ->save();
-                }
+            if (OrbitInput::get('from_homepage', '') !== 'y') {
+                if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                    if (is_object($mall)) {
+                        $activityNotes = sprintf('Page viewed: View mall coupon list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_mall_coupon_list')
+                            ->setActivityNameLong('View mall coupon list')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('Coupon')
+                            ->setNotes($activityNotes)
+                            ->responseOK()
+                            ->save();
+                    } else {
+                        $activityNotes = sprintf('Page viewed: Coupon list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_coupons_main_page')
+                            ->setActivityNameLong('View Coupons Main Page')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('Coupon')
+                            ->setNotes($activityNotes)
+                            ->responseOK()
+                            ->save();
+                    }
 
+                }
             }
 
             $this->response->data = new stdClass();

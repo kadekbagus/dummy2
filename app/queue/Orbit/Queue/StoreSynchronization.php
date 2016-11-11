@@ -211,7 +211,9 @@ class StoreSynchronization
                     // delete category
                     $delete_category = CategoryMerchant::where('merchant_id', $base_store_id)->delete(true);
                     // insert category
-                    $base_categories = BaseMerchantCategory::where('base_merchant_id', $base_merchant_id)->get();
+                    $base_categories = BaseMerchantCategory::leftJoin('categories', 'categories.category_id', '=', 'base_merchant_category.category_id')
+                                                            ->where('base_merchant_category.base_merchant_id', $base_merchant_id)
+                                                            ->where('categories.status', '!=', 'deleted')->get();
                     $categories = array();
                     foreach ($base_categories as $base_category) {
                         $categories[] = [ 'category_merchant_id' => ObjectID::make(),

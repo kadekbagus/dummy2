@@ -334,29 +334,31 @@ class NewsListAPIController extends ControllerAPI
             }
             $data->records = $listOfRec;
 
-            if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                if (is_object($mall)) {
-                    $activityNotes = sprintf('Page viewed: View mall event list');
-                    $activity->setUser($user)
-                        ->setActivityName('view_mall_event_list')
-                        ->setActivityNameLong('View mall event list')
-                        ->setObject(null)
-                        ->setLocation($mall)
-                        ->setModuleName('News')
-                        ->setNotes($activityNotes)
-                        ->responseOK()
-                        ->save();
-                } else {
-                    $activityNotes = sprintf('Page viewed: News list');
-                    $activity->setUser($user)
-                        ->setActivityName('view_news_main_page')
-                        ->setActivityNameLong('View News Main Page')
-                        ->setObject(null)
-                        ->setLocation($mall)
-                        ->setModuleName('News')
-                        ->setNotes($activityNotes)
-                        ->responseOK()
-                        ->save();
+            if (OrbitInput::get('from_homepage', '') !== 'y') {
+                if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                    if (is_object($mall)) {
+                        $activityNotes = sprintf('Page viewed: View mall event list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_mall_event_list')
+                            ->setActivityNameLong('View mall event list')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('News')
+                            ->setNotes($activityNotes)
+                            ->responseOK()
+                            ->save();
+                    } else {
+                        $activityNotes = sprintf('Page viewed: News list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_news_main_page')
+                            ->setActivityNameLong('View News Main Page')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('News')
+                            ->setNotes($activityNotes)
+                            ->responseOK()
+                            ->save();
+                    }
                 }
             }
 
