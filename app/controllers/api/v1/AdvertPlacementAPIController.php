@@ -173,7 +173,7 @@ class AdvertPlacementAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'campaign_status';
+            $sortBy = 'placement_name';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -184,7 +184,7 @@ class AdvertPlacementAPIController extends ControllerAPI
                     'advert_placement_id' => 'advert_placement_id',
                     'placement_name'      => 'placement_name',
                     'created_at'          => 'created_at',
-                    'status'              => 'campaign_status'
+                    'status'              => 'status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];

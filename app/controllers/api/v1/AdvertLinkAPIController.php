@@ -185,7 +185,7 @@ class AdvertLinkAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'campaign_status';
+            $sortBy = 'advert_link_name';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -196,7 +196,7 @@ class AdvertLinkAPIController extends ControllerAPI
                     'advert_link_type_id' => 'advert_link_type_id',
                     'advert_link_name'    => 'advert_link_name',
                     'created_at'          => 'created_at',
-                    'status'              => 'campaign_status'
+                    'status'              => 'status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
