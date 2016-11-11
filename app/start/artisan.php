@@ -104,6 +104,9 @@ Artisan::add(new UrlShortenerCommand);
 // Create User
 Artisan::add(new CreateUserCommand);
 
+// Update category image
+Artisan::add(new CategoryImageCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
