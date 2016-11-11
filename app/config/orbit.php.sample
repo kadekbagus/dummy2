@@ -3665,7 +3665,8 @@ return array(
             'pmp_promotions',
             'pmp_report_news',
             'pmp_report_promotions',
-            'pmp_employee'
+            'pmp_employee',
+            'pmp_advert'
         )
     ),
 
