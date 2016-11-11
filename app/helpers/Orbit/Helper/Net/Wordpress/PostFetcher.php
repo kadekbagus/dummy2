@@ -130,19 +130,27 @@ class PostFetcher
             return $this->config['default_image_url'];
         }
 
-        if (! property_exists($post->better_featured_image, 'sizes')) {
+        if (! property_exists($post->better_featured_image, 'media_details')) {
             return $this->config['default_image_url'];
         }
 
-        if (! is_object($post->better_featured_image->sizes)) {
+        if (! is_object($post->better_featured_image->media_details)) {
             return $this->config['default_image_url'];
         }
 
-        if (! property_exists($post->better_featured_image->sizes, 'thumbnail')) {
+        if (! property_exists($post->better_featured_image->media_details, 'sizes')) {
             return $this->config['default_image_url'];
         }
 
-        return $post->better_featured_image->sizes->thumbnail->source_url;
+        if (! is_object($post->better_featured_image->media_details->sizes)) {
+            return $this->config['default_image_url'];
+        }
+
+        if (! property_exists($post->better_featured_image->media_details->sizes, 'thumbnail')) {
+            return $this->config['default_image_url'];
+        }
+
+        return $post->better_featured_image->media_details->sizes->thumbnail->source_url;
     }
 
     /**
