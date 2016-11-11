@@ -11,7 +11,6 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
-use \Queue;
 
 class AdvertAPIController extends ControllerAPI
 {
@@ -142,7 +141,7 @@ class AdvertAPIController extends ControllerAPI
             // save advert locations.
             $advertLocations = array();
 
-            $locationType = 'mall'
+            $locationType = 'mall';
 
             foreach ($locations as $location_id) {
 
@@ -368,7 +367,7 @@ class AdvertAPIController extends ControllerAPI
                 // Insert new data
                 $advertLocations = array();
 
-                $locationType = 'mall'
+                $locationType = 'mall';
 
                 foreach ($locations as $location_id) {
 
