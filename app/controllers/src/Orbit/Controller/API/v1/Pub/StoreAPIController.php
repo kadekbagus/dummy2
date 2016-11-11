@@ -281,29 +281,31 @@ class StoreAPIController extends ControllerAPI
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
-            if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                if (is_object($mall)) {
-                    $activityNotes = sprintf('Page viewed: View mall store list page');
-                    $activity->setUser($user)
-                        ->setActivityName('view_mall_store_list')
-                        ->setActivityNameLong('View mall store list')
-                        ->setObject(null)
-                        ->setLocation($mall)
-                        ->setModuleName('Store')
-                        ->setNotes($activityNotes)
-                        ->responseOK()
-                        ->save();
-                } else {
-                    $activityNotes = sprintf('Page viewed: Store list');
-                    $activity->setUser($user)
-                        ->setActivityName('view_stores_main_page')
-                        ->setActivityNameLong('View Stores Main Page')
-                        ->setObject(null)
-                        ->setLocation($mall)
-                        ->setModuleName('Store')
-                        ->setNotes($activityNotes)
-                        ->responseOK()
-                        ->save();
+            if (OrbitInput::get('from_homepage', '') !== 'y') {
+                if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                    if (is_object($mall)) {
+                        $activityNotes = sprintf('Page viewed: View mall store list page');
+                        $activity->setUser($user)
+                            ->setActivityName('view_mall_store_list')
+                            ->setActivityNameLong('View mall store list')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('Store')
+                            ->setNotes($activityNotes)
+                            ->responseOK()
+                            ->save();
+                    } else {
+                        $activityNotes = sprintf('Page viewed: Store list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_stores_main_page')
+                            ->setActivityNameLong('View Stores Main Page')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('Store')
+                            ->setNotes($activityNotes)
+                            ->responseOK()
+                            ->save();
+                    }
                 }
             }
 
