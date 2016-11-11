@@ -50,3 +50,20 @@ Route::post('/api/v1/advert-image/delete', function()
 {
     return UploadAPIController::create()->postDeleteAdvertImage();
 });
+
+/**
+ * List/Search advert placement
+ */
+Route::get('/api/v1/advert-placement/{search}', function()
+{
+    return AdvertPlacementAPIController::create()->getSearchAdvertPlacement();
+})->where('search', '(list|search)');
+
+
+/**
+ * List/Search advert link
+ */
+Route::get('/api/v1/advert-link/{search}', function()
+{
+    return AdvertLinkAPIController::create()->getSearchAdvertLink();
+})->where('search', '(list|search)');
