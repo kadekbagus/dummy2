@@ -8356,6 +8356,396 @@ class UploadAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Upload images for Advert.
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `advert_id`                   (required) - ID of the advert
+     * @param file|array `images`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadAdvertImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadadvertimage.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadadvertimage.after.auth', array($this));
+
+                // Try to check access control list, does this advert allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadadvertimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_advert')) {
+                    Event::fire('orbit.upload.postuploadadvertimage.authz.notallowed', array($this, $user));
+                    $editNewsLang = Lang::get('validation.orbit.actionlist.update_advert');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editNewsLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadadvertimage.after.authz', array($this, $user));
+            } else {
+                // Comes from event
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for advert upload image
+            $uploadImageConfig = Config::get('orbit.upload.advert.main');
+            $elementName = $uploadImageConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $advert_id = OrbitInput::post('advert_id');
+            $images = OrbitInput::files($elementName);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'advert_id'  => $advert_id,
+                    $elementName => $images,
+                ),
+                array(
+                    'advert_id'  => 'required|orbit.empty.advert',
+                    $elementName => 'required|array|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadadvertimage.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadadvertimage.after.validation', array($this, $validator));
+
+            // We already had News instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $advert = App::make('orbit.empty.advert');
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($advert)
+            {
+                $advert_id = $advert->advert_id;
+                $slug = Str::slug($advert->advert_name);
+                $file['new']->name = sprintf('%s-%s-%s', $advert_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadadvertimage.before.save', array($this, $advert, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Delete old advert image
+            $pastMedia = Media::where('object_id', $advert->advert_id)
+                              ->where('object_name', 'advert')
+                              ->where('media_name_id', 'advert_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $advert->advert_id,
+                'name'          => 'advert',
+                'media_name_id' => 'advert_image',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            if (isset($uploaded[0])) {
+                $advert->image = $uploaded[0]['path'];
+                $advert->save();
+            }
+
+            Event::fire('orbit.upload.postuploadadvertimage.after.save', array($this, $advert, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.advert.main');
+
+            // Commit the changes
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadadvertimage.after.commit', array($this, $advert, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadadvertimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadadvertimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadadvertimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadadvertimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadadvertimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete images for Advert.
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `advert_id`                  (required) - ID of the advert
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteNewsImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeleteadvertimage.before.auth', array($this));
+
+            if (! $this->calledFrom('advert.new, advert.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeleteadvertimage.after.auth', array($this));
+
+                // Try to check access control list, does this advert allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeleteadvertimage.before.authz', array($this, $user));
+
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postdeleteadvertimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $advert_id = OrbitInput::post('advert_id');
+
+            $validator = Validator::make(
+                array(
+                    'advert_id'   => $advert_id,
+                ),
+                array(
+                    'advert_id'   => 'required|orbit.empty.advert',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeleteadvertimage.before.validation', array($this, $validator));
+
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeleteadvertimage.after.validation', array($this, $validator));
+
+            // We already had News instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $advert = App::make('orbit.empty.advert');
+
+            // Delete old advert image
+            $pastMedia = Media::where('object_id', $advert->advert_id)
+                              ->where('object_name', 'advert')
+                              ->where('media_name_id', 'advert_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeleteadvertimage.before.save', array($this, $advert));
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per advert
+            $advert->image = NULL;
+            $advert->save();
+
+            Event::fire('orbit.upload.postdeleteadvertimage.after.save', array($this, $advert));
+
+            $this->response->data = $advert;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.advert.delete_image');
+
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeleteadvertimage.after.commit', array($this, $advert));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeleteadvertimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeleteadvertimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeleteadvertimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeleteadvertimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('advert.new, advert.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeleteadvertimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
