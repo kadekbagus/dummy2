@@ -100,7 +100,7 @@ class PostFetcher
         }
 
         $result = [];
-        foreach ($postsData as $post) {
+        foreach ($postsData as $i=>$post) {
             $tmp = new stdClass();
             $tmp->post_url = $post->link;
             $tmp->image_url = $this->getImageFromPost($post);
@@ -126,7 +126,15 @@ class PostFetcher
             return $this->config['default_image_url'];
         }
 
+        if (! is_object($post->better_featured_image)) {
+            return $this->config['default_image_url'];
+        }
+
         if (! property_exists($post->better_featured_image, 'sizes')) {
+            return $this->config['default_image_url'];
+        }
+
+        if (! is_object($post->better_featured_image->sizes)) {
             return $this->config['default_image_url'];
         }
 
