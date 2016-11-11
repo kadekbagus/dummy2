@@ -185,6 +185,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
                 ->setActivityNameLong('View Redemption Page')
                 ->setObject($coupon)
                 ->setCoupon($coupon)
+                ->setLocation(NULL)
                 ->setModuleName('Coupon')
                 ->setNotes($activityNotes)
                 ->responseOK()

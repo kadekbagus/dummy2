@@ -19,6 +19,7 @@ use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Activity;
 use Coupon;
+use Mall;
 use IssuedCoupon;
 use Orbit\Helper\Security\Encrypter;
 use \Orbit\Helper\Exception\OrbitCustomException;
@@ -57,6 +58,7 @@ class CouponAddToWalletAPIController extends ControllerAPI
 
             $hashedIssuedCouponCode = OrbitInput::post('cid', NULL); // hashed issued coupon code
             $hashedPromotionCouponId = OrbitInput::post('pid', NULL); // hashed promotion id
+            $mallId = OrbitInput::post('mall_id', NULL);
 
             // add to wallet via SMS
             if (! empty($hashedIssuedCouponCode) && ! empty($hashedPromotionCouponId)) {
@@ -130,6 +132,12 @@ class CouponAddToWalletAPIController extends ControllerAPI
             $newIssuedCoupon = new IssuedCoupon();
             $issuedCoupon = $newIssuedCoupon->issueCouponViaWallet($coupon->promotion_id, $user->user_email, $user->user_id, $issued_coupon_code);
             $this->commit();
+
+            if (! empty($mallId)) {
+                $retailer = Mall::excludeDeleted()
+                    ->where('merchant_id', $mallId)
+                    ->first();
+            }
 
             if ($issuedCoupon) {
                 $this->response->message = 'Request Ok';
