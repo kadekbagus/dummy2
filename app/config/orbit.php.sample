@@ -4712,4 +4712,15 @@ return array(
         ]
     ],
 
+    /**
+     * Static placeholders
+     */
+    'static' => array(
+        'adverts' => array(
+            'footer' => array(
+                'image_url' => NULL,
+                'link_url' => NULL,
+            ),
+        ),
+    ),
 );
