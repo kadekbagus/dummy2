@@ -153,6 +153,7 @@ class PromotionDetailAPIController extends ControllerAPI
                     ->setActivityName('view_landing_page_promotion_detail')
                     ->setActivityNameLong('View GoToMalls Promotion Detail')
                     ->setObject($promotion)
+                    ->setLocation($mall)
                     ->setNews($promotion)
                     ->setModuleName('Promotion')
                     ->setNotes($activityNotes)

@@ -129,12 +129,12 @@
         <tr>
             <td>Estimated Total Cost (IDR)</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalEstimatedCost, 0); ?></strong></td>
+            <td><strong><?php echo 'N/A'; ?></strong></td>
         </tr>
         <tr>
             <td>Total Spending (IDR)</td>
             <td>:</td>
-            <td><strong><?php echo number_format($totalSpending, 0); ?></strong></td>
+            <td><strong><?php echo 'N/A'; ?></strong></td>
         </tr>
 
 
@@ -256,9 +256,9 @@
                     <td><?php echo date('d M Y', strtotime($row->begin_date)) . ' - ' . date('d M Y', strtotime($row->end_date)); ?></td>
                     <td><?php echo number_format($row->page_views); ?></td>
                     <td><?php echo number_format($row->popup_clicks); ?></td>
-                    <td><?php echo number_format($row->daily, 0); ?></td>
-                    <td><?php echo number_format($row->estimated_total, 0); ?></td>
-                    <td><?php echo number_format($row->spending, 0); ?></td>
+                    <td><?php echo 'N/A'; ?></td>
+                    <td><?php echo 'N/A'; ?></td>
+                    <td><?php echo 'N/A'; ?></td>
                     <td><?php echo $row->campaign_status; ?></td>
                 </tr>
             <?php endwhile ; ?>
