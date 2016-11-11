@@ -8,6 +8,6 @@ class AdvertLocation extends Eloquent
      */
 
     protected $table = 'advert_locations';
-    protected $primaryKey = 'advert_locations_id';
+    protected $primaryKey = 'advert_location_id';
 
 }
