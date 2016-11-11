@@ -12,6 +12,7 @@ class Advert extends Eloquent
      * with `status` field.
      */
     use ModelStatusTrait;
+    use CampaignAccessTrait;
 
     protected $table = 'adverts';
     protected $primaryKey = 'advert_id';
@@ -30,6 +31,27 @@ class Advert extends Eloquent
     {
         return $this->hasMany('Media', 'object_id', 'advert_id')
                     ->where('object_name', 'advert');
+    }
+
+    public function locations()
+    {
+        return $this->hasMany('AdvertLocation', 'advert_id', 'advert_id');
+    }
+
+    public function advertLocations()
+    {
+        $prefix = DB::getTablePrefix();
+        return $this->hasMany('AdvertLocation', 'advert_id', 'advert_id')
+                    ->select('advert_id',
+                        DB::raw("CASE
+                                    WHEN {$prefix}advert_locations.location_id = '0' and {$prefix}advert_locations.location_type = 'gtm' THEN '0'
+                                    ELSE merchant_id
+                                END AS 'merchant_id'"),
+                        DB::raw("CASE
+                                    WHEN {$prefix}advert_locations.location_id = '0' and {$prefix}advert_locations.location_type = 'gtm' THEN 'gtm'
+                                    ELSE name
+                                END AS 'name'"))
+                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'advert_locations.location_id');
     }
 
 }
