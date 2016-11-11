@@ -499,7 +499,6 @@ class AdvertAPIController extends ControllerAPI
     /**
      * GET - Search Advert
      *
-     * @author Tian <tian@dominopos.com>
      * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
@@ -828,7 +827,7 @@ class AdvertAPIController extends ControllerAPI
 
         // Check the existance of advert id
         Validator::extend('orbit.empty.advert', function ($attribute, $value, $parameters) {
-            $advert = Advert::excludeStoppedOrExpired('advert')
+            $advert = Advert::where('status', 'active')
                         ->where('advert_id', $value)
                         ->first();
 
@@ -837,6 +836,36 @@ class AdvertAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.advert', $advert);
+
+            return true;
+        });
+
+        // Check the existance of advert link id
+        Validator::extend('orbit.empty.advert_link_type_id', function ($attribute, $value, $parameters) {
+            $advert = AdvertLinkType::where('status', 'active')
+                        ->where('advert_link_type_id', $value)
+                        ->first();
+
+            if (empty($advert)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.advert_link_type_id', $advert);
+
+            return true;
+        });
+
+        // Check the existance of advert placement id
+        Validator::extend('orbit.empty.advert_placement_id', function ($attribute, $value, $parameters) {
+            $advert = AdvertPlacement::where('status', 'active')
+                        ->where('advert_placement_id', $value)
+                        ->first();
+
+            if (empty($advert)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.advert_placement_id', $advert);
 
             return true;
         });
