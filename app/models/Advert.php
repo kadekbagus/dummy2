@@ -13,7 +13,7 @@ class Advert extends Eloquent
      */
     use ModelStatusTrait;
 
-    protected $table = 'advert';
+    protected $table = 'adverts';
     protected $primaryKey = 'advert_id';
 
     public function creator()
