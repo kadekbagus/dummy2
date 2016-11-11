@@ -111,13 +111,23 @@ class AdvertLinkAPIController extends ControllerAPI
                 }
             }
 
-            $placement = OrbitInput::get('placement');
-
             $filterName = OrbitInput::get('link_name_like', '');
 
             // Builder object
             $prefix = DB::getTablePrefix();
             $link = AdvertLinkType::where('status', 'active');
+
+            // Filter advert by Id
+            OrbitInput::get('placement', function($placement) use ($link)
+            {
+                if ($placement == 'Top Banner') {
+                    $link->whereIn('advert_link_name', array('No Link', 'Information', 'URL', 'Store', 'Promotion', 'Coupon'));
+                } else if ($placement == 'Foot Banner') {
+                    $link->whereIn('advert_link_name', array('Information', 'URL', 'Store', 'Promotion', 'Coupon'));
+                } else if ($placement == 'Preferred List (Regular)' || $placement == 'Preferred List (Large)' || $placement == 'Featured List') {
+                    $link->whereIn('advert_link_name', array('Store', 'Promotion', 'Coupon'));
+                }
+            });
 
             // Filter advert by Id
             OrbitInput::get('advert_link_id', function($linkId) use ($link)
