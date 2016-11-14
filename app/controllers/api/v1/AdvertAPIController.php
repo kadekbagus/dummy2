@@ -722,6 +722,7 @@ class AdvertAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
+                    'advert_id'       => 'adverts.advert_id',
                     'advert_name'     => 'adverts.advert_name',
                     'total_location'  => 'total_location',
                     'placement_name'  => 'placement_name',
@@ -729,7 +730,8 @@ class AdvertAPIController extends ControllerAPI
                     'start_date'      => 'adverts.start_date',
                     'end_date'        => 'adverts.end_date',
                     'created_at'      => 'adverts.created_at',
-                    'updated_at'      => 'adverts.updated_at'
+                    'updated_at'      => 'adverts.updated_at',
+                    'status'          => 'adverts.status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
