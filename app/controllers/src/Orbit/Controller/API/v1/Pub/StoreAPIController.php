@@ -25,6 +25,7 @@ use Activity;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Database\Cache as OrbitDBCache;
 
 class StoreAPIController extends ControllerAPI
 {
@@ -269,6 +270,12 @@ class StoreAPIController extends ControllerAPI
 
             $_store = clone $store;
 
+            // Cache the result of database calls
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($store);
+
+            $recordCounter = RecordCounter::create($_store);
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
+
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $store->take($take);
 
@@ -276,7 +283,7 @@ class StoreAPIController extends ControllerAPI
             $store->skip($skip);
 
             $liststore = $store->get();
-            $count = count($_store->get());
+            $count = $recordCounter->count();
 
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
