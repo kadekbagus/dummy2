@@ -91,7 +91,6 @@ class AdvertAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'link_object_id'      => $link_object_id,
                     'advert_link_type_id' => $advert_link_type_id,
                     'advert_placement_id' => $advert_placement_id,
                     'advert_name'         => $advert_name,
@@ -100,7 +99,6 @@ class AdvertAPIController extends ControllerAPI
                     'status'              => $status
                 ),
                 array(
-                    'link_object_id'      => 'required|max:255',
                     'advert_link_type_id' => 'required|orbit.empty.advert_link_type_id',
                     'advert_placement_id' => 'required|orbit.empty.advert_placement_id',
                     'advert_name'         => 'required',
