@@ -49,7 +49,7 @@ class WordpressWebHooksPostAPIController extends ControllerAPI
             file_put_contents($config['cache_file'], $response);
             Log::info(sprintf('[WORDPRESS] Web Hooks: Successfully fetched and saved to %s', $config['cache_file']));
 
-            $this->response->data = NULL;
+            $this->response->data = json_decode($response);
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Posts has been successfully written to the cache';

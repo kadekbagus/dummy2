@@ -4829,4 +4829,17 @@ return array(
         ),
     ),
 
+    /**
+     * Cache the DB result for the list
+     */
+    'cache' => [
+        // Cache type
+        'database' => [
+            // Enable or disable the cache
+            'enable' => TRUE,
+
+            // Cache the result for X minutes
+            'cache_ttl' => 15
+        ]
+    ]
 );

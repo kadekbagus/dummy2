@@ -28,6 +28,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Database\Cache as OrbitDBCache;
 
 class PromotionListAPIController extends ControllerAPI
 {
@@ -321,7 +322,14 @@ class PromotionListAPIController extends ControllerAPI
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
+
             $_promotion = clone($promotion);
+
+            // Cache the result of database calls
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($promotion);
+
+            $recordCounter = RecordCounter::create($_promotion);
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('promotion');
             $promotion->take($take);
@@ -329,7 +337,7 @@ class PromotionListAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $promotion->skip($skip);
 
-            $totalRec = count($_promotion->get());
+            $totalRec = $recordCounter->count();
             $listOfRec = $promotion->get();
 
             $data = new \stdclass();
