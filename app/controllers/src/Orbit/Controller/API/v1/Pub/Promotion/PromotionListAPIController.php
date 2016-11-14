@@ -28,6 +28,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Database\Cache as OrbitDBCache;
 
 class PromotionListAPIController extends ControllerAPI
 {
@@ -71,6 +72,8 @@ class PromotionListAPIController extends ControllerAPI
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
             $withPremium = OrbitInput::get('is_premium', null);
+            $list_type = OrbitInput::get('list_type', 'featured');
+            $from_mall_ci = OrbitInput::get('from_mall_ci', null);
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -101,6 +104,13 @@ class PromotionListAPIController extends ControllerAPI
             $withMallId = '';
             if (! empty($mallId)) {
                 $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
+            }
+
+            $advert_location_type = 'gtm';
+            $advert_location_id = '0';
+            if (! empty($from_mall_ci)) {
+                $advert_location_type = 'mall';
+                $advert_location_id = $mallId;
             }
 
             $promotions = News::select(
@@ -141,7 +151,7 @@ class PromotionListAPIController extends ControllerAPI
                                                 AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                     THEN 'true' ELSE 'false' END AS is_started
                                 "),
-                            'news.sticky_order', 'news.created_at')
+                            'advert_placements.placement_type', 'news.created_at')
                             ->leftJoin('news_translations', function ($q) use ($valid_language) {
                                 $q->on('news_translations.news_id', '=', 'news.news_id')
                                   ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
@@ -156,8 +166,23 @@ class PromotionListAPIController extends ControllerAPI
                                 $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                             })
+                            ->leftJoin('adverts', 'adverts.link_object_id', '=', 'news.news_id')
+                            ->leftJoin('advert_link_types', function ($q) {
+                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
+                                $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Promotion'"));
+                            })
+                            ->leftJoin('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
+                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
+                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
+                                $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
+                            })
+                            ->leftJoin('media as advert_media', function ($q) {
+                                $q->on(DB::raw("advert_media.object_id"), '=', 'adverts.advert_id');
+                                $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
+                            })
                             ->where('news.object_type', '=', 'promotion')
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                            ->orderBy('advert_placements.placement_type', 'asc')
                             ->orderBy('news_name', 'asc');
 
             //calculate distance if user using my current location as filter and sort by location for listing
@@ -183,6 +208,19 @@ class PromotionListAPIController extends ControllerAPI
                                                         DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END"));
                                                 });
                 }
+            }
+
+            // display list : prefered or featured
+            if ($list_type === 'featured') {
+                $promotions->leftJoin('advert_placements', function ($q) {
+                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
+                                $q->on('advert_placements.placement_type', 'like', DB::raw("'%featured%'"));
+                            });
+            } else {
+                $promotions->leftJoin('advert_placements', function ($q) {
+                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
+                                $q->on('advert_placements.placement_type', 'like', DB::raw("'%preferred%'"));
+                            });
             }
 
             // filter by category_id
@@ -234,18 +272,12 @@ class PromotionListAPIController extends ControllerAPI
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
-                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), 'sticky_order', DB::raw("sub_query.created_at"));
-
-                if (! empty($withPremium)) {
-                    $promotion = $promotion->orderBy('sticky_order', 'desc');
-                }
-                $promotion = $promotion->orderBy('distance', 'asc');
-
+                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), 'placement_type', DB::raw("sub_query.created_at"))
+                                    ->orderBy('placement_type', 'desc')
+                                    ->orderBy('distance', 'asc');
             } else {
-                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', 'sticky_order', DB::raw("sub_query.created_at"));
-                if (! empty($withPremium)) {
-                    $promotion = $promotion->orderBy('sticky_order', 'desc');
-                }
+                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', 'placement_type', DB::raw("sub_query.created_at"))
+                                        ->orderBy('placement_type', 'desc');
             }
 
             $promotion = $promotion->groupBy(DB::Raw("sub_query.news_id"));
@@ -321,7 +353,14 @@ class PromotionListAPIController extends ControllerAPI
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
+
             $_promotion = clone($promotion);
+
+            // Cache the result of database calls
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($promotion);
+
+            $recordCounter = RecordCounter::create($_promotion);
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('promotion');
             $promotion->take($take);
@@ -329,7 +368,7 @@ class PromotionListAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $promotion->skip($skip);
 
-            $totalRec = count($_promotion->get());
+            $totalRec = $recordCounter->count();
             $listOfRec = $promotion->get();
 
             $data = new \stdclass();

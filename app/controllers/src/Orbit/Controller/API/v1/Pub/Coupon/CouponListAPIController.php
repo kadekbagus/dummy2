@@ -22,6 +22,8 @@ use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Database\Cache as OrbitDBCache;
+use Helper\EloquentRecordCounter as RecordCounter;
 
 class CouponListAPIController extends ControllerAPI
 {
@@ -311,6 +313,12 @@ class CouponListAPIController extends ControllerAPI
             }
             $_coupon = clone $coupon;
 
+            // Cache the result of database calls
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($coupon);
+
+            $recordCounter = RecordCounter::create($_coupon);
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
+
             $take = PaginationNumber::parseTakeFromGet('coupon');
             $coupon->take($take);
 
@@ -318,7 +326,7 @@ class CouponListAPIController extends ControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
-            $count = count($_coupon->get());
+            $count = $recordCounter->count();
 
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
