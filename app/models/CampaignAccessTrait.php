@@ -40,6 +40,11 @@ trait CampaignAccessTrait
                 $field_name = 'news_id';
                 break;
 
+            case 'advert':
+                $table_name = 'adverts';
+                $field_name = 'advert_id';
+                break;
+
             default:
                 throw new Exception("Wrong campaign type supplied", 1);
         }

@@ -35,7 +35,9 @@ class WordpressWebHooksPostAPIController extends ControllerAPI
             $accessSecurity = RequestAccess::create()->setAllowedIps($config['web_hooks_allowed_ips'], '*');
             $userIp = $_SERVER['REMOTE_ADDR'];
             if (! $accessSecurity->checkIpAddress($userIp)) {
-                throw new Exception(sprintf('Access denied from %s', $userIp));
+                $message = sprintf('Access denied from IP %s', $userIp);
+                Log::info(sprintf('[WORDPRESS] %s', $message));
+                ACL::throwAccessForbidden($message);
             }
 
             if (! file_exists($dirname)) {
