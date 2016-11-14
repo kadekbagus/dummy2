@@ -160,6 +160,13 @@ class AdvertAPIController extends ControllerAPI
             }
             $newadvert->tenants = $advertLocations;
 
+            //save to user campaign
+            $usercampaign = new UserCampaign();
+            $usercampaign->user_id = $user->user_id;
+            $usercampaign->campaign_id = $newadvert->advert_id;
+            $usercampaign->campaign_type = 'advert';
+            $usercampaign->save();
+
             Event::fire('orbit.advert.postnewadvert.after.save', array($this, $newadvert));
 
             $this->response->data = $newadvert;
