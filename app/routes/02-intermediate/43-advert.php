@@ -45,3 +45,9 @@ Route::get('/app/v1/advert-placement/{search}', 'IntermediateAuthController@Adve
  */
 Route::get('/app/v1/advert-link/{search}', 'IntermediateAuthController@AdvertLink_getSearchAdvertLink')
      ->where('search', '(list|search)');
+
+/**
+ * List and/or advert location
+ */
+Route::get('/app/v1/advert-location/{search}', 'IntermediateAuthController@AdvertLocation_getAdvertLocations')
+     ->where('search', '(list|search)');

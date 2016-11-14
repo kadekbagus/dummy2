@@ -28,6 +28,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Database\Cache as OrbitDBCache;
 
 class NewsListAPIController extends ControllerAPI
 {
@@ -316,6 +317,12 @@ class NewsListAPIController extends ControllerAPI
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
             $_news = clone($news);
+
+            // Cache the result of database calls
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($news);
+
+            $recordCounter = RecordCounter::create($_news);
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('news');
             $news->take($take);

@@ -616,8 +616,10 @@ class AdvertAPIController extends ControllerAPI
                                                 WHEN advert_link_name = 'Promotion' THEN {$prefix}news.news_name
                                                 ELSE link_url
                                              END AS 'link_to'"),
+                                     DB::raw("media.path as image_path"),
                                      'adverts.status',
-                                     'adverts.updated_at')
+                                     'adverts.updated_at',
+                                     'adverts.created_at')
                             ->excludeDeleted('adverts')
                             ->join('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
                             ->join('advert_link_types', 'advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id')
@@ -625,6 +627,7 @@ class AdvertAPIController extends ControllerAPI
                             ->leftJoin('promotions', 'promotions.promotion_id', '=', 'adverts.link_object_id')
                             ->leftJoin('news', 'news.news_id', '=', 'adverts.link_object_id')
                             ->leftJoin('merchants as store', DB::raw('store.merchant_id'), '=', DB::raw("{$prefix}adverts.link_object_id"))
+                            ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'advert_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'adverts.advert_id')
                             ->groupBy('adverts.advert_id');
 
             // Filter advert by Ids
@@ -719,6 +722,7 @@ class AdvertAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
+                    'advert_id'       => 'adverts.advert_id',
                     'advert_name'     => 'adverts.advert_name',
                     'total_location'  => 'total_location',
                     'placement_name'  => 'placement_name',
@@ -726,7 +730,8 @@ class AdvertAPIController extends ControllerAPI
                     'start_date'      => 'adverts.start_date',
                     'end_date'        => 'adverts.end_date',
                     'created_at'      => 'adverts.created_at',
-                    'updated_at'      => 'adverts.updated_at'
+                    'updated_at'      => 'adverts.updated_at',
+                    'status'          => 'adverts.status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
