@@ -151,7 +151,6 @@ class AdvertAPIController extends ControllerAPI
                 }
 
                 $advertLocation = new AdvertLocation();
-                $advertLocation->advert_location_id = $tenant_id;
                 $advertLocation->advert_id = $newadvert->advert_id;
                 $advertLocation->location_id = $location_id;
                 $advertLocation->location_type = $locationType;
@@ -159,6 +158,13 @@ class AdvertAPIController extends ControllerAPI
                 $advertLocations[] = $advertLocation;
             }
             $newadvert->tenants = $advertLocations;
+
+            //save to user campaign
+            $usercampaign = new UserCampaign();
+            $usercampaign->user_id = $user->user_id;
+            $usercampaign->campaign_id = $newadvert->advert_id;
+            $usercampaign->campaign_type = 'advert';
+            $usercampaign->save();
 
             Event::fire('orbit.advert.postnewadvert.after.save', array($this, $newadvert));
 
@@ -377,7 +383,6 @@ class AdvertAPIController extends ControllerAPI
                     }
 
                     $advertLocation = new AdvertLocation();
-                    $advertLocation->advert_location_id = $tenant_id;
                     $advertLocation->advert_id = $newadvert->advert_id;
                     $advertLocation->location_id = $location_id;
                     $advertLocation->location_type = $locationType;

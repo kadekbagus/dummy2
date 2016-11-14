@@ -14,8 +14,8 @@ class AdvertListAPIController extends ControllerAPI
             $staticFooterTitle = Config::get('orbit.statics.adverts.footer.title', null);
 
             $data = new stdClass();
-            $data->link_url = $staticFooterImage;
-            $data->image_url = $staticFooterUrl;
+            $data->link_url = $staticFooterUrl;
+            $data->image_url = $staticFooterImage;
             $data->title = $staticFooterTitle;
 
             $this->response->data = $data;

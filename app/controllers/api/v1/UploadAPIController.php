@@ -8407,6 +8407,7 @@ class UploadAPIController extends ControllerAPI
             // Application input
             $advert_id = OrbitInput::post('advert_id');
             $images = OrbitInput::files($elementName);
+
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
                     'max' => 1
@@ -8489,14 +8490,6 @@ class UploadAPIController extends ControllerAPI
                 'modified_by'   => $user->user_id
             );
             $mediaList = $this->saveMetadata($object, $uploaded);
-
-            // Update the `image` field which store the original path of the image
-            // This is temporary since right know the business rules actually
-            // only allows one image per product
-            if (isset($uploaded[0])) {
-                $advert->image = $uploaded[0]['path'];
-                $advert->save();
-            }
 
             Event::fire('orbit.upload.postuploadadvertimage.after.save', array($this, $advert, $uploader));
 
@@ -8583,7 +8576,7 @@ class UploadAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function postDeleteNewsImage()
+    public function postDeleteAdvertImage()
     {
         try {
             $httpCode = 200;
