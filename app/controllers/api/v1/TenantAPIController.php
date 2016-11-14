@@ -2405,22 +2405,7 @@ class TenantAPIController extends ControllerAPI
             $tenants->orderBy($sortBy, $sortMode);
 
             $totalTenants = RecordCounter::create($_tenants)->count();
-            // $listOfTenants = $tenants->get();
-
-
-
-$sql = $tenants->toSql();
-foreach($tenants->getBindings() as $binding)
-{
-  $value = is_numeric($binding) ? $binding : $this->quote($binding);
-  $sql = preg_replace('/\?/', $value, $sql, 1);
-}
-
-echo "<pre>";
-print_r($sql);
-die();
-
-
+            $listOfTenants = $tenants->get();
 
             $data = new stdclass();
             $data->total_records = $totalTenants;
