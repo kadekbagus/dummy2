@@ -2316,6 +2316,12 @@ class TenantAPIController extends ControllerAPI
                                     WHERE {$prefix}user_merchant.object_type IN ('mall'))");
             }
 
+            if ($filtermode === 'mall') {
+                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
+                                    SELECT merchant_id FROM {$prefix}user_merchant
+                                    WHERE {$prefix}user_merchant.object_type IN ('tenant'))");
+            }
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_tenants = clone $tenants;
@@ -2399,7 +2405,22 @@ class TenantAPIController extends ControllerAPI
             $tenants->orderBy($sortBy, $sortMode);
 
             $totalTenants = RecordCounter::create($_tenants)->count();
-            $listOfTenants = $tenants->get();
+            // $listOfTenants = $tenants->get();
+
+
+
+$sql = $tenants->toSql();
+foreach($tenants->getBindings() as $binding)
+{
+  $value = is_numeric($binding) ? $binding : $this->quote($binding);
+  $sql = preg_replace('/\?/', $value, $sql, 1);
+}
+
+echo "<pre>";
+print_r($sql);
+die();
+
+
 
             $data = new stdclass();
             $data->total_records = $totalTenants;
@@ -2412,6 +2433,7 @@ class TenantAPIController extends ControllerAPI
             }
 
             $this->response->data = $data;
+
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.tenant.getsearchtenant.access.forbidden', array($this, $e));
 
