@@ -12,11 +12,11 @@ use DB;
 class EloquentRecordCounter
 {
     /**
-     * The query builder
+     * Query builder for aggregate
      *
-     * @var Eloquent
+     * @var QueryBuilder
      */
-    protected $model;
+    protected $builder = NULL;
 
     /**
      * Class constructor
@@ -25,7 +25,18 @@ class EloquentRecordCounter
      */
     public function __construct($model)
     {
-        $this->model = $model;
+        // Turn the eloquent builder into SQL string
+        $sql = $model->toSql();
+        $query = $model;
+
+        // Get the query instance of the builder
+        if ($model instanceof \Illuminate\Database\Eloquent\Builder) {
+            $query = $model->getQuery();
+        }
+
+        // Use raw SQL Count statement
+        $this->builder = DB::table( DB::raw("({$sql}) as subquery") )
+                   ->mergeBindings($query);
     }
 
     /**
@@ -48,17 +59,16 @@ class EloquentRecordCounter
      */
     public function count()
     {
-        // Turn the eloquent builder into SQL string
-        $sql = $this->model->toSql();
+        return $this->builder->count();
+    }
 
-        // Get the query instance of the builder
-        $query = $this->model->getQuery();
-
-        // Use raw SQL Count statement
-        $count = DB::table( DB::raw("({$sql}) as subquery") )
-                   ->mergeBindings($query)
-                   ->count();
-
-        return $count;
+    /**
+     * Get the query builder
+     *
+     * @return QueryBuilder
+     */
+    public function getQueryBuilder()
+    {
+        return $this->builder;
     }
 }
