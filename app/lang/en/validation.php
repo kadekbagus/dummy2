@@ -316,6 +316,7 @@ return array(
             'couponreportbytenant_sortby' => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, user_email, issued_coupon_code, redeemed_date, issued_date, redeem_verification_code, total_issued, total_redeemed, gender, age, redemption_place, status',
             'issuedcouponreport_sortby'   => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, is_auto_issue_on_signup, user_email, issued_coupon_code, issued_date, total_issued, maximum_issued_coupon, coupon_status, status',
             'couponsummaryreport_sortby'  => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, is_auto_issue_on_signup, total_redeemed, total_issued, coupon_status',
+            'advert_sortby'  => 'The sort by argument you specified is not valid, the valid values are: advert_id, advert_name, advert_link_name, placement_name, start_date, end_date, status, created_at, updated_at, total_location',
             'mallgroup'            => 'The Mall Group ID you specified is not found',
             'membership'           => 'The Membership ID you specified is not found',
             'language' => 'The Language ID you specified is not found',
