@@ -151,7 +151,6 @@ class AdvertAPIController extends ControllerAPI
                 }
 
                 $advertLocation = new AdvertLocation();
-                $advertLocation->advert_location_id = $tenant_id;
                 $advertLocation->advert_id = $newadvert->advert_id;
                 $advertLocation->location_id = $location_id;
                 $advertLocation->location_type = $locationType;
@@ -384,7 +383,6 @@ class AdvertAPIController extends ControllerAPI
                     }
 
                     $advertLocation = new AdvertLocation();
-                    $advertLocation->advert_location_id = $tenant_id;
                     $advertLocation->advert_id = $newadvert->advert_id;
                     $advertLocation->location_id = $location_id;
                     $advertLocation->location_type = $locationType;
