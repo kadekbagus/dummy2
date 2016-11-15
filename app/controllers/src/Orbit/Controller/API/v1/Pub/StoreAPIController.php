@@ -26,6 +26,7 @@ use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
+use \Carbon\Carbon as Carbon;
 
 class StoreAPIController extends ControllerAPI
 {
@@ -64,6 +65,9 @@ class StoreAPIController extends ControllerAPI
             $ul = OrbitInput::get('ul');
             $lon = 0;
             $lat = 0;
+            $list_type = OrbitInput::get('list_type', 'featured');
+            $from_mall_ci = OrbitInput::get('from_mall_ci', null);
+            $mallId = OrbitInput::get('mall_id', null);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -90,6 +94,15 @@ class StoreAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $advert_location_type = 'gtm';
+            $advert_location_id = '0';
+            if (! empty($from_mall_ci)) {
+                $advert_location_type = 'mall';
+                $advert_location_id = $mallId;
+            }
+
+            $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
+
             $store = Tenant::select(
                     DB::raw("{$prefix}merchants.merchant_id"),
                     DB::raw("{$prefix}merchants.name"),
@@ -110,11 +123,39 @@ class StoreAPIController extends ControllerAPI
                         "),
                     DB::raw("oms.merchant_id as mall_id"),
                     DB::raw("oms.name as mall_name"),
-                    DB::raw("(select path from {$prefix}media where media_name_long = 'retailer_logo_orig' and object_id = {$prefix}merchants.merchant_id) as logo_url"))
+                    DB::raw("CASE WHEN advert_media.path is null THEN {$prefix}media.path
+                            ELSE advert_media.path END
+                            as logo_url"),
+                    'advert_placements.placement_type',
+                    'advert_placements.placement_order')
                 ->join(DB::raw("(select merchant_id, name, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->leftJoin('media', function($q) {
+                    $q->on('media.object_id', '=', 'merchants.merchant_id');
+                    $q->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
+                })
+                ->leftJoin('adverts', function ($q) use ($now) {
+                    $q->on('adverts.link_object_id', '=', 'merchants.merchant_id');
+                    $q->on('adverts.status', '=', DB::raw("'active'"));
+                    $q->on('adverts.start_date', '<=', DB::raw("'" . $now . "'"));
+                    $q->on('adverts.end_date', '>=', DB::raw("'" . $now . "'"));
+                })
+                ->leftJoin('advert_link_types', function ($q) {
+                    $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
+                    $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Store'"));
+                })
+                ->leftJoin('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
+                    $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
+                    $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
+                    $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
+                })
+                ->leftJoin('media as advert_media', function ($q) {
+                    $q->on(DB::raw("advert_media.object_id"), '=', 'adverts.advert_id');
+                    $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
+                })
                 ->where('merchants.status', 'active')
                 ->where('merchants.object_type', 'tenant')
                 ->whereRaw("oms.status = 'active'")
+                ->orderBy('advert_placements.placement_order', 'desc')
                 ->orderBy('merchants.created_at', 'asc');
 
             OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall) {
@@ -124,11 +165,25 @@ class StoreAPIController extends ControllerAPI
                         ->first();
             });
 
+            // display list : prefered or featured
+            if ($list_type === 'featured') {
+                $store->leftJoin('advert_placements', function ($q) {
+                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
+                                $q->on('advert_placements.placement_type', 'like', DB::raw("'%featured%'"));
+                            });
+            } else {
+                $store->leftJoin('advert_placements', function ($q) {
+                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
+                                $q->on('advert_placements.placement_type', 'like', DB::raw("'%preferred%'"));
+                            });
+            }
+
             $querySql = $store->toSql();
 
             $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery())
-                        ->select(DB::raw('subQuery.merchant_id'), 'name', 'description', 'logo_url', 'mall_id', 'mall_name')
+                        ->select(DB::raw('subQuery.merchant_id'), 'name', 'description', 'logo_url', 'mall_id', 'mall_name', 'placement_type', 'placement_order')
                         ->groupBy('name')
+                        ->orderBy('placement_order', 'desc')
                         ->orderBy('name', 'asc');
 
             // filter by category just on first store
@@ -198,7 +253,7 @@ class StoreAPIController extends ControllerAPI
             $querySql = $store->toSql();
 
             $store = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($store)
-                        ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url');
+                        ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url', 'placement_type', 'placement_order');
 
             if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
