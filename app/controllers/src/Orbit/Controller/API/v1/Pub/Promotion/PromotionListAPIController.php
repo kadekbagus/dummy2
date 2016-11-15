@@ -121,7 +121,8 @@ class PromotionListAPIController extends ControllerAPI
                             DB::Raw("
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                                 CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
-                                CASE WHEN {$prefix}media.path is null THEN (
+                                CASE WHEN advert_media.path is null THEN
+                                    CASE WHEN {$prefix}media.path is null THEN (
                                         select m.path
                                         from {$prefix}news_translations nt
                                         join {$prefix}media m
@@ -129,7 +130,9 @@ class PromotionListAPIController extends ControllerAPI
                                             and m.media_name_long = 'news_translation_image_orig'
                                         where nt.news_id = {$prefix}news.news_id
                                         group by nt.news_id
-                                    ) ELSE {$prefix}media.path END as image_url
+                                    ) ELSE {$prefix}media.path END
+                                ELSE advert_media.path END
+                                as image_url
                             "),
                             'news.object_type',
                             // query for get status active based on timezone
