@@ -91,7 +91,6 @@ class AdvertAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'link_object_id'      => $link_object_id,
                     'advert_link_type_id' => $advert_link_type_id,
                     'advert_placement_id' => $advert_placement_id,
                     'advert_name'         => $advert_name,
@@ -100,7 +99,6 @@ class AdvertAPIController extends ControllerAPI
                     'status'              => $status
                 ),
                 array(
-                    'link_object_id'      => 'required|max:255',
                     'advert_link_type_id' => 'required|orbit.empty.advert_link_type_id',
                     'advert_placement_id' => 'required|orbit.empty.advert_placement_id',
                     'advert_name'         => 'required',
@@ -722,6 +720,7 @@ class AdvertAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
+                    'advert_id'       => 'adverts.advert_id',
                     'advert_name'     => 'adverts.advert_name',
                     'total_location'  => 'total_location',
                     'placement_name'  => 'placement_name',
@@ -729,7 +728,8 @@ class AdvertAPIController extends ControllerAPI
                     'start_date'      => 'adverts.start_date',
                     'end_date'        => 'adverts.end_date',
                     'created_at'      => 'adverts.created_at',
-                    'updated_at'      => 'adverts.updated_at'
+                    'updated_at'      => 'adverts.updated_at',
+                    'status'          => 'adverts.status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
