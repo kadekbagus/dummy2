@@ -34,7 +34,7 @@ class AdvertFooterBanner
                             'adverts.advert_name as title',
                             'adverts.link_url',
                             'adverts.link_object_id as object_id',
-                            DB::raw('alt.advert_link_name as advert_type'),
+                            DB::raw('alt.advert_type'),
                             DB::raw('img.path as img_url')
                         )
                         ->join('advert_link_types as alt', function ($q) {
