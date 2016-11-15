@@ -10,7 +10,6 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
-use Carbon\Carbon as Carbon;
 
 class AdvertAPIController extends ControllerAPI
 {
@@ -33,7 +32,7 @@ class AdvertAPIController extends ControllerAPI
      * ----------------------
      * @param char      `link_object_id`        (optional) - Object type. Valid value: promotion, advert.
      * @param char      `advert_link_id`        (required) - Advert link to
-     * @param string    `advert_placement_id`   (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
+     * @param string    `advert_placement_id`   (required) - Status. Valid value: active, inactive, deleted.
      * @param string    `advert_name`           (optional) - name of advert
      * @param string    `link_url`              (optional) - Can be empty
      * @param datetime  `start_date`            (optional) - Start date
@@ -325,7 +324,7 @@ class AdvertAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'advert_id' => $advert_id,
-                    'end_date'  => $mall_id,
+                    'end_date'  => $end_date,
                     'status'    => $status,
                 ),
                 array(
@@ -964,23 +963,6 @@ class AdvertAPIController extends ControllerAPI
 
             return true;
         });
-    }
-
-
-    protected function getTimezone($current_mall)
-    {
-        $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
-            ->where('merchants.merchant_id','=', $current_mall)
-            ->first();
-
-        return $timezone->timezone_name;
-    }
-
-    protected function getTimezoneOffset($timezone)
-    {
-        $dt = new DateTime('now', new DateTimeZone($timezone));
-
-        return $dt->format('P');
     }
 
     protected function quote($arg)
