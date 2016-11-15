@@ -154,7 +154,7 @@ class AdvertAPIController extends ControllerAPI
                 $advertLocation->save();
                 $advertLocations[] = $advertLocation;
             }
-            $newadvert->tenants = $advertLocations;
+            $newadvert->locations = $advertLocations;
 
             //save to user campaign
             $usercampaign = new UserCampaign();
@@ -348,7 +348,7 @@ class AdvertAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $updatedadvert = Advert::with('tenants')->excludeDeleted()->where('advert_id', $advert_id)->first();
+            $updatedadvert = Advert::excludeDeleted()->where('advert_id', $advert_id)->first();
 
             OrbitInput::post('notes', function($notes) use ($updatedadvert) {
                 $updatedadvert->notes = $notes;
@@ -358,9 +358,7 @@ class AdvertAPIController extends ControllerAPI
                 $updatedadvert->end_date = $end_date;
             });
 
-            $updatedadvert->modified_by = $this->api->user->user_id;
             $updatedadvert->touch();
-
 
             OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id) {
                 // Delete old data
@@ -380,7 +378,7 @@ class AdvertAPIController extends ControllerAPI
                     }
 
                     $advertLocation = new AdvertLocation();
-                    $advertLocation->advert_id = $newadvert->advert_id;
+                    $advertLocation->advert_id = $advert_id;
                     $advertLocation->location_id = $location_id;
                     $advertLocation->location_type = $locationType;
                     $advertLocation->save();
@@ -405,7 +403,7 @@ class AdvertAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.advert.postupdateadvert.after.commit', array($this, $updatedadvert, $tempContent->temporary_content_id));
+            Event::fire('orbit.advert.postupdateadvert.after.commit', array($this, $updatedadvert));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.advert.postupdateadvert.access.forbidden', array($this, $e));
 
@@ -839,7 +837,7 @@ class AdvertAPIController extends ControllerAPI
         });
 
         // Check the existance of advert id
-        Validator::extend('orbit.empty.advert', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.empty.advert_id', function ($attribute, $value, $parameters) {
             $advert = Advert::where('status', 'active')
                         ->where('advert_id', $value)
                         ->first();
@@ -848,7 +846,7 @@ class AdvertAPIController extends ControllerAPI
                 return false;
             }
 
-            App::instance('orbit.empty.advert', $advert);
+            App::instance('orbit.empty.advert_id', $advert);
 
             return true;
         });
