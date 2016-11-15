@@ -605,6 +605,12 @@ class AdvertAPIController extends ControllerAPI
                                      'adverts.start_date',
                                      'adverts.end_date',
                                      'adverts.notes',
+                                     'adverts.advert_placement_id',
+                                     'adverts.status',
+                                     'adverts.updated_at',
+                                     'adverts.created_at',
+                                     'adverts.link_object_id',
+                                     'adverts.advert_link_type_id',
                                      'advert_placements.placement_name',
                                      'advert_link_types.advert_link_name',
                                      DB::raw("COUNT(DISTINCT {$prefix}advert_locations.location_id) as total_location"),
@@ -614,10 +620,7 @@ class AdvertAPIController extends ControllerAPI
                                                 WHEN advert_link_name = 'Promotion' THEN {$prefix}news.news_name
                                                 ELSE link_url
                                              END AS 'link_to'"),
-                                     DB::raw("media.path as image_path"),
-                                     'adverts.status',
-                                     'adverts.updated_at',
-                                     'adverts.created_at')
+                                     DB::raw("media.path as image_path"))
                             ->excludeDeleted('adverts')
                             ->join('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
                             ->join('advert_link_types', 'advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id')
