@@ -151,7 +151,9 @@ class PromotionListAPIController extends ControllerAPI
                                                 AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                     THEN 'true' ELSE 'false' END AS is_started
                                 "),
-                            'advert_placements.placement_type', 'news.created_at')
+                            'advert_placements.placement_type',
+                            'advert_placements.placement_order',
+                            'news.created_at')
                             ->leftJoin('news_translations', function ($q) use ($valid_language) {
                                 $q->on('news_translations.news_id', '=', 'news.news_id')
                                   ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
@@ -182,7 +184,7 @@ class PromotionListAPIController extends ControllerAPI
                             })
                             ->where('news.object_type', '=', 'promotion')
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->orderBy('advert_placements.placement_type', 'asc')
+                            ->orderBy('advert_placements.placement_order', 'desc')
                             ->orderBy('news_name', 'asc');
 
             //calculate distance if user using my current location as filter and sort by location for listing
@@ -272,12 +274,12 @@ class PromotionListAPIController extends ControllerAPI
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
-                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), 'placement_type', DB::raw("sub_query.created_at"))
-                                    ->orderBy('placement_type', 'desc')
+                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
+                                    ->orderBy('placement_order', 'desc')
                                     ->orderBy('distance', 'asc');
             } else {
-                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', 'placement_type', DB::raw("sub_query.created_at"))
-                                        ->orderBy('placement_type', 'desc');
+                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
+                                        ->orderBy('placement_order', 'desc');
             }
 
             $promotion = $promotion->groupBy(DB::Raw("sub_query.news_id"));
