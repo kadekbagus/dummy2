@@ -134,7 +134,8 @@ class CouponListAPIController extends ControllerAPI
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started"),
                                 DB::raw("
-                                        CASE WHEN {$prefix}media.path is null THEN (
+                                        CASE WHEN advert_media.path is null THEN
+                                            CASE WHEN {$prefix}media.path is null THEN (
                                                 select m.path
                                                 from {$prefix}coupon_translations ct
                                                 join {$prefix}media m
@@ -142,7 +143,9 @@ class CouponListAPIController extends ControllerAPI
                                                     and m.media_name_long = 'coupon_translation_image_orig'
                                                 where ct.promotion_id = {$prefix}promotions.promotion_id
                                                 group by ct.promotion_id
-                                            ) ELSE {$prefix}media.path END as image_url
+                                            ) ELSE {$prefix}media.path END
+                                        ELSE advert_media.path END
+                                        as image_url
                                     "),
                             'advert_placements.placement_type',
                             'advert_placements.placement_order',
