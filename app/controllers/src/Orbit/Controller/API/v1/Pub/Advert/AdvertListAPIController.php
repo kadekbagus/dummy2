@@ -1,24 +1,29 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Advert;
 
 use OrbitShop\API\v1\ControllerAPI;
-use Config;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use stdClass;
+use Orbit\Controller\API\v1\Pub\Advert\AdvertTopBanner;
+use Orbit\Controller\API\v1\Pub\Advert\AdvertFooterBanner;
 
 class AdvertListAPIController extends ControllerAPI
 {
     public function getAdvertList()
     {
         try {
-            $staticFooterImage = Config::get('orbit.statics.adverts.footer.image_url', null);
-            $staticFooterUrl = Config::get('orbit.statics.adverts.footer.link_url', null);
-            $staticFooterTitle = Config::get('orbit.statics.adverts.footer.title', null);
+            $advert = new stdClass();
+            $advert_type = OrbitInput::get('advert_type', 'top');
 
-            $data = new stdClass();
-            $data->link_url = $staticFooterUrl;
-            $data->image_url = $staticFooterImage;
-            $data->title = $staticFooterTitle;
+            if ($advert_type === 'top') {
+               $topBanner = AdvertTopBanner::create();
+               $advert = $topBanner->getAdvertTopBanner();
+            }
+            if ($advert_type === 'footer') {
+               $footerBanner = AdvertFooterBanner::create();
+               $advert = $topBanner->getAdvertFooterBanner();
+            }
 
-            $this->response->data = $data;
+            $this->response->data = $advert;
         } catch (Exception $e) {
             $this->response->code = $e->getCode();
             $this->response->status = $e->getLine();
