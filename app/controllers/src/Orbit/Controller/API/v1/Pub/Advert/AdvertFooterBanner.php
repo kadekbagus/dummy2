@@ -28,7 +28,7 @@ class AdvertFooterBanner
         $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
         $prefix = DB::getTablePrefix();
 
-        $footerBanner = Advert::excludeDeleted('adverts')
+        $footer_banner = DB::table('adverts')
                         ->select(
                             'adverts.advert_id',
                             'adverts.advert_name as title',
@@ -54,11 +54,12 @@ class AdvertFooterBanner
                             $q->on(DB::raw('img.object_id'), '=', 'adverts.advert_id')
                                 ->on(DB::raw("img.media_name_long"), '=', DB::raw("'advert_image_orig'"));
                         })
+                        ->where('adverts.status', 'active')
                         ->whereRaw("{$this->quote($now)} between {$prefix}adverts.start_date and {$prefix}adverts.end_date")
                         ->orderBy(DB::raw('RAND()'))
                         ->first();
 
-        return $footerBanner;
+        return $footer_banner;
     }
 
     protected function quote($arg)
