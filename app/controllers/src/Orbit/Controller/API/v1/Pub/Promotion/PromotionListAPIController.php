@@ -29,6 +29,7 @@ use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
+use \Carbon\Carbon as Carbon;
 
 class PromotionListAPIController extends ControllerAPI
 {
@@ -113,6 +114,8 @@ class PromotionListAPIController extends ControllerAPI
                 $advert_location_id = $mallId;
             }
 
+            $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
+
             $promotions = News::select(
                             'news.news_id as news_id',
                             DB::Raw("
@@ -168,7 +171,12 @@ class PromotionListAPIController extends ControllerAPI
                                 $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                             })
-                            ->leftJoin('adverts', 'adverts.link_object_id', '=', 'news.news_id')
+                            ->leftJoin('adverts', function ($q) use ($now) {
+                                $q->on('adverts.link_object_id', '=', 'news.news_id');
+                                $q->on('adverts.status', '=', DB::raw("'active'"));
+                                $q->on('adverts.start_date', '<=', DB::raw("'" . $now . "'"));
+                                $q->on('adverts.end_date', '>=', DB::raw("'" . $now . "'"));
+                            })
                             ->leftJoin('advert_link_types', function ($q) {
                                 $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                                 $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Promotion'"));

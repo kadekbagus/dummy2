@@ -24,6 +24,7 @@ use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Helper\EloquentRecordCounter as RecordCounter;
+use \Carbon\Carbon as Carbon;
 
 class CouponListAPIController extends ControllerAPI
 {
@@ -108,6 +109,8 @@ class CouponListAPIController extends ControllerAPI
                 $advert_location_id = $mallId;
             }
 
+            $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
+
             $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
                                 CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                 CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
@@ -159,7 +162,12 @@ class CouponListAPIController extends ControllerAPI
                             ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
-                            ->leftJoin('adverts', 'adverts.link_object_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('adverts', function ($q) use ($now) {
+                                $q->on('adverts.link_object_id', '=', 'promotions.promotion_id');
+                                $q->on('adverts.status', '=', DB::raw("'active'"));
+                                $q->on('adverts.start_date', '<=', DB::raw("'" . $now . "'"));
+                                $q->on('adverts.end_date', '>=', DB::raw("'" . $now . "'"));
+                            })
                             ->leftJoin('advert_link_types', function ($q) {
                                 $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                                 $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Coupon'"));
