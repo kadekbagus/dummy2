@@ -561,7 +561,7 @@ class AdvertAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:advert_id,advert_link_name,placement_name,advert_name,start_date,end_date,status,created_at,updated_at,total_location',
+                    'sort_by' => 'in:advert_id,advert_link_name,placement_name,advert_name,start_date,end_date,status,created_at,updated_at,total_location,link_to,link_url',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.advert_sortby'),
@@ -729,7 +729,9 @@ class AdvertAPIController extends ControllerAPI
                     'end_date'        => 'adverts.end_date',
                     'created_at'      => 'adverts.created_at',
                     'updated_at'      => 'adverts.updated_at',
-                    'status'          => 'adverts.status'
+                    'status'          => 'adverts.status',
+                    'link_to'         => 'adverts.link_to',
+                    'link_url'        => 'adverts.link_url'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
