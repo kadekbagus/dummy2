@@ -28,7 +28,7 @@ class AdvertListAPIController extends ControllerAPI
         try {
             $take = PaginationNumber::parseTakeFromGet('advert');
             $skip = PaginationNumber::parseSkipFromGet();
-            $advert_type = OrbitInput::get('advert_type', 'top_banner');
+            $banner_type = OrbitInput::get('banner_type', 'top_banner');
             $location_type = OrbitInput::get('location_type', 'mall');
             $location_id = OrbitInput::get('mall_id', null);
 
@@ -39,12 +39,12 @@ class AdvertListAPIController extends ControllerAPI
                 array(
                     'mall_id'       => $location_id,
                     'location_type' => $location_type,
-                    'advert_type'   => $advert_type,
+                    'banner_type'   => $banner_type,
                 ),
                 array(
                     'mall_id'       => 'orbit.empty.mall',
                     'location_type' => 'in:gtm,mall',
-                    'advert_type'   => 'in:top_banner,footer_banner',
+                    'banner_type'   => 'in:top_banner,footer_banner',
                 ),
                 array(
                 )
@@ -75,7 +75,8 @@ class AdvertListAPIController extends ControllerAPI
                                 'adverts.link_url',
                                 'adverts.link_object_id as object_id',
                                 DB::raw('alt.advert_type'),
-                                DB::raw('img.path as img_url')
+                                DB::raw('img.path as img_url'),
+                                DB::raw('t.name as store_name')
                             )
                             ->join('advert_link_types as alt', function ($q) {
                                 $q->on(DB::raw('alt.advert_link_type_id'), '=', 'adverts.advert_link_type_id')
@@ -86,13 +87,18 @@ class AdvertListAPIController extends ControllerAPI
                                     ->on(DB::raw('al.location_type'), '=', DB::raw("{$this->quote($location_type)}"))
                                     ->on(DB::raw('al.location_id'), '=', DB::raw("{$this->quote($location_id)}"));
                             })
-                            ->join('advert_placements as ap', function ($q) use ($advert_type) {
+                            ->join('advert_placements as ap', function ($q) use ($banner_type) {
                                 $q->on(DB::raw('ap.advert_placement_id'), '=', 'adverts.advert_placement_id')
-                                    ->on(DB::raw('ap.placement_type'), '=', DB::raw("{$this->quote($advert_type)}"));
+                                    ->on(DB::raw('ap.placement_type'), '=', DB::raw("{$this->quote($banner_type)}"));
                             })
                             ->leftJoin('media as img', function ($q) {
                                 $q->on(DB::raw('img.object_id'), '=', 'adverts.advert_id')
                                     ->on(DB::raw("img.media_name_long"), '=', DB::raw("'advert_image_orig'"));
+                            })
+                            ->leftJoin('merchants as t', function ($q) {
+                                $q->on(DB::raw('t.merchant_id'), '=', 'adverts.link_object_id')
+                                    ->on(DB::raw('t.object_type'), '=', DB::raw("'tenant'"))
+                                    ->on(DB::raw('t.status'), '=', DB::raw("'active'"));
                             })
                             ->where('adverts.status', 'active')
                             ->whereRaw("{$this->quote($now)} between {$prefix}adverts.start_date and {$prefix}adverts.end_date")
