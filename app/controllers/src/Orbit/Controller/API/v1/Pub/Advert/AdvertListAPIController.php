@@ -11,9 +11,14 @@ use \Exception;
 use Config;
 use Lang;
 use Validator;
+use Orbit\Helper\Util\PaginationNumber;
+use \Carbon\Carbon as Carbon;
 use stdClass;
-use Orbit\Controller\API\v1\Pub\Advert\AdvertTopBanner;
-use Orbit\Controller\API\v1\Pub\Advert\AdvertFooterBanner;
+use DB;
+use Advert;
+use AdvertLinkType;
+use AdvertLocation;
+use AdvertPlacement;
 
 class AdvertListAPIController extends ControllerAPI
 {
@@ -21,8 +26,9 @@ class AdvertListAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-            $advert = new stdClass();
-            $advert_type = OrbitInput::get('advert_type', 'top');
+            $take = PaginationNumber::parseTakeFromGet('advert');
+            $skip = PaginationNumber::parseSkipFromGet();
+            $advert_type = OrbitInput::get('advert_type', 'top_banner');
             $location_type = OrbitInput::get('location_type', 'mall');
             $location_id = OrbitInput::get('mall_id', null);
 
@@ -31,12 +37,14 @@ class AdvertListAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'mall_id'   => $location_id,
-                    'location_type'   => $location_type,
+                    'mall_id'       => $location_id,
+                    'location_type' => $location_type,
+                    'advert_type'   => $advert_type,
                 ),
                 array(
-                    'mall_id' => 'orbit.empty.mall',
-                    'location_type'   => 'in:gtm,mall',
+                    'mall_id'       => 'orbit.empty.mall',
+                    'location_type' => 'in:gtm,mall',
+                    'advert_type'   => 'in:top_banner,footer_banner',
                 ),
                 array(
                 )
@@ -57,14 +65,41 @@ class AdvertListAPIController extends ControllerAPI
                 $location_id = '0';
             }
 
-            if ($advert_type === 'top') {
-               $topBanner = AdvertTopBanner::create();
-               $advert = $topBanner->getAdvertTopBanner($location_type, $location_id);
-            }
-            if ($advert_type === 'footer') {
-               $footerBanner = AdvertFooterBanner::create();
-               $advert = $footerBanner->getAdvertFooterBanner($location_type, $location_id);
-            }
+            $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
+            $prefix = DB::getTablePrefix();
+
+            $advert = DB::table('adverts')
+                            ->select(
+                                'adverts.advert_id',
+                                'adverts.advert_name as title',
+                                'adverts.link_url',
+                                'adverts.link_object_id as object_id',
+                                DB::raw('alt.advert_type'),
+                                DB::raw('img.path as img_url')
+                            )
+                            ->join('advert_link_types as alt', function ($q) {
+                                $q->on(DB::raw('alt.advert_link_type_id'), '=', 'adverts.advert_link_type_id')
+                                    ->on(DB::raw('alt.status'), '=', DB::raw("'active'"));
+                            })
+                            ->join('advert_locations as al', function ($q) use ($location_type, $location_id) {
+                                $q->on(DB::raw('al.advert_id'), '=', 'adverts.advert_id')
+                                    ->on(DB::raw('al.location_type'), '=', DB::raw("{$this->quote($location_type)}"))
+                                    ->on(DB::raw('al.location_id'), '=', DB::raw("{$this->quote($location_id)}"));
+                            })
+                            ->join('advert_placements as ap', function ($q) use ($advert_type) {
+                                $q->on(DB::raw('ap.advert_placement_id'), '=', 'adverts.advert_placement_id')
+                                    ->on(DB::raw('ap.placement_type'), '=', DB::raw("{$this->quote($advert_type)}"));
+                            })
+                            ->leftJoin('media as img', function ($q) {
+                                $q->on(DB::raw('img.object_id'), '=', 'adverts.advert_id')
+                                    ->on(DB::raw("img.media_name_long"), '=', DB::raw("'advert_image_orig'"));
+                            })
+                            ->where('adverts.status', 'active')
+                            ->whereRaw("{$this->quote($now)} between {$prefix}adverts.start_date and {$prefix}adverts.end_date")
+                            ->orderBy(DB::raw('RAND()'))
+                            ->take($take)
+                            ->skip($skip)
+                            ->get();
 
             $this->response->data = $advert;
             $this->response->code = 0;
@@ -106,5 +141,10 @@ class AdvertListAPIController extends ControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
