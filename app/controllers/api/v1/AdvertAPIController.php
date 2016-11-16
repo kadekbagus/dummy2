@@ -358,6 +358,10 @@ class AdvertAPIController extends ControllerAPI
                 $updatedadvert->end_date = $end_date;
             });
 
+            OrbitInput::post('status', function($status) use ($updatedadvert) {
+                $updatedadvert->status = $status;
+            });
+
             $updatedadvert->touch();
 
             OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id) {
