@@ -24,6 +24,7 @@ Event::listen('orbit.advert.postnewadvert.after.save', function($controller, $ad
     App::instance('orbit.upload.user', $controller->api->user);
 
     $_POST['advert_id'] = $advert->advert_id;
+
     $response = UploadAPIController::create('raw')
                                    ->setCalledFrom('advert.new')
                                    ->postUploadAdvertImage();

@@ -8436,6 +8436,11 @@ class UploadAPIController extends ControllerAPI
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
+
+echo "<pre>";
+print_r($errorMessage);
+die();
+
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadadvertimage.after.validation', array($this, $validator));
@@ -8835,20 +8840,6 @@ class UploadAPIController extends ControllerAPI
                 return TRUE;
             });
 
-            Validator::extend('orbit.empty.advert_id', function ($attribute, $value, $parameters) use ($user) {
-                $news = Advert::excludeDeleted()
-                            ->where('advert_id', $value)
-                            ->first();
-
-                if (empty($news)) {
-                    return FALSE;
-                }
-
-                App::instance('orbit.empty.news', $news);
-
-                return TRUE;
-            });
-
             Validator::extend('orbit.empty.news', function ($attribute, $value, $parameters) use ($user) {
                 $news = News::excludeDeleted()
                             ->where('news_id', $value)
@@ -8926,6 +8917,20 @@ class UploadAPIController extends ControllerAPI
                 return TRUE;
             });
         }
+
+        Validator::extend('orbit.empty.advert_id', function ($attribute, $value, $parameters){
+            $advert = Advert::excludeDeleted()
+                        ->where('advert_id', $value)
+                        ->first();
+
+            if (empty($advert)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.advert_id', $advert);
+
+            return TRUE;
+        });
 
         Validator::extend('orbit.empty.promotion_translation', function ($attribute, $value, $parameters) {
             $promotion_translation = PromotionTranslation::excludeDeleted()

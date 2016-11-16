@@ -196,7 +196,7 @@ return array(
             'issued_coupon'        => 'The Issued Coupon ID you specified is not found',
             'event'                => 'The Event ID you specified is not found',
             'news'                 => 'The News ID you specified is not found',
-            'advert'               => 'The Advert ID you specified is not found',
+            'advert_id'            => 'The Advert ID you specified is not found',
             'event_translations'   => 'The Event Translation ID is not found',
             'merchant_language'    => 'The Merchant_Language ID is not found',
             'language_default'     => 'The language default you specified is not found',
