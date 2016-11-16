@@ -4596,6 +4596,15 @@ return array(
                 'object_type' => 'Advert',
                 'parameter_name' => 'advert_id'
             ),
+            // - Click advertisement on banner.
+            '89' => array(
+                'name' => 'click_banner',
+                'name_long' => 'Click Banner',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Advert',
+                'parameter_name' => 'advert_id'
+            ),
         ),
     ),
 
