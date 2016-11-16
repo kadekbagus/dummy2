@@ -28,6 +28,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Database\Cache as OrbitDBCache;
 
 class NewsListAPIController extends ControllerAPI
 {
@@ -317,6 +318,12 @@ class NewsListAPIController extends ControllerAPI
             }
             $_news = clone($news);
 
+            // Cache the result of database calls
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($news);
+
+            $recordCounter = RecordCounter::create($_news);
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
+
             $take = PaginationNumber::parseTakeFromGet('news');
             $news->take($take);
 
@@ -334,29 +341,31 @@ class NewsListAPIController extends ControllerAPI
             }
             $data->records = $listOfRec;
 
-            if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                if (is_object($mall)) {
-                    $activityNotes = sprintf('Page viewed: View mall event list');
-                    $activity->setUser($user)
-                        ->setActivityName('view_mall_event_list')
-                        ->setActivityNameLong('View mall event list')
-                        ->setObject(null)
-                        ->setLocation($mall)
-                        ->setModuleName('News')
-                        ->setNotes($activityNotes)
-                        ->responseOK()
-                        ->save();
-                } else {
-                    $activityNotes = sprintf('Page viewed: News list');
-                    $activity->setUser($user)
-                        ->setActivityName('view_news_main_page')
-                        ->setActivityNameLong('View News Main Page')
-                        ->setObject(null)
-                        ->setLocation($mall)
-                        ->setModuleName('News')
-                        ->setNotes($activityNotes)
-                        ->responseOK()
-                        ->save();
+            if (OrbitInput::get('from_homepage', '') !== 'y') {
+                if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                    if (is_object($mall)) {
+                        $activityNotes = sprintf('Page viewed: View mall event list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_mall_event_list')
+                            ->setActivityNameLong('View mall event list')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('News')
+                            ->setNotes($activityNotes)
+                            ->responseOK()
+                            ->save();
+                    } else {
+                        $activityNotes = sprintf('Page viewed: News list');
+                        $activity->setUser($user)
+                            ->setActivityName('view_news_main_page')
+                            ->setActivityNameLong('View News Main Page')
+                            ->setObject(null)
+                            ->setLocation($mall)
+                            ->setModuleName('News')
+                            ->setNotes($activityNotes)
+                            ->responseOK()
+                            ->save();
+                    }
                 }
             }
 

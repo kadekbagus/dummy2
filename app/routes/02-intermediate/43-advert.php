@@ -33,3 +33,21 @@ Route::post('/app/v1/advert-image/upload', 'IntermediateAuthController@Upload_po
  * Delete advert image
  */
 Route::post('/app/v1/advert-image/delete', 'IntermediateAuthController@Upload_postDeleteAdvertImage');
+
+/**
+ * List and/or advert placement
+ */
+Route::get('/app/v1/advert-placement/{search}', 'IntermediateAuthController@AdvertPlacement_getSearchAdvertPlacement')
+     ->where('search', '(list|search)');
+
+/**
+ * List and/or advert link
+ */
+Route::get('/app/v1/advert-link/{search}', 'IntermediateAuthController@AdvertLink_getSearchAdvertLink')
+     ->where('search', '(list|search)');
+
+/**
+ * List and/or advert location
+ */
+Route::get('/app/v1/advert-location/{search}', 'IntermediateAuthController@AdvertLocation_getAdvertLocations')
+     ->where('search', '(list|search)');
