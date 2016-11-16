@@ -1299,6 +1299,15 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->keywords = $tenantKeywords;
             });
 
+            // update store advert
+            if ($updatedtenant->object_type === 'tenant') {
+                $storeAdverts = Advert::excludeDeleted()
+                                    ->where('link_object_id', $updatedtenant->merchant_id)
+                                    ->update([
+                                            'status'     => $updatedtenant->status,
+                                        ]);
+            }
+
             Event::fire('orbit.tenant.postupdatetenant.after.save', array($this, $updatedtenant));
             $this->response->data = $updatedtenant;
 
