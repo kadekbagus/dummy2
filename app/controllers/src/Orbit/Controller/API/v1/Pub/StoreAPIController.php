@@ -97,7 +97,7 @@ class StoreAPIController extends ControllerAPI
 
             $advert_location_type = 'gtm';
             $advert_location_id = '0';
-            if (! empty($from_mall_ci)) {
+            if (! empty($mallId)) {
                 $advert_location_type = 'mall';
                 $advert_location_id = $mallId;
             }
