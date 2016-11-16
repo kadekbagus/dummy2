@@ -32,6 +32,8 @@ class PromotionMallAPIController extends ControllerAPI
         $httpCode = 200;
 
         try{
+            $this->checkAuth();
+
             $promotionId = OrbitInput::get('promotion_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
