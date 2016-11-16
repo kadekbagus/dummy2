@@ -2357,7 +2357,7 @@ class CouponAPIController extends ControllerAPI
             // Filter coupon by Ids
             OrbitInput::get('promotion_id', function($promotionIds) use ($coupons)
             {
-                $coupons->whereIn('promotions.promotion_id', $promotionIds);
+                $coupons->whereIn('promotions.promotion_id', (array)$promotionIds);
             });
 
             // to do : enable filter for mall id

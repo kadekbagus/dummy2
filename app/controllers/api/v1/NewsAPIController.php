@@ -11,7 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
-use \Queue;
+// use \Queue;
 
 class NewsAPIController extends ControllerAPI
 {
@@ -1658,7 +1658,7 @@ class NewsAPIController extends ControllerAPI
             // Filter news by Ids
             OrbitInput::get('news_id', function($newsIds) use ($news)
             {
-                $news->whereIn('news.news_id', $newsIds);
+                $news->whereIn('news.news_id', (array)$newsIds);
             });
 
 
