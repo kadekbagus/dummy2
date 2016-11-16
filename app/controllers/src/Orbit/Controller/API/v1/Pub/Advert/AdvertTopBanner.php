@@ -7,7 +7,7 @@ use AdvertLinkType;
 use AdvertLocation;
 use AdvertPlacement;
 
-class AdvertFooterBanner
+class AdvertTopBanner
 {
 
     public function __construct($session = NULL)
@@ -23,12 +23,12 @@ class AdvertFooterBanner
         return new static($session);
     }
 
-    public function getAdvertFooterBanner($location_type = 'gtm', $location_id = 0)
+    public function getAdvertTopBanner($location_type = 'gtm', $location_id = 0)
     {
         $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
         $prefix = DB::getTablePrefix();
 
-        $footer_banner = DB::table('adverts')
+        $topBanner = DB::table('adverts')
                         ->select(
                             'adverts.advert_id',
                             'adverts.advert_name as title',
@@ -48,7 +48,7 @@ class AdvertFooterBanner
                         })
                         ->join('advert_placements as ap', function ($q) {
                             $q->on(DB::raw('ap.advert_placement_id'), '=', 'adverts.advert_placement_id')
-                                ->on(DB::raw('ap.placement_type'), '=', DB::raw("'footer_banner'"));
+                                ->on(DB::raw('ap.placement_type'), '=', DB::raw("'top_banner'"));
                         })
                         ->leftJoin('media as img', function ($q) {
                             $q->on(DB::raw('img.object_id'), '=', 'adverts.advert_id')
@@ -57,9 +57,10 @@ class AdvertFooterBanner
                         ->where('adverts.status', 'active')
                         ->whereRaw("{$this->quote($now)} between {$prefix}adverts.start_date and {$prefix}adverts.end_date")
                         ->orderBy(DB::raw('RAND()'))
-                        ->first();
+                        ->take(10)
+                        ->get();
 
-        return $footer_banner;
+        return $topBanner;
     }
 
     protected function quote($arg)
