@@ -10,7 +10,6 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
-use Carbon\Carbon as Carbon;
 
 class AdvertAPIController extends ControllerAPI
 {
@@ -33,7 +32,7 @@ class AdvertAPIController extends ControllerAPI
      * ----------------------
      * @param char      `link_object_id`        (optional) - Object type. Valid value: promotion, advert.
      * @param char      `advert_link_id`        (required) - Advert link to
-     * @param string    `advert_placement_id`   (required) - Status. Valid value: active, inactive, pending, blocked, deleted.
+     * @param string    `advert_placement_id`   (required) - Status. Valid value: active, inactive, deleted.
      * @param string    `advert_name`           (optional) - name of advert
      * @param string    `link_url`              (optional) - Can be empty
      * @param datetime  `start_date`            (optional) - Start date
@@ -155,7 +154,7 @@ class AdvertAPIController extends ControllerAPI
                 $advertLocation->save();
                 $advertLocations[] = $advertLocation;
             }
-            $newadvert->tenants = $advertLocations;
+            $newadvert->locations = $advertLocations;
 
             //save to user campaign
             $usercampaign = new UserCampaign();
@@ -325,7 +324,7 @@ class AdvertAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'advert_id' => $advert_id,
-                    'end_date'  => $mall_id,
+                    'end_date'  => $end_date,
                     'status'    => $status,
                 ),
                 array(
@@ -349,7 +348,7 @@ class AdvertAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $updatedadvert = Advert::with('tenants')->excludeDeleted()->where('advert_id', $advert_id)->first();
+            $updatedadvert = Advert::excludeDeleted()->where('advert_id', $advert_id)->first();
 
             OrbitInput::post('notes', function($notes) use ($updatedadvert) {
                 $updatedadvert->notes = $notes;
@@ -359,9 +358,7 @@ class AdvertAPIController extends ControllerAPI
                 $updatedadvert->end_date = $end_date;
             });
 
-            $updatedadvert->modified_by = $this->api->user->user_id;
             $updatedadvert->touch();
-
 
             OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id) {
                 // Delete old data
@@ -381,7 +378,7 @@ class AdvertAPIController extends ControllerAPI
                     }
 
                     $advertLocation = new AdvertLocation();
-                    $advertLocation->advert_id = $newadvert->advert_id;
+                    $advertLocation->advert_id = $advert_id;
                     $advertLocation->location_id = $location_id;
                     $advertLocation->location_type = $locationType;
                     $advertLocation->save();
@@ -406,7 +403,7 @@ class AdvertAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.advert.postupdateadvert.after.commit', array($this, $updatedadvert, $tempContent->temporary_content_id));
+            Event::fire('orbit.advert.postupdateadvert.after.commit', array($this, $updatedadvert));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.advert.postupdateadvert.access.forbidden', array($this, $e));
 
@@ -561,7 +558,7 @@ class AdvertAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:advert_id,advert_link_name,placement_name,advert_name,start_date,end_date,status,created_at,updated_at,total_location',
+                    'sort_by' => 'in:advert_id,advert_link_name,placement_name,advert_name,start_date,end_date,status,created_at,updated_at,total_location,link_to,link_url',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.advert_sortby'),
@@ -605,6 +602,12 @@ class AdvertAPIController extends ControllerAPI
                                      'adverts.start_date',
                                      'adverts.end_date',
                                      'adverts.notes',
+                                     'adverts.advert_placement_id',
+                                     'adverts.status',
+                                     'adverts.updated_at',
+                                     'adverts.created_at',
+                                     'adverts.link_object_id',
+                                     'adverts.advert_link_type_id',
                                      'advert_placements.placement_name',
                                      'advert_link_types.advert_link_name',
                                      DB::raw("COUNT(DISTINCT {$prefix}advert_locations.location_id) as total_location"),
@@ -614,10 +617,7 @@ class AdvertAPIController extends ControllerAPI
                                                 WHEN advert_link_name = 'Promotion' THEN {$prefix}news.news_name
                                                 ELSE link_url
                                              END AS 'link_to'"),
-                                     DB::raw("media.path as image_path"),
-                                     'adverts.status',
-                                     'adverts.updated_at',
-                                     'adverts.created_at')
+                                     DB::raw("media.path as image_path"))
                             ->excludeDeleted('adverts')
                             ->join('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
                             ->join('advert_link_types', 'advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id')
@@ -729,7 +729,9 @@ class AdvertAPIController extends ControllerAPI
                     'end_date'        => 'adverts.end_date',
                     'created_at'      => 'adverts.created_at',
                     'updated_at'      => 'adverts.updated_at',
-                    'status'          => 'adverts.status'
+                    'status'          => 'adverts.status',
+                    'link_to'         => 'link_to',
+                    'link_url'        => 'adverts.link_url'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -835,7 +837,7 @@ class AdvertAPIController extends ControllerAPI
         });
 
         // Check the existance of advert id
-        Validator::extend('orbit.empty.advert', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.empty.advert_id', function ($attribute, $value, $parameters) {
             $advert = Advert::where('status', 'active')
                         ->where('advert_id', $value)
                         ->first();
@@ -844,7 +846,7 @@ class AdvertAPIController extends ControllerAPI
                 return false;
             }
 
-            App::instance('orbit.empty.advert', $advert);
+            App::instance('orbit.empty.advert_id', $advert);
 
             return true;
         });
@@ -959,23 +961,6 @@ class AdvertAPIController extends ControllerAPI
 
             return true;
         });
-    }
-
-
-    protected function getTimezone($current_mall)
-    {
-        $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
-            ->where('merchants.merchant_id','=', $current_mall)
-            ->first();
-
-        return $timezone->timezone_name;
-    }
-
-    protected function getTimezoneOffset($timezone)
-    {
-        $dt = new DateTime('now', new DateTimeZone($timezone));
-
-        return $dt->format('P');
     }
 
     protected function quote($arg)

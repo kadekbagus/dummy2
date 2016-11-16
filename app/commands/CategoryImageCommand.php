@@ -47,6 +47,7 @@ class CategoryImageCommand extends Command
         $category = DB::table('categories')
                       ->where('status', '!=', 'deleted')
                       ->where('category_name', '=', $category_name)
+                      ->where('merchant_id', '0')
                       ->first();
 
         if (empty($category)) {

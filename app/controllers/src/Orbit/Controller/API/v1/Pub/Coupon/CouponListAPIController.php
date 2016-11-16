@@ -24,6 +24,7 @@ use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Helper\EloquentRecordCounter as RecordCounter;
+use \Carbon\Carbon as Carbon;
 
 class CouponListAPIController extends ControllerAPI
 {
@@ -108,6 +109,7 @@ class CouponListAPIController extends ControllerAPI
                 $advert_location_id = $mallId;
             }
 
+            $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
 
             $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
                                 CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
@@ -132,7 +134,8 @@ class CouponListAPIController extends ControllerAPI
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started"),
                                 DB::raw("
-                                        CASE WHEN {$prefix}media.path is null THEN (
+                                        CASE WHEN advert_media.path is null THEN
+                                            CASE WHEN {$prefix}media.path is null THEN (
                                                 select m.path
                                                 from {$prefix}coupon_translations ct
                                                 join {$prefix}media m
@@ -140,11 +143,12 @@ class CouponListAPIController extends ControllerAPI
                                                     and m.media_name_long = 'coupon_translation_image_orig'
                                                 where ct.promotion_id = {$prefix}promotions.promotion_id
                                                 group by ct.promotion_id
-                                            ) ELSE {$prefix}media.path END as image_url
+                                            ) ELSE {$prefix}media.path END
+                                        ELSE advert_media.path END
+                                        as image_url
                                     "),
-                            'promotions.sticky_order', 
                             'advert_placements.placement_type',
-                            DB::raw("CASE WHEN ({$prefix}advert_placements.placement_type is null or {$prefix}advert_placements.placement_type = '') THEN 1 ELSE 0 END as placement_type_order"),
+                            'advert_placements.placement_order',
                             'promotions.created_at')
                             ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -161,7 +165,12 @@ class CouponListAPIController extends ControllerAPI
                             ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
-                            ->leftJoin('adverts', 'adverts.link_object_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('adverts', function ($q) use ($now) {
+                                $q->on('adverts.link_object_id', '=', 'promotions.promotion_id');
+                                $q->on('adverts.status', '=', DB::raw("'active'"));
+                                $q->on('adverts.start_date', '<=', DB::raw("'" . $now . "'"));
+                                $q->on('adverts.end_date', '>=', DB::raw("'" . $now . "'"));
+                            })
                             ->leftJoin('advert_link_types', function ($q) {
                                 $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                                 $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Coupon'"));
@@ -178,7 +187,7 @@ class CouponListAPIController extends ControllerAPI
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereRaw("available.tot > 0")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->orderBy(DB::raw('placement_type_order'), 'asc')
+                            ->orderBy('advert_placements.placement_order', 'desc')
                             ->orderBy('coupon_name', 'asc');
 
             //calculate distance if user using my current location as filter and sort by location for listing
@@ -250,23 +259,15 @@ class CouponListAPIController extends ControllerAPI
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"), 'sticky_order', DB::raw('placement_type_order'), 'placement_type', DB::raw("sub_query.created_at"))
-                                 ->groupBy('coupon_id');
-
-                if (! empty($withPremium)) {
-                    $coupon = $coupon->orderBy('sticky_order', 'desc');
-                }
-                $coupon = $coupon->orderBy(DB::raw('placement_type_order'), 'asc');
-                $coupon = $coupon->orderBy('distance', 'asc');
+                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"), 'placement_order', 'placement_type', DB::raw("sub_query.created_at"))
+                                 ->groupBy('coupon_id')
+                                 ->orderBy('placement_order', 'desc')
+                                 ->orderBy('distance', 'asc');
 
             } else {
-                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', 'sticky_order', 'placement_type', DB::raw('placement_type_order'), DB::raw("sub_query.created_at"))
-                                 ->groupBy('coupon_id');
-
-                if (! empty($withPremium)) {
-                    $coupon = $coupon->orderBy('sticky_order', 'desc');
-                }
-                $coupon = $coupon->orderBy(DB::raw('placement_type_order'), 'asc');
+                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
+                                 ->groupBy('coupon_id')
+                                 ->orderBy('placement_order', 'desc');
             }
 
             OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
