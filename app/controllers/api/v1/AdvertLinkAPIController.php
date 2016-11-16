@@ -120,12 +120,12 @@ class AdvertLinkAPIController extends ControllerAPI
             // Filter advert by Id
             OrbitInput::get('placement', function($placement) use ($link)
             {
-                if ($placement == 'Top Banner') {
-                    $link->whereIn('advert_link_name', array('No Link', 'Information', 'URL', 'Store', 'Promotion', 'Coupon'));
-                } else if ($placement == 'Foot Banner') {
-                    $link->whereIn('advert_link_name', array('Information', 'URL', 'Store', 'Promotion', 'Coupon'));
-                } else if ($placement == 'Preferred List (Regular)' || $placement == 'Preferred List (Large)' || $placement == 'Featured List') {
-                    $link->whereIn('advert_link_name', array('Store', 'Promotion', 'Coupon'));
+                if ($placement == 'top_banner') {
+                    $link->whereIn('advert_type', array('no_link', 'information', 'url', 'store', 'promotion', 'coupon'));
+                } else if ($placement == 'foot_banner') {
+                    $link->whereIn('advert_type', array('information', 'url', 'store', 'promotion', 'coupon'));
+                } else if ($placement == 'preferred_list_regular' || $placement == 'preferred_list_large' || $placement == 'featured_list') {
+                    $link->whereIn('advert_type', array('store', 'promotion', 'coupon'));
                 }
             });
 

@@ -358,6 +358,10 @@ class AdvertAPIController extends ControllerAPI
                 $updatedadvert->end_date = $end_date;
             });
 
+            OrbitInput::post('status', function($status) use ($updatedadvert) {
+                $updatedadvert->status = $status;
+            });
+
             $updatedadvert->touch();
 
             OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id) {
@@ -838,8 +842,7 @@ class AdvertAPIController extends ControllerAPI
 
         // Check the existance of advert id
         Validator::extend('orbit.empty.advert_id', function ($attribute, $value, $parameters) {
-            $advert = Advert::where('status', 'active')
-                        ->where('advert_id', $value)
+            $advert = Advert::where('advert_id', $value)
                         ->first();
 
             if (empty($advert)) {

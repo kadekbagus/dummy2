@@ -1299,6 +1299,15 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->keywords = $tenantKeywords;
             });
 
+            // update store advert
+            if ($updatedtenant->object_type === 'tenant') {
+                $storeAdverts = Advert::excludeDeleted()
+                                    ->where('link_object_id', $updatedtenant->merchant_id)
+                                    ->update([
+                                            'status'     => $updatedtenant->status,
+                                        ]);
+            }
+
             Event::fire('orbit.tenant.postupdatetenant.after.save', array($this, $updatedtenant));
             $this->response->data = $updatedtenant;
 
@@ -2218,6 +2227,13 @@ class TenantAPIController extends ControllerAPI
             $filtermode = OrbitInput::get('filtermode');
             $account_type_id = OrbitInput::get('account_type_id');
 
+            // for advert setup
+            $from = OrbitInput::get('from');
+            $group_by = OrbitInput::get('group_by');
+            $campaign_id = OrbitInput::get('campaign_id');
+            $link_type = OrbitInput::get('link_type');
+            $merchant_name = OrbitInput::get('merchant_name');
+
             $validator = Validator::make(
                 array(
                     'sortby' => $sort_by,
@@ -2253,6 +2269,70 @@ class TenantAPIController extends ControllerAPI
                                        ->whereIn('merchants.object_type', ['mall', 'tenant'])
                                        ->where('merchants.status', '!=', 'deleted')
                                        ->groupBy('merchants.merchant_id');
+
+            // Need to overide the query for advert
+            if ($from === 'advert') {
+                if ($link_type === 'coupon' ) {
+                    $tenants = PromotionRetailer::select(
+                                    'merchants.merchant_id',
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                    'merchants.status',
+                                    'merchants.object_type',
+                                    DB::raw("pm.name as display_name")
+                                )
+                                ->leftjoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                ->where('promotion_id', $campaign_id)
+                                ->groupBy('mall_id');
+                } elseif ($link_type === 'promotion') {
+                    $tenants = NewsMerchant::select(
+                                    'merchants.merchant_id',
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                    'merchants.status',
+                                    'merchants.object_type',
+                                    DB::raw("pm.name as display_name")
+                                )
+                                ->leftjoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                ->where('news_id', $campaign_id)
+                                ->groupBy('mall_id');
+                } elseif ($link_type === 'store') {
+                    $tenants = CampaignLocation::select('merchants.merchant_id',
+                                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                                    DB::raw("{$prefix}merchants.name as display_name"),
+                                                    'merchants.status',
+                                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
+                                                )
+                                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                               ->where('merchants.object_type', 'tenant')
+                                               ->where('merchants.status', '!=', 'deleted')
+                                               ->groupBy('merchants.name');
+
+                    if (! empty($merchant_name)) {
+                        $tenants = CampaignLocation::select('merchants.merchant_id',
+                                                        DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                                        DB::raw("pm.name as display_name"),
+                                                        'merchants.status',
+                                                        DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
+                                                    )
+                                                   ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                                   ->where('merchants.object_type', 'tenant')
+                                                   ->where('merchants.status', '!=', 'deleted')
+                                                   ->where('merchants.name', '=', $merchant_name);
+                    }
+
+                } elseif ($link_type === 'no link' || $link_type === 'information' || $link_type === 'url') {
+                    $tenants = CampaignLocation::select('merchants.merchant_id',
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                    DB::raw("pm.name as display_name"),
+                                    'merchants.status'
+                                )
+                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                               ->whereIn('merchants.object_type', ['mall', 'tenant'])
+                               ->where('merchants.status', '!=', 'deleted')
+                               ->groupBy('mall_id');
+                }
+            }
 
             if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
                 if ($user->campaignAccount->is_link_to_all === 'N') {
