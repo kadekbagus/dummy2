@@ -4851,4 +4851,17 @@ return array(
             'cache_ttl' => 15
         ]
     ]
+
+    /**
+     * Campaign spending related configuration
+     */
+    'campaign_spending' => [
+        // Update the campaign spending by recalculating
+        // the campaign cost when it was saved
+        'update_spending_on_save' => FALSE,
+
+        // Update the campaign spending by recalculating
+        // the campaign cost using artisan
+        'update_spending_on_artisan' => TRUE
+    ]
 );
