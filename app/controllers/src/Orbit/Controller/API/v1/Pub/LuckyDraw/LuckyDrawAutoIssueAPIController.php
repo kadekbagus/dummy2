@@ -1,8 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\LuckyDraw;
 
-use IntermediateBaseController;
-use OrbitShop\API\v1\ResponseProvider;
-use Orbit\Helper\Session\UserGetter;
+use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -23,7 +21,7 @@ use LuckyDrawNumber;
 use Inbox;
 use \Orbit\Helper\Exception\OrbitCustomException;
 
-class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
+class LuckyDrawAutoIssueAPIController extends ControllerAPI
 {
     /**
      * POST - post auto issue lucky draw (fake upload issue lucky draw number)
@@ -34,14 +32,14 @@ class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
      */
     public function postLuckyDrawAutoIssue()
     {
-        $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('click');
         $user = NULL;
         $httpCode = 200;
         $luckyDraw = null;
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
+            $session = SessionPreparer::prepareSession();
 
             // should always check the role
             $role = $user->role->role_name;
@@ -56,7 +54,7 @@ class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
             DB::connection()->beginTransaction();
 
             // check csrf token
-            if ($this->session->read('orbit_csrf_token') !== OrbitInput::post('_token')) {
+            if ($session->read('orbit_csrf_token') !== OrbitInput::post('_token')) {
                 throw new \Illuminate\Session\TokenMismatchException;
             }
 
@@ -163,7 +161,7 @@ class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
 
             // // refresh csrf_token
             $csrf_token = csrf_token();
-            $this->session->write('orbit_csrf_token', $csrf_token);
+            $session->write('orbit_csrf_token', $csrf_token);
 
             $data = new stdclass();
             $data->total_records = 1;
@@ -200,7 +198,7 @@ class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
 
         } catch (ACLForbiddenException $e) {
             DB::connection()->rollBack();
-            $token = $this->refreshCSRFToken($this->session);
+            $token = $this->refreshCSRFToken($session);
             $data = new stdclass();
             $data->token = $token;
 
@@ -221,7 +219,7 @@ class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
 
         } catch (InvalidArgsException $e) {
             DB::connection()->rollBack();
-            $token = $this->refreshCSRFToken($this->session);
+            $token = $this->refreshCSRFToken($session);
             $data = new stdclass();
             $data->token = $token;
 
@@ -242,7 +240,7 @@ class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
 
         } catch (QueryException $e) {
             DB::connection()->rollBack();
-            $token = $this->refreshCSRFToken($this->session);
+            $token = $this->refreshCSRFToken($session);
             $data = new stdclass();
             $data->token = $token;
 
@@ -269,7 +267,7 @@ class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
 
         } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
             DB::connection()->rollBack();
-            $token = $this->refreshCSRFToken($this->session);
+            $token = $this->refreshCSRFToken($session);
             $data = new stdclass();
             $data->token = $token;
             if ($e->getCode() === LuckyDraw::LUCKY_DRAW_MAX_NUMBER_REACHED_ERROR_CODE) {
@@ -293,7 +291,7 @@ class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
 
         } catch (\Illuminate\Session\TokenMismatchException $e) {
             DB::connection()->rollBack();
-            $token = $this->refreshCSRFToken($this->session);
+            $token = $this->refreshCSRFToken($session);
             $data = new stdclass();
             $data->token = $token;
 
@@ -314,7 +312,7 @@ class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
 
         } catch (\Exception $e) {
             DB::connection()->rollBack();
-            $token = $this->refreshCSRFToken($this->session);
+            $token = $this->refreshCSRFToken($session);
             $data = new stdclass();
             $data->token = $token;
 
@@ -338,7 +336,7 @@ class LuckyDrawAutoIssueAPIController extends IntermediateBaseController
         // Save the activity
         $activity->save();
 
-        return $this->render($this->response);
+        return $this->render($httpCode);
     }
 
     /**
