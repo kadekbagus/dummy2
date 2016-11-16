@@ -8420,7 +8420,7 @@ class UploadAPIController extends ControllerAPI
                     $elementName => $images,
                 ),
                 array(
-                    'advert_id'  => 'required|orbit.empty.advert',
+                    'advert_id'  => 'required|orbit.empty.advert_id',
                     $elementName => 'required|array|nomore.than.one',
                 ),
                 $messages
@@ -8442,7 +8442,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had News instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $advert = App::make('orbit.empty.advert');
+            $advert = App::make('orbit.empty.advert_id');
 
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
@@ -8616,7 +8616,7 @@ class UploadAPIController extends ControllerAPI
                     'advert_id'   => $advert_id,
                 ),
                 array(
-                    'advert_id'   => 'required|orbit.empty.advert',
+                    'advert_id'   => 'required|orbit.empty.advert_id',
                 )
             );
 
@@ -8636,7 +8636,7 @@ class UploadAPIController extends ControllerAPI
 
             // We already had News instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
-            $advert = App::make('orbit.empty.advert');
+            $advert = App::make('orbit.empty.advert_id');
 
             // Delete old advert image
             $pastMedia = Media::where('object_id', $advert->advert_id)
@@ -8831,6 +8831,20 @@ class UploadAPIController extends ControllerAPI
                 }
 
                 App::instance('orbit.empty.mallgroup', $merchant);
+
+                return TRUE;
+            });
+
+            Validator::extend('orbit.empty.advert_id', function ($attribute, $value, $parameters) use ($user) {
+                $news = Advert::excludeDeleted()
+                            ->where('advert_id', $value)
+                            ->first();
+
+                if (empty($news)) {
+                    return FALSE;
+                }
+
+                App::instance('orbit.empty.news', $news);
 
                 return TRUE;
             });
