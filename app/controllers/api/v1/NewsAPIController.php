@@ -1162,6 +1162,17 @@ class NewsAPIController extends ControllerAPI
             $tempContent->contents = serialize($beforeUpdatedNews);
             $tempContent->save();
 
+            // update promotion advert
+            if ($updatednews->object_type === 'promotion') {
+                $promotionAdverts = Advert::excludeDeleted()
+                                    ->where('link_object_id', $updatednews->news_id)
+                                    ->update([
+                                            'status'     => $updatednews->status,
+                                            'start_date' => $updatednews->begin_date,
+                                            'end_date'   => $updatednews->end_date
+                                        ]);
+            }
+
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
             // $this->response->data->translation_default = $updatednews_default_language;

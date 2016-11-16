@@ -104,7 +104,7 @@ class CouponListAPIController extends ControllerAPI
 
             $advert_location_type = 'gtm';
             $advert_location_id = '0';
-            if (! empty($from_mall_ci) || $from_mall_ci !== 'y') {
+            if (! empty($from_mall_ci)) {
                 $advert_location_type = 'mall';
                 $advert_location_id = $mallId;
             }
