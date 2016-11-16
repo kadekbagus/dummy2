@@ -4587,6 +4587,15 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - View advertisement on banner.
+            '88' => array(
+                'name' => 'view_banner',
+                'name_long' => 'View Banner',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => 'Advert',
+                'parameter_name' => 'advert_id'
+            ),
         ),
     ),
 
