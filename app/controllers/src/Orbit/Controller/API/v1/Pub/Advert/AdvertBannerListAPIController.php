@@ -20,9 +20,9 @@ use AdvertLinkType;
 use AdvertLocation;
 use AdvertPlacement;
 
-class AdvertListAPIController extends ControllerAPI
+class AdvertBannerListAPIController extends ControllerAPI
 {
-    public function getAdvertList()
+    public function getAdvertBannerList()
     {
         $httpCode = 200;
         try {
