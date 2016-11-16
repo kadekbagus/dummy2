@@ -130,30 +130,29 @@ class StoreAPIController extends ControllerAPI
                     'advert_placements.placement_order')
                 ->join(DB::raw("(select merchant_id, name, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->leftJoin('media', function($q) {
-                    $q->on('media.object_id', '=', 'merchants.merchant_id');
                     $q->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
+                    $q->on('media.object_id', '=', 'merchants.merchant_id');
                 })
                 ->leftJoin('adverts', function ($q) use ($now) {
-                    $q->on('adverts.link_object_id', '=', 'merchants.merchant_id');
                     $q->on('adverts.status', '=', DB::raw("'active'"));
                     $q->on('adverts.start_date', '<=', DB::raw("'" . $now . "'"));
                     $q->on('adverts.end_date', '>=', DB::raw("'" . $now . "'"));
+                    $q->on('adverts.link_object_id', '=', 'merchants.merchant_id');
                 })
                 ->leftJoin('advert_link_types', function ($q) {
-                    $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                     $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Store'"));
+                    $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                 })
                 ->leftJoin('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
-                    $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
-                    $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
                     $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
+                    $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
+                    $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
                 })
                 ->leftJoin('media as advert_media', function ($q) {
-                    $q->on(DB::raw("advert_media.object_id"), '=', 'adverts.advert_id');
                     $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
+                    $q->on(DB::raw("advert_media.object_id"), '=', 'adverts.advert_id');
                 })
                 ->where('merchants.status', 'active')
-                ->where('merchants.object_type', 'tenant')
                 ->whereRaw("oms.status = 'active'")
                 ->orderBy('advert_placements.placement_order', 'desc')
                 ->orderBy('merchants.created_at', 'asc');
@@ -261,9 +260,11 @@ class StoreAPIController extends ControllerAPI
                 $store = $store->addSelect('distance')
                                 ->groupBy('name')
                                 ->orderBy($sort_by, $sort_mode)
+                                ->orderBy('placement_order', 'desc')
                                 ->orderBy('name', 'asc');
             } else {
                 $store = $store->groupBy('name')
+                                ->orderBy('placement_order', 'desc')
                                 ->orderBy('name', 'asc');
             }
 
