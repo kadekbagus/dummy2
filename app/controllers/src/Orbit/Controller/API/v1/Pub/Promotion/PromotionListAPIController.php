@@ -395,6 +395,34 @@ class PromotionListAPIController extends ControllerAPI
             }
             $data->records = $listOfRec;
 
+            // random featured adv
+            $randomPromotion = $_promotion->get();
+            if ($list_type === 'featured') {
+                $advertedCampaigns = array_filter($randomPromotion, function($v) {
+                    return ! is_null($v->placement_type);
+                });
+
+                $nonAdvertedCampaigns = array_filter($randomPromotion, function($v) {
+                    return is_null($v->placement_type);
+                });
+
+                if (count($advertedCampaigns) > $take) {
+                    $random = array();
+                    $listSlide = array_rand($advertedCampaigns, $take);
+                    if (count($listSlide) > 1) {
+                        foreach ($listSlide as $key => $value) {
+                            $random[] = $advertedCampaigns[$value];
+                        }
+                    } else {
+                        $random = $advertedCampaigns[$listSlide];
+                    }
+
+                    $data->returned_records = count($listOfRec);
+                    $data->total_records = count($random);
+                    $data->records = $random;
+                }
+            }
+
             if (OrbitInput::get('from_homepage', '') !== 'y') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
                     if (is_object($mall)) {
