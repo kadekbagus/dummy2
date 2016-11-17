@@ -13,10 +13,7 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
-use OrbitShop\API\v1\ResponseProvider;
 use Activity;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
@@ -45,6 +42,8 @@ class CouponMallListAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $couponId = OrbitInput::get('coupon_id');

@@ -14,13 +14,10 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
 use PromotionRetailer;
 use Helper\EloquentRecordCounter as RecordCounter;
-use OrbitShop\API\v1\ResponseProvider;
 use Activity;
 use Coupon;
 use Mall;
@@ -30,13 +27,12 @@ class CouponLocationAPIController extends ControllerAPI
     public function getCouponLocations()
     {
         $httpCode = 200;
-        $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = null;
 
         try{
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');

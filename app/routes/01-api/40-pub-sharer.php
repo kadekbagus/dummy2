@@ -39,20 +39,19 @@ Route::group(
 /**
  * share campaign via email
  */
-Route::post(
-    '/{search}/v1/pub/sharer/email/campaign', ['as' => 'pub-share-email-campaign', function()
-    {
-        return Orbit\Controller\API\v1\Pub\CampaignShareEmailAPIController::create()->postCampaignShareEmail();
-    }]
-)->where('search', '(api|app)');
+Route::post('/api/v1/pub/sharer/email/campaign', function()
+{
+    return Orbit\Controller\API\v1\Pub\CampaignShareEmailAPIController::create()->postCampaignShareEmail();
+});
 
+Route::post('/app/v1/pub/sharer/email/campaign', ['as' => 'pub-share-email-campaign', 'uses' => 'IntermediatePubAuthController@CampaignShareEmail_postCampaignShareEmail']);
 
 /**
  * share landing page via email
  */
-Route::post(
-    '/{search}/v1/pub/sharer/email/landingpage', ['as' => 'pub-share-email-landingpage', function()
-    {
-        return Orbit\Controller\API\v1\Pub\LandingPageShareEmailAPIController::create()->postLandingPageShareEmail();
-    }]
-)->where('search', '(api|app)');
+Route::post('/api/v1/pub/sharer/email/landingpage', function()
+{
+    return Orbit\Controller\API\v1\Pub\LandingPageShareEmailAPIController::create()->postLandingPageShareEmail();
+});
+
+Route::post('/app/v1/pub/sharer/email/landingpage', ['as' => 'pub-share-email-landingpage', 'uses' => 'IntermediatePubAuthController@LandingPageShareEmail_postLandingPageShareEmail']);

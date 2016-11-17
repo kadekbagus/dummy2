@@ -154,4 +154,4 @@ Route::get('/api/v1/pub/mall-info', function()
     return Orbit\Controller\API\v1\Pub\Mall\MallInfoAPIController::create()->getMallInfo();
 });
 
-Route::get('/app/v1/pub/mall-info', ['as' => 'mall-info', 'uses' => 'IntermediatePubAuthController@Mall\MallList_getMallInfo']);
+Route::get('/app/v1/pub/mall-info', ['as' => 'mall-info', 'uses' => 'IntermediatePubAuthController@Mall\MallInfo_getMallInfo']);

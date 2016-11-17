@@ -13,9 +13,6 @@ use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Config;
 use stdClass;
-use OrbitShop\API\v1\ResponseProvider;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Validator;
 use News;
 use Coupon;
@@ -38,13 +35,11 @@ class CampaignShareEmailAPIController extends ControllerAPI
      */
     public function postCampaignShareEmail()
     {
-
         $httpCode = 200;
-        $this->response = new ResponseProvider();
-    	try {
 
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+        try {
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $email = OrbitInput::post('email');
             $campaign_id = OrbitInput::post('campaign_id');
@@ -81,12 +76,12 @@ class CampaignShareEmailAPIController extends ControllerAPI
                 'languageId'         => $language,
             ]);
 
-			$this->response->code = 0;
+            $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
             $this->response->data = null;
 
-    	} catch (ACLForbiddenException $e) {
+        } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';

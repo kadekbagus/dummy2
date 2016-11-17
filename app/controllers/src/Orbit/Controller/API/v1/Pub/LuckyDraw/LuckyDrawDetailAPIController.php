@@ -3,9 +3,7 @@
  * API Controller for Lucky draw list for public usage
  *
  */
-use IntermediateBaseController;
-use OrbitShop\API\v1\ResponseProvider;
-use Orbit\Helper\Session\UserGetter;
+use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -27,7 +25,7 @@ use URL;
 use Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawHelper;
 use Carbon\Carbon;
 
-class LuckyDrawDetailAPIController extends IntermediateBaseController
+class LuckyDrawDetailAPIController extends ControllerAPI
 {
     /**
      * GET - get lucky draw detail
@@ -43,15 +41,15 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
      */
     public function getLuckyDrawItem()
     {
-        $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
         $mall = NULL;
         $httpCode = 200;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
+            $session = SessionPreparer::prepareSession();
 
             $language = OrbitInput::get('language', 'id');
             $luckyDrawId = OrbitInput::get('lucky_draw_id');
@@ -153,7 +151,7 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
             }
 
             $csrf_token = csrf_token();
-            $this->session->write('orbit_csrf_token', $csrf_token);
+            $session->write('orbit_csrf_token', $csrf_token);
 
             $luckyDraw->current_mall_time = Carbon::now($luckyDraw->timezone_name)->format('Y-m-d H:i:s');
             $luckyDraw->token = $csrf_token;
@@ -227,7 +225,7 @@ class LuckyDrawDetailAPIController extends IntermediateBaseController
 
         }
 
-        return $this->render($this->response);
+        return $this->render($httpCode);
     }
 
     protected function quote($arg)

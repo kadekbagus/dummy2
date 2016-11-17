@@ -13,7 +13,6 @@ use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
 use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
@@ -46,8 +45,10 @@ class CouponAddToWalletAPIController extends ControllerAPI
         $issued_coupon_code = null;
         $coupon_id = OrbitInput::post('coupon_id', NULL);
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
+
+            $session = SessionPreparer::prepareSession();
 
             // should always check the role
             $role = $user->role->role_name;
@@ -74,7 +75,7 @@ class CouponAddToWalletAPIController extends ControllerAPI
                 ->where('promotion_id', '=', $coupon_id)
                 ->first();
 
-            $couponHelper = CouponHelper::create($this->session);
+            $couponHelper = CouponHelper::create($session);
             $couponHelper->couponCustomValidator();
 
             $validator = Validator::make(
