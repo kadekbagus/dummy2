@@ -326,7 +326,7 @@ class NewsListAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $news->skip($skip);
 
-            $totalRec = count($_news->get());
+            $totalRec = $recordCounter->count();
             $listOfRec = $news->get();
 
             $data = new \stdclass();

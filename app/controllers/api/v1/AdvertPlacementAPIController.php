@@ -173,7 +173,7 @@ class AdvertPlacementAPIController extends ControllerAPI
             }
 
             // Default sort by
-            $sortBy = 'placement_name';
+            $sortBy = 'placement_order';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -183,6 +183,7 @@ class AdvertPlacementAPIController extends ControllerAPI
                 $sortByMapping = array(
                     'advert_placement_id' => 'advert_placement_id',
                     'placement_name'      => 'placement_name',
+                    'placement_order'     => 'placement_order',
                     'created_at'          => 'created_at',
                     'status'              => 'status'
                 );
@@ -199,8 +200,8 @@ class AdvertPlacementAPIController extends ControllerAPI
             $placement->orderBy($sortBy, $sortMode);
 
             //with name
-            if ($sortBy !== 'placement_name') {
-                $placement->orderBy('placement_name', 'asc');
+            if ($sortBy !== 'placement_order') {
+                $placement->orderBy('placement_order', 'asc');
             }
 
             // Return the instance of Query Builder

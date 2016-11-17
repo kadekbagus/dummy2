@@ -15,6 +15,7 @@ use DB;
 use Validator;
 use Activity;
 use Mall;
+use Advert;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
@@ -101,12 +102,46 @@ class CouponListAPIController extends ControllerAPI
 
             $advert_location_type = 'gtm';
             $advert_location_id = '0';
-            if (! empty($from_mall_ci)) {
+            if (! empty($mallId)) {
                 $advert_location_type = 'mall';
                 $advert_location_id = $mallId;
             }
 
             $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
+
+            $adverts = Advert::select('adverts.advert_id',
+                                    'adverts.link_object_id',
+                                    'advert_placements.placement_type',
+                                    'advert_placements.placement_order',
+                                    'advert_locations.location_type',
+                                    'advert_link_types.advert_link_name')
+                            ->join('advert_link_types', function ($q) {
+                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
+                                $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Coupon'"));
+                            })
+                            ->join('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
+                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
+                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
+                                $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
+                            })
+                            ->join('advert_placements', function ($q) use ($list_type) {
+                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
+                                if ($list_type === 'featured') {
+                                    $q->on('advert_placements.placement_type', '=', DB::raw("'featured_list'"));
+                                } else {
+                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
+                                }
+                            })
+                            ->where('adverts.status', '=', DB::raw("'active'"))
+                            ->where('adverts.start_date', '<=', DB::raw("'" . $now . "'"))
+                            ->where('adverts.end_date', '>=', DB::raw("'" . $now . "'"));
+
+            $advertSql = $adverts->toSql();
+            foreach($adverts->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : $this->quote($binding);
+              $sql = preg_replace('/\?/', $value, $sql, 1);
+            }
 
             $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
                                 CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
@@ -144,8 +179,7 @@ class CouponListAPIController extends ControllerAPI
                                         ELSE advert_media.path END
                                         as image_url
                                     "),
-                            'advert_placements.placement_type',
-                            'advert_placements.placement_order',
+                            DB::raw("advert.placement_type, advert.placement_order"),
                             'promotions.created_at')
                             ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -162,29 +196,15 @@ class CouponListAPIController extends ControllerAPI
                             ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                             ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
-                            ->leftJoin('adverts', function ($q) use ($now) {
-                                $q->on('adverts.link_object_id', '=', 'promotions.promotion_id');
-                                $q->on('adverts.status', '=', DB::raw("'active'"));
-                                $q->on('adverts.start_date', '<=', DB::raw("'" . $now . "'"));
-                                $q->on('adverts.end_date', '>=', DB::raw("'" . $now . "'"));
-                            })
-                            ->leftJoin('advert_link_types', function ($q) {
-                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
-                                $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Coupon'"));
-                            })
-                            ->leftJoin('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
-                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
-                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
-                                $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
-                            })
+                            ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.link_object_id"), '=', 'promotions.promotion_id')
                             ->leftJoin('media as advert_media', function ($q) {
-                                $q->on(DB::raw("advert_media.object_id"), '=', 'adverts.advert_id');
+                                $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                                 $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
                             })
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereRaw("available.tot > 0")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->orderBy('advert_placements.placement_order', 'desc')
+                            ->orderBy(DB::raw("advert.placement_order"), 'desc')
                             ->orderBy('coupon_name', 'asc');
 
             //calculate distance if user using my current location as filter and sort by location for listing
@@ -207,19 +227,6 @@ class CouponListAPIController extends ControllerAPI
                                             $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END"));
                                     });
                 }
-            }
-
-            // display list : preferred or featured
-            if ($list_type === 'featured') {
-                $coupons->leftJoin('advert_placements', function ($q) {
-                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
-                                $q->on('advert_placements.placement_type', '=', DB::raw("'featured_list'"));
-                            });
-            } else {
-                $coupons->leftJoin('advert_placements', function ($q) {
-                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
-                                $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
-                            });
             }
 
             // filter by category_id
