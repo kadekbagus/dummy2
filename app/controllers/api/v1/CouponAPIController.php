@@ -226,7 +226,7 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
-                    'sticky_order'            => 'required|in:0,1',
+                    'sticky_order'            => 'in:0,1',
                     'is_popup'                => 'in:Y,N',
                     'coupon_codes'            => 'required',
                 ),

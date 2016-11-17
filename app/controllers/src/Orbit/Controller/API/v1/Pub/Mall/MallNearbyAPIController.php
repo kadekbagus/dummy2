@@ -17,8 +17,6 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use \Activity;
 use Elasticsearch\ClientBuilder;
-use Orbit\Helper\Session\UserGetter;
-use Orbit\Helper\Net\SessionPreparer;
 
 class MallNearbyAPIController extends ControllerAPI
 {
@@ -39,6 +37,8 @@ class MallNearbyAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
             $distance = OrbitInput::get('distance');
@@ -206,8 +206,8 @@ class MallNearbyAPIController extends ControllerAPI
         $activity = Activity::mobileci()->setActivityType('search');
         $httpCode = 200;
         try {
-            $session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $latitude = OrbitInput::get('latitude',null);
             $longitude = OrbitInput::get('longitude',null);

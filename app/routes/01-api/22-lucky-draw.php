@@ -136,19 +136,29 @@ Route::get('/app/v1/pub/lucky-draw/list', ['as' => 'pub-lucky-draw-list', 'uses'
 /**
  * Route for getting detail of lucky draw
  */
-Route::get('/api/v1/pub/lucky-draw/detail', ['as' => 'pub-lucky-draw-detail', 'uses' => 'IntermediatePubAuthController@LuckyDraw\LuckyDrawDetail_getLuckyDrawItem']);
+Route::get('/api/v1/pub/lucky-draw/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawDetailAPIController::create()->getLuckyDrawItem();
+});
+
+Route::get('/app/v1/pub/lucky-draw/detail', ['as' => 'pub-lucky-draw-detail', 'uses' => 'IntermediatePubAuthController@LuckyDraw\LuckyDrawDetail_getLuckyDrawItem']);
 
 /**
  * Route for issue auto lucky draw number (fake image upload)
  */
-Route::post('/api/v1/pub/lucky-draw/issue', ['as' => 'pub-lucky-draw-issue', 'uses' => 'IntermediatePubAuthController@LuckyDraw\LuckyDrawAutoIssue_postLuckyDrawAutoIssue']);
+Route::get('/api/v1/pub/lucky-draw/issue', function()
+{
+    return Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawAutoIssueAPIController::create()->postLuckyDrawAutoIssue();
+});
+
+Route::post('/app/v1/pub/lucky-draw/issue', ['as' => 'pub-lucky-draw-issue', 'uses' => 'IntermediatePubAuthController@LuckyDraw\LuckyDrawAutoIssue_postLuckyDrawAutoIssue']);
 
 /**
  * Route for getting list of my lucky draw on all malls
  */
-Route::get('/app/v1/pub/lucky-draw/number/list', function()
+Route::get('/api/v1/pub/lucky-draw/number/list', function()
 {
     return Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawMyListAPIController::create()->getMyLuckyDrawList();
 });
 
-Route::get('/api/v1/pub/lucky-draw/number/list', ['as' => 'pub-lucky-draw-number-list', 'uses' => 'IntermediatePubAuthController@LuckyDraw\LuckyDrawMyList_getMyLuckyDrawList']);
+Route::get('/app/v1/pub/lucky-draw/number/list', ['as' => 'pub-lucky-draw-number-list', 'uses' => 'IntermediatePubAuthController@LuckyDraw\LuckyDrawMyList_getMyLuckyDrawList']);

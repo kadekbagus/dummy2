@@ -13,9 +13,6 @@ use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Config;
 use stdClass;
-use OrbitShop\API\v1\ResponseProvider;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Validator;
 use \Queue;
 
@@ -36,11 +33,10 @@ class LandingPageShareEmailAPIController extends ControllerAPI
     {
 
         $httpCode = 200;
-        $this->response = new ResponseProvider();
-    	try {
+        try {
 
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $email = OrbitInput::post('email');
 
@@ -67,12 +63,12 @@ class LandingPageShareEmailAPIController extends ControllerAPI
                 'userId'             => $user->user_id,
             ]);
 
-			$this->response->code = 0;
+            $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Success';
             $this->response->data = null;
 
-    	} catch (ACLForbiddenException $e) {
+        } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';

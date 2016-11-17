@@ -2321,7 +2321,7 @@ class TenantAPIController extends ControllerAPI
                                                    ->where('merchants.name', '=', $merchant_name);
                     }
 
-                } elseif ($link_type === 'no link' || $link_type === 'information' || $link_type === 'url') {
+                } elseif ($link_type === 'no_link' || $link_type === 'information' || $link_type === 'url') {
                     $tenants = CampaignLocation::select('merchants.merchant_id',
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                     DB::raw("pm.name as display_name"),

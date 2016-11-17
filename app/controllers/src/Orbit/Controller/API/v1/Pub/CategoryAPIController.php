@@ -38,6 +38,8 @@ class CategoryAPIController extends ControllerAPI
     {
       $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $sort_by = OrbitInput::get('sortby', 'category_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -128,7 +130,7 @@ class CategoryAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';

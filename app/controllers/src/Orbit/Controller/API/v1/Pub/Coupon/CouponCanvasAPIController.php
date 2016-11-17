@@ -12,8 +12,6 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -49,8 +47,8 @@ class CouponCanvasAPIController extends ControllerAPI
         $isAvailable = NULL;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $language = OrbitInput::get('language', 'id');
             $issuedCouponCode = OrbitInput::get('cid');
