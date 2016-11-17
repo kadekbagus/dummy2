@@ -26,6 +26,8 @@ class AdvertBannerListAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $take = PaginationNumber::parseTakeFromGet('advert');
             $skip = PaginationNumber::parseSkipFromGet();
             $banner_type = OrbitInput::get('banner_type', 'top_banner');
@@ -137,7 +139,7 @@ class AdvertBannerListAPIController extends ControllerAPI
             $this->response->data = null;
 
             $httpCode = 500;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
