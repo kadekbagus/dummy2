@@ -121,7 +121,7 @@ class StoreAPIController extends ControllerAPI
                             ->join('advert_placements', function ($q) use ($list_type) {
                                 $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
                                 if ($list_type === 'featured') {
-                                    $q->on('advert_placements.placement_type', '=', DB::raw("'featured_list'"));
+                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('featured_list', 'preferred_list_regular', 'preferred_list_large')"));
                                 } else {
                                     $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
                                 }
@@ -187,10 +187,24 @@ class StoreAPIController extends ControllerAPI
             $querySql = $store->toSql();
 
             $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery())
-                        ->select(DB::raw('subQuery.merchant_id'), 'name', 'description', 'logo_url', 'mall_id', 'mall_name', 'placement_type', 'placement_order')
                         ->groupBy('name')
                         ->orderBy('placement_order', 'desc')
                         ->orderBy('name', 'asc');
+
+            if ($list_type === "featured") {
+                $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_order',
+                            DB::raw("CASE WHEN SUM(
+                                        CASE
+                                            WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
+                                            THEN 1
+                                            ELSE 0
+                                        END) > 0
+                                    THEN 'preferred_list_large'
+                                    ELSE placement_type
+                                    END AS placement_type"));
+            } else {
+                $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_type', 'placement_order');
+            }
 
             // filter by category just on first store
             OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
