@@ -9,8 +9,6 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use Config;
 use Validator;
 use Activity;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 
 class FeedbackAPIController extends ControllerAPI
 {
@@ -34,8 +32,8 @@ class FeedbackAPIController extends ControllerAPI
         $httpCode = 200;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $feedback = OrbitInput::post('feedback');
             $cs_email = Config::get('orbit.contact_information.customer_service.email');
@@ -101,7 +99,7 @@ class FeedbackAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
