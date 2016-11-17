@@ -3127,7 +3127,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 90000,
+                'file_size'     => 9000000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/advert',
@@ -3340,7 +3340,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 90000,
+                'file_size'     => 9000000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/base_store/logo',
