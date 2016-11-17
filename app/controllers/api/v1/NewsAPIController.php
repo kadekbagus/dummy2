@@ -1172,7 +1172,7 @@ class NewsAPIController extends ControllerAPI
                 if (! empty($end_date) || $end_date !== '') {
                     $promotionAdverts = Advert::excludeDeleted()
                                         ->where('link_object_id', $updatednews->news_id)
-                                        ->where('end_date', '>', $updatednews->end_date);
+                                        ->where('end_date', '>', $updatednews->end_date)
                                         ->update(['end_date'   => $updatednews->end_date]);
                 }
             }
