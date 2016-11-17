@@ -22,8 +22,6 @@ use Validator;
 use Language;
 use Coupon;
 use Activity;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
@@ -53,8 +51,8 @@ class StoreAPIController extends ControllerAPI
         $user = NULL;
         $httpCode = 200;
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -441,6 +439,8 @@ class StoreAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $storename = OrbitInput::get('store_name');
@@ -574,8 +574,8 @@ class StoreAPIController extends ControllerAPI
         $mall = NULL;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $storename = OrbitInput::get('store_name');
             $language = OrbitInput::get('language', 'id');
@@ -773,8 +773,8 @@ class StoreAPIController extends ControllerAPI
         $user = null;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -962,6 +962,8 @@ class StoreAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $sort_by = OrbitInput::get('sortby', 'campaign_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $store_name = OrbitInput::get('store_name');
