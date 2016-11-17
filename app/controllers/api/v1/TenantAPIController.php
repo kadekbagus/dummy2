@@ -2281,7 +2281,7 @@ class TenantAPIController extends ControllerAPI
                                     DB::raw("pm.name as display_name")
                                 )
                                 ->leftjoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                 ->where('promotion_id', $campaign_id)
                                 ->groupBy('mall_id');
                 } elseif ($link_type === 'promotion') {
@@ -2293,7 +2293,7 @@ class TenantAPIController extends ControllerAPI
                                     DB::raw("pm.name as display_name")
                                 )
                                 ->leftjoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                 ->where('news_id', $campaign_id)
                                 ->groupBy('mall_id');
                 } elseif ($link_type === 'store') {
@@ -2303,7 +2303,7 @@ class TenantAPIController extends ControllerAPI
                                                     'merchants.status',
                                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
                                                 )
-                                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                                ->where('merchants.object_type', 'tenant')
                                                ->where('merchants.status', '!=', 'deleted')
                                                ->groupBy('merchants.name');
@@ -2315,19 +2315,19 @@ class TenantAPIController extends ControllerAPI
                                                         'merchants.status',
                                                         DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
                                                     )
-                                                   ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                                   ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                                    ->where('merchants.object_type', 'tenant')
                                                    ->where('merchants.status', '!=', 'deleted')
                                                    ->where('merchants.name', '=', $merchant_name);
                     }
 
-                } elseif ($link_type === 'no link' || $link_type === 'information' || $link_type === 'url') {
+                } elseif ($link_type === 'no_link' || $link_type === 'information' || $link_type === 'url') {
                     $tenants = CampaignLocation::select('merchants.merchant_id',
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                     DB::raw("pm.name as display_name"),
                                     'merchants.status'
                                 )
-                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                ->whereIn('merchants.object_type', ['mall', 'tenant'])
                                ->where('merchants.status', '!=', 'deleted')
                                ->groupBy('mall_id');

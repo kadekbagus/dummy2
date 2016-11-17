@@ -13,7 +13,7 @@ use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Config;
 use stdClass;
-use OrbitShop\API\v1\ResponseProvider;
+use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 
 class GenericActivityListAPIController extends ControllerAPI
 {
@@ -31,8 +31,8 @@ class GenericActivityListAPIController extends ControllerAPI
     {
 
         $httpCode = 200;
-        $this->response = new ResponseProvider();
         try {
+            $this->checkAuth();
 
             $genAct = Config::get('orbit.generic_activity.activity_list');
             $paramName = Config::get('orbit.generic_activity.parameter_name');
@@ -87,7 +87,7 @@ class GenericActivityListAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
 
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';

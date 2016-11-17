@@ -68,17 +68,22 @@ Route::get('/api/v1/advert-link/{search}', function()
 })->where('search', '(list|search)');
 
 /**
- * Get pub banner advert
- */
-Route::get('/{app}/v1/pub/advert/{search}', [
-    'as' => 'pub-advert-list',
-    'uses' => 'IntermediatePubAuthController@Advert\AdvertBannerList_getAdvertBannerList'
-])->where(['app' => '(api|app)', 'search' => '(search|list)']);
-
-/**
  * List/Search advert location
  */
 Route::get('/api/v1/advert-location/{search}', function()
 {
     return AdvertLocationAPIController::create()->getAdvertLocations();
 })->where('search', '(list|search)');
+
+/**
+ * Get pub banner advert
+ */
+Route::get('/api/v1/pub/advert/{search}', function()
+{
+    return Orbit\Controller\API\v1\Pub\Advert\AdvertBannerListAPIController::create()->getAdvertBannerList();
+})->where('search', '(search|list)');
+
+Route::get('/app/v1/pub/advert/{search}', [
+    'as' => 'pub-advert-list',
+    'uses' => 'IntermediatePubAuthController@Advert\AdvertBannerList_getAdvertBannerList'
+])->where('search', '(search|list)');

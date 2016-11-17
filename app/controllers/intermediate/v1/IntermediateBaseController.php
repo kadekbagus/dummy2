@@ -242,7 +242,7 @@ class IntermediateBaseController extends Controller
             }
         } elseif ($theClass === 'IntermediatePubAuthController') {
             $namespace = 'Orbit\Controller\API\v1\Pub\\';
-            if ($userId = $this->authCheckFromAngularCI()) {
+            if ($userId = $this->authCheckPub()) {
                 $user = User::find($userId);
                 // This will query the database if the apikey has not been set up yet
                 $apikey = $user->apikey;
@@ -355,6 +355,26 @@ class IntermediateBaseController extends Controller
      * @return int - User ID
      */
     protected function authCheckFromAngularCI()
+    {
+        $userId = $this->session->read('user_id');
+
+        if (empty($userId)) {
+            $userId = $this->session->read('guest_user_id');
+            if (empty($userId)) {
+                return FALSE;
+            }
+        }
+
+        return $userId;
+    }
+
+    /**
+     * Check the authentication status from Pub Controllers.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return string - User ID
+     */
+    protected function authCheckPub()
     {
         $userId = $this->session->read('user_id');
 

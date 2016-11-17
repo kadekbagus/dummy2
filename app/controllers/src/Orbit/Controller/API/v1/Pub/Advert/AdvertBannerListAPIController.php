@@ -26,6 +26,8 @@ class AdvertBannerListAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $take = PaginationNumber::parseTakeFromGet('advert');
             $skip = PaginationNumber::parseSkipFromGet();
             $banner_type = OrbitInput::get('banner_type', 'top_banner');
@@ -101,13 +103,39 @@ class AdvertBannerListAPIController extends ControllerAPI
                                     ->on(DB::raw('t.status'), '=', DB::raw("'active'"));
                             })
                             ->where('adverts.status', 'active')
-                            ->whereRaw("{$this->quote($now)} between {$prefix}adverts.start_date and {$prefix}adverts.end_date")
-                            ->orderBy(DB::raw('RAND()'))
-                            ->take($take)
-                            ->skip($skip)
-                            ->get();
+                            ->whereRaw("{$this->quote($now)} between {$prefix}adverts.start_date and {$prefix}adverts.end_date");
 
-            $this->response->data = $advert;
+            $slideshow = $advert->get();
+
+            $slide_fix = array();
+            $random = array();
+
+            // random process
+            if (count($slideshow) > 1) {
+                if (count($slideshow) < $take) {
+                    $take = count($slideshow);
+                }
+
+                $slides = array();
+                $listSlide = array_rand($slideshow, $take);
+                if (count($listSlide) > 1) {
+                    foreach ($listSlide as $key => $value) {
+                        array_push($slides, $slideshow[$value]);
+                    }
+
+                    $keys = array_keys($slides);
+                    shuffle($keys);
+                    foreach ($keys as $key) {
+                        array_push($random, $slides[$key]);
+                    }
+                } else {
+                    $random = $slideshow[$listSlide];
+                }
+            } else {
+                $random = $slideshow;
+            }
+
+            $this->response->data = $random;
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
@@ -137,7 +165,7 @@ class AdvertBannerListAPIController extends ControllerAPI
             $this->response->data = null;
 
             $httpCode = 500;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();

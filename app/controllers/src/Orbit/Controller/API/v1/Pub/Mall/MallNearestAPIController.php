@@ -37,6 +37,8 @@ class MallNearestAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
             $width_ratio = OrbitInput::get('width_ratio', 1);

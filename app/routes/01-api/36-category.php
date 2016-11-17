@@ -39,9 +39,9 @@ Route::get('/api/v1/category/{search}', function()
 /**
  * Get Category list
  */
-Route::get(
-    '/{search}/v1/pub/category-list', ['as' => 'category-list', function()
-    {
-        return Orbit\Controller\API\v1\Pub\CategoryAPIController::create()->getCategoryList();
-    }]
-)->where('search', '(api|app)');
+Route::get('/api/v1/pub/category-list', function()
+{
+    return Orbit\Controller\API\v1\Pub\CategoryAPIController::create()->getCategoryList();
+});
+
+Route::get('/app/v1/pub/category-list', ['as' => 'pub-category-list', 'uses' => 'IntermediatePubAuthController@Category_getCategoryList']);

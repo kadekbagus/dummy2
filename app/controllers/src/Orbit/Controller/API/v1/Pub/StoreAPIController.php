@@ -23,8 +23,6 @@ use Validator;
 use Language;
 use Coupon;
 use Activity;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
@@ -54,8 +52,8 @@ class StoreAPIController extends ControllerAPI
         $user = NULL;
         $httpCode = 200;
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -106,6 +104,7 @@ class StoreAPIController extends ControllerAPI
 
             $adverts = Advert::select('adverts.advert_id',
                                     'adverts.link_object_id',
+                                    'merchants.name',
                                     'advert_placements.placement_type',
                                     'advert_placements.placement_order',
                                     'advert_locations.location_type',
@@ -127,6 +126,7 @@ class StoreAPIController extends ControllerAPI
                                     $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
                                 }
                             })
+                            ->join('merchants', 'merchants.merchant_id', '=', 'adverts.link_object_id')
                             ->where('adverts.status', '=', DB::raw("'active'"))
                             ->where('adverts.start_date', '<=', DB::raw("'" . $now . "'"))
                             ->where('adverts.end_date', '>=', DB::raw("'" . $now . "'"));
@@ -167,7 +167,7 @@ class StoreAPIController extends ControllerAPI
                     $q->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
                     $q->on('media.object_id', '=', 'merchants.merchant_id');
                 })
-                ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.link_object_id"), '=', 'merchants.merchant_id')
+                ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.name"), '=', 'merchants.name')
                 ->leftJoin('media as advert_media', function ($q) {
                     $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
                     $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
@@ -448,6 +448,8 @@ class StoreAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $storename = OrbitInput::get('store_name');
@@ -581,8 +583,8 @@ class StoreAPIController extends ControllerAPI
         $mall = NULL;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $storename = OrbitInput::get('store_name');
             $language = OrbitInput::get('language', 'id');
@@ -780,8 +782,8 @@ class StoreAPIController extends ControllerAPI
         $user = null;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -969,6 +971,8 @@ class StoreAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $sort_by = OrbitInput::get('sortby', 'campaign_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $store_name = OrbitInput::get('store_name');
