@@ -2,7 +2,6 @@
 
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
-use OrbitShop\API\v1\ResponseProvider;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use \Config;
@@ -17,8 +16,6 @@ use Language;
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
@@ -43,13 +40,12 @@ class NewsLocationAPIController extends ControllerAPI
     public function getNewsLocations()
     {
         $httpCode = 200;
-        $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = null;
 
         try{
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');

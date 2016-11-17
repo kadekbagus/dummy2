@@ -14,8 +14,6 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
 use Mall;
 use Activity;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
@@ -38,8 +36,10 @@ class MallInfoAPIController extends ControllerAPI
         $httpCode = 200;
         try {
             $activity = Activity::mobileci()->setActivityType('view');
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+
+            $this->checkAuth();
+            $user = $this->api->user;
+
             $from_mall_ci = OrbitInput::get('from_mall_ci', 'y');
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
