@@ -38,6 +38,13 @@ class CampaignDailySpendingCalculation extends Command {
      */
     public function fire()
     {
+        $updateSpendingAllowed = Config::get('orbit.campaign_spending.update_spending_on_cron', TRUE);
+        if ($updateSpendingAllowed === FALSE) {
+            $this->info('Campaign spending calculation via artisan is disabled.');
+
+            return FALSE;
+        }
+
         // date_default_timezone_set('UTC')
         $this->info('=== Running at ' . date('l j \of F Y h:i:s A') . " ===");
 

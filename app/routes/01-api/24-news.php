@@ -68,7 +68,7 @@ Route::get('/api/v1/pub/news-list', function()
     return Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create()->getSearchNews();
 });
 
-Route::get('/app/v1/pub/news-list', ['as' => 'pub-news-list', 'uses' => 'IntermediatePubAuthController@News\News_getSearchNews']);
+Route::get('/app/v1/pub/news-list', ['as' => 'pub-news-list', 'uses' => 'IntermediatePubAuthController@News\NewsList_getSearchNews']);
 
 /**
  * List mall of news
@@ -78,7 +78,7 @@ Route::get('/api/v1/pub/mall-news-list', function()
     return Orbit\Controller\API\v1\Pub\News\NewsMallAPIController::create()->getMallPerNews();
 });
 
-Route::get('/app/v1/pub/mall-news-list', ['as' => 'pub-mall-news-list', 'uses' => 'IntermediatePubAuthController@News\News_getMallPerNews']);
+Route::get('/app/v1/pub/mall-news-list', ['as' => 'pub-mall-news-list', 'uses' => 'IntermediatePubAuthController@News\NewsMall_getMallPerNews']);
 
 /**
  * Get news detail on landing page
@@ -88,7 +88,7 @@ Route::get('/api/v1/pub/news/detail', function()
     return Orbit\Controller\API\v1\Pub\News\NewsDetailAPIController::create()->getNewsItem();
 });
 
-Route::get('/app/v1/pub/news/detail', ['as' => 'pub-news-detail', 'uses' => 'IntermediatePubAuthController@News\News_getNewsItem']);
+Route::get('/app/v1/pub/news/detail', ['as' => 'pub-news-detail', 'uses' => 'IntermediatePubAuthController@News\NewsDetail_getNewsItem']);
 
 /**
  * List location of a news
@@ -98,4 +98,4 @@ Route::get('/api/v1/pub/news-location/list', function()
     return Orbit\Controller\API\v1\Pub\News\NewsLocationAPIController::create()->getNewsLocations();
 });
 
-Route::get('/app/v1/pub/news-location/list', ['as' => 'pub-news-location-list', 'uses' => 'IntermediatePubAuthController@News\News_getNewsLocations']);
+Route::get('/app/v1/pub/news-location/list', ['as' => 'pub-news-location-list', 'uses' => 'IntermediatePubAuthController@News\NewsLocation_getNewsLocations']);
