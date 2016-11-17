@@ -10,6 +10,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
+use \Carbon\Carbon as Carbon;
 
 class AdvertAPIController extends ControllerAPI
 {
@@ -598,6 +599,7 @@ class AdvertAPIController extends ControllerAPI
                 }
             }
 
+            $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
             // Builder object
             $prefix = DB::getTablePrefix();
             $advert = Advert::allowedForPMPUser($user, 'advert')
@@ -608,13 +610,16 @@ class AdvertAPIController extends ControllerAPI
                                      'adverts.end_date',
                                      'adverts.notes',
                                      'adverts.advert_placement_id',
-                                     'adverts.status',
                                      'adverts.updated_at',
                                      'adverts.created_at',
                                      'adverts.link_object_id',
                                      'adverts.advert_link_type_id',
                                      'advert_placements.placement_name',
                                      'advert_link_types.advert_link_name',
+                                     DB::raw("CASE
+                                                WHEN {$prefix}adverts.end_date < {$this->quote($now)} THEN 'inactive'
+                                                ELSE {$prefix}adverts.status
+                                             END AS 'status'"),
                                      DB::raw("COUNT(DISTINCT {$prefix}advert_locations.location_id) as total_location"),
                                      DB::raw("CASE
                                                 WHEN advert_link_name = 'Store' THEN store.name

@@ -131,7 +131,7 @@ class PromotionListAPIController extends ControllerAPI
                             ->join('advert_placements', function ($q) use ($list_type) {
                                 $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
                                 if ($list_type === 'featured') {
-                                    $q->on('advert_placements.placement_type', '=', DB::raw("'featured_list'"));
+                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('featured_list', 'preferred_list_regular', 'preferred_list_large')"));
                                 } else {
                                     $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
                                 }
@@ -286,17 +286,37 @@ class PromotionListAPIController extends ControllerAPI
 
             $promotion = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($promotions->getQuery());
 
+            if ($list_type === 'featured') {
+                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description',
+                                        DB::raw("sub_query.object_type"), 'image_url', 'campaign_status',
+                                        'is_started', 'placement_order',
+                                        DB::raw("sub_query.created_at"),
+                                        DB::raw("CASE WHEN SUM(
+                                                CASE
+                                                    WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
+                                                    THEN 1
+                                                    ELSE 0
+                                                END) > 0
+                                            THEN 'preferred_list_large'
+                                            ELSE placement_type
+                                            END AS placement_type")
+                                    )
+                                    ->groupBy(DB::Raw("sub_query.news_id"));
+            } else {
+                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description',
+                                            DB::raw("sub_query.object_type"), 'image_url', 'campaign_status',
+                                            'is_started', 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
+                                        ->groupBy(DB::Raw("sub_query.news_id"));
+            }
+
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
-                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
+                $promotion = $promotion->addSelect(DB::raw("min(distance) as distance"))
                                     ->orderBy('placement_order', 'desc')
                                     ->orderBy('distance', 'asc');
             } else {
-                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
-                                        ->orderBy('placement_order', 'desc');
+                $promotion = $promotion->orderBy('placement_order', 'desc');
             }
-
-            $promotion = $promotion->groupBy(DB::Raw("sub_query.news_id"));
 
             if ($sort_by !== 'location') {
                 // Map the sortby request to the real column name
@@ -394,6 +414,34 @@ class PromotionListAPIController extends ControllerAPI
                 $data->mall_name = $mall->name;
             }
             $data->records = $listOfRec;
+
+            // random featured adv
+            $randomPromotion = $_promotion->get();
+            if ($list_type === 'featured') {
+                $advertedCampaigns = array_filter($randomPromotion, function($v) {
+                    return ! is_null($v->placement_type);
+                });
+
+                $nonAdvertedCampaigns = array_filter($randomPromotion, function($v) {
+                    return is_null($v->placement_type);
+                });
+
+                if (count($advertedCampaigns) > $take) {
+                    $random = array();
+                    $listSlide = array_rand($advertedCampaigns, $take);
+                    if (count($listSlide) > 1) {
+                        foreach ($listSlide as $key => $value) {
+                            $random[] = $advertedCampaigns[$value];
+                        }
+                    } else {
+                        $random = $advertedCampaigns[$listSlide];
+                    }
+
+                    $data->returned_records = count($listOfRec);
+                    $data->total_records = count($random);
+                    $data->records = $random;
+                }
+            }
 
             if (OrbitInput::get('from_homepage', '') !== 'y') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
