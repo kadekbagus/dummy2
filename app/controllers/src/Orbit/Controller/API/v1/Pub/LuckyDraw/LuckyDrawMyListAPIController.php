@@ -1,8 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\LuckyDraw;
 
-use IntermediateBaseController;
-use OrbitShop\API\v1\ResponseProvider;
-use Orbit\Helper\Session\UserGetter;
+use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -10,7 +8,6 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Helper\EloquentRecordCounter as RecordCounter;
-use Orbit\Helper\Net\SessionPreparer;
 use Activity;
 use Mall;
 use Validator;
@@ -22,7 +19,7 @@ use DB;
 use URL;
 use Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawHelper;
 
-class LuckyDrawMyListAPIController extends IntermediateBaseController
+class LuckyDrawMyListAPIController extends ControllerAPI
 {
     /**
      * GET - get My lucky draw list in all mall
@@ -38,15 +35,14 @@ class LuckyDrawMyListAPIController extends IntermediateBaseController
      */
     public function getMyLuckyDrawList()
     {
-        $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
         $mall = NULL;
         $httpCode = 200;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             // should always check the role
             $role = $user->role->role_name;
@@ -311,7 +307,7 @@ class LuckyDrawMyListAPIController extends IntermediateBaseController
 
         }
 
-        return $this->render($this->response);
+        return $this->render($httpCode);
     }
 
     protected function quote($arg)

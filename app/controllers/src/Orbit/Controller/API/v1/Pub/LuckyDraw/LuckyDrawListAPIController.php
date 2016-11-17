@@ -1,8 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\LuckyDraw;
 
-use IntermediateBaseController;
-use OrbitShop\API\v1\ResponseProvider;
-use Orbit\Helper\Session\UserGetter;
+use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -10,7 +8,6 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Helper\EloquentRecordCounter as RecordCounter;
-use Orbit\Helper\Net\SessionPreparer;
 use Validator;
 use Lang;
 use Config;
@@ -22,7 +19,7 @@ use Activity;
 use Mall;
 use Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawHelper;
 
-class LuckyDrawListAPIController extends IntermediateBaseController
+class LuckyDrawListAPIController extends ControllerAPI
 {
     /**
      * GET - get lucky draw list in all mall
@@ -38,15 +35,14 @@ class LuckyDrawListAPIController extends IntermediateBaseController
      */
     public function getSearchLuckyDraw()
     {
-        $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
         $mall = NULL;
         $httpCode = 200;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.lucky_draw.max_record');
@@ -287,7 +283,7 @@ class LuckyDrawListAPIController extends IntermediateBaseController
 
         }
 
-        return $this->render($this->response);
+        return $this->render($httpCode);
     }
 
     protected function quote($arg)

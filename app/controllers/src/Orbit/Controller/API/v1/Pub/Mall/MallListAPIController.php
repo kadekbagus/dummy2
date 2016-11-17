@@ -16,8 +16,6 @@ use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Util\GTMSearchRecorder;
 
 class MallListAPIController extends ControllerAPI
@@ -37,8 +35,8 @@ class MallListAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $keyword = OrbitInput::get('keyword');
             $location = OrbitInput::get('location', null);
@@ -299,6 +297,8 @@ class MallListAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
+            $this->checkAuth();
+
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $sort_by = OrbitInput::get('sortby', 'city');
             $sort_mode = OrbitInput::get('sortmode','asc');
