@@ -412,6 +412,10 @@ class Activity extends Eloquent
                     }
                     break;
 
+                case 'Category':
+                    $this->object_display_name = $object->category_name;
+                    break;
+
                 default:
                     $this->object_display_name = NULL;
                     break;

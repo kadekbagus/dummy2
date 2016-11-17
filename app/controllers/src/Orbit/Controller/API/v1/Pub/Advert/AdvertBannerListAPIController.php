@@ -111,7 +111,7 @@ class AdvertBannerListAPIController extends ControllerAPI
             $random = array();
 
             // random process
-            if (count($slideshow) > 1) {
+            if (! empty($slideshow)) {
                 if (count($slideshow) < $take) {
                     $take = count($slideshow);
                 }
@@ -129,10 +129,10 @@ class AdvertBannerListAPIController extends ControllerAPI
                         array_push($random, $slides[$key]);
                     }
                 } else {
-                    $random = $slideshow[$listSlide];
+                    $random[] = $slideshow[$listSlide];
                 }
             } else {
-                $random = $slideshow;
+                $random = null;
             }
 
             $this->response->data = $random;
