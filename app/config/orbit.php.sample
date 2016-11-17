@@ -4605,6 +4605,24 @@ return array(
                 'object_type' => 'Advert',
                 'parameter_name' => 'advert_id'
             ),
+            // - Click blog item on homepage Gotomalls
+            '90' => array(
+                'name' => 'click_blog_link',
+                'name_long' => 'Click Blog Link',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Click category on homepage
+            '91' => array(
+                'name' => 'click_category',
+                'name_long' => 'Click Category',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Category',
+                'parameter_name' => 'category_id'
+            ),
         ),
     ),
 
