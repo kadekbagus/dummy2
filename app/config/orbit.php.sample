@@ -4587,6 +4587,24 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - View advertisement on banner.
+            '88' => array(
+                'name' => 'view_banner',
+                'name_long' => 'View Banner',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => 'Advert',
+                'parameter_name' => 'advert_id'
+            ),
+            // - Click advertisement on banner.
+            '89' => array(
+                'name' => 'click_banner',
+                'name_long' => 'Click Banner',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Advert',
+                'parameter_name' => 'advert_id'
+            ),
         ),
     ),
 
@@ -4841,5 +4859,18 @@ return array(
             // Cache the result for X minutes
             'cache_ttl' => 15
         ]
+    ]
+
+    /**
+     * Campaign spending related configuration
+     */
+    'campaign_spending' => [
+        // Update the campaign spending by recalculating
+        // the campaign cost when it was saved
+        'update_spending_on_save' => FALSE,
+
+        // Update the campaign spending by recalculating
+        // the campaign cost using artisan
+        'update_spending_on_artisan' => TRUE
     ]
 );

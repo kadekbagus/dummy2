@@ -11,6 +11,7 @@ use PromotionRetailer;
 use Mall;
 use DB;
 use Carbon\Carbon as Carbon;
+use Config;
 
 class SpendingCalculation
 {
@@ -23,6 +24,12 @@ class SpendingCalculation
      */
     public function fire($job, $data)
     {
+        $updateSpendingAllowed = Config::get('orbit.campaign_spending.update_spending_on_save', TRUE);
+        if ($updateSpendingAllowed === FALSE) {
+            $job->delete();
+
+            return FALSE;
+        }
 
         $prefix = DB::getTablePrefix();
         $campaign_id = $data['campaign_id'];
