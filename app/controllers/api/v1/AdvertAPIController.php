@@ -138,9 +138,9 @@ class AdvertAPIController extends ControllerAPI
             // save advert locations.
             $advertLocations = array();
 
-            $locationType = 'mall';
-
             foreach ($locations as $location_id) {
+
+                $locationType = 'mall';
 
                 if ($location_id === 'gtm') {
                     $location_id = '0';
@@ -372,9 +372,10 @@ class AdvertAPIController extends ControllerAPI
                 // Insert new data
                 $advertLocations = array();
 
-                $locationType = 'mall';
 
                 foreach ($locations as $location_id) {
+
+                    $locationType = 'mall';
 
                     if ($location_id === 'gtm') {
                         $location_id = '0';
