@@ -25,7 +25,7 @@ class UserAPIController extends ControllerAPI
         $activity = Activity::portal()
                            ->setActivityType('update');
         $httpCode = 200;
-
+        $user = NULL;
         try{
             $this->checkAuth();
             $user = $this->api->user;
@@ -186,7 +186,7 @@ class UserAPIController extends ControllerAPI
                 ->setNotes($e->getMessage())
                 ->responseFailed()
                 ->save();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             DB::rollback();
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
