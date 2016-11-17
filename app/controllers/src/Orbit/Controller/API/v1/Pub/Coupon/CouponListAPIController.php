@@ -378,6 +378,42 @@ class CouponListAPIController extends ControllerAPI
             $listcoupon = $coupon->get();
             $count = $recordCounter->count();
 
+            $data = new \stdclass();
+            $data->returned_records = count($listcoupon);
+            $data->total_records = $count;
+            if (is_object($mall)) {
+                $data->mall_name = $mall->name;
+            }
+            $data->records = $listcoupon;
+
+            // random featured adv
+            $randomCoupon = $_coupon->get();
+            if ($list_type === 'featured') {
+                $advertedCampaigns = array_filter($randomCoupon, function($v) {
+                    return ! is_null($v->placement_type);
+                });
+
+                $nonAdvertedCampaigns = array_filter($randomCoupon, function($v) {
+                    return is_null($v->placement_type);
+                });
+
+                if (count($advertedCampaigns) > $take) {
+                    $random = array();
+                    $listSlide = array_rand($advertedCampaigns, $take);
+                    if (count($listSlide) > 1) {
+                        foreach ($listSlide as $key => $value) {
+                            $random[] = $advertedCampaigns[$value];
+                        }
+                    } else {
+                        $random = $advertedCampaigns[$listSlide];
+                    }
+
+                    $data->returned_records = count($listcoupon);
+                    $data->total_records = count($random);
+                    $data->records = $random;
+                }
+            }
+
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
@@ -410,10 +446,10 @@ class CouponListAPIController extends ControllerAPI
                 }
             }
 
-            $this->response->data = new stdClass();
-            $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($listcoupon);
-            $this->response->data->records = $listcoupon;
+            $this->response->data = $data;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request Ok';
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();

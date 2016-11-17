@@ -348,6 +348,40 @@ class StoreAPIController extends ControllerAPI
             $liststore = $store->get();
             $count = $recordCounter->count();
 
+            $data = new \stdclass();
+            $data->returned_records = count($liststore);
+            $data->total_records = $count;
+            $data->records = $liststore;
+
+            // random featured adv
+            $randomStore = $_store->get();
+            if ($list_type === 'featured') {
+                $advertedCampaigns = array_filter($randomStore, function($v) {
+                    return ! is_null($v->placement_type);
+                });
+
+                $nonAdvertedCampaigns = array_filter($randomStore, function($v) {
+                    return is_null($v->placement_type);
+                });
+
+                if (count($advertedCampaigns) > $take) {
+                    $random = array();
+                    $listSlide = array_rand($advertedCampaigns, $take);
+
+                    if (count($listSlide) > 1) {
+                        foreach ($listSlide as $key => $value) {
+                            $random[] = $advertedCampaigns[$value];
+                        }
+                    } else {
+                        $random = $advertedCampaigns[$listSlide];
+                    }
+
+                    $data->returned_records = count($liststore);
+                    $data->total_records = count($random);
+                    $data->records = $random;
+                }
+            }
+
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
@@ -379,10 +413,10 @@ class StoreAPIController extends ControllerAPI
                 }
             }
 
-            $this->response->data = new stdClass();
-            $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($liststore);
-            $this->response->data->records = $liststore;
+            $this->response->data = $data;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request Ok';
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
