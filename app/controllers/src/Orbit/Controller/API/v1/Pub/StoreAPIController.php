@@ -276,6 +276,10 @@ class StoreAPIController extends ControllerAPI
             $store = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($store)
                         ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url', 'placement_type', 'placement_order');
 
+            if ($list_type === "featured") {
+                $store = $store->addSelect('placement_type_orig');
+            }
+
             if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
                 $sort_by = 'distance';
