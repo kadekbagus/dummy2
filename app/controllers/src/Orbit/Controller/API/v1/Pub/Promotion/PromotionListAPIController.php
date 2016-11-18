@@ -417,8 +417,15 @@ class PromotionListAPIController extends ControllerAPI
             $data->records = $listOfRec;
 
             // random featured adv
+            // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
             if ($list_type === 'featured') {
-                $randomPromotion = $_promotion->get();
+                $randomPromotionBuilder = clone $_promotion;
+                // Take 100 value right now to prevent memory leak
+                $randomPromotionBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
+
+                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($randomPromotionBuilder);
+                $randomPromotion = $randomPromotionBuilder->get();
+
                 $advertedCampaigns = array_filter($randomPromotion, function($v) {
                     return ($v->placement_type_orig === 'featured_list');
                 });
