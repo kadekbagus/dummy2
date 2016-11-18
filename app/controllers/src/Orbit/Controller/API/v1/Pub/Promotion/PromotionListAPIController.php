@@ -111,7 +111,7 @@ class PromotionListAPIController extends ControllerAPI
                 $advert_location_id = $mallId;
             }
 
-            $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
+            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
 
             $adverts = Advert::select('adverts.advert_id',
                                     'adverts.link_object_id',
@@ -136,8 +136,8 @@ class PromotionListAPIController extends ControllerAPI
                                     $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
                                 }
                             })
-                            ->where('adverts.start_date', '<=', DB::raw("'" . $now . "'"))
-                            ->where('adverts.end_date', '>=', DB::raw("'" . $now . "'"))
+                            ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
+                            ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
                             ->where('adverts.status', '=', DB::raw("'active'"));
 
             $advertSql = $adverts->toSql();
