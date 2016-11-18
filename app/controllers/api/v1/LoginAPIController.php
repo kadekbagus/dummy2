@@ -305,6 +305,7 @@ class LoginAPIController extends ControllerAPI
 
             $user_campaign = $user->campaignAccount;
             $mall = [];
+
             if ($user->isCampaignOwner() || $user->isCampaignEmployee()) {
                 $user_account_type = $user_campaign->accountType;
 
@@ -315,12 +316,19 @@ class LoginAPIController extends ControllerAPI
                 }
             } elseif ($user->isCampaignAdmin()) {
                 $mall = Mall::excludeDeleted()
-                            ->with('timezone')
+                            ->select('merchant_id', 'name')
                             ->get();
 
                 if(($key = array_search('pmp_employee', $menus)) !== false) {
                     unset($menus[$key]);
                 }
+            }
+
+            // hardcode timezone
+            $timezone = new stdClass();
+            $timezone->timezone_name = 'Asia/Jakarta';
+            foreach ($mall as $m) {
+                $m->timezone = $timezone;
             }
 
             $user->mall = $mall;
@@ -336,37 +344,9 @@ class LoginAPIController extends ControllerAPI
             // get total manage tenant and mall per user pmp
             $pmp_parent = $user->campaignAccount()->where('user_id', '=', $user->user_id)->first();
 
-            if ($user_campaign->is_link_to_all === 'Y') {
-                $um = count(Mall::excludeDeleted()->get());
-                $ut = count(Tenant::excludeDeleted()->get());
-            } else {
-
-                // Get mall id from mall
-                $mallId = array();
-                $userMallAtMall = $pmp_parent->userMall()->get();
-                if (count($userMallAtMall) > 0) {
-                    foreach ($userMallAtMall as $key => $vallMall) {
-                        $mallId[] = $vallMall->merchant_id;
-                    }
-                }
-
-                // Get mall id from tenant
-                $userTenantAtMall = $pmp_parent->userTenant()
-                    ->join('merchants', 'user_merchant.merchant_id', '=', 'merchants.merchant_id')
-                    ->groupBy('merchants.parent_id')
-                    ->get();
-                if (count($userTenantAtMall) > 0) {
-                    foreach ($userTenantAtMall as $key => $valTenant) {
-                        $mallId[] = $valTenant->parent_id;
-                    }
-                }
-
-                $um = count(array_unique($mallId));
-                $ut = $pmp_parent->userTenant()->count();
-            }
-
-            $user->total_mall = $um;
-            $user->total_tenant = $ut;
+            // hardcode total mall and tenant
+            $user->total_mall = 2;
+            $user->total_tenant = 2;
 
 
             $user_id = $user->user_id;
@@ -1707,20 +1687,14 @@ class LoginAPIController extends ControllerAPI
             ];
         $prefix = DB::getTablePrefix();
 
-        $get_mall = CampaignLocation::with('timezone')
-                                    ->leftJoin('merchants as pm', DB::Raw('pm.merchant_id'), '=', 'merchants.parent_id')
-                                    ->leftJoin('timezones as ot', DB::Raw('ot.timezone_id'), '=', DB::Raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN pm.timezone_id ELSE {$prefix}merchants.timezone_id END"))
+        $get_mall = CampaignLocation::leftJoin('merchants as pm', DB::Raw('pm.merchant_id'), '=', 'merchants.parent_id')
                                     ->select(
                                               DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as merchant_id"),
-                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.name, {$prefix}merchants.name) as name"),
-                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.status, {$prefix}merchants.status) as status"),
                                               DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.object_type, {$prefix}merchants.object_type) as object_type"),
-                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.timezone_id, {$prefix}merchants.timezone_id) as timezone_id"),
-                                              DB::Raw("TIMESTAMPDIFF(HOUR, UTC_TIMESTAMP(), CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)) as timezone_offset")
+                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.name, {$prefix}merchants.name) as name")
                                         )
                                     ->where('merchants.status', '=', 'active')
                                     ->having(DB::Raw('object_type'), '=', 'mall')
-                                    ->orderBy('timezone_offset')
                                     ->groupBy('merchant_id');
 
         // access
