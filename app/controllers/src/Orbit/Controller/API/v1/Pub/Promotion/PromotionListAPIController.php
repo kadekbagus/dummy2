@@ -120,25 +120,25 @@ class PromotionListAPIController extends ControllerAPI
                                     'advert_locations.location_type',
                                     'advert_link_types.advert_link_name')
                             ->join('advert_link_types', function ($q) {
-                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                                 $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Promotion'"));
+                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                             })
                             ->join('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
-                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
-                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
                                 $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
+                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
+                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
                             })
                             ->join('advert_placements', function ($q) use ($list_type) {
                                 $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
                                 if ($list_type === 'featured') {
-                                    $q->on('advert_placements.placement_type', '=', DB::raw("'featured_list'"));
+                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('featured_list', 'preferred_list_regular', 'preferred_list_large')"));
                                 } else {
                                     $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
                                 }
                             })
-                            ->where('adverts.status', '=', DB::raw("'active'"))
                             ->where('adverts.start_date', '<=', DB::raw("'" . $now . "'"))
-                            ->where('adverts.end_date', '>=', DB::raw("'" . $now . "'"));
+                            ->where('adverts.end_date', '>=', DB::raw("'" . $now . "'"))
+                            ->where('adverts.status', '=', DB::raw("'active'"));
 
             $advertSql = $adverts->toSql();
             foreach($adverts->getBindings() as $binding)
@@ -191,23 +191,23 @@ class PromotionListAPIController extends ControllerAPI
                             DB::raw("advert.placement_type, advert.placement_order"),
                             'news.created_at')
                             ->leftJoin('news_translations', function ($q) use ($valid_language) {
-                                $q->on('news_translations.news_id', '=', 'news.news_id')
-                                  ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                                $q->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                                $q->on('news_translations.news_id', '=', 'news.news_id');
                             })
                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                             ->leftJoin('media', function ($q) {
-                                $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                                $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             })
                             ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                             ->leftJoin('merchants as m', function ($q) {
-                                $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
+                                $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
                             })
                             ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.link_object_id"), '=', 'news.news_id')
                             ->leftJoin('media as advert_media', function ($q) {
-                                $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                                 $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
+                                $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                             })
                             ->where('news.object_type', '=', 'promotion')
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -286,17 +286,37 @@ class PromotionListAPIController extends ControllerAPI
 
             $promotion = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($promotions->getQuery());
 
+            if ($list_type === 'featured') {
+                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description',
+                                        DB::raw("sub_query.object_type"), 'image_url', 'campaign_status',
+                                        'is_started', 'placement_order',
+                                        DB::raw("sub_query.created_at"),
+                                        DB::raw("CASE WHEN SUM(
+                                                CASE
+                                                    WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
+                                                    THEN 1
+                                                    ELSE 0
+                                                END) > 0
+                                            THEN 'preferred_list_large'
+                                            ELSE placement_type
+                                            END AS placement_type")
+                                    )
+                                    ->groupBy(DB::Raw("sub_query.news_id"));
+            } else {
+                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description',
+                                            DB::raw("sub_query.object_type"), 'image_url', 'campaign_status',
+                                            'is_started', 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
+                                        ->groupBy(DB::Raw("sub_query.news_id"));
+            }
+
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
-                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
+                $promotion = $promotion->addSelect(DB::raw("min(distance) as distance"))
                                     ->orderBy('placement_order', 'desc')
                                     ->orderBy('distance', 'asc');
             } else {
-                $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
-                                        ->orderBy('placement_order', 'desc');
+                $promotion = $promotion->orderBy('placement_order', 'desc');
             }
-
-            $promotion = $promotion->groupBy(DB::Raw("sub_query.news_id"));
 
             if ($sort_by !== 'location') {
                 // Map the sortby request to the real column name

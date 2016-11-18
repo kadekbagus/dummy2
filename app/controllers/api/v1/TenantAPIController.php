@@ -2328,7 +2328,8 @@ class TenantAPIController extends ControllerAPI
                                 )
                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                ->whereIn('merchants.object_type', ['mall', 'tenant'])
-                               ->where('merchants.status', '!=', 'deleted')
+                               ->where('merchants.status', '=', 'active')
+                               ->where(DB::raw("pm.status"), '=', 'active')
                                ->groupBy('mall_id');
                 }
             }
