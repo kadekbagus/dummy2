@@ -2323,8 +2323,16 @@ class TenantAPIController extends ControllerAPI
                     }
 
                     if (! empty($merchant_id)) {
-                        $tenants = Tenant::select('merchant_id', 'name as display_name', 'status')
-                                                   ->where('merchant_id', '=', $merchant_id);
+                        $tenants = CampaignLocation::select('merchants.merchant_id', 'merchants.name as display_name',
+                                                        DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                                        'merchants.status',
+                                                        DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
+                                                    )
+                                                   ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                                   ->where('merchants.object_type', 'tenant')
+                                                   ->where('merchants.status', '!=', 'deleted')
+                                                   ->where('merchants.merchant_id', '=', $merchant_id);
+
                     }
 
                 } elseif ($link_type === 'no_link' || $link_type === 'information' || $link_type === 'url') {
