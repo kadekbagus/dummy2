@@ -765,7 +765,7 @@ class AdvertAPIController extends ControllerAPI
                     'end_date'        => 'adverts.end_date',
                     'created_at'      => 'adverts.created_at',
                     'updated_at'      => 'adverts.updated_at',
-                    'status'          => 'adverts.status',
+                    'status'          => 'status',
                     'link_to'         => 'link_to',
                     'link_url'        => 'adverts.link_url'
                 );
