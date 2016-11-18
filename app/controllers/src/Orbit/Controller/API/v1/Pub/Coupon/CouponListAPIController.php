@@ -266,6 +266,7 @@ class CouponListAPIController extends ControllerAPI
                 $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"),
                                     DB::raw("sub_query.status"), 'campaign_status', 'is_started',
                                     'image_url', 'placement_order',DB::raw("sub_query.created_at"),
+                                    DB::raw("placement_type AS placement_type_orig"),
                                     DB::raw("CASE WHEN SUM(
                                                 CASE
                                                     WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
@@ -409,11 +410,7 @@ class CouponListAPIController extends ControllerAPI
             $randomCoupon = $_coupon->get();
             if ($list_type === 'featured') {
                 $advertedCampaigns = array_filter($randomCoupon, function($v) {
-                    return ! is_null($v->placement_type);
-                });
-
-                $nonAdvertedCampaigns = array_filter($randomCoupon, function($v) {
-                    return is_null($v->placement_type);
+                    return ($v->placement_type_orig === 'featured_list');
                 });
 
                 if (count($advertedCampaigns) > $take) {

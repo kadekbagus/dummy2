@@ -906,7 +906,7 @@ class AdvertAPIController extends ControllerAPI
                             throw new OrbitCustomException($errorMessage, Advert::ADVERT_PROMOTION_ERROR_CODE, NULL);
                         }
                     } elseif ($advert->advert_type === 'coupon') {
-                        $advertCheck = Promotion::where('status', 'active')
+                        $advertCheck = Coupon::where('status', 'active')
                                         ->where('promotion_id', $advert->link_object_id)
                                         ->first();
                         if (empty($advertCheck)) {
