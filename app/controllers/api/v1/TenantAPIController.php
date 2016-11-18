@@ -2233,6 +2233,7 @@ class TenantAPIController extends ControllerAPI
             $campaign_id = OrbitInput::get('campaign_id');
             $link_type = OrbitInput::get('link_type');
             $merchant_name = OrbitInput::get('merchant_name');
+            $merchant_id = OrbitInput::get('merchant_id');
 
             $validator = Validator::make(
                 array(
@@ -2320,6 +2321,12 @@ class TenantAPIController extends ControllerAPI
                                                    ->where('merchants.status', '!=', 'deleted')
                                                    ->where('merchants.name', '=', $merchant_name);
                     }
+
+                    if (! empty($merchant_id)) {
+                        $tenants = Tenant::select('merchant_id', 'name as display_name', 'status')
+                                                   ->where('merchant_id', '=', $merchant_id);
+                    }
+
                 } elseif ($link_type === 'no_link' || $link_type === 'information' || $link_type === 'url') {
                     $tenants = CampaignLocation::select('merchants.merchant_id',
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
@@ -2346,7 +2353,11 @@ class TenantAPIController extends ControllerAPI
                         $tenants->whereRaw("{$prefix}merchants.object_type = 'mall'");
                     }
                 }
-                $tenants->where('merchants.status', '=', 'active');
+
+                if (empty($from) && empty($link_type) && empty($merchant_id)) {
+                    $tenants->where('merchants.status', '=', 'active');
+                }
+
             }
 
             // filter by account type
