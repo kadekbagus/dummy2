@@ -417,8 +417,8 @@ class PromotionListAPIController extends ControllerAPI
             $data->records = $listOfRec;
 
             // random featured adv
-            $randomPromotion = $_promotion->get();
             if ($list_type === 'featured') {
+                $randomPromotion = $_promotion->get();
                 $advertedCampaigns = array_filter($randomPromotion, function($v) {
                     return ($v->placement_type_orig === 'featured_list');
                 });
