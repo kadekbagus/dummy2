@@ -291,6 +291,7 @@ class PromotionListAPIController extends ControllerAPI
                                         DB::raw("sub_query.object_type"), 'image_url', 'campaign_status',
                                         'is_started', 'placement_order',
                                         DB::raw("sub_query.created_at"),
+                                        DB::raw("placement_type AS placement_type_orig"),
                                         DB::raw("CASE WHEN SUM(
                                                 CASE
                                                     WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
@@ -419,11 +420,7 @@ class PromotionListAPIController extends ControllerAPI
             $randomPromotion = $_promotion->get();
             if ($list_type === 'featured') {
                 $advertedCampaigns = array_filter($randomPromotion, function($v) {
-                    return ! is_null($v->placement_type);
-                });
-
-                $nonAdvertedCampaigns = array_filter($randomPromotion, function($v) {
-                    return is_null($v->placement_type);
+                    return ($v->placement_type_orig === 'featured_list');
                 });
 
                 if (count($advertedCampaigns) > $take) {
