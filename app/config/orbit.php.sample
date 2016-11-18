@@ -4877,7 +4877,7 @@ return array(
             // Cache the result for X minutes
             'cache_ttl' => 15
         ]
-    ]
+    ],
 
     /**
      * Campaign spending related configuration
