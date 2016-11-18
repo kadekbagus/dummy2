@@ -110,13 +110,13 @@ class StoreAPIController extends ControllerAPI
                                     'advert_locations.location_type',
                                     'advert_link_types.advert_link_name')
                             ->join('advert_link_types', function ($q) {
-                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                                 $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Store'"));
+                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                             })
                             ->join('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
-                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
-                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
                                 $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
+                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
+                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
                             })
                             ->join('advert_placements', function ($q) use ($list_type) {
                                 $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
