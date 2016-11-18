@@ -902,7 +902,7 @@ class AdvertAPIController extends ControllerAPI
                                         ->where('news_id', $advert->link_object_id)
                                         ->first();
                         if (empty($advertCheck)) {
-                            $errorMessage = 'Promotion campaign is stopped or paused.';
+                            $errorMessage = 'Promotion is stopped or paused';
                             throw new OrbitCustomException($errorMessage, Advert::ADVERT_PROMOTION_ERROR_CODE, NULL);
                         }
                     } elseif ($advert->advert_type === 'coupon') {
@@ -910,7 +910,7 @@ class AdvertAPIController extends ControllerAPI
                                         ->where('promotion_id', $advert->link_object_id)
                                         ->first();
                         if (empty($advertCheck)) {
-                            $errorMessage = 'Coupon campaign is stopped or paused.';
+                            $errorMessage = 'Coupon is stopped or paused';
                             throw new OrbitCustomException($errorMessage, Advert::ADVERT_COUPON_ERROR_CODE, NULL);
                         }
                     } elseif ($advert->advert_type === 'store') {
@@ -918,7 +918,7 @@ class AdvertAPIController extends ControllerAPI
                                         ->where('merchant_id', $advert->link_object_id)
                                         ->first();
                         if (empty($advertCheck)) {
-                            $errorMessage = 'Store is inactive.';
+                            $errorMessage = 'Store is inactive';
                             throw new OrbitCustomException($errorMessage, Advert::ADVERT_STORE_ERROR_CODE, NULL);
                         }
                     }
