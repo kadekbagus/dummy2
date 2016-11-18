@@ -19,6 +19,7 @@ use Activity;
 use Mall;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
+use OrbitShop\API\v1\ResponseProvider;
 
 class NewsDetailAPIController extends ControllerAPI
 {
