@@ -67,7 +67,7 @@ class AdvertBannerListAPIController extends ControllerAPI
                 $location_id = '0';
             }
 
-            $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
+            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
             $prefix = DB::getTablePrefix();
 
             $advert = DB::table('adverts')
@@ -103,7 +103,7 @@ class AdvertBannerListAPIController extends ControllerAPI
                                     ->on(DB::raw('t.status'), '=', DB::raw("'active'"));
                             })
                             ->where('adverts.status', 'active')
-                            ->whereRaw("{$this->quote($now)} between {$prefix}adverts.start_date and {$prefix}adverts.end_date");
+                            ->whereRaw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}') between {$prefix}adverts.start_date and {$prefix}adverts.end_date");
 
             $slideshow = $advert->get();
 
