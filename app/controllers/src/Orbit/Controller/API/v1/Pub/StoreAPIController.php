@@ -184,28 +184,6 @@ class StoreAPIController extends ControllerAPI
                         ->first();
             });
 
-            $querySql = $store->toSql();
-
-            $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery())
-                        ->groupBy('name')
-                        ->orderBy('placement_order', 'desc')
-                        ->orderBy('name', 'asc');
-
-            if ($list_type === "featured") {
-                $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_order',
-                            DB::raw("CASE WHEN SUM(
-                                        CASE
-                                            WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
-                                            THEN 1
-                                            ELSE 0
-                                        END) > 0
-                                    THEN 'preferred_list_large'
-                                    ELSE placement_type
-                                    END AS placement_type"));
-            } else {
-                $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_type', 'placement_order');
-            }
-
             // filter by category just on first store
             OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
@@ -272,20 +250,18 @@ class StoreAPIController extends ControllerAPI
 
             $querySql = $store->toSql();
 
-            $store = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($store)
-                        ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url', 'placement_type', 'placement_order');
+            $store = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($store->getQuery())
+                        ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url', 'placement_order');
 
             if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
                 $sort_by = 'distance';
                 $store = $store->addSelect('distance')
-                                ->groupBy('name')
                                 ->orderBy($sort_by, $sort_mode)
                                 ->orderBy('placement_order', 'desc')
                                 ->orderBy('name', 'asc');
             } else {
-                $store = $store->groupBy('name')
-                                ->orderBy('placement_order', 'desc')
+                $store = $store->orderBy('placement_order', 'desc')
                                 ->orderBy('name', 'asc');
             }
 
@@ -332,6 +308,24 @@ class StoreAPIController extends ControllerAPI
                 }
             });
 
+            $countStore = clone $store;
+
+            if ($list_type === "featured") {
+                $store = $store->addSelect(DB::raw("CASE WHEN SUM(
+                                        CASE
+                                            WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
+                                            THEN 1
+                                            ELSE 0
+                                        END) > 0
+                                    THEN 'preferred_list_large'
+                                    ELSE placement_type
+                                    END AS placement_type"));
+            } else {
+                $store = $store->addSelect('placement_type');
+            }
+
+            $store = $store->groupBy('name');
+
             // record GTM search activity
             if ($searchFlag) {
                 $parameters = [
@@ -350,7 +344,7 @@ class StoreAPIController extends ControllerAPI
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($store);
 
-            $recordCounter = RecordCounter::create($_store);
+            $recordCounter = RecordCounter::create($countStore);
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
