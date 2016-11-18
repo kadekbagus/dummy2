@@ -110,13 +110,13 @@ class StoreAPIController extends ControllerAPI
                                     'advert_locations.location_type',
                                     'advert_link_types.advert_link_name')
                             ->join('advert_link_types', function ($q) {
-                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                                 $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Store'"));
+                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                             })
                             ->join('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
-                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
-                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
                                 $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
+                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
+                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
                             })
                             ->join('advert_placements', function ($q) use ($list_type) {
                                 $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
@@ -193,6 +193,7 @@ class StoreAPIController extends ControllerAPI
 
             if ($list_type === "featured") {
                 $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_order',
+                        DB::raw("placement_type AS placement_type_orig"),
                             DB::raw("CASE WHEN SUM(
                                         CASE
                                             WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
@@ -274,6 +275,10 @@ class StoreAPIController extends ControllerAPI
 
             $store = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($store)
                         ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url', 'placement_type', 'placement_order');
+
+            if ($list_type === "featured") {
+                $store = $store->addSelect('placement_type_orig');
+            }
 
             if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
@@ -371,11 +376,7 @@ class StoreAPIController extends ControllerAPI
             $randomStore = $_store->get();
             if ($list_type === 'featured') {
                 $advertedCampaigns = array_filter($randomStore, function($v) {
-                    return ! is_null($v->placement_type);
-                });
-
-                $nonAdvertedCampaigns = array_filter($randomStore, function($v) {
-                    return is_null($v->placement_type);
+                    return ($v->placement_type_orig === 'featured_list');
                 });
 
                 if (count($advertedCampaigns) > $take) {

@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class AdvertAPIController extends ControllerAPI
 {
@@ -331,7 +332,7 @@ class AdvertAPIController extends ControllerAPI
                 array(
                     'advert_id' => 'required|orbit.empty.advert_id',
                     'end_date'  => 'date||orbit.empty.hour_format',
-                    'status'    => 'required|in:active,inactive'
+                    'status'    => 'required|in:active,inactive|orbit.empty.advert_updatestatus:' . $advert_id
                 )
             );
 
@@ -473,13 +474,38 @@ class AdvertAPIController extends ControllerAPI
                     ->setObject($updatedadvert)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            Event::fire('orbit.advert.postupdateadvert.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_advert')
+                    ->setActivityNameLong('Update Advert Failed')
+                    ->setObject($updatedadvert)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
         } catch (Exception $e) {
             Event::fire('orbit.advert.postupdateadvert.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
 
             // Rollback the changes
             $this->rollBack();
@@ -739,7 +765,7 @@ class AdvertAPIController extends ControllerAPI
                     'end_date'        => 'adverts.end_date',
                     'created_at'      => 'adverts.created_at',
                     'updated_at'      => 'adverts.updated_at',
-                    'status'          => 'adverts.status',
+                    'status'          => 'status',
                     'link_to'         => 'link_to',
                     'link_url'        => 'adverts.link_url'
                 );
@@ -856,6 +882,49 @@ class AdvertAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.advert_id', $advert);
+
+            return true;
+        });
+
+        // Check the existance of advert id
+        Validator::extend('orbit.empty.advert_updatestatus', function ($attribute, $value, $parameters) {
+
+            if ($value === 'active') {
+
+                $advert = Advert::where('advert_id', $parameters[0])
+                            ->join('advert_link_types', 'advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id')
+                            ->whereIn('advert_link_types.advert_type',['store', 'promotion', 'coupon'])
+                            ->first();
+
+                if (is_object($advert)) {
+                    if ($advert->advert_type === 'promotion') {
+                        $advertCheck = News::where('status', 'active')
+                                        ->where('news_id', $advert->link_object_id)
+                                        ->first();
+                        if (empty($advertCheck)) {
+                            $errorMessage = 'Promotion is stopped or paused';
+                            throw new OrbitCustomException($errorMessage, Advert::ADVERT_PROMOTION_ERROR_CODE, NULL);
+                        }
+                    } elseif ($advert->advert_type === 'coupon') {
+                        $advertCheck = Coupon::where('status', 'active')
+                                        ->where('promotion_id', $advert->link_object_id)
+                                        ->first();
+                        if (empty($advertCheck)) {
+                            $errorMessage = 'Coupon is stopped or paused';
+                            throw new OrbitCustomException($errorMessage, Advert::ADVERT_COUPON_ERROR_CODE, NULL);
+                        }
+                    } elseif ($advert->advert_type === 'store') {
+                        $advertCheck = TenantStoreAndService::where('status', 'active')
+                                        ->where('merchant_id', $advert->link_object_id)
+                                        ->first();
+                        if (empty($advertCheck)) {
+                            $errorMessage = 'Store is inactive';
+                            throw new OrbitCustomException($errorMessage, Advert::ADVERT_STORE_ERROR_CODE, NULL);
+                        }
+                    }
+                }
+
+            }
 
             return true;
         });

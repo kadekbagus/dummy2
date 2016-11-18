@@ -17,6 +17,10 @@ class Advert extends Eloquent
     protected $table = 'adverts';
     protected $primaryKey = 'advert_id';
 
+    const ADVERT_PROMOTION_ERROR_CODE = 1301;
+    const ADVERT_COUPON_ERROR_CODE = 1302;
+    const ADVERT_STORE_ERROR_CODE = 1303;
+
     public function creator()
     {
         return $this->belongsTo('User', 'created_by', 'user_id');
