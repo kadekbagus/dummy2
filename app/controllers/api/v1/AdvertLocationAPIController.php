@@ -107,7 +107,7 @@ class AdvertLocationAPIController extends ControllerAPI
                                                         END AS 'merchant_id'"),
                                                 DB::raw("CASE
                                                             WHEN {$prefix}advert_locations.location_id = '0' and
-                                                                 {$prefix}advert_locations.location_type = 'gtm' THEN 'gtm'
+                                                                 {$prefix}advert_locations.location_type = 'gtm' THEN 'GTM'
                                                             ELSE name
                                                         END AS 'name'"))
                                     ->leftJoin('advert_locations', 'advert_locations.advert_id', '=', 'adverts.advert_id')
