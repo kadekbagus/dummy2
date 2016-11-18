@@ -2278,10 +2278,10 @@ class TenantAPIController extends ControllerAPI
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                     'merchants.status',
                                     'merchants.object_type',
-                                    DB::raw("pm.name as display_name")
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name")
                                 )
                                 ->leftjoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                 ->where('promotion_id', $campaign_id)
                                 ->groupBy('mall_id');
                 } elseif ($link_type === 'promotion') {
@@ -2290,10 +2290,10 @@ class TenantAPIController extends ControllerAPI
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                     'merchants.status',
                                     'merchants.object_type',
-                                    DB::raw("pm.name as display_name")
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name")
                                 )
                                 ->leftjoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                 ->where('news_id', $campaign_id)
                                 ->groupBy('mall_id');
                 } elseif ($link_type === 'store') {
@@ -2320,16 +2320,16 @@ class TenantAPIController extends ControllerAPI
                                                    ->where('merchants.status', '!=', 'deleted')
                                                    ->where('merchants.name', '=', $merchant_name);
                     }
-
-                } elseif ($link_type === 'no link' || $link_type === 'information' || $link_type === 'url') {
+                } elseif ($link_type === 'no_link' || $link_type === 'information' || $link_type === 'url') {
                     $tenants = CampaignLocation::select('merchants.merchant_id',
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
-                                    DB::raw("pm.name as display_name"),
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name"),
                                     'merchants.status'
                                 )
-                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                ->whereIn('merchants.object_type', ['mall', 'tenant'])
-                               ->where('merchants.status', '!=', 'deleted')
+                               ->where('merchants.status', '=', 'active')
+                               ->where(DB::raw("pm.status"), '=', 'active')
                                ->groupBy('mall_id');
                 }
             }

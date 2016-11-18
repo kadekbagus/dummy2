@@ -102,7 +102,6 @@ class NewsAPIController extends ControllerAPI
             $description = OrbitInput::post('description');
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
-            $sticky_order = OrbitInput::post('sticky_order');
             $link_object_type = OrbitInput::post('link_object_type');
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
@@ -150,7 +149,7 @@ class NewsAPIController extends ControllerAPI
                     'id_language_default' => 'required|orbit.empty.language_default',
                     'is_all_gender'       => 'required|orbit.empty.is_all_gender',
                     'is_all_age'          => 'required|orbit.empty.is_all_age',
-                    'sticky_order'        => 'required|in:0,1',
+                    'sticky_order'        => 'in:0,1',
                 ),
                 array(
                     'sticky_order.in' => 'The sticky order value must 0 or 1',
@@ -1164,13 +1163,18 @@ class NewsAPIController extends ControllerAPI
 
             // update promotion advert
             if ($updatednews->object_type === 'promotion') {
-                $promotionAdverts = Advert::excludeDeleted()
-                                    ->where('link_object_id', $updatednews->news_id)
-                                    ->update([
-                                            'status'     => $updatednews->status,
-                                            'start_date' => $updatednews->begin_date,
-                                            'end_date'   => $updatednews->end_date
-                                        ]);
+                if (! empty($campaignStatus) || $campaignStatus !== '') {
+                    $promotionAdverts = Advert::excludeDeleted()
+                                        ->where('link_object_id', $updatednews->news_id)
+                                        ->update(['status'     => $updatednews->status]);
+                }
+
+                if (! empty($end_date) || $end_date !== '') {
+                    $promotionAdverts = Advert::excludeDeleted()
+                                        ->where('link_object_id', $updatednews->news_id)
+                                        ->where('end_date', '>', $updatednews->end_date)
+                                        ->update(['end_date'   => $updatednews->end_date]);
+                }
             }
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));

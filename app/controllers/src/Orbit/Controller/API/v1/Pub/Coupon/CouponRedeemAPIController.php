@@ -19,10 +19,7 @@ use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use URL;
 use Validator;
-use OrbitShop\API\v1\ResponseProvider;
 use Activity;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Language;
 use Lang;
 use CouponRetailer;
@@ -64,8 +61,8 @@ class CouponRedeemAPIController extends ControllerAPI
         $httpCode = 200;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();

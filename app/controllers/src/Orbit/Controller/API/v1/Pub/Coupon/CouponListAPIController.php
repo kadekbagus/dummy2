@@ -13,12 +13,9 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
-use OrbitShop\API\v1\ResponseProvider;
 use Activity;
 use Mall;
 use Advert;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
@@ -51,8 +48,8 @@ class CouponListAPIController extends ControllerAPI
         $user = NULL;
         $httpCode = 200;
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -130,7 +127,7 @@ class CouponListAPIController extends ControllerAPI
                             ->join('advert_placements', function ($q) use ($list_type) {
                                 $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
                                 if ($list_type === 'featured') {
-                                    $q->on('advert_placements.placement_type', '=', DB::raw("'featured_list'"));
+                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('featured_list', 'preferred_list_regular', 'preferred_list_large')"));
                                 } else {
                                     $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
                                 }
@@ -265,16 +262,35 @@ class CouponListAPIController extends ControllerAPI
             $querySql = $coupons->toSql();
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
 
+            if ($list_type === 'featured') {
+                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"),
+                                    DB::raw("sub_query.status"), 'campaign_status', 'is_started',
+                                    'image_url', 'placement_order',DB::raw("sub_query.created_at"),
+                                    DB::raw("CASE WHEN SUM(
+                                                CASE
+                                                    WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
+                                                    THEN 1
+                                                    ELSE 0
+                                                END) > 0
+                                            THEN 'preferred_list_large'
+                                            ELSE placement_type
+                                            END AS placement_type")
+                                    )
+                                 ->groupBy('coupon_id');
+
+            } else {
+                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"),
+                                    'campaign_status', 'is_started', 'image_url',
+                                    'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
+                                 ->groupBy('coupon_id');
+            }
+
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', DB::raw("min(distance) as distance"), 'placement_order', 'placement_type', DB::raw("sub_query.created_at"))
-                                 ->groupBy('coupon_id')
-                                 ->orderBy('placement_order', 'desc')
+                $coupon = $coupon->addSelect(DB::raw("min(distance) as distance"))->orderBy('placement_order', 'desc')
                                  ->orderBy('distance', 'asc');
 
             } else {
-                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'campaign_status', 'is_started', 'image_url', 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
-                                 ->groupBy('coupon_id')
-                                 ->orderBy('placement_order', 'desc');
+                $coupon = $coupon->orderBy('placement_order', 'desc');
             }
 
             OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
@@ -381,6 +397,42 @@ class CouponListAPIController extends ControllerAPI
             $listcoupon = $coupon->get();
             $count = $recordCounter->count();
 
+            $data = new \stdclass();
+            $data->returned_records = count($listcoupon);
+            $data->total_records = $count;
+            if (is_object($mall)) {
+                $data->mall_name = $mall->name;
+            }
+            $data->records = $listcoupon;
+
+            // random featured adv
+            $randomCoupon = $_coupon->get();
+            if ($list_type === 'featured') {
+                $advertedCampaigns = array_filter($randomCoupon, function($v) {
+                    return ! is_null($v->placement_type);
+                });
+
+                $nonAdvertedCampaigns = array_filter($randomCoupon, function($v) {
+                    return is_null($v->placement_type);
+                });
+
+                if (count($advertedCampaigns) > $take) {
+                    $random = array();
+                    $listSlide = array_rand($advertedCampaigns, $take);
+                    if (count($listSlide) > 1) {
+                        foreach ($listSlide as $key => $value) {
+                            $random[] = $advertedCampaigns[$value];
+                        }
+                    } else {
+                        $random = $advertedCampaigns[$listSlide];
+                    }
+
+                    $data->returned_records = count($listcoupon);
+                    $data->total_records = count($random);
+                    $data->records = $random;
+                }
+            }
+
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
             // moved from generic activity number 32
@@ -413,10 +465,10 @@ class CouponListAPIController extends ControllerAPI
                 }
             }
 
-            $this->response->data = new stdClass();
-            $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($listcoupon);
-            $this->response->data->records = $listcoupon;
+            $this->response->data = $data;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request Ok';
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();

@@ -15,10 +15,7 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
-use OrbitShop\API\v1\ResponseProvider;
 use Activity;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Lang;
 use \Exception;
 use Mall;
@@ -30,14 +27,14 @@ class CouponDetailAPIController extends ControllerAPI
     public function getCouponItem()
     {
         $httpCode = 200;
-        $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
         $mall = NULL;
 
         try{
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
+
             $role = $user->role->role_name;
 
             $couponId = OrbitInput::get('coupon_id', null);

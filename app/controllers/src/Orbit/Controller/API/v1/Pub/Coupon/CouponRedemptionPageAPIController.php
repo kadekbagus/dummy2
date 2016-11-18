@@ -12,8 +12,6 @@ use stdClass;
 use DB;
 use Validator;
 use Activity;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Lang;
 use IssuedCoupon;
 use Orbit\Helper\Security\Encrypter;
@@ -44,8 +42,8 @@ class CouponRedemptionPageAPIController extends ControllerAPI
         $isAvailable = NULL;
 
         try {
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $language = OrbitInput::get('language', 'id');
 

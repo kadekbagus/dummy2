@@ -2,7 +2,6 @@
 
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
-use OrbitShop\API\v1\ResponseProvider;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use \Config;
@@ -18,8 +17,6 @@ use Validator;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Mall;
-use Orbit\Helper\Net\SessionPreparer;
-use Orbit\Helper\Session\UserGetter;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 
@@ -45,8 +42,8 @@ class NewsDetailAPIController extends ControllerAPI
         $user = NULL;
 
         try{
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $newsId = OrbitInput::get('news_id', null);
             $language = OrbitInput::get('language', 'id');

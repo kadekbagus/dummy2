@@ -4,7 +4,7 @@
  *
  * @author Ahmad <ahmad@dominopos.com>
  */
-use IntermediateBaseController;
+use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\CommonAPIControllerTrait;
@@ -12,9 +12,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
-use OrbitShop\API\v1\ResponseProvider;
 use Illuminate\Database\QueryException;
-use Orbit\Helper\Net\GuestUserGenerator;
 use Config;
 use stdClass;
 use \Activity;
@@ -23,14 +21,12 @@ use User;
 use Lang;
 use Mall;
 use App;
-use Orbit\Helper\Session\UserGetter;
 use Illuminate\Database\Eloquent\Model;
 
-class GenericActivityAPIController extends IntermediateBaseController
+class GenericActivityAPIController extends ControllerAPI
 {
     public function postNewGenericActivity()
     {
-        $this->response = new ResponseProvider();
         $user = NULL;
         $mall = NULL;
         $httpCode = 200;
@@ -42,7 +38,8 @@ class GenericActivityAPIController extends IntermediateBaseController
             $this->response->status = 'error';
             $this->response->message = 'Activity config is not configured correctly.';
             $this->response->data = null;
-            return $this->render($this->response);
+            $httpCode = 403;
+            return $this->render($httpCode);
         }
 
         $activityParamName = $genericActivityConfig['parameter_name'];
@@ -53,7 +50,8 @@ class GenericActivityAPIController extends IntermediateBaseController
             $this->response->status = 'error';
             $this->response->message = 'Activity identifier is required.';
             $this->response->data = null;
-            return $this->render($this->response);
+            $httpCode = 403;
+            return $this->render($httpCode);
         }
 
         if (! array_key_exists($activityNumber, $genericActivityConfig['activity_list'])) {
@@ -61,7 +59,8 @@ class GenericActivityAPIController extends IntermediateBaseController
             $this->response->status = 'error';
             $this->response->message = 'Activity identifier is not found.';
             $this->response->data = null;
-            return $this->render($this->response);
+            $httpCode = 403;
+            return $this->render($httpCode);
         }
 
         if (! isset($genericActivityConfig['activity_list'])
@@ -76,7 +75,8 @@ class GenericActivityAPIController extends IntermediateBaseController
             $this->response->status = 'error';
             $this->response->message = 'Activity config is not configured correctly.';
             $this->response->data = null;
-            return $this->render($this->response);
+            $httpCode = 403;
+            return $this->render($httpCode);
         }
 
         $activityName = $genericActivityConfig['activity_list'][$activityNumber]['name'];
@@ -93,9 +93,8 @@ class GenericActivityAPIController extends IntermediateBaseController
 
         $activity = Activity::mobileci()->setActivityType($activityType);
         try {
-            $this->session->start([], 'no-session-creation');
-
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $object = null;
             if (! empty($activityObjectType) && ! empty($activityObjectIDParamName)) {
@@ -232,7 +231,7 @@ class GenericActivityAPIController extends IntermediateBaseController
                 ->save();
         }
 
-        return $this->render($this->response);
+        return $this->render($httpCode);
     }
 
 

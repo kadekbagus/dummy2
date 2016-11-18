@@ -226,7 +226,7 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
-                    'sticky_order'            => 'required|in:0,1',
+                    'sticky_order'            => 'in:0,1',
                     'is_popup'                => 'in:Y,N',
                     'coupon_codes'            => 'required',
                 ),
@@ -1802,13 +1802,18 @@ class CouponAPIController extends ControllerAPI
             }
 
             // update coupon advert
-            $couponAdverts = Advert::excludeDeleted()
-                                ->where('link_object_id', $updatedcoupon->promotion_id)
-                                ->update([
-                                        'status'     => $updatedcoupon->status,
-                                        'start_date' => $updatedcoupon->begin_date,
-                                        'end_date'   => $updatedcoupon->end_date
-                                    ]);
+            if (! empty($campaignStatus) || $campaignStatus !== '') {
+                $couponAdverts = Advert::excludeDeleted()
+                                    ->where('link_object_id', $updatedcoupon->promotion_id)
+                                    ->update(['status'     => $updatedcoupon->status]);
+            }
+
+            if (! empty($end_date) || $end_date !== '') {
+                $couponAdverts = Advert::excludeDeleted()
+                                    ->where('link_object_id', $updatedcoupon->promotion_id)
+                                    ->where('end_date', '>', $updatedcoupon->end_date)
+                                    ->update(['end_date' => $updatedcoupon->end_date]);
+            }
 
             $this->response->data = $updatedcoupon;
             // $this->response->data->translation_default = $updatedcoupon_default_language;
