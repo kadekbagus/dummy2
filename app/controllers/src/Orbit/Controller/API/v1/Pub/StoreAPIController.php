@@ -280,7 +280,8 @@ class StoreAPIController extends ControllerAPI
                 }
             });
 
-            $_realStore = clone $store;
+            $realStore = clone $store;
+            $_realStore = $realStore->groupBy('merchants.merchant_id');
 
             $querySql = $store->toSql();
             $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery());
