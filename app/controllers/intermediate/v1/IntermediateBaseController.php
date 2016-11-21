@@ -293,6 +293,11 @@ class IntermediateBaseController extends Controller
             $method = 'Bar';
         }
 
+        if ($theClass === 'IntermediatePubAuthController') {
+            // set PubControllerAPI user property, so user will be available inside controllers
+            return $class::create()->setUser($user)->$method();
+        }
+
         return $class::create()->$method();
     }
 
