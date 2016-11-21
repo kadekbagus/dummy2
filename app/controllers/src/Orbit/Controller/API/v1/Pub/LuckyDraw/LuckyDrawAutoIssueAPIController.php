@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\LuckyDraw;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -21,7 +21,7 @@ use LuckyDrawNumber;
 use Inbox;
 use \Orbit\Helper\Exception\OrbitCustomException;
 
-class LuckyDrawAutoIssueAPIController extends ControllerAPI
+class LuckyDrawAutoIssueAPIController extends PubControllerAPI
 {
     /**
      * POST - post auto issue lucky draw (fake upload issue lucky draw number)

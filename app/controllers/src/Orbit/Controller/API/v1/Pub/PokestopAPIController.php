@@ -2,7 +2,7 @@
 /**
  * An API controller for managing mall which have pokestop.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -17,7 +17,7 @@ use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
 
-class PokestopAPIController extends ControllerAPI
+class PokestopAPIController extends PubControllerAPI
 {
     /**
      * GET - get mall list after click pokestop menu

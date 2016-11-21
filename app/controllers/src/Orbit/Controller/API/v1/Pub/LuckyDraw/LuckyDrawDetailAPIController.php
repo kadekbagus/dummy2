@@ -3,7 +3,7 @@
  * API Controller for Lucky draw list for public usage
  *
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -25,7 +25,7 @@ use URL;
 use Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawHelper;
 use Carbon\Carbon;
 
-class LuckyDrawDetailAPIController extends ControllerAPI
+class LuckyDrawDetailAPIController extends PubControllerAPI
 {
     /**
      * GET - get lucky draw detail

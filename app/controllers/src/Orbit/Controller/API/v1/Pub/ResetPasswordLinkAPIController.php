@@ -3,7 +3,7 @@
  * An API controller for managing mall geo location.
  */
 use OrbitShop\API\v1\ResponseProvider;
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -22,7 +22,7 @@ use Activity;
 use Orbit\Helper\Util\PaginationNumber;
 use Queue;
 
-class ResetPasswordLinkAPIController extends ControllerAPI
+class ResetPasswordLinkAPIController extends PubControllerAPI
 {
     /**
      * POST - Reset password link

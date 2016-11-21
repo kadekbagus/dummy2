@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Coupon;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -23,7 +23,7 @@ use IssuedCoupon;
 use Orbit\Helper\Security\Encrypter;
 use \Orbit\Helper\Exception\OrbitCustomException;
 
-class CouponAddToWalletAPIController extends ControllerAPI
+class CouponAddToWalletAPIController extends PubControllerAPI
 {
     /**
      * POST - add to wallet

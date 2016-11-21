@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\News;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -19,7 +19,7 @@ use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 
-class NewsMallAPIController extends ControllerAPI
+class NewsMallAPIController extends PubControllerAPI
 {
 	public function getMallPerNews()
     {

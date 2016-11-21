@@ -2,7 +2,7 @@
 /**
  * An API controller for managing mall geo location.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -17,7 +17,7 @@ use stdClass;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\PaginationNumber;
 
-class MallNearestAPIController extends ControllerAPI
+class MallNearestAPIController extends PubControllerAPI
 {
     /**
      * GET - Nearest Mall

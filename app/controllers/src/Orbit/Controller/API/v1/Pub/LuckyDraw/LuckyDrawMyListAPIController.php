@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\LuckyDraw;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -19,7 +19,7 @@ use DB;
 use URL;
 use Orbit\Controller\API\v1\Pub\LuckyDraw\LuckyDrawHelper;
 
-class LuckyDrawMyListAPIController extends ControllerAPI
+class LuckyDrawMyListAPIController extends PubControllerAPI
 {
     /**
      * GET - get My lucky draw list in all mall

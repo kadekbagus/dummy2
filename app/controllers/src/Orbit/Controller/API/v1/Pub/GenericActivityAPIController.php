@@ -4,7 +4,7 @@
  *
  * @author Ahmad <ahmad@dominopos.com>
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\CommonAPIControllerTrait;
@@ -23,7 +23,7 @@ use Mall;
 use App;
 use Illuminate\Database\Eloquent\Model;
 
-class GenericActivityAPIController extends ControllerAPI
+class GenericActivityAPIController extends PubControllerAPI
 {
     public function postNewGenericActivity()
     {

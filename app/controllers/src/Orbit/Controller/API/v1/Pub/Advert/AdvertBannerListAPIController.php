@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Advert;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -20,7 +20,7 @@ use AdvertLinkType;
 use AdvertLocation;
 use AdvertPlacement;
 
-class AdvertBannerListAPIController extends ControllerAPI
+class AdvertBannerListAPIController extends PubControllerAPI
 {
     public function getAdvertBannerList()
     {

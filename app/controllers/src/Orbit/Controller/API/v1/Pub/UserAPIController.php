@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
@@ -18,7 +18,7 @@ use DB;
 use Event;
 use Hash;
 
-class UserAPIController extends ControllerAPI
+class UserAPIController extends PubControllerAPI
 {
     public function postEditAccount()
     {

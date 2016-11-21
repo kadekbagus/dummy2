@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Coupon;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -32,7 +32,7 @@ use \App;
 use \Exception;
 use \UserVerificationNumber;
 
-class CouponRedeemAPIController extends ControllerAPI
+class CouponRedeemAPIController extends PubControllerAPI
 {
     /**
      * POST - Pub Redeem Coupon

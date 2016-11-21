@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Coupon;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -21,7 +21,7 @@ use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use PromotionRetailer;
 use Helper\EloquentRecordCounter as RecordCounter;
 
-class CouponWalletListAPIController extends ControllerAPI
+class CouponWalletListAPIController extends PubControllerAPI
 {
     /**
      * GET - get all coupon wallet in all mall

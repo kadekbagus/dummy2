@@ -2,7 +2,7 @@
 /**
  * An API controller for managing mall geo location.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -22,7 +22,7 @@ use \DB;
 use Orbit\Helper\Util\PaginationNumber;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 
-class CampaignSliderAPIController extends ControllerAPI
+class CampaignSliderAPIController extends PubControllerAPI
 {
     /**
      * GET - check if mall inside map area

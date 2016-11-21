@@ -3,7 +3,7 @@
 /**
  * An API controller for getting generic activity.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -18,7 +18,7 @@ use News;
 use Coupon;
 use \Queue;
 
-class CampaignShareEmailAPIController extends ControllerAPI
+class CampaignShareEmailAPIController extends PubControllerAPI
 {
     /**
      * post - share gotomalls campaign via email
