@@ -67,6 +67,7 @@ class StoreAPIController extends ControllerAPI
             $list_type = OrbitInput::get('list_type', 'featured');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $mallId = OrbitInput::get('mall_id', null);
+            $no_total_records = OrbitInput::get('no_total_records', null);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -352,11 +353,19 @@ class StoreAPIController extends ControllerAPI
 
             $_store = clone $store;
 
+            $totalRec = 0;
+            // Set defaul 0 when get variable no_total_records = yes
+            if ($no_total_records === 'yes') {
+                $totalRec = 0;
+            } else {
+                $recordCounter = RecordCounter::create($_store);
+                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
+
+                $totalRec = $recordCounter->count();
+            }
+
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($store);
-
-            $recordCounter = RecordCounter::create($_store);
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $store->take($take);
@@ -365,11 +374,10 @@ class StoreAPIController extends ControllerAPI
             $store->skip($skip);
 
             $liststore = $store->get();
-            $count = $recordCounter->count();
 
             $data = new \stdclass();
             $data->returned_records = count($liststore);
-            $data->total_records = $count;
+            $data->total_records = $totalRec;
             $data->records = $liststore;
 
             // random featured adv
