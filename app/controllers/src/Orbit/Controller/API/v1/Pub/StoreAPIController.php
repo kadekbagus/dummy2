@@ -335,11 +335,19 @@ class StoreAPIController extends ControllerAPI
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($store);
 
-            $recordCounter = RecordCounter::create($_store);
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
+            $totalRecStore = 0;
+            $totalRecMerchant = 0;
+            // Set defaul 0 when get variable no_total_records = yes
+            if ($no_total_records !== 'yes') {
+                $recordCounter = RecordCounter::create($_store);
+                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
-            $recordCounterRealStores = RecordCounter::create($_realStore);
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounterRealStores->getQueryBuilder());
+                $recordCounterRealStores = RecordCounter::create($_realStore);
+                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounterRealStores->getQueryBuilder());
+
+                $totalRecStore = $recordCounterRealStores->count();
+                $totalRecMerchant = $recordCounter->count();
+            }
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $store->take($take);
@@ -370,10 +378,14 @@ class StoreAPIController extends ControllerAPI
                     }
 
                     $liststore = $random;
-                    $count = count($random);
+                    if ($no_total_records !== 'yes') {
+                        $totalRecMerchant = count($random);
+                    }
                 } else {
                     $liststore = array_slice($featuredStore, 0, $take);
-                    $count = count($liststore);
+                    if ($no_total_records !== 'yes') {
+                        $totalRecMerchant = count($liststore);
+                    }
                 }
             } else {
                 $take = PaginationNumber::parseTakeFromGet('retailer');
@@ -385,11 +397,11 @@ class StoreAPIController extends ControllerAPI
 
             $data = new \stdclass();
             $extras = new \stdClass();
-            $extras->total_stores = $recordCounterRealStores->count();
-            $extras->total_merchants = $count;
+            $extras->total_stores = $totalRecStore;
+            $extras->total_merchants = $totalRecMerchant;
 
             $data->returned_records = count($liststore);
-            $data->total_records = $count;
+            $data->total_records = $totalRecMerchant;
             $data->extras = $extras;
             $data->records = $liststore;
 
