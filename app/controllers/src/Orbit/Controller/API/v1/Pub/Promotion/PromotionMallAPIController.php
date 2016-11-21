@@ -5,7 +5,7 @@
  * @desc Controller for promotion list and search in landing page
  */
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -25,14 +25,14 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 
-class PromotionMallAPIController extends ControllerAPI
+class PromotionMallAPIController extends PubControllerAPI
 {
     public function getMallPerPromotion()
     {
         $httpCode = 200;
 
         try{
-            $this->checkAuth();
+
 
             $promotionId = OrbitInput::get('promotion_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');

@@ -5,7 +5,7 @@
  * @desc Controller for news list and search in landing page
  */
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -27,7 +27,7 @@ use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 
-class NewsListAPIController extends ControllerAPI
+class NewsListAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
     /**
@@ -55,8 +55,7 @@ class NewsListAPIController extends ControllerAPI
         $mall = null;
 
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');

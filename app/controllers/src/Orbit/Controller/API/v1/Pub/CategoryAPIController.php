@@ -2,7 +2,7 @@
 /**
  * An API controller for managing mall geo location.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -20,7 +20,7 @@ use Elasticsearch\ClientBuilder;
 use Language;
 use DB;
 
-class CategoryAPIController extends ControllerAPI
+class CategoryAPIController extends PubControllerAPI
 {
 
     /**
@@ -38,7 +38,7 @@ class CategoryAPIController extends ControllerAPI
     {
       $httpCode = 200;
         try {
-            $this->checkAuth();
+
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $sort_by = OrbitInput::get('sortby', 'category_name');

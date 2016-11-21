@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Coupon;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -17,7 +17,7 @@ use IssuedCoupon;
 use Orbit\Helper\Security\Encrypter;
 use \Exception;
 
-class CouponRedemptionPageAPIController extends ControllerAPI
+class CouponRedemptionPageAPIController extends PubControllerAPI
 {
     /**
      * GET - get coupon redemption page
@@ -42,8 +42,7 @@ class CouponRedemptionPageAPIController extends ControllerAPI
         $isAvailable = NULL;
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $language = OrbitInput::get('language', 'id');
 

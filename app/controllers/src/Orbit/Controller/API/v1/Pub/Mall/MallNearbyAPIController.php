@@ -2,7 +2,7 @@
 /**
  * An API controller for managing mall geo location.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -18,7 +18,7 @@ use Orbit\Helper\Util\PaginationNumber;
 use \Activity;
 use Elasticsearch\ClientBuilder;
 
-class MallNearbyAPIController extends ControllerAPI
+class MallNearbyAPIController extends PubControllerAPI
 {
     /**
      * GET - Search mall by location
@@ -37,7 +37,7 @@ class MallNearbyAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->checkAuth();
+
 
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
@@ -206,8 +206,7 @@ class MallNearbyAPIController extends ControllerAPI
         $activity = Activity::mobileci()->setActivityType('search');
         $httpCode = 200;
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $latitude = OrbitInput::get('latitude',null);
             $longitude = OrbitInput::get('longitude',null);
