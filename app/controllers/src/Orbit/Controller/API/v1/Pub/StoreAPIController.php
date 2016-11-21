@@ -135,7 +135,7 @@ class StoreAPIController extends ControllerAPI
             foreach($adverts->getBindings() as $binding)
             {
               $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $sql = preg_replace('/\?/', $value, $sql, 1);
+              $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
             }
 
             $store = Tenant::select(
@@ -184,12 +184,88 @@ class StoreAPIController extends ControllerAPI
                         ->first();
             });
 
-            $querySql = $store->toSql();
+            // filter by category just on first store
+            OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', 'merchants.merchant_id')
+                    ->where(DB::raw("cm.category_id"), $category_id);
+            });
 
-            $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery())
-                        ->groupBy('name')
-                        ->orderBy('placement_order', 'desc')
-                        ->orderBy('name', 'asc');
+            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                if (! empty($keyword)) {
+                    $store = $store->leftJoin('keyword_object', 'merchants.merchant_id', '=', 'keyword_object.object_id')
+                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
+                                ->where(function($query) use ($keyword, $prefix)
+                                {
+                                    $word = explode(" ", $keyword);
+                                    foreach ($word as $key => $value) {
+                                        if (strlen($value) === 1 && $value === '%') {
+                                            $query->orWhere(function($q) use ($value, $prefix){
+                                                $q->whereRaw("{$prefix}merchants.name like '%|{$value}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}merchants.description like '%|{$value}%' escape '|'")
+                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
+                                            });
+                                        } else {
+                                            $query->orWhere(function($q) use ($value, $prefix){
+                                                $q->where(DB::raw("{$prefix}merchants.name"), 'like', '%' . $value . '%')
+                                                  ->orWhere(DB::raw("{$prefix}merchants.description"), 'like', '%' . $value . '%')
+                                                  ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
+                                            });
+                                        }
+                                    }
+                                });
+                }
+            });
+
+            // prepare my location
+            if (! empty($ul)) {
+                $position = explode("|", $ul);
+                $lon = $position[0];
+                $lat = $position[1];
+            } else {
+                // get lon lat from cookie
+                $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                    $lon = $userLocationCookieArray[0];
+                    $lat = $userLocationCookieArray[1];
+                }
+            }
+
+            // filter by city before grouping
+            $myLocationFilter = FALSE;
+            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance, &$searchFlag, &$myLocationFilter) {
+                $searchFlag = $searchFlag || TRUE;
+                if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                    $myLocationFilter = TRUE;
+                    $store = $this->calculateDistance($store, $lat, $lon);
+                    $store->havingRaw("distance <= {$distance}");
+                } else {
+                    $store->leftJoin(DB::Raw("
+                            (SELECT
+                                s.name as s_name,
+                                m.city as m_city
+                            FROM {$prefix}merchants s
+                            LEFT JOIN {$prefix}merchants m
+                                ON m.merchant_id = s.parent_id
+                                AND m.city = {$this->quote($location)}
+                            WHERE s.object_type = 'tenant'
+                                AND s.status = 'active'
+                                AND m.status = 'active'
+                            ) as tmp_city
+                        "), DB::Raw("tmp_city.s_name"), '=', 'merchants.name')
+                        ->where(DB::Raw("tmp_city.m_city"), $location);
+                }
+            });
+
+            if ($sort_by === 'location' && ! empty($lon) && ! empty($lat) && !$myLocationFilter) {
+                $store = $this->calculateDistance($store, $lat, $lon);
+            }
+
+            $_realStore = clone $store;
+
+            $querySql = $store->toSql();
+            $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery());
 
             if ($list_type === "featured") {
                 $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_order',
@@ -207,135 +283,19 @@ class StoreAPIController extends ControllerAPI
                 $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_type', 'placement_order');
             }
 
-            // filter by category just on first store
-            OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', DB::Raw("subQuery.merchant_id"))
-                    ->where(DB::raw("cm.category_id"), $category_id);
-            });
-
-            // prepare my location
-            if (! empty($ul)) {
-                $position = explode("|", $ul);
-                $lon = $position[0];
-                $lat = $position[1];
-            } else {
-                // get lon lat from cookie
-                $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                    $lon = $userLocationCookieArray[0];
-                    $lat = $userLocationCookieArray[1];
-                }
-            }
-
-            if (! empty($lon) && ! empty($lat)) {
-                $store = $store->addSelect(
-                                        DB::raw("min( 6371 * acos( cos( radians({$lat}) ) * cos( radians( x(tmp_mg.position) ) ) * cos( radians( y(tmp_mg.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x(tmp_mg.position) ) ) ) ) AS distance")
-                                )
-                                ->leftJoin(DB::Raw("
-                                        (SELECT
-                                            store.name as store_name,
-                                            mg.position
-                                        FROM {$prefix}merchants store
-                                        LEFT JOIN {$prefix}merchants mall
-                                            ON mall.merchant_id = store.parent_id
-                                        LEFT JOIN {$prefix}merchant_geofences mg
-                                            ON mg.merchant_id = mall.merchant_id
-                                        WHERE store.status = 'active'
-                                            AND store.object_type = 'tenant'
-                                            AND mall.status = 'active'
-                                        ) as tmp_mg
-                                    "), DB::Raw("tmp_mg.store_name"), '=', DB::raw("subQuery.name"));
-            }
-
-            // filter by city before grouping
-            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                    $store->havingRaw("distance <= {$distance}");
-                } else {
-                    $store->leftJoin(DB::Raw("
-                            (SELECT
-                                s.name as s_name,
-                                m.city as m_city
-                            FROM {$prefix}merchants s
-                            LEFT JOIN {$prefix}merchants m
-                                ON m.merchant_id = s.parent_id
-                                AND m.city = {$this->quote($location)}
-                            WHERE s.object_type = 'tenant'
-                                AND s.status = 'active'
-                                AND m.status = 'active'
-                            ) as tmp_city
-                        "), DB::Raw("tmp_city.s_name"), '=', DB::raw('subQuery.name'))
-                        ->where(DB::Raw("tmp_city.m_city"), $location);
-                }
-            });
-
-            $querySql = $store->toSql();
-
-            $store = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($store)
-                        ->select(DB::raw('sub_query.merchant_id'), 'name', 'description', 'logo_url', 'placement_type', 'placement_order');
-
-            if ($list_type === "featured") {
-                $store = $store->addSelect('placement_type_orig');
-            }
-
             if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
                 $sort_by = 'distance';
-                $store = $store->addSelect('distance')
+                $store = $store->addSelect(DB::raw("min(distance)"))
                                 ->groupBy('name')
-                                ->orderBy($sort_by, $sort_mode)
                                 ->orderBy('placement_order', 'desc')
+                                ->orderBy($sort_by, $sort_mode)
                                 ->orderBy('name', 'asc');
             } else {
                 $store = $store->groupBy('name')
                                 ->orderBy('placement_order', 'desc')
                                 ->orderBy('name', 'asc');
             }
-
-            OrbitInput::get('filter_name', function ($filterName) use ($store, $prefix) {
-                if (! empty($filterName)) {
-                    if ($filterName === '#') {
-                        $store->whereRaw("SUBSTR(sub_query.name,1,1) not between 'a' and 'z'");
-                    } else {
-                        $filter = explode("-", $filterName);
-                        $store->whereRaw("SUBSTR(sub_query.name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
-                    }
-                }
-            });
-
-            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall) {
-                $store->addSelect('mall_id');
-                $store->addSelect('mall_name');
-            });
-
-            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                if (! empty($keyword)) {
-                    $store = $store->leftJoin('keyword_object', DB::raw('sub_query.merchant_id'), '=', 'keyword_object.object_id')
-                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
-                                ->where(function($query) use ($keyword, $prefix)
-                                {
-                                    $word = explode(" ", $keyword);
-                                    foreach ($word as $key => $value) {
-                                        if (strlen($value) === 1 && $value === '%') {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->whereRaw("sub_query.name like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("sub_query.description like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
-                                            });
-                                        } else {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->where(DB::raw('sub_query.name'), 'like', '%' . $value . '%')
-                                                  ->orWhere(DB::raw('sub_query.description'), 'like', '%' . $value . '%')
-                                                  ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
-                                            });
-                                        }
-                                    }
-                                });
-                }
-            });
 
             // record GTM search activity
             if ($searchFlag) {
@@ -351,11 +311,6 @@ class StoreAPIController extends ControllerAPI
             }
 
             $_store = clone $store;
-            $_realStore = clone $store;
-
-            // Apply the group by for merchant location
-            $_store->groupBy('name');
-            $store->groupBy('name');
 
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($store);
@@ -375,21 +330,10 @@ class StoreAPIController extends ControllerAPI
             $liststore = $store->get();
             $count = $recordCounter->count();
 
-            $data = new \stdclass();
-            $data->returned_records = count($liststore);
-            $data->total_records = $count;
-            $data->records = $liststore;
-
-            $extras = new \stdClass();
-            $extras->total_stores = $count;
-            $extras->total_merchants = $recordCounterRealStores->count();
-
-            $data->extras = $extras;
-
             // random featured adv
-            $randomStore = $_store->get();
             if ($list_type === 'featured') {
-                $advertedCampaigns = array_filter($randomStore, function($v) {
+                $featuredStore = $_store->get();
+                $advertedCampaigns = array_filter($featuredStore, function($v) {
                     return ($v->placement_type_orig === 'featured_list');
                 });
 
@@ -405,11 +349,29 @@ class StoreAPIController extends ControllerAPI
                         $random = $advertedCampaigns[$listSlide];
                     }
 
-                    $data->returned_records = count($liststore);
-                    $data->total_records = count($random);
-                    $data->records = $random;
+                    $liststore = $random;
+                    $count = count($random);
+                } else {
+                    $liststore = array_slice($featuredStore, 0, $take);
+                    $count = count($liststore);
                 }
+            } else {
+                $take = PaginationNumber::parseTakeFromGet('retailer');
+                $store->take($take);
+
+                $skip = PaginationNumber::parseSkipFromGet();
+                $store->skip($skip);
             }
+
+            $data = new \stdclass();
+            $extras = new \stdClass();
+            $extras->total_stores = $count;
+            $extras->total_merchants = $recordCounterRealStores->count();
+
+            $data->returned_records = count($liststore);
+            $data->total_records = $count;
+            $data->extras = $extras;
+            $data->records = $liststore;
 
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
@@ -1340,6 +1302,29 @@ class StoreAPIController extends ControllerAPI
             $this->valid_language = $language;
             return TRUE;
         });
+    }
+
+    protected function calculateDistance($store, $lat, $lon)
+    {
+        $prefix = DB::getTablePrefix();
+        $store = $store->addSelect(
+                                    DB::raw("( 6371 * acos( cos( radians({$lat}) ) * cos( radians( x(tmp_mg.position) ) ) * cos( radians( y(tmp_mg.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x(tmp_mg.position) ) ) ) ) AS distance")
+                                )
+                                ->leftJoin(DB::Raw("
+                                    (SELECT
+                                        store.name as store_name,
+                                        mg.position
+                                    FROM {$prefix}merchants store
+                                    LEFT JOIN {$prefix}merchants mall
+                                        ON mall.merchant_id = store.parent_id
+                                    LEFT JOIN {$prefix}merchant_geofences mg
+                                        ON mg.merchant_id = mall.merchant_id
+                                    WHERE store.status = 'active'
+                                        AND store.object_type = 'tenant'
+                                        AND mall.status = 'active'
+                                    ) as tmp_mg
+                                "), DB::Raw("tmp_mg.store_name"), '=', 'merchants.name');
+        return $store;
     }
 
     protected function quote($arg)
