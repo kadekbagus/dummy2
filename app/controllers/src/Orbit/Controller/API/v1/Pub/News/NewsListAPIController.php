@@ -68,6 +68,7 @@ class NewsListAPIController extends ControllerAPI
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
+            $no_total_records = OrbitInput::get('no_total_records', null);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -312,13 +313,20 @@ class NewsListAPIController extends ControllerAPI
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
-            $_news = clone($news);
+
+            $totalRec = 0;
+            // Set defaul 0 when get variable no_total_records = yes
+            if ($no_total_records !== 'yes') {
+                $_news = clone($news);
+
+                $recordCounter = RecordCounter::create($_news);
+                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
+
+                $totalRec = $recordCounter->count();
+            }
 
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($news);
-
-            $recordCounter = RecordCounter::create($_news);
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('news');
             $news->take($take);
@@ -326,7 +334,6 @@ class NewsListAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $news->skip($skip);
 
-            $totalRec = $recordCounter->count();
             $listOfRec = $news->get();
 
             $data = new \stdclass();

@@ -68,6 +68,7 @@ class StoreAPIController extends ControllerAPI
             $list_type = OrbitInput::get('list_type', 'featured');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $mallId = OrbitInput::get('mall_id', null);
+            $no_total_records = OrbitInput::get('no_total_records', null);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;

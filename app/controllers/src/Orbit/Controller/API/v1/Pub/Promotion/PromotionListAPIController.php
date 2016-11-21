@@ -72,6 +72,7 @@ class PromotionListAPIController extends ControllerAPI
             $withPremium = OrbitInput::get('is_premium', null);
             $list_type = OrbitInput::get('list_type', 'featured');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
+            $no_total_records = OrbitInput::get('no_total_records', null);
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -393,11 +394,17 @@ class PromotionListAPIController extends ControllerAPI
 
             $_promotion = clone($promotion);
 
+            $totalRec = 0;
+            // Set defaul 0 when get variable no_total_records = yes
+            if ($no_total_records !== 'yes') {
+                $recordCounter = RecordCounter::create($_promotion);
+                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
+
+                $totalRec = $recordCounter->count();
+            }
+
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($promotion);
-
-            $recordCounter = RecordCounter::create($_promotion);
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('promotion');
             $promotion->take($take);
@@ -405,7 +412,6 @@ class PromotionListAPIController extends ControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $promotion->skip($skip);
 
-            $totalRec = $recordCounter->count();
             $listOfRec = $promotion->get();
 
             $data = new \stdclass();
