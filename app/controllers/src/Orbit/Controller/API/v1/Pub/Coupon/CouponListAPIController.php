@@ -387,9 +387,7 @@ class CouponListAPIController extends ControllerAPI
 
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes
-            if ($no_total_records === 'yes') {
-                $totalRec = 0;
-            } else {
+            if ($no_total_records !== 'yes') {
                 $recordCounter = RecordCounter::create($_coupon);
                 OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
