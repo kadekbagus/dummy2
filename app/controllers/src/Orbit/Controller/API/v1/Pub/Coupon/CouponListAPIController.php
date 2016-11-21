@@ -65,6 +65,7 @@ class CouponListAPIController extends ControllerAPI
             $withPremium = OrbitInput::get('is_premium', null);
             $list_type = OrbitInput::get('list_type', 'featured');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
+            $no_total_records = OrbitInput::get('no_total_records', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -383,11 +384,20 @@ class CouponListAPIController extends ControllerAPI
             }
             $_coupon = clone $coupon;
 
+
+            $totalRec = 0;
+            // Set defaul 0 when get variable no_total_records = yes
+            if ($no_total_records === 'yes') {
+                $totalRec = 0;
+            } else {
+                $recordCounter = RecordCounter::create($_coupon);
+                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
+
+                $totalRec = $recordCounter->count();
+            }
+
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($coupon);
-
-            $recordCounter = RecordCounter::create($_coupon);
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('coupon');
             $coupon->take($take);
@@ -396,11 +406,10 @@ class CouponListAPIController extends ControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
-            $count = $recordCounter->count();
 
             $data = new \stdclass();
             $data->returned_records = count($listcoupon);
-            $data->total_records = $count;
+            $data->total_records = $totalRec;
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
             }
