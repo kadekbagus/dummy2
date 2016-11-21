@@ -257,11 +257,9 @@ class StoreAPIController extends ControllerAPI
             }
 
             // filter by city before grouping
-            $myLocationFilter = FALSE;
-            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance, &$searchFlag, &$myLocationFilter) {
+            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
                 if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                    $myLocationFilter = TRUE;
                     $store->havingRaw("distance <= {$distance}");
                 } else {
                     $store->leftJoin(DB::Raw("
@@ -281,8 +279,8 @@ class StoreAPIController extends ControllerAPI
                 }
             });
 
-            $realStore = clone $store;
-            $_realStore = $realStore->groupBy('merchants.merchant_id');
+            $realStore = $store->toSql();
+            $_realStore = DB::table(DB::raw("({$realStore}) as realStoreSubQuery"))->mergeBindings($store->getQuery())->groupBy('merchant_id');
 
             $querySql = $store->toSql();
             $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery());
