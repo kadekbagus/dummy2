@@ -32,8 +32,6 @@ class GenericActivityListAPIController extends ControllerAPI
 
         $httpCode = 200;
         try {
-            $this->checkAuth();
-
             $genAct = Config::get('orbit.generic_activity.activity_list');
             $paramName = Config::get('orbit.generic_activity.parameter_name');
 
