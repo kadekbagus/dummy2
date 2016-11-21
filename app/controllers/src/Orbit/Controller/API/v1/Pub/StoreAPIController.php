@@ -383,8 +383,8 @@ class StoreAPIController extends ControllerAPI
 
             $data = new \stdclass();
             $extras = new \stdClass();
-            $extras->total_stores = $count;
-            $extras->total_merchants = $recordCounterRealStores->count();
+            $extras->total_stores = $recordCounterRealStores->count();
+            $extras->total_merchants = $count;
 
             $data->returned_records = count($liststore);
             $data->total_records = $count;
