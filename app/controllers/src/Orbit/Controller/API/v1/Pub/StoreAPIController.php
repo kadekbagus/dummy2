@@ -351,12 +351,20 @@ class StoreAPIController extends ControllerAPI
             }
 
             $_store = clone $store;
+            $_realStore = clone $store;
+
+            // Apply the group by for merchant location
+            $_store->groupBy('name');
+            $store->groupBy('name');
 
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($store);
 
             $recordCounter = RecordCounter::create($_store);
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
+
+            $recordCounterRealStores = RecordCounter::create($_realStore);
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounterRealStores->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $store->take($take);
@@ -371,6 +379,12 @@ class StoreAPIController extends ControllerAPI
             $data->returned_records = count($liststore);
             $data->total_records = $count;
             $data->records = $liststore;
+
+            $extras = new \stdClass();
+            $extras->total_stores = $count;
+            $extras->total_merchants = $recordCounterRealStores->count();
+
+            $data->extras = $extras;
 
             // random featured adv
             $randomStore = $_store->get();
