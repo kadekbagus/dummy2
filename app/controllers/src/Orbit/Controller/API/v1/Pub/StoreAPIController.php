@@ -356,7 +356,6 @@ class StoreAPIController extends ControllerAPI
             $store->skip($skip);
 
             $liststore = $store->get();
-            $count = $recordCounter->count();
 
             // random featured adv
             if ($list_type === 'featured') {
