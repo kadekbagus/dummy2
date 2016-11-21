@@ -57,6 +57,7 @@ class StoreAPIController extends ControllerAPI
 
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $location = OrbitInput::get('location', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $language = OrbitInput::get('language', 'id');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
@@ -218,17 +219,39 @@ class StoreAPIController extends ControllerAPI
                 }
             });
 
-            // prepare my location
-            if (! empty($ul)) {
-                $position = explode("|", $ul);
-                $lon = $position[0];
-                $lat = $position[1];
-            } else {
-                // get lon lat from cookie
-                $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                    $lon = $userLocationCookieArray[0];
-                    $lat = $userLocationCookieArray[1];
+            if ($sort_by === 'location' || $location === 'mylocation') {
+                // prepare my location
+                if (! empty($ul)) {
+                    $position = explode("|", $ul);
+                    $lon = $position[0];
+                    $lat = $position[1];
+                } else {
+                    // get lon lat from cookie
+                    $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                    if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                        $lon = $userLocationCookieArray[0];
+                        $lat = $userLocationCookieArray[1];
+                    }
+                }
+
+                if (! empty($lon) && ! empty($lat)) {
+                    $store = $store->addSelect(
+                                        DB::raw("( 6371 * acos( cos( radians({$lat}) ) * cos( radians( x(tmp_mg.position) ) ) * cos( radians( y(tmp_mg.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x(tmp_mg.position) ) ) ) ) AS distance")
+                                    )
+                                    ->leftJoin(DB::Raw("
+                                        (SELECT
+                                            store.name as store_name,
+                                            mg.position
+                                        FROM {$prefix}merchants store
+                                        LEFT JOIN {$prefix}merchants mall
+                                            ON mall.merchant_id = store.parent_id
+                                        LEFT JOIN {$prefix}merchant_geofences mg
+                                            ON mg.merchant_id = mall.merchant_id
+                                        WHERE store.status = 'active'
+                                            AND store.object_type = 'tenant'
+                                            AND mall.status = 'active'
+                                        ) as tmp_mg
+                                    "), DB::Raw("tmp_mg.store_name"), '=', 'merchants.name');
                 }
             }
 
@@ -238,7 +261,6 @@ class StoreAPIController extends ControllerAPI
                 $searchFlag = $searchFlag || TRUE;
                 if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
                     $myLocationFilter = TRUE;
-                    $store = $this->calculateDistance($store, $lat, $lon);
                     $store->havingRaw("distance <= {$distance}");
                 } else {
                     $store->leftJoin(DB::Raw("
@@ -257,10 +279,6 @@ class StoreAPIController extends ControllerAPI
                         ->where(DB::Raw("tmp_city.m_city"), $location);
                 }
             });
-
-            if ($sort_by === 'location' && ! empty($lon) && ! empty($lat) && !$myLocationFilter) {
-                $store = $this->calculateDistance($store, $lat, $lon);
-            }
 
             $_realStore = clone $store;
 
@@ -1302,29 +1320,6 @@ class StoreAPIController extends ControllerAPI
             $this->valid_language = $language;
             return TRUE;
         });
-    }
-
-    protected function calculateDistance($store, $lat, $lon)
-    {
-        $prefix = DB::getTablePrefix();
-        $store = $store->addSelect(
-                                    DB::raw("( 6371 * acos( cos( radians({$lat}) ) * cos( radians( x(tmp_mg.position) ) ) * cos( radians( y(tmp_mg.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x(tmp_mg.position) ) ) ) ) AS distance")
-                                )
-                                ->leftJoin(DB::Raw("
-                                    (SELECT
-                                        store.name as store_name,
-                                        mg.position
-                                    FROM {$prefix}merchants store
-                                    LEFT JOIN {$prefix}merchants mall
-                                        ON mall.merchant_id = store.parent_id
-                                    LEFT JOIN {$prefix}merchant_geofences mg
-                                        ON mg.merchant_id = mall.merchant_id
-                                    WHERE store.status = 'active'
-                                        AND store.object_type = 'tenant'
-                                        AND mall.status = 'active'
-                                    ) as tmp_mg
-                                "), DB::Raw("tmp_mg.store_name"), '=', 'merchants.name');
-        return $store;
     }
 
     protected function quote($arg)
