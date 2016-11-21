@@ -5,7 +5,7 @@
  * @desc Controller for promotion list and search in landing page
  */
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -29,7 +29,7 @@ use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 
-class PromotionListAPIController extends ControllerAPI
+class PromotionListAPIController extends PubControllerAPI
 {
     /**
      * GET - get active promotion in all mall, and also provide for searching
@@ -56,8 +56,7 @@ class PromotionListAPIController extends ControllerAPI
         $mall = null;
 
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');

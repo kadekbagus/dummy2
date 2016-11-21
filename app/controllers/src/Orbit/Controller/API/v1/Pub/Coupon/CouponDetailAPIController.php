@@ -2,7 +2,7 @@
 /**
  * Controller for Coupon detail.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -22,7 +22,7 @@ use Mall;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 
-class CouponDetailAPIController extends ControllerAPI
+class CouponDetailAPIController extends PubControllerAPI
 {
     public function getCouponItem()
     {
@@ -32,8 +32,7 @@ class CouponDetailAPIController extends ControllerAPI
         $mall = NULL;
 
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $role = $user->role->role_name;
 

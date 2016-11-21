@@ -2,7 +2,7 @@
 /**
  * An API controller for managing feedback.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -10,7 +10,7 @@ use Config;
 use Validator;
 use Activity;
 
-class FeedbackAPIController extends ControllerAPI
+class FeedbackAPIController extends PubControllerAPI
 {
     /**
      * POST - send feedback
@@ -32,8 +32,7 @@ class FeedbackAPIController extends ControllerAPI
         $httpCode = 200;
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $feedback = OrbitInput::post('feedback');
             $cs_email = Config::get('orbit.contact_information.customer_service.email');

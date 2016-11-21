@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Coupon;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -24,7 +24,7 @@ use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
 
-class CouponListAPIController extends ControllerAPI
+class CouponListAPIController extends PubControllerAPI
 {
     /**
      * GET - get all coupon in all mall
@@ -48,8 +48,7 @@ class CouponListAPIController extends ControllerAPI
         $user = NULL;
         $httpCode = 200;
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');

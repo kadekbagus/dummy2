@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Coupon;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -17,7 +17,7 @@ use \Exception;
 use PromotionRetailer;
 use Helper\EloquentRecordCounter as RecordCounter;
 
-class CouponWalletLocationAPIController extends ControllerAPI
+class CouponWalletLocationAPIController extends PubControllerAPI
 {
     /**
      * GET - get list of coupon wallet locations
@@ -37,8 +37,7 @@ class CouponWalletLocationAPIController extends ControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             // should always check the role
             $role = $user->role->role_name;

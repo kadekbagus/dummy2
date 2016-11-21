@@ -3,7 +3,7 @@
 /**
  * An API controller for share gotomalls landing page via email
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -16,7 +16,7 @@ use stdClass;
 use Validator;
 use \Queue;
 
-class LandingPageShareEmailAPIController extends ControllerAPI
+class LandingPageShareEmailAPIController extends PubControllerAPI
 {
     /**
      * post - share gotomalls landing page via email
@@ -35,8 +35,7 @@ class LandingPageShareEmailAPIController extends ControllerAPI
         $httpCode = 200;
         try {
 
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $email = OrbitInput::post('email');
 

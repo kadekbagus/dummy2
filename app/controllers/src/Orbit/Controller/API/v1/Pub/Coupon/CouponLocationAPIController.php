@@ -2,7 +2,7 @@
 /**
  * Controller for Coupon location list.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -22,7 +22,7 @@ use Activity;
 use Coupon;
 use Mall;
 
-class CouponLocationAPIController extends ControllerAPI
+class CouponLocationAPIController extends PubControllerAPI
 {
     public function getCouponLocations()
     {
@@ -31,8 +31,7 @@ class CouponLocationAPIController extends ControllerAPI
         $user = null;
 
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');

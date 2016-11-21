@@ -7,7 +7,7 @@
  * @todo Make this as generic controller because its job only reading json
  *       file from a file.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -21,7 +21,7 @@ use Orbit\Helper\Net\Wordpress\PostFetcher;
 use Log;
 use Net\Security\RequestAccess;
 
-class WordpressWebHooksPostAPIController extends ControllerAPI
+class WordpressWebHooksPostAPIController extends PubControllerAPI
 {
     public function postWebHooks()
     {

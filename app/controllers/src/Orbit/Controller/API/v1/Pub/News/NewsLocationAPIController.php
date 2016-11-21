@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub\News;
 
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -20,7 +20,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
 
-class NewsLocationAPIController extends ControllerAPI
+class NewsLocationAPIController extends PubControllerAPI
 {
 
 	/**
@@ -44,8 +44,7 @@ class NewsLocationAPIController extends ControllerAPI
         $user = null;
 
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');

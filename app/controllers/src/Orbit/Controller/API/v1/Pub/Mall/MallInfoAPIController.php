@@ -2,7 +2,7 @@
 /**
  * An API controller for managing mall geo location.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -18,7 +18,7 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 
-class MallInfoAPIController extends ControllerAPI
+class MallInfoAPIController extends PubControllerAPI
 {
     /**
      * GET - check if mall inside map area
@@ -37,8 +37,7 @@ class MallInfoAPIController extends ControllerAPI
         try {
             $activity = Activity::mobileci()->setActivityType('view');
 
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $from_mall_ci = OrbitInput::get('from_mall_ci', 'y');
 

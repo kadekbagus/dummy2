@@ -32,14 +32,6 @@ class GenericActivityListAPIController extends PubControllerAPI
 
         $httpCode = 200;
         try {
-            // accessed via IntermediatePubAuthController
-            $user = $this->getUser();
-            if (empty($user)) {
-                // accessed directly
-                $this->checkAuth();
-                $user = $this->api->user;
-            }
-dd($user);
             $genAct = Config::get('orbit.generic_activity.activity_list');
             $paramName = Config::get('orbit.generic_activity.parameter_name');
 
