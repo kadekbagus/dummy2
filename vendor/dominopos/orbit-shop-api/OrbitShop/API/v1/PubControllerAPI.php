@@ -3,7 +3,7 @@
 /**
  * Base Pub API Controller.
  * This is an extension of ControllerAPI with additional user property
- * @author Rio Astamal <me@rioastamal.net>
+ * @author Ahmad <ahmad@dominopos.com>
  */
 
 class PubControllerAPI extends ControllerAPI
@@ -19,12 +19,28 @@ class PubControllerAPI extends ControllerAPI
 
     public function getUser()
     {
-        if (empty($this->user)) {
-            // accessing directly not via IntermediatePubAuthController
-            $this->checkAuth();
-            $this->user = $this->api->user;
-        }
-
         return $this->user;
+    }
+
+    public function checkAuth($forbiddenUserStatus=['blocked', 'pending', 'deleted'])
+    {
+        if (! empty($this->user)) {
+            // accessing via IntermediatePubAuthController
+            // use user set on IntermediateBaseController
+            $this->api = new \stdClass();
+            $this->api->user = $this->user;
+        } else {
+            // Get the api key from query string
+            $clientkey = (isset($_GET['apikey']) ? $_GET['apikey'] : '');
+
+            // Instantiate the OrbitShopAPI
+            $this->api = new OrbitShopAPI($clientkey, $forbiddenUserStatus);
+
+            // Set the request expires time
+            $this->api->expiresTimeFrame = $this->expiresTime;
+
+            // Run the signature check routine
+            $this->api->checkSignature();
+        }
     }
 }
