@@ -19,6 +19,12 @@ class PubControllerAPI extends ControllerAPI
 
     public function getUser()
     {
+        if (empty($this->user)) {
+            // accessing directly not via IntermediatePubAuthController
+            $this->checkAuth();
+            $this->user = $this->api->user;
+        }
+
         return $this->user;
     }
 }
