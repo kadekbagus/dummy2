@@ -26,7 +26,7 @@ class AdvertBannerListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->checkAuth();
+
 
             $take = PaginationNumber::parseTakeFromGet('advert');
             $skip = PaginationNumber::parseSkipFromGet();

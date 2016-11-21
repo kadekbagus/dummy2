@@ -45,8 +45,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
         $issued_coupon_code = null;
         $coupon_id = OrbitInput::post('coupon_id', NULL);
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $session = SessionPreparer::prepareSession();
 

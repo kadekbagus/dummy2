@@ -37,8 +37,7 @@ class LuckyDrawAutoIssueAPIController extends PubControllerAPI
         $httpCode = 200;
         $luckyDraw = null;
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
             $session = SessionPreparer::prepareSession();
 
             // should always check the role

@@ -43,8 +43,7 @@ class NewsDetailAPIController extends PubControllerAPI
         $user = NULL;
 
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $newsId = OrbitInput::get('news_id', null);
             $language = OrbitInput::get('language', 'id');

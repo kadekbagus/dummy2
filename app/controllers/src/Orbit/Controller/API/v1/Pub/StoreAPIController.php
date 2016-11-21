@@ -52,8 +52,7 @@ class StoreAPIController extends PubControllerAPI
         $user = NULL;
         $httpCode = 200;
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -497,7 +496,7 @@ class StoreAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->checkAuth();
+
 
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -632,8 +631,7 @@ class StoreAPIController extends PubControllerAPI
         $mall = NULL;
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $storename = OrbitInput::get('store_name');
             $language = OrbitInput::get('language', 'id');
@@ -831,8 +829,7 @@ class StoreAPIController extends PubControllerAPI
         $user = null;
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -1020,7 +1017,7 @@ class StoreAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->checkAuth();
+
 
             $sort_by = OrbitInput::get('sortby', 'campaign_name');
             $sort_mode = OrbitInput::get('sortmode','asc');

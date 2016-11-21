@@ -42,7 +42,7 @@ class CouponMallListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->checkAuth();
+
 
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');

@@ -42,8 +42,7 @@ class CouponRedemptionPageAPIController extends PubControllerAPI
         $isAvailable = NULL;
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $language = OrbitInput::get('language', 'id');
 

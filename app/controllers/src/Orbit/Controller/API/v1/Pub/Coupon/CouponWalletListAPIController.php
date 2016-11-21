@@ -46,8 +46,7 @@ class CouponWalletListAPIController extends PubControllerAPI
         $mall = NULL;
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             // should always check the role
             $role = $user->role->role_name;

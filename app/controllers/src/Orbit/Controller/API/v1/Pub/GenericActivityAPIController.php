@@ -93,8 +93,7 @@ class GenericActivityAPIController extends PubControllerAPI
 
         $activity = Activity::mobileci()->setActivityType($activityType);
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $object = null;
             if (! empty($activityObjectType) && ! empty($activityObjectIDParamName)) {

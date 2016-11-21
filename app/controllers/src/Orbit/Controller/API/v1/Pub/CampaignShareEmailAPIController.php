@@ -38,8 +38,7 @@ class CampaignShareEmailAPIController extends PubControllerAPI
         $httpCode = 200;
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $email = OrbitInput::post('email');
             $campaign_id = OrbitInput::post('campaign_id');

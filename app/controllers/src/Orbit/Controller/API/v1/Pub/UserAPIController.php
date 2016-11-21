@@ -27,8 +27,7 @@ class UserAPIController extends PubControllerAPI
         $httpCode = 200;
         $user = NULL;
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $session = SessionPreparer::prepareSession();
 

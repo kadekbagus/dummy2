@@ -26,7 +26,7 @@ class NewsMallAPIController extends PubControllerAPI
         $httpCode = 200;
 
         try{
-            $this->checkAuth();
+
 
             $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');

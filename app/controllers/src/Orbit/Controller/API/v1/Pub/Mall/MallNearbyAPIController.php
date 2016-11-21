@@ -37,7 +37,7 @@ class MallNearbyAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->checkAuth();
+
 
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);
@@ -206,8 +206,7 @@ class MallNearbyAPIController extends PubControllerAPI
         $activity = Activity::mobileci()->setActivityType('search');
         $httpCode = 200;
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $latitude = OrbitInput::get('latitude',null);
             $longitude = OrbitInput::get('longitude',null);

@@ -47,8 +47,7 @@ class LuckyDrawDetailAPIController extends PubControllerAPI
         $httpCode = 200;
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
             $session = SessionPreparer::prepareSession();
 
             $language = OrbitInput::get('language', 'id');

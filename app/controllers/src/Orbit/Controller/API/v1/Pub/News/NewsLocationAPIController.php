@@ -44,8 +44,7 @@ class NewsLocationAPIController extends PubControllerAPI
         $user = null;
 
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');

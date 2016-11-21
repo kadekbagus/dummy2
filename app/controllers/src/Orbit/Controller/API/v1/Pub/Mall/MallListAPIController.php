@@ -35,8 +35,7 @@ class MallListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $keyword = OrbitInput::get('keyword');
             $location = OrbitInput::get('location', null);
@@ -297,7 +296,7 @@ class MallListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->checkAuth();
+
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $sort_by = OrbitInput::get('sortby', 'city');

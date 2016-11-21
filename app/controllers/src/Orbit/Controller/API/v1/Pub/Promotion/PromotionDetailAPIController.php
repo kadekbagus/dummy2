@@ -34,8 +34,7 @@ class PromotionDetailAPIController extends PubControllerAPI
         $user = NULL;
 
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $promotionId = OrbitInput::get('promotion_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');

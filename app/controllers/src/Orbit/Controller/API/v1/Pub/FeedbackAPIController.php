@@ -32,8 +32,7 @@ class FeedbackAPIController extends PubControllerAPI
         $httpCode = 200;
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $feedback = OrbitInput::post('feedback');
             $cs_email = Config::get('orbit.contact_information.customer_service.email');

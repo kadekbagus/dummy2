@@ -41,8 +41,7 @@ class LuckyDrawListAPIController extends PubControllerAPI
         $httpCode = 200;
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.lucky_draw.max_record');

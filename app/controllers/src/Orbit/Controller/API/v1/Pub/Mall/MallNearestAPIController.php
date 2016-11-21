@@ -37,7 +37,7 @@ class MallNearestAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $this->checkAuth();
+
 
             $lat = OrbitInput::get('latitude', null);
             $long = OrbitInput::get('longitude', null);

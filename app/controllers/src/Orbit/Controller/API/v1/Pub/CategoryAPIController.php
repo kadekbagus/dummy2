@@ -38,7 +38,7 @@ class CategoryAPIController extends PubControllerAPI
     {
       $httpCode = 200;
         try {
-            $this->checkAuth();
+
 
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $sort_by = OrbitInput::get('sortby', 'category_name');

@@ -32,8 +32,7 @@ class CouponDetailAPIController extends PubControllerAPI
         $mall = NULL;
 
         try{
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
 
             $role = $user->role->role_name;
 
