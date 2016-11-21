@@ -19,10 +19,12 @@ class PubControllerAPI extends ControllerAPI
 
     public function getUser()
     {
-        return $this->user;
+        $this->checkAuth();
+
+        return $this->api->user;
     }
 
-    public function checkAuth($forbiddenUserStatus=['blocked', 'pending', 'deleted'])
+    public function checkAuth($forbiddenUserStatus=['deleted'])
     {
         if (! empty($this->user)) {
             // accessing via IntermediatePubAuthController
