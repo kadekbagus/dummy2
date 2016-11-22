@@ -240,7 +240,7 @@ class StoreAPIController extends PubControllerAPI
                                     )
                                     ->leftJoin(DB::Raw("
                                         (SELECT
-                                            store.name as store_name,
+                                            store.merchant_id as store_id,
                                             mg.position
                                         FROM {$prefix}merchants store
                                         LEFT JOIN {$prefix}merchants mall
@@ -251,7 +251,7 @@ class StoreAPIController extends PubControllerAPI
                                             AND store.object_type = 'tenant'
                                             AND mall.status = 'active'
                                         ) as tmp_mg
-                                    "), DB::Raw("tmp_mg.store_name"), '=', 'merchants.name');
+                                    "), DB::Raw("tmp_mg.store_id"), '=', 'merchants.merchant_id');
                 }
             }
 
