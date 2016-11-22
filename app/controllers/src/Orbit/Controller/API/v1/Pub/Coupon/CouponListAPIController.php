@@ -62,7 +62,7 @@ class CouponListAPIController extends PubControllerAPI
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
             $withPremium = OrbitInput::get('is_premium', null);
-            $list_type = OrbitInput::get('list_type', 'featured');
+            $list_type = OrbitInput::get('list_type', 'preferred');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
 
