@@ -48,7 +48,8 @@ class CouponListAPIController extends PubControllerAPI
         $user = NULL;
         $httpCode = 200;
         try {
-            $user = $this->getUser();
+            $this->checkAuth();
+            $user = $this->api->user;
 
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -62,8 +63,9 @@ class CouponListAPIController extends PubControllerAPI
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
             $withPremium = OrbitInput::get('is_premium', null);
-            $list_type = OrbitInput::get('list_type', 'preferred');
+            $list_type = OrbitInput::get('list_type', 'featured');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
+            $category_id = OrbitInput::get('category_id');
             $no_total_records = OrbitInput::get('no_total_records', null);
 
             $couponHelper = CouponHelper::create();
@@ -191,10 +193,7 @@ class CouponListAPIController extends PubControllerAPI
                             ->leftJoin('media', function ($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
-                            })
-                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                            ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"))
+                            })                            
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
                             ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.link_object_id"), '=', 'promotions.promotion_id')
                             ->leftJoin('media as advert_media', function ($q) {
@@ -206,6 +205,13 @@ class CouponListAPIController extends PubControllerAPI
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy(DB::raw("advert.placement_order"), 'desc')
                             ->orderBy('coupon_name', 'asc');
+
+            // left join when need link to mall
+            if ((! empty($lon) && ! empty($lat)) || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
+                $coupons = $coupons->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                                ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
+            }
 
             //calculate distance if user using my current location as filter and sort by location for listing
             if ($sort_by == 'location' || $location == 'mylocation') {
