@@ -210,6 +210,7 @@ class PromotionListAPIController extends ControllerAPI
                             ->orderBy(DB::raw("advert.placement_order"), 'desc')
                             ->orderBy('news_name', 'asc');
 
+            // left join when need link to mall
             if ((! empty($lon) && ! empty($lat)) || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
                 $promotions = $promotions->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants as m', function ($q) {
