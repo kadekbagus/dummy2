@@ -72,6 +72,7 @@ class PromotionListAPIController extends ControllerAPI
             $withPremium = OrbitInput::get('is_premium', null);
             $list_type = OrbitInput::get('list_type', 'featured');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
+            $category_id = OrbitInput::get('category_id');
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -199,11 +200,6 @@ class PromotionListAPIController extends ControllerAPI
                                 $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                                 $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             })
-                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                            ->leftJoin('merchants as m', function ($q) {
-                                $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
-                                $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
-                            })
                             ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.link_object_id"), '=', 'news.news_id')
                             ->leftJoin('media as advert_media', function ($q) {
                                 $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
@@ -213,6 +209,14 @@ class PromotionListAPIController extends ControllerAPI
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy(DB::raw("advert.placement_order"), 'desc')
                             ->orderBy('news_name', 'asc');
+
+            if ((! empty($lon) && ! empty($lat)) || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
+                $promotions = $promotions->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                    ->leftJoin('merchants as m', function ($q) {
+                                        $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
+                                        $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
+                                    });
+            }
 
             //calculate distance if user using my current location as filter and sort by location for listing
             if ($sort_by == 'location' || $location == 'mylocation') {
