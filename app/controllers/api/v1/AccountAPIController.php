@@ -125,7 +125,8 @@ class AccountAPIController extends ControllerAPI
                 'Master'    => 'mall_tenant'
             ];
 
-        $get_tenants = CampaignLocation::excludeDeleted();
+        $prefix = DB::getTablePrefix();
+        $get_tenants = CampaignLocation::select(DB::raw("COUNT(DISTINCT {$prefix}merchants.merchant_id) as total_location"))->excludeDeleted();
 
         // access
         if (array_key_exists($type_name, $permission)) {
@@ -138,12 +139,9 @@ class AccountAPIController extends ControllerAPI
             $get_tenants->whereIn('merchant_id', $tenantIds);
         }
 
-        $get_tenants = $get_tenants->orderBy('merchants.status', 'asc')->orderBy('name', 'asc')->get();
+        $get_tenants = $get_tenants->get();
 
-        $tenantArray = [];
-        foreach ($get_tenants as $row) {
-            $tenantArray[] = ['id' => $row->merchant_id, 'name' => $row->tenant_at_mall, 'status' => $row->status];
-        }
+        $tenantArray = $get_tenants[0]->total_location;
 
         return $tenantArray;
     }
@@ -571,8 +569,7 @@ class AccountAPIController extends ControllerAPI
                 'type_name'          => $row->type_name,
                 'select_all_tenants' => $row->campaignAccount->is_link_to_all,
                 'is_subscribed'      => $row->campaignAccount->is_subscribed,
-                'tenant_count'       => count($tenantAtMallArray),
-                'tenants'            => $tenantAtMallArray,
+                'tenant_count'       => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model
                 //                                                     What is this?

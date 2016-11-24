@@ -2349,6 +2349,15 @@ class TenantAPIController extends ControllerAPI
                 }
             }
 
+            // this is for request from pmp account listing on admin portal
+            $user_id = OrbitInput::get('user_id');
+            if (!empty($user_id)) {
+                $user = User::with('role')->where('user_id', '=', $user_id)->first();
+                if (!is_object($user)) {
+                    OrbitShopAPI::throwInvalidArgument('user not found');
+                }
+            }
+
             if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
                 if ($user->campaignAccount->is_link_to_all === 'N') {
                     $tenants->join('user_merchant', function($q) use ($user)
