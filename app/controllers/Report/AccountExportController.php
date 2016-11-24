@@ -17,17 +17,8 @@ class AccountExportController extends \AccountAPIController
     protected function handleCsvRowValue($row, $fieldName)
     {
         $csv = '"';
-        
-        if ($fieldName == 'tenants') {
-            $tenantNames = [];
-            foreach ($row['tenants'] as $tenant) {
-                $tenantNames[] = $tenant['name'];
-            }
 
-            $tenantImplode = implode(', ', $tenantNames);
-            $csv .= str_replace(', ', "\n", $tenantImplode);
-
-        } elseif ($fieldName == 'city') {
+        if ($fieldName == 'city') {
             $countryName = ($row['country']->name) ? ', '.$row['country']->name : '';
             $csv .= $row['city'].$countryName;
         } else {
@@ -58,7 +49,7 @@ class AccountExportController extends \AccountAPIController
         }
 
         if (\Input::get('status')) {
-            $summary['Filtered by status'] = \Input::get('status');     
+            $summary['Filtered by status'] = \Input::get('status');
         }
 
         if (\Input::get('creation_date_from') && \Input::get('creation_date_to')) {
