@@ -163,7 +163,12 @@ class StoreAPIController extends PubControllerAPI
                             ELSE advert_media.path END
                             as logo_url"),
                     DB::raw("advert.placement_type, advert.placement_order"))
-                ->join(DB::raw("(select merchant_id, name, status, parent_id, city from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->join(DB::raw("(
+                    select merchant_id, name, status, parent_id, city
+                    from {$prefix}merchants
+                    where status = 'active'
+                        and object_type = 'mall'
+                    ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->leftJoin('media', function($q) {
                     $q->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
                     $q->on('media.object_id', '=', 'merchants.merchant_id');
