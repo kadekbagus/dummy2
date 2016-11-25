@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
+use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Carbon\Carbon as Carbon;
 
 class TenantAPIController extends ControllerAPI
@@ -2396,20 +2397,22 @@ class TenantAPIController extends ControllerAPI
                 if ($account_type->unique_rule !== 'none') {
                     $unique_rule = implode("','", explode("_", $account_type->unique_rule));
 
-                    $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT
-                                        um.merchant_id
-                                    FROM
-                                        orb_user_merchant um
-                                    JOIN orb_campaign_account ca
-                                        ON ca.user_id = um.user_id
-                                    JOIN orb_account_types at
-                                        ON at.account_type_id = ca.account_type_id
+                    $tenants->whereRaw("NOT EXISTS (
+                                SELECT
+                                    1
+                                FROM
+                                    {$prefix}user_merchant um
+                                        JOIN
+                                    {$prefix}campaign_account ca ON ca.user_id = um.user_id
+                                        JOIN
+                                    {$prefix}account_types at ON at.account_type_id = ca.account_type_id
                                         AND at.unique_rule != 'none'
                                         AND at.status = 'active'
-                                    WHERE um.object_type IN ('$unique_rule')
-                                    GROUP BY um.merchant_id
-                                )");
+                                WHERE
+                                    um.object_type IN ('tenant')
+                                    AND {$prefix}merchants.merchant_id = um.merchant_id
+                                GROUP BY um.merchant_id
+                        )");
                 }
             }
 
@@ -2439,6 +2442,12 @@ class TenantAPIController extends ControllerAPI
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_tenants = clone $tenants;
+
+            // Cache the result of database calls
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($tenants);
+
+            $recordCounter = RecordCounter::create($_tenants);
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('link_to_tenant');
             $tenants->take($take);
@@ -2517,7 +2526,7 @@ class TenantAPIController extends ControllerAPI
             });
             $tenants->orderBy($sortBy, $sortMode);
 
-            $totalTenants = RecordCounter::create($_tenants)->count();
+            $totalTenants = $recordCounter->count();
             $listOfTenants = $tenants->get();
 
             $data = new stdclass();
