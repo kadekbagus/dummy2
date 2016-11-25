@@ -2434,12 +2434,11 @@ class TenantAPIController extends ControllerAPI
             // skip, and order by
             $_tenants = clone $tenants;
 
-            // to do : enable take and skip
-            /*$take = PaginationNumber::parseTakeFromGet('link_to_tenant');
+            $take = PaginationNumber::parseTakeFromGet('link_to_tenant');
             $tenants->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $tenants->skip($skip);*/
+            $tenants->skip($skip);
 
             // Default sort by
             $sortBy = 'display_name';
