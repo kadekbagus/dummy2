@@ -2415,22 +2415,34 @@ class TenantAPIController extends ControllerAPI
             }
 
             if ($filtermode === 'available') {
-                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT merchant_id FROM {$prefix}user_merchant
-                                    WHERE {$prefix}user_merchant.object_type IN ('mall', 'tenant'))");
+                $tenants->whereRaw("
+                    NOT EXISTS (
+                        SELECT 1
+                        FROM {$prefix}user_merchant
+                        WHERE {$prefix}user_merchant.object_type IN ('mall', 'tenant')
+                            AND merchant_id = {$prefix}merchants.merchant_id
+                    )");
             }
 
             // Only showing tenant only, provide for coupon redemption place.
             if ($filtermode === 'tenant') {
-                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT merchant_id FROM {$prefix}user_merchant
-                                    WHERE {$prefix}user_merchant.object_type = 'mall')");
+                $tenants->whereRaw("
+                    NOT EXISTS (
+                        SELECT 1
+                        FROM {$prefix}user_merchant
+                        WHERE {$prefix}user_merchant.object_type = 'mall'
+                            AND merchant_id = {$prefix}merchants.merchant_id
+                    )");
             }
 
             if ($filtermode === 'mall') {
-                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT merchant_id FROM {$prefix}user_merchant
-                                    WHERE {$prefix}user_merchant.object_type = 'tenant')");
+                $tenants->whereRaw("
+                    NOT EXISTS (
+                        SELECT 1
+                        FROM {$prefix}user_merchant
+                        WHERE {$prefix}user_merchant.object_type = 'tenant'
+                            AND merchant_id = {$prefix}merchants.merchant_id
+                    )");
             }
 
             if ($from !== 'advert') {
