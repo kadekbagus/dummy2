@@ -114,7 +114,7 @@ class AccountAPIController extends ControllerAPI
         return $this->render(200);
     }
 
-    protected function getTenantAtMallArray($type_name, $tenantIds = NULL)
+    protected function getTenantAtMallArray($type_name, $user_id = NULL)
     {
         $permission = [
                 'Mall'      => 'mall',
@@ -126,7 +126,7 @@ class AccountAPIController extends ControllerAPI
             ];
 
         $prefix = DB::getTablePrefix();
-        $get_tenants = CampaignLocation::select(DB::raw("COUNT(DISTINCT {$prefix}merchants.merchant_id) as total_location"))->excludeDeleted();
+        $get_tenants = CampaignLocation::select(DB::raw("COUNT(DISTINCT {$prefix}merchants.merchant_id) as total_location"));
 
         // access
         if (array_key_exists($type_name, $permission)) {
@@ -135,8 +135,24 @@ class AccountAPIController extends ControllerAPI
         }
 
         // filter
-        if (! is_null($tenantIds)) {
-            $get_tenants->whereIn('merchant_id', $tenantIds);
+        if (! is_null($user_id)) {
+            $get_tenants->excludeDeleted()
+                        ->whereRaw("
+                            EXISTS (
+                                SELECT 1
+                                FROM {$prefix}user_merchant um
+                                JOIN {$prefix}campaign_account ca
+                                    ON ca.user_id = um.user_id
+                                JOIN {$prefix}account_types at
+                                    ON at.account_type_id = ca.account_type_id
+                                    AND at.status = 'active'
+                                WHERE {$prefix}merchants.merchant_id = um.merchant_id
+                                    AND ca.user_id = {$this->quote($user_id)}
+                                GROUP BY um.merchant_id
+                            )
+                        ");
+        } else {
+            $get_tenants->where('status', 'active');
         }
 
         $get_tenants = $get_tenants->get();
@@ -557,7 +573,7 @@ class AccountAPIController extends ControllerAPI
             if ($row->campaignAccount->is_link_to_all === 'Y' && in_array($row->type_name, $this->allow_select_all_tenant)) {
                 $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name);
             } else {
-                $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->userTenants()->lists('merchant_id'));
+                $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->user_id);
             }
 
             $records[] = [
@@ -1587,8 +1603,8 @@ class AccountAPIController extends ControllerAPI
 
                     OrbitInput::post('id', function($user_id) use ($mall_tenant, $prefix) {
                         $mall_tenant->whereRaw("(
-                                {$prefix}user_merchant.user_id not in (
-                                    select oca.user_id
+                                not exists (
+                                    select 1
                                     from {$prefix}campaign_account oca,
                                     (
                                         select ifnull(ca.parent_user_id, ca.user_id) as uid
@@ -1596,6 +1612,7 @@ class AccountAPIController extends ControllerAPI
                                         where ca.user_id = {$this->quote($user_id)}
                                     ) as ca
                                     where oca.user_id = ca.uid or oca.parent_user_id = ca.uid
+                                        and oca.user_id = {$prefix}user_merchant.user_id
                                 )
                             )");
                     });

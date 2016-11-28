@@ -2398,16 +2398,14 @@ class TenantAPIController extends ControllerAPI
                     $unique_rule = implode("','", explode("_", $account_type->unique_rule));
 
                     $tenants->whereRaw("NOT EXISTS (
-                                SELECT
-                                    1
-                                FROM
-                                    {$prefix}user_merchant um
-                                        JOIN
-                                    {$prefix}campaign_account ca ON ca.user_id = um.user_id
-                                        JOIN
-                                    {$prefix}account_types at ON at.account_type_id = ca.account_type_id
-                                        AND at.unique_rule != 'none'
-                                        AND at.status = 'active'
+                                SELECT 1
+                                FROM {$prefix}user_merchant um
+                                JOIN {$prefix}campaign_account ca
+                                    ON ca.user_id = um.user_id
+                                JOIN {$prefix}account_types at
+                                    ON at.account_type_id = ca.account_type_id
+                                    AND at.unique_rule != 'none'
+                                    AND at.status = 'active'
                                 WHERE
                                     um.object_type IN ('tenant')
                                     AND {$prefix}merchants.merchant_id = um.merchant_id
