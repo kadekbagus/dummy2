@@ -66,6 +66,7 @@ return array(
             'mallgroup'     => 'There is no mall group that matched your search criteria.',
             'tenant'        => 'There is no tenant that matched your search criteria.',
             'membership'    => 'There is no membership that matched your search criteria.',
+            'advert'        => 'There is no advert that matched your search criteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(

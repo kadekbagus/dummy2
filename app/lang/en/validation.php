@@ -149,6 +149,7 @@ return array(
             'mobile_default_lang'    => 'Cannot remove default supported language',
             'link_mobile_default_lang'=> 'Cannot change default supported language has campaign translation',
             'link_to_tenant'         => 'Link to tenant is not allowed',
+            'base_store'             => 'The mall unit on this floor already use',
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',
@@ -195,6 +196,7 @@ return array(
             'issued_coupon'        => 'The Issued Coupon ID you specified is not found',
             'event'                => 'The Event ID you specified is not found',
             'news'                 => 'The News ID you specified is not found',
+            'advert_id'            => 'The Advert ID you specified is not found',
             'event_translations'   => 'The Event Translation ID is not found',
             'merchant_language'    => 'The Merchant_Language ID is not found',
             'language_default'     => 'The language default you specified is not found',
@@ -203,6 +205,7 @@ return array(
             'user_sortby'          => 'The sort by argument you specified is not valid, the valid values are: status, total_lucky_draw_number, total_usable_coupon, total_redeemed_coupon, username, email, firstname, lastname, registered_date, gender, city, last_visit_shop, last_visit_date, last_spent_amount, mobile_phone, membership_number, join_date, created_at, updated_at, first_visit_date, membership_since',
             'merchant_status'      => 'The merchant status you specified is not found',
             'merchant_sortby'      => 'The sort by argument you specified is not valid, the valid values are: registered_date, merchant_name, merchant_email, merchant_userid, merchant_description, merchantid, merchant_address1, merchant_address2, merchant_address3, merchant_cityid, merchant_city, merchant_countryid, merchant_country, merchant_phone, merchant_fax, merchant_status, merchant_currency, start_date_activity, total_retailer',
+            'merchant_sortby_2'    => 'The sort by argument you specified is not valid, the valid values are: merchant_name',
             'retailer_status'      => 'The retailer status you specified is not found',
             'tenant_status'        => 'The tenant status you specified is not found',
             'retailer_sortby'      => 'The sort by argument for retailer you specified is not valid, the valid values are: registered_date, retailer_name, retailer_email, retailer_userid, retailer_description, retailerid, retailer_address1, retailer_address2, retailer_address3, retailer_cityid, retailer_city, retailer_countryid, retailer_country, retailer_phone, retailer_fax, retailer_status, retailer_currency, contact_person_firstname, merchant_name, retailer_floor, retailer_unit, retailer_object_type, retailer_external_object_id, retailer_created_at, retailer_updated_at',
@@ -310,10 +313,11 @@ return array(
             'couponreportgeneral_sortby' => 'promotion_id,promotion_name,begin_date,coupon_validity_in_date,total_tenant,mall_name,rule_type,total_issued,total_redeemed,campaign_status,order',
             'dashboardissuedvsredeemed_sortby' => 'The sort by argument you specified is not valid, the valid values are: promotion_name, total_issued, total_redeemed',
             'couponredeemedreportgeneral_sortby' => 'The sort by argument you specified is not valid, the valid values are: issued_coupon_id, promotion_id, transaction_id, issued_coupon_code, user_id, expired_date, issued_date, redeemed_date, issuer_retailer_id, redeem_retailer_id, redeem_verification_code, status, created_at, updated_at',
-            'couponreportbycouponname_sortby' => 'The sort by argument you specified is not valid, the valid values are: redeem_retailer_name, total_redeemed, issued_coupon_code, user_email, redeemed_date, redeem_verification_code',
+            'couponreportbycouponname_sortby' => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, user_email, issued_coupon_code, redeemed_date, issued_date, redeem_verification_code, total_issued, total_redeemed, gender, age, redemption_place, status, user_type, user_email',
             'couponreportbytenant_sortby' => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, user_email, issued_coupon_code, redeemed_date, issued_date, redeem_verification_code, total_issued, total_redeemed, gender, age, redemption_place, status',
             'issuedcouponreport_sortby'   => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, is_auto_issue_on_signup, user_email, issued_coupon_code, issued_date, total_issued, maximum_issued_coupon, coupon_status, status',
             'couponsummaryreport_sortby'  => 'The sort by argument you specified is not valid, the valid values are: promotion_id, promotion_name, begin_date, end_date, is_auto_issue_on_signup, total_redeemed, total_issued, coupon_status',
+            'advert_sortby'  => 'The sort by argument you specified is not valid, the valid values are: advert_id, advert_name, advert_link_name, placement_name, start_date, end_date, status, created_at, updated_at, total_location',
             'mallgroup'            => 'The Mall Group ID you specified is not found',
             'membership'           => 'The Membership ID you specified is not found',
             'language' => 'The Language ID you specified is not found',
@@ -341,8 +345,11 @@ return array(
             'mall_status' => 'Mall status you specified is not found',
             'tenant_type' => 'Tenant type you specified is not found : the valid values are: tenant, service',
             'floor' => 'The Floor you specified is not found',
+            'base_merchant' => 'The Base Merchant you specified is not found',
+            'base_store' => 'The Base Store you specified is not found',
             'mobile_default_lang' => 'Mobile default language must on list languages',
-            'account_type'         => 'Account type not exist',
+            'account_type'        => 'Account type not exist',
+            'campaign'            => 'Campaign you specified is not found',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(
@@ -488,6 +495,13 @@ return array(
         ),
         'max' => array(
             'total_issued_coupons' => 'Number can not be less than current total issued coupons',
+        ),
+        'file' => array(
+            'max_size' => ':attribute is too big, maximum size allowed is :size:unit',
+            'type' => "File extension \".:ext\" is not allowed" ,
+        ),
+        'unique' => array(
+            'verification_number' => 'The verification number already used by other',
         ),
     ),
 

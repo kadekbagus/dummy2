@@ -27,6 +27,7 @@ use Artdarek\OAuth\Facade\OAuth;
 use Redirect;
 use URL;
 use Queue;
+use Orbit\Helper\Net\SignInRecorder;
 use \Exception;
 
 class RegistrationAPIController extends IntermediateBaseController
@@ -127,15 +128,20 @@ class RegistrationAPIController extends IntermediateBaseController
 
                 // Login_ok activity
                 $activity_login = Activity::mobileci()
-                    ->setUser($user)
+                    ->setActivityType('login');
+                $activity_login->setUser($user)
                     ->setActivityName('login_ok')
                     ->setActivityNameLong('Sign In')
-                    ->setActivityType('login')
                     ->setObject($user)
                     ->setNotes('Sign In via Mobile (Form) OK')
                     ->setModuleName('Application')
                     ->responseOK()
                     ->save();
+
+                if ($activity_login) {
+                    // Save also activity user sign in in user_signin table
+                    SignInRecorder::setSignInActivity($user, 'form', NULL, $activity_login, TRUE);
+                }
             }
 
             $this->response->data = $user;
@@ -331,11 +337,9 @@ class RegistrationAPIController extends IntermediateBaseController
         $validator = Validator::make(
             array(
                 'email'      => $email,
-                'first_name' => $firstname,
             ),
             array(
                 'email'      => 'required|email|orbit_email_exists',
-                'first_name' => 'required',
             ),
             array(
                 'date_of_birth.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),

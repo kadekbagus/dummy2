@@ -55,7 +55,7 @@ class ESMallUpdateQueue
     {
         $mallId = $data['mall_id'];
         $prefix = DB::getTablePrefix();
-        $mall = Mall::with('country')
+        $mall = Mall::with('country', 'mediaMapOrig')
                     ->leftJoin(DB::raw("(select * from {$prefix}media where media_name_long = 'mall_logo_orig') as med"), DB::raw("med.object_id"), '=', 'merchants.merchant_id')
                     ->where('merchants.status', '!=', 'deleted')
                     ->where('merchants.merchant_id', $mallId)
@@ -69,6 +69,8 @@ class ESMallUpdateQueue
                 'message' => sprintf('[Job ID: `%s`] Mall ID %s is not found.', $job->getJobId(), $mallId)
             ];
         }
+
+        $maps_url = $mall->mediaMapOrig->lists('path');
 
         $esConfig = Config::get('orbit.elasticsearch');
         $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
@@ -91,77 +93,50 @@ class ESMallUpdateQueue
             $response_search = $this->poster->search($params_search);
 
             $response = NULL;
+            $params = [
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
+                'id' => $mall->merchant_id,
+                'body' => []
+            ];
+
+            $esBody = [
+                'name'            => $mall->name,
+                'description'     => $mall->description,
+                'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
+                'city'            => $mall->city,
+                'country'         => $mall->Country->name,
+                'phone'           => $mall->phone,
+                'operating_hours' => $mall->operating_hours,
+                'object_type'     => $mall->object_type,
+                'logo_url'        => $mall->path,
+                'maps_url'        => $maps_url,
+                'status'          => $mall->status,
+                'ci_domain'       => $mall->ci_domain,
+                'is_subscribed'   => $mall->is_subscribed,
+                'position'        => [
+                    'lon' => $geofence->longitude,
+                    'lat' => $geofence->latitude
+                ],
+                'area' => [
+                    'type'        => 'polygon',
+                    'coordinates' => $geofence->area
+                ]
+            ];
+
+            // validation geofence
+            if (empty($geofence->area) || empty($geofence->latitude) || empty($geofence->longitude)) {
+                unset($esBody['position']);
+                unset($esBody['area']);
+            }
+
             if ($response_search['hits']['total'] > 0) {
-                $params = [
-                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index'),
-                    'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
-                    'id' => $mall->merchant_id,
-                    'body' => [
-                        'doc' => [
-                            'name'            => $mall->name,
-                            'description'     => $mall->description,
-                            'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
-                            'city'            => $mall->city,
-                            'country'         => $mall->Country->name,
-                            'phone'           => $mall->phone,
-                            'operating_hours' => $mall->operating_hours,
-                            'object_type'     => $mall->object_type,
-                            'logo_url'        => $mall->path,
-                            'status'          => $mall->status,
-                            'ci_domain'       => $mall->ci_domain,
-                            'position'        => [
-                                'lon' => $geofence->longitude,
-                                'lat' => $geofence->latitude
-                            ],
-                            'area' => [
-                                'type'        => 'polygon',
-                                'coordinates' => $geofence->area
-                            ]
-                        ]
-                    ]
+                $params['body'] = [
+                    'doc' => $esBody
                 ];
-
-                // validation geofence
-                if (empty($geofence->area) || empty($geofence->latitude) || empty($geofence->longitude)) {
-                    unset($params['body']['doc']['position']);
-                    unset($params['body']['doc']['area']);
-                }
-
                 $response = $this->poster->update($params);
             } else {
-                $params = [
-                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index'),
-                    'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
-                    'id' => $mall->merchant_id,
-                    'body' => [
-                        'name'            => $mall->name,
-                        'description'     => $mall->description,
-                        'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
-                        'city'            => $mall->city,
-                        'country'         => $mall->Country->name,
-                        'phone'           => $mall->phone,
-                        'operating_hours' => $mall->operating_hours,
-                        'object_type'     => $mall->object_type,
-                        'logo_url'        => $mall->path,
-                        'status'          => $mall->status,
-                        'ci_domain'       => $mall->ci_domain,
-                        'position'        => [
-                            'lon' => $geofence->longitude,
-                            'lat' => $geofence->latitude
-                        ],
-                        'area' => [
-                            'type'        => 'polygon',
-                            'coordinates' => $geofence->area
-                        ]
-                    ]
-                ];
-
-                // validation geofence
-                if (empty($geofence->area) || empty($geofence->latitude) || empty($geofence->longitude)) {
-                    unset($params['body']['position']);
-                    unset($params['body']['area']);
-                }
-
+                $params['body'] = $esBody;
                 $response = $this->poster->index($params);
             }
 

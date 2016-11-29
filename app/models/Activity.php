@@ -316,6 +316,22 @@ class Activity extends Eloquent
             $this->metadata_location = $location->toJSON();
         }
 
+        if (! is_object($location) && $this->group === 'mobile-ci') {
+            $this->location_id = 0;
+            $this->location_name = 'gtm';
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set the value of object_display_name
+     * @author Ahmad <ahmad@dominopos.com>
+     */
+    public function setObjectDisplayName($name = NULL)
+    {
+        $this->object_display_name = $name;
+
         return $this;
     }
 
@@ -394,6 +410,10 @@ class Activity extends Eloquent
                     if (is_object($widgetGroupName)) {
                         $this->object_display_name = $widgetGroupName->widget_group_name;
                     }
+                    break;
+
+                case 'Category':
+                    $this->object_display_name = $object->category_name;
                     break;
 
                 default:
@@ -983,6 +1003,9 @@ class Activity extends Eloquent
             case 'view_landing_page_coupon_detail':
             case 'view_landing_page_news_detail':
             case 'view_landing_page_promotion_detail':
+            case 'view_mall_event_detail':
+            case 'view_mall_promotion_detail':
+            case 'view_mall_coupon_detail':
                 $campaign = new CampaignPageView();
                 $campaign->campaign_id = $this->object_id;
                 $campaign->user_id = $this->user_id;
@@ -1109,9 +1132,10 @@ class Activity extends Eloquent
     protected function saveToCampaignPopUpClick()
     {
         $activity_name_long_array = array(
-            'Click Coupon Pop Up'      => 'Click Coupon Pop Up',
-            'Click Promotion Pop Up'   => 'Click Promotion Pop Up',
-            'Click News Pop Up'        => 'Click News Pop Up',
+            'Click Coupon Pop Up'          => 'Click Coupon Pop Up',
+            'Click Promotion Pop Up'       => 'Click Promotion Pop Up',
+            'Click News Pop Up'            => 'Click News Pop Up',
+            'Click mall featured carousel' => 'Click mall featured carousel',
         );
 
         $proceed = in_array($this->activity_name_long, $activity_name_long_array);
@@ -1119,11 +1143,16 @@ class Activity extends Eloquent
             return;
         }
 
+        $location_id = $this->location_id;
+        if ($this->activity_name === 'click_mall_featured_carousel') {
+            $location_id = 0;
+        }
+
         // Save also the activity to particular `campaign_xyz` table
         $popupview = new CampaignClicks();
         $popupview->campaign_id = $this->object_id;
         $popupview->user_id = $this->user_id;
-        $popupview->location_id = $this->location_id;
+        $popupview->location_id = $location_id;
         $popupview->activity_id = $this->activity_id;
         $popupview->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
         $popupview->save();
@@ -1190,8 +1219,9 @@ class Activity extends Eloquent
         // queue for create/update activity document in elasticsearch
         Queue::push('Orbit\\Queue\\Elasticsearch\\ESActivityUpdateQueue', [
             'activity_id' => $this->activity_id,
-            'referer' => substr($referer, 0, 1024),
-            'orbit_referer' => substr($orbitReferer, 0, 1024)
+            'referer' => substr($referer, 0, 2048),
+            'orbit_referer' => substr($orbitReferer, 0, 2048),
+            'current_url' => Request::fullUrl()
         ]);
     }
 
@@ -1392,6 +1422,28 @@ class Activity extends Eloquent
 
             case 'view_landing_page_promotion_detail':
                 $groupName = 'Promotion';
+                break;
+
+            case 'view_mall_event_detail':
+                $groupName = 'News';
+                break;
+
+            case 'view_mall_promotion_detail':
+                $groupName = 'Promotion';
+                break;
+
+            case 'view_mall_coupon_detail':
+                $groupName = 'Coupon';
+                break;
+
+            case 'click_mall_featured_carousel':
+                if ($this->module_name == 'News') {
+                    $groupName = 'News';
+                } elseif ($this->module_name == 'Promotion') {
+                    $groupName = 'Promotion';
+                } elseif ($this->module_name == 'Coupon') {
+                    $groupName = 'Coupon';
+                }
                 break;
         }
 

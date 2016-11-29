@@ -2,7 +2,7 @@
 /**
  * An API controller for managing mall geo location.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -18,8 +18,9 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Language;
+use DB;
 
-class CategoryAPIController extends ControllerAPI
+class CategoryAPIController extends PubControllerAPI
 {
 
     /**
@@ -37,9 +38,12 @@ class CategoryAPIController extends ControllerAPI
     {
       $httpCode = 200;
         try {
+
+
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $sort_by = OrbitInput::get('sortby', 'category_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $prefix = DB::getTablePrefix();
 
             $merchant_id = OrbitInput::get('merchant_id', 0);
             $lang = OrbitInput::get('language', 'id');
@@ -48,14 +52,39 @@ class CategoryAPIController extends ControllerAPI
                             ->where('name', $lang)
                             ->first();
 
-            $categories = Category::select('categories.category_id','category_translations.category_name')
+            $categories = Category::select('categories.category_id','category_translations.category_name', DB::raw("media.path AS image_path"))
                                 ->join('category_translations', 'category_translations.category_id', '=', 'categories.category_id')
+                                ->leftJoin(DB::raw("(SELECT *
+                                                    FROM {$prefix}media
+                                                    WHERE object_name = 'category'
+                                                        AND media_name_id = 'category_image'
+                                                        AND media_name_long = 'category_image_orig') as media"),
+                                        DB::raw("media.object_id"), '=', 'categories.category_id')
                                 ->where('category_translations.merchant_language_id', '=', $language->language_id)
                                 ->where('categories.merchant_id', $merchant_id)
-                                ->excludeDeleted('categories')
-                                ->orderBy($sort_by, $sort_mode);
+                                ->excludeDeleted('categories');
 
             $_categories = clone $categories;
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'name'           => 'categories.category_name',
+                    'created_date'   => 'categories.created_at',
+                    'category_order' => 'categories.category_order'
+                );
+
+                $sort_by = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sort_mode = 'desc';
+                }
+            });
+            $categories->orderBy($sort_by, $sort_mode);
 
             $take = PaginationNumber::parseTakeFromGet('category');
             $categories->take($take);
@@ -101,7 +130,7 @@ class CategoryAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';

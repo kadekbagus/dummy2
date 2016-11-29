@@ -242,7 +242,7 @@ class IntermediateBaseController extends Controller
             }
         } elseif ($theClass === 'IntermediatePubAuthController') {
             $namespace = 'Orbit\Controller\API\v1\Pub\\';
-            if ($userId = $this->authCheckFromAngularCI()) {
+            if ($userId = $this->authCheckPub()) {
                 $user = User::find($userId);
                 // This will query the database if the apikey has not been set up yet
                 $apikey = $user->apikey;
@@ -251,6 +251,25 @@ class IntermediateBaseController extends Controller
                     // Create new one
                     $apikey = $user->createAPiKey();
                 }
+                // Generate the signature
+                $_GET['apikey'] = $apikey->api_key;
+                $_GET['apitimestamp'] = time();
+                $signature = Generator::genSignature($apikey->api_secret_key);
+                $_SERVER['HTTP_X_ORBIT_SIGNATURE'] = $signature;
+            }
+        } elseif ($theClass === 'IntermediateMerchantAuthController') {
+            $namespace = 'Orbit\Controller\API\v1\Merchant\\';
+            if ($userId = $this->authCheck()) {
+                $user = User::find($userId);
+
+                // This will query the database if the apikey has not been set up yet
+                $apikey = $user->apikey;
+
+                if (empty($apikey)) {
+                    // Create new one
+                    $apikey = $user->createAPiKey();
+                }
+
                 // Generate the signature
                 $_GET['apikey'] = $apikey->api_key;
                 $_GET['apitimestamp'] = time();
@@ -272,6 +291,11 @@ class IntermediateBaseController extends Controller
         } else {
             $class = 'Foo';
             $method = 'Bar';
+        }
+
+        if ($theClass === 'IntermediatePubAuthController') {
+            // set PubControllerAPI user property, so user will be available inside controllers
+            return $class::create()->setUser($user)->$method();
         }
 
         return $class::create()->$method();
@@ -336,6 +360,26 @@ class IntermediateBaseController extends Controller
      * @return int - User ID
      */
     protected function authCheckFromAngularCI()
+    {
+        $userId = $this->session->read('user_id');
+
+        if (empty($userId)) {
+            $userId = $this->session->read('guest_user_id');
+            if (empty($userId)) {
+                return FALSE;
+            }
+        }
+
+        return $userId;
+    }
+
+    /**
+     * Check the authentication status from Pub Controllers.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return string - User ID
+     */
+    protected function authCheckPub()
     {
         $userId = $this->session->read('user_id');
 

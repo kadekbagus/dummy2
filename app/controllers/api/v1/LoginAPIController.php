@@ -143,6 +143,109 @@ class LoginAPIController extends ControllerAPI
     }
 
     /**
+     * POST - Login for MDM portal, only user with role 'Merchant Database Admin' can be login
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `email`                 (required) - Email address of the user
+     * @param string    `password`              (required) - Password for the account
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postLoginMDM()
+    {
+        $activity = Activity::portal()
+                            ->setActivityType('login');
+        try {
+            $email = trim(OrbitInput::post('email'));
+            $password = trim(OrbitInput::post('password'));
+
+            if (trim($email) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (trim($password) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'password'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $roles = ['Merchant Database Admin'];
+
+            $user = User::with('role')
+                        ->active()
+                        ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                        ->where('user_email', $email)
+                        ->whereIn('roles.role_name', $roles)
+                        ->first();
+
+            if (! is_object($user)) {
+                $message = Lang::get('validation.orbit.access.inactiveuser');
+                ACL::throwAccessForbidden($message);
+            }
+
+            if (! Hash::check($password, $user->user_password)) {
+                $message = Lang::get('validation.orbit.access.loginfailed');
+                ACL::throwAccessForbidden($message);
+            }
+
+            $roleIds = Role::roleIdsByName($roles);
+            if (! in_array($user->user_role_id, $roleIds)) {
+                $message = Lang::get('validation.orbit.access.forbidden', [
+                    'action' => 'Login (Role Denied)'
+                ]);
+                ACL::throwAccessForbidden($message);
+            }
+
+            // Successfull login
+            $activity->setUser($user)
+                     ->setActivityName('login_ok')
+                     ->setActivityNameLong('Sign in')
+                     ->responseOK();
+
+            $this->response->data = $user;
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        } catch (Exception $e) {
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $activity->setUser('guest')
+                     ->setActivityName('login_failed')
+                     ->setActivityNameLong('Login Failed')
+                     ->setNotes($e->getMessage())
+                     ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->setModuleName('Application')->save();
+
+        return $this->render();
+    }    /**
      * POST - Login Campaign Owner, Campaign Employee and Campaign Admin
      *
      * @author Irianto <irianto@dominopos.com>
@@ -202,6 +305,7 @@ class LoginAPIController extends ControllerAPI
 
             $user_campaign = $user->campaignAccount;
             $mall = [];
+
             if ($user->isCampaignOwner() || $user->isCampaignEmployee()) {
                 $user_account_type = $user_campaign->accountType;
 
@@ -212,12 +316,19 @@ class LoginAPIController extends ControllerAPI
                 }
             } elseif ($user->isCampaignAdmin()) {
                 $mall = Mall::excludeDeleted()
-                            ->with('timezone')
+                            ->select('merchant_id', 'name')
                             ->get();
 
                 if(($key = array_search('pmp_employee', $menus)) !== false) {
                     unset($menus[$key]);
                 }
+            }
+
+            // hardcode timezone
+            $timezone = new stdClass();
+            $timezone->timezone_name = 'Asia/Jakarta';
+            foreach ($mall as $m) {
+                $m->timezone = $timezone;
             }
 
             $user->mall = $mall;
@@ -233,37 +344,9 @@ class LoginAPIController extends ControllerAPI
             // get total manage tenant and mall per user pmp
             $pmp_parent = $user->campaignAccount()->where('user_id', '=', $user->user_id)->first();
 
-            if ($user_campaign->is_link_to_all === 'Y') {
-                $um = count(Mall::excludeDeleted()->get());
-                $ut = count(Tenant::excludeDeleted()->get());
-            } else {
-
-                // Get mall id from mall
-                $mallId = array();
-                $userMallAtMall = $pmp_parent->userMall()->get();
-                if (count($userMallAtMall) > 0) {
-                    foreach ($userMallAtMall as $key => $vallMall) {
-                        $mallId[] = $vallMall->merchant_id;
-                    }
-                }
-
-                // Get mall id from tenant
-                $userTenantAtMall = $pmp_parent->userTenant()
-                    ->join('merchants', 'user_merchant.merchant_id', '=', 'merchants.merchant_id')
-                    ->groupBy('merchants.parent_id')
-                    ->get();
-                if (count($userTenantAtMall) > 0) {
-                    foreach ($userTenantAtMall as $key => $valTenant) {
-                        $mallId[] = $valTenant->parent_id;
-                    }
-                }
-
-                $um = count(array_unique($mallId));
-                $ut = $pmp_parent->userTenant()->count();
-            }
-
-            $user->total_mall = $um;
-            $user->total_tenant = $ut;
+            // hardcode total mall and tenant
+            $user->total_mall = 2;
+            $user->total_tenant = 2;
 
 
             $user_id = $user->user_id;
@@ -1604,20 +1687,14 @@ class LoginAPIController extends ControllerAPI
             ];
         $prefix = DB::getTablePrefix();
 
-        $get_mall = CampaignLocation::with('timezone')
-                                    ->leftJoin('merchants as pm', DB::Raw('pm.merchant_id'), '=', 'merchants.parent_id')
-                                    ->leftJoin('timezones as ot', DB::Raw('ot.timezone_id'), '=', 'merchants.timezone_id')
+        $get_mall = CampaignLocation::leftJoin('merchants as pm', DB::Raw('pm.merchant_id'), '=', 'merchants.parent_id')
                                     ->select(
                                               DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as merchant_id"),
-                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.name, {$prefix}merchants.name) as name"),
-                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.status, {$prefix}merchants.status) as status"),
                                               DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.object_type, {$prefix}merchants.object_type) as object_type"),
-                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.timezone_id, {$prefix}merchants.timezone_id) as timezone_id"),
-                                              DB::Raw("TIMESTAMPDIFF(HOUR, UTC_TIMESTAMP(), CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)) as timezone_offset")
+                                              DB::Raw("IF ({$prefix}merchants.object_type = 'tenant', pm.name, {$prefix}merchants.name) as name")
                                         )
                                     ->where('merchants.status', '=', 'active')
                                     ->having(DB::Raw('object_type'), '=', 'mall')
-                                    ->orderBy('timezone_offset')
                                     ->groupBy('merchant_id');
 
         // access

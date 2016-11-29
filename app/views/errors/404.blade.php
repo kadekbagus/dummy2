@@ -14,7 +14,7 @@
                 <h2>Page not found</h2>
             </div>
             <div class="err-body">
-                <a href="#/" class="btn btn-lg btn-goback">
+                <a href="{{Config::get('app.url')}}" class="btn btn-lg btn-goback">
                     <span class="glyphicon glyphicon-home"></span>
                     <span class="space"></span>
                     Go Back to Home Page

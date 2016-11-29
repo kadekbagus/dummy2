@@ -92,6 +92,21 @@ Artisan::add(new ElasticsearchUpdateMallLogoCommand);
 // Send Email about campaign expired
 Artisan::add(new SendEmailCampaignExpired);
 
+// Update ES mall is_subscribed
+Artisan::add(new ElasticsearchUpdateMallIsSubscribed);
+
+// Sync to elasticsearch from activity table
+Artisan::add(new ElasticsearchResyncActivityCommand);
+
+// Shorten Coupon Url
+Artisan::add(new UrlShortenerCommand);
+
+// Create User
+Artisan::add(new CreateUserCommand);
+
+// Update category image
+Artisan::add(new CategoryImageCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

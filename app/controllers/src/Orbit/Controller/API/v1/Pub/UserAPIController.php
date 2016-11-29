@@ -1,8 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub;
 
-use IntermediateBaseController;
-use OrbitShop\API\v1\ResponseProvider;
-use Orbit\Helper\Session\UserGetter;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
@@ -20,22 +18,21 @@ use DB;
 use Event;
 use Hash;
 
-class UserAPIController extends IntermediateBaseController
+class UserAPIController extends PubControllerAPI
 {
     public function postEditAccount()
     {
         $activity = Activity::portal()
                            ->setActivityType('update');
-
         $httpCode = 200;
-        $this->response = new ResponseProvider();
-
+        $user = NULL;
         try{
-            $this->session = SessionPreparer::prepareSession();
-            $user = UserGetter::getLoggedInUser($this->session);
+            $user = $this->getUser();
 
-            $userId = $this->session->read('user_id');
-            if (($this->session->read('logged_in') !== TRUE || ! $userId) || ! is_object($user)) {
+            $session = SessionPreparer::prepareSession();
+
+            $userId = $session->read('user_id');
+            if (($session->read('logged_in') !== TRUE || ! $userId) || ! is_object($user)) {
                 OrbitShopAPI::throwInvalidArgument('You need to log in to view this page.');
             }
 
@@ -81,6 +78,11 @@ class UserAPIController extends IntermediateBaseController
             });
 
             $updateUser->save();
+
+            // Update session fullname
+            $sessionData = $session->read(NULL);
+            $sessionData['fullname'] = $updateUser->user_firstname. ' ' . $updateUser->user_lastname;
+            $session->update($sessionData);
 
             // Even for upload user picture profile
             Event::fire('orbit.user.postupdateuser.after.save', array($this, $updateUser));
@@ -183,7 +185,7 @@ class UserAPIController extends IntermediateBaseController
                 ->setNotes($e->getMessage())
                 ->responseFailed()
                 ->save();
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             DB::rollback();
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -200,6 +202,6 @@ class UserAPIController extends IntermediateBaseController
                 ->save();
         }
 
-        return $this->render($this->response);
+        return $this->render($httpCode);
     }
 }

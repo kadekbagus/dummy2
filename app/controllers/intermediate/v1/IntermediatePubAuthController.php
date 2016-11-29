@@ -30,7 +30,9 @@ class IntermediatePubAuthController extends IntermediateBaseController
             try
             {
                 $this->session = SessionPreparer::prepareSession();
+                // Get user, or generate guest user for new session
                 $user = UserGetter::getLoggedInUserOrGuest($this->session);
+                // Check for blocked url
                 UrlChecker::checkBlockedUrl($user);
             } catch (ACLForbiddenException $e) {
                 $response = new ResponseProvider();

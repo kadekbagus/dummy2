@@ -77,6 +77,7 @@ class CouponAPIController extends ControllerAPI
      * @param string     `gender_ids`                        (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`                     (optional) - Age Range IDs
      * @param string     `translations`                      (optional) - For Translations
+     * @param string     `sticky_order`                      (required) - For set premium content, Default : 0
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -162,7 +163,7 @@ class CouponAPIController extends ControllerAPI
             $id_language_default = OrbitInput::post('id_language_default');
             $is_all_gender = OrbitInput::post('is_all_gender');
             $is_all_age = OrbitInput::post('is_all_age');
-            $is_popup = OrbitInput::post('is_popup');
+            $is_popup = OrbitInput::post('is_popup', 'N');
             $rule_begin_date = OrbitInput::post('rule_begin_date');
             $rule_end_date = OrbitInput::post('rule_end_date');
             $gender_ids = OrbitInput::post('gender_ids');
@@ -174,6 +175,8 @@ class CouponAPIController extends ControllerAPI
             $keywords = (array) $keywords;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
+            $sticky_order = OrbitInput::post('sticky_order');
+            $couponCodes = OrbitInput::post('coupon_codes');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -202,7 +205,9 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => $rule_end_date,
                     'is_all_gender'           => $is_all_gender,
                     'is_all_age'              => $is_all_age,
-                    'is_popup'            => $is_popup,
+                    'sticky_order'            => $sticky_order,
+                    'is_popup'                => $is_popup,
+                    'coupon_codes'            => $couponCodes,
                 ),
                 array(
                     'promotion_name'          => 'required|max:255',
@@ -221,7 +226,9 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
-                    'is_popup'            => 'required|in:Y,N',
+                    'sticky_order'            => 'in:0,1',
+                    'is_popup'                => 'in:Y,N',
+                    'coupon_codes'            => 'required',
                 ),
                 array(
                     'rule_value.required'     => 'The amount to obtain is required',
@@ -230,6 +237,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.required' => 'The coupon value is required',
                     'discount_value.numeric'  => 'The coupon value must be a number',
                     'discount_value.min'      => 'The coupon value must be greater than zero',
+                    'sticky_order.in'         => 'The sticky order value must 0 or 1',
                     'is_popup.in' => 'is popup must Y or N',
                 )
             );
@@ -345,6 +353,24 @@ class CouponAPIController extends ControllerAPI
                 Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
             }
 
+            // validate coupon codes
+            if (! empty($couponCodes)) {
+                $dupes = array();
+                // trim and explode coupon codes to array
+                $arrayCouponCode = array_map('trim', explode("\n", $couponCodes));
+                // delete empty array and reorder it
+                $arrayCouponCode = array_values(array_filter($arrayCouponCode));
+                // find the dupes
+                foreach(array_count_values($arrayCouponCode) as $val => $frequency) {
+                    if ($frequency > 1) $dupes[] = $val;
+                }
+
+                if (! empty($dupes)) {
+                    $stringDupes = implode(',', $dupes);
+                    $errorMessage = 'The coupon codes you supplied have duplicates: %s';
+                    OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $stringDupes));
+                }
+            }
 
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
@@ -373,6 +399,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->is_all_age = $is_all_age;
             $newcoupon->is_all_gender = $is_all_gender;
             $newcoupon->is_popup = $is_popup;
+            $newcoupon->sticky_order = $sticky_order;
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -728,6 +755,11 @@ class CouponAPIController extends ControllerAPI
             $this->response->data = $newcoupon;
             // $this->response->data->translation_default = $coupon_translation_default;
 
+            // issue coupon if coupon code is supplied
+            if (! empty($arrayCouponCode)) {
+                IssuedCoupon::bulkIssue($arrayCouponCode, $newcoupon->promotion_id, $newcoupon->coupon_validity_in_date, $user);
+            }
+
             // Commit the changes
             $this->commit();
 
@@ -885,6 +917,7 @@ class CouponAPIController extends ControllerAPI
      * @param string     `gender_ids`                        (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`                     (optional) - Age Range IDs
      * @param string     `translations`                      (optional) - For translations
+     * @param string     `sticky_order`                      (required) - For set premium content, Default : 0
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -1277,6 +1310,10 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('is_popup', function($is_popup) use ($updatedcoupon) {
                 $updatedcoupon->is_popup = $is_popup;
+            });
+
+            OrbitInput::post('sticky_order', function($sticky_order) use ($updatedcoupon) {
+                $updatedcoupon->sticky_order = $sticky_order;
             });
 
             OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
@@ -1764,6 +1801,20 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // update coupon advert
+            if (! empty($campaignStatus) || $campaignStatus !== '') {
+                $couponAdverts = Advert::excludeDeleted()
+                                    ->where('link_object_id', $updatedcoupon->promotion_id)
+                                    ->update(['status'     => $updatedcoupon->status]);
+            }
+
+            if (! empty($end_date) || $end_date !== '') {
+                $couponAdverts = Advert::excludeDeleted()
+                                    ->where('link_object_id', $updatedcoupon->promotion_id)
+                                    ->where('end_date', '>', $updatedcoupon->end_date)
+                                    ->update(['end_date' => $updatedcoupon->end_date]);
+            }
+
             $this->response->data = $updatedcoupon;
             // $this->response->data->translation_default = $updatedcoupon_default_language;
 
@@ -2223,7 +2274,8 @@ class CouponAPIController extends ControllerAPI
             // Addition select case and join for sorting by discount_value.
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
                 ->with('couponRule')
-                ->select(DB::raw("{$table_prefix}promotions.*, {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS display_name, media.path as image_path,
+                ->select(
+                    DB::raw("{$table_prefix}promotions.*, {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS display_name, media.path as image_path,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -2265,7 +2317,11 @@ class CouponAPIController extends ControllerAPI
                         {$table_prefix}promotions.status
                     END as 'coupon_status'"),
                     DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (SELECT COUNT(pr.promotion_retailer_id) FROM {$table_prefix}promotion_retailer as pr WHERE pr.object_type != 'mall' and pr.promotion_id = {$table_prefix}promotions.promotion_id)) AS estimated"),
-                    DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location")
+                    DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location"),
+                    DB::raw("(SELECT GROUP_CONCAT(issued_coupon_code separator '\n')
+                        FROM {$table_prefix}issued_coupons ic
+                        WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
+                            ) as coupon_codes")
                 )
                 ->leftJoin('campaign_price', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
@@ -2274,7 +2330,6 @@ class CouponAPIController extends ControllerAPI
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                //->leftJoin('merchant_languages', 'merchant_languages.merchant_language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                 ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
@@ -2307,7 +2362,7 @@ class CouponAPIController extends ControllerAPI
             // Filter coupon by Ids
             OrbitInput::get('promotion_id', function($promotionIds) use ($coupons)
             {
-                $coupons->whereIn('promotions.promotion_id', $promotionIds);
+                $coupons->whereIn('promotions.promotion_id', (array)$promotionIds);
             });
 
             // to do : enable filter for mall id
@@ -2841,20 +2896,29 @@ class CouponAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $mall_id = OrbitInput::post('current_mall');
+            $storeId = OrbitInput::post('store_id');
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
 
             $validator = Validator::make(
                 array(
+                    'store_id' => $storeId,
                     'current_mall' => $mall_id,
-                    'issued_coupon_id' => $issuedCouponId,
                     'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
+                    'store_id'                      => 'required',
                     'current_mall'                  => 'required|orbit.empty.merchant',
-                    'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
                     'merchant_verification_number'  => 'required'
+                )
+            );
+            $validator2 = Validator::make(
+                array(
+                    'issued_coupon_id' => $issuedCouponId,
+                ),
+                array(
+                    'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
                 )
             );
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
@@ -2865,6 +2929,11 @@ class CouponAPIController extends ControllerAPI
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            // Run the validation
+            if ($validator2->fails()) {
+                $errorMessage = $validator2->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
@@ -2918,7 +2987,7 @@ class CouponAPIController extends ControllerAPI
             $this->commit();
 
             $this->response->message = 'Coupon has been successfully redeemed.';
-            $this->response->data = $issuedcoupon;
+            $this->response->data = $issuedcoupon->issued_coupon_code;
 
             // Successfull Creation
             $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
@@ -3389,7 +3458,6 @@ class CouponAPIController extends ControllerAPI
             return TRUE;
         });
 
-
         // Check the existance of id_language_default
         Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
             $news = Language::where('language_id', '=', $value)
@@ -3464,10 +3532,11 @@ class CouponAPIController extends ControllerAPI
             $now = date('Y-m-d H:i:s');
             $number = OrbitInput::post('merchant_verification_number');
             $mall_id = OrbitInput::post('current_mall');
+            $storeId = OrbitInput::post('store_id');
 
             $prefix = DB::getTablePrefix();
 
-            $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+            $issuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed', 'available'])
                         ->where('issued_coupons.issued_coupon_id', $value)
                         ->where('issued_coupons.user_id', $user->user_id)
                         // ->whereRaw("({$prefix}issued_coupons.expired_date >= ? or {$prefix}issued_coupons.expired_date is null)", [$now])
@@ -3486,12 +3555,12 @@ class CouponAPIController extends ControllerAPI
             //Checking verification number in cs and tenant verification number
             //Checking in tenant verification number first
             if ($issuedCoupon->coupon->is_all_retailer === 'Y') {
-                $checkIssuedCoupon = Tenant::where('parent_id','=', $mall_id)
+                $checkIssuedCoupon = Tenant::where('merchant_id','=', $storeId)
                             ->where('status', 'active')
                             ->where('masterbox_number', $number)
                             ->first();
             } elseif ($issuedCoupon->coupon->is_all_retailer === 'N') {
-                $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed', 'available'])
                             ->join('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_id', '=', 'issued_coupons.promotion_id')
                             ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                             ->where('issued_coupons.issued_coupon_id', $value)
@@ -3501,6 +3570,7 @@ class CouponAPIController extends ControllerAPI
                                 $q->where('promotions.status', 'active');
                                 $q->where('promotions.coupon_validity_in_date', '>=', $now);
                             })
+                            ->where('merchants.merchant_id', $storeId)
                             ->where('merchants.masterbox_number', $number)
                             ->first();
             }
@@ -3516,7 +3586,7 @@ class CouponAPIController extends ControllerAPI
                                 ->where('verification_number', $number)
                                 ->first();
                 } elseif ($issuedCoupon->coupon->is_all_employee === 'N') {
-                    $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed'])
+                    $checkIssuedCoupon = IssuedCoupon::whereNotIn('issued_coupons.status', ['deleted', 'redeemed', 'available'])
                                 ->join('promotion_employee', 'promotion_employee.promotion_id', '=', 'issued_coupons.promotion_id')
                                 ->join('user_verification_numbers', 'user_verification_numbers.user_id', '=', 'promotion_employee.user_id')
                                 ->join('employees', 'employees.user_id', '=', 'user_verification_numbers.user_id')
@@ -3574,7 +3644,12 @@ class CouponAPIController extends ControllerAPI
         // Check the existence of the coupon rule type
         Validator::extend('orbit.empty.coupon_rule_type', function ($attribute, $value, $parameters) {
             $valid = false;
-            $statuses = array('auto_issue_on_signup', 'auto_issue_on_first_signin', 'auto_issue_on_every_signin');
+            $statuses = array(
+                            'auto_issue_on_signup',
+                            'auto_issue_on_first_signin',
+                            'auto_issue_on_every_signin',
+                            'blast_via_sms'
+                        );
             foreach ($statuses as $status) {
                 if($value === $status) $valid = $valid || TRUE;
             }

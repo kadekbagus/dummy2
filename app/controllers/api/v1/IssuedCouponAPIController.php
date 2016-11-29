@@ -541,12 +541,16 @@ class IssuedCouponAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+            $fields  = OrbitInput::get('fields', null);
+
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
+                    'fields'  => $fields,
                 ),
                 array(
                     'sort_by' => 'in:registered_date,issued_coupon_code,expired_date,issued_date,redeemed_date,status',
+                    'fields'  => 'array',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.issued_coupon_sortby'),
@@ -583,6 +587,23 @@ class IssuedCouponAPIController extends ControllerAPI
 
             // Builder object
             $issuedcoupons = IssuedCoupon::excludeDeleted();
+
+            // Dynamic select filter
+            OrbitInput::get('fields', function($fields) use ($issuedcoupons)
+            {
+                // Do not allow fields that are unknown by us
+                $errorCount = 0;
+                $validFields = ['issued_coupon_code'];
+                foreach ($fields as $field) {
+                    if (! in_array($field, $validFields)) {
+                        $errorCount++;
+                    }
+                }
+
+                if ($errorCount === 0) {
+                    $issuedcoupons->addSelect($fields);
+                }
+            });
 
             // Filter coupon by Ids
             OrbitInput::get('promotion_id', function($promotionIds) use ($issuedcoupons)

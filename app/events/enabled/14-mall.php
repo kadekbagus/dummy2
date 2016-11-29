@@ -36,6 +36,28 @@ Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
         }
     }
     $mall->load('mediaLogo');
+
+    $maps = OrbitInput::files('maps');
+
+    if (! empty($maps)) {
+        $_POST['merchant_id'] = $mall->merchant_id;
+
+        // This will be used on UploadAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        $response = UploadAPIController::create('raw')
+                                       ->setCalledFrom('mall.update')
+                                       ->postUploadMallMap();
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+
+        $mall->setRelation('media_map', $response->data);
+        $mall->media_map = $response->data;
+    }
+    $mall->load('mediaMap');
 });
 
 
@@ -81,6 +103,29 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
         }
     }
     $mall->load('mediaLogo');
+
+    $maps = OrbitInput::files('maps');
+    $_POST['merchant_id'] = $mall->merchant_id;
+
+    // upload map
+    if (! empty($maps)) {
+        // This will be used on UploadAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        $response = UploadAPIController::create('raw')
+                                       ->setCalledFrom('mall.update')
+                                       ->postUploadMallMap();
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+
+        $mall->setRelation('media_map', $response->data);
+        $mall->media_map = $response->data;
+    }
+    $mall->load('mediaMap');
+
 });
 
 /**

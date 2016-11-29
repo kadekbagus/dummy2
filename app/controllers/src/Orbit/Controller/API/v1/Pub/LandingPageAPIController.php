@@ -2,7 +2,7 @@
 /**
  * An API controller for managing mall geo location.
  */
-use OrbitShop\API\v1\ControllerAPI;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -13,7 +13,7 @@ use Text\Util\LineChecker;
 use Config;
 use stdClass;
 
-class LandingPageAPIController extends ControllerAPI
+class LandingPageAPIController extends PubControllerAPI
 {
     /**
      * GET - get icon list for landing page

@@ -4,7 +4,7 @@
  *
  * @author Ahmad <ahmad@dominopos.com>
  */
-use IntermediateBaseController;
+use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use OrbitShop\API\v1\CommonAPIControllerTrait;
@@ -12,9 +12,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
-use OrbitShop\API\v1\ResponseProvider;
 use Illuminate\Database\QueryException;
-use Orbit\Helper\Net\GuestUserGenerator;
 use Config;
 use stdClass;
 use \Activity;
@@ -23,14 +21,14 @@ use User;
 use Lang;
 use Mall;
 use App;
-use Orbit\Helper\Session\UserGetter;
+use Illuminate\Database\Eloquent\Model;
 
-class GenericActivityAPIController extends IntermediateBaseController
+class GenericActivityAPIController extends PubControllerAPI
 {
     public function postNewGenericActivity()
     {
-        $this->response = new ResponseProvider();
         $user = NULL;
+        $mall = NULL;
         $httpCode = 200;
 
         $genericActivityConfig = Config::get('orbit.generic_activity');
@@ -40,7 +38,8 @@ class GenericActivityAPIController extends IntermediateBaseController
             $this->response->status = 'error';
             $this->response->message = 'Activity config is not configured correctly.';
             $this->response->data = null;
-            return $this->render($this->response);
+            $httpCode = 403;
+            return $this->render($httpCode);
         }
 
         $activityParamName = $genericActivityConfig['parameter_name'];
@@ -51,7 +50,8 @@ class GenericActivityAPIController extends IntermediateBaseController
             $this->response->status = 'error';
             $this->response->message = 'Activity identifier is required.';
             $this->response->data = null;
-            return $this->render($this->response);
+            $httpCode = 403;
+            return $this->render($httpCode);
         }
 
         if (! array_key_exists($activityNumber, $genericActivityConfig['activity_list'])) {
@@ -59,7 +59,8 @@ class GenericActivityAPIController extends IntermediateBaseController
             $this->response->status = 'error';
             $this->response->message = 'Activity identifier is not found.';
             $this->response->data = null;
-            return $this->render($this->response);
+            $httpCode = 403;
+            return $this->render($httpCode);
         }
 
         if (! isset($genericActivityConfig['activity_list'])
@@ -74,7 +75,8 @@ class GenericActivityAPIController extends IntermediateBaseController
             $this->response->status = 'error';
             $this->response->message = 'Activity config is not configured correctly.';
             $this->response->data = null;
-            return $this->render($this->response);
+            $httpCode = 403;
+            return $this->render($httpCode);
         }
 
         $activityName = $genericActivityConfig['activity_list'][$activityNumber]['name'];
@@ -83,18 +85,35 @@ class GenericActivityAPIController extends IntermediateBaseController
         $activityType = $genericActivityConfig['activity_list'][$activityNumber]['type'];
         $activityObjectType = $genericActivityConfig['activity_list'][$activityNumber]['object_type'];
         $activityObjectIDParamName = $genericActivityConfig['activity_list'][$activityNumber]['parameter_name'];
+        // object type is supplied by frontend
+        $activityObjectTypeParamName = NULL;
+        if (isset($genericActivityConfig['activity_list'][$activityNumber]['object_type_parameter_name'])) {
+            $activityObjectTypeParamName = $genericActivityConfig['activity_list'][$activityNumber]['object_type_parameter_name'];
+        }
 
         $activity = Activity::mobileci()->setActivityType($activityType);
         try {
-            $this->session->start([], 'no-session-creation');
-
-            $user = UserGetter::getLoggedInUserOrGuest($this->session);
+            $user = $this->getUser();
 
             $object = null;
             if (! empty($activityObjectType) && ! empty($activityObjectIDParamName)) {
                 $object_id = OrbitInput::post($activityObjectIDParamName, null);
 
                 if (! empty($object_id)) {
+                    // Model name is provided from frontend, need to double check
+                    $objectString = OrbitInput::post($activityObjectTypeParamName, NULL);
+                    if ($activityObjectType === '--SET BY object_type_parameter_name--' && ! empty($objectString)) {
+                        // check if class exists
+                        if (class_exists($objectString) ) {
+                            $activityObjectType = $objectString;
+                            // check if model name is instance of Model
+                            if (! (new $activityObjectType instanceof Model)) {
+                                OrbitShopAPI::throwInvalidArgument('Invalid object type parameter name');
+                            }
+                        } else {
+                            OrbitShopAPI::throwInvalidArgument('Invalid object type parameter name');
+                        }
+                    }
                     $object_primary_name = App::make($activityObjectType)->getkeyName();
 
                     $savedObject = $activityObjectType::excludeDeleted()
@@ -103,15 +122,34 @@ class GenericActivityAPIController extends IntermediateBaseController
 
                     if (is_object($savedObject)) {
                         $object = $savedObject;
+                    } else {
+                        // should throw error if object is not found when Object Name is provided by frontend
+                        if (! empty($objectString)) {
+                            OrbitShopAPI::throwInvalidArgument('Object ID not found');
+                        }
                     }
                 }
             }
+
+            // Get mall object for set setLocation activity
+            $mallId = OrbitInput::post('mall_id', null);
+
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
+            }
+
+            // Get notes
+            $notes = OrbitInput::post('notes', null);
 
             $activity->setUser($user)
                 ->setActivityName($activityName)
                 ->setActivityNameLong($activityNameLong)
                 ->setObject($object)
                 ->setModuleName($activityModuleName)
+                ->setLocation($mall)
+                ->setNotes($notes)
                 ->responseOK()
                 ->save();
 
@@ -192,6 +230,8 @@ class GenericActivityAPIController extends IntermediateBaseController
                 ->save();
         }
 
-        return $this->render($this->response);
+        return $this->render($httpCode);
     }
+
+
 }

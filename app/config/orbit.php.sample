@@ -634,7 +634,8 @@ return array(
             'mall_portal' => 'X-OMS-Mall',
             'cs_portal' => 'X-OMS-CS',
             'pmp_portal' => 'X-OMS-PMP',
-            'admin_portal' => 'X-OMS-Admin'
+            'admin_portal' => 'X-OMS-Admin',
+            'mdm_portal' => 'X-OMS-MDM',
         ],
 
         /**
@@ -649,7 +650,8 @@ return array(
             'mall_portal' => '4',
             'cs_portal' => '5',
             'pmp_portal' => '6',
-            'admin_portal' => '7'
+            'admin_portal' => '7',
+            'mdm_portal' => '8',
         ],
 
         /**
@@ -1014,6 +1016,40 @@ return array(
                     'httponly'  => TRUE
                 ),
             ),
+            'mdm_portal' => array(
+                'expire' => 3600,   // 1 hour
+
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-MDM'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-MDM'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-MDM',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
         ),
     ),
 
@@ -1068,6 +1104,7 @@ return array(
                 'Set-X-OMS-Admin',
                 'Set-X-OMS-PMP',
                 'Set-X-OMS-CS',
+                'Set-X-OMS-MDM',
             ],
 
             // No need protocol, just enter domain name
@@ -1751,6 +1788,74 @@ return array(
 
                 // Default HTML element name
                 'name'          => 'logo',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+            'map' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 90000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/malls/maps',
+
+                // Default HTML element name
+                'name'          => 'maps',
 
                 // Force create directory when not exists
                 'create_directory'  => TRUE,
@@ -3011,6 +3116,79 @@ return array(
         ),
 
         // -------------------------------------------------------------------//
+        // Advert Related Uploads
+        // -------------------------------------------------------------------//
+        'advert'  => array(
+            'main' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 9000000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/advert',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 400,
+                        'height'    => 400
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
+        // -------------------------------------------------------------------//
         // Membership Related Uploads
         // -------------------------------------------------------------------//
         'membership'  => array(
@@ -3152,6 +3330,281 @@ return array(
 
         ),
 
+
+        'base_store'  => array(
+            'logo'  => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 9000000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/base_store/logo',
+
+                // Default HTML element name
+                'name'          => 'logo',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+            'picture' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 90000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/base_store/pictures',
+
+                // Default HTML element name
+                'name'          => 'pictures',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+            'map' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 90000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/base_store/maps',
+
+                // Default HTML element name
+                'name'          => 'maps',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+            'background' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 90000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/base_store/backgrounds',
+
+                // Default HTML element name
+                'name'          => 'backgrounds',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+        ),
+
     ),
 
     'devices'  => array(
@@ -3196,6 +3649,10 @@ return array(
         'google' => array(
             'callback_url' => 'http://mall-api.gotomalls.cool/pub/social-google-callback',
         ),
+        'bitly' => array(
+            // bitly generic_access_token
+            'generic_access_token' => NULL,
+        )
     ],
 
     // set the external crawler user agent
@@ -3281,7 +3738,8 @@ return array(
             'pmp_promotions',
             'pmp_report_news',
             'pmp_report_promotions',
-            'pmp_employee'
+            'pmp_employee',
+            'pmp_advert'
         )
     ),
 
@@ -3446,6 +3904,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Stores View
+            // *** Moved to the getStoreList() ***
             '15' => array(
                 'name' => 'view_stores_main_page',
                 'name_long' => 'View Stores Main Page',
@@ -3464,6 +3923,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Lucky Draws View
+            // *** Moved to the getSearchLuckyDraw() ***
             '17' => array(
                 'name' => 'view_lucky_draws_main_page',
                 'name_long' => 'View Lucky Draws Main Page',
@@ -3600,6 +4060,7 @@ return array(
                 'parameter_name' => null
             ),
             // - Coupons View
+            // *** Moved to the getCouponList() ***
             '32' => array(
                 'name' => 'view_coupons_main_page',
                 'name_long' => 'View Coupons Main Page',
@@ -3619,6 +4080,7 @@ return array(
             ),
 
             // - News Location View
+            // *** Moved to the getNewsLocations() ***
             '34' => array(
                 'name' => 'view_news_location',
                 'name_long' => 'View News Location Page',
@@ -3638,6 +4100,7 @@ return array(
             ),
 
             // - Promotion Location View
+            // *** Moved to the getPromotionLocations() ***
             '36' => array(
                 'name' => 'view_promotion_location',
                 'name_long' => 'View Promotion Location Page',
@@ -3657,6 +4120,7 @@ return array(
             ),
 
             // - Coupon Location View
+            // *** Moved to the getCouponLocations() ***
             '38' => array(
                 'name' => 'view_coupon_location',
                 'name_long' => 'View Coupon Location Page',
@@ -3676,6 +4140,7 @@ return array(
             ),
 
             // - Store Location View
+            // *** Moved to the getMallDetailStore() ***
             '40' => array(
                 'name' => 'view_store_location',
                 'name_long' => 'View Store Location Page',
@@ -3711,30 +4176,473 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+
+            // - User clicks on "Events" from mall sidebar menu
+            '44' => array(
+                'name' => 'click_mall_menu_events',
+                'name_long' => 'Click mall menu (Events)',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - User clicks on "See all" on event carousel in mall page
+            '45' => array(
+                'name' => 'click_see_all_mall_events',
+                'name_long' => 'Click see all (Mall Events)',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - User clicks an event from mall event list page
+            '46' => array(
+                'name' => 'click_in_mall_event_list',
+                'name_long' => 'Click event from mall event list',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - User clicks on one of the events featured in event carousel (mall page)
+            '47' => array(
+                'name' => 'click_mall_featured_event',
+                'name_long' => 'Click mall featured event',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - User clicks on "Promotions" from mall sidebar menu
+            '48' => array(
+                'name' => 'click_mall_menu_promotions',
+                'name_long' => 'Click mall menu (Promotions)',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - User clicks on "See all" on promotion carousel in mall page
+            '49' => array(
+                'name' => 'click_see_all_mall_promotions',
+                'name_long' => 'Click see all (Mall Promotions)',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+
+            // - User clicks a promotion from mall promotion list page
+            '50' => array(
+                'name' => 'click_in_mall_promotion_list',
+                'name_long' => 'Click promotion from mall promotion list',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+
+            // - User clicks on one of the promotions featured in promotion carousel (mall page)
+            '51' => array(
+                'name' => 'click_mall_featured_promotion',
+                'name_long' => 'Click mall featured promotion',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => 'Promotion',
+                'parameter_name' => 'promotion_id'
+            ),
+
+            // - User clicks on "Lucky draws" from mall sidebar menu Gotomalls
+            '52' => array(
+                'name' => 'click_mall_menu_lucky_draws',
+                'name_long' => 'Click mall menu (Lucky draws)',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on lucky draw carousel in mall page
+            '53' => array(
+                'name' => 'click_see_all_mall_lucky_draws',
+                'name_long' => 'Click see all (Mall Lucky Draws)',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a lucky draw from mall lucky draw list page
+            '54' => array(
+                'name' => 'click_in_mall_lucky_draw_list',
+                'name_long' => 'Click lucky draw from mall lucky draw list',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
+            // - User clicks on one of the lucky draw featured in lucky draw carousel (mall page)
+            '55' => array(
+                'name' => 'click_mall_featured_lucky_draw',
+                'name_long' => 'Click mall featured lucky draw',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
+            // - View progressive sign in (name) pop up page
+            '56' => array(
+                'name' => 'view_prog_login_name',
+                'name_long' => 'View progressive sign in (Name)',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User gives name in progressive sign in (name) pop up page
+            '57' => array(
+                'name' => 'prog_login_name_ok',
+                'name_long' => 'Progressive sign in (Name)',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User does not give name or dismiss progressive sign in (name) pop up page
+            '58' => array(
+                'name' => 'prog_login_name_canceled',
+                'name_long' => 'Progressive sign in (Name) canceled',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - View progressive sign in (email) pop up page
+            '59' => array(
+                'name' => 'view_prog_login_email',
+                'name_long' => 'View progressive sign in (Email)',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User gives email in progressive sign in (email) pop up page
+            '60' => array(
+                'name' => 'prog_login_email_ok',
+                'name_long' => 'Progressive sign in (Email)',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User does not give email or dismiss progressive sign in (email) pop up page
+            '61' => array(
+                'name' => 'prog_login_email_canceled',
+                'name_long' => 'Progressive sign in (Email) canceled',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "Coupons" from mall sidebar menu
+            '62' => array(
+                'name' => 'click_mall_menu_coupons',
+                'name_long' => 'Click mall menu (Coupons)',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on coupon carousel in mall page
+            '63' => array(
+                'name' => 'click_see_all_mall_coupons',
+                'name_long' => 'Click see all (Mall Coupons)',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a coupon from mall coupon list page
+            '64' => array(
+                'name' => 'click_in_mall_coupon_list',
+                'name_long' => 'Click coupon from mall coupon list',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on one of the coupons featured in coupon carousel (mall page)
+            '65' => array(
+                'name' => 'click_mall_featured_coupon',
+                'name_long' => 'Click mall featured coupon',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on "Stores" from mall sidebar menu
+            '66' => array(
+                'name' => 'click_mall_menu_stores',
+                'name_long' => 'Click mall menu (Stores)',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "See all" on coupon carousel in mall page
+            '67' => array(
+                'name' => 'click_see_all_mall_stores',
+                'name_long' => 'Click see all (Mall Stores)',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks a store from mall store list page
+            '68' => array(
+                'name' => 'click_in_mall_store_list',
+                'name_long' => 'Click store from mall store list',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - User clicks on one of the stores featured in store carousel (mall page)
+            '69' => array(
+                'name' => 'click_mall_featured_store',
+                'name_long' => 'Click mall featured store',
+                'module_name' => 'Store',
+                'type' => 'click',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'store_id'
+            ),
+            // - User clicks on mall sidebar menu
+            '70' => array(
+                'name' => 'click_mall_menu',
+                'name_long' => 'Click mall menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on one of the news/event featured in mall carousel (top of mall page)
+            '71' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'News',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'news_id'
+            ),
+
+            // - User clicks on one of the promotion featured in mall carousel (top of mall page)
+            '72' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'Promotion',
+                'type' => 'click',
+                'object_type' => 'News',
+                'parameter_name' => 'promotion_id'
+            ),
+
+            // - User clicks on one of the coupon featured in mall carousel (top of mall page)
+            '73' => array(
+                'name' => 'click_mall_featured_carousel',
+                'name_long' => 'Click mall featured carousel',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - Click share button in detail page
+            '74' => array(
+                'name' => 'click_share',
+                'name_long' => 'Click Share',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // - Click sharing platform e.g: Facebook, email, etc.
+            '75' => array(
+                'name' => 'click_share',
+                'name_long' => 'Click Share Type',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // - User clicks back to Gotomalls home page
+            '76' => array(
+                'name' => 'click_back_to_GTM',
+                'name_long' => 'Click back to Gotomalls',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'mall_id'
+            ),
+            // - User clicks on "Mall info" from mall sidebar menu
+            '77' => array(
+                'name' => 'click_mall_menu_info',
+                'name_long' => 'Click mall menu (Info)',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'mall_id'
+            ),
+            // - User clicks on interested coupon
+            '78' => array(
+                'name' => 'click_interested',
+                'name_long' => 'Click Interested',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on not interested coupon
+            '79' => array(
+                'name' => 'click_not_interested ',
+                'name_long' => 'Click Not Interested',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - The campaign appears in the carousel
+            '80' => array(
+                'name' => 'view_carousel',
+                'name_long' => 'View Carousel',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // - User clicks on share us via Facebook/Email
+            '81' => array(
+                'name' => 'click_share_us',
+                'name_long' => 'Click Share Us',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on Facebook/Instagram/Twitter icon in about us section
+            '82' => array(
+                'name' => 'click_social_media',
+                'name_long' => 'Click GTM Social Media',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Clicking on a lucky draw location
+            '83' => array(
+                'name' => 'click_lucky_draw_location',
+                'name_long' => 'Click Lucky Draw Location',
+                'module_name' => 'LuckyDraw',
+                'type' => 'click',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
+            // - Lucky Draw Location View
+            '84' => array(
+                'name' => 'view_lucky_draw_location',
+                'name_long' => 'View Lucky Draw Location Page',
+                'module_name' => 'LuckyDraw',
+                'type' => 'view',
+                'object_type' => 'LuckyDraw',
+                'parameter_name' => 'lucky_draw_id'
+            ),
+            // - User view the about us page
+            '85' => array(
+                'name' => 'view_about_us',
+                'name_long' => 'View About Us',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Event click in the carousel
+            '86' => array(
+                'name' => 'click_carousel',
+                'name_long' => 'Click Carousel',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // - User clicks on sidebar menu (Put Home, My Coupon, etc in notes)
+            '87' => array(
+                'name' => 'click_menu',
+                'name_long' => 'Click Menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - View advertisement on banner.
+            '88' => array(
+                'name' => 'view_banner',
+                'name_long' => 'View Banner',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => 'Advert',
+                'parameter_name' => 'advert_id'
+            ),
+            // - Click advertisement on banner.
+            '89' => array(
+                'name' => 'click_banner',
+                'name_long' => 'Click Banner',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Advert',
+                'parameter_name' => 'advert_id'
+            ),
+            // - Click blog item on homepage Gotomalls
+            '90' => array(
+                'name' => 'click_blog_link',
+                'name_long' => 'Click Blog Link',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - Click category on homepage
+            '91' => array(
+                'name' => 'click_category',
+                'name_long' => 'Click Category',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Category',
+                'parameter_name' => 'category_id'
+            ),
         ),
     ),
 
     'redirect_url_list' => array(
+        /*
+         *  // append these keys inside each type to record activity while redirecting user
+         *  // eg:
+         *  'activity_name' => 'click_blog',
+         *  'activity_name_long' => 'Click Gotomalls Blog',
+         *  'activity_module_name' => 'Application',
+         *  'activity_type' => 'click',
+        */
         'instagram' => array(
             'url' => 'https://www.instagram.com/gotomalls',
-            'activity_name' => 'click_social_media',
-            'activity_name_long' => 'Click Instagram',
-            'activity_module_name' => 'Application',
-            'activity_type' => 'click',
         ),
         'facebook' => array(
             'url' => 'https://www.facebook.com/Gotomalls.Indo',
-            'activity_name' => 'click_social_media',
-            'activity_name_long' => 'Click Facebook',
-            'activity_module_name' => 'Application',
-            'activity_type' => 'click',
         ),
         'blog' => array(
             'url' => 'https://blog.gotomalls.com',
-            'activity_name' => 'click_blog',
-            'activity_name_long' => 'Click Gotomalls Blog',
-            'activity_module_name' => 'Application',
-            'activity_type' => 'click',
         ),
     ),
 
@@ -3793,6 +4701,9 @@ return array(
         // URL redemption page which should be on main page (not CI)
         // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
         'direct_redemption_url' => NULL,
+        // URL coupon canvas
+        // e.g: https://www.gotomalls.cool/#!/coupon-blasting?cid=%s&pid=%s
+        'sms_direct_redemption_url' => NULL,
     ],
 
     'campaign_auto_email' => array(
@@ -3803,4 +4714,181 @@ return array(
             'name'  => 'Gotomalls'
         ),
     ),
+
+    /**
+     * Configuration for share via email on campaign detail page
+     */
+    'campaign_share_email' => array(
+        'sender' => array(
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
+        ),
+
+        // subject of the email
+        'subject' => '[%s] %s - Gotomalls.com',
+
+        // base url of the campaign detail, needed for showing link on the email
+        'news_detail_base_url' => 'https://v211.gotomalls.cool/#!/news/detail/%s/%s',
+
+        'promotion_detail_base_url' => 'https://v211.gotomalls.cool/#!/promotions/detail/%s/%s',
+
+        'coupon_detail_base_url' => 'https://v211.gotomalls.cool/#!/coupons/detail/%s/%s',
+    ),
+
+    /**
+     * Configuration for share via email on sidebar GTM
+     */
+    'landingpage_share_email' => array(
+        'sender' => array(
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
+        ),
+
+        // subject of the email
+        'subject' => 'Sudahkah anda mencoba Gotomalls.com?',
+
+        // the share url
+        'share_url' => 'https://www.gotomalls.com',
+
+        // the video url
+        'video_url' => 'https://www.youtube.com/watch?v=v7x-Avxb38E',
+    ),
+
+    /**
+     * List of user agent rules used by UserAgent parser. This rules serve as additional rules
+     * that already defined in MobileDetect class.
+     */
+    'user_agent_rules' => [
+        // Returning the browser name
+        'browser' => [
+            'Opera' => 'Opera.*Mini|Opera.*Mobi|Android.*Opera|Mobile.*OPR/[0-9.]+|Coast/[0-9.]+|Opera/[0-9.]+.*Presto|AppleWebKit/[0-9.]+.*Safari/[0-9]+.*OPR/[0-9]+|AppleWebKit/[0-9.]+.*OPiOS/[0-9]+',
+            'UCBrowser' => 'UC.*Browser|UCWEB|UBrowser/[0-9.].* Safari',
+            // It should come after UCBrowser or Opera Mobile because this pattern more generic and it will override the chrome if it put on top
+            'Chrome' => '\bCrMo\b|CriOS|Android.*Chrome/[.0-9]* (Mobile)?|Chrome/.*Safari',
+            // It should come after 'Chrome' because this pattern more generic than Chrome and it will override the chrome if it put on top
+            'Android Browser' => 'Android [0-9.].*AppleWebKit.*Mobile Safari/',
+            'Firefox' => 'fennec|firefox.*maemo|(Mobile|Tablet).*Firefox|Firefox.*Mobile|Firefox/[0-9]+',
+            'Instagram Browser' => 'Instagram [0-9]*',
+            'Facebook Browser' => 'FBAV/[0-9.]+',
+
+            // Bots
+            'GoogleBot' => 'GoogleBot/.*bot\.html|Google Keyword Suggestion|AdsBot-Google',
+            'BingBot' => 'bingbot',
+            'Slurp (Yahoo Bot)' => 'Slurp',
+            'DuckDuckBot' => 'DuckDuckBot',
+            'Baiduspider' => 'Baiduspider',
+            'YandexBot' => 'YandexBot',
+            'SogouBot' => '\bSogou\b',
+            'Exabot' => '\bExabot\b',
+            'FacebookBot' => 'facebot|facebookexternalhit',
+            'AlexaBot' => 'ia_archiver',
+            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2',
+
+            'IE' => 'IEMobile|MSIEMobile|MSIE',
+        ],
+
+        // Returning the platform name
+        'platform' => [
+            'Bot' => '\bSogou\b|Baiduspider|DuckDuckBot|Googlebot|facebookexternalhit|AdsBot-Google|Google Keyword Suggestion|Facebot|YandexBot|bingbot|ia_archiver|AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|YandexImages|TurnitinBot|Pingdom|Googlebot-Mobile|AdsBot-Google-Mobile|YahooSeeker/M1A1-R2D2',
+        ],
+
+        // Returning the device model
+        'device_model' => [
+            'Bot' => '\bSogou\b|Baiduspider|DuckDuckBot|Googlebot|facebookexternalhit|AdsBot-Google|Google Keyword Suggestion|Facebot|YandexBot|bingbot|ia_archiver|AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|YandexImages|TurnitinBot|Pingdom|Googlebot-Mobile|AdsBot-Google-Mobile|YahooSeeker/M1A1-R2D2',
+        ]
+    ],
+
+    'generic_email' => [
+        'sender' => [
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
+            ]
+    ],
+
+    'sync' => [
+        'store' => [
+            // Email need to send before and after the sync process
+            'email' => [
+                'to' => ['marketing@dominopos.com'],
+
+                'pre_sync' => [
+                    'subject' => '[Sync Store] - Sync ID: {{SYNC_ID}} has been started by {{USER_EMAIL}}',
+                ],
+
+                'post_sync' => [
+                    'subject' => '[Sync Store] - Sync ID: {{SYNC_ID}} started by {{USER_EMAIL}} has been completed.'
+                ]
+            ]
+        ]
+    ],
+
+    /**
+     * Calls to external service
+     */
+    'external_calls' => [
+        'wordpress' => [
+            // Driver of the HTTP client
+            // Value: 'curl', 'fake'
+            'driver' => 'curl',
+
+            // The base URL of the blog, e.g: https://blog.example.com
+            'base_blog_url' => NULL,
+
+            // Number of posts to take
+            'take' => 6,
+
+            // Default image used when the post does not have image URL
+            'default_image_url' => NULL,
+
+            // Cache file location, the web hooks will write to this file
+            'cache_file' => 'storage/wordpress/post-list.json',
+
+            // When post is made - Wordpress try to call Orbit URLs
+            // For security reason we limit the IPs that able to hit
+            // this URL
+            // Value could be '*' (means all) or an array
+            // e.g: ['127.0.0.1', '192.168.0/24']
+            'web_hooks_allowed_ips' => '*'
+        ]
+    ],
+
+    /**
+     * Static placeholders
+     */
+    'statics' => array(
+        'adverts' => array(
+            'footer' => array(
+                'image_url' => NULL,
+                'link_url' => NULL,
+                'title' => NULL,
+            ),
+        ),
+    ),
+
+    /**
+     * Cache the DB result for the list
+     */
+    'cache' => [
+        // Cache type
+        'database' => [
+            // Enable or disable the cache
+            'enable' => TRUE,
+
+            // Cache the result for X minutes
+            'cache_ttl' => 15
+        ]
+    ],
+
+    /**
+     * Campaign spending related configuration
+     */
+    'campaign_spending' => [
+        // Update the campaign spending by recalculating
+        // the campaign cost when it was saved
+        'update_spending_on_save' => FALSE,
+
+        // Update the campaign spending by recalculating
+        // the campaign cost using artisan
+        'update_spending_on_artisan' => TRUE
+    ]
 );

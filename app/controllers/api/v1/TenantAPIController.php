@@ -1299,6 +1299,15 @@ class TenantAPIController extends ControllerAPI
                 $updatedtenant->keywords = $tenantKeywords;
             });
 
+            // update store advert
+            if ($updatedtenant->object_type === 'tenant') {
+                $storeAdverts = Advert::excludeDeleted()
+                                    ->where('link_object_id', $updatedtenant->merchant_id)
+                                    ->update([
+                                            'status'     => $updatedtenant->status,
+                                        ]);
+            }
+
             Event::fire('orbit.tenant.postupdatetenant.after.save', array($this, $updatedtenant));
             $this->response->data = $updatedtenant;
 
@@ -1598,6 +1607,7 @@ class TenantAPIController extends ControllerAPI
                 $tenants->addSelect(DB::raw("GROUP_CONCAT(`{$prefix}categories`.`category_name` ORDER BY category_name ASC SEPARATOR ', ') as tenant_categories"))
                         ->leftJoin('category_merchant','category_merchant.merchant_id','=','merchants.merchant_id')
                         ->leftJoin('categories','categories.category_id','=','category_merchant.category_id')
+                        ->where('categories.status', '!=', 'deleted')
                         ->groupBy('merchants.merchant_id');
             }
 
@@ -1976,6 +1986,12 @@ class TenantAPIController extends ControllerAPI
                         $tenants->with('translations');
                     } elseif ($relation === 'keywords') {
                         $tenants->with('keywords');
+                    } elseif ($relation === 'categories') {
+                        $tenants->with([
+                            'categories' => function($q) {
+                                $q->where('status', 'active');
+                            }
+                        ]);
                     }
                 }
             });
@@ -2211,6 +2227,14 @@ class TenantAPIController extends ControllerAPI
             $filtermode = OrbitInput::get('filtermode');
             $account_type_id = OrbitInput::get('account_type_id');
 
+            // for advert setup
+            $from = OrbitInput::get('from');
+            $group_by = OrbitInput::get('group_by');
+            $campaign_id = OrbitInput::get('campaign_id');
+            $link_type = OrbitInput::get('link_type');
+            $merchant_name = OrbitInput::get('merchant_name');
+            $merchant_id = OrbitInput::get('merchant_id');
+
             $validator = Validator::make(
                 array(
                     'sortby' => $sort_by,
@@ -2247,6 +2271,93 @@ class TenantAPIController extends ControllerAPI
                                        ->where('merchants.status', '!=', 'deleted')
                                        ->groupBy('merchants.merchant_id');
 
+            // Need to overide the query for advert
+            if ($from === 'advert') {
+                if ($link_type === 'coupon' ) {
+                    $tenants = PromotionRetailer::select(
+                                    'merchants.merchant_id',
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                    'merchants.status',
+                                    'merchants.object_type',
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name")
+                                )
+                                ->leftjoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
+                                ->where('promotion_id', $campaign_id)
+                                ->groupBy('mall_id');
+                } elseif ($link_type === 'promotion') {
+                    $tenants = NewsMerchant::select(
+                                    'merchants.merchant_id',
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                    'merchants.status',
+                                    'merchants.object_type',
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name")
+                                )
+                                ->leftjoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
+                                ->where('news_id', $campaign_id)
+                                ->groupBy('mall_id');
+                } elseif ($link_type === 'store') {
+                    $tenants = CampaignLocation::select('merchants.merchant_id',
+                                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                                    DB::raw("{$prefix}merchants.name as display_name"),
+                                                    'merchants.status',
+                                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
+                                                )
+                                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                               ->where('merchants.object_type', 'tenant')
+                                               ->where('merchants.status', '!=', 'deleted')
+                                               ->groupBy('merchants.name');
+
+                    if (! empty($merchant_name)) {
+                        $tenants = CampaignLocation::select('merchants.merchant_id',
+                                                        DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                                        DB::raw("pm.name as display_name"),
+                                                        'merchants.status',
+                                                        DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
+                                                    )
+                                                   ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                                   ->where('merchants.object_type', 'tenant')
+                                                   ->where('merchants.status', '!=', 'deleted')
+                                                   ->where('merchants.name', '=', $merchant_name);
+                    }
+
+                    if (! empty($merchant_id)) {
+                        $tenants = CampaignLocation::select('merchants.merchant_id', 'merchants.name as display_name',
+                                                        DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                                        'merchants.status',
+                                                        DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
+                                                    )
+                                                   ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                                   ->where('merchants.object_type', 'tenant')
+                                                   ->where('merchants.status', '!=', 'deleted')
+                                                   ->where('merchants.merchant_id', '=', $merchant_id);
+
+                    }
+
+                } elseif ($link_type === 'no_link' || $link_type === 'information' || $link_type === 'url') {
+                    $tenants = CampaignLocation::select('merchants.merchant_id',
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name"),
+                                    'merchants.status'
+                                )
+                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
+                               ->whereIn('merchants.object_type', ['mall', 'tenant'])
+                               ->where('merchants.status', '=', 'active')
+                               ->where(DB::raw("pm.status"), '=', 'active')
+                               ->groupBy('mall_id');
+                }
+            }
+
+            // this is for request from pmp account listing on admin portal
+            $user_id = OrbitInput::get('user_id');
+            if (!empty($user_id)) {
+                $user = User::with('role')->where('user_id', '=', $user_id)->first();
+                if (!is_object($user)) {
+                    OrbitShopAPI::throwInvalidArgument('user not found');
+                }
+            }
+
             if (in_array(strtolower($user->role->role_name), $this->campaignRole)) {
                 if ($user->campaignAccount->is_link_to_all === 'N') {
                     $tenants->join('user_merchant', function($q) use ($user)
@@ -2259,7 +2370,11 @@ class TenantAPIController extends ControllerAPI
                         $tenants->whereRaw("{$prefix}merchants.object_type = 'mall'");
                     }
                 }
-                $tenants->where('merchants.status', '=', 'active');
+
+                if (empty($from) && empty($link_type) && empty($merchant_id)) {
+                    $tenants->where('merchants.status', '=', 'active');
+                }
+
             }
 
             // filter by account type
@@ -2309,16 +2424,21 @@ class TenantAPIController extends ControllerAPI
                                     WHERE {$prefix}user_merchant.object_type IN ('mall'))");
             }
 
+            if ($filtermode === 'mall') {
+                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
+                                    SELECT merchant_id FROM {$prefix}user_merchant
+                                    WHERE {$prefix}user_merchant.object_type IN ('tenant'))");
+            }
+
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_tenants = clone $tenants;
 
-            // to do : enable take and skip
-            /*$take = PaginationNumber::parseTakeFromGet('link_to_tenant');
+            $take = PaginationNumber::parseTakeFromGet('link_to_tenant');
             $tenants->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $tenants->skip($skip);*/
+            $tenants->skip($skip);
 
             // Default sort by
             $sortBy = 'display_name';
@@ -2405,6 +2525,7 @@ class TenantAPIController extends ControllerAPI
             }
 
             $this->response->data = $data;
+
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.tenant.getsearchtenant.access.forbidden', array($this, $e));
 

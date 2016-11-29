@@ -125,13 +125,15 @@ class CouponReportPrinterController extends DataPrinterController
 
                         $rule_type = $val_rule_type;
                         if ($rule_type === 'auto_issue_on_first_signin') {
-                            $rule_type = 'coupon blast upon first sign in';
+                            $rule_type = 'Blast upon first sign in';
                         } elseif ($rule_type === 'auto_issue_on_signup') {
-                            $rule_type = 'coupon blast upon sign up';
+                            $rule_type = 'Blast upon sign up';
                         } elseif ($rule_type === 'auto_issue_on_every_signin') {
-                            $rule_type = 'coupon blast upon every sign in';
+                            $rule_type = 'Blast upon every sign in';
                         } elseif ($rule_type === 'manual') {
-                            $rule_type = 'manual issued';
+                            $rule_type = 'Manual issued';
+                        } elseif ($rule_type === 'blast_via_sms') {
+                            $rule_type = 'Blast via SMS';
                         }
 
                         $rule_type_string .= $rule_type . ', ';
@@ -166,13 +168,15 @@ class CouponReportPrinterController extends DataPrinterController
 
                     $rule_type = $row->rule_type;
                     if ($rule_type === 'auto_issue_on_first_signin') {
-                        $rule_type = 'Coupon blast upon first sign in';
+                        $rule_type = 'Blast upon first sign in';
                     } elseif ($rule_type === 'auto_issue_on_signup') {
-                        $rule_type = 'Coupon blast upon sign up';
+                        $rule_type = 'Blast upon sign up';
                     } elseif ($rule_type === 'auto_issue_on_every_signin') {
-                        $rule_type = 'Coupon blast upon every sign in';
+                        $rule_type = 'Blast upon every sign in';
                     } elseif ($rule_type === 'manual') {
                         $rule_type = 'Manual issued';
+                    } elseif ($rule_type === 'blast_via_sms') {
+                        $rule_type = 'Blast via SMS';
                     }
 
                     printf("\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s / %s\",\"%s / %s\",\"%s\"\n",
@@ -395,11 +399,12 @@ class CouponReportPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', 'Redeemed Date', $dateRange, '', '', '', '', '');
                 }
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Issued Date & Time', 'Redeemed Date & Time', 'Redemption Place', 'Coupon Status');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Coupon Code', 'Customer Age', 'Customer Gender', 'Customer Type', 'Customer Email', 'Issued Date & Time', 'Redeemed Date & Time', 'Redemption Place', 'Coupon Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '', '', '', '');
 
                 $count = 1;
+
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
 
                     if ($row->status === 'active') {
@@ -420,11 +425,37 @@ class CouponReportPrinterController extends DataPrinterController
                         $place = $row->redemption_place;
                     }
 
+                    if (empty($row->age)) {
+                        $userAge = '--';
+                    } else {
+                        $userAge = $row->age;
+                    }
+
+                    if (empty($row->gender)) {
+                        $userGender = '--';
+                    } else {
+                        $userGender = $row->gender;
+                    }
+
+                    if (empty($row->user_type)) {
+                        $userType = '--';
+                    } else {
+                        $userType = $row->user_type;
+                    }
+
+                    if (empty($row->user_email)) {
+                        $userEmail = '--';
+                    } else {
+                        $userEmail = $row->user_email;
+                    }
+
                     printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->issued_coupon_code,
-                            $row->age,
-                            $row->gender,
+                            $userAge,
+                            $userGender,
+                            $userType,
+                            $userEmail,
                             $this->printDateTime($row->issued_date, '', 'd M Y H:i') . ' (UTC)',
                             $dateRedeem,
                             $place,

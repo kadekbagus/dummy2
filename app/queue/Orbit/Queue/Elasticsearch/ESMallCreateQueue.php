@@ -55,7 +55,7 @@ class ESMallCreateQueue
     {
         $mallId = $data['mall_id'];
         $prefix = DB::getTablePrefix();
-        $mall = Mall::with('country')
+        $mall = Mall::with('country', 'mediaMapOrig')
                     ->leftJoin(DB::raw("(select * from {$prefix}media where media_name_long = 'mall_logo_orig') as med"), DB::raw("med.object_id"), '=', 'merchants.merchant_id')
                     ->where('merchants.status', '!=', 'deleted')
                     ->where('merchants.merchant_id', $mallId)
@@ -70,6 +70,8 @@ class ESMallCreateQueue
             ];
         }
 
+        $maps_url = $mall->mediaMapOrig->lists('path');
+
         $esConfig = Config::get('orbit.elasticsearch');
         $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
@@ -82,15 +84,17 @@ class ESMallCreateQueue
                 'body' => [
                     'name'            => $mall->name,
                     'description'     => $mall->description,
-                    'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
+                    'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line3])),
                     'city'            => $mall->city,
                     'country'         => $mall->Country->name,
                     'phone'           => $mall->phone,
                     'operating_hours' => $mall->operating_hours,
                     'object_type'     => $mall->object_type,
                     'logo_url'        => $mall->path,
+                    'maps_url'        => $maps_url,
                     'status'          => $mall->status,
                     'ci_domain'       => $mall->ci_domain,
+                    'is_subscribed'   => $mall->is_subscribed,
                     'position'        => [
                         'lon' => $geofence->longitude,
                         'lat' => $geofence->latitude

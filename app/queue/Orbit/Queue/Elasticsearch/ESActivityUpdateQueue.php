@@ -76,7 +76,12 @@ class ESActivityUpdateQueue
             ];
         }
 
-        $detect = new UserAgent;
+        // This one used if the config is empty so the comparison
+        // of user agent is not fail
+        $fallbackUARules = ['browser' => [], 'platform' => [], 'device_model' => []];
+
+        $detect = new UserAgent();
+        $detect->setRules(Config::get('orbit.user_agent_rules', $fallbackUARules));
         $detect->setUserAgent($activity->user_agent);
 
         // device
@@ -139,7 +144,7 @@ class ESActivityUpdateQueue
                 'body' => []
             ];
 
-            $fullCurrentUrl = Request::fullUrl();
+            $fullCurrentUrl = $data['current_url'];
             $urlForTracking = [ $data['referer'], $fullCurrentUrl ];
             $campaignData = CampaignSourceParser::create()
                                                 ->setUrls($urlForTracking)
@@ -197,7 +202,7 @@ class ESActivityUpdateQueue
 
             if ($response_search['hits']['total'] > 0) {
                 $params['body'] = [
-                    'docs' => $esBody
+                    'doc' => $esBody
                 ];
                 $response = $this->poster->update($params);
             } else {

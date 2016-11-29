@@ -32,9 +32,6 @@ return [
             'title' => 'Number of Tenant(s)',
             'sort_key' => 'tenant_count',
         ],
-        'tenants' => [
-            'title' => 'Tenant(s)',
-        ],
         'created_at' => [
             'title' => 'Creation Date',
             'sort_key' => 'created_at',

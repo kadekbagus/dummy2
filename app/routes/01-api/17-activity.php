@@ -115,9 +115,19 @@ Route::get('/api/v1/activity/groups', function()
 /**
  * Post new generic activity
  */
-Route::post(
-    '/{search}/v1/pub/generic-activity/new', ['as' => 'generic-activity-new', function()
-    {
-        return Orbit\Controller\API\v1\Pub\GenericActivityAPIController::create()->postNewGenericActivity();
-    }]
-)->where('search', '(api|app)');
+Route::post('/api/v1/pub/generic-activity/new', function()
+{
+    return Orbit\Controller\API\v1\Pub\GenericActivityAPIController::create()->postNewGenericActivity();
+});
+
+Route::post('/app/v1/pub/generic-activity/new', ['as' => 'generic-activity-new', 'uses' => 'IntermediatePubAuthController@GenericActivity_postNewGenericActivity']);
+
+/**
+ * Get generic activity list
+ */
+Route::get('/api/v1/pub/generic-activity/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\GenericActivityListAPIController::create()->getGenericActivityList();
+});
+
+Route::get('/app/v1/pub/generic-activity/list', ['as' => 'generic-activity-list', 'uses' => 'IntermediatePubAuthController@GenericActivityList_getGenericActivityList']);
