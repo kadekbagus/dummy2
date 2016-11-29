@@ -2407,7 +2407,7 @@ class TenantAPIController extends ControllerAPI
                                     AND at.unique_rule != 'none'
                                     AND at.status = 'active'
                                 WHERE
-                                    um.object_type IN ('tenant')
+                                    um.object_type IN ('{$unique_rule}')
                                     AND {$prefix}merchants.merchant_id = um.merchant_id
                                 GROUP BY um.merchant_id
                         )");
