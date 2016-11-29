@@ -2420,7 +2420,7 @@ class TenantAPIController extends ControllerAPI
                         SELECT 1
                         FROM {$prefix}user_merchant
                         WHERE {$prefix}user_merchant.object_type IN ('mall', 'tenant')
-                            AND merchant_id = {$prefix}merchants.merchant_id
+                            AND {$prefix}merchants.merchant_id = {$prefix}user_merchant.merchant_id
                     )");
             }
 
@@ -2431,7 +2431,7 @@ class TenantAPIController extends ControllerAPI
                         SELECT 1
                         FROM {$prefix}user_merchant
                         WHERE {$prefix}user_merchant.object_type = 'mall'
-                            AND merchant_id = {$prefix}merchants.merchant_id
+                            AND {$prefix}merchants.merchant_id = {$prefix}user_merchant.merchant_id
                     )");
             }
 
@@ -2441,7 +2441,7 @@ class TenantAPIController extends ControllerAPI
                         SELECT 1
                         FROM {$prefix}user_merchant
                         WHERE {$prefix}user_merchant.object_type = 'tenant'
-                            AND merchant_id = {$prefix}merchants.merchant_id
+                            AND {$prefix}merchants.merchant_id = {$prefix}user_merchant.merchant_id
                     )");
             }
 
