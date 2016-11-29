@@ -724,9 +724,9 @@ class CouponAPIController extends ControllerAPI
                                                         FROM {$prefix}merchants
                                                         WHERE {$prefix}merchants.object_type = 'mall'
                                                             AND merchant_id in ('{$malls}')
-                                                            AND name = mobile_default_language
+                                                            AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
                                                         )
-                                                    AND {$prefix}coupon_translations.merchant_language_id = language_id
+                                                    AND {$prefix}coupon_translations.merchant_language_id = {$prefix}languages.language_id
                                                     )
                                             ")
                                             ->where(function($query) {
@@ -1781,9 +1781,9 @@ class CouponAPIController extends ControllerAPI
                                                         FROM {$prefix}merchants
                                                         WHERE {$prefix}merchants.object_type = 'mall'
                                                             AND merchant_id in ('{$malls}')
-                                                            AND name = mobile_default_language
+                                                            AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
                                                     )
-                                                    AND {$prefix}coupon_translations.merchant_language_id = language_id
+                                                    AND {$prefix}coupon_translations.merchant_language_id = {$prefix}languages.language_id
                                                 )
                                             ")
                                             ->where(function($query) {
