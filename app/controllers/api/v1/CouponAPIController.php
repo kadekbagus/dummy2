@@ -715,12 +715,20 @@ class CouponAPIController extends ControllerAPI
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
             $isAvailable = CouponTranslation::where('promotion_id', '=', $newcoupon->promotion_id)
-                                            ->whereRaw("{$prefix}coupon_translations.merchant_language_id IN (select language_id
-                                                                                                                    from {$prefix}languages
-                                                                                                                    where name in (select mobile_default_language
-                                                                                                                                    from {$prefix}merchants
-                                                                                                                                    where {$prefix}merchants.object_type = 'mall'
-                                                                                                                                    and merchant_id in ('$malls')))")
+                                            ->whereRaw("
+                                                EXISTS (
+                                                    SELECT 1
+                                                    FROM {$prefix}languages
+                                                    WHERE EXISTS (
+                                                        SELECT 1
+                                                        FROM {$prefix}merchants
+                                                        WHERE {$prefix}merchants.object_type = 'mall'
+                                                            AND merchant_id in ('{$malls}')
+                                                            AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
+                                                        )
+                                                    AND {$prefix}coupon_translations.merchant_language_id = {$prefix}languages.language_id
+                                                    )
+                                            ")
                                             ->where(function($query) {
                                                 $query->where('promotion_name', '=', '')
                                                       ->orWhere('description', '=', '')
@@ -1764,12 +1772,20 @@ class CouponAPIController extends ControllerAPI
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
             $isAvailable = CouponTranslation::where('promotion_id', '=', $promotion_id)
-                                            ->whereRaw("{$prefix}coupon_translations.merchant_language_id IN (select language_id
-                                                                                                                    from {$prefix}languages
-                                                                                                                    where name in (select mobile_default_language
-                                                                                                                                    from {$prefix}merchants
-                                                                                                                                    where {$prefix}merchants.object_type = 'mall'
-                                                                                                                                    and merchant_id in ('$malls')))")
+                                            ->whereRaw("
+                                                EXISTS (
+                                                    SELECT 1
+                                                    FROM {$prefix}languages
+                                                    WHERE EXISTS (
+                                                        SELECT 1
+                                                        FROM {$prefix}merchants
+                                                        WHERE {$prefix}merchants.object_type = 'mall'
+                                                            AND merchant_id in ('{$malls}')
+                                                            AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
+                                                    )
+                                                    AND {$prefix}coupon_translations.merchant_language_id = {$prefix}languages.language_id
+                                                )
+                                            ")
                                             ->where(function($query) {
                                                 $query->where('promotion_name', '=', '')
                                                       ->orWhere('description', '=', '')
