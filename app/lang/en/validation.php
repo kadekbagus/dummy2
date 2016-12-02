@@ -350,6 +350,7 @@ return array(
             'mobile_default_lang' => 'Mobile default language must on list languages',
             'account_type'        => 'Account type not exist',
             'campaign'            => 'Campaign you specified is not found',
+            'partner_sortby'     => 'The sort by argument you specified is not valid, the valid values are: partner name, location, start date, end date, partner url, status',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(
