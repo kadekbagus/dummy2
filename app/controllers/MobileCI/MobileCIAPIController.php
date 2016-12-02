@@ -10701,6 +10701,7 @@ class MobileCIAPIController extends BaseCIController
             $sessionData['fullname'] = $user->getFullName();
             $sessionData['visited_location'] = [];
             $sessionData['coupon_location'] = [];
+            $sessionData['status'] = $user->status;
 
             $this->beginTransaction();
             // update the guest session data, append user data to it so the user will be recognized
@@ -10761,6 +10762,7 @@ class MobileCIAPIController extends BaseCIController
                 $sessionData['guest_email'] = $guest->user_email;
                 $sessionData['role'] = $user->role->role_name;
                 $sessionData['fullname'] = '';
+                $sessionData['status'] = $user->status;
 
                 $this->session->update($sessionData);
             }
