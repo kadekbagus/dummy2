@@ -85,6 +85,7 @@ class RegistrationAPIController extends IntermediateBaseController
                     $sessionData['fullname'] = $user->getFullName();
                     $sessionData['visited_location'] = [];
                     $sessionData['coupon_location'] = [];
+                    $sessionData['status'] = $user->status;
 
                     // update the guest session data, append user data to it so the user will be recognized
                     $this->session->update($sessionData);
@@ -287,6 +288,8 @@ class RegistrationAPIController extends IntermediateBaseController
                 if ($useTransaction) {
                     DB::commit();
                 }
+
+                $new_user->load('role');
 
                 return $new_user;
             } catch (Exception $e) {
