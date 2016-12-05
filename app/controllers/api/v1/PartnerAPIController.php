@@ -386,17 +386,60 @@ class PartnerAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $partners = Partner::excludeDeleted()
+            $partners = Partner::excludeDeleted('partners')
                         ->select(
-                            'partner_id',
-                            'partner_name',
+                            'partners.partner_id',
+                            'partners.partner_name',
                             DB::raw("concat({$prefix}partners.city, ', ', {$prefix}countries.name) as location"),
-                            'start_date',
-                            'end_date',
-                            'url',
-                            'status'
+                            'partners.start_date',
+                            'partners.end_date',
+                            'partners.url',
+                            'partners.status',
+                            DB::raw('logo.path as logo'), // logo
+                            DB::raw('info_image.path as info_image'), // info page image
+                            'partners.description',
+                            'partners.address',
+                            'partners.city',
+                            'partners.province',
+                            'partners.postal_code',
+                            'partners.country_id',
+                            'partners.phone',
+                            DB::raw('fb_url.social_media_uri as facebook_url'), // facebook url
+                            'deeplinks.deeplink_url', // deeplink url
+                            'partners.note',
+                            'partners.contact_firstname',
+                            'partners.contact_lastname',
+                            'partners.contact_position',
+                            'partners.contact_phone',
+                            'partners.contact_email'
                         )
-                        ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id');
+                        ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id')
+                        ->leftJoin('media as logo', function($qLogo) {
+                            $qLogo->on(DB::raw('logo.object_id'), '=', 'partners.partner_id')
+                                ->on(DB::raw('logo.object_name'), '=', DB::raw("'partner'"))
+                                ->on(DB::raw('logo.media_name_id'), '=', DB::raw("'partner_logo'"))
+                                ->on(DB::raw('logo.media_name_long'), '=', DB::raw("'partner_logo_orig'"));
+                        })
+                        ->leftJoin('media as info_image', function($qInfoImage) {
+                            $qInfoImage->on(DB::raw('info_image.object_id'), '=', 'partners.partner_id')
+                                ->on(DB::raw('info_image.object_name'), '=', DB::raw("'partner'"))
+                                ->on(DB::raw('info_image.media_name_id'), '=', DB::raw("'partner_image'"))
+                                ->on(DB::raw('info_image.media_name_long'), '=', DB::raw("'partner_image_orig'"));
+                        })
+                        ->leftJoin('deeplinks', function($qDeepLink) {
+                            $qDeepLink->on('deeplinks.object_id', '=', 'partners.partner_id')
+                                ->on('deeplinks.object_type', '=', DB::raw("'partner'"))
+                                ->on('deeplinks.status', '=', DB::raw("'active'"));
+                        })
+                        ->leftJoin('object_social_media as fb_url', function($qDeepLink) use ($prefix) {
+                            $qDeepLink->on(DB::raw('fb_url.object_id'), '=', 'partners.partner_id')
+                                ->on(DB::raw('fb_url.object_type'), '=', DB::raw("'partner'"))
+                                ->on(DB::raw('fb_url.social_media_id'), '=', DB::raw("(
+                                        SELECT sm.social_media_id
+                                        FROM {$prefix}social_media as sm
+                                        WHERE sm.social_media_code = 'facebook'
+                                    )"));
+                        });
 
             // Filter partner by Ids
             OrbitInput::get('partner_id', function ($partnerIds) use ($partners) {
