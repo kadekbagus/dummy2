@@ -117,6 +117,12 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['fullname'] = $user->getFullName();
                 $sessionData['visited_location'] = [];
                 $sessionData['coupon_location'] = [];
+                $sessionData['status'] = $user->status;
+                if ($user->status === 'pending') {
+                    if ($user->created_at < Carbon::now()->subWeek()) {
+                        $sessionData['account_expired'] = TRUE;
+                    }
+                }
 
                 $guest_id = $this->session->read('guest_user_id');
 
@@ -155,6 +161,12 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['email'] = $user->user_email;
                 $sessionData['role'] = $user->role->role_name;
                 $sessionData['fullname'] = $user->getFullName();
+                $sessionData['status'] = $user->status;
+                if ($user->status === 'pending') {
+                    if ($user->created_at < Carbon::now()->subWeek()) {
+                        $sessionData['account_expired'] = TRUE;
+                    }
+                }
 
                 $this->session->enableForceNew()->start($sessionData);
 
@@ -768,6 +780,12 @@ class LoginAPIController extends IntermediateBaseController
             $sessionData['fullname'] = $user->getFullName();
             $sessionData['visited_location'] = [];
             $sessionData['coupon_location'] = [];
+            $sessionData['status'] = $user->status;
+            if ($user->status === 'pending') {
+                    if ($user->created_at < Carbon::now()->subWeek()) {
+                        $sessionData['account_expired'] = TRUE;
+                    }
+                }
 
             // update the guest session data, append user data to it so the user will be recognized
             $this->session->update($sessionData);
@@ -900,6 +918,12 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['email'] = $user->user_email;
                 $sessionData['role'] = $user->role->role_name;
                 $sessionData['fullname'] = $user->getFullName();
+                $sessionData['status'] = $user->status;
+                if ($user->status === 'pending') {
+                    if ($user->created_at < Carbon::now()->subWeek()) {
+                        $sessionData['account_expired'] = TRUE;
+                    }
+                }
 
                 $this->session->update($sessionData);
             } catch (Exception $e) {
@@ -910,6 +934,12 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['email'] = $user->user_email;
                 $sessionData['role'] = $user->role->role_name;
                 $sessionData['fullname'] = $user->getFullName();
+                $sessionData['status'] = $user->status;
+                if ($user->status === 'pending') {
+                    if ($user->created_at < Carbon::now()->subWeek()) {
+                        $sessionData['account_expired'] = TRUE;
+                    }
+                }
                 $this->session->enableForceNew()->start($sessionData);
             }
 

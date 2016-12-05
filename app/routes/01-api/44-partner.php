@@ -10,3 +10,11 @@ Route::post('/api/v1/partner/new', function()
 {
     return PartnerAPIController::create()->postNewPartner();
 });
+
+/**
+ * Get search partner
+ */
+Route::get('/api/v1/partner/list', function()
+{
+    return PartnerAPIController::create()->getSearchPartner();
+});
