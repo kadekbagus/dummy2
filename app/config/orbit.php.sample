@@ -4635,10 +4635,28 @@ return array(
                 'object_type' => 'Category',
                 'parameter_name' => 'category_id'
             ),
-            // - User clicks on grab button in mall page. Use location_id and location_name for storing mall, and 'Mall' in notes.
+            // - User clicks on grab button in mall page.
             '92' => array(
                 'name' => 'click_grab',
                 'name_long' => 'Click Grab',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks OK to confirm grab.
+            '93' => array(
+                'name' => 'click_grab_confirm_ok',
+                'name_long' => 'Click Grab Confirmation OK',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks Cancel to confirm grab.
+            '94' => array(
+                'name' => 'click_grab_confirm_canceled',
+                'name_long' => 'Click Grab Confirmation Cancel',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => null,
