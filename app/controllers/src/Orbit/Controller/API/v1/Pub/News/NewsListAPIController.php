@@ -186,14 +186,14 @@ class NewsListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($news, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                if ($category_id === 'mall') {
-                    $news = $news->where(DB::raw("m.object_type"), $category_id);
+                if (in_array("mall", $category_id)) {
+                    $news = $news->whereIn(DB::raw("m.object_type"), $category_id);
                 } else {
                     $news = $news->leftJoin('category_merchant as cm', function($q) {
                                     $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
                                     $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
                                 })
-                        ->where(DB::raw('cm.category_id'), $category_id);
+                        ->whereIn(DB::raw('cm.category_id'), $category_id);
                 }
             });
 
