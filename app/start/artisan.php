@@ -107,6 +107,9 @@ Artisan::add(new CreateUserCommand);
 // Update category image
 Artisan::add(new CategoryImageCommand);
 
+// Create Partner Link
+Artisan::add(new CreatePartnerLinkCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
