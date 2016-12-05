@@ -67,11 +67,6 @@ class ActivationAPIController extends IntermediateBaseController
             if(! $this->saveAsAuto) {
                 $activityNameLong = 'Account Activation';
                 $tokenValue = trim(OrbitInput::post('token', null));
-                $password = OrbitInput::post('password');
-                $password2 = OrbitInput::post('password_confirmation');
-                $gender = OrbitInput::post('gender');
-                $birthdate = OrbitInput::post('birthdate');
-                $email = trim(OrbitInput::post('email'));
 
                 // check the token first
                 $token = Token::active()
@@ -93,25 +88,12 @@ class ActivationAPIController extends IntermediateBaseController
                 $validator = Validator::make(
                     array(
                         'token'                 => $tokenValue,
-                        'password'              => $password,
-                        'password_confirmation' => $password2,
-                        'date_of_birth'         => $birthdate,
-                        'gender'                => $gender,
                     ),
                     array(
                         'token'                 => 'required|orbit_activation_empty_token',
-                        'password_confirmation' => 'required|min:6',
-                        'password'              => 'required|min:6|confirmed',
-                        'date_of_birth'         => 'required|date|date_format:d-m-Y|before:' . $current_date,
-                        'gender'                => 'required|in:m,f',
                     ),
                     array(
                         'orbit_activation_empty_token' => Lang::get('validation.orbit.empty.token'),
-                        'date_of_birth.date' => Lang::get('validation.orbit.formaterror.date.invalid_date'),
-                        'date_of_birth.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),
-                        'date_of_birth.before' => Lang::get('validation.orbit.formaterror.date.cannot_future_date'),
-                        'password_confirmation.min' => Lang::get('validation.orbit.formaterror.min'),
-                        'password.confirmed' => Lang::get('validation.orbit.formaterror.confirmed_password'),
                     )
                 );
 
@@ -122,14 +104,11 @@ class ActivationAPIController extends IntermediateBaseController
                 }
 
                 $token = $this->tokenObject;
-                $user = User::with('userdetail')
-                            ->excludeDeleted()
+                $user = User::excludeDeleted()
                             ->where('user_id', $token->user_id)
                             ->first();
 
-                $userDetail = UserDetail::where('user_id', '=', $token->user_id)->first();
-
-                if (! is_object($token) || ! is_object($user) || ! is_object($userDetail)) {
+                if (! is_object($token) || ! is_object($user)) {
                     $message = Lang::get('validation.orbit.access.loginfailed');
                     ACL::throwAccessForbidden($message);
                 }
@@ -138,17 +117,8 @@ class ActivationAPIController extends IntermediateBaseController
                 $token->status = 'deleted';
                 $token->save();
 
-                // Update user password and activate them
-                if (! empty($password)) {
-                    $user->user_password = Hash::make($password);
-                }
-
                 $user->status = 'active';
                 $user->save();
-
-                $userDetail->gender = $gender;
-                $userDetail->birthdate = date("Y-m-d", strtotime($birthdate)); // format date in database is Y-m-d
-                $userDetail->save();
             } else {
                 $from = $this->socialFrom;
                 $activityNameLong = sprintf('Auto Account Activation from %s', ucfirst($from));
