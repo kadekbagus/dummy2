@@ -193,7 +193,7 @@ class CouponListAPIController extends PubControllerAPI
                             ->leftJoin('media', function ($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
-                            })                            
+                            })
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
                             ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.link_object_id"), '=', 'promotions.promotion_id')
                             ->leftJoin('media as advert_media', function ($q) {
@@ -238,14 +238,14 @@ class CouponListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                if ($category_id === 'mall') {
-                    $coupons = $coupons->where(DB::raw("t.object_type"), $category_id);
+                if (in_array("mall", $category_id)) {
+                    $coupons = $coupons->whereIn(DB::raw("t.object_type"), $category_id);
                 } else {
                     $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
                                     $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("t.merchant_id"));
                                     $q->on(DB::raw("t.object_type"), '=', DB::raw("'tenant'"));
                                 })
-                        ->where(DB::raw('cm.category_id'), $category_id);
+                        ->whereIn(DB::raw('cm.category_id'), $category_id);
                 }
             });
 
