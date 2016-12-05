@@ -189,6 +189,8 @@ class PartnerAPIController extends ControllerAPI
 
             Event::fire('orbit.partner.postnewpartner.after.save', array($this, $newPartner));
 
+            Event::fire('orbit.partner.postnewpartner.after.save2', array($this, $newPartner));
+
             $this->response->data = $newPartner;
 
             // Commit the changes
