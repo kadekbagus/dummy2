@@ -189,6 +189,8 @@ class PartnerAPIController extends ControllerAPI
 
             Event::fire('orbit.partner.postnewpartner.after.save', array($this, $newPartner));
 
+            Event::fire('orbit.partner.postnewpartner.after.save2', array($this, $newPartner));
+
             $this->response->data = $newPartner;
 
             // Commit the changes
@@ -288,6 +290,332 @@ class PartnerAPIController extends ControllerAPI
 
         return $this->render($httpCode);
     }
+
+    /**
+     * POST - Update Partner
+     *
+     * @author firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string    `partner_id`            (optional) - Id Partner
+     * @param string    `partner_name`          (optional) - name of partner
+     * @param string    `description`           (optional) - description
+     * @param string    `city`                  (optional) - city
+     * @param string    `province`              (optional) - province
+     * @param string    `postal_code`           (optional) - postal_code
+     * @param string    `country_id`            (optional) - country_id
+     * @param string    `phone`                 (optional) - phone
+     * @param string    `url`                   (optional) - url
+     * @param string    `note`                  (optional) - note
+     * @param string    `contact_firstname`     (optional) - contact_firstname
+     * @param string    `contact_lastname`      (optional) - contact_lastname
+     * @param string    `contact_position`      (optional) - contact_position
+     * @param string    `contact_phone`         (optional) - contact_phone
+     * @param string    `contact_email`         (optional) - contact_email
+     * @param datetime  `start_date`            (optional) - start date
+     * @param datetime  `end_date`              (optional) - end date
+     * @param string    `status`                (optional) - active, inactive
+     * @param char      `is_shown_in_filter`    (optional) - shown in filter GTM or not, default Y
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+
+    public function postUpdatePartner()
+    {
+        $activity = Activity::portal()
+                           ->setActivityType('update');
+
+        $user = NULL;
+        $updatedpartner = NULL;
+        try {
+            $httpCode=200;
+
+            Event::fire('orbit.partner.postupdatepartner.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.partner.postupdatepartner.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.partner.postupdatepartner.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->partnerModifiyRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.partner.postupdatepartner.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $partner_id = OrbitInput::post('partner_id');
+            $partner_name = OrbitInput::post('partner_name');
+            $description = OrbitInput::post('description');
+            $address = OrbitInput::post('address');
+            $city = OrbitInput::post('city');
+            $province = OrbitInput::post('province');
+            $postal_code = OrbitInput::post('postal_code');
+            $country_id = OrbitInput::post('country_id');
+            $phone = OrbitInput::post('phone');
+            $partner_url = OrbitInput::post('partner_url');
+            $note = OrbitInput::post('note');
+            $contact_firstname = OrbitInput::post('contact_firstname');
+            $contact_lastname = OrbitInput::post('contact_lastname');
+            $contact_position = OrbitInput::post('contact_position');
+            $contact_phone = OrbitInput::post('contact_phone');
+            $contact_email = OrbitInput::post('contact_email');
+            $start_date = OrbitInput::post('start_date');
+            $end_date = OrbitInput::post('end_date');
+            $status = OrbitInput::post('status');
+            $is_shown_in_filter = OrbitInput::post('is_shown_in_filter', 'Y');
+            $deeplink_url = OrbitInput::post('deeplink_url');
+            $social_media_id = OrbitInput::post('social_media_id');
+            $social_media_uri = OrbitInput::post('social_media_uri');
+
+            $validator = Validator::make(
+                array(
+                    'partner_name'        => $partner_name,
+                    'start_date'          => $start_date,
+                    'end_date'            => $end_date,
+                    'status'              => $status,
+                    'address'             => $address,
+                    'city'                => $city,
+                    'country_id'          => $country_id,
+                    'phone'               => $phone,
+                    'contact_firstname'   => $contact_firstname,
+                    'contact_lastname'    => $contact_lastname,
+                ),
+                array(
+                    'partner_name'        => 'required',
+                    'start_date'          => 'required|date|orbit.empty.hour_format',
+                    'end_date'            => 'required|date|orbit.empty.hour_format',
+                    'status'              => 'required|in:active,inactive',
+                    'address'             => 'required',
+                    'city'                => 'required',
+                    'country_id'          => 'required',
+                    'phone'               => 'required',
+                    'contact_firstname'   => 'required',
+                    'contact_lastname'    => 'required',
+                )
+            );
+
+            Event::fire('orbit.partner.postupdatepartner.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.partner.postupdatepartner.after.validation', array($this, $validator));
+
+            $prefix = DB::getTablePrefix();
+
+            $updatedpartner = Partner::excludeDeleted()->where('partner_id', $partner_id)->first();
+
+            // update Partner
+            OrbitInput::post('partner_name', function($partner_name) use ($updatedpartner) {
+                $updatedpartner->partner_name = $partner_name;
+            });
+
+            OrbitInput::post('address', function($address) use ($updatedpartner) {
+                $updatedpartner->address = $address;
+            });
+
+            OrbitInput::post('city', function($city) use ($updatedpartner) {
+                $updatedpartner->city = $city;
+            });
+
+            OrbitInput::post('province', function($province) use ($updatedpartner) {
+                $updatedpartner->province = $province;
+            });
+
+            OrbitInput::post('postal_code', function($postal_code) use ($updatedpartner) {
+                $updatedpartner->postal_code = $postal_code;
+            });
+
+            OrbitInput::post('country_id', function($country_id) use ($updatedpartner) {
+                $updatedpartner->country_id = $country_id;
+            });
+
+            OrbitInput::post('phone', function($phone) use ($updatedpartner) {
+                $updatedpartner->phone = $phone;
+            });
+
+            OrbitInput::post('partner_url', function($partner_url) use ($updatedpartner) {
+                $updatedpartner->partner_url = $partner_url;
+            });
+
+            OrbitInput::post('note', function($note) use ($updatedpartner) {
+                $updatedpartner->note = $note;
+            });
+
+            OrbitInput::post('contact_firstname', function($contact_firstname) use ($updatedpartner) {
+                $updatedpartner->contact_firstname = $contact_firstname;
+            });
+
+            OrbitInput::post('contact_lastname', function($contact_lastname) use ($updatedpartner) {
+                $updatedpartner->contact_lastname = $contact_lastname;
+            });
+
+            OrbitInput::post('contact_position', function($contact_position) use ($updatedpartner) {
+                $updatedpartner->contact_position = $contact_position;
+            });
+
+            OrbitInput::post('contact_phone', function($contact_phone) use ($updatedpartner) {
+                $updatedpartner->contact_phone = $contact_phone;
+            });
+
+            OrbitInput::post('contact_email', function($contact_email) use ($updatedpartner) {
+                $updatedpartner->contact_email = $contact_email;
+            });
+
+            OrbitInput::post('start_date', function($start_date) use ($updatedpartner) {
+                $updatedpartner->start_date = $start_date;
+            });
+
+            OrbitInput::post('end_date', function($end_date) use ($updatedpartner) {
+                $updatedpartner->end_date = $end_date;
+            });
+
+            OrbitInput::post('status', function($status) use ($updatedpartner) {
+                $updatedpartner->status = $status;
+            });
+
+            OrbitInput::post('is_shown_in_filter', function($is_shown_in_filter) use ($updatedpartner) {
+                $updatedpartner->is_shown_in_filter = $is_shown_in_filter;
+            });
+
+            OrbitInput::post('deeplink_url', function($deeplink_url) use ($updatedpartner) {
+                // $updatedpartner->deeplink_url = $deeplink_url;
+            });
+
+            OrbitInput::post('social_media_id', function($social_media_id) use ($updatedpartner) {
+                // $updatedpartner->social_media_id = $social_media_id;
+            });
+
+            OrbitInput::post('social_media_uri', function($social_media_uri) use ($updatedpartner) {
+                // $updatedpartner->social_media_uri = $social_media_uri;
+            });
+
+            // $updatedpartner->modified_by = $this->api->user->user_id;
+            $updatedpartner->save();
+
+            Event::fire('orbit.partner.postupdatepartner.after.save', array($this, $updatedpartner));
+            $this->response->data = $updatedpartner;
+
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Update
+            $activityNotes = sprintf('Partner updated: %s', $updatedpartner->partner_name);
+            $activity->setUser($user)
+                    ->setActivityName('update_partner')
+                    ->setActivityNameLong('Update Partner OK')
+                    ->setObject($updatedpartner)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.partner.postupdatepartner.after.commit', array($this, $updatedpartner, $tempContent->temporary_content_id));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.partner.postupdatepartner.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_partner')
+                    ->setActivityNameLong('Update Partner Failed')
+                    ->setObject($updatedpartner)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.partner.postupdatepartner.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_partner')
+                    ->setActivityNameLong('Update Partner Failed')
+                    ->setObject($updatedpartner)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.partner.postupdatepartner.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_partner')
+                    ->setActivityNameLong('Update Partner Failed')
+                    ->setObject($updatedpartner)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.partner.postupdatepartner.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Failed Update
+            $activity->setUser($user)
+                    ->setActivityName('update_partner')
+                    ->setActivityNameLong('Update Partner Failed')
+                    ->setObject($updatedpartner)
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save activity
+        $activity->save();
+
+        return $this->render($httpCode);
+    }
+
 
     /**
      * GET - Search Partner
