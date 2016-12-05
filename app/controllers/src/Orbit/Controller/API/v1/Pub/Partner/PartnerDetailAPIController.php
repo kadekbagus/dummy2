@@ -112,7 +112,7 @@ class PartnerDetailAPIController extends PubControllerAPI
             $this->response->message = 'Request OK';
 
             $activity->setUser($user)
-                ->setActivityName('view_partner_info')
+                ->setActivityName('view_partner')
                 ->setActivityNameLong('View Partner')
                 ->setObject($partner)
                 ->setModuleName('Partner')
