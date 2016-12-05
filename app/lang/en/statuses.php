@@ -129,6 +129,11 @@ return array(
                 'main'          => 'Membership image has been successfully uploaded.',
                 'delete_image'  => 'Membership image has been successfully deleted.'
             ),
+            'partner' => array(
+                'main'          => 'Partner image has been successfully uploaded.',
+                'logo'          => 'Partner logo has been successfully uploaded.',
+                'delete_image'  => 'Partner image has been successfully deleted.'
+            ),
         ),
         'activate'   => array(
             'account'  => 'Your account has been successfully activate.'
