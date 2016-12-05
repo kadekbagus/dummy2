@@ -186,6 +186,7 @@ class BaseAPIController extends ControllerAPI
             $sessionData['guest_email'] = $user->user_email;
             $sessionData['role'] = $user->role->role_name;
             $sessionData['fullname'] = '';
+            $sessionData['status'] = $user->status;
 
             $session->update($sessionData);
 
