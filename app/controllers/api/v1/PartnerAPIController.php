@@ -16,31 +16,277 @@ use \Orbit\Helper\Exception\OrbitCustomException;
 class PartnerAPIController extends ControllerAPI
 {
     protected $viewPartnerRoles = ['super admin', 'mall admin', 'mall owner'];
+    protected $modifyPartnerRoles = ['super admin', 'mall admin', 'mall owner'];
     protected $returnBuilder = FALSE;
 
-	/**
+    /**
      * POST - Create New Partner
      *
      * @author kadek <kadek@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param char      `link_object_id`        (optional) - Object type. Valid value: promotion, advert.
-     * @param char      `advert_link_id`        (required) - Advert link to
-     * @param string    `advert_placement_id`   (required) - Status. Valid value: active, inactive, deleted.
-     * @param string    `advert_name`           (optional) - name of advert
-     * @param string    `link_url`              (optional) - Can be empty
-     * @param datetime  `start_date`            (optional) - Start date
-     * @param datetime  `end_date`              (optional) - End date
-     * @param string    `notes`                 (optional) - Description
-     * @param string    `status`                (optional) - active, inactive, deleted
-     * @param array     `locations`             (optional) - Location of multiple mall or gtm
+     * @param string    `partner_name`          (optional) - name of partner
+     * @param string    `description`           (optional) - description
+     * @param string    `city`                  (optional) - city
+     * @param string    `province`              (optional) - province
+     * @param string    `postal_code`           (optional) - postal_code
+     * @param string    `country_id`            (optional) - country_id
+     * @param string    `phone`                 (optional) - phone
+     * @param string    `url`                   (optional) - url
+     * @param string    `note`                  (optional) - note
+     * @param string    `contact_firstname`     (optional) - contact_firstname
+     * @param string    `contact_lastname`      (optional) - contact_lastname
+     * @param string    `contact_position`      (optional) - contact_position
+     * @param string    `contact_phone`         (optional) - contact_phone
+     * @param string    `contact_email`         (optional) - contact_email
+     * @param datetime  `start_date`            (optional) - start date
+     * @param datetime  `end_date`              (optional) - end date
+     * @param string    `status`                (optional) - active, inactive
+     * @param char      `is_shown_in_filter`    (optional) - shown in filter GTM or not, default Y
      *
      * @return Illuminate\Support\Facades\Response
      */
     public function postNewPartner()
     {
+        $activity = Activity::portal()
+                    ->setActivityType('create');
 
+        $user = NULL;
+        $newpartner = NULL;
+
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.partner.postnewpartner.before.auth', array($this));
+
+            $this->checkAuth();
+
+            Event::fire('orbit.partner.postnewpartner.after.auth', array($this));
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.partner.postnewpartner.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->modifyPartnerRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.partner.postnewpartner.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $partner_name = OrbitInput::post('partner_name');
+            $description = OrbitInput::post('description');
+            $address = OrbitInput::post('address');
+            $city = OrbitInput::post('city');
+            $province = OrbitInput::post('province');
+            $postal_code = OrbitInput::post('postal_code');
+            $country_id = OrbitInput::post('country_id');
+            $phone = OrbitInput::post('phone');
+            $partner_url = OrbitInput::post('partner_url');
+            $note = OrbitInput::post('note');
+            $contact_firstname = OrbitInput::post('contact_firstname');
+            $contact_lastname = OrbitInput::post('contact_lastname');
+            $contact_position = OrbitInput::post('contact_position');
+            $contact_phone = OrbitInput::post('contact_phone');
+            $contact_email = OrbitInput::post('contact_email');
+            $start_date = OrbitInput::post('start_date');
+            $end_date = OrbitInput::post('end_date');
+            $status = OrbitInput::post('status');
+            $is_shown_in_filter = OrbitInput::post('is_shown_in_filter', 'Y');
+            $deeplink_url = OrbitInput::post('deeplink_url');
+            $social_media_id = OrbitInput::post('social_media_id');
+            $social_media_uri = OrbitInput::post('social_media_uri');
+
+            $validator = Validator::make(
+                array(
+                    'partner_name'        => $partner_name,
+                    'start_date'          => $start_date,
+                    'end_date'            => $end_date,
+                    'status'              => $status,
+                    'address'             => $address,
+                    'city'                => $city,
+                    'country_id'          => $country_id,
+                    'phone'               => $phone,
+                    'contact_firstname'   => $contact_firstname,
+                    'contact_lastname'    => $contact_lastname,
+                ),
+                array(
+                    'partner_name'        => 'required',
+                    'start_date'          => 'required|date|orbit.empty.hour_format',
+                    'end_date'            => 'required|date|orbit.empty.hour_format',
+                    'status'              => 'required|in:active,inactive',
+                    'address'             => 'required',
+                    'city'                => 'required',
+                    'country_id'          => 'required',
+                    'phone'               => 'required',
+                    'contact_firstname'   => 'required',
+                    'contact_lastname'    => 'required',
+                )
+            );
+
+            Event::fire('orbit.partner.postnewpartner.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            $this->beginTransaction();
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            Event::fire('orbit.partner.postnewpartner.after.validation', array($this, $validator));
+
+            $newPartner = new Partner();
+            $newPartner->partner_name = $partner_name;
+            $newPartner->description = $description;
+            $newPartner->address = $address;
+            $newPartner->city = $city;
+            $newPartner->province = $province;
+            $newPartner->postal_code = $postal_code;
+            $newPartner->country_id = $country_id;
+            $newPartner->phone = $phone;
+            $newPartner->url = $partner_url;
+            $newPartner->note = $note;
+            $newPartner->contact_firstname = $contact_firstname;
+            $newPartner->contact_lastname = $contact_lastname;
+            $newPartner->contact_position = $contact_position;
+            $newPartner->contact_phone = $contact_phone;
+            $newPartner->contact_email = $contact_email;
+            $newPartner->start_date = $start_date;
+            $newPartner->end_date = $end_date;
+            $newPartner->status = $status;
+            $newPartner->is_shown_in_filter = $is_shown_in_filter;
+
+            Event::fire('orbit.partner.postnewpartner.before.save', array($this, $newPartner));
+
+            $newPartner->save();
+
+            if (!empty($deeplink_url) ) {
+                $newDeepLink = new DeepLink();
+                $newDeepLink->object_id = $newPartner->partner_id;
+                $newDeepLink->object_type = 'partner';
+                $newDeepLink->deeplink_url = $deeplink_url;
+                $newDeepLink->status = 'active';
+                $newDeepLink->save();
+            }
+
+            if (!empty($social_media_id) && !empty($social_media_uri)) {
+                $newObjectSocialMedia = new ObjectSocialMedia();
+                $newObjectSocialMedia->object_id = $newPartner->partner_id;
+                $newObjectSocialMedia->object_type = 'partner';
+                $newObjectSocialMedia->social_media_id = $social_media_id;
+                $newObjectSocialMedia->social_media_uri = $social_media_uri;
+                $newObjectSocialMedia->save();
+            }
+
+            Event::fire('orbit.partner.postnewpartner.after.save', array($this, $newPartner));
+
+            $this->response->data = $newPartner;
+
+            // Commit the changes
+            $this->commit();
+
+            // Successfull Creation
+            $activityNotes = sprintf('partner Created: %s', $newPartner->partner_name);
+            $activity->setUser($user)
+                    ->setActivityName('create_partner')
+                    ->setActivityNameLong('Create partner OK')
+                    ->setObject($newPartner)
+                    ->setNotes($activityNotes)
+                    ->responseOK();
+
+            Event::fire('orbit.partner.postnewpartner.after.commit', array($this, $newPartner));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.partner.postnewpartner.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_partner')
+                    ->setActivityNameLong('Create partner Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.partner.postnewpartner.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_partner')
+                    ->setActivityNameLong('Create partner Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (QueryException $e) {
+            Event::fire('orbit.partner.postnewpartner.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_partner')
+                    ->setActivityNameLong('Create partner Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        } catch (Exception $e) {
+            Event::fire('orbit.partner.postnewpartner.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_partner')
+                    ->setActivityNameLong('Create partner Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+        }
+
+        // Save the activity
+        $activity->save();
+
+        return $this->render($httpCode);
     }
 
     /**
@@ -359,5 +605,23 @@ class PartnerAPIController extends ControllerAPI
         $this->returnBuilder = $bool;
 
         return $this;
+    }
+
+    protected function registerCustomValidation()
+    {
+
+        // Validate the time format for over 23 hour
+        Validator::extend('orbit.empty.hour_format', function ($attribute, $value, $parameters) {
+            // explode the format Y-m-d H:i:s
+            $dateTimeExplode = explode(' ', $value);
+            // explode the format H:i:s
+            $timeExplode = explode(':', $dateTimeExplode[1]);
+            // get the Hour format
+            if($timeExplode[0] > 23){
+                return false;
+            }
+
+            return true;
+        });
     }
 }
