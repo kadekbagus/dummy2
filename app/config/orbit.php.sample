@@ -355,6 +355,12 @@ return array(
             'max_record'    => 100,
         ),
 
+        // Advert
+        'advert' => array(
+            'per_page'      => 10,
+            'max_record'    => 20,
+        ),
+
         // Country
         'country' => array(
             'per_page'      => 300,
@@ -557,6 +563,12 @@ return array(
         'coupon_location' => array(
             'per_page'      => 50,
             'max_record'    => 200,
+        ),
+
+        // Partner
+        'partner' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
         ),
     ),
 
