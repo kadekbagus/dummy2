@@ -194,7 +194,7 @@ class StoreAPIController extends PubControllerAPI
             OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
                 $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', 'merchants.merchant_id')
-                    ->where(DB::raw("cm.category_id"), $category_id);
+                    ->whereIn(DB::raw("cm.category_id"), $category_id);
             });
 
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
