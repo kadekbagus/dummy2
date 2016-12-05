@@ -3633,7 +3633,7 @@ return array(
                 'file_size'     => 9000000,
 
                 // The target path which file to be stored
-                'path'          => 'uploads/base_store/logo',
+                'path'          => 'uploads/partner/logo',
 
                 // Default HTML element name
                 'name'          => 'logo',
@@ -3701,10 +3701,10 @@ return array(
                 'file_size'     => 90000,
 
                 // The target path which file to be stored
-                'path'          => 'uploads/base_store/pictures',
+                'path'          => 'uploads/partner/images',
 
                 // Default HTML element name
-                'name'          => 'pictures',
+                'name'          => 'images',
 
                 // Force create directory when not exists
                 'create_directory'  => TRUE,
