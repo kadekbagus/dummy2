@@ -18,6 +18,7 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Orbit\Helper\Net\GuestUserGenerator;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\AppOriginProcessor;
+use Carbon\Carbon;
 
 class IntermediateLoginController extends IntermediateBaseController
 {
@@ -808,9 +809,11 @@ class IntermediateLoginController extends IntermediateBaseController
                     $this->session->remove('visited_location');
                     $this->session->remove('coupon_location');
                     $this->session->remove('login_from');
+                    $this->session->remove('account_expired');
                     $sessionData = $this->session->read(NULL);
                     $sessionData['fullname'] = '';
                     $sessionData['role'] = $guestUser->role->role_name;
+                    $sessionData['status'] = $guestUser->status;
 
                     $this->session->update($sessionData);
                 } else {
@@ -879,11 +882,50 @@ class IntermediateLoginController extends IntermediateBaseController
                 $sessionData['guest_email'] = $guest->user_email;
                 $sessionData['role'] = $guest->role->role_name;
                 $sessionData['fullname'] = '';
+                $sessionData['status'] = $guest->status;
 
                 $this->session->update($sessionData);
             }
 
             $response->data = $this->session->getSession();
+
+            if (! isset($response->data->value['status']) || empty($response->data->value['status'])) {
+                $response->data->value['status'] = null;
+                if (strtolower($response->data->value['role']) === 'guest') {
+                    $response->data->value['status'] = 'pending';
+                } elseif (strtolower($response->data->value['role']) === 'consumer') {
+                    $user = User::excludeDeleted()
+                        ->where('user_id', $response->data->value['user_id'])
+                        ->first();
+
+                    if (is_object($user)) {
+                        $response->data->value['status'] = $user->status;
+                    }
+                }
+
+                $sessionData = $this->session->read(NULL);
+                $sessionData['status'] = $response->data->value['status'];
+                $this->session->update($sessionData);
+            } elseif ($response->data->value['status'] === 'pending') {
+                if (strtolower($response->data->value['role']) === 'consumer') {
+                    $user = User::where('status', 'pending')
+                        ->where('user_id', $response->data->value['user_id'])
+                        ->where('created_at', '<', Carbon::now()->subWeek())
+                        ->first();
+
+                    if (is_object($user)) {
+                        $response->data->value['account_expired'] = TRUE;
+
+                        $sessionData = $this->session->read(NULL);
+                        $sessionData['account_expired'] = $response->data->value['account_expired'];
+                        $this->session->update($sessionData);
+                    }
+                }
+            }
+
+            if (strtolower($response->data->value['role']) === 'consumer') {
+
+            }
 
             unset($response->data->userAgent);
             unset($response->data->ipAddress);
@@ -906,6 +948,7 @@ class IntermediateLoginController extends IntermediateBaseController
                 $sessionData['guest_email'] = $guest->user_email;
                 $sessionData['role'] = $guest->role->role_name;
                 $sessionData['fullname'] = '';
+                $sessionData['status'] = $guest->status;
 
                 $this->session->update($sessionData);
                 $response->data = $this->session->getSession();

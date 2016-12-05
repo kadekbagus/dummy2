@@ -355,6 +355,12 @@ return array(
             'max_record'    => 100,
         ),
 
+        // Advert
+        'advert' => array(
+            'per_page'      => 10,
+            'max_record'    => 20,
+        ),
+
         // Country
         'country' => array(
             'per_page'      => 300,
@@ -557,6 +563,12 @@ return array(
         'coupon_location' => array(
             'per_page'      => 50,
             'max_record'    => 200,
+        ),
+
+        // Partner
+        'partner' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
         ),
     ),
 
@@ -4622,6 +4634,33 @@ return array(
                 'type' => 'click',
                 'object_type' => 'Category',
                 'parameter_name' => 'category_id'
+            ),
+            // - User clicks on grab button in mall page.
+            '92' => array(
+                'name' => 'click_grab',
+                'name_long' => 'Click Grab',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks OK to confirm grab.
+            '93' => array(
+                'name' => 'click_grab_confirm_ok',
+                'name_long' => 'Click Grab Confirmation OK',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks Cancel to confirm grab.
+            '94' => array(
+                'name' => 'click_grab_confirm_canceled',
+                'name_long' => 'Click Grab Confirmation Cancel',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
             ),
         ),
     ),

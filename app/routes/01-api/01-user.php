@@ -212,3 +212,13 @@ Route::get(
         return Orbit\Controller\API\v1\Pub\ResetPasswordAPIController::create()->getCheckActivationToken();
     }]
 )->where('prefix', '(api|app)');
+
+/**
+ * Route for checking activation token already activate or not
+ */
+Route::post(
+    '/{prefix}/v1/pub/user/resend-activation-email', ['as' => 'pub-resend-activation-email', function()
+    {
+        return Orbit\Controller\API\v1\Pub\ActivationResendEmailAPIController::create()->postResendActivationLink();
+    }]
+)->where('prefix', '(api|app)');
