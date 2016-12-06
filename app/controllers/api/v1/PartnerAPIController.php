@@ -44,6 +44,7 @@ class PartnerAPIController extends ControllerAPI
      * @param datetime  `end_date`              (optional) - end date
      * @param string    `status`                (optional) - active, inactive
      * @param char      `is_shown_in_filter`    (optional) - shown in filter GTM or not, default Y
+     * @param char      `is_visible`            (optional) - visible on list gtm or not, default Y
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -100,6 +101,7 @@ class PartnerAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $status = OrbitInput::post('status');
             $is_shown_in_filter = OrbitInput::post('is_shown_in_filter', 'Y');
+            $is_visible = OrbitInput::post('is_visible', 'Y');
             $deeplink_url = OrbitInput::post('deeplink_url');
             $social_media_id = OrbitInput::post('social_media_id');
             $social_media_uri = OrbitInput::post('social_media_uri');
@@ -164,6 +166,7 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->end_date = $end_date;
             $newPartner->status = $status;
             $newPartner->is_shown_in_filter = $is_shown_in_filter;
+            $newPartner->is_visible = $is_visible;
 
             Event::fire('orbit.partner.postnewpartner.before.save', array($this, $newPartner));
 
@@ -317,6 +320,7 @@ class PartnerAPIController extends ControllerAPI
      * @param datetime  `end_date`              (optional) - end date
      * @param string    `status`                (optional) - active, inactive
      * @param char      `is_shown_in_filter`    (optional) - shown in filter GTM or not, default Y
+     * @param char      `is_visible`            (optional) - visible on list gtm or not, default Y
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -483,6 +487,10 @@ class PartnerAPIController extends ControllerAPI
 
             OrbitInput::post('is_shown_in_filter', function($is_shown_in_filter) use ($updatedpartner) {
                 $updatedpartner->is_shown_in_filter = $is_shown_in_filter;
+            });
+
+            OrbitInput::post('is_visible', function($is_visible) use ($updatedpartner) {
+                $updatedpartner->is_visible = $is_visible;
             });
 
             OrbitInput::post('deeplink_url', function($deeplink_url) use ($updatedpartner, $partner_id) {
