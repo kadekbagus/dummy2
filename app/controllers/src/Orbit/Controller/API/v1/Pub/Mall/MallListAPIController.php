@@ -156,6 +156,19 @@ class MallListAPIController extends PubControllerAPI
 
             }
 
+            if (!$searchFlag) {
+                $mallIds = implode('", "', Config::get('orbit.featured.mall_ids'));
+                $withscore = '"_score",';
+                $filterKeyword = '"query":{
+                                   "bool": {
+                                      "should": [
+                                        {"terms": {"_id": ["' . $mallIds . '"]}},
+                                        {"match_all": {}}
+                                      ]
+                                    }
+                                 },';
+            }
+
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
             $json_area = '{

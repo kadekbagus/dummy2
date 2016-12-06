@@ -4890,5 +4890,9 @@ return array(
         // Update the campaign spending by recalculating
         // the campaign cost using artisan
         'update_spending_on_artisan' => TRUE
+    ],
+
+    'featured' => [
+        'mall_ids' => []
     ]
 );
