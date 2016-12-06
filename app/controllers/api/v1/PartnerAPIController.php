@@ -44,6 +44,7 @@ class PartnerAPIController extends ControllerAPI
      * @param datetime  `end_date`              (optional) - end date
      * @param string    `status`                (optional) - active, inactive
      * @param char      `is_shown_in_filter`    (optional) - shown in filter GTM or not, default Y
+     * @param char      `is_visible`            (optional) - visible on list gtm or not, default Y
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -100,6 +101,7 @@ class PartnerAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $status = OrbitInput::post('status');
             $is_shown_in_filter = OrbitInput::post('is_shown_in_filter', 'Y');
+            $is_visible = OrbitInput::post('is_visible', 'Y');
             $deeplink_url = OrbitInput::post('deeplink_url');
             $social_media_id = OrbitInput::post('social_media_id');
             $social_media_uri = OrbitInput::post('social_media_uri');
@@ -164,6 +166,7 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->end_date = $end_date;
             $newPartner->status = $status;
             $newPartner->is_shown_in_filter = $is_shown_in_filter;
+            $newPartner->is_visible = $is_visible;
 
             Event::fire('orbit.partner.postnewpartner.before.save', array($this, $newPartner));
 
@@ -317,6 +320,7 @@ class PartnerAPIController extends ControllerAPI
      * @param datetime  `end_date`              (optional) - end date
      * @param string    `status`                (optional) - active, inactive
      * @param char      `is_shown_in_filter`    (optional) - shown in filter GTM or not, default Y
+     * @param char      `is_visible`            (optional) - visible on list gtm or not, default Y
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -345,7 +349,7 @@ class PartnerAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->partnerModifiyRoles;
+            $validRoles = $this->modifyPartnerRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
@@ -357,25 +361,15 @@ class PartnerAPIController extends ControllerAPI
 
             $partner_id = OrbitInput::post('partner_id');
             $partner_name = OrbitInput::post('partner_name');
-            $description = OrbitInput::post('description');
-            $address = OrbitInput::post('address');
-            $city = OrbitInput::post('city');
-            $province = OrbitInput::post('province');
-            $postal_code = OrbitInput::post('postal_code');
-            $country_id = OrbitInput::post('country_id');
-            $phone = OrbitInput::post('phone');
-            $partner_url = OrbitInput::post('partner_url');
-            $note = OrbitInput::post('note');
-            $contact_firstname = OrbitInput::post('contact_firstname');
-            $contact_lastname = OrbitInput::post('contact_lastname');
-            $contact_position = OrbitInput::post('contact_position');
-            $contact_phone = OrbitInput::post('contact_phone');
-            $contact_email = OrbitInput::post('contact_email');
             $start_date = OrbitInput::post('start_date');
             $end_date = OrbitInput::post('end_date');
             $status = OrbitInput::post('status');
-            $is_shown_in_filter = OrbitInput::post('is_shown_in_filter', 'Y');
-            $deeplink_url = OrbitInput::post('deeplink_url');
+            $address = OrbitInput::post('address');
+            $city = OrbitInput::post('city');
+            $country_id = OrbitInput::post('country_id');
+            $phone = OrbitInput::post('phone');
+            $contact_firstname = OrbitInput::post('contact_firstname');
+            $contact_lastname = OrbitInput::post('contact_lastname');
             $social_media_id = OrbitInput::post('social_media_id');
             $social_media_uri = OrbitInput::post('social_media_uri');
 
@@ -452,7 +446,7 @@ class PartnerAPIController extends ControllerAPI
             });
 
             OrbitInput::post('partner_url', function($partner_url) use ($updatedpartner) {
-                $updatedpartner->partner_url = $partner_url;
+                $updatedpartner->url = $partner_url;
             });
 
             OrbitInput::post('note', function($note) use ($updatedpartner) {
@@ -495,22 +489,55 @@ class PartnerAPIController extends ControllerAPI
                 $updatedpartner->is_shown_in_filter = $is_shown_in_filter;
             });
 
-            OrbitInput::post('deeplink_url', function($deeplink_url) use ($updatedpartner) {
-                // $updatedpartner->deeplink_url = $deeplink_url;
+            OrbitInput::post('is_visible', function($is_visible) use ($updatedpartner) {
+                $updatedpartner->is_visible = $is_visible;
             });
 
-            OrbitInput::post('social_media_id', function($social_media_id) use ($updatedpartner) {
-                // $updatedpartner->social_media_id = $social_media_id;
+            OrbitInput::post('deeplink_url', function($deeplink_url) use ($updatedpartner, $partner_id) {
+                // Check update when exist and insert if not exist
+                $deepLink = DeepLink::where('object_id', $partner_id)
+                                ->where('object_type', 'partner')
+                                ->where('status', 'active')
+                                ->first();
+
+                if (! empty($deepLink)) {
+                    $deepLink->deeplink_url = $deeplink_url;
+                    $deepLink->save();
+                } else {
+                    $deepLink = new DeepLink();
+                    $deepLink->object_id = $partner_id;
+                    $deepLink->object_type = 'partner';
+                    $deepLink->deeplink_url = $deeplink_url;
+                    $deepLink->status = 'active';
+                    $deepLink->save();
+                }
             });
 
-            OrbitInput::post('social_media_uri', function($social_media_uri) use ($updatedpartner) {
-                // $updatedpartner->social_media_uri = $social_media_uri;
+            OrbitInput::post('social_media_uri', function($social_media_uri) use ($updatedpartner, $partner_id, $social_media_id, $social_media_uri) {
+                // Check update when exist and insert if not exist
+                $socialMedia = ObjectSocialMedia::where('object_id', $partner_id)
+                                ->where('object_type', 'partner')
+                                ->first();
+
+                 if (! empty($socialMedia)) {
+                    $socialMedia->social_media_id = $social_media_id;
+                    $socialMedia->social_media_uri = $social_media_uri;
+                    $socialMedia->save();
+                } else {
+                    $socialMedia = new ObjectSocialMedia();
+                    $socialMedia->object_id = $partner_id;
+                    $socialMedia->object_type = 'partner';
+                    $socialMedia->social_media_id = $social_media_id;
+                    $socialMedia->social_media_uri = $social_media_uri;
+                    $socialMedia->save();
+                }
             });
 
-            // $updatedpartner->modified_by = $this->api->user->user_id;
             $updatedpartner->save();
 
             Event::fire('orbit.partner.postupdatepartner.after.save', array($this, $updatedpartner));
+            Event::fire('orbit.partner.postupdatepartner.after.save2', array($this, $updatedpartner));
+
             $this->response->data = $updatedpartner;
 
 
@@ -526,7 +553,7 @@ class PartnerAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.partner.postupdatepartner.after.commit', array($this, $updatedpartner, $tempContent->temporary_content_id));
+            Event::fire('orbit.partner.postupdatepartner.after.commit', array($this, $updatedpartner));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.partner.postupdatepartner.access.forbidden', array($this, $e));
 
