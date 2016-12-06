@@ -87,7 +87,8 @@ class PartnerDetailAPIController extends PubControllerAPI
                     'partner_name',
                     'description',
                     'media.path as logo_url',
-                    DB::raw('image_media.path as image_url')
+                    DB::raw('image_media.path as image_url'),
+                    'deeplinks.deeplink_url'
                 )
                 ->leftJoin('media', function ($q) {
                     $q->on('media.object_id', '=', 'partners.partner_id');
@@ -99,8 +100,16 @@ class PartnerDetailAPIController extends PubControllerAPI
                     $q->on(DB::raw("image_media.object_name"), '=', DB::raw("'partner'"));
                     $q->on(DB::raw("image_media.media_name_long"), '=', DB::raw("'partner_image_orig'"));
                 })
-                ->excludeDeleted()
+                // currently there is only one deeplink for partner,
+                // should use lazy load maybe if multiple deeplink is applied
+                ->leftJoin('deeplinks', function ($q) {
+                    $q->on('deeplinks.object_id', '=', 'partners.partner_id');
+                    $q->on('deeplinks.object_type', '=', DB::raw("'partner'"));
+                    $q->on('deeplinks.status', '=', DB::raw("'active'"));
+                })
+                ->excludeDeleted('partners')
                 ->where('partner_id', $partnerId)
+                ->groupBy('partners.partner_id')
                 ->first();
 
             // Cache the result of database calls
