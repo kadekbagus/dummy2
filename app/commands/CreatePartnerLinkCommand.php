@@ -93,6 +93,8 @@ class CreatePartnerLinkCommand extends Command {
                 throw new Exception($errorMessage);
             }
 
+            DB::beginTransaction();
+
             foreach ($data as $type => $link) {
                 // validation support type
                 $validator = Validator::make(
@@ -138,20 +140,18 @@ class CreatePartnerLinkCommand extends Command {
                     }
 
                     // insert to db
-                    DB::beginTransaction();
-
                     $newpartnerlink = new ObjectPartner();
                     $newpartnerlink->partner_id = $partner_id;
                     $newpartnerlink->object_id = $object_id;
                     $newpartnerlink->object_type = $object_type[$type];
                     $newpartnerlink->save();
 
-                    DB::commit();
-
                     // print information
                     $this->info( sprintf('Partner id %s successfully link to %s with id %s.', $partner_id, $type, $object_id) );
                 }
             }
+
+            DB::commit();
         } catch (Exception $e) {
             DB::rollback();
             $this->error('Line #' . $e->getLine() . ': ' . $e->getMessage());
