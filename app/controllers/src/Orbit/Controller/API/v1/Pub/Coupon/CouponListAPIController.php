@@ -249,6 +249,30 @@ class CouponListAPIController extends PubControllerAPI
                 }
             });
 
+            OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                $coupons = $coupons->leftJoin('object_partner',function($q) use ($partner_id) {
+                            $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
+                              ->where('object_partner.object_type', '=', 'coupon')
+                              ->where('object_partner.partner_id', '=', $partner_id);
+                        })
+                        ->whereNotExists(function($query) use ($partner_id, $prefix)
+                        {
+                            $query->select('promotions.promotion_id')
+                                  ->from('promotions')
+                                  ->join('object_partner',function($q) {
+                                        $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
+                                          ->where('object_partner.object_type', '=', 'coupon');
+                                    })
+                                  ->join('partner_competitor', function($q) use ($partner_id) {
+                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id')
+                                          ->where('partner_competitor.partner_id', '=', $partner_id);
+                                    })
+                                  ->where('promotions.object_type', 'coupon')
+                                  ->groupBy('promotions.promotion_id');
+                        });
+            });
+
             // filter by city
             OrbitInput::get('location', function($location) use ($coupons, $prefix, $lat, $lon, $distance, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
@@ -382,7 +406,8 @@ class CouponListAPIController extends PubControllerAPI
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name')
+                    'sortBy' => OrbitInput::get('sortby', 'name'),
+                    'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
