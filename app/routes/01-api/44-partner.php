@@ -44,3 +44,36 @@ Route::get('/api/v1/pub/partner/detail', function()
 {
     return Orbit\Controller\API\v1\Pub\Partner\PartnerDetailAPIController::create()->getPartnerDetail();
 });
+
+
+/**
+ * Upload logo partner
+ */
+Route::post('/api/v1/partner/upload/logo', function()
+{
+    return UploadAPIController::create()->postUploadPartnerLogo();
+});
+
+/**
+ * Upload logo partner
+ */
+Route::post('/api/v1/partner/upload/image', function()
+{
+    return UploadAPIController::create()->postUploadPartnerImage();
+});
+
+/**
+ * Delete logo partner
+ */
+Route::post('/api/v1/partner/delete/logo', function()
+{
+    return UploadAPIController::create()->postDeletePartnerLogo();
+});
+
+/**
+ * Delete logo partner
+ */
+Route::post('/api/v1/partner/delete/image', function()
+{
+    return UploadAPIController::create()->postDeletePartnerImage();
+});

@@ -132,6 +132,7 @@ return array(
             'partner' => array(
                 'main'          => 'Partner image has been successfully uploaded.',
                 'logo'          => 'Partner logo has been successfully uploaded.',
+                'delete_logo'   => 'Partner logo has been successfully deleted.',
                 'delete_image'  => 'Partner image has been successfully deleted.'
             ),
         ),
