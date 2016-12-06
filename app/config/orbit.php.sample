@@ -4892,7 +4892,10 @@ return array(
         'update_spending_on_artisan' => TRUE
     ],
 
+    // Hardcoded featured items
     'featured' => [
-        'mall_ids' => []
+        // List of malls that need to be featured (put ontop of the others)
+        'mall_ids' => [
+        ]
     ]
 );
