@@ -110,6 +110,9 @@ Artisan::add(new CategoryImageCommand);
 // Create Partner Link
 Artisan::add(new CreatePartnerLinkCommand);
 
+// Create Partner Competitor
+Artisan::add(new CreatePartnerCompetitorCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
