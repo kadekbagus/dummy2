@@ -63,14 +63,18 @@ class CreatePartnerCompetitorCommand extends Command {
             $data = $this->readJSON($fileName);
             $partner_id = $this->option('partner-id');
             $competitors = $data['competitors'];
-            $duplicate_competitors = array_count_values($competitors);
             $unique_competitors = array_unique($competitors);
 
-            foreach ($unique_competitors as $competitor_id) {
-                if ($duplicate_competitors[$competitor_id] > 1) {
-                    $errorMessage = sprintf('Partner competitor with id %s has duplicate.', $competitor_id);
-                    throw new Exception($errorMessage);
+            // duplicate competitor id validation
+            if (count($competitors) !== count($unique_competitors)) {
+                $get_duplicate = array_diff_key($competitors, $unique_competitors);
+                $errorMessage = '';
+
+                foreach ($get_duplicate as $idx => $competitor_id) {
+                    $errorMessage = $errorMessage . "\n" . sprintf('Row %s Partner competitor with id %s has duplicate.', $idx, $competitor_id);
                 }
+
+                throw new Exception($errorMessage);
             }
 
             // validatoin partner id is exists
