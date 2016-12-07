@@ -5071,5 +5071,12 @@ return array(
         // Update the campaign spending by recalculating
         // the campaign cost using artisan
         'update_spending_on_artisan' => TRUE
+    ],
+
+    // Hardcoded featured items
+    'featured' => [
+        // List of malls that need to be featured (put ontop of the others)
+        'mall_ids' => [
+        ]
     ]
 );
