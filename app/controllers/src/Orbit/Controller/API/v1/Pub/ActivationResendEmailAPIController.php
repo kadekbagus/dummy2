@@ -2,7 +2,7 @@
 /**
  * API Controller for account activation.
  *
- * @author Rio Astamal <rio@dominopos.com>
+ * @author Ahmad <ahmad@dominopos.com>
  */
 use IntermediateBaseController;
 use OrbitShop\API\v1\OrbitShopAPI;
