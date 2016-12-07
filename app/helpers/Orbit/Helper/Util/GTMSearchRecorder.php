@@ -9,6 +9,7 @@
 use Activity;
 use Category;
 use Mall;
+use Partner;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 class GTMSearchRecorder

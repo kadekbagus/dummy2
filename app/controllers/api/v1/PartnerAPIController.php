@@ -429,6 +429,10 @@ class PartnerAPIController extends ControllerAPI
                 $updatedpartner->partner_name = $partner_name;
             });
 
+            OrbitInput::post('description', function($description) use ($updatedpartner) {
+                $updatedpartner->description = $description;
+            });
+
             OrbitInput::post('address', function($address) use ($updatedpartner) {
                 $updatedpartner->address = $address;
             });
