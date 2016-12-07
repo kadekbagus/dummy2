@@ -828,7 +828,27 @@ class PartnerAPIController extends ControllerAPI
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
-                    $partners->with($relation);
+                    if ($relation === 'mediaLogoOrig') {
+                        $partners->with([$relation => function ($qLogo) {
+                            $qLogo->select(
+                                    'object_id',
+                                    'file_name',
+                                    'path',
+                                    'metadata'
+                                );
+                            }]);
+                    } else if ($relation === 'mediaImageOrig') {
+                        $partners->with([$relation => function ($qImage) {
+                            $qImage->select(
+                                    'object_id',
+                                    'file_name',
+                                    'path',
+                                    'metadata'
+                                );
+                            }]);
+                    } else {
+                        $partners->with($relation);
+                    }
                 }
             });
 
