@@ -259,6 +259,30 @@ class PromotionListAPIController extends PubControllerAPI
                 }
             });
 
+            OrbitInput::get('partner_id', function($partner_id) use ($promotions, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                $promotions = $promotions->leftJoin('object_partner',function($q) use ($partner_id) {
+                                $q->on('object_partner.object_id', '=', 'news.news_id')
+                                  ->where('object_partner.object_type', '=', 'promotion')
+                                  ->where('object_partner.partner_id', '=', $partner_id);
+                            })
+                            ->whereNotExists(function($query) use ($partner_id, $prefix)
+                            {
+                                $query->select('news.news_id')
+                                      ->from('news')
+                                      ->join('object_partner',function($q) {
+                                            $q->on('object_partner.object_id', '=', 'news.news_id')
+                                              ->where('object_partner.object_type', '=', 'promotion');
+                                        })
+                                      ->join('partner_competitor', function($q) use ($partner_id) {
+                                            $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id')
+                                              ->where('partner_competitor.partner_id', '=', $partner_id);
+                                        })
+                                      ->where('news.object_type', 'promotion')
+                                      ->groupBy('news.news_id');
+                            });
+            });
+
             // filter promotions by mall id
             OrbitInput::get('mall_id', function($mallid) use ($promotions) {
                 $promotions->where(DB::raw("m.parent_id"), '=', $mallid)
@@ -391,7 +415,8 @@ class PromotionListAPIController extends PubControllerAPI
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name')
+                    'sortBy' => OrbitInput::get('sortby', 'name'),
+                    'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);

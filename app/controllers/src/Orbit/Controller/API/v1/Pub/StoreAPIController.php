@@ -197,6 +197,30 @@ class StoreAPIController extends PubControllerAPI
                     ->whereIn(DB::raw("cm.category_id"), $category_id);
             });
 
+            OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                $store = $store->leftJoin('object_partner',function($q) {
+                            $q->on('object_partner.object_id', '=', 'merchants.merchant_id')
+                              ->where('object_partner.object_type', '=', 'store')
+                              ->where('object_partner.partner_id', '=', $partner_id);
+                        })
+                        ->whereNotExists(function($query) use ($partner_id, $prefix)
+                        {
+                            $query->select('merchants.merchant_id')
+                                  ->from('merchants')
+                                  ->join('object_partner',function($q) {
+                                        $q->on('object_partner.object_id', '=', 'merchants.merchant_id')
+                                          ->where('object_partner.object_type', '=', 'tenant');
+                                    })
+                                  ->join('partner_competitor', function($q) use ($partner_id) {
+                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id')
+                                          ->where('partner_competitor.partner_id', '=', $partner_id);
+                                    })
+                                  ->where('merchants.object_type', 'tenant')
+                                  ->groupBy('merchants.merchant_id');
+                        });
+            });
+
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
                 if (! empty($keyword)) {
@@ -326,7 +350,8 @@ class StoreAPIController extends PubControllerAPI
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name')
+                    'sortBy' => OrbitInput::get('sortby', 'name'),
+                    'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
