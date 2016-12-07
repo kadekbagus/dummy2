@@ -96,18 +96,36 @@ class UserAPIController extends PubControllerAPI
                     return TRUE;
                 });
 
+                Validator::extend('orbit_email_not_exists', function ($attribute, $value, $parameters) {
+                    $user = User::excludeDeleted()
+                        ->where('user_email', $value)
+                        ->whereHas('role', function($q) {
+                            $q->where('role_name', 'Consumer');
+                        })
+                        ->first();
+
+                    if (is_object($user)) {
+                        return TRUE;
+                    }
+
+                    return FALSE;
+                });
+
                 $validator = Validator::make(
                     array(
+                        'current_email' => OrbitInput::post('current_email', NULL),
                         'email' => $newEmail,
                         'status' => $updateUser->status,
                         'registration_date' => $updateUser->created_at,
                     ),
                     array(
+                        'current_email' => 'required|email|orbit_email_not_exists',
                         'email' => 'required|email|orbit_email_exists',
                         'status' => 'in:pending',
                         'registration_date' => 'before:' . Carbon::now()->subWeek(),
                     ),
                     array(
+                        'orbit_email_not_exists' => Lang::get('validation.orbit.empty.email'),
                         'orbit_email_exists' => Lang::get('validation.orbit.email.exists'),
                         'in' => 'User status should be pending',
                         'before' => 'User registration date must be more than a week',
