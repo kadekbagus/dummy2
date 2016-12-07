@@ -525,7 +525,7 @@ class PartnerAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('social_media_uri', function($social_media_uri) use ($updatedpartner, $partner_id, $social_media_uri) {
+            OrbitInput::post('social_media_uri', function($social_media_uri) use ($updatedpartner, $partner_id, $social_media_uri, $social_media_type) {
                 // Check update when exist and insert if not exist
                 $socialMedia = ObjectSocialMedia::where('object_id', $partner_id)
                                 ->where('object_type', 'partner')
