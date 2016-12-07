@@ -51,8 +51,8 @@ class CouponListAPIController extends PubControllerAPI
             $this->checkAuth();
             $user = $this->api->user;
 
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
+            $sort_by = OrbitInput::get('sortby', 'created_date');
+            $sort_mode = OrbitInput::get('sortmode','desc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $location = OrbitInput::get('location', null);
             $ul = OrbitInput::get('ul', null);
@@ -258,18 +258,15 @@ class CouponListAPIController extends PubControllerAPI
                         })
                         ->whereNotExists(function($query) use ($partner_id, $prefix)
                         {
-                            $query->select('promotions.promotion_id')
-                                  ->from('promotions')
-                                  ->join('object_partner',function($q) {
-                                        $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
-                                          ->where('object_partner.object_type', '=', 'coupon');
-                                    })
+                            $query->select('object_partner.object_id')
+                                  ->from('object_partner')
                                   ->join('partner_competitor', function($q) use ($partner_id) {
                                         $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id')
                                           ->where('partner_competitor.partner_id', '=', $partner_id);
                                     })
-                                  ->where('promotions.object_type', 'coupon')
-                                  ->groupBy('promotions.promotion_id');
+                                  ->where('object_partner.object_type', '=', 'coupon')
+                                  ->where('object_partner.object_id', '=', 'promotions.promotion_id')
+                                  ->groupBy('object_partner.object_id');
                         });
             });
 
