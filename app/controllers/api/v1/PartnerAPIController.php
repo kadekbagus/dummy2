@@ -703,7 +703,7 @@ class PartnerAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:partner_id,partner_name,location,start_date,end_date,url,status',
+                    'sort_by' => 'in:partner_name,location,start_date,end_date,url,status',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.partner_sortby'),
