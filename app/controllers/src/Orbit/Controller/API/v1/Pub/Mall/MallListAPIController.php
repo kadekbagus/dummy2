@@ -139,7 +139,7 @@ class MallListAPIController extends PubControllerAPI
 
             // sort by name or location
             $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
-            if($sort_by === 'location' && $latitude != '' && $longitude != '') {
+            if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withscore = '';
                 $sortby = ' {
@@ -154,6 +154,22 @@ class MallListAPIController extends PubControllerAPI
                                 }
                             }';
 
+            }
+
+            if (! $searchFlag) {
+                $mallConfig =  Config::get('orbit.featured.mall_ids', null);
+                if (! empty($mallConfig)) {
+                    $mallIds = implode('", "', $mallConfig);
+                    $withscore = '"_score",';
+                    $filterKeyword = '"query":{
+                                       "bool": {
+                                          "should": [
+                                            {"terms": {"_id": ["' . $mallIds . '"]}},
+                                            {"match_all": {}}
+                                          ]
+                                        }
+                                     },';
+                }
             }
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
