@@ -767,6 +767,7 @@ class PartnerAPIController extends ControllerAPI
                             'partners.province',
                             'partners.postal_code',
                             'partners.country_id',
+                            'countries.name as country',
                             'partners.phone',
                             DB::raw('fb_url.social_media_uri as facebook_url'), // facebook url
                             'deeplinks.deeplink_url', // deeplink url
