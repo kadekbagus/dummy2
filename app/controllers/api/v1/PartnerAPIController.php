@@ -759,8 +759,6 @@ class PartnerAPIController extends ControllerAPI
                             'partners.end_date',
                             'partners.url',
                             'partners.status',
-                            DB::raw('logo.path as logo'), // logo
-                            DB::raw('info_image.path as info_image'), // info page image
                             'partners.description',
                             'partners.address',
                             'partners.city',
@@ -769,7 +767,7 @@ class PartnerAPIController extends ControllerAPI
                             'partners.country_id',
                             'countries.name as country',
                             'partners.phone',
-                            DB::raw('fb_url.social_media_uri as facebook_url'), // facebook url
+                            DB::raw('fb_url.social_media_uri'), // facebook url
                             'deeplinks.deeplink_url', // deeplink url
                             'partners.note',
                             'partners.contact_firstname',
@@ -779,18 +777,6 @@ class PartnerAPIController extends ControllerAPI
                             'partners.contact_email'
                         )
                         ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id')
-                        ->leftJoin('media as logo', function($qLogo) {
-                            $qLogo->on(DB::raw('logo.object_id'), '=', 'partners.partner_id')
-                                ->on(DB::raw('logo.object_name'), '=', DB::raw("'partner'"))
-                                ->on(DB::raw('logo.media_name_id'), '=', DB::raw("'partner_logo'"))
-                                ->on(DB::raw('logo.media_name_long'), '=', DB::raw("'partner_logo_orig'"));
-                        })
-                        ->leftJoin('media as info_image', function($qInfoImage) {
-                            $qInfoImage->on(DB::raw('info_image.object_id'), '=', 'partners.partner_id')
-                                ->on(DB::raw('info_image.object_name'), '=', DB::raw("'partner'"))
-                                ->on(DB::raw('info_image.media_name_id'), '=', DB::raw("'partner_image'"))
-                                ->on(DB::raw('info_image.media_name_long'), '=', DB::raw("'partner_image_orig'"));
-                        })
                         ->leftJoin('deeplinks', function($qDeepLink) {
                             $qDeepLink->on('deeplinks.object_id', '=', 'partners.partner_id')
                                 ->on('deeplinks.object_type', '=', DB::raw("'partner'"))
