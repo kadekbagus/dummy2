@@ -70,10 +70,19 @@ class ActivationAPIController extends IntermediateBaseController
                 $tokenValue = trim(OrbitInput::post('token', null));
 
                 // check the token first
-                $token = Token::active()
-                        ->where('token_value', $tokenValue)
+                $token = Token::where('token_value', $tokenValue)
                         ->where('token_name', 'user_registration_mobile')
                         ->first();
+
+                $user = User::excludeDeleted()
+                            ->where('user_id', $token->user_id)
+                            ->first();
+
+                // override error message if user is already active
+                if ($user->status === 'active') {
+                    $errorMessage = 'User is already active';
+                    throw new OrbitCustomException($errorMessage, User::USER_ALREADY_ACTIVE_ERROR_CODE, NULL);
+                }
 
                 if (!is_object($token)) {
                     $errorMessage = Lang::get('validation.orbit.empty.token');
@@ -105,18 +114,10 @@ class ActivationAPIController extends IntermediateBaseController
                 }
 
                 $token = $this->tokenObject;
-                $user = User::excludeDeleted()
-                            ->where('user_id', $token->user_id)
-                            ->first();
 
-                if (! is_object($token) || ! is_object($user)) {
+                if (! is_object($token) || $token->status !== 'active' || ! is_object($user)) {
                     $message = Lang::get('validation.orbit.access.loginfailed');
                     ACL::throwAccessForbidden($message);
-                }
-
-                if ($user->status === 'active') {
-                    $errorMessage = 'User is already active';
-                    throw new OrbitCustomException($errorMessage, User::USER_ALREADY_ACTIVE_ERROR_CODE, NULL);
                 }
 
                 // update the token status so it cannot be use again
