@@ -57,8 +57,8 @@ class NewsListAPIController extends PubControllerAPI
         try{
             $user = $this->getUser();
 
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
+            $sort_by = OrbitInput::get('sortby', 'created_date');
+            $sort_mode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
             $ul = OrbitInput::get('ul', null);
@@ -197,6 +197,27 @@ class NewsListAPIController extends PubControllerAPI
                 }
             });
 
+            OrbitInput::get('partner_id', function($partner_id) use ($news, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                $news = $news->leftJoin('object_partner',function($q) {
+                            $q->on('object_partner.object_id', '=', 'news.news_id')
+                              ->where('object_partner.object_type', '=', 'news')
+                              ->where('object_partner.partner_id', '=', $partner_id);
+                        })
+                        ->whereNotExists(function($query) use ($partner_id, $prefix)
+                        {
+                            $query->select('object_partner.object_id')
+                                  ->from('object_partner')
+                                  ->join('partner_competitor', function($q) use ($partner_id) {
+                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id')
+                                          ->where('partner_competitor.partner_id', '=', $partner_id);
+                                    })
+                                  ->where('object_partner.object_type', '=', 'news')
+                                  ->where('object_partner.object_id', '=', 'news.news_id')
+                                  ->groupBy('object_partner.object_id');
+                        });
+            });
+
             // filter news by mall id
              OrbitInput::get('mall_id', function($mallid) use ($news) {
                 $news->where(function($q) use ($mallid){
@@ -307,7 +328,8 @@ class NewsListAPIController extends PubControllerAPI
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name')
+                    'sortBy' => OrbitInput::get('sortby', 'name'),
+                    'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
