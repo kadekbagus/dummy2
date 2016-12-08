@@ -910,7 +910,7 @@ class IntermediateLoginController extends IntermediateBaseController
                 if (strtolower($response->data->value['role']) === 'consumer') {
                     $user = User::where('status', 'pending')
                         ->where('user_id', $response->data->value['user_id'])
-                        ->where('created_at', '<', Carbon::now()->subWeek())
+                        ->where('created_at', '<', Carbon::now()->subDays(Config::get('orbit.shop.user_expiry', 7)))
                         ->first();
 
                     if (is_object($user)) {

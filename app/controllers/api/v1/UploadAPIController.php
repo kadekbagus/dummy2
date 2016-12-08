@@ -8436,11 +8436,6 @@ class UploadAPIController extends ControllerAPI
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
-
-echo "<pre>";
-print_r($errorMessage);
-die();
-
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadadvertimage.after.validation', array($this, $validator));
