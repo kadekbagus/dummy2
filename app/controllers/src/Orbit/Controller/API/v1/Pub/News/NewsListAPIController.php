@@ -57,8 +57,8 @@ class NewsListAPIController extends PubControllerAPI
         try{
             $user = $this->getUser();
 
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
+            $sort_by = OrbitInput::get('sortby', 'created_date');
+            $sort_mode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
             $ul = OrbitInput::get('ul', null);
@@ -206,18 +206,15 @@ class NewsListAPIController extends PubControllerAPI
                         })
                         ->whereNotExists(function($query) use ($partner_id, $prefix)
                         {
-                            $query->select('news.news_id')
-                                  ->from('news')
-                                  ->join('object_partner',function($q) {
-                                        $q->on('object_partner.object_id', '=', 'news.news_id')
-                                          ->where('object_partner.object_type', '=', 'news');
-                                    })
+                            $query->select('object_partner.object_id')
+                                  ->from('object_partner')
                                   ->join('partner_competitor', function($q) use ($partner_id) {
                                         $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id')
                                           ->where('partner_competitor.partner_id', '=', $partner_id);
                                     })
-                                  ->where('news.object_type', 'news')
-                                  ->groupBy('news.news_id');
+                                  ->where('object_partner.object_type', '=', 'news')
+                                  ->where('object_partner.object_id', '=', 'news.news_id')
+                                  ->groupBy('object_partner.object_id');
                         });
             });
 
