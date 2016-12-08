@@ -893,7 +893,7 @@ class PartnerAPIController extends ControllerAPI
                     'partner_name' => 'partners.partner_name',
                     'location'     => 'location',
                     'start_date'   => 'partners.start_date',
-                    'end_Date'     => 'partners.end_date',
+                    'end_date'     => 'partners.end_date',
                     'url'          => 'partners.url',
                     'status'       => 'partners.status',
                 );
