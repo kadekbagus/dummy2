@@ -4788,8 +4788,8 @@ return array(
             ),
             // - User clicks OK to confirm grab.
             '93' => array(
-                'name' => 'click_grab_confirm_ok',
-                'name_long' => 'Click Grab Confirmation OK',
+                'name' => 'click_deeplink_confirm_ok',
+                'name_long' => 'Click Deeplink Confirmation OK',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => null,
@@ -4797,8 +4797,8 @@ return array(
             ),
             // - User clicks Cancel to confirm grab.
             '94' => array(
-                'name' => 'click_grab_confirm_canceled',
-                'name_long' => 'Click Grab Confirmation Cancel',
+                'name' => 'click_deeplink_confirm_canceled',
+                'name_long' => 'Click Deeplink Confirmation Cancel',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => null,
