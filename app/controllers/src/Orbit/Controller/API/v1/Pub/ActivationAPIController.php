@@ -80,7 +80,7 @@ class ActivationAPIController extends IntermediateBaseController
 
                 // override error message if user is already active
                 if ($user->status === 'active') {
-                    $errorMessage = 'User is already active';
+                    $errorMessage = 'Your link has expired';
                     throw new OrbitCustomException($errorMessage, User::USER_ALREADY_ACTIVE_ERROR_CODE, NULL);
                 }
 
