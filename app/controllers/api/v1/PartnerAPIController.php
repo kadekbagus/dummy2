@@ -90,7 +90,7 @@ class PartnerAPIController extends ControllerAPI
             $postal_code = OrbitInput::post('postal_code');
             $country_id = OrbitInput::post('country_id');
             $phone = OrbitInput::post('phone');
-            $partner_url = OrbitInput::post('partner_url');
+            $url = OrbitInput::post('url');
             $note = OrbitInput::post('note');
             $contact_firstname = OrbitInput::post('contact_firstname');
             $contact_lastname = OrbitInput::post('contact_lastname');
@@ -155,7 +155,7 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->postal_code = $postal_code;
             $newPartner->country_id = $country_id;
             $newPartner->phone = $phone;
-            $newPartner->url = $partner_url;
+            $newPartner->url = $url;
             $newPartner->note = $note;
             $newPartner->contact_firstname = $contact_firstname;
             $newPartner->contact_lastname = $contact_lastname;
@@ -457,8 +457,8 @@ class PartnerAPIController extends ControllerAPI
                 $updatedpartner->phone = $phone;
             });
 
-            OrbitInput::post('partner_url', function($partner_url) use ($updatedpartner) {
-                $updatedpartner->url = $partner_url;
+            OrbitInput::post('url', function($url) use ($updatedpartner) {
+                $updatedpartner->url = $url;
             });
 
             OrbitInput::post('note', function($note) use ($updatedpartner) {
@@ -525,7 +525,7 @@ class PartnerAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('social_media_uri', function($social_media_uri) use ($updatedpartner, $partner_id, $social_media_uri) {
+            OrbitInput::post('social_media_uri', function($social_media_uri) use ($updatedpartner, $partner_id, $social_media_uri, $social_media_type) {
                 // Check update when exist and insert if not exist
                 $socialMedia = ObjectSocialMedia::where('object_id', $partner_id)
                                 ->where('object_type', 'partner')

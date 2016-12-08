@@ -119,7 +119,7 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['coupon_location'] = [];
                 $sessionData['status'] = $user->status;
                 if ($user->status === 'pending') {
-                    if ($user->created_at < Carbon::now()->subWeek()) {
+                    if ($user->created_at < Carbon::now()->subDays(Config::get('orbit.shop.user_expiry', 7))) {
                         $sessionData['account_expired'] = TRUE;
                     }
                 }
@@ -163,7 +163,7 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['fullname'] = $user->getFullName();
                 $sessionData['status'] = $user->status;
                 if ($user->status === 'pending') {
-                    if ($user->created_at < Carbon::now()->subWeek()) {
+                    if ($user->created_at < Carbon::now()->subDays(Config::get('orbit.shop.user_expiry', 7))) {
                         $sessionData['account_expired'] = TRUE;
                     }
                 }
@@ -782,7 +782,7 @@ class LoginAPIController extends IntermediateBaseController
             $sessionData['coupon_location'] = [];
             $sessionData['status'] = $user->status;
             if ($user->status === 'pending') {
-                    if ($user->created_at < Carbon::now()->subWeek()) {
+                    if ($user->created_at < Carbon::now()->subDays(Config::get('orbit.shop.user_expiry', 7))) {
                         $sessionData['account_expired'] = TRUE;
                     }
                 }
@@ -920,7 +920,7 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['fullname'] = $user->getFullName();
                 $sessionData['status'] = $user->status;
                 if ($user->status === 'pending') {
-                    if ($user->created_at < Carbon::now()->subWeek()) {
+                    if ($user->created_at < Carbon::now()->subDays(Config::get('orbit.shop.user_expiry', 7))) {
                         $sessionData['account_expired'] = TRUE;
                     }
                 }
@@ -936,7 +936,7 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['fullname'] = $user->getFullName();
                 $sessionData['status'] = $user->status;
                 if ($user->status === 'pending') {
-                    if ($user->created_at < Carbon::now()->subWeek()) {
+                    if ($user->created_at < Carbon::now()->subDays(Config::get('orbit.shop.user_expiry', 7))) {
                         $sessionData['account_expired'] = TRUE;
                     }
                 }
