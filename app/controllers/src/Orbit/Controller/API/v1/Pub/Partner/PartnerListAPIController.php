@@ -106,6 +106,15 @@ class PartnerListAPIController extends PubControllerAPI
                 }
             });
 
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sort_mode = 'desc';
+                }
+            });
+
+            $partners->orderBy($sort_by, $sort_mode);
+
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes
             if ($no_total_records !== 'yes') {
