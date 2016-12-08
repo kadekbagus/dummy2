@@ -74,19 +74,19 @@ class ActivationAPIController extends IntermediateBaseController
                         ->where('token_name', 'user_registration_mobile')
                         ->first();
 
+                if (!is_object($token)) {
+                    $errorMessage = 'Your link has expired';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
                 $user = User::excludeDeleted()
                             ->where('user_id', $token->user_id)
                             ->first();
 
                 // override error message if user is already active
                 if ($user->status === 'active') {
-                    $errorMessage = 'User is already active';
+                    $errorMessage = 'Your link has expired';
                     throw new OrbitCustomException($errorMessage, User::USER_ALREADY_ACTIVE_ERROR_CODE, NULL);
-                }
-
-                if (!is_object($token)) {
-                    $errorMessage = Lang::get('validation.orbit.empty.token');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
                 // Begin database transaction
