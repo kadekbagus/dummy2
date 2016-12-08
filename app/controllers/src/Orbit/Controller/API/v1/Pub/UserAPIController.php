@@ -122,7 +122,7 @@ class UserAPIController extends PubControllerAPI
                         'current_email' => 'required|email|orbit_email_not_exists',
                         'email' => 'required|email|orbit_email_exists',
                         'status' => 'in:pending',
-                        'registration_date' => 'before:' . Carbon::now()->subWeek(),
+                        'registration_date' => 'before:' . Carbon::now()->subDays(Config::get('orbit.shop.user_expiry', 7)),
                     ),
                     array(
                         'orbit_email_not_exists' => Lang::get('validation.orbit.empty.email'),
