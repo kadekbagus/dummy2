@@ -25,6 +25,7 @@ use UserDetail;
 use Lang;
 use Mall;
 use Hash;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class ActivationAPIController extends IntermediateBaseController
 {
@@ -113,6 +114,11 @@ class ActivationAPIController extends IntermediateBaseController
                     ACL::throwAccessForbidden($message);
                 }
 
+                if ($user->status === 'active') {
+                    $errorMessage = 'User is already active';
+                    throw new OrbitCustomException($errorMessage, User::USER_ALREADY_ACTIVE_ERROR_CODE, NULL);
+                }
+
                 // update the token status so it cannot be use again
                 $token->status = 'deleted';
                 $token->save();
@@ -172,6 +178,13 @@ class ActivationAPIController extends IntermediateBaseController
             $this->response->data = null;
 
             // Rollback the changes
+            $this->rollBack();
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
             $this->rollBack();
         } catch (Exception $e) {
             $this->response->code = Status::UNKNOWN_ERROR;
