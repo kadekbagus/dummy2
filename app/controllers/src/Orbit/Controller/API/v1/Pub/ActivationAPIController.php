@@ -223,6 +223,7 @@ class ActivationAPIController extends IntermediateBaseController
         Validator::extend('orbit_activation_empty_token', function ($attribute, $value, $parameters) use ($me) {
             $token = Token::active()
                           ->registrationToken()
+                          ->notExpire()
                           ->where('token_value', $value)
                           ->first();
 
