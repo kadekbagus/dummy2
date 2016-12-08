@@ -809,7 +809,6 @@ class IntermediateLoginController extends IntermediateBaseController
                     $this->session->remove('visited_location');
                     $this->session->remove('coupon_location');
                     $this->session->remove('login_from');
-                    $this->session->remove('account_expired');
                     $sessionData = $this->session->read(NULL);
                     $sessionData['fullname'] = '';
                     $sessionData['role'] = $guestUser->role->role_name;
@@ -906,21 +905,6 @@ class IntermediateLoginController extends IntermediateBaseController
                 $sessionData = $this->session->read(NULL);
                 $sessionData['status'] = $response->data->value['status'];
                 $this->session->update($sessionData);
-            } elseif ($response->data->value['status'] === 'pending') {
-                if (strtolower($response->data->value['role']) === 'consumer') {
-                    $user = User::where('status', 'pending')
-                        ->where('user_id', $response->data->value['user_id'])
-                        ->where('created_at', '<', Carbon::now()->subDays(Config::get('orbit.shop.user_expiry', 7)))
-                        ->first();
-
-                    if (is_object($user)) {
-                        $response->data->value['account_expired'] = TRUE;
-
-                        $sessionData = $this->session->read(NULL);
-                        $sessionData['account_expired'] = $response->data->value['account_expired'];
-                        $this->session->update($sessionData);
-                    }
-                }
             }
 
             if (strtolower($response->data->value['role']) === 'consumer') {

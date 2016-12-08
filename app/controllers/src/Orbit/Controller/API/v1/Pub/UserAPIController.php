@@ -18,7 +18,6 @@ use DB;
 use Event;
 use Hash;
 use Queue;
-use Carbon\Carbon;
 
 class UserAPIController extends PubControllerAPI
 {
@@ -80,71 +79,11 @@ class UserAPIController extends PubControllerAPI
                 $updateUser->user_password = Hash::make($newPassword);
             });
 
-            OrbitInput::post('new_email', function($newEmail) use ($updateUser, &$emailUpdateFlag) {
-                Validator::extend('orbit_email_exists', function ($attribute, $value, $parameters) {
-                    $user = User::excludeDeleted()
-                        ->where('user_email', $value)
-                        ->whereHas('role', function($q) {
-                            $q->where('role_name', 'Consumer');
-                        })
-                        ->first();
-
-                    if (is_object($user)) {
-                        return FALSE;
-                    }
-
-                    return TRUE;
-                });
-
-                Validator::extend('orbit_email_not_exists', function ($attribute, $value, $parameters) {
-                    $user = User::excludeDeleted()
-                        ->where('user_email', $value)
-                        ->whereHas('role', function($q) {
-                            $q->where('role_name', 'Consumer');
-                        })
-                        ->first();
-
-                    if (is_object($user)) {
-                        return TRUE;
-                    }
-
-                    return FALSE;
-                });
-
-                $validator = Validator::make(
-                    array(
-                        'current_email' => OrbitInput::post('current_email', NULL),
-                        'email' => $newEmail,
-                        'status' => $updateUser->status,
-                        'registration_date' => $updateUser->created_at,
-                    ),
-                    array(
-                        'current_email' => 'required|email|orbit_email_not_exists',
-                        'email' => 'required|email|orbit_email_exists',
-                        'status' => 'in:pending',
-                        'registration_date' => 'before:' . Carbon::now()->subDays(Config::get('orbit.shop.user_expiry', 7)),
-                    ),
-                    array(
-                        'orbit_email_not_exists' => Lang::get('validation.orbit.empty.email'),
-                        'orbit_email_exists' => Lang::get('validation.orbit.email.exists'),
-                        'in' => 'User status should be pending',
-                        'before' => 'User registration date must be more than a week',
-                    )
-                );
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-                $updateUser->user_email = $newEmail;
-                $emailUpdateFlag = TRUE;
-            });
-
             $updateUser->save();
 
             // Update session fullname and email
             $sessionData = $session->read(NULL);
             $sessionData['fullname'] = $updateUser->user_firstname. ' ' . $updateUser->user_lastname;
-            $sessionData['email'] = $updateUser->user_email;
             $session->update($sessionData);
 
             // Even for upload user picture profile
