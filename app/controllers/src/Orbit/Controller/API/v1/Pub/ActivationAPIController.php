@@ -75,7 +75,7 @@ class ActivationAPIController extends IntermediateBaseController
                         ->first();
 
                 if (!is_object($token)) {
-                    $errorMessage = Lang::get('validation.orbit.empty.token');
+                    $errorMessage = 'Your link has expired';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
