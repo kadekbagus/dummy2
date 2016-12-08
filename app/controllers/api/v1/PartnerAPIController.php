@@ -90,7 +90,7 @@ class PartnerAPIController extends ControllerAPI
             $postal_code = OrbitInput::post('postal_code');
             $country_id = OrbitInput::post('country_id');
             $phone = OrbitInput::post('phone');
-            $partner_url = OrbitInput::post('partner_url');
+            $url = OrbitInput::post('url');
             $note = OrbitInput::post('note');
             $contact_firstname = OrbitInput::post('contact_firstname');
             $contact_lastname = OrbitInput::post('contact_lastname');
@@ -155,7 +155,7 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->postal_code = $postal_code;
             $newPartner->country_id = $country_id;
             $newPartner->phone = $phone;
-            $newPartner->url = $partner_url;
+            $newPartner->url = $url;
             $newPartner->note = $note;
             $newPartner->contact_firstname = $contact_firstname;
             $newPartner->contact_lastname = $contact_lastname;
@@ -429,6 +429,10 @@ class PartnerAPIController extends ControllerAPI
                 $updatedpartner->partner_name = $partner_name;
             });
 
+            OrbitInput::post('description', function($description) use ($updatedpartner) {
+                $updatedpartner->description = $description;
+            });
+
             OrbitInput::post('address', function($address) use ($updatedpartner) {
                 $updatedpartner->address = $address;
             });
@@ -453,8 +457,8 @@ class PartnerAPIController extends ControllerAPI
                 $updatedpartner->phone = $phone;
             });
 
-            OrbitInput::post('partner_url', function($partner_url) use ($updatedpartner) {
-                $updatedpartner->url = $partner_url;
+            OrbitInput::post('url', function($url) use ($updatedpartner) {
+                $updatedpartner->url = $url;
             });
 
             OrbitInput::post('note', function($note) use ($updatedpartner) {
@@ -521,7 +525,7 @@ class PartnerAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('social_media_uri', function($social_media_uri) use ($updatedpartner, $partner_id, $social_media_uri) {
+            OrbitInput::post('social_media_uri', function($social_media_uri) use ($updatedpartner, $partner_id, $social_media_uri, $social_media_type) {
                 // Check update when exist and insert if not exist
                 $socialMedia = ObjectSocialMedia::where('object_id', $partner_id)
                                 ->where('object_type', 'partner')
@@ -759,8 +763,6 @@ class PartnerAPIController extends ControllerAPI
                             'partners.end_date',
                             'partners.url',
                             'partners.status',
-                            DB::raw('logo.path as logo'), // logo
-                            DB::raw('info_image.path as info_image'), // info page image
                             'partners.description',
                             'partners.address',
                             'partners.city',
@@ -769,7 +771,7 @@ class PartnerAPIController extends ControllerAPI
                             'partners.country_id',
                             'countries.name as country',
                             'partners.phone',
-                            DB::raw('fb_url.social_media_uri as facebook_url'), // facebook url
+                            DB::raw('fb_url.social_media_uri'), // facebook url
                             'deeplinks.deeplink_url', // deeplink url
                             'partners.note',
                             'partners.contact_firstname',
@@ -779,18 +781,6 @@ class PartnerAPIController extends ControllerAPI
                             'partners.contact_email'
                         )
                         ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id')
-                        ->leftJoin('media as logo', function($qLogo) {
-                            $qLogo->on(DB::raw('logo.object_id'), '=', 'partners.partner_id')
-                                ->on(DB::raw('logo.object_name'), '=', DB::raw("'partner'"))
-                                ->on(DB::raw('logo.media_name_id'), '=', DB::raw("'partner_logo'"))
-                                ->on(DB::raw('logo.media_name_long'), '=', DB::raw("'partner_logo_orig'"));
-                        })
-                        ->leftJoin('media as info_image', function($qInfoImage) {
-                            $qInfoImage->on(DB::raw('info_image.object_id'), '=', 'partners.partner_id')
-                                ->on(DB::raw('info_image.object_name'), '=', DB::raw("'partner'"))
-                                ->on(DB::raw('info_image.media_name_id'), '=', DB::raw("'partner_image'"))
-                                ->on(DB::raw('info_image.media_name_long'), '=', DB::raw("'partner_image_orig'"));
-                        })
                         ->leftJoin('deeplinks', function($qDeepLink) {
                             $qDeepLink->on('deeplinks.object_id', '=', 'partners.partner_id')
                                 ->on('deeplinks.object_type', '=', DB::raw("'partner'"))
@@ -838,7 +828,27 @@ class PartnerAPIController extends ControllerAPI
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
-                    $partners->with($relation);
+                    if ($relation === 'mediaLogoOrig') {
+                        $partners->with([$relation => function ($qLogo) {
+                            $qLogo->select(
+                                    'object_id',
+                                    'file_name',
+                                    'path',
+                                    'metadata'
+                                );
+                            }]);
+                    } else if ($relation === 'mediaImageOrig') {
+                        $partners->with([$relation => function ($qImage) {
+                            $qImage->select(
+                                    'object_id',
+                                    'file_name',
+                                    'path',
+                                    'metadata'
+                                );
+                            }]);
+                    } else {
+                        $partners->with($relation);
+                    }
                 }
             });
 
