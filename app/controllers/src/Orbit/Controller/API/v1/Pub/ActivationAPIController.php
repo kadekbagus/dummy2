@@ -245,7 +245,6 @@ class ActivationAPIController extends IntermediateBaseController
         try{
             // update current session if exists
             $this->session->start(array(), 'no-session-creation');
-            $this->session->remove('account_expired');
             $sessionData = $this->session->read(NULL);
             $sessionData['logged_in'] = TRUE;
             $sessionData['user_id'] = $user->user_id;

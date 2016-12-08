@@ -308,9 +308,6 @@ return array(
         // gotomalls landing page domain (used in shared url redirection in pub-fb-bot filter)
         // fill with: 'http://v27.gotomalls.cool' if in testing environment
         'gtm_url' => 'http://www.gotomalls.cool',
-
-        // user created_at expiry (in day(s))
-        'user_expiry' => 7,
     ),
 
     // General contact data
