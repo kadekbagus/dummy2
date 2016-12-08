@@ -88,7 +88,7 @@ class PartnerListAPIController extends PubControllerAPI
                     $q->on('media.object_id', '=', 'partners.partner_id');
                     $q->on('media.media_name_long', '=', DB::raw("'partner_logo_orig'"));
                 })
-                ->excludeDeleted();
+                ->where('partners.status', 'active');
 
 
             // Map the sortby request to the real column name
