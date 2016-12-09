@@ -278,7 +278,7 @@ class PromotionListAPIController extends PubControllerAPI
                                               ->where('partner_competitor.partner_id', '=', $partner_id);
                                         })
                                       ->where('object_partner.object_type', '=', 'promotion')
-                                      ->where('object_partner.object_id', '=', 'news.news_id')
+                                      ->where('object_partner.object_id', '=', DB::raw("{$prefix}news.news_id"))
                                       ->groupBy('object_partner.object_id');
                             });
             });

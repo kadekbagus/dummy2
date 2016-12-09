@@ -269,7 +269,7 @@ class CouponListAPIController extends PubControllerAPI
                                           ->where('partner_competitor.partner_id', '=', $partner_id);
                                     })
                                   ->where('object_partner.object_type', '=', 'coupon')
-                                  ->where('object_partner.object_id', '=', 'promotions.promotion_id')
+                                  ->where('object_partner.object_id', '=', DB::raw("{$prefix}promotions.promotion_id"))
                                   ->groupBy('object_partner.object_id');
                         });
             });
