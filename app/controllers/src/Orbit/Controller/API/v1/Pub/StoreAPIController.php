@@ -275,18 +275,19 @@ class StoreAPIController extends PubControllerAPI
                     $store = $store->addSelect(
                                         DB::raw("( 6371 * acos( cos( radians({$lat}) ) * cos( radians( x(tmp_mg.position) ) ) * cos( radians( y(tmp_mg.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x(tmp_mg.position) ) ) ) ) AS distance")
                                     )
-                                    ->leftJoin(DB::Raw("
+                                    ->Join(DB::Raw("
                                         (SELECT
                                             store.merchant_id as store_id,
                                             mg.position
                                         FROM {$prefix}merchants store
                                         LEFT JOIN {$prefix}merchants mall
                                             ON mall.merchant_id = store.parent_id
+                                            AND mall.object_type = 'mall'
+                                            AND mall.status = 'active'
                                         LEFT JOIN {$prefix}merchant_geofences mg
                                             ON mg.merchant_id = mall.merchant_id
                                         WHERE store.status = 'active'
                                             AND store.object_type = 'tenant'
-                                            AND mall.status = 'active'
                                         ) as tmp_mg
                                     "), DB::Raw("tmp_mg.store_id"), '=', 'merchants.merchant_id');
                 }
