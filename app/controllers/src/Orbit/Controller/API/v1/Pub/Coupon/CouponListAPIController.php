@@ -264,12 +264,12 @@ class CouponListAPIController extends PubControllerAPI
                         ->whereNotExists(function($query) use ($partner_id, $prefix) {
                             $query->select('object_partner.object_id')
                                   ->from('object_partner')
-                                  ->join('partner_competitor', function($q) use ($partner_id) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id')
-                                          ->where('partner_competitor.partner_id', '=', $partner_id);
+                                  ->join('partner_competitor', function($q) {
+                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
                                     })
-                                  ->where('object_partner.object_type', '=', 'coupon')
-                                  ->where('object_partner.object_id', '=', DB::raw("{$prefix}promotions.promotion_id"))
+                                  ->whereRaw("{$prefix}object_partner.object_type = 'coupon'")
+                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
+                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}promotions.promotion_id")
                                   ->groupBy('object_partner.object_id');
                         });
             });
