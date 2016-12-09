@@ -211,6 +211,19 @@ class PromotionListAPIController extends PubControllerAPI
                             ->orderBy(DB::raw("advert.placement_order"), 'desc')
                             ->orderBy('news_name', 'asc');
 
+            if (! empty($ul)) {
+                $position = explode("|", $ul);
+                $lon = $position[0];
+                $lat = $position[1];
+            } else {
+                // get lon lat from cookie
+                $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                    $lon = $userLocationCookieArray[0];
+                    $lat = $userLocationCookieArray[1];
+                }
+            }
+
             // left join when need link to mall
             if ((! empty($lon) && ! empty($lat)) || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
                 $promotions = $promotions->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
@@ -222,19 +235,6 @@ class PromotionListAPIController extends PubControllerAPI
 
             //calculate distance if user using my current location as filter and sort by location for listing
             if ($sort_by == 'location' || $location == 'mylocation') {
-                if (! empty($ul)) {
-                    $position = explode("|", $ul);
-                    $lon = $position[0];
-                    $lat = $position[1];
-                } else {
-                    // get lon lat from cookie
-                    $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                    if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                        $lon = $userLocationCookieArray[0];
-                        $lat = $userLocationCookieArray[1];
-                    }
-                }
-
                 if (! empty($lon) && ! empty($lat)) {
                     $promotions = $promotions->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance")
                                                 )
