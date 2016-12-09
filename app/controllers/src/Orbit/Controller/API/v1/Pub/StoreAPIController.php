@@ -299,20 +299,7 @@ class StoreAPIController extends PubControllerAPI
                 if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
                     $store->havingRaw("distance <= {$distance}");
                 } else {
-                    $store->leftJoin(DB::Raw("
-                            (SELECT
-                                s.name as s_name,
-                                m.city as m_city
-                            FROM {$prefix}merchants s
-                            LEFT JOIN {$prefix}merchants m
-                                ON m.merchant_id = s.parent_id
-                                AND m.city = {$this->quote($location)}
-                            WHERE s.object_type = 'tenant'
-                                AND s.status = 'active'
-                                AND m.status = 'active'
-                            ) as tmp_city
-                        "), DB::Raw("tmp_city.s_name"), '=', 'merchants.name')
-                        ->where(DB::Raw("tmp_city.m_city"), $location);
+                    $store->where(DB::Raw("oms.city"), $location);
                 }
             });
 
