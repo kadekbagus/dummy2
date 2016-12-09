@@ -91,6 +91,11 @@ class PartnerListAPIController extends PubControllerAPI
                 ->where('partners.status', 'active')
                 ->where('partners.is_visible', 'y');
 
+            OrbitInput::get('shown_in_filter', function($show_in_filter) use ($partners)
+            {
+                $shown_in_filter = $shown_in_filter === 'yes' ? 'Y' : 'N';
+                $partners->where('partners.is_shown_in_filter', $shown_in_filter);
+            });
 
             // Map the sortby request to the real column name
             $sortByMapping = array(
