@@ -82,6 +82,7 @@ class PartnerListAPIController extends PubControllerAPI
                     'partner_id',
                     'partner_name',
                     'description',
+                    'is_shown_in_filter',
                     'path as logo_url'
                 )
                 ->leftJoin('media', function ($q) {
