@@ -121,8 +121,8 @@ class PartnerAPIController extends ControllerAPI
                 ),
                 array(
                     'partner_name'        => 'required',
-                    'start_date'          => 'required|date|orbit.empty.hour_format',
-                    'end_date'            => 'required|date|orbit.empty.hour_format',
+                    'start_date'          => 'date|orbit.empty.hour_format',
+                    'end_date'            => 'date|orbit.empty.hour_format',
                     'status'              => 'required|in:active,inactive',
                     'address'             => 'required',
                     'city'                => 'required',
@@ -162,8 +162,8 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->contact_position = $contact_position;
             $newPartner->contact_phone = $contact_phone;
             $newPartner->contact_email = $contact_email;
-            $newPartner->start_date = $start_date;
-            $newPartner->end_date = $end_date;
+            $newPartner->start_date = (is_null($start_date)) ? '0000-00-00 00:00:00' : $start_date;
+            $newPartner->end_date = (is_null($end_date)) ? '0000-00-00 00:00:00' : $end_date;
             $newPartner->status = $status;
             $newPartner->is_shown_in_filter = $is_shown_in_filter;
             $newPartner->is_visible = $is_visible;
@@ -396,8 +396,8 @@ class PartnerAPIController extends ControllerAPI
                 array(
                     'partner_name'        => 'required',
                     'partner_id'          => 'required',
-                    'start_date'          => 'required|date|orbit.empty.hour_format',
-                    'end_date'            => 'required|date|orbit.empty.hour_format',
+                    'start_date'          => 'date|orbit.empty.hour_format',
+                    'end_date'            => 'date|orbit.empty.hour_format',
                     'status'              => 'required|in:active,inactive',
                     'address'             => 'required',
                     'city'                => 'required',
@@ -778,7 +778,8 @@ class PartnerAPIController extends ControllerAPI
                             'partners.contact_lastname',
                             'partners.contact_position',
                             'partners.contact_phone',
-                            'partners.contact_email'
+                            'partners.contact_email',
+                            'partners.is_visible'
                         )
                         ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id')
                         ->leftJoin('deeplinks', function($qDeepLink) {
@@ -893,7 +894,7 @@ class PartnerAPIController extends ControllerAPI
                     'partner_name' => 'partners.partner_name',
                     'location'     => 'location',
                     'start_date'   => 'partners.start_date',
-                    'end_Date'     => 'partners.end_date',
+                    'end_date'     => 'partners.end_date',
                     'url'          => 'partners.url',
                     'status'       => 'partners.status',
                 );

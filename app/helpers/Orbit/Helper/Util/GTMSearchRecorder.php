@@ -51,6 +51,10 @@ class GTMSearchRecorder
         $list_category = array();
 
         if (! empty($categories)) {
+            if (! is_array($categories)) {
+                $categories = (array)$categories;
+            }
+
             if (in_array("mall", $categories)) {
                 $disp = $this->displayName;
                 if (strtolower($this->displayName) === 'news') {
