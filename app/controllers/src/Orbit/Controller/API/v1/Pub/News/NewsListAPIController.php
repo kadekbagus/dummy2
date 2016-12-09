@@ -152,7 +152,7 @@ class NewsListAPIController extends PubControllerAPI
                                 $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                         })
-                        ->where('news.object_type', '=', 'news')
+                        ->whereRaw("{$prefix}news.object_type = 'news'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->orderBy('news_name', 'asc');
 
