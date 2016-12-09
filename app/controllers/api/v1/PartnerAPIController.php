@@ -396,8 +396,8 @@ class PartnerAPIController extends ControllerAPI
                 array(
                     'partner_name'        => 'required',
                     'partner_id'          => 'required',
-                    'start_date'          => 'required|date|orbit.empty.hour_format',
-                    'end_date'            => 'required|date|orbit.empty.hour_format',
+                    'start_date'          => 'date|orbit.empty.hour_format',
+                    'end_date'            => 'date|orbit.empty.hour_format',
                     'status'              => 'required|in:active,inactive',
                     'address'             => 'required',
                     'city'                => 'required',
