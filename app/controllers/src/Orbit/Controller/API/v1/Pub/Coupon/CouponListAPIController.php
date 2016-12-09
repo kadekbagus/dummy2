@@ -142,10 +142,10 @@ class CouponListAPIController extends PubControllerAPI
             foreach($adverts->getBindings() as $binding)
             {
               $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $sql = preg_replace('/\?/', $value, $sql, 1);
+              $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
             }
 
-            $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
+            $coupons = DB::table('promotions')->select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
                                 CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                 CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                 {$prefix}promotions.status,
@@ -200,6 +200,7 @@ class CouponListAPIController extends PubControllerAPI
                                 $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                                 $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
                             })
+                            ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereRaw("available.tot > 0")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -238,6 +239,10 @@ class CouponListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
                 if (in_array("mall", $category_id)) {
                     $coupons = $coupons->whereIn(DB::raw("t.object_type"), $category_id);
                 } else {
@@ -251,21 +256,20 @@ class CouponListAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $coupons = $coupons->leftJoin('object_partner',function($q) use ($partner_id) {
+                $coupons = $coupons->leftJoin('object_partner', function($q) use ($partner_id) {
                             $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
                               ->where('object_partner.object_type', '=', 'coupon')
                               ->where('object_partner.partner_id', '=', $partner_id);
                         })
-                        ->whereNotExists(function($query) use ($partner_id, $prefix)
-                        {
+                        ->whereNotExists(function($query) use ($partner_id, $prefix) {
                             $query->select('object_partner.object_id')
                                   ->from('object_partner')
-                                  ->join('partner_competitor', function($q) use ($partner_id) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id')
-                                          ->where('partner_competitor.partner_id', '=', $partner_id);
+                                  ->join('partner_competitor', function($q) {
+                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
                                     })
-                                  ->where('object_partner.object_type', '=', 'coupon')
-                                  ->where('object_partner.object_id', '=', 'promotions.promotion_id')
+                                  ->whereRaw("{$prefix}object_partner.object_type = 'coupon'")
+                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
+                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}promotions.promotion_id")
                                   ->groupBy('object_partner.object_id');
                         });
             });
@@ -287,7 +291,13 @@ class CouponListAPIController extends PubControllerAPI
             });
 
             $querySql = $coupons->toSql();
-            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
+            foreach($coupons->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : $this->quote($binding);
+              $querySql = preg_replace('/\?/', $value, $querySql, 1);
+            }
+
+            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"));
 
             if ($list_type === 'featured') {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"),

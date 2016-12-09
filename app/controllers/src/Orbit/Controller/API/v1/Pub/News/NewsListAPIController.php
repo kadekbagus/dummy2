@@ -152,7 +152,7 @@ class NewsListAPIController extends PubControllerAPI
                                 $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                         })
-                        ->where('news.object_type', '=', 'news')
+                        ->whereRaw("{$prefix}news.object_type = 'news'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->orderBy('news_name', 'asc');
 
@@ -186,6 +186,10 @@ class NewsListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($news, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
                 if (in_array("mall", $category_id)) {
                     $news = $news->whereIn(DB::raw("m.object_type"), $category_id);
                 } else {
@@ -199,7 +203,7 @@ class NewsListAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($news, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $news = $news->leftJoin('object_partner',function($q) {
+                $news = $news->leftJoin('object_partner',function($q) use ($partner_id){
                             $q->on('object_partner.object_id', '=', 'news.news_id')
                               ->where('object_partner.object_type', '=', 'news')
                               ->where('object_partner.partner_id', '=', $partner_id);
@@ -208,12 +212,12 @@ class NewsListAPIController extends PubControllerAPI
                         {
                             $query->select('object_partner.object_id')
                                   ->from('object_partner')
-                                  ->join('partner_competitor', function($q) use ($partner_id) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id')
-                                          ->where('partner_competitor.partner_id', '=', $partner_id);
+                                  ->join('partner_competitor', function($q) {
+                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
                                     })
-                                  ->where('object_partner.object_type', '=', 'news')
-                                  ->where('object_partner.object_id', '=', 'news.news_id')
+                                  ->whereRaw("{$prefix}object_partner.object_type = 'news'")
+                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
+                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}news.news_id")
                                   ->groupBy('object_partner.object_id');
                         });
             });
