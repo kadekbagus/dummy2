@@ -146,7 +146,7 @@ class PromotionListAPIController extends PubControllerAPI
             foreach($adverts->getBindings() as $binding)
             {
               $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $sql = preg_replace('/\?/', $value, $sql, 1);
+              $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
             }
 
             $promotions = News::select(

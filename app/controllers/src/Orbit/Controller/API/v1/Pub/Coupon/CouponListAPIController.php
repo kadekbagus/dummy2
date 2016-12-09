@@ -142,7 +142,7 @@ class CouponListAPIController extends PubControllerAPI
             foreach($adverts->getBindings() as $binding)
             {
               $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $sql = preg_replace('/\?/', $value, $sql, 1);
+              $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
             }
 
             $coupons = DB::table('promotions')->select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
@@ -291,7 +291,13 @@ class CouponListAPIController extends PubControllerAPI
             });
 
             $querySql = $coupons->toSql();
-            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
+            foreach($coupons->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : $this->quote($binding);
+              $querySql = preg_replace('/\?/', $value, $querySql, 1);
+            }
+
+            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"));
 
             if ($list_type === 'featured') {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"),
