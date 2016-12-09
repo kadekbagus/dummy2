@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 
 class PartnerAPIController extends ControllerAPI
 {
@@ -105,32 +106,58 @@ class PartnerAPIController extends ControllerAPI
             $deeplink_url = OrbitInput::post('deeplink_url');
             $social_media_uri = OrbitInput::post('social_media_uri');
             $social_media_type = OrbitInput::post('social_media_type', 'facebook');
+            $logo = OrbitInput::files('logo');
+            $image = OrbitInput::files('image');
+
+            // generate array validation image
+            $logo_validation = $this->generate_validation_image('partner_logo', $logo, 'orbit.upload.partner.logo');
+            $image_validation = $this->generate_validation_image('partner_image', $image, 'orbit.upload.partner.image');
+
+            $validation_data = [
+                'partner_name'        => $partner_name,
+                'start_date'          => $start_date,
+                'end_date'            => $end_date,
+                'status'              => $status,
+                'address'             => $address,
+                'city'                => $city,
+                'country_id'          => $country_id,
+                'phone'               => $phone,
+                'contact_firstname'   => $contact_firstname,
+                'contact_lastname'    => $contact_lastname,
+            ];
+
+            $validation_error = [
+                'partner_name'        => 'required',
+                'start_date'          => 'date|orbit.empty.hour_format',
+                'end_date'            => 'date|orbit.empty.hour_format',
+                'status'              => 'required|in:active,inactive',
+                'address'             => 'required',
+                'city'                => 'required',
+                'country_id'          => 'required',
+                'phone'               => 'required',
+                'contact_firstname'   => 'required',
+                'contact_lastname'    => 'required',
+            ];
+
+            $validation_error_message = [];
+
+            // add validation image
+            if (! empty($logo_validation)) {
+                $validation_data += $logo_validation['data'];
+                $validation_error += $logo_validation['error'];
+                $validation_error_message += $logo_validation['error_message'];
+            }
+
+            if (! empty($image_validation)) {
+                $validation_data += $image_validation['data'];
+                $validation_error += $image_validation['error'];
+                $validation_error_message += $image_validation['error_message'];
+            }
 
             $validator = Validator::make(
-                array(
-                    'partner_name'        => $partner_name,
-                    'start_date'          => $start_date,
-                    'end_date'            => $end_date,
-                    'status'              => $status,
-                    'address'             => $address,
-                    'city'                => $city,
-                    'country_id'          => $country_id,
-                    'phone'               => $phone,
-                    'contact_firstname'   => $contact_firstname,
-                    'contact_lastname'    => $contact_lastname,
-                ),
-                array(
-                    'partner_name'        => 'required',
-                    'start_date'          => 'date|orbit.empty.hour_format',
-                    'end_date'            => 'date|orbit.empty.hour_format',
-                    'status'              => 'required|in:active,inactive',
-                    'address'             => 'required',
-                    'city'                => 'required',
-                    'country_id'          => 'required',
-                    'phone'               => 'required',
-                    'contact_firstname'   => 'required',
-                    'contact_lastname'    => 'required',
-                )
+                $validation_data,
+                $validation_error,
+                $validation_error_message
             );
 
             Event::fire('orbit.partner.postnewpartner.before.validation', array($this, $validator));
@@ -378,34 +405,60 @@ class PartnerAPIController extends ControllerAPI
             $contact_lastname = OrbitInput::post('contact_lastname');
             $social_media_uri = OrbitInput::post('social_media_uri');
             $social_media_type = OrbitInput::post('social_media_type', 'facebook');
+            $logo = OrbitInput::files('logo');
+            $image = OrbitInput::files('image');
+
+            // generate array validation image
+            $logo_validation = $this->generate_validation_image('partner_logo', $logo, 'orbit.upload.partner.logo');
+            $image_validation = $this->generate_validation_image('partner_image', $image, 'orbit.upload.partner.image');
+
+            $validation_data = [
+                'partner_name'        => $partner_name,
+                'partner_id'          => $partner_id,
+                'start_date'          => $start_date,
+                'end_date'            => $end_date,
+                'status'              => $status,
+                'address'             => $address,
+                'city'                => $city,
+                'country_id'          => $country_id,
+                'phone'               => $phone,
+                'contact_firstname'   => $contact_firstname,
+                'contact_lastname'    => $contact_lastname,
+            ];
+
+            $validation_error = [
+                'partner_name'        => 'required',
+                'partner_id'          => 'required',
+                'start_date'          => 'date|orbit.empty.hour_format',
+                'end_date'            => 'date|orbit.empty.hour_format',
+                'status'              => 'required|in:active,inactive',
+                'address'             => 'required',
+                'city'                => 'required',
+                'country_id'          => 'required',
+                'phone'               => 'required',
+                'contact_firstname'   => 'required',
+                'contact_lastname'    => 'required',
+            ];
+
+            $validation_error_message = [];
+
+            // add validation image
+            if (! empty($logo_validation)) {
+                $validation_data += $logo_validation['data'];
+                $validation_error += $logo_validation['error'];
+                $validation_error_message += $logo_validation['error_message'];
+            }
+
+            if (! empty($image_validation)) {
+                $validation_data += $image_validation['data'];
+                $validation_error += $image_validation['error'];
+                $validation_error_message += $image_validation['error_message'];
+            }
 
             $validator = Validator::make(
-                array(
-                    'partner_name'        => $partner_name,
-                    'partner_id'          => $partner_id,
-                    'start_date'          => $start_date,
-                    'end_date'            => $end_date,
-                    'status'              => $status,
-                    'address'             => $address,
-                    'city'                => $city,
-                    'country_id'          => $country_id,
-                    'phone'               => $phone,
-                    'contact_firstname'   => $contact_firstname,
-                    'contact_lastname'    => $contact_lastname,
-                ),
-                array(
-                    'partner_name'        => 'required',
-                    'partner_id'          => 'required',
-                    'start_date'          => 'date|orbit.empty.hour_format',
-                    'end_date'            => 'date|orbit.empty.hour_format',
-                    'status'              => 'required|in:active,inactive',
-                    'address'             => 'required',
-                    'city'                => 'required',
-                    'country_id'          => 'required',
-                    'phone'               => 'required',
-                    'contact_firstname'   => 'required',
-                    'contact_lastname'    => 'required',
-                )
+                $validation_data,
+                $validation_error,
+                $validation_error_message
             );
 
             Event::fire('orbit.partner.postupdatepartner.before.validation', array($this, $validator));
@@ -999,5 +1052,63 @@ class PartnerAPIController extends ControllerAPI
 
             return true;
         });
+
+        Validator::extend('orbit.file.max_size', function ($attribute, $value, $parameters) {
+            $config_size = $parameters[0];
+            $file_size = $value;
+
+            if ($file_size > $config_size) {
+                return false;
+            }
+
+            return true;
+        });
+
+        // Check the images, we are allowed array of images but not more than
+        Validator::extend('nomore.than', function ($attribute, $value, $parameters) {
+            $max_count = $parameters[0];
+
+            if (is_array($value['name']) && count($value['name']) > $max_count) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+    }
+
+    protected function generate_validation_image($image_name, $images, $config, $max_count = 1) {
+        $validation = [];
+        if (! empty($images)) {
+            $images_properties = OrbitUploader::simplifyFilesVar($images);
+            $image_config = Config::get($config);
+            $image_type =  "image/" . implode(",image/", $image_config['file_type']);
+            $image_units = OrbitUploader::bytesToUnits($image_config['file_size']);
+
+            $validation['data'] = [
+                $image_name => $images
+            ];
+            $validation['error'] = [
+                $image_name => 'nomore.than:' . $max_count
+            ];
+            $validation['error_message'] = [
+                $image_name . '.nomore.than' => Lang::get('validation.max.array', array('max' => $max_count))
+            ];
+
+            foreach ($images_properties as $idx => $image) {
+                $ext = strtolower(substr(strrchr($image->name, '.'), 1));
+                $idx+=1;
+
+                $validation['data'][$image_name . '_' . $idx . '_type'] = $image->type;
+                $validation['data'][$image_name . '_' . $idx . '_size'] = $image->size;
+
+                $validation['error'][$image_name . '_' . $idx . '_type'] = 'in:' . $image_type;
+                $validation['error'][$image_name . '_' . $idx . '_size'] = 'orbit.file.max_size:' . $image_config['file_size'];
+
+                $validation['error_message'][$image_name . '_' . $idx . '_type' . '.in'] = Lang::get('validation.orbit.file.type', array('ext' => $ext));
+                $validation['error_message'][$image_name . '_' . $idx . '_size' . '.orbit.file.max_size'] = Lang::get('validation.orbit.file.max_size', array('name' => $image_config['name'], 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
+            }
+        }
+
+        return $validation;
     }
 }
