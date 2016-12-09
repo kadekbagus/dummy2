@@ -88,7 +88,8 @@ class PartnerListAPIController extends PubControllerAPI
                     $q->on('media.object_id', '=', 'partners.partner_id');
                     $q->on('media.media_name_long', '=', DB::raw("'partner_logo_orig'"));
                 })
-                ->where('partners.status', 'active');
+                ->where('partners.status', 'active')
+                ->where('partners.is_visible', 'y');
 
 
             // Map the sortby request to the real column name
@@ -105,6 +106,15 @@ class PartnerListAPIController extends PubControllerAPI
                     $sort_mode = 'desc';
                 }
             });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sort_mode = 'desc';
+                }
+            });
+
+            $partners->orderBy($sort_by, $sort_mode);
 
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes

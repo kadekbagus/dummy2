@@ -72,6 +72,12 @@ class StoreAPIController extends PubControllerAPI
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
 
+            // store can not sorted by date, so it must be changes to default sorting (name - ascending)
+            if ($sort_by === "created_date") {
+                $sort_by = "name";
+                $sort_mode = "asc";
+            }
+
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
@@ -193,13 +199,17 @@ class StoreAPIController extends PubControllerAPI
             // filter by category just on first store
             OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
                 $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', 'merchants.merchant_id')
                     ->whereIn(DB::raw("cm.category_id"), $category_id);
             });
 
             OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $store = $store->leftJoin('object_partner',function($q) {
+                $store = $store->leftJoin('object_partner',function($q) use ($partner_id){
                             $q->on('object_partner.object_id', '=', 'merchants.merchant_id')
                               ->where('object_partner.object_type', '=', 'store')
                               ->where('object_partner.partner_id', '=', $partner_id);
@@ -347,7 +357,7 @@ class StoreAPIController extends PubControllerAPI
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name'),
+                    'sortBy' => $sort_by,
                     'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
@@ -528,8 +538,6 @@ class StoreAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-
-
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $storename = OrbitInput::get('store_name');
