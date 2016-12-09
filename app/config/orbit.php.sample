@@ -570,6 +570,12 @@ return array(
             'per_page'      => 50,
             'max_record'    => 100,
         ),
+
+        // mall location
+        'mall_location' => array(
+            'per_page'      => 50,
+            'max_record'    => 200,
+        ),
     ),
 
     'reset_password' => array(
