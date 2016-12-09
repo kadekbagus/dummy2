@@ -224,7 +224,7 @@ class StoreAPIController extends PubControllerAPI
                                           ->where('partner_competitor.partner_id', '=', $partner_id);
                                     })
                                   ->where('object_partner.object_type', '=', 'tenant')
-                                  ->where('object_partner.object_id', '=', 'merchants.merchant_id')
+                                  ->where('object_partner.object_id', '=', DB::raw("{$prefix}merchants.merchant_id"))
                                   ->groupBy('object_partner.object_id');
                         });
             });
