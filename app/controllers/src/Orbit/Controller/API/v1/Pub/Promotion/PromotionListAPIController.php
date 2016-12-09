@@ -146,7 +146,7 @@ class PromotionListAPIController extends PubControllerAPI
             foreach($adverts->getBindings() as $binding)
             {
               $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $sql = preg_replace('/\?/', $value, $sql, 1);
+              $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
             }
 
             $promotions = News::select(
@@ -278,7 +278,7 @@ class PromotionListAPIController extends PubControllerAPI
                                               ->where('partner_competitor.partner_id', '=', $partner_id);
                                         })
                                       ->where('object_partner.object_type', '=', 'promotion')
-                                      ->where('object_partner.object_id', '=', 'news.news_id')
+                                      ->where('object_partner.object_id', '=', DB::raw("{$prefix}news.news_id"))
                                       ->groupBy('object_partner.object_id');
                             });
             });
