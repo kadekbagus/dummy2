@@ -238,6 +238,10 @@ class CouponListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
                 if (in_array("mall", $category_id)) {
                     $coupons = $coupons->whereIn(DB::raw("t.object_type"), $category_id);
                 } else {

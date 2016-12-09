@@ -248,6 +248,10 @@ class PromotionListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($promotions, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
                 if (in_array("mall", $category_id)) {
                     $promotions = $promotions->whereIn(DB::raw("m.object_type"), $category_id);
                 } else {
