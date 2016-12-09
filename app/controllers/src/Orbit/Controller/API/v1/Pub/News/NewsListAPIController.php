@@ -203,7 +203,7 @@ class NewsListAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($news, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $news = $news->leftJoin('object_partner',function($q) {
+                $news = $news->leftJoin('object_partner',function($q) use ($partner_id){
                             $q->on('object_partner.object_id', '=', 'news.news_id')
                               ->where('object_partner.object_type', '=', 'news')
                               ->where('object_partner.partner_id', '=', $partner_id);

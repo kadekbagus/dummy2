@@ -209,7 +209,7 @@ class StoreAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $store = $store->leftJoin('object_partner',function($q) {
+                $store = $store->leftJoin('object_partner',function($q) use ($partner_id){
                             $q->on('object_partner.object_id', '=', 'merchants.merchant_id')
                               ->where('object_partner.object_type', '=', 'store')
                               ->where('object_partner.partner_id', '=', $partner_id);
