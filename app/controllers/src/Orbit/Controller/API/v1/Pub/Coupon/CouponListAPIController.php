@@ -145,7 +145,7 @@ class CouponListAPIController extends PubControllerAPI
               $sql = preg_replace('/\?/', $value, $sql, 1);
             }
 
-            $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
+            $coupons = DB::table('promotions')->select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
                                 CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                 CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                 {$prefix}promotions.status,
@@ -200,6 +200,7 @@ class CouponListAPIController extends PubControllerAPI
                                 $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                                 $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
                             })
+                            ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereRaw("available.tot > 0")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -255,13 +256,12 @@ class CouponListAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $coupons = $coupons->leftJoin('object_partner',function($q) use ($partner_id) {
+                $coupons = $coupons->leftJoin('object_partner', function($q) use ($partner_id) {
                             $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
                               ->where('object_partner.object_type', '=', 'coupon')
                               ->where('object_partner.partner_id', '=', $partner_id);
                         })
-                        ->whereNotExists(function($query) use ($partner_id, $prefix)
-                        {
+                        ->whereNotExists(function($query) use ($partner_id, $prefix) {
                             $query->select('object_partner.object_id')
                                   ->from('object_partner')
                                   ->join('partner_competitor', function($q) use ($partner_id) {

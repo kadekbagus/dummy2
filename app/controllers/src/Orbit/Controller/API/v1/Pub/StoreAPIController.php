@@ -145,7 +145,7 @@ class StoreAPIController extends PubControllerAPI
               $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
             }
 
-            $store = Tenant::select(
+            $store = DB::table("merchants")->select(
                     DB::raw("{$prefix}merchants.merchant_id"),
                     DB::raw("{$prefix}merchants.name"),
                     DB::Raw("CASE WHEN (
@@ -184,7 +184,8 @@ class StoreAPIController extends PubControllerAPI
                     $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
                     $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                 })
-                ->where('merchants.status', 'active')
+                ->whereRaw("{$prefix}merchants.object_type = 'tenant'")
+                ->whereRaw("{$prefix}merchants.status = 'active'")
                 ->whereRaw("oms.status = 'active'")
                 ->orderBy(DB::raw("advert.placement_order"), 'desc')
                 ->orderBy('merchants.created_at', 'asc');
@@ -209,9 +210,9 @@ class StoreAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $store = $store->leftJoin('object_partner',function($q) use ($partner_id){
+                $store = $store->leftJoin('object_partner', function($q) use ($partner_id) {
                             $q->on('object_partner.object_id', '=', 'merchants.merchant_id')
-                              ->where('object_partner.object_type', '=', 'store')
+                              ->where('object_partner.object_type', '=', 'tenant')
                               ->where('object_partner.partner_id', '=', $partner_id);
                         })
                         ->whereNotExists(function($query) use ($partner_id, $prefix)
@@ -315,10 +316,14 @@ class StoreAPIController extends PubControllerAPI
             });
 
             $realStore = $store->toSql();
-            $_realStore = DB::table(DB::raw("({$realStore}) as realStoreSubQuery"))->mergeBindings($store->getQuery())->groupBy('merchant_id');
+            foreach($store->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : $this->quote($binding);
+              $realStore = preg_replace('/\?/', $value, $realStore, 1);
+            }
+            $_realStore = DB::table(DB::raw("({$realStore}) as realStoreSubQuery"))->groupBy('merchant_id');
 
-            $querySql = $store->toSql();
-            $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery());
+            $store = DB::table(DB::raw("({$realStore}) as subQuery"));
 
             if ($list_type === "featured") {
                 $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_order',

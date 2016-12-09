@@ -206,7 +206,7 @@ class PromotionListAPIController extends PubControllerAPI
                                 $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
                                 $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                             })
-                            ->where('news.object_type', '=', 'promotion')
+                            ->whereRaw("{$prefix}news.object_type = 'promotion'")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy(DB::raw("advert.placement_order"), 'desc')
                             ->orderBy('news_name', 'asc');
@@ -265,13 +265,12 @@ class PromotionListAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($promotions, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $promotions = $promotions->leftJoin('object_partner',function($q) use ($partner_id) {
+                $promotions = $promotions->leftJoin('object_partner', function($q) use ($partner_id) {
                                 $q->on('object_partner.object_id', '=', 'news.news_id')
                                   ->where('object_partner.object_type', '=', 'promotion')
                                   ->where('object_partner.partner_id', '=', $partner_id);
                             })
-                            ->whereNotExists(function($query) use ($partner_id, $prefix)
-                            {
+                            ->whereNotExists(function($query) use ($partner_id, $prefix) {
                                 $query->select('object_partner.object_id')
                                       ->from('object_partner')
                                       ->join('partner_competitor', function($q) use ($partner_id) {
