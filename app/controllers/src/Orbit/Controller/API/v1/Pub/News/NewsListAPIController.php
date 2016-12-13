@@ -156,8 +156,6 @@ class NewsListAPIController extends PubControllerAPI
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->orderBy('news_name', 'asc');
 
-
-
             //calculate distance if user using my current location as filter and sort by location for listing
             if ($sort_by == 'location' || $location == 'mylocation') {
                 if (! empty($ul)) {
