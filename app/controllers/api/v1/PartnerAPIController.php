@@ -111,7 +111,7 @@ class PartnerAPIController extends ControllerAPI
 
             // generate array validation image
             $logo_validation = $this->generate_validation_image('partner_logo', $logo, 'orbit.upload.partner.logo');
-            $image_validation = $this->generate_validation_image('partner_image', $image, 'orbit.upload.partner.image');
+            $image_validation = $this->generate_validation_image('info_image_page', $image, 'orbit.upload.partner.image');
 
             $validation_data = [
                 'partner_name'        => $partner_name,
@@ -410,7 +410,7 @@ class PartnerAPIController extends ControllerAPI
 
             // generate array validation image
             $logo_validation = $this->generate_validation_image('partner_logo', $logo, 'orbit.upload.partner.logo');
-            $image_validation = $this->generate_validation_image('partner_image', $image, 'orbit.upload.partner.image');
+            $image_validation = $this->generate_validation_image('info_image_page', $image, 'orbit.upload.partner.image');
 
             $validation_data = [
                 'partner_name'        => $partner_name,
@@ -1105,7 +1105,7 @@ class PartnerAPIController extends ControllerAPI
                 $validation['error'][$image_name . '_' . $idx . '_size'] = 'orbit.file.max_size:' . $image_config['file_size'];
 
                 $validation['error_message'][$image_name . '_' . $idx . '_type' . '.in'] = Lang::get('validation.orbit.file.type', array('ext' => $ext));
-                $validation['error_message'][$image_name . '_' . $idx . '_size' . '.orbit.file.max_size'] = Lang::get('validation.orbit.file.max_size', array('name' => $image_config['name'], 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
+                $validation['error_message'][$image_name . '_' . $idx . '_size' . '.orbit.file.max_size'] = ($max_count > 1) ? Lang::get('validation.orbit.file.max_size', array('size' => $image_units['newsize'], 'unit' => $image_units['unit'])) : Lang::get('validation.orbit.file.max_size_one', array('name' => ucfirst(str_replace('_', ' ', $image_name)), 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
             }
         }
 

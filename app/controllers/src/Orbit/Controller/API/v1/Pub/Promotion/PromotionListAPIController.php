@@ -212,7 +212,7 @@ class PromotionListAPIController extends PubControllerAPI
                             ->orderBy('news_name', 'asc');
 
             // left join when need link to mall
-            if ((! empty($lon) && ! empty($lat)) || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
+            if ($sort_by == 'location' || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
                 $promotions = $promotions->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants as m', function ($q) {
                                         $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
@@ -238,7 +238,7 @@ class PromotionListAPIController extends PubControllerAPI
                 if (! empty($lon) && ! empty($lat)) {
                     $promotions = $promotions->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance")
                                                 )
-                                            ->leftJoin('merchant_geofences', function ($q) use($prefix) {
+                                            ->Join('merchant_geofences', function ($q) use($prefix) {
                                                         $q->on('merchant_geofences.merchant_id', '=',
                                                         DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END"));
                                                 });

@@ -499,6 +499,7 @@ return array(
         ),
         'file' => array(
             'max_size' => ':attribute is too big, maximum size allowed is :size:unit',
+            'max_size_one' => ':name size is too big, maximum size allowed is :size:unit',
             'type' => "File extension \".:ext\" is not allowed" ,
         ),
         'unique' => array(

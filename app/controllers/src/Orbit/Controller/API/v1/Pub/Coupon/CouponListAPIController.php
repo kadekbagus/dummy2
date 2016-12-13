@@ -208,7 +208,7 @@ class CouponListAPIController extends PubControllerAPI
                             ->orderBy('coupon_name', 'asc');
 
             // left join when need link to mall
-            if ((! empty($lon) && ! empty($lat)) || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
+            if ($sort_by == 'location' || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
                 $coupons = $coupons->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                 ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                                 ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
@@ -228,6 +228,7 @@ class CouponListAPIController extends PubControllerAPI
                         $lat = $userLocationCookieArray[1];
                     }
                 }
+
                 if (!empty($lon) && !empty($lat)) {
                     $coupons = $coupons->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                     ->leftJoin('merchant_geofences', function ($q) use($prefix) {
