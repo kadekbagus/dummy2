@@ -27,11 +27,47 @@ class LanguageAPIController extends ControllerAPI
         try {
             $this->checkAuth();
 
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user_login = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $user_role = $user_login->role;
+
+            $role_name = ['Campaign Admin', 'Campaign Employee', 'Campaign Owner'];
+
+
             $prefix = DB::getTablePrefix();
             $languages = Language::select('languages.language_id', 'languages.name', 'languages.name_native', 'languages.name_long', 'languages.language_order', 'languages.created_at', 'languages.updated_at', 'languages.status')
                                 ->leftJoin('merchant_languages', 'merchant_languages.language_id', '=', 'languages.language_id')
                                 ->orderBy('language_order', 'DESC')
                                 ->distinct();
+
+            if (in_array($user_role->role_name, $role_name)) {
+                $campaign_account = $user_login->campaignAccount()->first();
+
+                if ($campaign_account->is_link_to_all !== 'Y'){
+                    $languages->whereRaw("
+                                EXISTS (
+                                    SELECT 1
+                                    FROM {$prefix}user_merchant um
+                                    JOIN {$prefix}campaign_account ca
+                                        ON ca.user_id = um.user_id
+                                    JOIN {$prefix}account_types at
+                                        ON at.account_type_id = ca.account_type_id
+                                        AND at.status = 'active'
+                                    LEFT JOIN {$prefix}merchants pm
+                                        ON pm.merchant_id = um.merchant_id
+                                        AND pm.status = 'active'
+                                        AND pm.object_type = 'tenant'
+                                    WHERE {$prefix}merchant_languages.merchant_id = (CASE WHEN um.object_type = 'tenant' THEN pm.parent_id ELSE um.merchant_id END)
+                                        AND ca.user_id = {$this->quote($user_login->user_id)}
+                                    GROUP BY um.merchant_id
+                                )
+                                AND {$prefix}merchant_languages.status = 'active'
+                            ");
+                }
+            }
 
             OrbitInput::get('status', function($status) use ($languages) {
                 $languages->where('languages.status', '=', $status);
@@ -466,8 +502,11 @@ class LanguageAPIController extends ControllerAPI
 
             return $valid;
         });
+    }
 
-
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 
 }
