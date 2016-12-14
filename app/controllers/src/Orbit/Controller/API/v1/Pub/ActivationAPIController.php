@@ -76,13 +76,13 @@ class ActivationAPIController extends IntermediateBaseController
                         ->first();
 
                 if (!is_object($token)) {
-                    $errorMessage = 'Token not found';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    $errorMessage = Lang::get('validation.orbit.empty.token');
+                    throw new OrbitCustomException($errorMessage, Token::TOKEN_NOT_FOUND_ERROR_CODE, NULL);
                 }
 
                 if ($token->expire <= Carbon::now()) {
                     $errorMessage = Lang::get('validation.orbit.empty.token_expired');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    throw new OrbitCustomException($errorMessage, Token::TOKEN_EXPIRED_ERROR_CODE, NULL);
                 }
 
                 $user = User::excludeDeleted()
