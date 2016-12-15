@@ -169,12 +169,6 @@ class CreateUserCommand extends Command {
 
         // Check the existance of role id
         Validator::extend('orbit.exist.role_id', function ($attribute, $value, $parameters) {
-
-            $roleAllow = ['Merchant Database Admin'];
-            if (! in_array($value, $roleAllow)) {
-                return FALSE;
-            }
-
             $checkRole = Role::where('role_name', $value)->first();
             if (empty($checkRole)) {
                 return FALSE;
