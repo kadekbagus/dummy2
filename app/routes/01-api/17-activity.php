@@ -125,9 +125,7 @@ Route::post('/app/v1/pub/generic-activity/new', ['as' => 'generic-activity-new',
 /**
  * Get generic activity list
  */
-Route::get('/api/v1/pub/generic-activity/list', function()
+Route::get('/{app}/v1/pub/generic-activity/list', function()
 {
     return Orbit\Controller\API\v1\Pub\GenericActivityListAPIController::create()->getGenericActivityList();
-});
-
-Route::get('/app/v1/pub/generic-activity/list', ['as' => 'generic-activity-list', 'uses' => 'IntermediatePubAuthController@GenericActivityList_getGenericActivityList']);
+})->where('app', '(app|api)');
