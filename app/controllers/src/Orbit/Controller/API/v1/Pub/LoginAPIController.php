@@ -489,6 +489,7 @@ class LoginAPIController extends IntermediateBaseController
         } else {
             $caller_url .= '?error=' . $errorMessage;
         }
+        $_POST['plain'] = TRUE;
         return Redirect::to($caller_url);
     }
 
