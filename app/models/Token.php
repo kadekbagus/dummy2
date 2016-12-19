@@ -14,6 +14,9 @@ class Token extends Eloquent
      */
     use ModelStatusTrait;
 
+    const TOKEN_NOT_FOUND_ERROR_CODE = 1501;
+    const TOKEN_EXPIRED_ERROR_CODE = 1502;
+
     protected $table = 'tokens';
 
     protected $primaryKey = 'token_id';
