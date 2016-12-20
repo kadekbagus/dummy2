@@ -32,6 +32,16 @@ Route::group(
                 }
             )
         );
+
+        Route::get('/pub/sharer/facebook/store-detail',
+            array(
+                'as' => 'pub-share-store',
+                function()
+                {
+                    return Orbit\Controller\API\v1\Pub\SocMedAPIController::create()->getStoreDetailView();
+                }
+            )
+        );
     }
 );
 

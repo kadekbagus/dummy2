@@ -233,3 +233,13 @@ Route::get('/api/v1/pub/coupon/canvas', function()
 });
 
 Route::get('/app/v1/pub/coupon/canvas', ['as' => 'pub-mall-coupon-canvas', 'uses' => 'IntermediatePubAuthController@Coupon\CouponCanvas_getCheckValidityCoupon']);
+
+/**
+ * List store of a coupon
+ */
+Route::get('/api/v1/pub/store-coupon/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponStoreAPIController::create()->getCouponStore();
+});
+
+Route::get('/app/v1/pub/store-coupon/list', ['as' => 'pub-store-coupon-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponStore_getCouponStore']);

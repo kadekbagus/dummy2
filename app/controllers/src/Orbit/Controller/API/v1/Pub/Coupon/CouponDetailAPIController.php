@@ -115,6 +115,19 @@ class CouponDetailAPIController extends PubControllerAPI
                                                 WHERE opr.promotion_id = {$prefix}promotions.promotion_id
                                                 AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                     THEN 'true' ELSE 'false' END AS is_started
+                            "),
+                            // query for getting timezone for countdown on the frontend
+                            DB::raw("
+                                (SELECT
+                                    ot.timezone_name
+                                FROM {$prefix}promotion_retailer opt
+                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                    LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
+                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                ORDER BY CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) ASC
+                                LIMIT 1
+                                ) as timezone
                             ")
                         )
                         ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
