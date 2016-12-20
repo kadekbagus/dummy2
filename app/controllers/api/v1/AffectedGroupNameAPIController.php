@@ -113,9 +113,7 @@ class AffectedGroupNameAPIController extends ControllerAPI
             $affected_group_names = AffectedGroupName::excludeDeleted('affected_group_names')
                         ->select(
                             'affected_group_names.affected_group_name_id',
-                            'affected_group_names.group_name',
-                            'affected_group_names.group_order',
-                            'affected_group_names.status'
+                            'affected_group_names.group_name'
                         );
 
             // Filter affected group names by Ids
