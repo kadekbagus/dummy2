@@ -104,6 +104,15 @@ class PromotionDetailAPIController extends PubControllerAPI
                                                 WHERE onm.news_id = {$prefix}news.news_id
                                                 AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                     THEN 'true' ELSE 'false' END AS is_started
+                            "),
+                            // query for getting timezone for countdown on the frontend
+                            DB::raw("
+                                (SELECT min(ot.timezone_name)
+                                FROM {$prefix}news_merchant onm
+                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                WHERE onm.news_id = {$prefix}news.news_id) as timezone
                             ")
                         )
                         ->leftJoin('news_translations', function ($q) use ($valid_language) {
