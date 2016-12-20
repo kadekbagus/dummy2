@@ -182,6 +182,12 @@ class CouponListAPIController extends PubControllerAPI
                                         as image_url
                                     "),
                             DB::raw("advert.placement_type, advert.placement_order"),
+                            DB::raw("
+                                    CASE WHEN {$prefix}issued_coupons.user_id is null
+                                        THEN 'false'
+                                        ELSE 'true'
+                                    END as owned
+                                "),
                             'promotions.created_at')
                             ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -195,6 +201,11 @@ class CouponListAPIController extends PubControllerAPI
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
+                            ->leftJoin('issued_coupons', function ($q) use ($user) {
+                                $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('issued_coupons.user_id', '=', DB::raw("{$this->quote($user->user_id)}"))
+                                  ->on('issued_coupons.status', '=', DB::raw("'issued'"));
+                            })
                             ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.link_object_id"), '=', 'promotions.promotion_id')
                             ->leftJoin('media as advert_media', function ($q) {
                                 $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
@@ -313,14 +324,15 @@ class CouponListAPIController extends PubControllerAPI
                                                 END) > 0
                                             THEN 'preferred_list_large'
                                             ELSE placement_type
-                                            END AS placement_type")
+                                            END AS placement_type"),
+                                    'owned'
                                     )
                                  ->groupBy('coupon_id');
 
             } else {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"),
                                     'campaign_status', 'is_started', 'image_url',
-                                    'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
+                                    'placement_type', 'placement_order', DB::raw("sub_query.created_at"), 'owned')
                                  ->groupBy('coupon_id');
             }
 
