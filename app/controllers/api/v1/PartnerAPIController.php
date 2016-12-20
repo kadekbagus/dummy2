@@ -832,7 +832,8 @@ class PartnerAPIController extends ControllerAPI
                             'partners.contact_position',
                             'partners.contact_phone',
                             'partners.contact_email',
-                            'partners.is_visible'
+                            'partners.is_visible',
+                            'partners.is_shown_in_filter'
                         )
                         ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id')
                         ->leftJoin('deeplinks', function($qDeepLink) {
