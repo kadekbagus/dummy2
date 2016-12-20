@@ -99,3 +99,13 @@ Route::get('/api/v1/pub/mall-promotion-location/list', function()
 });
 
 Route::get('/app/v1/pub/mall-promotion-location/list', ['as' => 'pub-mall-promotion-location-list', 'uses' => 'IntermediatePubAuthController@Promotion\PromotionLocation_getPromotionLocations']);
+
+/**
+ * List store location in promotion detil
+ */
+Route::get('/api/v1/pub/store-promotion/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Promotion\PromotionStoreAPIController::create()->getPromotionStore();
+});
+
+Route::get('/app/v1/pub/store-promotion/list', ['as' => 'pub-store-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion\PromotionStore_getPromotionStore']);
