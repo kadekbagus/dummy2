@@ -82,6 +82,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.operating_hours ELSE '' END as operating_hours"),
                                         DB::raw("{$prefix}merchants.object_type as location_type"),
                                         DB::raw("img.path as location_logo"),
+                                        DB::raw("map.path as map_image"),
                                         DB::raw("{$prefix}merchants.phone as phone"),
                                         DB::raw("x(position) as longitude"),
                                         DB::raw("y(position) as latitude")
@@ -90,6 +91,12 @@ class PromotionLocationAPIController extends PubControllerAPI
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', DB::raw("IF({$prefix}merchants.object_type = 'tenant', {$prefix}merchants.parent_id, {$prefix}merchants.merchant_id)"))
+                                    // Map
+                                    ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
+                                        $q->on(DB::raw('map.object_id'), '=', "merchants.merchant_id")
+                                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig')"));
+                                    })
+                                    // Logo
                                     ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
                                         $q->on(DB::raw('img.object_id'), '=', DB::Raw("
                                                         (select CASE WHEN t.object_type = 'tenant'
