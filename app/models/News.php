@@ -59,6 +59,14 @@ class News extends Eloquent
             ->withPivot('object_type');
     }
 
+    public function campaignObjectPartners()
+    {
+        $prefix = DB::getTablePrefix();
+        return $this->hasMany('ObjectPartner', 'object_id', 'news_id')
+                      ->select('object_partner.object_id',DB::raw("{$prefix}partners.partner_id"), DB::raw("{$prefix}partners.partner_name"))
+                      ->leftjoin('partners', 'partners.partner_id', '=', 'object_partner.partner_id');
+    }
+
     /**
      * News has many uploaded media.
      *
