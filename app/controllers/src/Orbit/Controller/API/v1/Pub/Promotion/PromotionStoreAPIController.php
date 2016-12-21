@@ -78,7 +78,7 @@ class PromotionStoreAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
             $promotionLocation = NewsMerchant::select(
                                         "merchants.merchant_id",
-                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.name ELSE oms.name END as name"),
+                                        DB::raw("{$prefix}merchants.name as name"),
                                         "merchants.object_type"
                                     )
                                     ->join('news', function ($q) {
@@ -86,10 +86,9 @@ class PromotionStoreAPIController extends PubControllerAPI
                                           ->on('news.object_type', '=', DB::raw("'promotion'"));
                                     })
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('news_merchant.news_id', '=', $promotionId)
+                                    ->where('merchants.object_type', 'tenant')
                                     ->groupBy("name")
-                                    ->groupBy("object_type")
                                     ->orderBy($sort_by, $sort_mode);
 
             // filter news by mall id
