@@ -5117,5 +5117,12 @@ return array(
         // List of malls that need to be featured (put ontop of the others)
         'mall_ids' => [
         ]
+    ],
+
+    // mdm config
+    'mdm' => [
+        'synchronization' => [
+            'chunk' => 50
+        ]
     ]
 );
