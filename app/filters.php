@@ -182,6 +182,14 @@ Route::filter('pub-fb-bot', function() {
                     ->first();
 
                 break;
+            case 'pub-share-store':
+                $type = 'stores';
+
+                $item = Tenant::excludeDeleted()
+                    ->where('name', Input::get('name', NULL))
+                    ->first();
+
+                break;
             default:
                 $type = '';
 
@@ -191,7 +199,17 @@ Route::filter('pub-fb-bot', function() {
         if (is_object($item)) {
             // redirect user to gotomalls detail page
             // needs to be updated if there are route changes on frontend side
-            $redirect_to = URL::to(sprintf('%s/#!/%s/detail/%s/%s', $gtmUrl, $type, Input::get('id'), rawurlencode(Input::get('name', ''))));
+            switch ($type) {
+                case 'stores':
+                    $redirect_to = URL::to(sprintf('%s/#!/%s/detail/%s', $gtmUrl, $type, rawurlencode(Input::get('name', ''))));
+
+                    break;
+
+                default:
+                    $redirect_to = URL::to(sprintf('%s/#!/%s/detail/%s/%s', $gtmUrl, $type, Input::get('id'), rawurlencode(Input::get('name', ''))));
+
+                    break;
+            }
         } else {
             $redirect_to = URL::to($gtmUrl);
         }
