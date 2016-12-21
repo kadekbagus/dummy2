@@ -90,8 +90,7 @@ class PartnerListAPIController extends PubControllerAPI
                     $q->on('media.object_id', '=', 'partners.partner_id');
                     $q->on('media.media_name_long', '=', DB::raw("'partner_logo_orig'"));
                 })
-                ->where('partners.status', 'active')
-                ->where('partners.is_visible', 'y');
+                ->where('partners.status', 'active');
 
             OrbitInput::get('shown_in_filter', function($shown_in_filter) use ($partners)
             {
