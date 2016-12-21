@@ -83,6 +83,7 @@ class PartnerListAPIController extends PubControllerAPI
                     'partner_name',
                     'description',
                     'is_shown_in_filter',
+                    'is_visible',
                     'path as logo_url'
                 )
                 ->leftJoin('media', function ($q) {
@@ -96,6 +97,12 @@ class PartnerListAPIController extends PubControllerAPI
             {
                 $shown_in_filter = ($shown_in_filter === 'yes' ? 'Y' : 'N');
                 $partners->where('partners.is_shown_in_filter', $shown_in_filter);
+            });
+
+            OrbitInput::get('visible', function($visible) use ($partners)
+            {
+                $visible = ($visible === 'yes' ? 'Y' : 'N');
+                $partners->where('partners.is_visible', $visible);
             });
 
             // Map the sortby request to the real column name
