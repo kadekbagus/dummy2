@@ -177,6 +177,7 @@ return array(
             'role'                 => 'The Role ID you specified is not found',
             'role_name'            => 'The Role you specified is not found',
             'consumer_role'        => 'The Consumer role does not exist',
+            'token_expired'        => 'Your activation link has expired',
             'token'                => 'The token you specified is no longer available',
             'user'                 => 'The User ID you specified is not found',
             'question_id'          => 'The Quenstion ID you specified is not found',
