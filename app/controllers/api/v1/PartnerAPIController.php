@@ -109,34 +109,42 @@ class PartnerAPIController extends ControllerAPI
             $logo = OrbitInput::files('logo');
             $image = OrbitInput::files('image');
 
+            $affected_group_name_id = OrbitInput::post('affected_group_name_id');
+
+            if (is_array($affected_group_name_id)) {
+                $affected_group_name_validation = $this->generate_validation_affected_group_name($affected_group_name_id);
+            }
+
             // generate array validation image
             $logo_validation = $this->generate_validation_image('partner_logo', $logo, 'orbit.upload.partner.logo');
             $image_validation = $this->generate_validation_image('info_image_page', $image, 'orbit.upload.partner.image');
 
             $validation_data = [
-                'partner_name'        => $partner_name,
-                'start_date'          => $start_date,
-                'end_date'            => $end_date,
-                'status'              => $status,
-                'address'             => $address,
-                'city'                => $city,
-                'country_id'          => $country_id,
-                'phone'               => $phone,
-                'contact_firstname'   => $contact_firstname,
-                'contact_lastname'    => $contact_lastname,
+                'partner_name'           => $partner_name,
+                'start_date'             => $start_date,
+                'end_date'               => $end_date,
+                'status'                 => $status,
+                'address'                => $address,
+                'city'                   => $city,
+                'country_id'             => $country_id,
+                'phone'                  => $phone,
+                'contact_firstname'      => $contact_firstname,
+                'contact_lastname'       => $contact_lastname,
+                'affected_group_name_id' => $affected_group_name_id,
             ];
 
             $validation_error = [
-                'partner_name'        => 'required',
-                'start_date'          => 'date|orbit.empty.hour_format',
-                'end_date'            => 'date|orbit.empty.hour_format',
-                'status'              => 'required|in:active,inactive',
-                'address'             => 'required',
-                'city'                => 'required',
-                'country_id'          => 'required',
-                'phone'               => 'required',
-                'contact_firstname'   => 'required',
-                'contact_lastname'    => 'required',
+                'partner_name'           => 'required',
+                'start_date'             => 'date|orbit.empty.hour_format',
+                'end_date'               => 'date|orbit.empty.hour_format',
+                'status'                 => 'required|in:active,inactive',
+                'address'                => 'required',
+                'city'                   => 'required',
+                'country_id'             => 'required',
+                'phone'                  => 'required',
+                'contact_firstname'      => 'required',
+                'contact_lastname'       => 'required',
+                'affected_group_name_id' => 'array',
             ];
 
             $validation_error_message = [];
@@ -152,6 +160,11 @@ class PartnerAPIController extends ControllerAPI
                 $validation_data += $image_validation['data'];
                 $validation_error += $image_validation['error'];
                 $validation_error_message += $image_validation['error_message'];
+            }
+
+            if (! empty($affected_group_name_validation)) {
+                $validation_data += $affected_group_name_validation['data'];
+                $validation_error += $affected_group_name_validation['error'];
             }
 
             $validator = Validator::make(
@@ -221,6 +234,15 @@ class PartnerAPIController extends ControllerAPI
                 $newObjectSocialMedia->save();
 
                 $newPartner->social_media = $newObjectSocialMedia;
+            }
+
+            if (is_array($affected_group_name_id)) {
+                foreach ($affected_group_name_id as $idx => $group_name_id) {
+                    $newPartnerAffectedGroup = new PartnerAffectedGroup();
+                    $newPartnerAffectedGroup->affected_group_name_id = $group_name_id;
+                    $newPartnerAffectedGroup->partner_id = $newPartner->partner_id;
+                    $newPartnerAffectedGroup->save();
+                }
             }
 
             Event::fire('orbit.partner.postnewpartner.after.save', array($this, $newPartner));
@@ -408,36 +430,44 @@ class PartnerAPIController extends ControllerAPI
             $logo = OrbitInput::files('logo');
             $image = OrbitInput::files('image');
 
+            $affected_group_name_id = OrbitInput::post('affected_group_name_id');
+
+            if (is_array($affected_group_name_id)) {
+                $affected_group_name_validation = $this->generate_validation_affected_group_name($affected_group_name_id);
+            }
+
             // generate array validation image
             $logo_validation = $this->generate_validation_image('partner_logo', $logo, 'orbit.upload.partner.logo');
             $image_validation = $this->generate_validation_image('info_image_page', $image, 'orbit.upload.partner.image');
 
             $validation_data = [
-                'partner_name'        => $partner_name,
-                'partner_id'          => $partner_id,
-                'start_date'          => $start_date,
-                'end_date'            => $end_date,
-                'status'              => $status,
-                'address'             => $address,
-                'city'                => $city,
-                'country_id'          => $country_id,
-                'phone'               => $phone,
-                'contact_firstname'   => $contact_firstname,
-                'contact_lastname'    => $contact_lastname,
+                'partner_name'           => $partner_name,
+                'partner_id'             => $partner_id,
+                'start_date'             => $start_date,
+                'end_date'               => $end_date,
+                'status'                 => $status,
+                'address'                => $address,
+                'city'                   => $city,
+                'country_id'             => $country_id,
+                'phone'                  => $phone,
+                'contact_firstname'      => $contact_firstname,
+                'contact_lastname'       => $contact_lastname,
+                'affected_group_name_id' => $affected_group_name_id,
             ];
 
             $validation_error = [
-                'partner_name'        => 'required',
-                'partner_id'          => 'required',
-                'start_date'          => 'date|orbit.empty.hour_format',
-                'end_date'            => 'date|orbit.empty.hour_format',
-                'status'              => 'required|in:active,inactive',
-                'address'             => 'required',
-                'city'                => 'required',
-                'country_id'          => 'required',
-                'phone'               => 'required',
-                'contact_firstname'   => 'required',
-                'contact_lastname'    => 'required',
+                'partner_name'           => 'required',
+                'partner_id'             => 'required',
+                'start_date'             => 'date|orbit.empty.hour_format',
+                'end_date'               => 'date|orbit.empty.hour_format',
+                'status'                 => 'required|in:active,inactive',
+                'address'                => 'required',
+                'city'                   => 'required',
+                'country_id'             => 'required',
+                'phone'                  => 'required',
+                'contact_firstname'      => 'required',
+                'contact_lastname'       => 'required',
+                'affected_group_name_id' => 'array',
             ];
 
             $validation_error_message = [];
@@ -453,6 +483,11 @@ class PartnerAPIController extends ControllerAPI
                 $validation_data += $image_validation['data'];
                 $validation_error += $image_validation['error'];
                 $validation_error_message += $image_validation['error_message'];
+            }
+
+            if (! empty($affected_group_name_validation)) {
+                $validation_data += $affected_group_name_validation['data'];
+                $validation_error += $affected_group_name_validation['error'];
             }
 
             $validator = Validator::make(
@@ -596,6 +631,22 @@ class PartnerAPIController extends ControllerAPI
                     $socialMedia->social_media_id = $sosmed->social_media_id;
                     $socialMedia->social_media_uri = $social_media_uri;
                     $socialMedia->save();
+                }
+            });
+
+            OrbitInput::post('affected_group_name_id', function($affected_group_name_id) use ($updatedpartner) {
+                // del partner affected group
+                $del_partner_affected_group = PartnerAffectedGroup::where('partner_id', $updatedpartner->partner_id)->delete();
+
+                if (is_array($affected_group_name_id)) {
+                    foreach ($affected_group_name_id as $idx => $group_name_id) {
+                        if ($group_name_id !== '') {
+                            $newPartnerAffectedGroup = new PartnerAffectedGroup();
+                            $newPartnerAffectedGroup->affected_group_name_id = $group_name_id;
+                            $newPartnerAffectedGroup->partner_id = $updatedpartner->partner_id;
+                            $newPartnerAffectedGroup->save();
+                        }
+                    }
                 }
             });
 
@@ -901,6 +952,15 @@ class PartnerAPIController extends ControllerAPI
                                     'metadata'
                                 );
                             }]);
+                    } else if ($relation === 'partnerAffectedGroup') {
+                        $partners->with([$relation => function ($qGroupName) {
+                            $qGroupName->select(
+                                    'partner_id',
+                                    'partner_affected_group.affected_group_name_id',
+                                    'group_name'
+                                )
+                                ->join('affected_group_names', 'affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id');
+                            }]);
                     } else {
                         $partners->with($relation);
                     }
@@ -1075,6 +1135,21 @@ class PartnerAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+        // Check the affected group name is exists
+        Validator::extend('orbit.empty.affected_group_name', function ($attribute, $value, $parameters) {
+            $affected_group_name_id = $value;
+
+            $affected_group_name = AffectedGroupName::excludeDeleted()
+                                    ->where('affected_group_name_id', $affected_group_name_id)
+                                    ->first();
+
+            if (empty($affected_group_name)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
     }
 
     protected function generate_validation_image($image_name, $images, $config, $max_count = 1) {
@@ -1108,6 +1183,19 @@ class PartnerAPIController extends ControllerAPI
                 $validation['error_message'][$image_name . '_' . $idx . '_type' . '.in'] = Lang::get('validation.orbit.file.type', array('ext' => $ext));
                 $validation['error_message'][$image_name . '_' . $idx . '_size' . '.orbit.file.max_size'] = ($max_count > 1) ? Lang::get('validation.orbit.file.max_size', array('size' => $image_units['newsize'], 'unit' => $image_units['unit'])) : Lang::get('validation.orbit.file.max_size_one', array('name' => ucfirst(str_replace('_', ' ', $image_name)), 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
             }
+        }
+
+        return $validation;
+    }
+
+    protected function generate_validation_affected_group_name($group_names) {
+        $validation = [];
+
+        foreach ($group_names as $idx => $group_name) {
+            $idx+=1;
+
+            $validation['data'][$group_name] = $group_name;
+            $validation['error'][$group_name] = 'orbit.empty.affected_group_name';
         }
 
         return $validation;
