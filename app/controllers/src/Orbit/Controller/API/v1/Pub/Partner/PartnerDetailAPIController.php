@@ -107,13 +107,17 @@ class PartnerDetailAPIController extends PubControllerAPI
                     $q->on('deeplinks.object_type', '=', DB::raw("'partner'"));
                     $q->on('deeplinks.status', '=', DB::raw("'active'"));
                 })
-                ->excludeDeleted('partners')
+                ->where('partners.status', 'active')
                 ->where('partner_id', $partnerId)
                 ->groupBy('partners.partner_id')
                 ->first();
 
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($partner);
+
+            if (! is_object($partner)) {
+                OrbitShopAPI::throwInvalidArgument('Partner that you specify is not found');
+            }
 
             $this->response->data = $partner;
             $this->response->code = 0;

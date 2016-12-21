@@ -2,7 +2,7 @@
 
 /**
  * @author firmansyah <firmansyah@dominopos.com>
- * @desc Controller for promotion list and search in landing page
+ * @desc Get list location (stores and malls) of the promotion
  */
 
 use OrbitShop\API\v1\PubControllerAPI;
@@ -41,6 +41,7 @@ class PromotionLocationAPIController extends PubControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
             $mallId = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
+            $location = OrbitInput::get('location');
             $mall = null;
 
             $validator = Validator::make(
@@ -70,22 +71,22 @@ class PromotionLocationAPIController extends PubControllerAPI
             $promotionLocation = NewsMerchant::select(
                                         DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END as mall_id"),
+                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE {$prefix}merchants.name END as name"),
+                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.address_line1 ELSE {$prefix}merchants.address_line1 END as address"),
+                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.floor ELSE '' END as floor"),
+                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.unit ELSE '' END as unit"),
+                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.operating_hours ELSE '' END as operating_hours"),
                                         DB::raw("{$prefix}merchants.object_type as location_type"),
-                                        DB::raw("CONCAT(IF({$prefix}merchants.object_type = 'tenant', oms.ci_domain, {$prefix}merchants.ci_domain), '/customer/mallpromotion?id=', {$prefix}news_merchant.news_id) as url"),
-                                        'news.begin_date as begin_date',
-                                        'news.end_date as end_date',
-                                        DB::raw("( SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
-                                                    FROM {$prefix}merchants om
-                                                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                                    WHERE om.merchant_id = (CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END)
-                                                ) as tz"),
-                                            DB::Raw("img.path as location_logo"),
-                                            DB::Raw("{$prefix}merchants.phone as phone")
+                                        DB::raw("img.path as location_logo"),
+                                        DB::raw("{$prefix}merchants.phone as phone"),
+                                        DB::raw("x(position) as longitude"),
+                                        DB::raw("y(position) as latitude")
                                     )
                                     ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', DB::raw("IF({$prefix}merchants.object_type = 'tenant', {$prefix}merchants.parent_id, {$prefix}merchants.merchant_id)"))
                                     ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
                                         $q->on(DB::raw('img.object_id'), '=', DB::Raw("
                                                         (select CASE WHEN t.object_type = 'tenant'
@@ -99,8 +100,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                                             "))
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
-                                    ->where('news_merchant.news_id', '=', $promotionId)
-                                    ->havingRaw('tz <= end_date AND tz >= begin_date');
+                                    ->where('news_merchant.news_id', '=', $promotionId);
 
             // filter news by mall id
             $group_by = '';
@@ -111,6 +111,14 @@ class PromotionLocationAPIController extends PubControllerAPI
                                           ->orWhere('merchants.merchant_id', '=', $mallid);
                                     });
                     $group_by = 'mall';
+                }
+            });
+
+            OrbitInput::get('location', function($location) use ($promotionLocation, $prefix) {
+                if ($location == 'mylocation') {
+                    $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
+                } else {
+                    $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
                 }
             });
 
