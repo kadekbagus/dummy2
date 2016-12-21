@@ -81,15 +81,14 @@ class CouponStoreAPIController extends PubControllerAPI
 
             $couponLocations = PromotionRetailer::select(
                                             "merchants.merchant_id",
-                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.name ELSE oms.name END as name"),
+                                            DB::raw("{$prefix}merchants.name as name"),
                                             "merchants.object_type"
                                         )
                                     ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('promotions.promotion_id', $couponId)
+                                    ->where('merchants.object_type', 'tenant')
                                     ->groupBy("name")
-                                    ->groupBy("object_type")
                                     ->orderBy($sort_by, $sort_mode);
 
             // filter news by mall id
