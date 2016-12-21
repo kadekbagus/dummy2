@@ -45,6 +45,9 @@ class WordpressPostListAPIController extends PubControllerAPI
         $this->setMallObject();
 
         try {
+            $this->checkAuth();
+            $user = $this->api->user;
+
             $jsonFile = Config::get('orbit.external_calls.wordpress.cache_file');
             $totalRec = 0;
             $listOfRec = [];

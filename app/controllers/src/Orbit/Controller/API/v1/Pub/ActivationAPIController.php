@@ -26,6 +26,7 @@ use Lang;
 use Mall;
 use Hash;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use Carbon\Carbon;
 
 class ActivationAPIController extends IntermediateBaseController
 {
@@ -75,8 +76,13 @@ class ActivationAPIController extends IntermediateBaseController
                         ->first();
 
                 if (!is_object($token)) {
-                    $errorMessage = 'Your link has expired';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    $errorMessage = Lang::get('validation.orbit.empty.token');
+                    throw new OrbitCustomException($errorMessage, Token::TOKEN_NOT_FOUND_ERROR_CODE, NULL);
+                }
+
+                if ($token->expire <= Carbon::now()) {
+                    $errorMessage = Lang::get('validation.orbit.empty.token_expired');
+                    throw new OrbitCustomException($errorMessage, Token::TOKEN_EXPIRED_ERROR_CODE, NULL);
                 }
 
                 $user = User::excludeDeleted()
@@ -220,6 +226,7 @@ class ActivationAPIController extends IntermediateBaseController
     protected function registerCustomValidation()
     {
         $me = $this;
+
         Validator::extend('orbit_activation_empty_token', function ($attribute, $value, $parameters) use ($me) {
             $token = Token::active()
                           ->registrationToken()
