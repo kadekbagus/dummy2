@@ -75,14 +75,6 @@ class NewsAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.news.postnewnews.before.authz', array($this, $user));
 
-/*
-            if (! ACL::create($user)->isAllowed('create_news')) {
-                Event::fire('orbit.news.postnewnews.authz.notallowed', array($this, $user));
-                $createNewsLang = Lang::get('validation.orbit.actionlist.new_news');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $createNewsLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->newsModifiyRoles;
@@ -116,6 +108,8 @@ class NewsAPIController extends ControllerAPI
             $keywords = (array) $keywords;
             $translations = OrbitInput::post('translations');
             $sticky_order = OrbitInput::post('sticky_order');
+            $partner_ids = OrbitInput::post('partner_ids');
+            $partner_ids = (array) $partner_ids;
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -271,6 +265,18 @@ class NewsAPIController extends ControllerAPI
                 $newsretailers[] = $newsretailer;
             }
             $newnews->tenants = $newsretailers;
+
+            // save ObjectPartner
+            $objectPartners = array();
+            foreach ($partner_ids as $partner_id) {
+                $objectPartner = new ObjectPartner();
+                $objectPartner->object_id = $newnews->news_id;
+                $objectPartner->object_type = $object_type;
+                $objectPartner->partner_id = $partner_id;
+                $objectPartner->save();
+                $objectPartners[] = $objectPartner;
+            }
+            $newnews->partners = $objectPartners;
 
             //save to user campaign
             $usercampaign = new UserCampaign();
@@ -657,6 +663,8 @@ class NewsAPIController extends ControllerAPI
             $translations = OrbitInput::post('translations');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
+            $partner_ids = OrbitInput::post('partner_ids');
+            $partner_ids = (array) $partner_ids;
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -922,6 +930,27 @@ class NewsAPIController extends ControllerAPI
                     $newsretailer->object_type = $isMall;
                     $newsretailer->save();
                 }
+            });
+
+            OrbitInput::post('partner_ids', function($partner_ids) use ($updatednews, $news_id, $object_type) {
+                // validate retailer_ids
+                $partner_ids = (array) $partner_ids;
+
+                // Delete old data
+                $delete_object_partner = ObjectPartner::where('object_id', '=', $news_id);
+                $delete_retailer->delete();
+
+                // Insert new data
+                $objectPartners = array();
+                foreach ($partner_ids as $partner_id) {
+                    $objectPartner = new ObjectPartner();
+                    $objectPartner->object_id = $news_id;
+                    $objectPartner->object_type = $object_type;
+                    $objectPartner->partner_id = $partner_id;
+                    $objectPartner->save();
+                    $objectPartners[] = $objectPartner;
+                }
+                $updatednews->partners = $objectPartners;
             });
 
             OrbitInput::post('gender_ids', function($gender_ids) use ($updatednews, $news_id, $object_type) {
