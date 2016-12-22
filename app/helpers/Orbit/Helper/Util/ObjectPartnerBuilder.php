@@ -7,6 +7,7 @@
  */
 use DB;
 use PartnerAffectedGroup;
+use \Config;
 
 class ObjectPartnerBuilder
 {
