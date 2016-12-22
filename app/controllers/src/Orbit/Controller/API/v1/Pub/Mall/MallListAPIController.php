@@ -16,6 +16,7 @@ use Mall;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
 use stdClass;
+use DB;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\GTMSearchRecorder;
