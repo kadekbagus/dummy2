@@ -14,7 +14,7 @@ class ObjectPartnerBuilder
    {
         $prefix = DB::getTablePrefix();
         $partner_affected = PartnerAffectedGroup::join('affected_group_names', function($q) use ($type) {
-                                                            $q->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.partner_affected_group_id')
+                                                            $q->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
                                                               ->on('affected_group_names.group_type', '=', DB::raw("'{$type}'"));
                                                         })
                                                 ->where('partner_id', $partner_id)
