@@ -24,6 +24,7 @@ use Language;
 use Coupon;
 use Activity;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 
@@ -205,23 +206,7 @@ class StoreAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $store = $store->leftJoin('object_partner', function($q) use ($partner_id) {
-                            $q->on('object_partner.object_id', '=', 'merchants.merchant_id')
-                              ->where('object_partner.object_type', '=', 'tenant')
-                              ->where('object_partner.partner_id', '=', $partner_id);
-                        })
-                        ->whereNotExists(function($query) use ($partner_id, $prefix)
-                        {
-                            $query->select('object_partner.object_id')
-                                  ->from('object_partner')
-                                  ->join('partner_competitor', function($q) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
-                                    })
-                                  ->whereRaw("{$prefix}object_partner.object_type = 'tenant'")
-                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
-                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}merchants.merchant_id")
-                                  ->groupBy('object_partner.object_id');
-                        });
+                $store = ObjectPartnerBuilder::getQueryBuilder($store, $partner_id, 'tenant');
             });
 
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
