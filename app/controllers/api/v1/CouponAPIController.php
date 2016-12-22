@@ -1729,6 +1729,29 @@ class CouponAPIController extends ControllerAPI
 
             });
 
+            OrbitInput::post('partner_ids', function($partner_ids) use ($updatedcoupon, $promotion_id) {
+                // validate retailer_ids
+                $partner_ids = (array) $partner_ids;
+
+                // Delete old data
+                $delete_object_partner = ObjectPartner::where('object_id', '=', $promotion_id);
+                $delete_object_partner->delete();
+
+                $objectPartners = array();
+                // Insert new data
+                if(array_filter($partner_ids)) {
+                    foreach ($partner_ids as $partner_id) {
+                        $objectPartner = new ObjectPartner();
+                        $objectPartner->object_id = $promotion_id;
+                        $objectPartner->object_type = 'coupon';
+                        $objectPartner->partner_id = $partner_id;
+                        $objectPartner->save();
+                        $objectPartners[] = $objectPartner;
+                    }
+                }
+                $updatedcoupon->partners = $objectPartners;
+            });
+
             // Delete old data
             $deleted_keyword_object = KeywordObject::where('object_id', '=', $promotion_id)
                                                     ->where('object_type', '=', 'coupon');
