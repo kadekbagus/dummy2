@@ -134,13 +134,11 @@ class NewsLocationAPIController extends PubControllerAPI
             $group_by = '';
 
             OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
-                if ($is_detail != 'y') {
-                    $newsLocations->where(function($q) use ($mallid){
-                                        $q->where('merchants.parent_id', '=', $mallid)
-                                          ->orWhere('merchants.merchant_id', '=', $mallid);
-                                    });
-                    $group_by = 'mall';
-                }
+                $newsLocations->where(function($q) use ($mallid){
+                                    $q->where('merchants.parent_id', '=', $mallid)
+                                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                                });
+                $group_by = 'mall';
             });
 
             OrbitInput::get('location', function($location) use ($newsLocations, $userLocationCookieName, $ul, $distance, $prefix) {
