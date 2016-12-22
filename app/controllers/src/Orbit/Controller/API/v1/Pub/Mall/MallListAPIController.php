@@ -144,9 +144,9 @@ class MallListAPIController extends PubControllerAPI
             // filter by partner_id
             $partner_filter = '';
             if (! empty($partner_id)) {
-                $partner_affected = PartnerAffectedGroup::Join('affected_group_names', function($q) {
-                                                            $q->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.partner_affected_group_id')
-                                                              ->on('affected_group_names.group_type', '=', DB::raw("'mall'"));
+                $partner_affected = PartnerAffectedGroup::join('affected_group_names', function($join) {
+                                                            $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+                                                                 ->where('affected_group_names.group_type', '=', 'mall');
                                                         })
                                                         ->where('partner_id', $partner_id)
                                                         ->first();
