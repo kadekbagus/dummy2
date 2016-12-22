@@ -110,7 +110,6 @@ Route::get('/api/v1/pub/store-news/list', function()
 
 Route::get('/app/v1/pub/store-news/list', ['as' => 'pub-store-news-list', 'uses' => 'IntermediatePubAuthController@News\NewsStore_getNewsStore']);
 
-
 /**
  * List city for news
  */
