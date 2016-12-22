@@ -1,10 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Promotion;
 
-/**
- * @author firmansyah <firmansyah@dominopos.com>
- * @desc Get list of city for each promotion
- */
-
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -17,13 +12,29 @@ use \DB;
 use \URL;
 use News;
 use NewsMerchant;
-use Language;
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 
 class PromotionCityAPIController extends PubControllerAPI
 {
+
+    /**
+     * GET - Get list of city for each promotion
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string promotion_id
+     * @param string sortby
+     * @param string sortmode
+     * @param string take
+     * @param string skip
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+
     public function getPromotionCity()
     {
         $httpCode = 200;
