@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Promotion;
+<?php namespace Orbit\Controller\API\v1\Pub\News;
 
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -16,17 +16,17 @@ use Validator;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 
-class PromotionCityAPIController extends PubControllerAPI
+class NewsCityAPIController extends PubControllerAPI
 {
 
     /**
-     * GET - Get list of city for each promotion
+     * GET - Get list of city for each news
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string promotion_id
+     * @param string news_id
      * @param string sortby
      * @param string sortmode
      * @param string take
@@ -35,7 +35,7 @@ class PromotionCityAPIController extends PubControllerAPI
      * @return Illuminate\Support\Facades\Response
      */
 
-    public function getPromotionCity()
+    public function getNewsCity()
     {
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
@@ -44,20 +44,20 @@ class PromotionCityAPIController extends PubControllerAPI
         try{
             $user = $this->getUser();
 
-            $promotionId = OrbitInput::get('promotion_id', null);
+            $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'city');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $mall = null;
 
             $validator = Validator::make(
                 array(
-                    'promotion_id' => $promotionId,
+                    'news_id' => $newsId,
                 ),
                 array(
-                    'promotion_id' => 'required',
+                    'news_id' => 'required',
                 ),
                 array(
-                    'required' => 'Promotion ID is required',
+                    'required' => 'News ID is required',
                 )
             );
 
@@ -73,40 +73,40 @@ class PromotionCityAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $promotionLocation = NewsMerchant::select(
+            $newsLocation = NewsMerchant::select(
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city")
                                     )
                                     ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->where('news_merchant.news_id', '=', $promotionId)
+                                    ->where('news_merchant.news_id', '=', $newsId)
                                     ->groupBy('city');
 
-            $_promotionLocation = clone($promotionLocation);
+            $_newsLocation = clone($newsLocation);
 
             $take = PaginationNumber::parseTakeFromGet('news');
-            $promotionLocation->take($take);
+            $newsLocation->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $promotionLocation->skip($skip);
+            $newsLocation->skip($skip);
 
-            $promotionLocation->orderBy($sort_by, $sort_mode);
+            $newsLocation->orderBy($sort_by, $sort_mode);
 
-            $listOfRec = $promotionLocation->get();
+            $listOfRec = $newsLocation->get();
 
             // moved from generic activity number 36
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
-                $promotion = News::excludeDeleted()
-                    ->where('news_id', $promotionId)
+                $news = News::excludeDeleted()
+                    ->where('news_id', $newsId)
                     ->first();
 
-                $activityNotes = sprintf('Page viewed: Promotion city list');
+                $activityNotes = sprintf('Page viewed: News city list');
                 $activity->setUser($user)
-                    ->setActivityName('view_promotion_city')
-                    ->setActivityNameLong('View Promotion City Page')
-                    ->setObject($promotion)
+                    ->setActivityName('view_news_city')
+                    ->setActivityNameLong('View News City Page')
+                    ->setObject($news)
                     ->setLocation($mall)
-                    ->setModuleName('Promotion')
+                    ->setModuleName('News')
                     ->setNotes($activityNotes)
                     ->responseOK()
                     ->save();
@@ -114,7 +114,7 @@ class PromotionCityAPIController extends PubControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = RecordCounter::create($_promotionLocation)->count();
+            $data->total_records = RecordCounter::create($_newsLocation)->count();
             $data->records = $listOfRec;
 
             $this->response->data = $data;
