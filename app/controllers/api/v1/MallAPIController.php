@@ -2354,11 +2354,11 @@ class MallAPIController extends ControllerAPI
 
             // update link to partner
             OrbitInput::post('partner_ids', function($partner_ids) use ($updatedmall) {
-                if (count($partner_ids) > 0) {
-                  // Delete old data
-                  $delete_partner = ObjectPartner::where('object_id', '=', $updatedmall->merchant_id);
-                  $delete_partner->delete(true);
+                // Delete old data
+                $delete_partner = ObjectPartner::where('object_id', '=', $updatedmall->merchant_id);
+                $delete_partner->delete(true);
 
+                if (! empty($partner_ids)) {
                   // Insert new data
                   foreach ($partner_ids as $partner_id) {
                       $object_partner = new ObjectPartner();
