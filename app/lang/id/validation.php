@@ -143,6 +143,7 @@ return array(
             'product'              => 'Product ID tidak ditemukan.',
             'category'             => 'Category ID tidak ditemukan.',
             'tax'                  => 'Tax ID tidak ditemukan.',
+            'token_expired'        => 'Your activation link has expired',
             'promotion'            => 'Promotion ID tidak ditemukan.',
             'coupon'               => 'Coupon ID tidak ditemukan.',
             'issued_coupon'        => 'Issued Coupon ID tidak ditemukan.',

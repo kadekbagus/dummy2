@@ -7,6 +7,7 @@
 use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use Mall;
+use ObjectPartner;
 use DB;
 use MerchantGeofence;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
@@ -61,6 +62,8 @@ class ESMallCreateQueue
                     ->where('merchants.merchant_id', $mallId)
                     ->first();
 
+        $object_partner = ObjectPartner::where('object_type', 'mall')->where('object_id', $mall->merchant_id)->lists('partner_id');
+
         if (! is_object($mall)) {
             $job->delete();
 
@@ -105,6 +108,10 @@ class ESMallCreateQueue
                     ]
                 ]
             ];
+
+            if (! empty($object_partner)) {
+                $esBody['partner_ids'] = $object_partner;
+            }
 
             // validation geofence
             if (empty($geofence->area) || empty($geofence->latitude) || empty($geofence->longitude)) {

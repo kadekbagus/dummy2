@@ -13,6 +13,8 @@ use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
 use Mall;
+use PartnerAffectedGroup;
+use PartnerCompetitor;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
@@ -42,6 +44,7 @@ class MallListAPIController extends PubControllerAPI
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
             $sort_by = OrbitInput::get('sortby', null);
+            $partner_id = OrbitInput::get('partner_id', null);
             $sort_mode = OrbitInput::get('sortmode','asc');
             $ul = OrbitInput::get('ul', null);
             $radius = Config::get('orbit.geo_location.distance', 10);
@@ -137,6 +140,38 @@ class MallListAPIController extends PubControllerAPI
                 }
             }
 
+            // filter by partner_id
+            $partner_filter = '';
+            if (! empty($partner_id)) {
+                $partner_affected = PartnerAffectedGroup::Join('affected_group_names', function($q) {
+                                                            $q->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.partner_affected_group_id')
+                                                              ->on('affected_group_names.group_type', '=', DB::raw("'mall'"));
+                                                        })
+                                                        ->where('partner_id', $partner_id)
+                                                        ->first();
+
+                if (is_object($partner_affected)) {
+                    $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
+                    $partner_filter = '{
+                                    "query": {
+                                        "match": { "partner_ids": "' . $partner_id . '" }
+                                    }
+                                },';
+
+                    if (in_array($partner_id, $exception)) {
+                        $partner_exception = PartnerCompetitor::where("partner_id", $partner_id)->lists("competitor_id");
+                        $partnerIds = implode('", "', $partner_exception);
+                        $partner_filter = '{
+                                    "query": {
+                                        "not" : {
+                                            "terms": { "partner_ids": ["' . $partnerIds . '"] }
+                                        }
+                                    }
+                                },';
+                    }
+                }
+            }
+
             // sort by name or location
             $sortby = '{"name.raw" : {"order" : "' . $sort_mode . '"}}';
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
@@ -181,7 +216,8 @@ class MallListAPIController extends PubControllerAPI
                                     ' . $filterKeyword . '
                                     "filter": {
                                         "and": [
-                                            ' . $locationFilter . '
+                                            ' . $locationFilter .
+                                                $partner_filter .'
                                             {
                                                 "query": {
                                                     ' . $filterStatus . '

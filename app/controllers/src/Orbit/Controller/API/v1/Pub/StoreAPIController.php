@@ -24,6 +24,7 @@ use Language;
 use Coupon;
 use Activity;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 
@@ -139,11 +140,6 @@ class StoreAPIController extends PubControllerAPI
                             ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"));
 
             $advertSql = $adverts->toSql();
-            foreach($adverts->getBindings() as $binding)
-            {
-              $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
-            }
 
             $store = DB::table("merchants")->select(
                     DB::raw("{$prefix}merchants.merchant_id"),
@@ -210,23 +206,7 @@ class StoreAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $store = $store->leftJoin('object_partner', function($q) use ($partner_id) {
-                            $q->on('object_partner.object_id', '=', 'merchants.merchant_id')
-                              ->where('object_partner.object_type', '=', 'tenant')
-                              ->where('object_partner.partner_id', '=', $partner_id);
-                        })
-                        ->whereNotExists(function($query) use ($partner_id, $prefix)
-                        {
-                            $query->select('object_partner.object_id')
-                                  ->from('object_partner')
-                                  ->join('partner_competitor', function($q) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
-                                    })
-                                  ->whereRaw("{$prefix}object_partner.object_type = 'tenant'")
-                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
-                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}merchants.merchant_id")
-                                  ->groupBy('object_partner.object_id');
-                        });
+                $store = ObjectPartnerBuilder::getQueryBuilder($store, $partner_id, 'tenant');
             });
 
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
@@ -386,7 +366,11 @@ class StoreAPIController extends PubControllerAPI
 
             // random featured adv
             if ($list_type === 'featured') {
-                $featuredStore = $_store->get();
+                $featuredStoreBuilder = clone $_store;
+                $featuredStoreBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
+                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($featuredStoreBuilder);
+
+                $featuredStore = $featuredStoreBuilder->get();
                 $advertedCampaigns = array_filter($featuredStore, function($v) {
                     return ($v->placement_type_orig === 'featured_list');
                 });
@@ -407,18 +391,7 @@ class StoreAPIController extends PubControllerAPI
                     if ($no_total_records !== 'yes') {
                         $totalRecMerchant = count($random);
                     }
-                } else {
-                    $liststore = array_slice($featuredStore, 0, $take);
-                    if ($no_total_records !== 'yes') {
-                        $totalRecMerchant = count($liststore);
-                    }
                 }
-            } else {
-                $take = PaginationNumber::parseTakeFromGet('retailer');
-                $store->take($take);
-
-                $skip = PaginationNumber::parseSkipFromGet();
-                $store->skip($skip);
             }
 
             $data = new \stdclass();

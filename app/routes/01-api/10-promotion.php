@@ -109,3 +109,14 @@ Route::get('/api/v1/pub/store-promotion/list', function()
 });
 
 Route::get('/app/v1/pub/store-promotion/list', ['as' => 'pub-store-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion\PromotionStore_getPromotionStore']);
+
+
+/**
+ * List city for promotion
+ */
+Route::get('/api/v1/pub/promotion-city/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Promotion\PromotionCityAPIController::create()->getPromotionCity();
+});
+
+Route::get('/app/v1/pub/promotion-city/list', ['as' => 'pub-promotion-city', 'uses' => 'IntermediatePubAuthController@Promotion\PromotionCity_getPromotionCity']);

@@ -20,6 +20,7 @@ use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
@@ -268,22 +269,7 @@ class CouponListAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $coupons = $coupons->leftJoin('object_partner', function($q) use ($partner_id) {
-                            $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
-                              ->where('object_partner.object_type', '=', 'coupon')
-                              ->where('object_partner.partner_id', '=', $partner_id);
-                        })
-                        ->whereNotExists(function($query) use ($partner_id, $prefix) {
-                            $query->select('object_partner.object_id')
-                                  ->from('object_partner')
-                                  ->join('partner_competitor', function($q) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
-                                    })
-                                  ->whereRaw("{$prefix}object_partner.object_type = 'coupon'")
-                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
-                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}promotions.promotion_id")
-                                  ->groupBy('object_partner.object_id');
-                        });
+                $coupons = ObjectPartnerBuilder::getQueryBuilder($coupons, $partner_id, 'coupon');
             });
 
             // filter by city
