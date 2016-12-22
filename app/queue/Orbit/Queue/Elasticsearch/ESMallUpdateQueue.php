@@ -117,7 +117,6 @@ class ESMallUpdateQueue
                 'status'          => $mall->status,
                 'ci_domain'       => $mall->ci_domain,
                 'is_subscribed'   => $mall->is_subscribed,
-                'partner_ids'     => $object_partner,
                 'position'        => [
                     'lon' => $geofence->longitude,
                     'lat' => $geofence->latitude
@@ -127,6 +126,10 @@ class ESMallUpdateQueue
                     'coordinates' => $geofence->area
                 ]
             ];
+
+            if (! empty($object_partner)) {
+                $esBody['partner_ids'] = $object_partner;
+            }
 
             // validation geofence
             if (empty($geofence->area) || empty($geofence->latitude) || empty($geofence->longitude)) {
