@@ -486,6 +486,20 @@ class Mall extends Eloquent
     }
 
     /**
+     * Mall has many partner
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function partners()
+    {
+        $prefix = DB::getTablePrefix();
+        return $this->hasMany('ObjectPartner', 'object_id', 'merchant_id')
+                      ->select('object_partner.object_id', DB::raw("{$prefix}partners.partner_id"), DB::raw("{$prefix}partners.partner_name"))
+                      ->leftjoin('partners', 'partners.partner_id', '=', 'object_partner.partner_id');
+    }
+
+    /**
      * Add Filter merchant based on user who request it.
      *
      * @author Rio Astamal <me@rioastamal.net>

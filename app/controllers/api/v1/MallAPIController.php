@@ -307,6 +307,7 @@ class MallAPIController extends ControllerAPI
             $timezoneName = OrbitInput::post('timezone', $this->default['timezone']);
             $domain = OrbitInput::post('domain');
             $languages = OrbitInput::post('languages', []);
+            $partner_ids = OrbitInput::post('partner_ids', []);
             $floors = OrbitInput::post('floors');
             $campaign_base_price_promotion = OrbitInput::post('campaign_base_price_promotion', $this->default['campaign_base_price_promotion']);
             $campaign_base_price_coupon = OrbitInput::post('campaign_base_price_coupon', $this->default['campaign_base_price_coupon']);
@@ -716,6 +717,17 @@ class MallAPIController extends ControllerAPI
             $newSpendingRules->object_id = $newmall->merchant_id;
             $newSpendingRules->with_spending = 'N';
             $newSpendingRules->save();
+
+            //save to object_partner
+            if (! empty($partner_ids)) {
+              foreach ($partner_ids as $partner_id) {
+                $objectPartner = new ObjectPartner();
+                $objectPartner->object_id = $newmall->merchant_id;
+                $objectPartner->object_type = 'mall';
+                $objectPartner->partner_id = $partner_id;
+                $objectPartner->save();
+              }
+            }
 
             if (OrbitInput::post('facebook_uri')) {
                 $this->saveSocmedUri('facebook', $newmall->merchant_id, OrbitInput::post('facebook_uri'));
@@ -2338,6 +2350,24 @@ class MallAPIController extends ControllerAPI
 
                 // reload taxes relation
                 $updatedmall->load('taxes');
+            });
+
+            // update link to partner
+            OrbitInput::post('partner_ids', function($partner_ids) use ($updatedmall) {
+                if (count($partner_ids) > 0) {
+                  // Delete old data
+                  $delete_partner = ObjectPartner::where('object_id', '=', $updatedmall->merchant_id);
+                  $delete_partner->delete(true);
+
+                  // Insert new data
+                  foreach ($partner_ids as $partner_id) {
+                      $object_partner = new ObjectPartner();
+                      $object_partner->object_id = $updatedmall->merchant_id;
+                      $object_partner->object_type = 'mall';
+                      $object_partner->partner_id = $partner_id;
+                      $object_partner->save();
+                  }
+                }
             });
 
             Event::fire('orbit.mall.postupdatemall.after.save', array($this, $updatedmall));
