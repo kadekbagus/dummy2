@@ -3,7 +3,8 @@
 /**
  * An API controller for getting generic activity.
  */
-use OrbitShop\API\v1\PubControllerAPI;
+use IntermediateBaseController;
+use OrbitShop\API\v1\ResponseProvider;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
@@ -15,7 +16,7 @@ use Config;
 use stdClass;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 
-class GenericActivityListAPIController extends PubControllerAPI
+class GenericActivityListAPIController extends IntermediateBaseController
 {
     /**
      * GET - get generic activity list
@@ -29,10 +30,9 @@ class GenericActivityListAPIController extends PubControllerAPI
      */
     public function getGenericActivityList()
     {
-
+        $this->response = new ResponseProvider();
         $httpCode = 200;
         try {
-            $this->checkAuth();
 
             $genAct = Config::get('orbit.generic_activity.activity_list');
             $paramName = Config::get('orbit.generic_activity.parameter_name');
@@ -96,6 +96,6 @@ class GenericActivityListAPIController extends PubControllerAPI
             $httpCode = 500;
         }
 
-        return $this->render($httpCode);
+        return $this->render($this->response);
     }
 }

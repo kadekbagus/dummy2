@@ -67,7 +67,7 @@ class StoreSynchronization
             $prefix = DB::getTablePrefix();
             $sync_data = $data['sync_data'];
             $user_id = $data['user'];
-            $chunk = 50;
+            $chunk = Config::get('orbit.mdm.synchronization.chunk', 50);
 
             $user = User::where('user_id', $user_id)->firstOrFail();
 

@@ -137,6 +137,18 @@ class AffectedGroupNameAPIController extends ControllerAPI
                 $affected_group_names->where('affected_group_names.status', $status);
             });
 
+            // Filter affected group names by partner_id
+            OrbitInput::get('partner_id', function ($partner_id) use ($affected_group_names, $prefix) {
+                $affected_group_names->join('partner_affected_group', 'partner_affected_group.affected_group_name_id', '=', 'affected_group_names.affected_group_name_id')
+                    ->leftJoin('object_partner', function ($qJoin) use ($prefix) {
+                        $qJoin->on('object_partner.partner_id', '=', 'partner_affected_group.partner_id')
+                            ->on('object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
+                    })
+                    ->addSelect(DB::raw('count(object_type) as item_count'))
+                    ->where('partner_affected_group.partner_id', $partner_id)
+                    ->groupBy('object_partner.partner_id', 'group_name');
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($affected_group_names) {
                 $with = (array) $with;
