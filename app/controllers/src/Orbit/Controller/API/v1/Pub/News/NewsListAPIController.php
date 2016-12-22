@@ -25,6 +25,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 
 class NewsListAPIController extends PubControllerAPI
@@ -201,23 +202,7 @@ class NewsListAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($news, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $news = $news->leftJoin('object_partner',function($q) use ($partner_id){
-                            $q->on('object_partner.object_id', '=', 'news.news_id')
-                              ->where('object_partner.object_type', '=', 'news')
-                              ->where('object_partner.partner_id', '=', $partner_id);
-                        })
-                        ->whereNotExists(function($query) use ($partner_id, $prefix)
-                        {
-                            $query->select('object_partner.object_id')
-                                  ->from('object_partner')
-                                  ->join('partner_competitor', function($q) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
-                                    })
-                                  ->whereRaw("{$prefix}object_partner.object_type = 'news'")
-                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
-                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}news.news_id")
-                                  ->groupBy('object_partner.object_id');
-                        });
+                $news = ObjectPartnerBuilder::getQueryBuilder($news, $partner_id, 'news');
             });
 
             // filter news by mall id
