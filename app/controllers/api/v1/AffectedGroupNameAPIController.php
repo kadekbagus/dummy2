@@ -371,27 +371,27 @@ class AffectedGroupNameAPIController extends ControllerAPI
             if ($group_name === 'promotions') {
                 $partners->join('affected_group_names', function($join) {
                         $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                             ->where('affected_group_names.group_name', '=', 'Promotions');
+                             ->where('affected_group_names.group_type', '=', 'promotion');
                     });
             } else if ($group_name === 'events') {
                 $partners->join('affected_group_names', function($join) {
                         $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                             ->where('affected_group_names.group_name', '=', 'Events');
+                             ->where('affected_group_names.group_type', '=', 'news');
                     });
             } else if ($group_name === 'coupons') {
                 $partners->join('affected_group_names', function($join) {
                         $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                             ->where('affected_group_names.group_name', '=', 'Coupons');
+                             ->where('affected_group_names.group_type', '=', 'coupon');
                     });
             } else if ($group_name === 'malls') {
                 $partners->join('affected_group_names', function($join) {
                         $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                             ->where('affected_group_names.group_name', '=', 'Malls');
+                             ->where('affected_group_names.group_type', '=', 'mall');
                     });
             } else if ($group_name === 'stores') {
                 $partners->join('affected_group_names', function($join) {
                         $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                             ->where('affected_group_names.group_name', '=', 'Stores');
+                             ->where('affected_group_names.group_type', '=', 'tenant');
                 });
             }
 
