@@ -14,6 +14,8 @@ use Carbon\Carbon as Carbon;
 
 class IssuedCouponAPIController extends ControllerAPI
 {
+    protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
+    protected $modifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
 
     /**
      * POST - Create New Issued Coupon
@@ -530,10 +532,11 @@ class IssuedCouponAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.issuedcoupon.getsearchissuedcoupon.before.authz', array($this, $user));
 
-            if (! ACL::create($user)->isAllowed('view_issued_coupon')) {
-                Event::fire('orbit.issuedcoupon.getsearchissuedcoupon.authz.notallowed', array($this, $user));
-                $viewIssuedCouponLang = Lang::get('validation.orbit.actionlist.view_issuedcoupon');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $viewIssuedCouponLang));
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
             Event::fire('orbit.issuedcoupon.getsearchissuedcoupon.after.authz', array($this, $user));
