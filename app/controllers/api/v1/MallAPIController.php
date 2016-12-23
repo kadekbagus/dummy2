@@ -721,11 +721,13 @@ class MallAPIController extends ControllerAPI
             //save to object_partner
             if (! empty($partner_ids)) {
               foreach ($partner_ids as $partner_id) {
-                $objectPartner = new ObjectPartner();
-                $objectPartner->object_id = $newmall->merchant_id;
-                $objectPartner->object_type = 'mall';
-                $objectPartner->partner_id = $partner_id;
-                $objectPartner->save();
+                if ($partner_id != "") {
+                  $objectPartner = new ObjectPartner();
+                  $objectPartner->object_id = $newmall->merchant_id;
+                  $objectPartner->object_type = 'mall';
+                  $objectPartner->partner_id = $partner_id;
+                  $objectPartner->save();
+                }
               }
             }
 
