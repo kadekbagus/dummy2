@@ -120,6 +120,18 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $news->skip($skip);
 
+// -------convert to sql query--------
+$sql = $news->toSql();
+foreach($news->getBindings() as $binding)
+{
+    $value = is_numeric($binding) ? $binding : DB::connection()->getPdo()->quote($binding);
+    $sql = preg_replace('/\?/', $value, $sql, 1);
+}
+
+print_r($sql);
+die();
+// ----------------------------------
+
             $listOfRec = $news->get();
 
             $data = new \stdclass();
@@ -275,17 +287,12 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                         $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                     })
-                    // ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                    // ->leftJoin('merchants as m', function ($q) {
-                    //         $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
-                    //         $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
-                    // })
                     ->whereRaw("{$prefix}news.object_type = 'news'")
                     ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                     ->orderBy('news_name', 'asc');
 
         // left join when need link to mall
-        if ($sort_by == 'location' || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
+        if ($filter === 'Y') {
             $news = $news->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants as m', function ($q) {
                             $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
