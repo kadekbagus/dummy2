@@ -234,7 +234,7 @@ class StoreSynchronization
                     // insert object_partner
                     $base_object_partners = BaseObjectPartner::join('partners', 'partners.partner_id', '=', 'base_object_partner.partner_id')
                                                             ->where('base_object_partner.object_id', $base_merchant_id)
-                                                            ->where('base_object_partner.object_type', 'merchants')->get();
+                                                            ->where('base_object_partner.object_type', 'tenant')->get();
                     $object_partner = array();
                     foreach ($base_object_partners as $base_object_partner) {
                         $object_partner[] = [ 'object_partner_id' => ObjectID::make(),
