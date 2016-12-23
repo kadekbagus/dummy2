@@ -1,41 +1,51 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Promotion;
+<?php namespace Orbit\Controller\API\v1\Pub\Coupon;
 
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
-use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use \Config;
-use \Exception;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use \DB;
-use \URL;
-use News;
-use NewsMerchant;
-use Validator;
+use Illuminate\Database\QueryException;
+use Config;
+use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
+use DB;
+use Validator;
+use Lang;
+use \Exception;
+use PromotionRetailer;
+use Helper\EloquentRecordCounter as RecordCounter;
 use Activity;
+use Coupon;
+use Mall;
 
-class PromotionCityAPIController extends PubControllerAPI
+class CouponCityAPIController extends PubControllerAPI
 {
 
     /**
-     * GET - Get list of city for each promotion
+     * GET - get list city per each coupon
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string promotion_id
+     * @param string coupon_id
      * @param string sortby
      * @param string sortmode
+     * @param string mall_id
+     * @param string is_detail
+     * @param string location
+     * @param string orbit.user_location.cookie.name
+     * @param string orbit.geo_location.distance
+     * @param string ul
      * @param string take
      * @param string skip
      *
      * @return Illuminate\Support\Facades\Response
      */
 
-    public function getPromotionCity()
+    public function getCouponCity()
     {
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
@@ -44,20 +54,20 @@ class PromotionCityAPIController extends PubControllerAPI
         try{
             $user = $this->getUser();
 
-            $promotionId = OrbitInput::get('promotion_id', null);
+            $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'city');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $mall = null;
 
             $validator = Validator::make(
                 array(
-                    'promotion_id' => $promotionId,
+                    'coupon_id' => $couponId,
                 ),
                 array(
-                    'promotion_id' => 'required',
+                    'coupon_id' => 'required',
                 ),
                 array(
-                    'required' => 'Promotion ID is required',
+                    'required' => 'Coupon ID is required',
                 )
             );
 
@@ -73,40 +83,40 @@ class PromotionCityAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $promotionLocation = NewsMerchant::select(
-                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city")
-                                    )
-                                    ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+            $couponLocations = PromotionRetailer::select(
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city")
+                                        )
+                                    ->leftJoin('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->where('news_merchant.news_id', '=', $promotionId)
+                                    ->where('promotions.promotion_id', $couponId)
                                     ->groupBy('city');
 
-            $_promotionLocation = clone($promotionLocation);
+            $_couponLocations = clone($couponLocations);
 
-            $take = PaginationNumber::parseTakeFromGet('news');
-            $promotionLocation->take($take);
+            $take = PaginationNumber::parseTakeFromGet('promotions');
+            $couponLocations->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $promotionLocation->skip($skip);
+            $couponLocations->skip($skip);
 
-            $promotionLocation->orderBy($sort_by, $sort_mode);
+            $couponLocations->orderBy($sort_by, $sort_mode);
 
-            $listOfRec = $promotionLocation->get();
+            $listOfRec = $couponLocations->get();
 
-            // moved from generic activity number 36
+            // moved from generic activity number 38
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
-                $promotion = News::excludeDeleted()
-                    ->where('news_id', $promotionId)
+                $coupon = Coupon::excludeDeleted()
+                    ->where('promotion_id', $couponId)
                     ->first();
 
-                $activityNotes = sprintf('Page viewed: Promotion city list');
+                $activityNotes = sprintf('Page viewed: Coupon city list');
                 $activity->setUser($user)
-                    ->setActivityName('view_promotion_city')
-                    ->setActivityNameLong('View Promotion City Page')
-                    ->setObject($promotion)
+                    ->setActivityName('view_coupon_city')
+                    ->setActivityNameLong('View Coupon City Page')
+                    ->setObject($coupon)
                     ->setLocation($mall)
-                    ->setModuleName('Promotion')
+                    ->setModuleName('Coupon')
                     ->setNotes($activityNotes)
                     ->responseOK()
                     ->save();
@@ -114,7 +124,7 @@ class PromotionCityAPIController extends PubControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = RecordCounter::create($_promotionLocation)->count();
+            $data->total_records = RecordCounter::create($_couponLocations)->count();
             $data->records = $listOfRec;
 
             $this->response->data = $data;

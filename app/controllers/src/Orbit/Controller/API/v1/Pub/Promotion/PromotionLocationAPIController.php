@@ -1,10 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Promotion;
 
-/**
- * @author firmansyah <firmansyah@dominopos.com>
- * @desc Get list location (stores and malls) of the promotion
- */
-
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -26,6 +21,29 @@ use Mall;
 
 class PromotionLocationAPIController extends PubControllerAPI
 {
+
+    /**
+     * GET - Get list location (stores and malls) of the promotion
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string promotion_id
+     * @param string sortby
+     * @param string sortmode
+     * @param string mall_id
+     * @param string is_detail
+     * @param string location
+     * @param string orbit.user_location.cookie.name
+     * @param string orbit.geo_location.distance
+     * @param string ul
+     * @param string take
+     * @param string skip
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+
     public function getPromotionLocations()
     {
         $httpCode = 200;
@@ -44,7 +62,6 @@ class PromotionLocationAPIController extends PubControllerAPI
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance', 10);
             $ul = OrbitInput::get('ul', null);
-
             $mall = null;
 
             $validator = Validator::make(
@@ -114,24 +131,20 @@ class PromotionLocationAPIController extends PubControllerAPI
 
             // filter news by mall id
             $group_by = '';
-            OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
-                if ($is_detail != 'y') {
-                    $promotionLocation->where(function($q) use ($mallid){
-                                        $q->where('merchants.parent_id', '=', $mallid)
-                                          ->orWhere('merchants.merchant_id', '=', $mallid);
-                                    });
-                    $group_by = 'mall';
-                }
+            OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, $group_by) {
+                $promotionLocation->where(function($q) use ($mallid){
+                                    $q->where('merchants.parent_id', '=', $mallid)
+                                      ->orWhere('merchants.merchant_id', '=', $mallid);
+                                });
+                $group_by = 'mall';
             });
 
             OrbitInput::get('location', function($location) use ($promotionLocation, $userLocationCookieName, $ul, $distance, $prefix) {
-
                 $position = isset($ul)?explode("|", $ul):null;
                 $lon = isset($position[0])?$position[0]:null;
                 $lat = isset($position[0])?$position[0]:null;
 
                 if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-
                     if (! empty($ul)) {
                         $position = explode("|", $ul);
                         $lon = $position[0];
@@ -147,11 +160,8 @@ class PromotionLocationAPIController extends PubControllerAPI
 
                     $promotionLocation->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                         ->havingRaw("distance <= {$distance}");
-
                 } else {
-
                     $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
-
                 }
             });
 

@@ -938,17 +938,19 @@ class NewsAPIController extends ControllerAPI
 
                 // Delete old data
                 $delete_object_partner = ObjectPartner::where('object_id', '=', $news_id);
-                $delete_retailer->delete();
+                $delete_object_partner->delete();
 
-                // Insert new data
                 $objectPartners = array();
-                foreach ($partner_ids as $partner_id) {
-                    $objectPartner = new ObjectPartner();
-                    $objectPartner->object_id = $news_id;
-                    $objectPartner->object_type = $object_type;
-                    $objectPartner->partner_id = $partner_id;
-                    $objectPartner->save();
-                    $objectPartners[] = $objectPartner;
+                // Insert new data
+                if(array_filter($partner_ids)) {
+                    foreach ($partner_ids as $partner_id) {
+                        $objectPartner = new ObjectPartner();
+                        $objectPartner->object_id = $news_id;
+                        $objectPartner->object_type = $object_type;
+                        $objectPartner->partner_id = $partner_id;
+                        $objectPartner->save();
+                        $objectPartners[] = $objectPartner;
+                    }
                 }
                 $updatednews->partners = $objectPartners;
             });
@@ -1882,6 +1884,8 @@ class NewsAPIController extends ControllerAPI
                         $news->with('ages');
                     } elseif ($relation === 'keywords') {
                         $news->with('keywords');
+                    } elseif ($relation === 'campaignObjectPartners') {
+                        $news->with('campaignObjectPartners');
                     }
                 }
             });

@@ -5124,5 +5124,13 @@ return array(
         'synchronization' => [
             'chunk' => 50
         ]
+    ],
+
+    // partner config
+    'partner' => [
+        // exception behaviour for query in listing (ex: dompetku)
+        'exception_behaviour' => [
+            'partner_ids' => ['']
+        ]
     ]
 );

@@ -154,6 +154,16 @@ Route::get('/api/v1/pub/coupon/detail', function()
 Route::get('/app/v1/pub/coupon/detail', ['as' => 'pub-coupon-detail', 'uses' => 'IntermediatePubAuthController@Coupon\CouponDetail_getCouponItem']);
 
 /**
+ * Get coupon count for sidebar
+ */
+Route::get('/api/v1/pub/coupon/count', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponCountAPIController::create()->getCouponCount();
+});
+
+Route::get('/app/v1/pub/coupon/count', ['as' => 'pub-coupon-count', 'uses' => 'IntermediatePubAuthController@Coupon\CouponCount_getCouponCount']);
+
+/**
  * List location of a coupon
  */
 Route::get('/api/v1/pub/coupon-location/list', function()
@@ -243,3 +253,13 @@ Route::get('/api/v1/pub/store-coupon/list', function()
 });
 
 Route::get('/app/v1/pub/store-coupon/list', ['as' => 'pub-store-coupon-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponStore_getCouponStore']);
+
+/**
+ * List city for coupon
+ */
+Route::get('/api/v1/pub/coupon-city/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponCityAPIController::create()->getCouponCity();
+});
+
+Route::get('/app/v1/pub/coupon-city/list', ['as' => 'pub-coupon-city', 'uses' => 'IntermediatePubAuthController@Coupon\CouponCity_getCouponCity']);
