@@ -26,6 +26,7 @@ use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
+use Orbit\Helper\Util\ObjectPartnerBuilder;
 
 class NewsAlsoLikeListAPIController extends PubControllerAPI
 {
@@ -266,22 +267,31 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                         "),
                     'news.created_at')
                     ->leftJoin('news_translations', function ($q) use ($valid_language) {
-                        $q->on('news_translations.news_id', '=', 'news.news_id')
-                          ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        $q->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        $q->on('news_translations.news_id', '=', 'news.news_id');
                     })
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->leftJoin('media', function ($q) {
-                        $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                         $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                        $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                     })
-                    ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                    ->leftJoin('merchants as m', function ($q) {
-                            $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
-                            $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
-                    })
+                    // ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                    // ->leftJoin('merchants as m', function ($q) {
+                    //         $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
+                    //         $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
+                    // })
                     ->whereRaw("{$prefix}news.object_type = 'news'")
                     ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                     ->orderBy('news_name', 'asc');
+
+        // left join when need link to mall
+        if ($sort_by == 'location' || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
+            $news = $news->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchants as m', function ($q) {
+                            $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
+                            $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
+                        });
+        }
 
         //calculate distance if user using my current location as filter and sort by location for listing
         if ($sort_by == 'location' || $location == 'mylocation') {
@@ -348,31 +358,16 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         }
 
         if (! empty($partner_id)) {
-            $news = $news->leftJoin('object_partner',function($q) use ($partner_id){
-                        $q->on('object_partner.object_id', '=', 'news.news_id')
-                          ->on('object_partner.object_type', '=', DB::raw("'news'"))
-                          ->on('object_partner.partner_id', '=', DB::raw("'{$partner_id}'"));
-                    })
-                    ->whereNotExists(function($query) use ($partner_id, $prefix)
-                    {
-                        $query->select('object_partner.object_id')
-                              ->from('object_partner')
-                              ->join('partner_competitor', function($q) {
-                                    $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
-                                })
-                              ->whereRaw("{$prefix}object_partner.object_type = 'news'")
-                              ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
-                              ->whereRaw("{$prefix}object_partner.object_id = {$prefix}news.news_id")
-                              ->groupBy('object_partner.object_id');
-                    });
+            $news = ObjectPartnerBuilder::getQueryBuilder($news, $partner_id, 'news');
         }
 
         if (! empty($mallId)) {
             // filter news by mall id
             $news = $news->where(function($q) use ($mallId){
-                    $q->where(DB::raw("m.parent_id"), '=', $mallId)
-                      ->orWhere(DB::raw("m.merchant_id"), '=', $mallId);
-                });
+                        $q->where(DB::raw("m.parent_id"), '=', $mallId)
+                          ->orWhere(DB::raw("m.merchant_id"), '=', $mallId);
+                    })
+                    ->where('news.object_type', '=', 'news');
         }
 
          // frontend need the mall name
