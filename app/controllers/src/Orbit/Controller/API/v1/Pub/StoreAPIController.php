@@ -840,6 +840,11 @@ class StoreAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $storename = OrbitInput::get('store_name');
+            $location = OrbitInput::get('location');
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+            $distance = Config::get('orbit.geo_location.distance', 10);
+            $ul = OrbitInput::get('ul', null);
+
             $keyword = OrbitInput::get('keyword');
 
             $validator = Validator::make(
@@ -865,10 +870,32 @@ class StoreAPIController extends PubControllerAPI
             // Query without searching keyword
             $mall = Mall::select('merchants.merchant_id',
                                     'merchants.name',
-                                    'merchants.ci_domain',
+                                    'merchants.address_line1 as address',
                                     'merchants.city',
-                                    'merchants.description',
-                                    DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/tenant?id=', oms.merchant_id) as store_url"))
+                                    'merchants.floor',
+                                    'merchants.unit',
+                                    'merchants.operating_hours',
+                                    'merchants.object_type as location_type',
+                                    DB::raw("img.path as location_logo"),
+                                    DB::raw("map.path as map_image"),
+                                    'merchants.phone',
+                                    DB::raw("x(position) as longitude"),
+                                    DB::raw("y(position) as latitude")
+                                )
+                    ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
+                    // Map
+                    ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
+                        $q->on(DB::raw('map.object_id'), '=', "merchants.merchant_id")
+                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig')"))
+                          ;
+                    })
+                    // Logo
+                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
+                        $q->on(DB::raw('img.object_id'), '=', "merchants.merchant_id")
+                          ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"))
+                          ;
+                    })
+
                     ->with(['tenants' => function ($q) use ($prefix, $storename) {
                             $q->select('merchants.merchant_id',
                                         'merchants.name as title',
@@ -917,8 +944,7 @@ class StoreAPIController extends PubControllerAPI
                 $mall = $mall->join(DB::raw("( select {$prefix}merchants.merchant_id, name, parent_id from {$prefix}merchants
                                             left join {$prefix}keyword_object on {$prefix}merchants.merchant_id = {$prefix}keyword_object.object_id
                                             left join {$prefix}keywords on {$prefix}keyword_object.keyword_id = {$prefix}keywords.keyword_id
-                                            where name = {$this->quote($storename)}
-                                            and {$prefix}merchants.status = 'active'
+                                            where {$prefix}merchants.status = 'active'
                                             and (" . $keywordSql . ")
                                         ) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                             ->active();
@@ -926,6 +952,33 @@ class StoreAPIController extends PubControllerAPI
                 $mall = $mall->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                             ->active();
             }
+
+            OrbitInput::get('location', function($location) use ($mall, $userLocationCookieName, $ul, $distance, $prefix) {
+                $position = isset($ul)?explode("|", $ul):null;
+                $lon = isset($position[0])?$position[0]:null;
+                $lat = isset($position[0])?$position[0]:null;
+
+                if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                    if (! empty($ul)) {
+                        $position = explode("|", $ul);
+                        $lon = $position[0];
+                        $lat = $position[1];
+                    } else {
+                        // get lon lat from cookie
+                        $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                        if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                            $lon = $userLocationCookieArray[0];
+                            $lat = $userLocationCookieArray[1];
+                        }
+                    }
+
+                    $mall->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
+                                        ->havingRaw("distance <= {$distance}");
+                } else {
+                    $mall->where('merchants.city', $location);
+                }
+            });
+
 
             $mall = $mall->groupBy('merchants.merchant_id')->orderBy($sort_by, $sort_mode);
 
