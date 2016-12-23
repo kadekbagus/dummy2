@@ -53,3 +53,13 @@ Route::get('/api/v1/merchant/merchant/detail', function()
 });
 
 Route::get('/app/v1/merchant/merchant/detail', ['as' => 'merchant-api-merchant-detail', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantDetail_getMerchantDetail']);
+
+/**
+ * Get merchant detail
+ */
+Route::get('/api/v1/merchant/merchant/partner', function()
+{
+    return Orbit\Controller\API\v1\Merchant\Merchant\MerchantPartnerAPIController::create()->getMerchantPartner();
+});
+
+Route::get('/app/v1/merchant/merchant/partner', ['as' => 'merchant-api-merchant-partner', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantPartner_getMerchantPartner']);
