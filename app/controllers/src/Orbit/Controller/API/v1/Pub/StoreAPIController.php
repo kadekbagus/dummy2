@@ -1105,7 +1105,7 @@ class StoreAPIController extends PubControllerAPI
                 array(
                     'store_name' => 'required',
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,created_date',
+                    'sortby'   => 'in:campaign_name,name,location,created_date',
                 ),
                 array(
                     'required' => 'Store name is required',
@@ -1403,6 +1403,7 @@ class StoreAPIController extends PubControllerAPI
             if ($sort_by !== 'location') {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
+                    'campaign_name'   => 'campaign_name',
                     'name'            => 'campaign_name',
                     'created_date'    => 'created_at',
                 );
