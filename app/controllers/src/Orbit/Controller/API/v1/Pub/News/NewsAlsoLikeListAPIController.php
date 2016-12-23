@@ -53,7 +53,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
 
         try{
             $user = $this->getUser();
-            $no_total_records = OrbitInput::get('no_total_records', null);
+            $show_total_record = OrbitInput::get('show_total_record', null);
             // variable for function
             $except_id = OrbitInput::get('except_id'); // except news id on detail page
             $category_id = OrbitInput::get('category_id'); // filter category id
@@ -102,7 +102,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
 
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes
-            if ($no_total_records !== 'yes') {
+            if ($show_total_record === 'yes') {
                 $_news = clone($news);
 
                 $recordCounter = RecordCounter::create($_news);
@@ -114,7 +114,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($news);
 
-            $take = PaginationNumber::parseTakeFromGet('news');
+            $take = PaginationNumber::parseTakeFromGet('you_might_also_like');
             $news->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
@@ -419,6 +419,9 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         if ($sort_by !== 'location') {
             $news = $news->orderBy($sort_by, $sort_mode);
         }
+
+        $take = Config::get('orbit.pagination.you_might_also_like.max_record');
+        $news->take($take);
 
         // second subquery merging for keep sort by before union
         $_news = clone $news;
