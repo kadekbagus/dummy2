@@ -144,6 +144,7 @@ class MallListAPIController extends PubControllerAPI
             // filter by partner_id
             $partner_filter = '';
             if (! empty($partner_id)) {
+                $searchFlag = $searchFlag || TRUE;
                 $partner_affected = PartnerAffectedGroup::join('affected_group_names', function($join) {
                                                             $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
                                                                  ->where('affected_group_names.group_type', '=', 'mall');
@@ -255,7 +256,8 @@ class MallListAPIController extends PubControllerAPI
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => NULL,
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name')
+                    'sortBy' => OrbitInput::get('sortby', 'name'),
+                    'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);

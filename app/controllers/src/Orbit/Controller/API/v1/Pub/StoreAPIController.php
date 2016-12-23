@@ -839,6 +839,7 @@ class StoreAPIController extends PubControllerAPI
 
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $mallId = OrbitInput::get('mall_id', null);
             $storename = OrbitInput::get('store_name');
             $location = OrbitInput::get('location');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
@@ -979,6 +980,9 @@ class StoreAPIController extends PubControllerAPI
                 }
             });
 
+            if (! empty($mallId)) {
+                $mall->where('merchants.merchant_id', '=', $mallId)->first();
+            }
 
             $mall = $mall->groupBy('merchants.merchant_id')->orderBy($sort_by, $sort_mode);
 
