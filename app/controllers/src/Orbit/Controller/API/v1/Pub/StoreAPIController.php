@@ -880,8 +880,8 @@ class StoreAPIController extends PubControllerAPI
                                     DB::raw("img.path as location_logo"),
                                     DB::raw("map.path as map_image"),
                                     'merchants.phone',
-                                    DB::raw("x(position) as longitude"),
-                                    DB::raw("y(position) as latitude")
+                                    DB::raw("x(position) as latitude"),
+                                    DB::raw("y(position) as longitude")
                                 )
                     ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
                     // Map
