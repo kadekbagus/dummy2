@@ -263,3 +263,13 @@ Route::get('/api/v1/pub/coupon-city/list', function()
 });
 
 Route::get('/app/v1/pub/coupon-city/list', ['as' => 'pub-coupon-city', 'uses' => 'IntermediatePubAuthController@Coupon\CouponCity_getCouponCity']);
+
+/**
+ * Also like List of coupon
+ */
+Route::get('/api/v1/pub/coupon/suggestion/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponAlsoLikeListAPIController::create()->getCouponList();
+});
+
+Route::get('/app/v1/pub/coupon/suggestion/list', ['as' => 'pub-coupon-suggestion-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponAlsoLikeList_getCouponList']);
