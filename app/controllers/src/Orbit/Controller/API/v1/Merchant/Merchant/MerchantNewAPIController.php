@@ -12,6 +12,7 @@ use Lang;
 use BaseMerchant;
 use BaseMerchantCategory;
 use BaseMerchantKeyword;
+use BaseObjectPartner;
 use Config;
 use Language;
 use Keyword;
@@ -61,6 +62,7 @@ class MerchantNewAPIController extends ControllerAPI
             $merchantName = OrbitInput::post('merchant_name');
             $websiteUrl = OrbitInput::post('website_url');
             $facebookUrl = OrbitInput::post('facebook_url');
+            $partnerIds = OrbitInput::post('partner_ids', []);
             $categoryIds = OrbitInput::post('category_ids');
             $categoryIds = (array) $categoryIds;
             $translations = OrbitInput::post('translations');
@@ -200,6 +202,19 @@ class MerchantNewAPIController extends ControllerAPI
 
             }
             $newBaseMerchant->keywords = $tenantKeywords;
+
+            //save to base object partner
+            if (! empty($partnerIds)) {
+              foreach ($partnerIds as $partnerId) {
+                if ($partnerId != "") {
+                  $baseObjectPartner = new BaseObjectPartner();
+                  $baseObjectPartner->object_id = $newBaseMerchant->base_merchant_id;
+                  $baseObjectPartner->object_type = 'merchants';
+                  $baseObjectPartner->partner_id = $partnerId;
+                  $baseObjectPartner->save();
+                }
+              }
+            }
 
             Event::fire('orbit.basemerchant.postnewbasemerchant.after.save', array($this, $newBaseMerchant));
 
