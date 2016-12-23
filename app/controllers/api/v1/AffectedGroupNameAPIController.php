@@ -144,7 +144,11 @@ class AffectedGroupNameAPIController extends ControllerAPI
                         $qJoin->on('object_partner.partner_id', '=', 'partner_affected_group.partner_id')
                             ->on('object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
                     })
-                    ->addSelect(DB::raw('count(object_type) as item_count'))
+                    ->leftJoin('base_object_partner', function ($qJoin) use ($prefix) {
+                        $qJoin->on('base_object_partner.partner_id', '=', 'partner_affected_group.partner_id')
+                            ->on('base_object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
+                    })
+                    ->addSelect(DB::raw('(count({$prefix}object_partner.object_type) + count({$prefix}base_object_partner.object_type)) as item_count'))
                     ->where('partner_affected_group.partner_id', $partner_id)
                     ->groupBy('object_partner.partner_id', 'group_name');
             });
