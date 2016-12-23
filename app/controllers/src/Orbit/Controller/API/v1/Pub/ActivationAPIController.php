@@ -25,6 +25,8 @@ use UserDetail;
 use Lang;
 use Mall;
 use Hash;
+use \Orbit\Helper\Exception\OrbitCustomException;
+use Carbon\Carbon;
 
 class ActivationAPIController extends IntermediateBaseController
 {
@@ -67,21 +69,30 @@ class ActivationAPIController extends IntermediateBaseController
             if(! $this->saveAsAuto) {
                 $activityNameLong = 'Account Activation';
                 $tokenValue = trim(OrbitInput::post('token', null));
-                $password = OrbitInput::post('password');
-                $password2 = OrbitInput::post('password_confirmation');
-                $gender = OrbitInput::post('gender');
-                $birthdate = OrbitInput::post('birthdate');
-                $email = trim(OrbitInput::post('email'));
 
                 // check the token first
-                $token = Token::active()
-                        ->where('token_value', $tokenValue)
+                $token = Token::where('token_value', $tokenValue)
                         ->where('token_name', 'user_registration_mobile')
                         ->first();
 
                 if (!is_object($token)) {
                     $errorMessage = Lang::get('validation.orbit.empty.token');
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    throw new OrbitCustomException($errorMessage, Token::TOKEN_NOT_FOUND_ERROR_CODE, NULL);
+                }
+
+                if ($token->expire <= Carbon::now()) {
+                    $errorMessage = Lang::get('validation.orbit.empty.token_expired');
+                    throw new OrbitCustomException($errorMessage, Token::TOKEN_EXPIRED_ERROR_CODE, NULL);
+                }
+
+                $user = User::excludeDeleted()
+                            ->where('user_id', $token->user_id)
+                            ->first();
+
+                // override error message if user is already active
+                if ($user->status === 'active') {
+                    $errorMessage = 'Your link has expired';
+                    throw new OrbitCustomException($errorMessage, User::USER_ALREADY_ACTIVE_ERROR_CODE, NULL);
                 }
 
                 // Begin database transaction
@@ -93,25 +104,12 @@ class ActivationAPIController extends IntermediateBaseController
                 $validator = Validator::make(
                     array(
                         'token'                 => $tokenValue,
-                        'password'              => $password,
-                        'password_confirmation' => $password2,
-                        'date_of_birth'         => $birthdate,
-                        'gender'                => $gender,
                     ),
                     array(
                         'token'                 => 'required|orbit_activation_empty_token',
-                        'password_confirmation' => 'required|min:6',
-                        'password'              => 'required|min:6|confirmed',
-                        'date_of_birth'         => 'required|date|date_format:d-m-Y|before:' . $current_date,
-                        'gender'                => 'required|in:m,f',
                     ),
                     array(
                         'orbit_activation_empty_token' => Lang::get('validation.orbit.empty.token'),
-                        'date_of_birth.date' => Lang::get('validation.orbit.formaterror.date.invalid_date'),
-                        'date_of_birth.date_format' => Lang::get('validation.orbit.formaterror.date.dmy_date'),
-                        'date_of_birth.before' => Lang::get('validation.orbit.formaterror.date.cannot_future_date'),
-                        'password_confirmation.min' => Lang::get('validation.orbit.formaterror.min'),
-                        'password.confirmed' => Lang::get('validation.orbit.formaterror.confirmed_password'),
                     )
                 );
 
@@ -122,14 +120,8 @@ class ActivationAPIController extends IntermediateBaseController
                 }
 
                 $token = $this->tokenObject;
-                $user = User::with('userdetail')
-                            ->excludeDeleted()
-                            ->where('user_id', $token->user_id)
-                            ->first();
 
-                $userDetail = UserDetail::where('user_id', '=', $token->user_id)->first();
-
-                if (! is_object($token) || ! is_object($user) || ! is_object($userDetail)) {
+                if (! is_object($token) || $token->status !== 'active' || ! is_object($user)) {
                     $message = Lang::get('validation.orbit.access.loginfailed');
                     ACL::throwAccessForbidden($message);
                 }
@@ -138,17 +130,8 @@ class ActivationAPIController extends IntermediateBaseController
                 $token->status = 'deleted';
                 $token->save();
 
-                // Update user password and activate them
-                if (! empty($password)) {
-                    $user->user_password = Hash::make($password);
-                }
-
                 $user->status = 'active';
                 $user->save();
-
-                $userDetail->gender = $gender;
-                $userDetail->birthdate = date("Y-m-d", strtotime($birthdate)); // format date in database is Y-m-d
-                $userDetail->save();
             } else {
                 $from = $this->socialFrom;
                 $activityNameLong = sprintf('Auto Account Activation from %s', ucfirst($from));
@@ -203,6 +186,13 @@ class ActivationAPIController extends IntermediateBaseController
 
             // Rollback the changes
             $this->rollBack();
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            $this->rollBack();
         } catch (Exception $e) {
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
@@ -236,9 +226,11 @@ class ActivationAPIController extends IntermediateBaseController
     protected function registerCustomValidation()
     {
         $me = $this;
+
         Validator::extend('orbit_activation_empty_token', function ($attribute, $value, $parameters) use ($me) {
             $token = Token::active()
                           ->registrationToken()
+                          ->notExpire()
                           ->where('token_value', $value)
                           ->first();
 
@@ -266,6 +258,7 @@ class ActivationAPIController extends IntermediateBaseController
             $sessionData['email'] = $user->user_email;
             $sessionData['role'] = $user->role->role_name;
             $sessionData['fullname'] = $user->getFullName();
+            $sessionData['status'] = $user->status;
 
             $this->session->update($sessionData);
         } catch (\Exception $e) {

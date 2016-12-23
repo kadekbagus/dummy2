@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
+use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Carbon\Carbon as Carbon;
 
 class TenantAPIController extends ControllerAPI
@@ -2267,9 +2268,7 @@ class TenantAPIController extends ControllerAPI
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
                                         )
                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
-                                       ->whereIn('merchants.object_type', ['mall', 'tenant'])
-                                       ->where('merchants.status', '!=', 'deleted')
-                                       ->groupBy('merchants.merchant_id');
+                                       ->where('merchants.status', '!=', 'deleted');
 
             // Need to overide the query for advert
             if ($from === 'advert') {
@@ -2387,52 +2386,78 @@ class TenantAPIController extends ControllerAPI
                         '3rd Party' => 'mall',
                         'Dominopos' => 'mall_tenant'
                     ];
-                // unique link to tenant
-                if ($account_type->unique_rule !== 'none') {
-                    $unique_rule = implode("','", explode("_", $account_type->unique_rule));
-
-                    $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                            SELECT um.merchant_id
-                                            FROM {$prefix}user_merchant um
-                                            JOIN {$prefix}campaign_account ca
-                                                ON ca.user_id = um.user_id
-                                            JOIN {$prefix}account_types at
-                                                ON at.account_type_id = ca.account_type_id
-                                            WHERE um.object_type IN ('$unique_rule')
-                                                AND at.unique_rule != 'none'
-                                            GROUP BY um.merchant_id
-                                        )");
-                }
 
                 // access
                 if (array_key_exists($account_type->type_name, $permission)) {
                     $access = implode("','", explode("_", $permission[$account_type->type_name]));
-                    $tenants->whereRaw("{$prefix}merchants.object_type in ('$access')");
+                    $tenants->whereRaw("{$prefix}merchants.object_type in ('{$access}')");
+                }
+
+                // unique link to tenant
+                if ($account_type->unique_rule !== 'none') {
+                    $unique_rule = implode("','", explode("_", $account_type->unique_rule));
+
+                    $tenants->whereRaw("NOT EXISTS (
+                                SELECT 1
+                                FROM {$prefix}user_merchant um
+                                JOIN {$prefix}campaign_account ca
+                                    ON ca.user_id = um.user_id
+                                JOIN {$prefix}account_types at
+                                    ON at.account_type_id = ca.account_type_id
+                                    AND at.unique_rule != 'none'
+                                    AND at.status = 'active'
+                                WHERE
+                                    um.object_type IN ('{$unique_rule}')
+                                    AND {$prefix}merchants.merchant_id = um.merchant_id
+                                GROUP BY um.merchant_id
+                        )");
                 }
             }
 
             if ($filtermode === 'available') {
-                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT merchant_id FROM {$prefix}user_merchant
-                                    WHERE {$prefix}user_merchant.object_type IN ('mall', 'tenant'))");
+                $tenants->whereRaw("
+                    NOT EXISTS (
+                        SELECT 1
+                        FROM {$prefix}user_merchant
+                        WHERE {$prefix}user_merchant.object_type IN ('mall', 'tenant')
+                            AND {$prefix}merchants.merchant_id = {$prefix}user_merchant.merchant_id
+                    )");
             }
 
             // Only showing tenant only, provide for coupon redemption place.
             if ($filtermode === 'tenant') {
-                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT merchant_id FROM {$prefix}user_merchant
-                                    WHERE {$prefix}user_merchant.object_type IN ('mall'))");
+                $tenants->whereRaw("
+                    NOT EXISTS (
+                        SELECT 1
+                        FROM {$prefix}user_merchant
+                        WHERE {$prefix}user_merchant.object_type = 'mall'
+                            AND {$prefix}merchants.merchant_id = {$prefix}user_merchant.merchant_id
+                    )");
             }
 
             if ($filtermode === 'mall') {
-                $tenants->whereRaw("{$prefix}merchants.merchant_id NOT IN (
-                                    SELECT merchant_id FROM {$prefix}user_merchant
-                                    WHERE {$prefix}user_merchant.object_type IN ('tenant'))");
+                $tenants->whereRaw("
+                    NOT EXISTS (
+                        SELECT 1
+                        FROM {$prefix}user_merchant
+                        WHERE {$prefix}user_merchant.object_type = 'tenant'
+                            AND {$prefix}merchants.merchant_id = {$prefix}user_merchant.merchant_id
+                    )");
+            }
+
+            if ($from !== 'advert') {
+               $tenants->groupBy('merchants.merchant_id');
             }
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_tenants = clone $tenants;
+
+            // Cache the result of database calls
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($tenants);
+
+            $recordCounter = RecordCounter::create($_tenants);
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
             $take = PaginationNumber::parseTakeFromGet('link_to_tenant');
             $tenants->take($take);
@@ -2511,7 +2536,7 @@ class TenantAPIController extends ControllerAPI
             });
             $tenants->orderBy($sortBy, $sortMode);
 
-            $totalTenants = RecordCounter::create($_tenants)->count();
+            $totalTenants = $recordCounter->count();
             $listOfTenants = $tenants->get();
 
             $data = new stdclass();

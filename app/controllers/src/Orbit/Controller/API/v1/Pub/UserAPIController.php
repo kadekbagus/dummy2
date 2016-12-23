@@ -17,6 +17,7 @@ use stdclass;
 use DB;
 use Event;
 use Hash;
+use Queue;
 
 class UserAPIController extends PubControllerAPI
 {
@@ -28,6 +29,7 @@ class UserAPIController extends PubControllerAPI
         $user = NULL;
         try{
             $user = $this->getUser();
+            $emailUpdateFlag = FALSE;
 
             $session = SessionPreparer::prepareSession();
 
@@ -79,7 +81,7 @@ class UserAPIController extends PubControllerAPI
 
             $updateUser->save();
 
-            // Update session fullname
+            // Update session fullname and email
             $sessionData = $session->read(NULL);
             $sessionData['fullname'] = $updateUser->user_firstname. ' ' . $updateUser->user_lastname;
             $session->update($sessionData);
@@ -92,14 +94,13 @@ class UserAPIController extends PubControllerAPI
             // Commit the changes
             DB::commit();
 
-            // Successfull Update
-            $activityNotes = sprintf('User updated: %s', $updateUser->username);
-            $activity->setUser($user)
-                    ->setActivityName('update_user')
-                    ->setActivityNameLong('Update User OK')
-                    ->setObject($updateUser)
-                    ->setNotes($activityNotes)
-                    ->responseOK();
+            if ($emailUpdateFlag) {
+                // Resend email process to the queue
+                Queue::push('Orbit\\Queue\\RegistrationMail', [
+                    'user_id' => $updateUser->user_id,
+                    'mode' => 'gotomalls'
+                ]);
+            }
 
             $image = null;
             $media = $user->profilePicture()
@@ -113,13 +114,13 @@ class UserAPIController extends PubControllerAPI
             }
 
             $data = new \stdclass();
-            $data->email = $user->user_email;
-            $data->firstname = $user->user_firstname;
-            $data->lastname = $user->user_lastname;
+            $data->email = $updateUser->user_email;
+            $data->firstname = $updateUser->user_firstname;
+            $data->lastname = $updateUser->user_lastname;
             $data->image = $image;
 
-            $activityNote = sprintf('Update User Account, user Id: %s', $user->user_id);
-            $activity->setUser($user)
+            $activityNote = sprintf('Update User Account, user Id: %s', $updateUser->user_id);
+            $activity->setUser($updateUser)
                 ->setActivityName('update_user_account')
                 ->setActivityNameLong('Update User Account')
                 ->setModuleName('My Account')

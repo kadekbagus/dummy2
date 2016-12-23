@@ -9,6 +9,8 @@ class User extends Eloquent implements UserInterface
     use ModelStatusTrait;
     use UserRoleTrait;
 
+    const USER_ALREADY_ACTIVE_ERROR_CODE = 1401;
+
     protected $primaryKey = 'user_id';
 
     protected $table = 'users';

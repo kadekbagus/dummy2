@@ -72,6 +72,12 @@ class StoreAPIController extends PubControllerAPI
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
 
+            // store can not sorted by date, so it must be changes to default sorting (name - ascending)
+            if ($sort_by === "created_date") {
+                $sort_by = "name";
+                $sort_mode = "asc";
+            }
+
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
@@ -133,13 +139,8 @@ class StoreAPIController extends PubControllerAPI
                             ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"));
 
             $advertSql = $adverts->toSql();
-            foreach($adverts->getBindings() as $binding)
-            {
-              $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
-            }
 
-            $store = Tenant::select(
+            $store = DB::table("merchants")->select(
                     DB::raw("{$prefix}merchants.merchant_id"),
                     DB::raw("{$prefix}merchants.name"),
                     DB::Raw("CASE WHEN (
@@ -178,7 +179,8 @@ class StoreAPIController extends PubControllerAPI
                     $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
                     $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                 })
-                ->where('merchants.status', 'active')
+                ->whereRaw("{$prefix}merchants.object_type = 'tenant'")
+                ->whereRaw("{$prefix}merchants.status = 'active'")
                 ->whereRaw("oms.status = 'active'")
                 ->orderBy(DB::raw("advert.placement_order"), 'desc')
                 ->orderBy('merchants.created_at', 'asc');
@@ -193,8 +195,33 @@ class StoreAPIController extends PubControllerAPI
             // filter by category just on first store
             OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
                 $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', 'merchants.merchant_id')
-                    ->where(DB::raw("cm.category_id"), $category_id);
+                    ->whereIn(DB::raw("cm.category_id"), $category_id);
+            });
+
+            OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                $store = $store->leftJoin('object_partner', function($q) use ($partner_id) {
+                            $q->on('object_partner.object_id', '=', 'merchants.merchant_id')
+                              ->where('object_partner.object_type', '=', 'tenant')
+                              ->where('object_partner.partner_id', '=', $partner_id);
+                        })
+                        ->whereNotExists(function($query) use ($partner_id, $prefix)
+                        {
+                            $query->select('object_partner.object_id')
+                                  ->from('object_partner')
+                                  ->join('partner_competitor', function($q) {
+                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
+                                    })
+                                  ->whereRaw("{$prefix}object_partner.object_type = 'tenant'")
+                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
+                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}merchants.merchant_id")
+                                  ->groupBy('object_partner.object_id');
+                        });
             });
 
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
@@ -243,18 +270,19 @@ class StoreAPIController extends PubControllerAPI
                     $store = $store->addSelect(
                                         DB::raw("( 6371 * acos( cos( radians({$lat}) ) * cos( radians( x(tmp_mg.position) ) ) * cos( radians( y(tmp_mg.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x(tmp_mg.position) ) ) ) ) AS distance")
                                     )
-                                    ->leftJoin(DB::Raw("
+                                    ->Join(DB::Raw("
                                         (SELECT
                                             store.merchant_id as store_id,
                                             mg.position
                                         FROM {$prefix}merchants store
                                         LEFT JOIN {$prefix}merchants mall
                                             ON mall.merchant_id = store.parent_id
+                                            AND mall.object_type = 'mall'
+                                            AND mall.status = 'active'
                                         LEFT JOIN {$prefix}merchant_geofences mg
                                             ON mg.merchant_id = mall.merchant_id
                                         WHERE store.status = 'active'
                                             AND store.object_type = 'tenant'
-                                            AND mall.status = 'active'
                                         ) as tmp_mg
                                     "), DB::Raw("tmp_mg.store_id"), '=', 'merchants.merchant_id');
                 }
@@ -266,28 +294,19 @@ class StoreAPIController extends PubControllerAPI
                 if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
                     $store->havingRaw("distance <= {$distance}");
                 } else {
-                    $store->leftJoin(DB::Raw("
-                            (SELECT
-                                s.name as s_name,
-                                m.city as m_city
-                            FROM {$prefix}merchants s
-                            LEFT JOIN {$prefix}merchants m
-                                ON m.merchant_id = s.parent_id
-                                AND m.city = {$this->quote($location)}
-                            WHERE s.object_type = 'tenant'
-                                AND s.status = 'active'
-                                AND m.status = 'active'
-                            ) as tmp_city
-                        "), DB::Raw("tmp_city.s_name"), '=', 'merchants.name')
-                        ->where(DB::Raw("tmp_city.m_city"), $location);
+                    $store->where(DB::Raw("oms.city"), $location);
                 }
             });
 
             $realStore = $store->toSql();
-            $_realStore = DB::table(DB::raw("({$realStore}) as realStoreSubQuery"))->mergeBindings($store->getQuery())->groupBy('merchant_id');
+            foreach($store->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : $this->quote($binding);
+              $realStore = preg_replace('/\?/', $value, $realStore, 1);
+            }
+            $_realStore = DB::table(DB::raw("({$realStore}) as realStoreSubQuery"))->groupBy('merchant_id');
 
-            $querySql = $store->toSql();
-            $store = DB::table(DB::raw("({$querySql}) as subQuery"))->mergeBindings($store->getQuery());
+            $store = DB::table(DB::raw("({$realStore}) as subQuery"));
 
             if ($list_type === "featured") {
                 $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_order',
@@ -326,7 +345,8 @@ class StoreAPIController extends PubControllerAPI
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name')
+                    'sortBy' => $sort_by,
+                    'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
@@ -361,7 +381,11 @@ class StoreAPIController extends PubControllerAPI
 
             // random featured adv
             if ($list_type === 'featured') {
-                $featuredStore = $_store->get();
+                $featuredStoreBuilder = clone $_store;
+                $featuredStoreBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
+                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($featuredStoreBuilder);
+
+                $featuredStore = $featuredStoreBuilder->get();
                 $advertedCampaigns = array_filter($featuredStore, function($v) {
                     return ($v->placement_type_orig === 'featured_list');
                 });
@@ -382,18 +406,7 @@ class StoreAPIController extends PubControllerAPI
                     if ($no_total_records !== 'yes') {
                         $totalRecMerchant = count($random);
                     }
-                } else {
-                    $liststore = array_slice($featuredStore, 0, $take);
-                    if ($no_total_records !== 'yes') {
-                        $totalRecMerchant = count($liststore);
-                    }
                 }
-            } else {
-                $take = PaginationNumber::parseTakeFromGet('retailer');
-                $store->take($take);
-
-                $skip = PaginationNumber::parseSkipFromGet();
-                $store->skip($skip);
             }
 
             $data = new \stdclass();
@@ -506,8 +519,6 @@ class StoreAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-
-
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $storename = OrbitInput::get('store_name');

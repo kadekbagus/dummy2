@@ -67,6 +67,7 @@ return array(
             'tenant'        => 'There is no tenant that matched your search criteria.',
             'membership'    => 'There is no membership that matched your search criteria.',
             'advert'        => 'There is no advert that matched your search criteria.',
+            'partner'       => 'There is no partner that matched your search criteria.',
         ),
         'uploaded'  => array(
             'merchant' => array(
@@ -127,6 +128,12 @@ return array(
             'membership' => array(
                 'main'          => 'Membership image has been successfully uploaded.',
                 'delete_image'  => 'Membership image has been successfully deleted.'
+            ),
+            'partner' => array(
+                'main'          => 'Partner image has been successfully uploaded.',
+                'logo'          => 'Partner logo has been successfully uploaded.',
+                'delete_logo'   => 'Partner logo has been successfully deleted.',
+                'delete_image'  => 'Partner image has been successfully deleted.'
             ),
         ),
         'activate'   => array(

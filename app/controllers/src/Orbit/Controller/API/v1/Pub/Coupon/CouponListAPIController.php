@@ -51,8 +51,8 @@ class CouponListAPIController extends PubControllerAPI
             $this->checkAuth();
             $user = $this->api->user;
 
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
+            $sort_by = OrbitInput::get('sortby', 'created_date');
+            $sort_mode = OrbitInput::get('sortmode','desc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $location = OrbitInput::get('location', null);
             $ul = OrbitInput::get('ul', null);
@@ -142,10 +142,10 @@ class CouponListAPIController extends PubControllerAPI
             foreach($adverts->getBindings() as $binding)
             {
               $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $sql = preg_replace('/\?/', $value, $sql, 1);
+              $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
             }
 
-            $coupons = Coupon::select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
+            $coupons = DB::table('promotions')->select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
                                 CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                 CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
                                 {$prefix}promotions.status,
@@ -193,13 +193,14 @@ class CouponListAPIController extends PubControllerAPI
                             ->leftJoin('media', function ($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
-                            })                            
+                            })
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
                             ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.link_object_id"), '=', 'promotions.promotion_id')
                             ->leftJoin('media as advert_media', function ($q) {
                                 $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                                 $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
                             })
+                            ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereRaw("available.tot > 0")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -207,7 +208,7 @@ class CouponListAPIController extends PubControllerAPI
                             ->orderBy('coupon_name', 'asc');
 
             // left join when need link to mall
-            if ((! empty($lon) && ! empty($lat)) || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
+            if ($sort_by == 'location' || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
                 $coupons = $coupons->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                 ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
                                 ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
@@ -227,6 +228,7 @@ class CouponListAPIController extends PubControllerAPI
                         $lat = $userLocationCookieArray[1];
                     }
                 }
+
                 if (!empty($lon) && !empty($lat)) {
                     $coupons = $coupons->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                     ->leftJoin('merchant_geofences', function ($q) use($prefix) {
@@ -238,15 +240,39 @@ class CouponListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                if ($category_id === 'mall') {
-                    $coupons = $coupons->where(DB::raw("t.object_type"), $category_id);
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
+                if (in_array("mall", $category_id)) {
+                    $coupons = $coupons->whereIn(DB::raw("t.object_type"), $category_id);
                 } else {
                     $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
                                     $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("t.merchant_id"));
                                     $q->on(DB::raw("t.object_type"), '=', DB::raw("'tenant'"));
                                 })
-                        ->where(DB::raw('cm.category_id'), $category_id);
+                        ->whereIn(DB::raw('cm.category_id'), $category_id);
                 }
+            });
+
+            OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                $coupons = $coupons->leftJoin('object_partner', function($q) use ($partner_id) {
+                            $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
+                              ->where('object_partner.object_type', '=', 'coupon')
+                              ->where('object_partner.partner_id', '=', $partner_id);
+                        })
+                        ->whereNotExists(function($query) use ($partner_id, $prefix) {
+                            $query->select('object_partner.object_id')
+                                  ->from('object_partner')
+                                  ->join('partner_competitor', function($q) {
+                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
+                                    })
+                                  ->whereRaw("{$prefix}object_partner.object_type = 'coupon'")
+                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
+                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}promotions.promotion_id")
+                                  ->groupBy('object_partner.object_id');
+                        });
             });
 
             // filter by city
@@ -266,7 +292,13 @@ class CouponListAPIController extends PubControllerAPI
             });
 
             $querySql = $coupons->toSql();
-            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons->getQuery());
+            foreach($coupons->getBindings() as $binding)
+            {
+              $value = is_numeric($binding) ? $binding : $this->quote($binding);
+              $querySql = preg_replace('/\?/', $value, $querySql, 1);
+            }
+
+            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"));
 
             if ($list_type === 'featured') {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"),
@@ -382,7 +414,8 @@ class CouponListAPIController extends PubControllerAPI
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name')
+                    'sortBy' => OrbitInput::get('sortby', 'name'),
+                    'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);

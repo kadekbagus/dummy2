@@ -319,9 +319,11 @@ class LoginAPIController extends ControllerAPI
                             ->select('merchant_id', 'name')
                             ->get();
 
-                if(($key = array_search('pmp_employee', $menus)) !== false) {
+                if (($key = array_search('pmp_employee', $menus)) !== false) {
                     unset($menus[$key]);
                 }
+
+                $menus = array_values($menus);
             }
 
             // hardcode timezone

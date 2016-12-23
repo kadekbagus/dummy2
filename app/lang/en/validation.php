@@ -177,6 +177,7 @@ return array(
             'role'                 => 'The Role ID you specified is not found',
             'role_name'            => 'The Role you specified is not found',
             'consumer_role'        => 'The Consumer role does not exist',
+            'token_expired'        => 'Your activation link has expired',
             'token'                => 'The token you specified is no longer available',
             'user'                 => 'The User ID you specified is not found',
             'question_id'          => 'The Quenstion ID you specified is not found',
@@ -350,6 +351,7 @@ return array(
             'mobile_default_lang' => 'Mobile default language must on list languages',
             'account_type'        => 'Account type not exist',
             'campaign'            => 'Campaign you specified is not found',
+            'partner_sortby'     => 'The sort by argument you specified is not valid, the valid values are: partner name, location, start date, end date, partner url, status',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(
@@ -498,6 +500,7 @@ return array(
         ),
         'file' => array(
             'max_size' => ':attribute is too big, maximum size allowed is :size:unit',
+            'max_size_one' => ':name size is too big, maximum size allowed is :size:unit',
             'type' => "File extension \".:ext\" is not allowed" ,
         ),
         'unique' => array(

@@ -57,8 +57,8 @@ class NewsListAPIController extends PubControllerAPI
         try{
             $user = $this->getUser();
 
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
+            $sort_by = OrbitInput::get('sortby', 'created_date');
+            $sort_mode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
             $ul = OrbitInput::get('ul', null);
@@ -152,11 +152,9 @@ class NewsListAPIController extends PubControllerAPI
                                 $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                         })
-                        ->where('news.object_type', '=', 'news')
+                        ->whereRaw("{$prefix}news.object_type = 'news'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->orderBy('news_name', 'asc');
-
-
 
             //calculate distance if user using my current location as filter and sort by location for listing
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -186,15 +184,40 @@ class NewsListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($news, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                if ($category_id === 'mall') {
-                    $news = $news->where(DB::raw("m.object_type"), $category_id);
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
+                if (in_array("mall", $category_id)) {
+                    $news = $news->whereIn(DB::raw("m.object_type"), $category_id);
                 } else {
                     $news = $news->leftJoin('category_merchant as cm', function($q) {
                                     $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
                                     $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
                                 })
-                        ->where(DB::raw('cm.category_id'), $category_id);
+                        ->whereIn(DB::raw('cm.category_id'), $category_id);
                 }
+            });
+
+            OrbitInput::get('partner_id', function($partner_id) use ($news, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                $news = $news->leftJoin('object_partner',function($q) use ($partner_id){
+                            $q->on('object_partner.object_id', '=', 'news.news_id')
+                              ->where('object_partner.object_type', '=', 'news')
+                              ->where('object_partner.partner_id', '=', $partner_id);
+                        })
+                        ->whereNotExists(function($query) use ($partner_id, $prefix)
+                        {
+                            $query->select('object_partner.object_id')
+                                  ->from('object_partner')
+                                  ->join('partner_competitor', function($q) {
+                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
+                                    })
+                                  ->whereRaw("{$prefix}object_partner.object_type = 'news'")
+                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
+                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}news.news_id")
+                                  ->groupBy('object_partner.object_id');
+                        });
             });
 
             // filter news by mall id
@@ -307,7 +330,8 @@ class NewsListAPIController extends PubControllerAPI
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name')
+                    'sortBy' => OrbitInput::get('sortby', 'name'),
+                    'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);

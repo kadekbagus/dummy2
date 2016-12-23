@@ -9,6 +9,7 @@
 use Activity;
 use Category;
 use Mall;
+use Partner;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 class GTMSearchRecorder
@@ -45,32 +46,52 @@ class GTMSearchRecorder
         $categories = isset($parameters['categories']) ? $parameters['categories'] : NULL;
         $location = isset($parameters['location']) ? $parameters['location'] : 'All Location';
         $sortBy = isset($parameters['sortBy']) ? $parameters['sortBy'] : NULL;
+        $partner = isset($parameters['partner']) ? $parameters['partner'] : NULL;
 
-        $category_name = NULL;
-        if ($this->displayName != 'Mall') {
-            $category_name = 'All Category';
-        }
+        $list_category = array();
 
         if (! empty($categories)) {
-            if ($categories === 'mall') {
+            if (! is_array($categories)) {
+                $categories = (array)$categories;
+            }
+
+            if (in_array("mall", $categories)) {
                 $disp = $this->displayName;
                 if (strtolower($this->displayName) === 'news') {
                     $disp = 'Events';
                 }
-                $category_name =  'Mall ' . $disp;
-            } else {
-                $category = Category::where('category_id', $categories)->first();
-                if (is_object($category)) {
-                    $category_name = $category->category_name;
+                $list_category[] = 'Mall ' . $disp;
+
+                $key = array_search("mall", $categories);
+                unset($categories[$key]);
+            }
+
+            if (! empty($categories)) {
+                $category_name = Category::select("category_name")->whereIn('category_id', $categories)->get();
+                if (is_object($category_name)) {
+                    foreach($category_name as $val) {
+                        $list_category[] = $val->category_name;
+                    }
                 }
+            }
+        } elseif ($this->displayName != 'Mall') {
+            $list_category[] = 'All Category';
+        }
+
+        $partner_name = NULL;
+        if (! empty($partner)) {
+            $partners = Partner::select("partner_name")->where("partner_id", $partner)->first();
+            if (is_object($partners)) {
+                $partner_name = $partners->partner_name;
             }
         }
 
         $notes = array(
                 'keywords' => $keywords,
-                'categories' => $category_name,
+                'categories' => $list_category,
                 'location' => $location,
-                'sortBy' => $sortBy
+                'sortBy' => $sortBy,
+                'partner' => $partner_name
             );
         $this->notes = json_encode($notes);
     }

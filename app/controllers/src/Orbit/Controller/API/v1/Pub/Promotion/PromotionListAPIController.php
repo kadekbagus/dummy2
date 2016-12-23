@@ -59,8 +59,8 @@ class PromotionListAPIController extends PubControllerAPI
             $this->checkAuth();
             $user = $this->api->user;
 
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
+            $sort_by = OrbitInput::get('sortby', 'created_date');
+            $sort_mode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
             $ul = OrbitInput::get('ul', null);
@@ -146,7 +146,7 @@ class PromotionListAPIController extends PubControllerAPI
             foreach($adverts->getBindings() as $binding)
             {
               $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $sql = preg_replace('/\?/', $value, $sql, 1);
+              $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
             }
 
             $promotions = News::select(
@@ -206,13 +206,13 @@ class PromotionListAPIController extends PubControllerAPI
                                 $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
                                 $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                             })
-                            ->where('news.object_type', '=', 'promotion')
+                            ->whereRaw("{$prefix}news.object_type = 'promotion'")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy(DB::raw("advert.placement_order"), 'desc')
                             ->orderBy('news_name', 'asc');
 
             // left join when need link to mall
-            if ((! empty($lon) && ! empty($lat)) || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
+            if ($sort_by == 'location' || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
                 $promotions = $promotions->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants as m', function ($q) {
                                         $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
@@ -238,7 +238,7 @@ class PromotionListAPIController extends PubControllerAPI
                 if (! empty($lon) && ! empty($lat)) {
                     $promotions = $promotions->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance")
                                                 )
-                                            ->leftJoin('merchant_geofences', function ($q) use($prefix) {
+                                            ->Join('merchant_geofences', function ($q) use($prefix) {
                                                         $q->on('merchant_geofences.merchant_id', '=',
                                                         DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END"));
                                                 });
@@ -248,22 +248,48 @@ class PromotionListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($category_id) use ($promotions, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                if ($category_id === 'mall') {
-                    $promotions = $promotions->where(DB::raw("m.object_type"), $category_id);
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
+                if (in_array("mall", $category_id)) {
+                    $promotions = $promotions->whereIn(DB::raw("m.object_type"), $category_id);
                 } else {
                     $promotions = $promotions->leftJoin('category_merchant as cm', function($q) {
                                     $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
                                     $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
                                 })
-                        ->where(DB::raw('cm.category_id'), $category_id);
+                        ->whereIn(DB::raw('cm.category_id'), $category_id);
                 }
+            });
+
+            OrbitInput::get('partner_id', function($partner_id) use ($promotions, $prefix, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                $promotions = $promotions->leftJoin('object_partner', function($q) use ($partner_id) {
+                                $q->on('object_partner.object_id', '=', 'news.news_id')
+                                  ->where('object_partner.object_type', '=', 'promotion')
+                                  ->where('object_partner.partner_id', '=', $partner_id);
+                            })
+                            ->whereNotExists(function($query) use ($partner_id, $prefix) {
+                                $query->select('object_partner.object_id')
+                                      ->from('object_partner')
+                                      ->join('partner_competitor', function($q) {
+                                            $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
+                                        })
+                                      ->whereRaw("{$prefix}object_partner.object_type = 'promotion'")
+                                      ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
+                                      ->whereRaw("{$prefix}object_partner.object_id = {$prefix}news.news_id")
+                                      ->groupBy('object_partner.object_id');
+                            });
             });
 
             // filter promotions by mall id
             OrbitInput::get('mall_id', function($mallid) use ($promotions) {
-                $promotions->where(DB::raw("m.parent_id"), '=', $mallid)
-                      ->orWhere(DB::raw("m.merchant_id"), '=', $mallid)
-                      ->where('news.object_type', '=', 'promotion');
+                $promotions->where(function($q) use($mallid) {
+                            $q->where(DB::raw("m.parent_id"), '=', $mallid)
+                                ->orWhere(DB::raw("m.merchant_id"), '=', $mallid);
+                        })
+                        ->where('news.object_type', '=', 'promotion');
             });
 
             // frontend need the mall name
@@ -391,7 +417,8 @@ class PromotionListAPIController extends PubControllerAPI
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name')
+                    'sortBy' => OrbitInput::get('sortby', 'name'),
+                    'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);

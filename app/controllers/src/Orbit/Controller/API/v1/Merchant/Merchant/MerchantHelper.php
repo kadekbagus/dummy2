@@ -9,7 +9,7 @@ use BaseMerchant;
 use BaseMerchantTranslation;
 use Category;
 use App;
-use MerchantLanguage;
+use Language;
 use Lang;
 
 class MerchantHelper
@@ -122,7 +122,7 @@ class MerchantHelper
         }
 
         foreach ($data as $language_id => $translations) {
-            $language = MerchantLanguage::excludeDeleted()
+            $language = Language::excludeDeleted()
                 ->where('language_id', '=', $language_id)
                 ->first();
             if (empty($language)) {

@@ -8436,11 +8436,6 @@ class UploadAPIController extends ControllerAPI
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
-
-echo "<pre>";
-print_r($errorMessage);
-die();
-
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.upload.postuploadadvertimage.after.validation', array($this, $validator));
@@ -8744,6 +8739,752 @@ die();
         return $output;
     }
 
+    /**
+     * Upload logo for Partner.
+     *
+     * @author kadek<kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `partner_id`                 (required) - ID of the partner
+     * @param file|array `images`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadPartnerLogo()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadpartnerlogo.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadpartnerlogo.after.auth', array($this));
+
+                // Try to check access control list, does this parent allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadpartnerlogo.before.authz', array($this, $user));
+
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadpartnerlogo.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $partner_id = OrbitInput::post('partner_id');
+            $logo = OrbitInput::files('logo');
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'partner_id' => $partner_id,
+                    'logo'       => $logo,
+                ),
+                array(
+                    'partner_id' => 'required|orbit.empty.partner',
+                    'logo'       => 'required|nomore.than.one',
+                )
+            );
+
+            Event::fire('orbit.upload.postuploadpartnerlogo.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadpartnerlogo.after.validation', array($this, $validator));
+
+            // We already had partner instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $partner = App::make('orbit.empty.partner_id');
+
+            // Callback to rename the file, we will format it as follow
+            // [PARTNER_ID]-[PARTNER_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($partner)
+            {
+                $partner_id = $partner->partner_id;
+                $slug = Str::slug($partner->partner_name);
+                $file['new']->name = sprintf('%s-%s-%s', $partner_id, $slug, time());
+            };
+
+            // Load the orbit configuration for partner upload logo
+            $uploadLogoConfig = Config::get('orbit.upload.partner.logo');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLogoConfig);
+            $config->setConfig('before_saving', $renameFile);
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadpartnerlogo.before.save', array($this, $partner, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($logo);
+
+            // Delete old partner logo
+            $pastMedia = Media::where('object_id', $partner->partner_id)
+                              ->where('object_name', 'partner')
+                              ->where('media_name_id', 'partner_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $partner->partner_id,
+                'name'          => 'partner',
+                'media_name_id' => 'partner_logo',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            Event::fire('orbit.upload.postuploadpartnerlogo.after.save', array($this, $partner, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.partner.logo');
+
+            // Commit the changes
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadpartnerlogo.after.commit', array($this, $partner, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadpartnerlogo.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadpartnerlogo.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadpartnerlogo.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadpartnerlogo.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadpartnerlogo.before.render', array($this, $output));
+
+        return $output;
+    }
+
+
+    /**
+     * Upload image for Partner.
+     *
+     * @author kadek<kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `partner_id`   (required) - ID of the partner
+     * @param file|array `images`       (required) - Image
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadPartnerImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadpartnerimage.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadpartnerimage.after.auth', array($this));
+
+                // Try to check access control list, does this parent allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadpartnerimage.before.authz', array($this, $user));
+
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadpartnerimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $partner_id = OrbitInput::post('partner_id');
+            $image = OrbitInput::files('image');
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'partner_id' => $partner_id,
+                    'image'      => $image,
+                ),
+                array(
+                    'partner_id' => 'required|orbit.empty.partner',
+                    'image'      => 'required|nomore.than.one',
+                )
+            );
+
+            Event::fire('orbit.upload.postuploadpartnerimage.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadpartnerimage.after.validation', array($this, $validator));
+
+            // We already had partner instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $partner = App::make('orbit.empty.partner_id');
+
+            // Callback to rename the file, we will format it as follow
+            // [PARTNER_ID]-[PARTNER_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($partner)
+            {
+                $partner_id = $partner->partner_id;
+                $slug = Str::slug($partner->partner_name);
+                $file['new']->name = sprintf('%s-%s-%s', $partner_id, $slug, time());
+            };
+
+            // Load the orbit configuration for partner upload image
+            $uploadimageConfig = Config::get('orbit.upload.partner.image');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadimageConfig);
+            $config->setConfig('before_saving', $renameFile);
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadpartnerimage.before.save', array($this, $partner, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($image);
+
+            // Delete old partner image
+            $pastMedia = Media::where('object_id', $partner->partner_id)
+                              ->where('object_name', 'partner')
+                              ->where('media_name_id', 'partner_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $partner->partner_id,
+                'name'          => 'partner',
+                'media_name_id' => 'partner_image',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            Event::fire('orbit.upload.postuploadpartnerimage.after.save', array($this, $partner, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.partner.main');
+
+            // Commit the changes
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadpartnerimage.after.commit', array($this, $partner, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadpartnerimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadpartnerimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadpartnerimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadpartnerimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadpartnerimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Delete logo for partner.
+     *
+     * @author kadek<kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param char    `partner_id`      (required) - ID of the partner
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeletePartnerLogo()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeletepartnerlogo.before.auth', array($this));
+
+            if (! $this->calledFrom('partner.new, partner.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeletepartnerlogo.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeletepartnerlogo.before.authz', array($this, $user));
+
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postdeletepartnerlogo.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $partner_id = OrbitInput::post('partner_id');
+
+            $validator = Validator::make(
+                array(
+                    'partner_id'   => $partner_id,
+                ),
+                array(
+                    'partner_id'   => 'required|orbit.empty.partner',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletepartnerlogo.before.validation', array($this, $validator));
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletepartnerlogo.after.validation', array($this, $validator));
+
+            // We already had Product instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $partner = App::make('orbit.empty.partner_id');
+
+            // Delete old partner logo
+            $pastMedia = Media::where('object_id', $partner->partner_id)
+                              ->where('object_name', 'partner')
+                              ->where('media_name_id', 'partner_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletepartnerlogo.before.save', array($this, $partner));
+
+            Event::fire('orbit.upload.postdeletepartnerlogo.after.save', array($this, $partner));
+
+            $this->response->data = $partner;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.partner.delete_logo');
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletepartnerlogo.after.commit', array($this, $partner));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletepartnerlogo.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletepartnerlogo.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletepartnerlogo.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletepartnerlogo.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletepartnerlogo.before.render', array($this, $output));
+
+        return $output;
+    }
+
+
+    /**
+     * Delete image for partner.
+     *
+     * @author kadek<kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param char    `partner_id`      (required) - ID of the partner
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeletePartnerImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postdeletepartnerimage.before.auth', array($this));
+
+            if (! $this->calledFrom('partner.new, partner.update'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postdeletepartnerimage.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postdeletepartnerimage.before.authz', array($this, $user));
+
+                $role = $user->role;
+                $validRoles = ['super admin', 'mall admin', 'mall owner'];
+                if (! in_array( strtolower($role->role_name), $validRoles)) {
+                    $message = 'Your role are not allowed to access this resource.';
+                    ACL::throwAccessForbidden($message);
+                }
+
+                Event::fire('orbit.upload.postdeletepartnerimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $partner_id = OrbitInput::post('partner_id');
+
+            $validator = Validator::make(
+                array(
+                    'partner_id'   => $partner_id,
+                ),
+                array(
+                    'partner_id'   => 'required|orbit.empty.partner',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletepartnerimage.before.validation', array($this, $validator));
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletepartnerimage.after.validation', array($this, $validator));
+
+            // We already had Product instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $partner = App::make('orbit.empty.partner_id');
+
+            // Delete old partner logo
+            $pastMedia = Media::where('object_id', $partner->partner_id)
+                              ->where('object_name', 'partner')
+                              ->where('media_name_id', 'partner_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletepartnerimage.before.save', array($this, $partner));
+
+            Event::fire('orbit.upload.postdeletepartnerimage.after.save', array($this, $partner));
+
+            $this->response->data = $partner;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.partner.delete_image');
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletepartnerimage.after.commit', array($this, $partner));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletepartnerimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletepartnerimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletepartnerimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletepartnerimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('partner.new, partner.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletepartnerimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
@@ -8928,6 +9669,20 @@ die();
             }
 
             App::instance('orbit.empty.advert_id', $advert);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.partner', function ($attribute, $value, $parameters){
+            $partner = Partner::excludeDeleted()
+                        ->where('partner_id', $value)
+                        ->first();
+
+            if (empty($partner)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.partner_id', $partner);
 
             return TRUE;
         });

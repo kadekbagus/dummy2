@@ -18,6 +18,7 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Orbit\Helper\Net\GuestUserGenerator;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Session\AppOriginProcessor;
+use Carbon\Carbon;
 
 class IntermediateLoginController extends IntermediateBaseController
 {
@@ -811,6 +812,7 @@ class IntermediateLoginController extends IntermediateBaseController
                     $sessionData = $this->session->read(NULL);
                     $sessionData['fullname'] = '';
                     $sessionData['role'] = $guestUser->role->role_name;
+                    $sessionData['status'] = $guestUser->status;
 
                     $this->session->update($sessionData);
                 } else {
@@ -877,13 +879,55 @@ class IntermediateLoginController extends IntermediateBaseController
                 $sessionData['logged_in'] = TRUE;
                 $sessionData['guest_user_id'] = $guest->user_id;
                 $sessionData['guest_email'] = $guest->user_email;
-                $sessionData['role'] = $guest->role->role_name;
-                $sessionData['fullname'] = '';
+                $sessionData['role'] = strtolower($this->session->read('role')) === 'consumer' ? $this->session->read('role') : $guest->role->role_name;
+                $sessionData['fullname'] = ! empty($this->session->read('fullname')) ? $this->session->read('fullname') : '';
+                $sessionData['status'] = $guest->status;
 
                 $this->session->update($sessionData);
             }
 
             $response->data = $this->session->getSession();
+
+            if (! isset($response->data->value['status']) || empty($response->data->value['status'])) {
+                $response->data->value['status'] = null;
+                if (strtolower($response->data->value['role']) === 'guest') {
+                    $response->data->value['status'] = 'pending';
+                } elseif (strtolower($response->data->value['role']) === 'consumer') {
+                    $user = User::excludeDeleted()
+                        ->where('user_id', $response->data->value['user_id'])
+                        ->first();
+
+                    if (is_object($user)) {
+                        $response->data->value['status'] = $user->status;
+                    }
+                }
+
+                $sessionData = $this->session->read(NULL);
+                $sessionData['status'] = $response->data->value['status'];
+                $this->session->update($sessionData);
+            }
+
+            // request to update the status in session data
+            OrbitInput::get('request_update', function($req) use($response) {
+                if ($req === 'yes') {
+                    // this should be run if only the user is consumer and the status is pending
+                    if (strtolower($response->data->value['role']) === 'consumer') {
+                        if (isset($response->data->value['status']) && $response->data->value['status'] === 'pending') {
+                            $user = User::excludeDeleted()
+                                ->where('user_id', $response->data->value['user_id'])
+                                ->first();
+
+                            if (is_object($user)) {
+                                $response->data->value['status'] = $user->status;
+
+                                $sessionData = $this->session->read(NULL);
+                                $sessionData['status'] = $response->data->value['status'];
+                                $this->session->update($sessionData);
+                            }
+                        }
+                    }
+                }
+            });
 
             unset($response->data->userAgent);
             unset($response->data->ipAddress);
@@ -906,6 +950,7 @@ class IntermediateLoginController extends IntermediateBaseController
                 $sessionData['guest_email'] = $guest->user_email;
                 $sessionData['role'] = $guest->role->role_name;
                 $sessionData['fullname'] = '';
+                $sessionData['status'] = $guest->status;
 
                 $this->session->update($sessionData);
                 $response->data = $this->session->getSession();

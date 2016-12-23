@@ -422,12 +422,20 @@ class NewsAPIController extends ControllerAPI
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
             $isAvailable = NewsTranslation::where('news_id', '=', $newnews->news_id)
-                                        ->whereRaw("{$prefix}news_translations.merchant_language_id IN (select language_id
-                                                                                                                from {$prefix}languages
-                                                                                                                where name in (select mobile_default_language
-                                                                                                                                from {$prefix}merchants
-                                                                                                                                where {$prefix}merchants.object_type = 'mall'
-                                                                                                                                and merchant_id in ('$malls')))")
+                                        ->whereRaw("
+                                            EXISTS (
+                                                SELECT 1
+                                                FROM {$prefix}languages
+                                                WHERE EXISTS (
+                                                    SELECT 1
+                                                    FROM {$prefix}merchants
+                                                    WHERE {$prefix}merchants.object_type = 'mall'
+                                                        AND merchant_id in ('{$malls}')
+                                                        AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
+                                                )
+                                                AND {$prefix}news_translations.merchant_language_id = {$prefix}languages.language_id
+                                            )
+                                        ")
                                         ->where(function($query) {
                                             $query->where('news_name', '=', '')
                                                   ->orWhere('description', '=', '')
@@ -807,12 +815,20 @@ class NewsAPIController extends ControllerAPI
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
             $isAvailable = NewsTranslation::where('news_id', '=', $news_id)
-                                        ->whereRaw("{$prefix}news_translations.merchant_language_id IN (select language_id
-                                                                                                                from {$prefix}languages
-                                                                                                                where name in (select mobile_default_language
-                                                                                                                                from {$prefix}merchants
-                                                                                                                                where {$prefix}merchants.object_type = 'mall'
-                                                                                                                                and merchant_id in ('$malls')))")
+                                        ->whereRaw("
+                                            EXISTS (
+                                                SELECT 1
+                                                FROM {$prefix}languages
+                                                WHERE EXISTS (
+                                                    SELECT 1
+                                                    FROM {$prefix}merchants
+                                                    WHERE {$prefix}merchants.object_type = 'mall'
+                                                        AND merchant_id in ('{$malls}')
+                                                        AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
+                                                )
+                                                AND {$prefix}news_translations.merchant_language_id = {$prefix}languages.language_id
+                                            )
+                                        ")
                                         ->where(function($query) {
                                             $query->where('news_name', '=', '')
                                                   ->orWhere('description', '=', '')
