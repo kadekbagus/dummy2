@@ -12,6 +12,7 @@ use Lang;
 use BaseMerchant;
 use BaseMerchantCategory;
 use BaseMerchantKeyword;
+use BaseObjectPartner;
 use Config;
 use Language;
 use Keyword;
@@ -187,6 +188,26 @@ class MerchantUpdateAPIController extends ControllerAPI
                 }
 
                 $updatedBaseMerchant->keywords = $merchantKeywords;
+            });
+
+            // update link to partner - base opject partner table
+            OrbitInput::post('partner_ids', function($partnerIds) use ($baseMerchantId) {
+                // Delete old data
+                $delete_partner = BaseObjectPartner::where('object_id', '=', $baseMerchantId)->where('object_type', 'merchants');
+                $delete_partner->delete(true);
+
+                if (! empty($partnerIds)) {
+                  // Insert new data
+                  foreach ($partnerIds as $partnerId) {
+                    if ($partnerId != "") {
+                      $object_partner = new BaseObjectPartner();
+                      $object_partner->object_id = $baseMerchantId;
+                      $object_partner->object_type = 'tenant';
+                      $object_partner->partner_id = $partnerId;
+                      $object_partner->save();
+                    }
+                  }
+                }
             });
 
             Event::fire('orbit.basemerchant.postupdatebasemerchant.after.save', array($this, $updatedBaseMerchant));

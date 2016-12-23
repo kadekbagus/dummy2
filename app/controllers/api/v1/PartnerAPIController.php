@@ -958,12 +958,16 @@ class PartnerAPIController extends ControllerAPI
                                     'partner_affected_group.partner_id',
                                     'partner_affected_group.affected_group_name_id',
                                     'group_name',
-                                    DB::Raw("count(object_type) as item_count")
+                                    DB::Raw("count({$prefix}object_partner.object_type) + count({$prefix}base_object_partner.object_type) as item_count")
                                 )
                                 ->join('affected_group_names', 'affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
                                 ->leftJoin('object_partner', function ($qJoin) use ($prefix) {
                                     $qJoin->on('object_partner.partner_id', '=', 'partner_affected_group.partner_id')
                                         ->on('object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
+                                })
+                                ->leftJoin('base_object_partner', function ($qJoin) use ($prefix) {
+                                    $qJoin->on('base_object_partner.partner_id', '=', 'partner_affected_group.partner_id')
+                                        ->on('base_object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
                                 })
                                 ->groupBy('partner_id', 'group_name');
                             }]);
