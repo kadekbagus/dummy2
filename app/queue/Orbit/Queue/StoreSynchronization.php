@@ -240,12 +240,12 @@ class StoreSynchronization
                         $object_partner[] = [ 'object_partner_id' => ObjectID::make(),
                                           'object_id' => $base_store_id,
                                           'object_type' => 'tenant',
-                                          'partner_id' => $base_object_partners->partner_id,
+                                          'partner_id' => $base_object_partner->partner_id,
                                            "created_at" => date("Y-m-d H:i:s"),
                                            "updated_at" => date("Y-m-d H:i:s") ];
                     }
                     if (! empty($object_partner)) {
-                        DB::table('object_type')->insert($object_partner);
+                        DB::table('object_partner')->insert($object_partner);
                     }
 
                     // save to media
