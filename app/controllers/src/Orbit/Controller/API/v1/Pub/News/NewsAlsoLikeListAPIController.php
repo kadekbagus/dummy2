@@ -73,49 +73,31 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                 'lat'         => $lat,
                 'mallId'      => $mallId,
                 'filter'      => 'Y',
-                'exists'      => 'Y',
             ];
 
             if (! empty($category_id)) {
-                // news with filter category_id, location, partner_id
-                $news_clp   = $this->generateQuery($param);
+                $news_clp = $this->generateQuery($param);
 
-                // news with filter category_id, location
-                $param['partner_id'] = null;
-                $news_cl    = $this->generateQuery($param);
-
-                // news with filter category_id
-                $param['location'] = null;
-                $news_c     = $this->generateQuery($param);
-
-                // news with filter category_id, location, partner_id (category_id from detail page)
                 $param['category_id'] = null;
-                $param['partner_id'] = $partner_id;
-                $param['location'] = $location;
             }
 
-            $news_dplp   = $this->generateQuery($param);
+            $news_dplp = $this->generateQuery($param);
 
-            // news with filter category_id, location (category_id from detail page)
             $param['partner_id'] = null;
-            $news_dpl    = $this->generateQuery($param);
-
-            // news with filter category_id (category_id from detail page)
             $param['location'] = null;
-            $news_dp     = $this->generateQuery($param);
+            $param['filter'] = 'N'; // pass filter category
 
-            $param['filter'] = 'N';
-            $news_all   = $this->generateQuery($param);
+            $news_all = $this->generateQuery($param);
 
             if (! empty($category_id)) {
-                $news = $news_clp->union($news_cl)->union($news_c)->union($news_dplp)->union($news_dpl)->union($news_dp)->union($news_all);
+                $news_union = $news_clp->union($news_dplp)->union($news_all);
             } else {
-                $news = $news_dplp->union($news_dpl)->union($news_dp)->union($news_all);
+                $news_union = $news_dplp->union($news_all);
             }
 
-            // $newsQuery = $news->getQuery();
-            $newsSql = $news->toSql();
-            $news = DB::table(DB::raw("({$newsSql}) as news_union"))->mergeBindings($news);
+            // news union subquery to take and skip
+            $newsSql = $news_union->toSql();
+            $news = DB::table(DB::raw("({$newsSql}) as news_union"))->mergeBindings($news_union);
 
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes
@@ -214,7 +196,6 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         $lat         = $param['lat'];
         $mallId      = $param['mallId'];
         $filter      = $param['filter'];
-        $exists      = $param['exists'];
 
         $newsHelper = NewsHelper::create();
         $newsHelper->registerCustomValidation();
@@ -369,8 +350,8 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         if (! empty($partner_id)) {
             $news = $news->leftJoin('object_partner',function($q) use ($partner_id){
                         $q->on('object_partner.object_id', '=', 'news.news_id')
-                          ->where('object_partner.object_type', '=', 'news')
-                          ->where('object_partner.partner_id', '=', $partner_id);
+                          ->on('object_partner.object_type', '=', DB::raw("'news'"))
+                          ->on('object_partner.partner_id', '=', DB::raw("'{$partner_id}'"));
                     })
                     ->whereNotExists(function($query) use ($partner_id, $prefix)
                     {
