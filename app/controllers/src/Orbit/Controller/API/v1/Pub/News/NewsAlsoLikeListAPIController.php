@@ -120,18 +120,6 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $news->skip($skip);
 
-// -------convert to sql query--------
-$sql = $news->toSql();
-foreach($news->getBindings() as $binding)
-{
-    $value = is_numeric($binding) ? $binding : DB::connection()->getPdo()->quote($binding);
-    $sql = preg_replace('/\?/', $value, $sql, 1);
-}
-
-print_r($sql);
-die();
-// ----------------------------------
-
             $listOfRec = $news->get();
 
             $data = new \stdclass();
