@@ -104,8 +104,8 @@ class CouponLocationAPIController extends PubControllerAPI
                                             DB::raw("img.path as location_logo"),
                                             DB::raw("map.path as map_image"),
                                             DB::raw("{$prefix}merchants.phone as phone"),
-                                            DB::raw("x(position) as longitude"),
-                                            DB::raw("y(position) as latitude")
+                                            DB::raw("x(position) as latitude"),
+                                            DB::raw("y(position) as longitude")
                                         )
                                     ->leftJoin('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
