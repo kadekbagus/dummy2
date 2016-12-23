@@ -164,3 +164,13 @@ Route::get('/api/v1/pub/campaign-store-list', function()
 });
 
 Route::get('/app/v1/pub/campaign-store-list', ['as' => 'pub-campaign-store-list', 'uses' => 'IntermediatePubAuthController@Store_getCampaignStoreList']);
+
+/**
+ * List city for store
+ */
+Route::get('/api/v1/pub/store-city/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\StoreCityAPIController::create()->getStoreCity();
+});
+
+Route::get('/app/v1/pub/store-city/list', ['as' => 'pub-store-city', 'uses' => 'IntermediatePubAuthController@StoreCity_getStoreCity']);
