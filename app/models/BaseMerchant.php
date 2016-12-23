@@ -73,4 +73,18 @@ class BaseMerchant extends Eloquent
         return $this->hasMany('BaseMerchantKeyword', 'base_merchant_id', 'base_merchant_id')
                     ->join('keywords', 'keywords.keyword_id', '=', 'base_merchant_keyword.keyword_id');
     }
+
+    /**
+     * Merchant has many partner
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function partners()
+    {
+        $prefix = DB::getTablePrefix();
+        return $this->hasMany('BaseObjectPartner', 'object_id', 'base_merchant_id')
+                      ->select('base_object_partner.object_id', DB::raw("{$prefix}partners.partner_id"), DB::raw("{$prefix}partners.partner_name"))
+                      ->leftjoin('partners', 'partners.partner_id', '=', 'base_object_partner.partner_id');
+    }
 }

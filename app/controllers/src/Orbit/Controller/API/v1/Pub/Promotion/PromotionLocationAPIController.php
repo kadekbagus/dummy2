@@ -131,7 +131,7 @@ class PromotionLocationAPIController extends PubControllerAPI
 
             // filter news by mall id
             $group_by = '';
-            OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, $group_by) {
+            OrbitInput::get('mall_id', function($mallid) use ($promotionLocation, &$group_by) {
                 $promotionLocation->where(function($q) use ($mallid){
                                     $q->where('merchants.parent_id', '=', $mallid)
                                       ->orWhere('merchants.merchant_id', '=', $mallid);

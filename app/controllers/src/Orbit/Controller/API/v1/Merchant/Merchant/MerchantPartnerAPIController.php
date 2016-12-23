@@ -11,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use BaseMerchant;
+use Partner;
 use Validator;
 use Lang;
 use DB;
@@ -18,16 +19,16 @@ use Config;
 use stdclass;
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 
-class MerchantListAPIController extends ControllerAPI
+class MerchantPartnerAPIController extends ControllerAPI
 {
     protected $merchantViewRoles = ['super admin', 'merchant database admin'];
 
     /**
-     * GET Search Base Merchant
+     * GET Partner list wich is affected to Store/tenant
      *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
      */
-    public function getSearchMerchant()
+    public function getMerchantPartner()
     {
         try {
             $httpCode = 200;
@@ -54,13 +55,13 @@ class MerchantListAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'sortby' => $sort_by,
+                    'sortby'     => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:merchant_name,location_number',
+                    'sortby'     => 'in:partner_id,partner_name,partner_city,partner_start_date,partner_end_date,partner_created_at,partner_updated_at',
                 ),
                 array(
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: merchant_name, location_number',
+                    'sortby.in' => Lang::get('validation.orbit.empty.retailer_sortby'),
                 )
             );
 
@@ -72,58 +73,26 @@ class MerchantListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $merchants = BaseMerchant::select(
-                    'base_merchants.base_merchant_id',
-                    'name',
-                    DB::raw("
-                            count({$prefix}base_stores.base_store_id) as location_count
-                        ")
-                )
-                ->leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
-                ->excludeDeleted('base_merchants');
-
-            OrbitInput::get('merchant_id', function($data) use ($merchants)
-            {
-                $merchants->whereIn('merchants.merchant_id', $data);
-            });
-
-            // Filter merchant by name
-            OrbitInput::get('name', function($name) use ($merchants)
-            {
-                $merchants->whereIn('base_merchants.name', $name);
-            });
-
-            // Filter merchant by matching name pattern
-            OrbitInput::get('name_like', function($name) use ($merchants)
-            {
-                $merchants->where('base_merchants.name', 'like', "%$name%");
-            });
-
-            // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($merchants) {
-                $with = (array) $with;
-
-                foreach ($with as $relation) {
-                    if ($relation === 'partners') {
-                        $merchants->with('partners');
-                    }
-                }
-            });
-
-            $merchants->groupBy('base_merchants.base_merchant_id');
+            $partners = Partner::excludeDeleted('partners')
+                                ->select('partners.partner_id', 'partners.partner_name')
+                                ->join('partner_affected_group', 'partner_affected_group.partner_id', '=', 'partners.partner_id')
+                                ->join('affected_group_names', function($join) {
+                                        $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+                                             ->where('affected_group_names.group_type', '=', 'tenant');
+                                });
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_merchants = clone $merchants;
+            $_partners = clone $partners;
 
-            $take = PaginationNumber::parseTakeFromGet('merchant');
-            $merchants->take($take);
+            $take = PaginationNumber::parseTakeFromGet('affected_group_name');
+            $partners->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $merchants->skip($skip);
+            $partners->skip($skip);
 
             // Default sort by
-            $sortBy = 'base_merchants.name';
+            $sortBy = 'partner_name';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -131,8 +100,13 @@ class MerchantListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'merchant_name' => 'base_merchants.name',
-                    'location_number' => 'location_count'
+                    'partner_id'         => 'partners.partner_id',
+                    'partner_name'       => 'partners.partner_name',
+                    'partner_city'       => 'partners.city',
+                    'partner_start_date' => 'partners.start_date',
+                    'partner_end_date'   => 'partners.end_date',
+                    'partner_created_at' => 'partners.created_at',
+                    'partner_updated_at' => 'partners.updated_at',
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -146,19 +120,19 @@ class MerchantListAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $merchants->orderBy($sortBy, $sortMode);
+            $partners->orderBy($sortBy, $sortMode);
 
-            $totalMerchants = RecordCounter::create($_merchants)->count();
-            $listOfMerchants = $merchants->get();
+            $totalPartners = RecordCounter::create($_partners)->count();
+            $listOfPartners = $partners->get();
 
             $data = new stdclass();
-            $data->total_records = $totalMerchants;
-            $data->returned_records = count($listOfMerchants);
-            $data->records = $listOfMerchants;
+            $data->total_records = $totalPartners;
+            $data->returned_records = count($listOfPartners);
+            $data->records = $listOfPartners;
 
-            if ($totalMerchants === 0) {
+            if ($totalPartners === 0) {
                 $data->records = NULL;
-                $this->response->message = Lang::get('statuses.orbit.nodata.merchant');
+                $this->response->message = Lang::get('statuses.orbit.nodata.partner');
             }
 
             $this->response->data = $data;
