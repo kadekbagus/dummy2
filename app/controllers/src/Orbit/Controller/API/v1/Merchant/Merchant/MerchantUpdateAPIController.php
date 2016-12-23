@@ -193,7 +193,7 @@ class MerchantUpdateAPIController extends ControllerAPI
             // update link to partner - base opject partner table
             OrbitInput::post('partner_ids', function($partnerIds) use ($baseMerchantId) {
                 // Delete old data
-                $delete_partner = BaseObjectPartner::where('object_id', '=', $baseMerchantId)->where('object_type', 'merchants');
+                $delete_partner = BaseObjectPartner::where('object_id', '=', $baseMerchantId)->where('object_type', 'tenant');
                 $delete_partner->delete(true);
 
                 if (! empty($partnerIds)) {
