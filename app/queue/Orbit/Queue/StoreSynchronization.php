@@ -245,7 +245,7 @@ class StoreSynchronization
                                            "updated_at" => date("Y-m-d H:i:s") ];
                     }
                     if (! empty($object_partner)) {
-                        DB::table('object_type')->insert($object_partner);
+                        DB::table('object_partner')->insert($object_partner);
                     }
 
                     // save to media
