@@ -267,7 +267,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started
                             "),
-                        'news.created_at')
+                        'news.begin_date')
                         ->leftJoin('news_translations', function ($q) use ($valid_language) {
                             $q->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                             $q->on('news_translations.news_id', '=', 'news.news_id');
@@ -394,10 +394,10 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
         $promotions = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($promotions_query);
 
         if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-            $promotions = $promotions->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.created_at"))
+            $promotions = $promotions->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.begin_date"))
                                    ->orderBy('distance', 'asc');
         } else {
-            $promotions = $promotions->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.created_at"));
+            $promotions = $promotions->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.begin_date"));
         }
 
         $promotions = $promotions->groupBy(DB::Raw("sub_query.news_id"));
@@ -406,7 +406,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
             // Map the sortby request to the real column name
             $sortByMapping = array(
                 'name'            => 'news_name',
-                'created_date'    => 'created_at',
+                'created_date'    => 'begin_date',
             );
 
             $sort_by = $sortByMapping[$sort_by];
