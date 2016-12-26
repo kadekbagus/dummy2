@@ -278,6 +278,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                         })
                         ->whereRaw("{$prefix}news.object_type = 'promotion'")
+                        ->whereRaw("{$prefix}news.status = 'active'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->orderBy('news_name', 'asc');
 
