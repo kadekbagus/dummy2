@@ -281,7 +281,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                     ->orderBy('news_name', 'asc');
 
         // left join when need link to mall
-        if ($filter === 'Y') {
+        if ($filter === 'Y' || ! empty($mallId)) {
             $news = $news->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants as m', function ($q) {
                             $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
