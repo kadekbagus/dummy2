@@ -189,7 +189,8 @@ class CouponListAPIController extends PubControllerAPI
                                         ELSE 'true'
                                     END as owned
                                 "),
-                            'promotions.created_at')
+                            'promotions.created_at',
+                            'promotions.begin_date')
                             ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
@@ -301,7 +302,7 @@ class CouponListAPIController extends PubControllerAPI
             if ($list_type === 'featured') {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"),
                                     DB::raw("sub_query.status"), 'campaign_status', 'is_started',
-                                    'image_url', 'placement_order',DB::raw("sub_query.created_at"),
+                                    'image_url', 'placement_order',DB::raw("sub_query.created_at"), DB::raw("sub_query.begin_date"),
                                     DB::raw("placement_type AS placement_type_orig"),
                                     DB::raw("CASE WHEN SUM(
                                                 CASE
@@ -319,7 +320,7 @@ class CouponListAPIController extends PubControllerAPI
             } else {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"),
                                     'campaign_status', 'is_started', 'image_url',
-                                    'placement_type', 'placement_order', DB::raw("sub_query.created_at"), 'owned')
+                                    'placement_type', 'placement_order', DB::raw("sub_query.created_at"), DB::raw("sub_query.begin_date"), 'owned')
                                  ->groupBy('coupon_id');
             }
 
@@ -351,7 +352,7 @@ class CouponListAPIController extends PubControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'name'            => 'coupon_name',
-                    'created_date'    => 'created_at'
+                    'created_date'    => 'begin_date'
                 );
 
                 $sort_by = $sortByMapping[$sort_by];

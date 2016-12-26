@@ -192,7 +192,8 @@ class PromotionListAPIController extends PubControllerAPI
                                     THEN 'true' ELSE 'false' END AS is_started
                                 "),
                             DB::raw("advert.placement_type, advert.placement_order"),
-                            'news.created_at')
+                            'news.created_at',
+                            'news.begin_date')
                             ->leftJoin('news_translations', function ($q) use ($valid_language) {
                                 $q->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                                 $q->on('news_translations.news_id', '=', 'news.news_id');
@@ -310,6 +311,7 @@ class PromotionListAPIController extends PubControllerAPI
                                         DB::raw("sub_query.object_type"), 'image_url', 'campaign_status',
                                         'is_started', 'placement_order',
                                         DB::raw("sub_query.created_at"),
+                                        DB::raw("sub_query.begin_date"),
                                         DB::raw("placement_type AS placement_type_orig"),
                                         DB::raw("CASE WHEN SUM(
                                                 CASE
@@ -325,7 +327,7 @@ class PromotionListAPIController extends PubControllerAPI
             } else {
                 $promotion = $promotion->select(DB::raw("sub_query.news_id"), 'news_name', 'description',
                                             DB::raw("sub_query.object_type"), 'image_url', 'campaign_status',
-                                            'is_started', 'placement_type', 'placement_order', DB::raw("sub_query.created_at"))
+                                            'is_started', 'placement_type', 'placement_order', DB::raw("sub_query.created_at"), DB::raw("sub_query.begin_date"))
                                         ->groupBy(DB::Raw("sub_query.news_id"));
             }
 
@@ -342,7 +344,7 @@ class PromotionListAPIController extends PubControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'name'            => 'news_name',
-                    'created_date'    => 'created_at',
+                    'created_date'    => 'begin_date',
                 );
 
                 $sort_by = $sortByMapping[$sort_by];
