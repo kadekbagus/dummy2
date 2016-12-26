@@ -168,6 +168,7 @@ class StoreSynchronization
                     $tenant->floor_id = empty($store->floor_id) ? 0 : $store->floor_id;
                     $tenant->floor = $store->object_name;
                     $tenant->unit = $store->unit;
+                    $tenant->phone = $store->phone;
                     $tenant->masterbox_number = $store->verification_number;
                     $tenant->save();
 

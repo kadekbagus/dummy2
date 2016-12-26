@@ -208,6 +208,7 @@ class PromotionListAPIController extends PubControllerAPI
                                 $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
                             })
                             ->whereRaw("{$prefix}news.object_type = 'promotion'")
+                            ->whereRaw("{$prefix}news.status = 'active'")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy(DB::raw("advert.placement_order"), 'desc')
                             ->orderBy('news_name', 'asc');

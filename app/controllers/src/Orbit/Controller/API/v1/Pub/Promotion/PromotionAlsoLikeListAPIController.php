@@ -2,7 +2,7 @@
 
 /**
  * @author Irianto <irianto@dominopos.com>
- * @desc Controller for promotion list and search in landing page
+ * @desc Controller for promotion list you might also like
  */
 
 use OrbitShop\API\v1\PubControllerAPI;
@@ -33,7 +33,7 @@ use \Carbon\Carbon as Carbon;
 class PromotionAlsoLikeListAPIController extends PubControllerAPI
 {
     /**
-     * GET - get active promotion in all mall, and also provide for searching
+     * GET - get active promotion you might also like
      *
      * @author Irianto <irianto@dominopos.com>
      *
@@ -278,6 +278,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                         })
                         ->whereRaw("{$prefix}news.object_type = 'promotion'")
+                        ->whereRaw("{$prefix}news.status = 'active'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->orderBy('news_name', 'asc');
 

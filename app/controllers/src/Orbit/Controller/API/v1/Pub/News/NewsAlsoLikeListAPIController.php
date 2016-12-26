@@ -2,7 +2,7 @@
 
 /**
  * @author Irianto <irianto@dominopos.com>
- * @desc Controller for news list and search in landing page
+ * @desc Controller for news list you might also like
  */
 
 use OrbitShop\API\v1\PubControllerAPI;
@@ -32,7 +32,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
     /**
-     * GET - get active news in all mall, and also provide for searching
+     * GET - get news you might also like
      *
      * @author Irianto <irianto@dominopos.com>
      *
@@ -276,6 +276,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                         $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                     })
                     ->whereRaw("{$prefix}news.object_type = 'news'")
+                    ->whereRaw("{$prefix}news.status = 'active'")
                     ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                     ->orderBy('news_name', 'asc');
 
