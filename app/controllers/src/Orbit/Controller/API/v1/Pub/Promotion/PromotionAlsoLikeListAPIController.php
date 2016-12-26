@@ -1,8 +1,8 @@
-<?php namespace Orbit\Controller\API\v1\Pub\News;
+<?php namespace Orbit\Controller\API\v1\Pub\Promotion;
 
 /**
  * @author Irianto <irianto@dominopos.com>
- * @desc Controller for news list you might also like
+ * @desc Controller for promotion list you might also like
  */
 
 use OrbitShop\API\v1\PubControllerAPI;
@@ -16,23 +16,24 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
 use News;
+use Advert;
 use NewsMerchant;
 use Language;
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
-use Orbit\Controller\API\v1\Pub\News\NewsHelper;
+use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
-use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
+use Orbit\Helper\Database\Cache as OrbitDBCache;
+use \Carbon\Carbon as Carbon;
 
-class NewsAlsoLikeListAPIController extends PubControllerAPI
+class PromotionAlsoLikeListAPIController extends PubControllerAPI
 {
-    protected $valid_language = NULL;
     /**
-     * GET - get news you might also like
+     * GET - get active promotion you might also like
      *
      * @author Irianto <irianto@dominopos.com>
      *
@@ -45,19 +46,20 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getSearchNews()
+    public function getSearchPromotion()
     {
         $httpCode = 200;
         $user = null;
         $mall = null;
 
         try{
-            $user = $this->getUser();
+            $this->checkAuth();
+            $user = $this->api->user;
             $show_total_record = OrbitInput::get('show_total_record', null);
             // variable for function
-            $except_id = OrbitInput::get('except_id'); // except news id on detail page
-            $category_id = OrbitInput::get('category_id'); // filter category id
-            $partner_id = OrbitInput::get('partner_id'); // filter partner_id
+            $except_id = OrbitInput::get('except_id');
+            $category_id = OrbitInput::get('category_id');
+            $partner_id = OrbitInput::get('partner_id');
             $location = OrbitInput::get('location', null);
             $ul = OrbitInput::get('ul', null);
             $lon = '';
@@ -77,50 +79,49 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             ];
 
             if (! empty($category_id)) {
-                $news_clp = $this->generateQuery($param);
+                $promotion_clp = $this->generateQuery($param);
 
                 $param['category_id'] = null;
             }
 
-            $news_dplp = $this->generateQuery($param);
+            $promotion_dplp = $this->generateQuery($param);
 
             $param['partner_id'] = null;
             $param['location'] = null;
             $param['filter'] = 'N'; // pass filter category
-
-            $news_all = $this->generateQuery($param);
+            $promotion_nofilter = $this->generateQuery($param);
 
             if (! empty($category_id)) {
-                $news_union = $news_clp->union($news_dplp)->union($news_all);
+                $promotion_union = $promotion_clp->union($promotion_dplp)->union($promotion_nofilter);
             } else {
-                $news_union = $news_dplp->union($news_all);
+                $promotion_union = $promotion_dplp->union($promotion_nofilter);
             }
 
-            // news union subquery to take and skip
-            $newsSql = $news_union->toSql();
-            $news = DB::table(DB::raw("({$newsSql}) as news_union"))->mergeBindings($news_union);
+            // promotion union subquery to take and skip
+            $promotionSql = $promotion_union->toSql();
+            $promotion = DB::table(DB::raw("({$promotionSql}) as promotion_union"))->mergeBindings($promotion_union);
 
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes
             if ($show_total_record === 'yes') {
-                $_news = clone($news);
+                $_promotion = clone($promotion);
 
-                $recordCounter = RecordCounter::create($_news);
+                $recordCounter = RecordCounter::create($_promotion);
                 OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
                 $totalRec = $recordCounter->count();
             }
 
             // Cache the result of database calls
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($news);
+            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($promotion);
 
             $take = PaginationNumber::parseTakeFromGet('you_might_also_like');
-            $news->take($take);
+            $promotion->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $news->skip($skip);
+            $promotion->skip($skip);
 
-            $listOfRec = $news->get();
+            $listOfRec = $promotion->get();
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
@@ -198,17 +199,17 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         $mallId      = $param['mallId'];
         $filter      = $param['filter'];
 
-        $newsHelper = NewsHelper::create();
-        $newsHelper->registerCustomValidation();
+        $promotionHelper = PromotionHelper::create();
+        $promotionHelper->registerCustomValidation();
         $validator = Validator::make(
             array(
-                'language'    => $language,
-                'except_id'   => $except_id,
-                'sortby'      => $sort_by,
+                'language'  => $language,
+                'except_id' => $except_id,
+                'sortby'    => $sort_by,
             ),
             array(
                 'language'  => 'required|orbit.empty.language_default',
-                'except_id' => 'required', // need check news id is exists
+                'except_id' => 'required', //need check promotion id is exists
                 'sortby'    => 'in:name,location,created_date',
             )
         );
@@ -219,7 +220,8 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             OrbitShopAPI::throwInvalidArgument($errorMessage);
         }
 
-        $valid_language = $newsHelper->getValidLanguage();
+        $valid_language = $promotionHelper->getValidLanguage();
+
         $prefix = DB::getTablePrefix();
 
         $withMallId = '';
@@ -227,66 +229,66 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
         }
 
-        $news = News::select(
-                            'news.news_id as news_id',
-                            DB::Raw("
-                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
-                                CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
-                                CASE WHEN {$prefix}media.path is null THEN (
-                                        select m.path
-                                        from {$prefix}news_translations nt
-                                        join {$prefix}media m
-                                            on m.object_id = nt.news_translation_id
-                                            and m.media_name_long = 'news_translation_image_orig'
-                                        where nt.news_id = {$prefix}news.news_id
-                                        group by nt.news_id
-                                    ) ELSE {$prefix}media.path END as image_url
-                            "),
-                            'news.object_type',
-                    // query for get status active based on timezone
-                    DB::raw("
-                            CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
-                                    THEN {$prefix}campaign_status.campaign_status_name
-                                    ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
-                                                                                FROM {$prefix}news_merchant onm
-                                                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
-                                                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                WHERE onm.news_id = {$prefix}news.news_id
-                                                                                {$withMallId})
-                            THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
-                            CASE WHEN (SELECT count(onm.merchant_id)
-                                        FROM {$prefix}news_merchant onm
-                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
-                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                        WHERE onm.news_id = {$prefix}news.news_id
-                                        {$withMallId}
-                                        AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
-                            THEN 'true' ELSE 'false' END AS is_started
+        $promotions = News::select(
+                        'news.news_id as news_id',
+                        DB::Raw("
+                            CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                            CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
+                            CASE WHEN {$prefix}media.path is null THEN (
+                                select m.path
+                                from {$prefix}news_translations nt
+                                join {$prefix}media m
+                                    on m.object_id = nt.news_translation_id
+                                    and m.media_name_long = 'news_translation_image_orig'
+                                where nt.news_id = {$prefix}news.news_id
+                                group by nt.news_id
+                            ) ELSE {$prefix}media.path END as image_url
                         "),
-                    'news.begin_date')
-                    ->leftJoin('news_translations', function ($q) use ($valid_language) {
-                        $q->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
-                        $q->on('news_translations.news_id', '=', 'news.news_id');
-                    })
-                    ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                    ->leftJoin('media', function ($q) {
-                        $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
-                        $q->on('media.object_id', '=', 'news_translations.news_translation_id');
-                    })
-                    ->whereRaw("{$prefix}news.object_type = 'news'")
-                    ->whereRaw("{$prefix}news.status = 'active'")
-                    ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                    ->orderBy('news_name', 'asc');
+                        'news.object_type',
+                        // query for get status active based on timezone
+                        DB::raw("
+                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                        THEN {$prefix}campaign_status.campaign_status_name
+                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                    FROM {$prefix}news_merchant onm
+                                                                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                    WHERE onm.news_id = {$prefix}news.news_id
+                                                                                    {$withMallId})
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
+                                CASE WHEN (SELECT count(onm.merchant_id)
+                                            FROM {$prefix}news_merchant onm
+                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                            WHERE onm.news_id = {$prefix}news.news_id
+                                            {$withMallId}
+                                            AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
+                                THEN 'true' ELSE 'false' END AS is_started
+                            "),
+                        'news.begin_date')
+                        ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                            $q->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            $q->on('news_translations.news_id', '=', 'news.news_id');
+                        })
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin('media', function ($q) {
+                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
+                        })
+                        ->whereRaw("{$prefix}news.object_type = 'promotion'")
+                        ->whereRaw("{$prefix}news.status = 'active'")
+                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                        ->orderBy('news_name', 'asc');
 
         // left join when need link to mall
         if ($filter === 'Y') {
-            $news = $news->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                        ->leftJoin('merchants as m', function ($q) {
-                            $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
-                            $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
-                        });
+            $promotions = $promotions->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                ->leftJoin('merchants as m', function ($q) {
+                                    $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
+                                    $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
+                                });
         }
 
         //calculate distance if user using my current location as filter and sort by location for listing
@@ -305,22 +307,22 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             }
 
             if (! empty($lon) && ! empty($lat)) {
-                $news = $news->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance")
+                $promotions = $promotions->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance")
                                             )
-                                        ->leftJoin('merchant_geofences', function ($q) use($prefix) {
+                                        ->Join('merchant_geofences', function ($q) use($prefix) {
                                                     $q->on('merchant_geofences.merchant_id', '=',
                                                     DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END"));
                                             });
             }
         }
 
-        // except news_id on detail page
-        $news = $news->where('news.news_id', '!=', $except_id);
+        // except promotion on detail page
+        $promotions = $promotions->where('news.news_id', '!=', $except_id);
 
         if ($filter === 'Y') {
             if (empty($category_id)) {
                 // handle if category is empty will find with same of category on detail page
-                $news = $news->leftJoin('category_merchant as cm', function($q) {
+                $promotions = $promotions->leftJoin('category_merchant as cm', function($q) {
                                     $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
                                     $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
                                 })
@@ -345,7 +347,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                     $category_id = (array)$category_id;
                 }
 
-                $news = $news->leftJoin('category_merchant as cm', function($q) {
+                $promotions = $promotions->leftJoin('category_merchant as cm', function($q) {
                                 $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
                                 $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
                             })
@@ -354,57 +356,57 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         }
 
         if (! empty($partner_id)) {
-            $news = ObjectPartnerBuilder::getQueryBuilder($news, $partner_id, 'news');
+            $promotions = ObjectPartnerBuilder::getQueryBuilder($promotions, $partner_id, 'promotion');
         }
 
         if (! empty($mallId)) {
-            // filter news by mall id
-            $news = $news->where(function($q) use ($mallId){
-                        $q->where(DB::raw("m.parent_id"), '=', $mallId)
-                          ->orWhere(DB::raw("m.merchant_id"), '=', $mallId);
-                    })
-                    ->where('news.object_type', '=', 'news');
+            $promotions = $promotions->where(function($q) use ($mallId) {
+                                $q->where(DB::raw("m.parent_id"), '=', $mallId)
+                                    ->orWhere(DB::raw("m.merchant_id"), '=', $mallId);
+                            })
+                            ->where('news.object_type', '=', 'promotion');
         }
 
-         // frontend need the mall name
-         $mall = null;
-         if (! empty($mallId)) {
+        // frontend need the mall name
+        $mall = null;
+        if (! empty($mallId)) {
             $mall = Mall::where('merchant_id', '=', $mallId)->first();
-         }
+        }
 
-         if (! empty($location)) {
-            $news = $news->leftJoin('merchants as mp', function($q) {
+        // filter by city
+        if (! empty($location)) {
+            $promotions = $promotions->leftJoin('merchants as mp', function($q) {
                             $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
                             $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
                             $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                         });
 
             if ($location === 'mylocation' && !empty($lon) && !empty($lat)) {
-                $news = $news->havingRaw("distance <= {$distance}");
+                $promotions = $promotions->havingRaw("distance <= {$distance}");
             } else {
-                $news = $news->where(DB::raw("(CASE WHEN m.object_type = 'tenant' THEN mp.city ELSE m.city END)"), $location);
+                $promotions = $promotions->where(DB::raw("(CASE WHEN m.object_type = 'tenant' THEN mp.city ELSE m.city END)"), $location);
             }
-         }
-
-        // first subquery
-        $querySql = $news->toSql();
-        $news_query = $news->getQuery();
-        $news = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($news_query);
-
-        if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-            $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.begin_date"))
-                                   ->orderBy('distance', 'asc');
-        } else {
-            $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.begin_date"));
         }
 
-        $news = $news->groupBy(DB::Raw("sub_query.news_id"));
+        // first subquery
+        $querySql = $promotions->toSql();
+        $promotions_query = $promotions->getQuery();
+        $promotions = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($promotions_query);
+
+        if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
+            $promotions = $promotions->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.begin_date"))
+                                   ->orderBy('distance', 'asc');
+        } else {
+            $promotions = $promotions->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.begin_date"));
+        }
+
+        $promotions = $promotions->groupBy(DB::Raw("sub_query.news_id"));
 
         if ($sort_by !== 'location') {
             // Map the sortby request to the real column name
             $sortByMapping = array(
-                'name'          => 'news_name',
-                'created_date'  => 'begin_date'
+                'name'            => 'news_name',
+                'created_date'    => 'begin_date',
             );
 
             $sort_by = $sortByMapping[$sort_by];
@@ -418,17 +420,17 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         });
 
         if ($sort_by !== 'location') {
-            $news = $news->orderBy($sort_by, $sort_mode);
+            $promotions = $promotions->orderBy($sort_by, $sort_mode);
         }
 
         $take = Config::get('orbit.pagination.you_might_also_like.max_record');
-        $news->take($take);
+        $promotions->take($take);
 
         // second subquery merging for keep sort by before union
-        $_news = clone $news;
-        $_querysql = $_news->toSql();
-        $_news = DB::table(DB::raw("({$_querysql}) as news_subquery"))->mergeBindings($_news);
+        $_promotions = clone $promotions;
+        $_querysql = $_promotions->toSql();
+        $_promotions = DB::table(DB::raw("({$_querysql}) as promotions_subquery"))->mergeBindings($_promotions);
 
-        return $_news;
+        return $_promotions;
     }
 }

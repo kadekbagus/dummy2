@@ -209,7 +209,7 @@ class MerchantNewAPIController extends ControllerAPI
                 if ($partnerId != "") {
                   $baseObjectPartner = new BaseObjectPartner();
                   $baseObjectPartner->object_id = $newBaseMerchant->base_merchant_id;
-                  $baseObjectPartner->object_type = 'merchants';
+                  $baseObjectPartner->object_type = 'tenant';
                   $baseObjectPartner->partner_id = $partnerId;
                   $baseObjectPartner->save();
                 }

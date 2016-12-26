@@ -168,6 +168,7 @@ class StoreSynchronization
                     $tenant->floor_id = empty($store->floor_id) ? 0 : $store->floor_id;
                     $tenant->floor = $store->object_name;
                     $tenant->unit = $store->unit;
+                    $tenant->phone = $store->phone;
                     $tenant->masterbox_number = $store->verification_number;
                     $tenant->save();
 
@@ -234,7 +235,7 @@ class StoreSynchronization
                     // insert object_partner
                     $base_object_partners = BaseObjectPartner::join('partners', 'partners.partner_id', '=', 'base_object_partner.partner_id')
                                                             ->where('base_object_partner.object_id', $base_merchant_id)
-                                                            ->where('base_object_partner.object_type', 'merchants')->get();
+                                                            ->where('base_object_partner.object_type', 'tenant')->get();
                     $object_partner = array();
                     foreach ($base_object_partners as $base_object_partner) {
                         $object_partner[] = [ 'object_partner_id' => ObjectID::make(),
