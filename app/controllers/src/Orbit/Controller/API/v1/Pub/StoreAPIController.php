@@ -1090,7 +1090,7 @@ class StoreAPIController extends PubControllerAPI
                                             LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                             LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                         WHERE onm.news_id = {$prefix}news.news_id
-                                        AND om.name = '{$store_name}'
+                                        AND om.name = {$this->quote($store_name)}
                                     )
                                     THEN 'expired'
                                     ELSE {$prefix}campaign_status.campaign_status_name
