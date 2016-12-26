@@ -1125,7 +1125,7 @@ class StoreAPIController extends PubControllerAPI
             // get news list
             $news = DB::table('news')->select(
                         'news.news_id as campaign_id',
-                        'news.created_at as created_at',
+                        'news.begin_date as begin_date',
                         DB::Raw("
                                  CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
                             "),
@@ -1142,7 +1142,7 @@ class StoreAPIController extends PubControllerAPI
                                             LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                             LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                         WHERE onm.news_id = {$prefix}news.news_id
-                                        AND om.name = '{$store_name}'
+                                        AND om.name = {$this->quote($store_name)}
                                     )
                                     THEN 'expired'
                                     ELSE {$prefix}campaign_status.campaign_status_name
@@ -1215,7 +1215,7 @@ class StoreAPIController extends PubControllerAPI
 
             $promotions = DB::table('news')->select(
                         'news.news_id as campaign_id',
-                        'news.created_at as created_at',
+                        'news.begin_date as begin_date',
                         DB::Raw("
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
                         "),
@@ -1306,7 +1306,7 @@ class StoreAPIController extends PubControllerAPI
             // get coupon list
             $coupons = DB::table('promotions')->select(DB::raw("
                                 {$prefix}promotions.promotion_id as campaign_id,
-                                {$prefix}promotions.created_at as created_at,
+                                {$prefix}promotions.begin_date as begin_date,
                                 CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
                                 'coupon' as campaign_type,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -1405,7 +1405,7 @@ class StoreAPIController extends PubControllerAPI
                 $sortByMapping = array(
                     'campaign_name'   => 'campaign_name',
                     'name'            => 'campaign_name',
-                    'created_date'    => 'created_at',
+                    'created_date'    => 'begin_date',
                 );
 
                 $sort_by = $sortByMapping[$sort_by];
