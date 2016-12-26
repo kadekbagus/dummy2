@@ -270,7 +270,7 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
                                         group by ct.promotion_id
                                     ) ELSE {$prefix}media.path END as image_url
                                 "),
-                            'promotions.created_at')
+                            'promotions.begin_date')
                         ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                         ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
@@ -293,8 +293,10 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
         // left join when need link to mall
         if ($filter === 'Y') {
             $coupons = $coupons->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                            ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
+                        ->leftJoin('merchants as m', function ($q) {
+                            $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
+                            $q->on(DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id');
+                        });
         }
 
         //calculate distance if user using my current location as filter and sort by location for listing
@@ -315,7 +317,7 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
             if (!empty($lon) && !empty($lat)) {
                 $coupons = $coupons->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                 ->leftJoin('merchant_geofences', function ($q) use($prefix) {
-                                        $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END"));
+                                        $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END"));
                                 });
             }
         }
@@ -350,15 +352,11 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
                     $category_id = (array)$category_id;
                 }
 
-                if (in_array("mall", $category_id)) {
-                    $coupons = $coupons->whereIn(DB::raw("t.object_type"), $category_id);
-                } else {
-                    $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
-                                    $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("t.merchant_id"));
-                                    $q->on(DB::raw("t.object_type"), '=', DB::raw("'tenant'"));
-                                })
-                        ->whereIn(DB::raw('cm.category_id'), $category_id);
-                }
+                $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
+                                $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
+                                $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
+                            })
+                    ->whereIn(DB::raw('cm.category_id'), $category_id);
             }
         }
 
@@ -383,7 +381,7 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
         // filter by city
          if (! empty($location)) {
             $coupons = $coupons->leftJoin('merchants as mp', function($q) {
-                            $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("t.parent_id"));
+                            $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
                             $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
                             $q->on(DB::raw("mp.status"), '=', DB::raw("'active'"));
                         });
@@ -391,7 +389,7 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
             if ($location === 'mylocation' && !empty($lon) && !empty($lat)) {
                 $coupons = $coupons->havingRaw("distance <= {$distance}");
             } else {
-                $coupons = $coupons->where(DB::raw("(CASE WHEN t.object_type = 'tenant' THEN mp.city ELSE t.city END)"), $location);
+                $coupons = $coupons->where(DB::raw("(CASE WHEN m.object_type = 'tenant' THEN mp.city ELSE m.city END)"), $location);
             }
          }
 
@@ -400,10 +398,10 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
         $coupons = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons);
 
         if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-            $coupons = $coupons->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.created_at"))
+            $coupons = $coupons->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.begin_date"))
                                    ->orderBy('distance', 'asc');
         } else {
-            $coupons = $coupons->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.created_at"));
+            $coupons = $coupons->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.begin_date"));
         }
 
         $coupons = $coupons->groupBy(DB::Raw("coupon_id"));
@@ -411,8 +409,8 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
         if ($sort_by !== 'location') {
             // Map the sortby request to the real column name
             $sortByMapping = array(
-                'name'            => 'coupon_name',
-                'created_date'    => 'created_at'
+                'name'         => 'coupon_name',
+                'created_date' => 'begin_date'
             );
 
             $sort_by = $sortByMapping[$sort_by];
