@@ -1187,6 +1187,14 @@ class StoreAPIController extends PubControllerAPI
                         ->groupBy('campaign_id')
                         ->orderBy('news.created_at', 'desc');
 
+            // filter by mall id
+            OrbitInput::get('mall_id', function($mallid) use ($news) {
+                $news->where(function($q) use($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+            });
+
             // filter by city
             OrbitInput::get('location', function($location) use ($news, $prefix, $ul, $userLocationCookieName, $distance) {
                 $news = $this->getLocation($prefix, $location, $news, $ul, $distance, $userLocationCookieName);
@@ -1277,6 +1285,14 @@ class StoreAPIController extends PubControllerAPI
                         ->groupBy('campaign_id')
                         ->orderBy('news.created_at', 'desc');
 
+            // filter by mall id
+            OrbitInput::get('mall_id', function($mallid) use ($promotions) {
+                $promotions->where(function($q) use($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+            });
+
             // filter by city
             OrbitInput::get('location', function($location) use ($promotions, $prefix, $ul, $userLocationCookieName, $distance) {
                 $promotions = $this->getLocation($prefix, $location, $promotions, $ul, $distance, $userLocationCookieName);
@@ -1365,6 +1381,14 @@ class StoreAPIController extends PubControllerAPI
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
                             ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');
+
+            // filter by mall id
+            OrbitInput::get('mall_id', function($mallid) use ($coupons) {
+                $coupons->where(function($q) use($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+            });
 
             // filter by city
             OrbitInput::get('location', function($location) use ($coupons, $prefix, $ul, $userLocationCookieName, $distance) {
