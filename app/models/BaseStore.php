@@ -149,7 +149,11 @@ class BaseStore extends Eloquent
                             ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
                             ->leftJoin('objects', 'objects.object_id', '=', 'base_stores.floor_id')
                             ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
-                            ->leftJoin(DB::raw("(SELECT * FROM {$prefix}media WHERE media_name_id = 'base_merchant_logo' AND object_name = 'base_merchant') AS media"), DB::raw("media.object_id"), '=', 'base_merchants.base_merchant_id')
+                            ->leftJoin(DB::raw("{$prefix}media media"), function ($q) {
+                                $q->on(DB::raw("media.object_id"), '=', 'base_merchants.base_merchant_id')
+                                  ->on(DB::raw("media.media_name_id"), '=', DB::raw("'base_merchant_logo'"))
+                                  ->on(DB::raw("media.object_name"), '=', DB::raw("'base_merchant'"));
+                            })
                             ->where('base_stores.status', '!=', 'deleted')
                             ->groupBy('base_stores.base_store_id');
 
