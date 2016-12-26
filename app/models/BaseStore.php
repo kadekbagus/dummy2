@@ -141,6 +141,7 @@ class BaseStore extends Eloquent
                                 'base_stores.merchant_id',
                                 'base_merchants.url',
                                 'base_stores.floor_id',
+                                'base_stores.phone',
                                 'objects.object_name',
                                 'base_stores.unit',
                                 'base_stores.verification_number',
