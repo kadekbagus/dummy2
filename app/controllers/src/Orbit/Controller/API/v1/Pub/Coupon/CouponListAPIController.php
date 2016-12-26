@@ -215,7 +215,7 @@ class CouponListAPIController extends PubControllerAPI
                             ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereRaw("available.tot > 0")
-                            ->whereRaw("{$prefix}promotion.status = 'active'")
+                            ->whereRaw("{$prefix}promotions.status = 'active'")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy(DB::raw("advert.placement_order"), 'desc')
                             ->orderBy('coupon_name', 'asc');
