@@ -291,7 +291,7 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
                         ->orderBy('coupon_name', 'asc');
 
         // left join when need link to mall
-        if ($filter === 'Y') {
+        if ($filter === 'Y' || ! empty($mallId)) {
             $coupons = $coupons->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', function ($q) {
                             $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
