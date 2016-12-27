@@ -130,10 +130,10 @@ Event::listen('orbit.basestore.postupdatestore.after.save', function($controller
 
 Event::listen('orbit.basestore.sync.begin', function($syncObject) {
     // Send email process to the queue
-    Queue::push('Orbit\\Queue\\SyncStore\\PreSyncStoreMail', ['sync_id' => $syncObject->sync_id]);
+    Queue::push('Orbit\\Queue\\SyncStore\\PreSyncStoreMail', ['sync_id' => $syncObject->sync_id], 'store_sync');
 });
 
 Event::listen('orbit.basestore.sync.complete', function($syncObject) {
     // Send email process to the queue
-    Queue::push('Orbit\\Queue\\SyncStore\\PostSyncStoreMail', ['sync_id' => $syncObject->sync_id]);
+    Queue::push('Orbit\\Queue\\SyncStore\\PostSyncStoreMail', ['sync_id' => $syncObject->sync_id], 'store_sync');
 });
