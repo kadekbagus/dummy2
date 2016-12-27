@@ -137,6 +137,22 @@ class AffectedGroupNameAPIController extends ControllerAPI
                 $affected_group_names->where('affected_group_names.status', $status);
             });
 
+            // Filter affected group names by partner_id
+            OrbitInput::get('partner_id', function ($partner_id) use ($affected_group_names, $prefix) {
+                $affected_group_names->join('partner_affected_group', 'partner_affected_group.affected_group_name_id', '=', 'affected_group_names.affected_group_name_id')
+                    ->leftJoin('object_partner', function ($qJoin) use ($prefix) {
+                        $qJoin->on('object_partner.partner_id', '=', 'partner_affected_group.partner_id')
+                            ->on('object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
+                    })
+                    ->leftJoin('base_object_partner', function ($qJoin) use ($prefix) {
+                        $qJoin->on('base_object_partner.partner_id', '=', 'partner_affected_group.partner_id')
+                            ->on('base_object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
+                    })
+                    ->addSelect(DB::raw('(count({$prefix}object_partner.object_type) + count({$prefix}base_object_partner.object_type)) as item_count'))
+                    ->where('partner_affected_group.partner_id', $partner_id)
+                    ->groupBy('object_partner.partner_id', 'group_name');
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($affected_group_names) {
                 $with = (array) $with;
@@ -359,27 +375,27 @@ class AffectedGroupNameAPIController extends ControllerAPI
             if ($group_name === 'promotions') {
                 $partners->join('affected_group_names', function($join) {
                         $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                             ->where('affected_group_names.group_name', '=', 'Promotions');
+                             ->where('affected_group_names.group_type', '=', 'promotion');
                     });
             } else if ($group_name === 'events') {
                 $partners->join('affected_group_names', function($join) {
                         $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                             ->where('affected_group_names.group_name', '=', 'Events');
+                             ->where('affected_group_names.group_type', '=', 'news');
                     });
             } else if ($group_name === 'coupons') {
                 $partners->join('affected_group_names', function($join) {
                         $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                             ->where('affected_group_names.group_name', '=', 'Coupons');
+                             ->where('affected_group_names.group_type', '=', 'coupon');
                     });
             } else if ($group_name === 'malls') {
                 $partners->join('affected_group_names', function($join) {
                         $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                             ->where('affected_group_names.group_name', '=', 'Malls');
+                             ->where('affected_group_names.group_type', '=', 'mall');
                     });
             } else if ($group_name === 'stores') {
                 $partners->join('affected_group_names', function($join) {
                         $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                             ->where('affected_group_names.group_name', '=', 'Stores');
+                             ->where('affected_group_names.group_type', '=', 'tenant');
                 });
             }
 

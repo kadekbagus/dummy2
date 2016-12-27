@@ -20,6 +20,7 @@ use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
@@ -188,7 +189,8 @@ class CouponListAPIController extends PubControllerAPI
                                         ELSE 'true'
                                     END as owned
                                 "),
-                            'promotions.created_at')
+                            'promotions.created_at',
+                            'promotions.begin_date')
                             ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
@@ -214,6 +216,7 @@ class CouponListAPIController extends PubControllerAPI
                             ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereRaw("available.tot > 0")
+                            ->whereRaw("{$prefix}promotions.status = 'active'")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->orderBy(DB::raw("advert.placement_order"), 'desc')
                             ->orderBy('coupon_name', 'asc');
@@ -268,22 +271,7 @@ class CouponListAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $coupons = $coupons->leftJoin('object_partner', function($q) use ($partner_id) {
-                            $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
-                              ->where('object_partner.object_type', '=', 'coupon')
-                              ->where('object_partner.partner_id', '=', $partner_id);
-                        })
-                        ->whereNotExists(function($query) use ($partner_id, $prefix) {
-                            $query->select('object_partner.object_id')
-                                  ->from('object_partner')
-                                  ->join('partner_competitor', function($q) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
-                                    })
-                                  ->whereRaw("{$prefix}object_partner.object_type = 'coupon'")
-                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
-                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}promotions.promotion_id")
-                                  ->groupBy('object_partner.object_id');
-                        });
+                $coupons = ObjectPartnerBuilder::getQueryBuilder($coupons, $partner_id, 'coupon');
             });
 
             // filter by city
@@ -314,7 +302,7 @@ class CouponListAPIController extends PubControllerAPI
             if ($list_type === 'featured') {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"),
                                     DB::raw("sub_query.status"), 'campaign_status', 'is_started',
-                                    'image_url', 'placement_order',DB::raw("sub_query.created_at"),
+                                    'image_url', 'placement_order',DB::raw("sub_query.created_at"), DB::raw("sub_query.begin_date"),
                                     DB::raw("placement_type AS placement_type_orig"),
                                     DB::raw("CASE WHEN SUM(
                                                 CASE
@@ -332,7 +320,7 @@ class CouponListAPIController extends PubControllerAPI
             } else {
                 $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"),
                                     'campaign_status', 'is_started', 'image_url',
-                                    'placement_type', 'placement_order', DB::raw("sub_query.created_at"), 'owned')
+                                    'placement_type', 'placement_order', DB::raw("sub_query.created_at"), DB::raw("sub_query.begin_date"), 'owned')
                                  ->groupBy('coupon_id');
             }
 
@@ -364,7 +352,7 @@ class CouponListAPIController extends PubControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'name'            => 'coupon_name',
-                    'created_date'    => 'created_at'
+                    'created_date'    => 'begin_date'
                 );
 
                 $sort_by = $sortByMapping[$sort_by];

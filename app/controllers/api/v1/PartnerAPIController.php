@@ -930,7 +930,7 @@ class PartnerAPIController extends ControllerAPI
             });
 
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($partners) {
+            OrbitInput::get('with', function ($with) use ($partners, $prefix) {
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
@@ -953,20 +953,29 @@ class PartnerAPIController extends ControllerAPI
                                 );
                             }]);
                     } else if ($relation === 'partnerAffectedGroup') {
-                        $partners->with([$relation => function ($qGroupName) {
+                        $partners->with([$relation => function ($qGroupName) use ($prefix) {
                             $qGroupName->select(
-                                    'partner_id',
+                                    'partner_affected_group.partner_id',
                                     'partner_affected_group.affected_group_name_id',
-                                    'group_name'
+                                    'group_name',
+                                    DB::Raw("count({$prefix}object_partner.object_type) + count({$prefix}base_object_partner.object_type) as item_count")
                                 )
-                                ->join('affected_group_names', 'affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id');
+                                ->join('affected_group_names', 'affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+                                ->leftJoin('object_partner', function ($qJoin) use ($prefix) {
+                                    $qJoin->on('object_partner.partner_id', '=', 'partner_affected_group.partner_id')
+                                        ->on('object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
+                                })
+                                ->leftJoin('base_object_partner', function ($qJoin) use ($prefix) {
+                                    $qJoin->on('base_object_partner.partner_id', '=', 'partner_affected_group.partner_id')
+                                        ->on('base_object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
+                                })
+                                ->groupBy('partner_id', 'group_name');
                             }]);
                     } else {
                         $partners->with($relation);
                     }
                 }
             });
-
 
             $_partners = clone $partners;
 

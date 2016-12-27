@@ -582,6 +582,12 @@ return array(
             'per_page'      => 50,
             'max_record'    => 200,
         ),
+
+        // you might also like
+        'you_might_also_like' => array(
+            'per_page'      => 4,
+            'max_record'    => 4,
+        ),
     ),
 
     'reset_password' => array(
@@ -5123,6 +5129,14 @@ return array(
     'mdm' => [
         'synchronization' => [
             'chunk' => 50
+        ]
+    ],
+
+    // partner config
+    'partner' => [
+        // exception behaviour for query in listing (ex: dompetku)
+        'exception_behaviour' => [
+            'partner_ids' => ['']
         ]
     ]
 );

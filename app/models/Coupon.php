@@ -108,6 +108,14 @@ class Coupon extends Eloquent
                 ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id');
     }
 
+    public function campaignObjectPartners()
+    {
+        $prefix = DB::getTablePrefix();
+        return $this->hasMany('ObjectPartner', 'object_id', 'promotion_id')
+                      ->select('object_partner.object_id',DB::raw("{$prefix}partners.partner_id"), DB::raw("{$prefix}partners.partner_name"))
+                      ->leftjoin('partners', 'partners.partner_id', '=', 'object_partner.partner_id');
+    }
+
     /**
      * Coupon strings can be translated to many languages.
      */

@@ -109,3 +109,23 @@ Route::get('/api/v1/pub/store-news/list', function()
 });
 
 Route::get('/app/v1/pub/store-news/list', ['as' => 'pub-store-news-list', 'uses' => 'IntermediatePubAuthController@News\NewsStore_getNewsStore']);
+
+/**
+ * List city for news
+ */
+Route::get('/api/v1/pub/news-city/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\News\NewsCityAPIController::create()->getNewsCity();
+});
+
+Route::get('/app/v1/pub/news-city/list', ['as' => 'pub-news-city', 'uses' => 'IntermediatePubAuthController@News\NewsCity_getNewsCity']);
+
+/**
+ * Also like List of news
+ */
+Route::get('/api/v1/pub/news/suggestion/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\News\NewsAlsoLikeListAPIController::create()->getSearchNews();
+});
+
+Route::get('/app/v1/pub/news/suggestion/list', ['as' => 'pub-news-suggestion-list', 'uses' => 'IntermediatePubAuthController@News\NewsAlsoLikeList_getSearchNews']);

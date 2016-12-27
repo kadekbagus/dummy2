@@ -140,8 +140,35 @@ class GenericActivityAPIController extends PubControllerAPI
                         ->first();
             }
 
+            // Get mall object for set setLocation activity
+            $mallId = OrbitInput::post('mall_id', null);
+
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
+            }
+
             // Get notes
             $notes = OrbitInput::post('notes', null);
+
+            // Menu specific block, to set object_display_name to 'sidebar' or else
+            if ($activityName === 'click_menu') {
+                $menuSource = OrbitInput::post('menu_location', null);
+
+                if (! empty($menuSource)) {
+                    switch ($menuSource) {
+                        case 'sidebar':
+                            $activity->setObjectDisplayName('Sidebar Menu');
+                            break;
+
+                        case 'topmenu':
+                        default:
+                            $activity->setObjectDisplayName('Top Menu');
+                            break;
+                    }
+                }
+            }
 
             $activity->setUser($user)
                 ->setActivityName($activityName)

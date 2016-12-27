@@ -24,6 +24,7 @@ use Language;
 use Coupon;
 use Activity;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 
@@ -60,7 +61,7 @@ class StoreAPIController extends PubControllerAPI
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $language = OrbitInput::get('language', 'id');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
-            $distance = Config::get('orbit.geo_location.distance');
+            $distance = Config::get('orbit.geo_location.distance', 10);
             $ul = OrbitInput::get('ul');
             $lon = 0;
             $lat = 0;
@@ -205,23 +206,7 @@ class StoreAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $store = $store->leftJoin('object_partner', function($q) use ($partner_id) {
-                            $q->on('object_partner.object_id', '=', 'merchants.merchant_id')
-                              ->where('object_partner.object_type', '=', 'tenant')
-                              ->where('object_partner.partner_id', '=', $partner_id);
-                        })
-                        ->whereNotExists(function($query) use ($partner_id, $prefix)
-                        {
-                            $query->select('object_partner.object_id')
-                                  ->from('object_partner')
-                                  ->join('partner_competitor', function($q) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
-                                    })
-                                  ->whereRaw("{$prefix}object_partner.object_type = 'tenant'")
-                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
-                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}merchants.merchant_id")
-                                  ->groupBy('object_partner.object_id');
-                        });
+                $store = ObjectPartnerBuilder::getQueryBuilder($store, $partner_id, 'tenant');
             });
 
             OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
@@ -854,7 +839,13 @@ class StoreAPIController extends PubControllerAPI
 
             $sort_by = OrbitInput::get('sortby', 'merchants.name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $mallId = OrbitInput::get('mall_id', null);
             $storename = OrbitInput::get('store_name');
+            $location = OrbitInput::get('location');
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+            $distance = Config::get('orbit.geo_location.distance', 10);
+            $ul = OrbitInput::get('ul', null);
+
             $keyword = OrbitInput::get('keyword');
 
             $validator = Validator::make(
@@ -880,10 +871,32 @@ class StoreAPIController extends PubControllerAPI
             // Query without searching keyword
             $mall = Mall::select('merchants.merchant_id',
                                     'merchants.name',
-                                    'merchants.ci_domain',
+                                    'merchants.address_line1 as address',
                                     'merchants.city',
-                                    'merchants.description',
-                                    DB::raw("CONCAT({$prefix}merchants.ci_domain, '/customer/tenant?id=', oms.merchant_id) as store_url"))
+                                    'merchants.floor',
+                                    'merchants.unit',
+                                    'merchants.operating_hours',
+                                    'merchants.object_type as location_type',
+                                    DB::raw("img.path as location_logo"),
+                                    DB::raw("map.path as map_image"),
+                                    'merchants.phone',
+                                    DB::raw("x(position) as latitude"),
+                                    DB::raw("y(position) as longitude")
+                                )
+                    ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
+                    // Map
+                    ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
+                        $q->on(DB::raw('map.object_id'), '=', "merchants.merchant_id")
+                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig')"))
+                          ;
+                    })
+                    // Logo
+                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
+                        $q->on(DB::raw('img.object_id'), '=', "merchants.merchant_id")
+                          ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"))
+                          ;
+                    })
+
                     ->with(['tenants' => function ($q) use ($prefix, $storename) {
                             $q->select('merchants.merchant_id',
                                         'merchants.name as title',
@@ -932,14 +945,43 @@ class StoreAPIController extends PubControllerAPI
                 $mall = $mall->join(DB::raw("( select {$prefix}merchants.merchant_id, name, parent_id from {$prefix}merchants
                                             left join {$prefix}keyword_object on {$prefix}merchants.merchant_id = {$prefix}keyword_object.object_id
                                             left join {$prefix}keywords on {$prefix}keyword_object.keyword_id = {$prefix}keywords.keyword_id
-                                            where name = {$this->quote($storename)}
-                                            and {$prefix}merchants.status = 'active'
+                                            where {$prefix}merchants.status = 'active'
                                             and (" . $keywordSql . ")
                                         ) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                             ->active();
             } else {
                 $mall = $mall->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                             ->active();
+            }
+
+            OrbitInput::get('location', function($location) use ($mall, $userLocationCookieName, $ul, $distance, $prefix) {
+                $position = isset($ul)?explode("|", $ul):null;
+                $lon = isset($position[0])?$position[0]:null;
+                $lat = isset($position[0])?$position[0]:null;
+
+                if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                    if (! empty($ul)) {
+                        $position = explode("|", $ul);
+                        $lon = $position[0];
+                        $lat = $position[1];
+                    } else {
+                        // get lon lat from cookie
+                        $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                        if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                            $lon = $userLocationCookieArray[0];
+                            $lat = $userLocationCookieArray[1];
+                        }
+                    }
+
+                    $mall->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
+                                        ->havingRaw("distance <= {$distance}");
+                } else {
+                    $mall->where('merchants.city', $location);
+                }
+            });
+
+            if (! empty($mallId)) {
+                $mall->where('merchants.merchant_id', '=', $mallId)->first();
             }
 
             $mall = $mall->groupBy('merchants.merchant_id')->orderBy($sort_by, $sort_mode);
@@ -1045,16 +1087,25 @@ class StoreAPIController extends PubControllerAPI
             $store_name = OrbitInput::get('store_name');
             $keyword = OrbitInput::get('keyword');
             $language = OrbitInput::get('language', 'id');
+            $location = OrbitInput::get('location', null);
+            $category_id = OrbitInput::get('category_id');
+            $ul = OrbitInput::get('ul', null);
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+            $distance = Config::get('orbit.geo_location.distance', 10);
+            $lon = '';
+            $lat = '';
 
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'store_name' => $store_name,
                     'language' => $language,
+                    'sortby'   => $sort_by,
                 ),
                 array(
                     'store_name' => 'required',
                     'language' => 'required|orbit.empty.language_default',
+                    'sortby'   => 'in:campaign_name,name,location,created_date',
                 ),
                 array(
                     'required' => 'Store name is required',
@@ -1074,6 +1125,7 @@ class StoreAPIController extends PubControllerAPI
             // get news list
             $news = DB::table('news')->select(
                         'news.news_id as campaign_id',
+                        'news.begin_date as begin_date',
                         DB::Raw("
                                  CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
                             "),
@@ -1135,8 +1187,43 @@ class StoreAPIController extends PubControllerAPI
                         ->groupBy('campaign_id')
                         ->orderBy('news.created_at', 'desc');
 
+            // filter by mall id
+            OrbitInput::get('mall_id', function($mallid) use ($news) {
+                $news->where(function($q) use($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+            });
+
+            // filter by city
+            OrbitInput::get('location', function($location) use ($news, $prefix, $ul, $userLocationCookieName, $distance) {
+                $news = $this->getLocation($prefix, $location, $news, $ul, $distance, $userLocationCookieName);
+            });
+
+            // filter by category_id
+            OrbitInput::get('category_id', function($category_id) use ($news, $prefix) {
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
+                if (in_array("mall", $category_id)) {
+                    $news = $news->whereIn('merchants', $category_id);
+                } else {
+                    $news = $news->leftJoin('category_merchant', function($q) {
+                                    $q->on('category_merchant.merchant_id', '=', 'merchants.merchant_id');
+                                    $q->on('merchants.object_type', '=', DB::raw("'tenant'"));
+                                })
+                        ->whereIn('category_merchant.category_id', $category_id);
+                }
+            });
+
+            OrbitInput::get('partner_id', function($partner_id) use ($news) {
+                $news = ObjectPartnerBuilder::getQueryBuilder($news, $partner_id, 'news');
+            });
+
             $promotions = DB::table('news')->select(
                         'news.news_id as campaign_id',
+                        'news.begin_date as begin_date',
                         DB::Raw("
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
                         "),
@@ -1198,9 +1285,44 @@ class StoreAPIController extends PubControllerAPI
                         ->groupBy('campaign_id')
                         ->orderBy('news.created_at', 'desc');
 
+            // filter by mall id
+            OrbitInput::get('mall_id', function($mallid) use ($promotions) {
+                $promotions->where(function($q) use($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+            });
+
+            // filter by city
+            OrbitInput::get('location', function($location) use ($promotions, $prefix, $ul, $userLocationCookieName, $distance) {
+                $promotions = $this->getLocation($prefix, $location, $promotions, $ul, $distance, $userLocationCookieName);
+            });
+
+            // filter by category_id
+            OrbitInput::get('category_id', function($category_id) use ($promotions, $prefix) {
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
+                if (in_array("mall", $category_id)) {
+                    $promotions = $promotions->whereIn('merchants', $category_id);
+                } else {
+                    $promotions = $promotions->leftJoin('category_merchant', function($q) {
+                                    $q->on('category_merchant.merchant_id', '=', 'merchants.merchant_id');
+                                    $q->on('merchants.object_type', '=', DB::raw("'tenant'"));
+                                })
+                        ->whereIn('category_merchant.category_id', $category_id);
+                }
+            });
+
+            OrbitInput::get('partner_id', function($partner_id) use ($promotions) {
+                $promotions = ObjectPartnerBuilder::getQueryBuilder($promotions, $partner_id, 'promotion');
+            });
+
             // get coupon list
             $coupons = DB::table('promotions')->select(DB::raw("
                                 {$prefix}promotions.promotion_id as campaign_id,
+                                {$prefix}promotions.begin_date as begin_date,
                                 CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
                                 'coupon' as campaign_type,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -1260,6 +1382,40 @@ class StoreAPIController extends PubControllerAPI
                             ->groupBy('campaign_id')
                             ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');
 
+            // filter by mall id
+            OrbitInput::get('mall_id', function($mallid) use ($coupons) {
+                $coupons->where(function($q) use($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+            });
+
+            // filter by city
+            OrbitInput::get('location', function($location) use ($coupons, $prefix, $ul, $userLocationCookieName, $distance) {
+                $coupons = $this->getLocation($prefix, $location, $coupons, $ul, $distance, $userLocationCookieName);
+            });
+
+            // filter by category_id
+            OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix) {
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
+                if (in_array("mall", $category_id)) {
+                    $coupons = $coupons->whereIn('merchants', $category_id);
+                } else {
+                    $coupons = $coupons->leftJoin('category_merchant', function($q) {
+                                    $q->on('category_merchant.merchant_id', '=', 'merchants.merchant_id');
+                                    $q->on('merchants.object_type', '=', DB::raw("'tenant'"));
+                                })
+                        ->whereIn('category_merchant.category_id', $category_id);
+                }
+            });
+
+            OrbitInput::get('partner_id', function($partner_id) use ($coupons) {
+                $coupons = ObjectPartnerBuilder::getQueryBuilder($coupons, $partner_id, 'coupon');
+            });
+
             $result = $news->unionAll($promotions)->unionAll($coupons);
 
             $querySql = $result->toSql();
@@ -1268,6 +1424,17 @@ class StoreAPIController extends PubControllerAPI
 
             $_campaign = clone $campaign;
 
+            if ($sort_by !== 'location') {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'campaign_name'   => 'campaign_name',
+                    'name'            => 'campaign_name',
+                    'created_date'    => 'begin_date',
+                );
+
+                $sort_by = $sortByMapping[$sort_by];
+            }
+
             $take = PaginationNumber::parseTakeFromGet('campaign');
 
             $campaign->take($take);
@@ -1275,12 +1442,16 @@ class StoreAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $campaign->skip($skip);
 
-            $campaign->orderBy($sort_by, $sort_mode);
+            if ($sort_by !== 'location') {
+                $campaign->orderBy($sort_by, $sort_mode);
+            }
 
+            $recordCounter = RecordCounter::create($_campaign);
+            $totalRec = $recordCounter->count();
             $listcampaign = $campaign->get();
 
             $this->response->data = new stdClass();
-            $this->response->data->total_records = count($_campaign->get());
+            $this->response->data->total_records = $totalRec;
             $this->response->data->returned_records = count($listcampaign);
             $this->response->data->records = $listcampaign;
         } catch (ACLForbiddenException $e) {
@@ -1349,5 +1520,41 @@ class StoreAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    protected function getLocation($prefix, $location, $query, $ul, $distance, $userLocationCookieName)
+    {
+        $query = $query->join('merchants as mp', function($q) use ($prefix) {
+                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("{$prefix}merchants.parent_id"));
+                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
+                                $q->on(DB::raw("{$prefix}merchants.status"), '=', DB::raw("'active'"));
+                            });
+
+                if ($location === 'mylocation') {
+                    if (! empty($ul)) {
+                        $position = explode("|", $ul);
+                        $lon = $position[0];
+                        $lat = $position[1];
+                    } else {
+                        // get lon lat from cookie
+                        $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                        if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                            $lon = $userLocationCookieArray[0];
+                            $lat = $userLocationCookieArray[1];
+                        }
+                    }
+
+                    if (!empty($lon) && !empty($lat)) {
+                        $query = $query->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
+                                        ->join('merchant_geofences', function ($q) use($prefix) {
+                                                $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END"));
+                                        });
+                    }
+                    $query = $query->havingRaw("distance <= {$distance}");
+                } else {
+                    $query = $query->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN mp.city ELSE {$prefix}merchants.city END)"), $location);
+                }
+
+        return $query;
     }
 }

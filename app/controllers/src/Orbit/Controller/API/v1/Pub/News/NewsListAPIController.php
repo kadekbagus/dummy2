@@ -25,6 +25,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 
 class NewsListAPIController extends PubControllerAPI
@@ -137,7 +138,8 @@ class NewsListAPIController extends PubControllerAPI
                                             AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
                                 THEN 'true' ELSE 'false' END AS is_started
                             "),
-                        'news.created_at')
+                        'news.created_at',
+                        'news.begin_date')
                         ->leftJoin('news_translations', function ($q) use ($valid_language) {
                             $q->on('news_translations.news_id', '=', 'news.news_id')
                               ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
@@ -153,6 +155,7 @@ class NewsListAPIController extends PubControllerAPI
                                 $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
                         })
                         ->whereRaw("{$prefix}news.object_type = 'news'")
+                        ->whereRaw("{$prefix}news.status = 'active'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->orderBy('news_name', 'asc');
 
@@ -201,23 +204,7 @@ class NewsListAPIController extends PubControllerAPI
 
             OrbitInput::get('partner_id', function($partner_id) use ($news, $prefix, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $news = $news->leftJoin('object_partner',function($q) use ($partner_id){
-                            $q->on('object_partner.object_id', '=', 'news.news_id')
-                              ->where('object_partner.object_type', '=', 'news')
-                              ->where('object_partner.partner_id', '=', $partner_id);
-                        })
-                        ->whereNotExists(function($query) use ($partner_id, $prefix)
-                        {
-                            $query->select('object_partner.object_id')
-                                  ->from('object_partner')
-                                  ->join('partner_competitor', function($q) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
-                                    })
-                                  ->whereRaw("{$prefix}object_partner.object_type = 'news'")
-                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
-                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}news.news_id")
-                                  ->groupBy('object_partner.object_id');
-                        });
+                $news = ObjectPartnerBuilder::getQueryBuilder($news, $partner_id, 'news');
             });
 
             // filter news by mall id
@@ -256,10 +243,10 @@ class NewsListAPIController extends PubControllerAPI
 
             if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
                 $searchFlag = $searchFlag || TRUE;
-                $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.created_at"))
+                $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.created_at"), DB::raw("sub_query.begin_date"))
                                        ->orderBy('distance', 'asc');
             } else {
-                $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.created_at"));
+                $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.created_at"), DB::raw("sub_query.begin_date"));
             }
 
             $news = $news->groupBy(DB::Raw("sub_query.news_id"));
@@ -268,7 +255,7 @@ class NewsListAPIController extends PubControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'name'          => 'news_name',
-                    'created_date'  => 'created_at'
+                    'created_date'  => 'begin_date'
                 );
 
                 $sort_by = $sortByMapping[$sort_by];
