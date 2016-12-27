@@ -80,6 +80,8 @@ class PromotionCityAPIController extends PubControllerAPI
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('news_merchant.news_id', '=', $promotionId)
+                                    ->where('merchants.status', '=', 'active')
+                                    ->where(DB::raw('oms.status'), '=', 'active')
                                     ->groupBy('city');
 
             $_promotionLocation = clone($promotionLocation);
