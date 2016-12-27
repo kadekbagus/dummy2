@@ -100,6 +100,7 @@ class CouponLocationAPIController extends PubControllerAPI
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.floor ELSE '' END as floor"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.unit ELSE '' END as unit"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.operating_hours ELSE '' END as operating_hours"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.is_subscribed ELSE {$prefix}merchants.is_subscribed END as is_subscribed"),
                                             DB::raw("{$prefix}merchants.object_type as location_type"),
                                             DB::raw("img.path as location_logo"),
                                             DB::raw("map.path as map_image"),
@@ -131,7 +132,9 @@ class CouponLocationAPIController extends PubControllerAPI
                                             "))
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
-                                    ->where('promotions.promotion_id', $couponId);
+                                    ->where('promotions.promotion_id', $couponId)
+                                    ->where('merchants.status', '=', 'active')
+                                    ->where(DB::raw('oms.status'), '=', 'active');
 
             // filter news by mall id
             $group_by = '';

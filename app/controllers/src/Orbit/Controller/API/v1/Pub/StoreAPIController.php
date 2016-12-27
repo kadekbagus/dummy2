@@ -876,6 +876,7 @@ class StoreAPIController extends PubControllerAPI
                                     'merchants.floor',
                                     'merchants.unit',
                                     'merchants.operating_hours',
+                                    'merchants.is_subscribed',
                                     'merchants.object_type as location_type',
                                     DB::raw("img.path as location_logo"),
                                     DB::raw("map.path as map_image"),
