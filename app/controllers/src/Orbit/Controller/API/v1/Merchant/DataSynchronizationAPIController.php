@@ -61,7 +61,7 @@ class DataSynchronizationAPIController extends ControllerAPI
                 'sync_type' => $syncType,
                 'sync_data' => $syncData,
                 'user' => $user->user_id
-            ]);
+            ], 'store_sync');
 
         } catch (ACLForbiddenException $e) {
 
