@@ -373,12 +373,12 @@ class PromotionListAPIController extends PubControllerAPI
                                         if (strlen($word) === 1 && $word === '%') {
                                             $query->orWhere(function($q) use ($word, $prefix){
                                                 $q->whereRaw("sub_query.news_name like '%|{$word}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$word}%' escape '|'");
+                                                  ->orWhereRaw("{$prefix}keywords.keyword = '|{$word}' escape '|'");
                                             });
                                         } else {
                                             $query->orWhere(function($q) use ($word, $prefix){
                                                 $q->where(DB::raw('sub_query.news_name'), 'like', '%' . $word . '%')
-                                                  ->orWhere('keywords.keyword', 'like', '%' . $word . '%');
+                                                  ->orWhere('keywords.keyword', '=', $word);
                                             });
                                         }
                                     }
