@@ -221,14 +221,12 @@ class StoreAPIController extends PubControllerAPI
                                         if (strlen($value) === 1 && $value === '%') {
                                             $query->orWhere(function($q) use ($value, $prefix){
                                                 $q->whereRaw("{$prefix}merchants.name like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}merchants.description like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
+                                                  ->orWhereRaw("{$prefix}keywords.keyword = '|{$value}' escape '|'");
                                             });
                                         } else {
                                             $query->orWhere(function($q) use ($value, $prefix){
                                                 $q->where(DB::raw("{$prefix}merchants.name"), 'like', '%' . $value . '%')
-                                                  ->orWhere(DB::raw("{$prefix}merchants.description"), 'like', '%' . $value . '%')
-                                                  ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
+                                                  ->orWhere('keywords.keyword', '=', $value);
                                             });
                                         }
                                     }
@@ -540,12 +538,13 @@ class StoreAPIController extends PubControllerAPI
                 $keywordSql = " 1=1 ";
                 foreach ($words as $key => $value) {
                     if (strlen($value) === 1 && $value === '%') {
-                        $keywordSql .= " or {$prefix}merchants.name like '%|{$value}%' escape '|' or {$prefix}merchants.description like '%|{$value}%' escape '|' or {$prefix}keywords.keyword like '%|{$value}%' escape '|' ";
+                        $keywordSql .= " or {$prefix}merchants.name like '%|{$value}%' escape '|' or {$prefix}keywords.keyword = '|{$value}' escape '|' ";
                     } else {
                         // escaping the query
+                        $real_value = $value;
                         $word = '%' . $value . '%';
                         $value = $this->quote($word);
-                        $keywordSql .= " or {$prefix}merchants.name like {$value} or {$prefix}merchants.description like {$value} or {$prefix}keywords.keyword like {$value} ";
+                        $keywordSql .= " or {$prefix}merchants.name like {$value} or {$prefix}keywords.keyword = {$this->quote($real_value)} ";
                     }
                 }
 
@@ -934,12 +933,13 @@ class StoreAPIController extends PubControllerAPI
                 $keywordSql = " 1=1 ";
                 foreach ($words as $key => $value) {
                     if (strlen($value) === 1 && $value === '%') {
-                        $keywordSql .= " or {$prefix}merchants.name like '%|{$value}%' escape '|' or {$prefix}merchants.description like '%|{$value}%' escape '|' or {$prefix}keywords.keyword like '%|{$value}%' escape '|' ";
+                        $keywordSql .= " or {$prefix}merchants.name like '%|{$value}%' escape '|' or {$prefix}keywords.keyword = '|{$value}' escape '|' ";
                     } else {
                         // escaping the query
+                        $real_value = $value;
                         $word = '%' . $value . '%';
                         $value = $this->quote($word);
-                        $keywordSql .= " or {$prefix}merchants.name like {$value} or {$prefix}merchants.description like {$value} or {$prefix}keywords.keyword like {$value} ";
+                        $keywordSql .= " or {$prefix}merchants.name like {$value} or {$prefix}keywords.keyword = {$this->quote($real_value)} ";
                     }
                 }
 
