@@ -182,13 +182,11 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         if (strlen($value) === 1 && $value === '%') {
                                             $query->orWhere(function($q) use ($value, $prefix){
                                                 $q->whereRaw("{$prefix}coupon_translations.promotion_name like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}coupon_translations.description like '%|{$value}%' escape '|'")
                                                   ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
                                             });
                                         } else {
                                             $query->orWhere(function($q) use ($value, $prefix){
                                                 $q->where('coupon_translations.promotion_name', 'like', '%' . $value . '%')
-                                                  ->orWhere('coupon_translations.description', 'like', '%' . $value . '%')
                                                   ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
                                             });
                                         }
