@@ -392,13 +392,11 @@ class CouponListAPIController extends PubControllerAPI
                                         if (strlen($value) === 1 && $value === '%') {
                                             $query->orWhere(function($q) use ($value, $prefix){
                                                 $q->whereRaw("sub_query.coupon_name like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("sub_query.description like '%|{$value}%' escape '|'")
                                                   ->orWhereRaw("{$prefix}keywords.keyword like '%|{$value}%' escape '|'");
                                             });
                                         } else {
                                             $query->orWhere(function($q) use ($value, $prefix){
                                                 $q->where(DB::raw('sub_query.coupon_name'), 'like', '%' . $value . '%')
-                                                  ->orWhere(DB::raw('sub_query.description'), 'like', '%' . $value . '%')
                                                   ->orWhere('keywords.keyword', 'like', '%' . $value . '%');
                                             });
                                         }
