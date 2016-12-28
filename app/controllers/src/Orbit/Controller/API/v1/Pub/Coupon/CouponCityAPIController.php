@@ -91,7 +91,6 @@ class CouponCityAPIController extends PubControllerAPI
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('promotions.promotion_id', $couponId)
                                     ->where('merchants.status', '=', 'active')
-                                    ->where(DB::raw('oms.status'), '=', 'active')
                                     ->groupBy('city');
 
             $_couponLocations = clone($couponLocations);

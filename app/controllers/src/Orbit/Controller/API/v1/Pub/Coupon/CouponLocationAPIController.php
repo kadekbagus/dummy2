@@ -133,8 +133,7 @@ class CouponLocationAPIController extends PubControllerAPI
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
                                     ->where('promotions.promotion_id', $couponId)
-                                    ->where('merchants.status', '=', 'active')
-                                    ->where(DB::raw('oms.status'), '=', 'active');
+                                    ->where('merchants.status', '=', 'active');
 
             // filter news by mall id
             $group_by = '';
