@@ -278,7 +278,7 @@ return array(
         'back_to_map_url' => 'https://www.gotomalls.cool/#/?redirect_ci=false',
 
         // after sign in social url
-        'after_social_sign_in' => 'https://www.gotomalls.cool',
+        'after_social_sign_in' => 'https://www.gotomalls.cool/#!/auth',
 
         // enable or disable the google analytics tracking
         'enable_google_analytics' => FALSE,
