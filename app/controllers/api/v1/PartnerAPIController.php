@@ -954,22 +954,115 @@ class PartnerAPIController extends ControllerAPI
                             }]);
                     } else if ($relation === 'partnerAffectedGroup') {
                         $partners->with([$relation => function ($qGroupName) use ($prefix) {
-                            $qGroupName->select(
-                                    'partner_affected_group.partner_id',
-                                    'partner_affected_group.affected_group_name_id',
-                                    'group_name',
-                                    DB::Raw("count({$prefix}object_partner.object_type) + count({$prefix}base_object_partner.object_type) as item_count")
-                                )
-                                ->join('affected_group_names', 'affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                                ->leftJoin('object_partner', function ($qJoin) use ($prefix) {
-                                    $qJoin->on('object_partner.partner_id', '=', 'partner_affected_group.partner_id')
-                                        ->on('object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
-                                })
-                                ->leftJoin('base_object_partner', function ($qJoin) use ($prefix) {
-                                    $qJoin->on('base_object_partner.partner_id', '=', 'partner_affected_group.partner_id')
-                                        ->on('base_object_partner.object_type', '=', DB::raw("{$prefix}affected_group_names.group_type"));
-                                })
-                                ->groupBy('partner_id', 'group_name');
+                            $qGroupName->select(DB::raw("
+                                        `subQuery`.`partner_id`,
+                                        `subQuery`.`affected_group_name_id`,
+                                        `subQuery`.`group_name`,
+                                        SUM(if (`subQuery`.campaign_status = 'ongoing', 1, 0)) AS item_count
+                                    "))
+                                ->leftJoin(
+                                    DB::raw("
+                                        (SELECT
+                                            `{$prefix}partner_affected_group`.`partner_affected_group_id`,
+                                            `{$prefix}partner_affected_group`.`partner_id`,
+                                            `{$prefix}partner_affected_group`.`affected_group_name_id`,
+                                            `group_name`,
+                                            CASE
+                                                WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name
+                                                ELSE (
+                                                  CASE
+                                                    WHEN
+                                                        {$prefix}object_partner.object_type = 'news'
+                                                            OR {$prefix}object_partner.object_type = 'promotion'
+                                                    THEN
+                                                        CASE
+                                                            WHEN
+                                                                {$prefix}news.end_date < (SELECT
+                                                                        MIN(CONVERT_TZ(UTC_TIMESTAMP(),
+                                                                                    '+00:00',
+                                                                                    ot.timezone_name))
+                                                                    FROM
+                                                                        {$prefix}news_merchant onm
+                                                                            LEFT JOIN
+                                                                        {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                            LEFT JOIN
+                                                                        {$prefix}merchants oms ON oms.merchant_id = om.parent_id
+                                                                            LEFT JOIN
+                                                                        {$prefix}timezones ot ON ot.timezone_id = (CASE
+                                                                            WHEN om.object_type = 'tenant' THEN oms.timezone_id
+                                                                            ELSE om.timezone_id
+                                                                        END)
+                                                                    WHERE
+                                                                        onm.news_id = {$prefix}news.news_id)
+                                                            THEN
+                                                                'expired'
+                                                            ELSE {$prefix}campaign_status.campaign_status_name
+                                                        END
+                                                    WHEN
+                                                        {$prefix}object_partner.object_type = 'coupon'
+                                                    THEN
+                                                        CASE
+                                                            WHEN
+                                                                {$prefix}promotions.end_date < (SELECT
+                                                                        MIN(CONVERT_TZ(UTC_TIMESTAMP(),
+                                                                                    '+00:00',
+                                                                                    ot.timezone_name))
+                                                                    FROM
+                                                                        {$prefix}promotion_retailer opt
+                                                                            LEFT JOIN
+                                                                        {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                                            LEFT JOIN
+                                                                        {$prefix}merchants oms ON oms.merchant_id = om.parent_id
+                                                                            LEFT JOIN
+                                                                        {$prefix}timezones ot ON ot.timezone_id = (CASE
+                                                                            WHEN om.object_type = 'tenant' THEN oms.timezone_id
+                                                                            ELSE om.timezone_id
+                                                                        END)
+                                                                    WHERE
+                                                                        opt.promotion_id = {$prefix}promotions.promotion_id)
+                                                            THEN
+                                                                'expired'
+                                                            ELSE {$prefix}campaign_status.campaign_status_name
+                                                        END
+                                                    WHEN
+                                                        {$prefix}object_partner.object_type = 'tenant'
+                                                            OR {$prefix}object_partner.object_type = 'mall'
+                                                    THEN
+                                                        'ongoing'
+                                                END)
+                                            END AS campaign_status,
+                                            {$prefix}news.news_id,
+                                            {$prefix}promotions.promotion_id,
+                                            {$prefix}merchants.merchant_id
+                                        FROM
+                                            `{$prefix}partner_affected_group`
+                                                INNER JOIN
+                                            `{$prefix}affected_group_names` ON `{$prefix}affected_group_names`.`affected_group_name_id` = `{$prefix}partner_affected_group`.`affected_group_name_id`
+                                                LEFT JOIN
+                                            `{$prefix}object_partner` ON `{$prefix}object_partner`.`partner_id` = `{$prefix}partner_affected_group`.`partner_id`
+                                                AND `{$prefix}object_partner`.`object_type` = {$prefix}affected_group_names.group_type
+                                                LEFT JOIN
+                                            `{$prefix}news` ON `{$prefix}object_partner`.`object_id` = `{$prefix}news`.`news_id`
+                                                AND `{$prefix}news`.`status` = 'active'
+                                                LEFT JOIN
+                                            `{$prefix}promotions` ON `{$prefix}object_partner`.`object_id` = `{$prefix}promotions`.`promotion_id`
+                                                AND `{$prefix}promotions`.`status` = 'active'
+                                                LEFT JOIN
+                                            `{$prefix}merchants` ON `{$prefix}object_partner`.`object_id` = `{$prefix}merchants`.`merchant_id`
+                                                AND `{$prefix}merchants`.`status` = 'active'
+                                                LEFT JOIN
+                                            `{$prefix}campaign_status`
+                                                ON
+                                                `{$prefix}campaign_status`.`campaign_status_id` = `{$prefix}news`.`campaign_status_id`
+                                                OR
+                                                `{$prefix}campaign_status`.`campaign_status_id` = `{$prefix}promotions`.`campaign_status_id`
+
+                                                LEFT JOIN
+                                            `{$prefix}base_object_partner` ON `{$prefix}base_object_partner`.`partner_id` = `{$prefix}partner_affected_group`.`partner_id`
+                                                AND `{$prefix}base_object_partner`.`object_type` = {$prefix}affected_group_names.group_type
+                                        ) as subQuery
+                                    "), DB::raw('subQuery.partner_affected_group_id'), '=', 'partner_affected_group.partner_affected_group_id')
+                                ->groupBy(DB::raw("subQuery.partner_id"), DB::raw("subQuery.group_name"));
                             }]);
                     } else {
                         $partners->with($relation);
