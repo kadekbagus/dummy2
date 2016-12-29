@@ -185,7 +185,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
     protected function generateQuery($param = array()) {
         $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
         $distance = Config::get('orbit.geo_location.distance', 10);
-        $sort_by = OrbitInput::get('sortby', 'created_date');
+        $sort_by = 'created_date';
         $sort_mode = OrbitInput::get('sortmode','desc');
         $language = OrbitInput::get('language', 'id');
 
