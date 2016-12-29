@@ -958,7 +958,7 @@ class PartnerAPIController extends ControllerAPI
                                         `subQuery`.`partner_id`,
                                         `subQuery`.`affected_group_name_id`,
                                         `subQuery`.`group_name`,
-                                        SUM(if (`subQuery`.campaign_status = 'ongoing', 1, 0)) AS item_count
+                                        SUM(if (`subQuery`.campaign_status = 'ongoing' and `subQuery`.is_started = 'true', 1, 0)) AS item_count
                                     "))
                                 ->leftJoin(
                                     DB::raw("
@@ -1031,6 +1031,36 @@ class PartnerAPIController extends ControllerAPI
                                                         'ongoing'
                                                 END)
                                             END AS campaign_status,
+                                            CASE
+                                                WHEN
+                                                    {$prefix}object_partner.object_type = 'news'
+                                                        OR {$prefix}object_partner.object_type = 'promotion'
+                                                THEN
+                                                    CASE WHEN (SELECT count(onm.merchant_id)
+                                                                FROM {$prefix}news_merchant onm
+                                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                WHERE onm.news_id = {$prefix}news.news_id
+                                                                AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
+                                                    THEN 'true' ELSE 'false' END
+                                                WHEN
+                                                    {$prefix}object_partner.object_type = 'coupon'
+                                                THEN
+                                                    CASE WHEN (SELECT count(opt.promotion_retailer_id)
+                                                                FROM {$prefix}promotion_retailer opt
+                                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                                                AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
+                                                    THEN 'true' ELSE 'false' END
+                                                WHEN
+                                                    {$prefix}object_partner.object_type = 'tenant'
+                                                        OR {$prefix}object_partner.object_type = 'mall'
+                                                THEN
+                                                    'true'
+                                            END AS is_started,
                                             {$prefix}news.news_id,
                                             {$prefix}promotions.promotion_id,
                                             {$prefix}merchants.merchant_id
