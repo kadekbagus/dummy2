@@ -172,10 +172,10 @@ class NewsLocationAPIController extends PubControllerAPI
 
             // Order data by nearby or city alphabetical
             if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                $promotionLocation->orderBy('distance', 'asc');
+                $newsLocations->orderBy('distance', 'asc');
             } else {
-                $promotionLocation->orderBy('city', 'asc');
-                $promotionLocation->orderBy('name', 'asc');
+                $newsLocations->orderBy('city', 'asc');
+                $newsLocations->orderBy('name', 'asc');
             }
 
             $listOfRec = $newsLocations->get();
