@@ -16,6 +16,7 @@ use News;
 use Coupon;
 use DB;
 use Language;
+use Str;
 
 class CampaignShareMail
 {
@@ -67,7 +68,7 @@ class CampaignShareMail
                                 ->first();
 
                     $baseUrl = Config::get('orbit.campaign_share_email.promotion_detail_base_url');
-                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $campaign->campaign_name);
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name));
                     $campaignTypeEn = 'promotion';
                     $campaignTypeId = 'promosi';
 
@@ -102,7 +103,7 @@ class CampaignShareMail
                                 ->first();
 
                     $baseUrl = Config::get('orbit.campaign_share_email.news_detail_base_url');
-                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $campaign->campaign_name);
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name));
                     $campaignTypeEn = 'event';
                     $campaignTypeId = 'event';
 
@@ -136,7 +137,7 @@ class CampaignShareMail
                         ->first();
 
                     $baseUrl = Config::get('orbit.campaign_share_email.coupon_detail_base_url');
-                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $campaign->campaign_name);
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name));
                     $campaignTypeEn = 'coupon';
                     $campaignTypeId = 'kupon';
 
@@ -215,4 +216,15 @@ class CampaignShareMail
         $string = preg_replace("/[\s_]/", "-", $string);
         return $string;
     }
+
+    /**
+     * This function make common slugify url, and remove the '%' to ''
+     */
+    protected function getSlugUrl($campaign_name)
+    {
+        $slug = Str::slug($campaign_name, $separator = '-');
+        $slugCampaignName = str_replace('%', '', $slug);
+        return $slugCampaignName;
+    }
+
 }
