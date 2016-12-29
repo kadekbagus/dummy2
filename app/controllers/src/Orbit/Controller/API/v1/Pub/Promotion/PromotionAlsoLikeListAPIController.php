@@ -185,8 +185,8 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
     protected function generateQuery($param = array()) {
         $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
         $distance = Config::get('orbit.geo_location.distance', 10);
-        $sort_by = OrbitInput::get('sortby', 'created_date');
-        $sort_mode = OrbitInput::get('sortmode','desc');
+        $sort_by = 'created_date';
+        $sort_mode = 'desc';
         $language = OrbitInput::get('language', 'id');
 
         $except_id   = $param['except_id'];
@@ -283,7 +283,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
                         ->orderBy('news_name', 'asc');
 
         // left join when need link to mall
-        if ($filter === 'Y' || ! empty($mallId)) {
+        if ($filter === 'Y' || ! empty($mallId) || $sort_by == 'location') {
             $promotions = $promotions->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                 ->leftJoin('merchants as m', function ($q) {
                                     $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
