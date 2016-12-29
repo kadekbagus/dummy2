@@ -48,7 +48,7 @@ class StoreCityAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
 
-            $sort_by = OrbitInput::get('sortby', 'merchants.name');
+            $sort_by = OrbitInput::get('sortby', 'city');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $storename = OrbitInput::get('store_name');
 
