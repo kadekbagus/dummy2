@@ -966,7 +966,9 @@ class PartnerAPIController extends ControllerAPI
                                             `{$prefix}partner_affected_group`.`partner_affected_group_id`,
                                             `{$prefix}partner_affected_group`.`partner_id`,
                                             `{$prefix}partner_affected_group`.`affected_group_name_id`,
+                                            `{$prefix}object_partner`.`object_id`,
                                             `group_name`,
+                                            `group_type`,
                                             CASE
                                                 WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name
                                                 ELSE (
@@ -1025,12 +1027,16 @@ class PartnerAPIController extends ControllerAPI
                                                             ELSE {$prefix}campaign_status.campaign_status_name
                                                         END
                                                     WHEN
-                                                        {$prefix}object_partner.object_type = 'tenant'
-                                                            OR {$prefix}object_partner.object_type = 'mall'
+                                                        {$prefix}object_partner.object_type = 'mall' AND {$prefix}merchants.status = 'active'
+                                                    THEN
+                                                        'ongoing'
+                                                    WHEN
+                                                        {$prefix}base_object_partner.object_type = 'tenant'
                                                     THEN
                                                         'ongoing'
                                                 END)
                                             END AS campaign_status,
+
                                             CASE
                                                 WHEN
                                                     {$prefix}object_partner.object_type = 'news'
@@ -1056,14 +1062,14 @@ class PartnerAPIController extends ControllerAPI
                                                                 AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                                                     THEN 'true' ELSE 'false' END
                                                 WHEN
-                                                    {$prefix}object_partner.object_type = 'tenant'
-                                                        OR {$prefix}object_partner.object_type = 'mall'
+                                                    {$prefix}object_partner.object_type = 'mall' AND {$prefix}merchants.status = 'active'
                                                 THEN
                                                     'true'
-                                            END AS is_started,
-                                            {$prefix}news.news_id,
-                                            {$prefix}promotions.promotion_id,
-                                            {$prefix}merchants.merchant_id
+                                                WHEN
+                                                    {$prefix}base_object_partner.object_type = 'tenant'
+                                                THEN
+                                                    'true'
+                                            END AS is_started
                                         FROM
                                             `{$prefix}partner_affected_group`
                                                 INNER JOIN
@@ -1071,25 +1077,25 @@ class PartnerAPIController extends ControllerAPI
                                                 LEFT JOIN
                                             `{$prefix}object_partner` ON `{$prefix}object_partner`.`partner_id` = `{$prefix}partner_affected_group`.`partner_id`
                                                 AND `{$prefix}object_partner`.`object_type` = {$prefix}affected_group_names.group_type
+                                                AND `{$prefix}object_partner`.`object_type` != 'tenant'
+                                                LEFT JOIN
+                                            `{$prefix}base_object_partner` ON `{$prefix}base_object_partner`.`partner_id` = `{$prefix}partner_affected_group`.`partner_id`
+                                                AND `{$prefix}base_object_partner`.`object_type` = {$prefix}affected_group_names.group_type
                                                 LEFT JOIN
                                             `{$prefix}news` ON `{$prefix}object_partner`.`object_id` = `{$prefix}news`.`news_id`
-                                                AND `{$prefix}news`.`status` = 'active'
                                                 LEFT JOIN
                                             `{$prefix}promotions` ON `{$prefix}object_partner`.`object_id` = `{$prefix}promotions`.`promotion_id`
-                                                AND `{$prefix}promotions`.`status` = 'active'
                                                 LEFT JOIN
                                             `{$prefix}merchants` ON `{$prefix}object_partner`.`object_id` = `{$prefix}merchants`.`merchant_id`
-                                                AND `{$prefix}merchants`.`status` = 'active'
+                                                AND {$prefix}merchants.object_type = 'mall'
+                                                LEFT JOIN
+                                            `{$prefix}base_merchants` ON `{$prefix}base_object_partner`.`object_id` = `{$prefix}base_merchants`.`base_merchant_id`
                                                 LEFT JOIN
                                             `{$prefix}campaign_status`
                                                 ON
                                                 `{$prefix}campaign_status`.`campaign_status_id` = `{$prefix}news`.`campaign_status_id`
                                                 OR
                                                 `{$prefix}campaign_status`.`campaign_status_id` = `{$prefix}promotions`.`campaign_status_id`
-
-                                                LEFT JOIN
-                                            `{$prefix}base_object_partner` ON `{$prefix}base_object_partner`.`partner_id` = `{$prefix}partner_affected_group`.`partner_id`
-                                                AND `{$prefix}base_object_partner`.`object_type` = {$prefix}affected_group_names.group_type
                                         ) as subQuery
                                     "), DB::raw('subQuery.partner_affected_group_id'), '=', 'partner_affected_group.partner_affected_group_id')
                                 ->groupBy(DB::raw("subQuery.partner_id"), DB::raw("subQuery.group_name"));
