@@ -54,8 +54,6 @@ class PromotionLocationAPIController extends PubControllerAPI
             $user = $this->getUser();
 
             $promotionId = OrbitInput::get('promotion_id', null);
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
             $mallId = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
             $location = OrbitInput::get('location');
@@ -141,31 +139,20 @@ class PromotionLocationAPIController extends PubControllerAPI
                 $group_by = 'mall';
             });
 
-            OrbitInput::get('location', function($location) use ($promotionLocation, $userLocationCookieName, $ul, $distance, $prefix) {
-                $position = isset($ul)?explode("|", $ul):null;
-                $lon = isset($position[0])?$position[0]:null;
-                $lat = isset($position[0])?$position[0]:null;
+            // Get user location
+            $position = isset($ul)?explode("|", $ul):null;
+            $lon = isset($position[0])?$position[0]:null;
+            $lat = isset($position[1])?$position[1]:null;
 
+            // Filter by location
+            if (! empty($location)) {
                 if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                    if (! empty($ul)) {
-                        $position = explode("|", $ul);
-                        $lon = $position[0];
-                        $lat = $position[1];
-                    } else {
-                        // get lon lat from cookie
-                        $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                        if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                            $lon = $userLocationCookieArray[0];
-                            $lat = $userLocationCookieArray[1];
-                        }
-                    }
-
                     $promotionLocation->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                         ->havingRaw("distance <= {$distance}");
                 } else {
                     $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
                 }
-            });
+            }
 
             if ($group_by === 'mall') {
                 $promotionLocation->groupBy('mall_id');
@@ -181,7 +168,13 @@ class PromotionLocationAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $promotionLocation->skip($skip);
 
-            $promotionLocation->orderBy($sort_by, $sort_mode);
+            // Order data by nearby or city alphabetical
+            if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                $promotionLocation->orderBy('distance', 'asc');
+            } else {
+                $promotionLocation->orderBy('city', 'asc');
+                $promotionLocation->orderBy('name', 'asc');
+            }
 
             $listOfRec = $promotionLocation->get();
 
