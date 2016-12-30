@@ -420,6 +420,10 @@ class Activity extends Eloquent
                     $this->object_display_name = $object->partner_name;
                     break;
 
+                case 'Advert':
+                    $this->object_display_name = $object->advert_name;
+                    break;
+
                 default:
                     $this->object_display_name = NULL;
                     break;
