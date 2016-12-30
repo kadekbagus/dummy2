@@ -46,6 +46,8 @@ class MallAreaAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby',null);
             $sort_mode = OrbitInput::get('sortmode','asc');
 
+            $subscribed = OrbitInput::get('subscribed','Y');
+
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
@@ -124,7 +126,7 @@ class MallAreaAPIController extends PubControllerAPI
                                             {
                                                 "query": {
                                                     "match" : {
-                                                        "is_subscribed" : "Y"
+                                                        "is_subscribed" : "' . $subscribed . '"
                                                     }
                                                 }
                                             },

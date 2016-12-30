@@ -835,9 +835,6 @@ class StoreAPIController extends PubControllerAPI
 
         try {
             $user = $this->getUser();
-
-            $sort_by = OrbitInput::get('sortby', 'merchants.name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
             $mallId = OrbitInput::get('mall_id', null);
             $storename = OrbitInput::get('store_name');
             $location = OrbitInput::get('location');
@@ -955,37 +952,34 @@ class StoreAPIController extends PubControllerAPI
                             ->active();
             }
 
-            OrbitInput::get('location', function($location) use ($mall, $userLocationCookieName, $ul, $distance, $prefix) {
-                $position = isset($ul)?explode("|", $ul):null;
-                $lon = isset($position[0])?$position[0]:null;
-                $lat = isset($position[0])?$position[0]:null;
+            // Get user location
+            $position = isset($ul)?explode("|", $ul):null;
+            $lon = isset($position[0])?$position[0]:null;
+            $lat = isset($position[1])?$position[1]:null;
 
+            // Filter by location
+            if (! empty($location)) {
                 if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                    if (! empty($ul)) {
-                        $position = explode("|", $ul);
-                        $lon = $position[0];
-                        $lat = $position[1];
-                    } else {
-                        // get lon lat from cookie
-                        $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                        if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                            $lon = $userLocationCookieArray[0];
-                            $lat = $userLocationCookieArray[1];
-                        }
-                    }
-
                     $mall->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                         ->havingRaw("distance <= {$distance}");
                 } else {
                     $mall->where('merchants.city', $location);
                 }
-            });
+            };
 
             if (! empty($mallId)) {
                 $mall->where('merchants.merchant_id', '=', $mallId)->first();
             }
 
-            $mall = $mall->groupBy('merchants.merchant_id')->orderBy($sort_by, $sort_mode);
+            $mall = $mall->groupBy('merchants.merchant_id');
+
+            // Order data by nearby or city alphabetical
+            if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                $mall->orderBy('distance', 'asc');
+            } else {
+                $mall->orderBy('city', 'asc');
+                $mall->orderBy('merchants.name', 'asc');
+            }
 
             $_mall = clone $mall;
 
