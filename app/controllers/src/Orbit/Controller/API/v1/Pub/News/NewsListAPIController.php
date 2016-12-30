@@ -68,6 +68,7 @@ class NewsListAPIController extends PubControllerAPI
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
+            $category_id = OrbitInput::get('category_id');
             $no_total_records = OrbitInput::get('no_total_records', null);
 
             // search by key word or filter or sort by flag
