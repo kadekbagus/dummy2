@@ -31,4 +31,19 @@ class ElasticsearchErrorChecker
             throw new Exception('The document indexing seems fail because the successful value is less than 1.', 1);
         }
     }
+
+    /**
+     * Throw an exception if there is an error when doing bulk index for
+     * documents.
+     *
+     * @param array $response
+     * @return void
+     * @throws Exception
+     */
+    public static function throwExceptionOnBulkDocumentError($response)
+    {
+        if (isset($response['errors']) && $response['errors']) {
+            throw new Exception('Response: ' . serialize($response));
+        }
+    }
 }
