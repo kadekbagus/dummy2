@@ -102,12 +102,12 @@ class MallListAPIController extends PubControllerAPI
                                         "fields": [
                                             "name^6",
                                             "object_type^5",
+                                            "city^5",
+                                            "province^5",
                                             "keywords^4",
-                                            "description^3",
-                                            "city^2",
-                                            "province^2",
                                             "address_line^2",
-                                            "country^1"
+                                            "country^2",
+                                            "description^1"
                                         ]
                                     }
                                   },';
