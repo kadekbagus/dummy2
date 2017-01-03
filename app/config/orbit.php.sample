@@ -5102,7 +5102,50 @@ return array(
 
             // Cache the result for X minutes
             'cache_ttl' => 15
-        ]
+        ],
+
+        // Cache per context
+        'context' => [
+            'default' => [
+                'enable' => FALSE,
+                'cache_ttl' => 30,
+            ],
+
+            // promotion list specific cache setting
+            'promotion-list' => [
+                'enable' => TRUE,
+                'cache_ttl' => 60
+            ],
+
+            // coupon list specific cache setting
+            'coupon-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // store list specific cache setting
+            'store-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // mall list specific cache setting
+            'mall-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // event list specific cache setting
+            'event-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // location list specific cache setting
+            'location-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
     ],
 
     /**
