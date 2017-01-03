@@ -638,21 +638,21 @@ class StoreAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
 
-            $storename = OrbitInput::get('store_name');
+            $merchantid = OrbitInput::get('merchant_id');
             $language = OrbitInput::get('language', 'id');
 
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
-                    'store_name' => $storename,
+                    'merchantid' => $merchantid,
                     'language' => $language,
                 ),
                 array(
-                    'store_name' => 'required',
+                    'merchantid' => 'required',
                     'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
-                    'required' => 'Store name is required',
+                    'required' => 'Merchant id is required',
                 )
             );
 
@@ -669,6 +669,7 @@ class StoreAPIController extends PubControllerAPI
             $store = Tenant::select(
                                 'merchants.merchant_id',
                                 'merchants.name',
+                                'merchants.name as mall_name',
                                 DB::Raw("CASE WHEN (
                                                 select mt.description
                                                 from {$prefix}merchant_translations mt
@@ -729,7 +730,7 @@ class StoreAPIController extends PubControllerAPI
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
-                ->where('merchants.name', $storename);
+                ->where('merchants.merchant_id', $merchantid);
 
             OrbitInput::get('mall_id', function($mallId) use ($store, &$mall, $prefix) {
                 $store->where('merchants.parent_id', $mallId);
@@ -867,6 +868,7 @@ class StoreAPIController extends PubControllerAPI
             // Query without searching keyword
             $mall = Mall::select('merchants.merchant_id',
                                     'merchants.name',
+                                    'merchants.name as mall_name',
                                     'merchants.address_line1 as address',
                                     'merchants.city',
                                     'merchants.floor',

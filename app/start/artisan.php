@@ -113,6 +113,9 @@ Artisan::add(new CreatePartnerLinkCommand);
 // Create Partner Competitor
 Artisan::add(new CreatePartnerCompetitorCommand);
 
+// Sync to elasticsearch from merchants table (mall)
+Artisan::add(new ElasticsearchResyncMallCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

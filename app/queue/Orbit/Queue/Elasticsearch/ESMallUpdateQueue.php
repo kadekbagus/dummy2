@@ -108,6 +108,7 @@ class ESMallUpdateQueue
                 'description'     => $mall->description,
                 'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),
                 'city'            => $mall->city,
+                'province'        => $mall->province,
                 'country'         => $mall->Country->name,
                 'phone'           => $mall->phone,
                 'operating_hours' => $mall->operating_hours,
@@ -117,6 +118,7 @@ class ESMallUpdateQueue
                 'status'          => $mall->status,
                 'ci_domain'       => $mall->ci_domain,
                 'is_subscribed'   => $mall->is_subscribed,
+                'keywords'        => '',
                 'position'        => [
                     'lon' => $geofence->longitude,
                     'lat' => $geofence->latitude
