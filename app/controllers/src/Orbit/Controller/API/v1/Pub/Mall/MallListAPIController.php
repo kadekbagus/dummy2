@@ -100,11 +100,14 @@ class MallListAPIController extends PubControllerAPI
                                     "multi_match" : {
                                         "query": "' . $keyword . '",
                                         "fields": [
-                                            "name^5",
-                                            "city^4",
-                                            "country^3",
+                                            "name^6",
+                                            "object_type^5",
+                                            "keywords^4",
+                                            "description^3",
+                                            "city^2",
+                                            "province^2",
                                             "address_line^2",
-                                            "description^1"
+                                            "country^1"
                                         ]
                                     }
                                   },';
