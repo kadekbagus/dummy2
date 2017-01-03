@@ -669,6 +669,7 @@ class StoreAPIController extends PubControllerAPI
             $store = Tenant::select(
                                 'merchants.merchant_id',
                                 'merchants.name',
+                                'merchants.name as mall_name',
                                 DB::Raw("CASE WHEN (
                                                 select mt.description
                                                 from {$prefix}merchant_translations mt
@@ -867,6 +868,7 @@ class StoreAPIController extends PubControllerAPI
             // Query without searching keyword
             $mall = Mall::select('merchants.merchant_id',
                                     'merchants.name',
+                                    'merchants.name as mall_name',
                                     'merchants.address_line1 as address',
                                     'merchants.city',
                                     'merchants.floor',
