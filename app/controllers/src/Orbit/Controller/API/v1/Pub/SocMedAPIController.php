@@ -250,7 +250,7 @@ class SocMedAPIController extends PubControllerAPI
             $languageEnId = $language->language_id;
         }
 
-        $storename = OrbitInput::get('name');
+        $storeId = OrbitInput::get('id');
 
         $prefix = DB::getTablePrefix();
 
@@ -293,7 +293,7 @@ class SocMedAPIController extends PubControllerAPI
             ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
             ->where('merchants.status', 'active')
             ->whereRaw("oms.status = 'active'")
-            ->where('merchants.name', $storename)
+            ->where('merchants.merchant_id', $storeId)
             ->orderBy('merchants.created_at', 'asc')
             ->first();
 

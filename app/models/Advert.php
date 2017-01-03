@@ -37,6 +37,11 @@ class Advert extends Eloquent
                     ->where('object_name', 'advert');
     }
 
+    public function media_orig()
+    {
+        return $this->media()->where('media_name_long', '=', 'advert_image_orig');
+    }
+
     public function locations()
     {
         return $this->hasMany('AdvertLocation', 'advert_id', 'advert_id');

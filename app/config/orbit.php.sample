@@ -4954,11 +4954,13 @@ return array(
         'subject' => '[%s] %s - Gotomalls.com',
 
         // base url of the campaign detail, needed for showing link on the email
-        'news_detail_base_url' => 'https://v211.gotomalls.cool/#!/news/detail/%s/%s',
+        'news_detail_base_url' => 'https://v215.gotomalls.cool/#!/events/%s/%s',
 
-        'promotion_detail_base_url' => 'https://v211.gotomalls.cool/#!/promotions/detail/%s/%s',
+        'promotion_detail_base_url' => 'https://v215.gotomalls.cool/#!/promotions/%s/%s',
 
-        'coupon_detail_base_url' => 'https://v211.gotomalls.cool/#!/coupons/detail/%s/%s',
+        'coupon_detail_base_url' => 'https://v215.gotomalls.cool/#!/coupons/%s/%s',
+
+        'store_detail_base_url' => 'https://v215.gotomalls.cool/#!/stores/%s/%s',
     ),
 
     /**
