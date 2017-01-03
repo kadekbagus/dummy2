@@ -186,7 +186,7 @@ Route::filter('pub-fb-bot', function() {
                 $type = 'stores';
 
                 $item = Tenant::excludeDeleted()
-                    ->where('name', Input::get('name', NULL))
+                    ->where('merchant_id', Input::get('id', NULL))
                     ->first();
 
                 break;
@@ -197,19 +197,14 @@ Route::filter('pub-fb-bot', function() {
         }
 
         if (is_object($item)) {
-            // redirect user to gotomalls detail page
-            // needs to be updated if there are route changes on frontend side
-            switch ($type) {
-                case 'stores':
-                    $redirect_to = URL::to(sprintf('%s/#!/%s/detail/%s', $gtmUrl, $type, rawurlencode(Input::get('name', ''))));
+            $config = [
+                'stores'     => Config::get('orbit.campaign_share_email.store_detail_base_url'),
+                'promotions' => Config::get('orbit.campaign_share_email.promotion_detail_base_url'),
+                'coupons'    => Config::get('orbit.campaign_share_email.coupon_detail_base_url'),
+                'news'       => Config::get('orbit.campaign_share_email.news_detail_base_url'),
+            ];
 
-                    break;
-
-                default:
-                    $redirect_to = URL::to(sprintf('%s/#!/%s/detail/%s/%s', $gtmUrl, $type, Input::get('id'), rawurlencode(Input::get('name', ''))));
-
-                    break;
-            }
+            $redirect_to = URL::to(sprintf($config[$type], Input::get('id'), rawurlencode(Input::get('name', ''))));
         } else {
             $redirect_to = URL::to($gtmUrl);
         }
