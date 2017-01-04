@@ -138,6 +138,7 @@ Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $
  * Listen on:    `orbit.coupon.postupdatecoupon.after.commit`
  * Purpose:      Send email to marketing after create coupon
  *
+ * @author irianto <irianto@dominopos.com>
  * @author kadek <kadek@dominopos.com>
  *
  * @param CouponAPIController $controller
@@ -160,4 +161,8 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
         'mode'               => 'update'
     ]);
 
+    // Notify the queueing system to update Elasticsearch document
+    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+        'coupon_id' => $coupon->promotion_id
+    ]);
 });
