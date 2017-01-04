@@ -44,7 +44,13 @@ return array(
             'news' => [
                  'index' => 'news',
                  'type'  => 'basic'
-            ]
+            ],
+
+            'promotions' => [
+                 'index' => 'promotions',
+                 'type'  => 'basic'
+            ],
+
         ],
 
         'nearest' => [
