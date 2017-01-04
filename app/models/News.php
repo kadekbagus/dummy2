@@ -59,12 +59,41 @@ class News extends Eloquent
             ->withPivot('object_type');
     }
 
+    public function esCampaignLocations()
+    {
+        $prefix = DB::getTablePrefix();
+        return $this->belongsToMany('CampaignLocation', 'news_merchant', 'news_id', 'merchant_id')
+                ->select(
+                    'merchants.parent_id',
+                    'merchants.name',
+                    'merchants.object_type',
+                    DB::raw('oms.city,
+                    oms.province,
+                    oms.country'),
+                    DB::raw("
+                        (CASE WHEN {$prefix}merchants.object_type = 'tenant'
+                            THEN {$prefix}merchants.parent_id
+                            ELSE {$prefix}merchants.merchant_id
+                        END) as merchant_id
+                    ")
+                )
+                ->leftJoin(DB::raw("{$prefix}merchants oms"), DB::raw("oms.merchant_id"), '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END"))
+                ;
+    }
+
     public function campaignObjectPartners()
     {
         $prefix = DB::getTablePrefix();
         return $this->hasMany('ObjectPartner', 'object_id', 'news_id')
                       ->select('object_partner.object_id',DB::raw("{$prefix}partners.partner_id"), DB::raw("{$prefix}partners.partner_name"))
                       ->leftjoin('partners', 'partners.partner_id', '=', 'object_partner.partner_id');
+    }
+
+    public function adverts()
+    {
+        return $this->hasMany('Advert', 'link_object_id', 'promotion_id')
+            ->leftJoin('advert_link_types', 'adverts.advert_link_type_id', '=', 'advert_link_types.advert_link_type_id')
+            ->where('advert_link_types.advert_type', '=', 'coupon');
     }
 
     /**
