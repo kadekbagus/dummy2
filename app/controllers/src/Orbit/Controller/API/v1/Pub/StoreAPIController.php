@@ -50,6 +50,7 @@ class StoreAPIController extends PubControllerAPI
     {
         $activity = Activity::mobileci()->setActivityType('view');
         $mall = NULL;
+        $mall_name = NULL;
         $user = NULL;
         $httpCode = 200;
         try {
@@ -186,11 +187,15 @@ class StoreAPIController extends PubControllerAPI
                 ->orderBy(DB::raw("advert.placement_order"), 'desc')
                 ->orderBy('merchants.created_at', 'asc');
 
-            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall) {
+            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall, &$mall_name) {
                 $store->where('merchants.parent_id', '=', DB::raw("{$this->quote($mallId)}"));
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
+
+                if (! empty($mall)) {
+                    $mall_name = $mall->name;
+                }
             });
 
             // filter by category just on first store
@@ -400,6 +405,7 @@ class StoreAPIController extends PubControllerAPI
             $data->returned_records = count($liststore);
             $data->total_records = $totalRecMerchant;
             $data->extras = $extras;
+            $data->mall_name = $mall_name;
             $data->records = $liststore;
 
             // save activity when accessing listing
