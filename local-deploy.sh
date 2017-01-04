@@ -26,6 +26,7 @@ rsync -avz --delete \
 --exclude=app/config/app.php \
 --exclude=app/config/database.php \
 --exclude=app/config/mail.php \
+--exclude=app/config/cache.php \
 --exclude=app/config/oauth-4-laravel.php \
 --exclude=app/config/orbit-notifier.php \
 --exclude=app/config/orbit.php \
