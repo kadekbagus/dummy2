@@ -181,7 +181,6 @@ class MallListAPIController extends PubControllerAPI
             $sortby = '{"name.raw" : {"order" : "asc"}}';
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $withscore = '';
                 $sortby = ' {
                                 "_geo_distance": {
                                     "position": {
