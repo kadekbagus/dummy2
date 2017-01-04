@@ -1,5 +1,4 @@
 <?php namespace Orbit\Controller\API\v1\Pub\News;
-
 /**
  * @author firmansyah <firmansyah@dominopos.com>
  * @desc Controller for news list and search in landing page
@@ -27,6 +26,7 @@ use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
+use Orbit\Helper\Util\SimpleCache;
 
 class NewsListAPIController extends PubControllerAPI
 {
@@ -35,6 +35,7 @@ class NewsListAPIController extends PubControllerAPI
      * GET - get active news in all mall, and also provide for searching
      *
      * @author Firmansyayh <firmansyah@dominopos.com>
+     * @author Rio Astamal <rio@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -54,8 +55,17 @@ class NewsListAPIController extends PubControllerAPI
         $keyword = null;
         $user = null;
         $mall = null;
+        $cacheKey = [];
+        $serializedCacheKey = [];
 
-        try{
+        // Cache result of all possible calls to backend storage
+        $cacheConfig = Config::get('orbit.cache.context');
+        $cacheContext = 'event-list';
+        $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
+        $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-total-rec');
+
+        try {
             $user = $this->getUser();
 
             $sort_by = OrbitInput::get('sortby', 'created_date');
@@ -69,7 +79,10 @@ class NewsListAPIController extends PubControllerAPI
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
             $category_id = OrbitInput::get('category_id');
+            $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
+            $take = PaginationNumber::parseTakeFromGet('news');
+            $skip = PaginationNumber::parseSkipFromGet();
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -86,6 +99,18 @@ class NewsListAPIController extends PubControllerAPI
                     'sortby'   => 'in:name,location,created_date',
                 )
             );
+
+            // Pass all possible parameters to be used as cache key.
+            // Make sure there is no missing one.
+            $cacheKey = [
+                'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
+                'location' => $location, 'ul' => $ul,
+                'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
+                'distance' => $distance, 'mall_id' => $mallId,
+                'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
+                'no_total_record' => $no_total_records,
+                'take' => $take, 'skip' => $skip,
+            ];
 
             // Run the validation
             if ($validator->fails()) {
@@ -277,7 +302,8 @@ class NewsListAPIController extends PubControllerAPI
                 $news = $news->orderBy($sort_by, $sort_mode);
             }
 
-            OrbitInput::get('keyword', function($keyword) use ($news, $prefix, &$searchFlag) {
+            OrbitInput::get('keyword', function($keyword) use ($news, $prefix, &$searchFlag, &$cacheKey) {
+                $cacheKey['keyword'] = $keyword;
                 $searchFlag = $searchFlag || TRUE;
                  if (! empty($keyword)) {
                     $news = $news->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
@@ -302,7 +328,8 @@ class NewsListAPIController extends PubControllerAPI
                  }
             });
 
-            OrbitInput::get('filter_name', function ($filterName) use ($news, $prefix) {
+            OrbitInput::get('filter_name', function ($filterName) use ($news, $prefix, &$cacheKey) {
+                $cacheKey['filter_name'] = $filterName;
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
                         $news->whereRaw("SUBSTR(sub_query.news_name,1,1) not between 'a' and 'z'");
@@ -327,27 +354,31 @@ class NewsListAPIController extends PubControllerAPI
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
+            $serializedCacheKey = SimpleCache::transformArrayToHash($cacheKey);
+
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes
             if ($no_total_records !== 'yes') {
                 $_news = clone($news);
-
                 $recordCounter = RecordCounter::create($_news);
-                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
-                $totalRec = $recordCounter->count();
+                // Try to get the result from cache
+                $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
+                    return $recordCounter->count();
+                });
+
+                // Put the result in cache if it is applicable
+                $totalRecordCache->put($serializedCacheKey, $totalRec);
             }
 
-            // Cache the result of database calls
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($news);
-
-            $take = PaginationNumber::parseTakeFromGet('news');
             $news->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
             $news->skip($skip);
 
-            $listOfRec = $news->get();
+            // Try to get the result from cache
+            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($news) {
+                return $news->get();
+            });
+            $recordCache->put($serializedCacheKey, $listOfRec);
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
@@ -356,6 +387,7 @@ class NewsListAPIController extends PubControllerAPI
                 $data->mall_name = $mall->name;
             }
             $data->records = $listOfRec;
+
 
             if (OrbitInput::get('from_homepage', '') !== 'y') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {

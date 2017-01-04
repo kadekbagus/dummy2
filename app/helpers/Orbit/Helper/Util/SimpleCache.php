@@ -9,13 +9,6 @@ use Cache;
 class SimpleCache
 {
     /**
-     * Key for the cache
-     *
-     * @var string
-     */
-    protected $key = '';
-
-    /**
      * Prefix of the key
      *
      * @var string
@@ -188,7 +181,6 @@ class SimpleCache
         // Time to live
         $ttl = $this->getConfigValue('cache_ttl');
 
-        // Put the data into the cache and tag them also
         Cache::put($key, $data, $ttl);
 
         return $this;

@@ -57,6 +57,7 @@ class PromotionListAPIController extends PubControllerAPI
         $user = null;
         $mall = null;
         $cacheKey = [];
+        $serializedCacheKey = '';
 
         // Cache result of all possible calls to backend storage
         $cacheConfig = Config::get('orbit.cache.context');
@@ -86,6 +87,8 @@ class PromotionListAPIController extends PubControllerAPI
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $category_id = OrbitInput::get('category_id');
             $no_total_records = OrbitInput::get('no_total_records', null);
+            $take = PaginationNumber::parseTakeFromGet('promotion');
+            $skip = PaginationNumber::parseSkipFromGet();
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -107,10 +110,14 @@ class PromotionListAPIController extends PubControllerAPI
             // Make sure there is no missing one.
             $cacheKey = [
                 'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
-                'location' => $location, 'ul' => $ul, 'mall_id' => $mallId,
+                'location' => $location, 'ul' => $ul,
+                'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
+                'distance' => $distance, 'mall_id' => $mallId,
                 'with_premium' => $withPremium, 'list_type' => $list_type,
                 'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
                 'no_total_record' => $no_total_records,
+                'take' => $take, 'skip' => $skip,
+
             ];
 
             // Run the validation
@@ -382,8 +389,9 @@ class PromotionListAPIController extends PubControllerAPI
                 $promotion = $promotion->orderBy($sort_by, $sort_mode);
             }
 
-            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix, &$searchFlag, &$cacheKey) {
-                $cacheKey[] = $keyword;
+            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix, &$searchFlag, &$chacheKey) {
+                $cacheKey['keyword'] = $keyword;
+
                 $searchFlag = $searchFlag || TRUE;
                 if (! empty($keyword)) {
                     $promotion = $promotion->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
@@ -409,7 +417,7 @@ class PromotionListAPIController extends PubControllerAPI
             });
 
             OrbitInput::get('filter_name', function ($filterName) use ($promotion, $prefix, &$cacheKey) {
-                $cacheKey[] = $filterName;
+                $cacheKey['filter_name'] = $filterName;
 
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
@@ -436,6 +444,7 @@ class PromotionListAPIController extends PubControllerAPI
             }
 
             $_promotion = clone($promotion);
+            $serializedCacheKey = SimpleCache::transformArrayToHash($cacheKey);
 
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes
@@ -443,26 +452,21 @@ class PromotionListAPIController extends PubControllerAPI
                 $recordCounter = RecordCounter::create($_promotion);
 
                 // Try to get the result from cache
-                $totalRecordCacheKey = SimpleCache::transformArrayToHash($cacheKey);
-                $totalRec = $totalRecordCache->get($totalRecordCacheKey, function() use ($recordCounter) {
+                $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
                     return $recordCounter->count();
                 });
                 // Put the result in cache if it is applicable
-                $totalRecordCache->put($totalRecordCacheKey, $totalRec);
+                $totalRecordCache->put($serializedCacheKey, $totalRec);
             }
 
-            $take = PaginationNumber::parseTakeFromGet('promotion');
             $promotion->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
             $promotion->skip($skip);
 
             // Try to get the result from cache
-            $recordCacheKey = SimpleCache::transformArrayToHash($cacheKey + ['take' => $take, 'skip' => $skip]);
-            $listOfRec = $recordCache->get($recordCacheKey, function() use ($promotion) {
+            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($promotion) {
                 return $promotion->get();
             });
-            $recordCache->put($recordCacheKey, $listOfRec);
+            $recordCache->put($serializedCacheKey, $listOfRec);
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
@@ -479,12 +483,10 @@ class PromotionListAPIController extends PubControllerAPI
                 // Take 100 value right now to prevent memory leak
                 $randomPromotionBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
 
-                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($randomPromotionBuilder);
-                $featuredRecordCacheKey = SimpleCache::transformArrayToHash($cacheKey);
-                $randomPromotion = $featuredRecordCache->get($featuredRecordCacheKey, function() use ($randomPromotionBuilder) {
+                $randomPromotion = $featuredRecordCache->get($serializedCacheKey, function() use ($randomPromotionBuilder) {
                     return $randomPromotionBuilder->get();
                 });
-                $featuredRecordCache->put($featuredRecordCacheKey, $randomPromotion);
+                $featuredRecordCache->put($serializedCacheKey, $randomPromotion);
 
                 $advertedCampaigns = array_filter($randomPromotion, function($v) {
                     return ($v->placement_type_orig === 'featured_list');
