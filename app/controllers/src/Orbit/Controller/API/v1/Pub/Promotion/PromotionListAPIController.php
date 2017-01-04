@@ -444,7 +444,7 @@ class PromotionListAPIController extends PubControllerAPI
             }
 
             $_promotion = clone($promotion);
-            $serializedCacheKey = SimpleCache::transformArrayToHash($cacheKey);
+            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
 
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes
