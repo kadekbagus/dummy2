@@ -34,6 +34,16 @@ return array(
             'activities' => [
                 'index' => 'activities',
                 'type'  => 'activity'
+            ],
+
+            'coupons' => [
+                'index' => 'coupons',
+                'type'  => 'basic'
+            ],
+
+            'news' => [
+                 'index' => 'news',
+                 'type'  => 'basic'
             ]
         ],
 
