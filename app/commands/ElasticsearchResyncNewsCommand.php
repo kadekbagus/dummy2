@@ -1,4 +1,8 @@
 <?php
+/**
+ * Command for resync coupon data from MySQL to Elasticsearch based on coupon id
+ * @author Firmansyah <firmansyah@dominopos.com>
+ */
 
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
