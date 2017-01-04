@@ -40,6 +40,11 @@ return array(
                 'index' => 'coupons',
                 'type'  => 'basic'
             ],
+
+            'news' => [
+                 'index' => 'news',
+                 'type'  => 'basic'
+            ]
         ],
 
         'nearest' => [
