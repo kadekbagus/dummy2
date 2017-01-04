@@ -119,6 +119,12 @@ Artisan::add(new ElasticsearchResyncMallCommand);
 // Initial coupon data migration
 Artisan::add(new ElasticsearchResyncCouponCommand);
 
+// Initial news/event data migration
+Artisan::add(new ElasticsearchResyncNewsCommand);
+
+// Initial Promotion data migration
+Artisan::add(new ElasticsearchResyncPromotionCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
