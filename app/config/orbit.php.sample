@@ -34,7 +34,12 @@ return array(
             'activities' => [
                 'index' => 'activities',
                 'type'  => 'activity'
-            ]
+            ],
+
+            'coupons' => [
+                'index' => 'coupons',
+                'type'  => 'basic'
+            ],
         ],
 
         'nearest' => [
