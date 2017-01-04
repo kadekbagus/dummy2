@@ -80,7 +80,7 @@ class ElasticsearchResyncNewsCommand extends Command {
 	protected function getArguments()
 	{
 		return array(
-			array('id', null, InputOption::VALUE_OPTIONAL, 'News ID.', null)
+			array('id', null, InputOption::VALUE_OPTIONAL, null)
 		);
 	}
 

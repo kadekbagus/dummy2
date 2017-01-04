@@ -49,8 +49,7 @@ return array(
             'promotions' => [
                  'index' => 'promotions',
                  'type'  => 'basic'
-            ],
-
+            ]
         ],
 
         'nearest' => [
