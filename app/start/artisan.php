@@ -116,6 +116,9 @@ Artisan::add(new CreatePartnerCompetitorCommand);
 // Sync to elasticsearch from merchants table (mall)
 Artisan::add(new ElasticsearchResyncMallCommand);
 
+// Initial coupon data migration
+Artisan::add(new ElasticsearchResyncCouponCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
