@@ -39,6 +39,11 @@ return array(
             'coupons' => [
                 'index' => 'coupons',
                 'type'  => 'basic'
+            ],
+
+            'news' => [
+                 'index' => 'news',
+                 'type'  => 'basic'
             ]
         ],
 
@@ -5153,7 +5158,6 @@ return array(
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
-        ],
     ],
 
     /**
