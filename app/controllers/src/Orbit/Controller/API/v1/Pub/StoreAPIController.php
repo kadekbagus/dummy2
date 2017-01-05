@@ -843,6 +843,7 @@ class StoreAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
             $mallId = OrbitInput::get('mall_id', null);
+            $merchantId = OrbitInput::get('merchant_id', null);
             $storename = OrbitInput::get('store_name');
             $location = OrbitInput::get('location');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
@@ -853,13 +854,13 @@ class StoreAPIController extends PubControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'store_name' => $storename,
+                    'merchant_id' => $merchantId,
                 ),
                 array(
-                    'store_name' => 'required',
+                    'merchant_id' => 'required',
                 ),
                 array(
-                    'required' => 'Store name is required',
+                    'required' => 'Merchant id is required',
                 )
             );
 
@@ -902,7 +903,7 @@ class StoreAPIController extends PubControllerAPI
                           ;
                     })
 
-                    ->with(['tenants' => function ($q) use ($prefix, $storename) {
+                    ->with(['tenants' => function ($q) use ($prefix, $merchantId) {
                             $q->select('merchants.merchant_id',
                                         'merchants.name as title',
                                         'merchants.phone',
@@ -913,7 +914,7 @@ class StoreAPIController extends PubControllerAPI
                                     )
                               ->join('objects', 'objects.object_id', '=', 'merchants.floor_id')
                               ->where('objects.object_type', 'floor')
-                              ->where('merchants.name', $storename)
+                              ->where('merchants.merchant_id', $merchantId)
                               ->where('merchants.status', 'active')
                               ->with(['categories' => function ($q) {
                                     $q->select(
@@ -956,7 +957,7 @@ class StoreAPIController extends PubControllerAPI
                                         ) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                             ->active();
             } else {
-                $mall = $mall->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
+                $mall = $mall->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where merchant_id = {$this->quote($merchantId)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                             ->active();
             }
 
@@ -1087,6 +1088,7 @@ class StoreAPIController extends PubControllerAPI
 
             $sort_by = OrbitInput::get('sortby', 'campaign_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $merchant_id = OrbitInput::get('merchant_id');
             $store_name = OrbitInput::get('store_name');
             $keyword = OrbitInput::get('keyword');
             $language = OrbitInput::get('language', 'id');
@@ -1101,17 +1103,17 @@ class StoreAPIController extends PubControllerAPI
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
-                    'store_name' => $store_name,
+                    'merchant_id' => $merchant_id,
                     'language' => $language,
                     'sortby'   => $sort_by,
                 ),
                 array(
-                    'store_name' => 'required',
+                    'merchant_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
                     'sortby'   => 'in:campaign_name,name,location,created_date',
                 ),
                 array(
-                    'required' => 'Store name is required',
+                    'required' => 'Merchant id is required',
                 )
             );
 
@@ -1145,7 +1147,7 @@ class StoreAPIController extends PubControllerAPI
                                             LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                             LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                         WHERE onm.news_id = {$prefix}news.news_id
-                                        AND om.name = {$this->quote($store_name)}
+                                        AND om.merchant_id = {$this->quote($merchant_id)}
                                     )
                                     THEN 'expired'
                                     ELSE {$prefix}campaign_status.campaign_status_name
@@ -1184,7 +1186,7 @@ class StoreAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
-                        ->where('merchants.name', $store_name)
+                        ->where('merchants.merchant_id', $merchant_id)
                         ->where('news.object_type', '=', 'news')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
@@ -1282,7 +1284,7 @@ class StoreAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
-                        ->where('merchants.name', $store_name)
+                        ->where('merchants.merchant_id', $merchant_id)
                         ->where('news.object_type', '=', 'promotion')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
@@ -1380,7 +1382,7 @@ class StoreAPIController extends PubControllerAPI
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
                             ->whereRaw("available.tot > 0")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
-                            ->where('merchants.name', $store_name)
+                            ->where('merchants.merchant_id', $merchant_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
                             ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');
