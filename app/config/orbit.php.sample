@@ -5158,11 +5158,30 @@ return array(
                 'cache_ttl' => 60
             ],
 
-            // location list specific cache setting
-            'location-list' => [
+            // news location list specific cache setting
+            'news-location-list' => [
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
+
+            // promotion location list specific cache setting
+            'promotion-location-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // coupon location list specific cache setting
+            'coupon-location-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // store location list specific cache setting
+            'store-location-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
         ],
     ],
 
