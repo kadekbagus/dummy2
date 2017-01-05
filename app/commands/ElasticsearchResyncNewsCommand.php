@@ -1,8 +1,14 @@
 <?php
+/**
+ * Command for resync coupon data from MySQL to Elasticsearch based on coupon id
+ * @author Firmansyah <firmansyah@dominopos.com>
+ */
 
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
+use Orbit\FakeJob;
+use Orbit\Queue\ElasticSearch\ESNewsUpdateQueue;
 
 class ElasticsearchResyncNewsCommand extends Command {
 
@@ -39,6 +45,7 @@ class ElasticsearchResyncNewsCommand extends Command {
 	{
         try {
             $input = ! empty($this->argument('id')) ? $this->argument('id') : file_get_contents("php://stdin");
+            $input = trim($input);
 
             if (empty($input)) {
                 throw new Exception("Input needed.", 1);
@@ -73,7 +80,7 @@ class ElasticsearchResyncNewsCommand extends Command {
 	protected function getArguments()
 	{
 		return array(
-			array('id', null, InputOption::VALUE_OPTIONAL, 'News ID.', null)
+			array('id', null, InputOption::VALUE_OPTIONAL, null)
 		);
 	}
 

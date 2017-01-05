@@ -354,7 +354,7 @@ class NewsListAPIController extends PubControllerAPI
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
-            $serializedCacheKey = SimpleCache::transformArrayToHash($cacheKey);
+            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
 
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes
