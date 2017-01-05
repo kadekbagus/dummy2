@@ -400,10 +400,10 @@ class StoreAPIController extends PubControllerAPI
             $store->skip($skip);
 
             // Try to get the result from cache
-            $listStore = $recordCache->get($serializedCacheKey, function() use ($promotion) {
+            $listStore = $recordCache->get($serializedCacheKey, function() use ($store) {
                 return $store->get();
             });
-            $recordCache->put($serializedCacheKey, $listOfRec);
+            $recordCache->put($serializedCacheKey, $listStore);
 
             // random featured adv
             if ($list_type === 'featured') {
