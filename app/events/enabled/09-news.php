@@ -180,4 +180,17 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
         'mode'               => 'update'
     ]);
 
+    if ($news->object_type === 'promotion') {
+        // Notify the queueing system to update Elasticsearch document
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
+            'news_id' => $news->news_id
+        ]);
+    }
+
+    if ($news->object_type === 'news') {
+        // Notify the queueing system to update Elasticsearch document
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
+            'news_id' => $news->news_id
+        ]);
+    }
 });

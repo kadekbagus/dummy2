@@ -185,5 +185,8 @@ class MerchantHelper
                 $existing_translation->delete();
             }
         }
+
+        // to prevent error on saving base merchant
+        unset($baseMerchant->translations);
     }
 }
