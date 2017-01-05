@@ -81,6 +81,7 @@ class StoreAPIController extends PubControllerAPI
             $lat = 0;
             $list_type = OrbitInput::get('list_type', 'preferred');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
+            $category_id = OrbitInput::get('category_id');
             $mallId = OrbitInput::get('mall_id', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
             $take = PaginationNumber::parseTakeFromGet('retailer');
