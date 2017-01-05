@@ -294,7 +294,8 @@ class PromotionListAPIController extends PubControllerAPI
                 }
             });
 
-            OrbitInput::get('partner_id', function($partner_id) use ($promotions, $prefix, &$searchFlag) {
+            OrbitInput::get('partner_id', function($partner_id) use ($promotions, $prefix, &$searchFlag, &$chacheKey) {
+                $cacheKey['partner_id'] = $partner_id;
                 $searchFlag = $searchFlag || TRUE;
                 $promotions = ObjectPartnerBuilder::getQueryBuilder($promotions, $partner_id, 'promotion');
             });
