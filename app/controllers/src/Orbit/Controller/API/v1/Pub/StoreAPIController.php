@@ -886,12 +886,13 @@ class StoreAPIController extends PubControllerAPI
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
         $user = null;
+        $storename = null;
 
         try {
             $user = $this->getUser();
             $mallId = OrbitInput::get('mall_id', null);
-            $merchantId = OrbitInput::get('merchant_id', null);
             $storename = OrbitInput::get('store_name');
+            $merchantId = OrbitInput::get('merchant_id');
             $location = OrbitInput::get('location');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance', 10);
@@ -919,10 +920,15 @@ class StoreAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            // Get store name base in merchant_id
+            $store = Tenant::select('merchant_id', 'name')->where('merchant_id', $merchantId)->active()->first();
+            if (! empty($store)) {
+                $storename = $store->name;
+            }
+
             // Query without searching keyword
             $mall = Mall::select('merchants.merchant_id',
                                     'merchants.name',
-                                    'merchants.name as mall_name',
                                     'merchants.address_line1 as address',
                                     'merchants.city',
                                     'merchants.floor',
@@ -950,7 +956,7 @@ class StoreAPIController extends PubControllerAPI
                           ;
                     })
 
-                    ->with(['tenants' => function ($q) use ($prefix, $merchantId) {
+                    ->with(['tenants' => function ($q) use ($prefix, $storename) {
                             $q->select('merchants.merchant_id',
                                         'merchants.name as title',
                                         'merchants.phone',
@@ -961,7 +967,7 @@ class StoreAPIController extends PubControllerAPI
                                     )
                               ->join('objects', 'objects.object_id', '=', 'merchants.floor_id')
                               ->where('objects.object_type', 'floor')
-                              ->where('merchants.merchant_id', $merchantId)
+                              ->where('merchants.name', $storename)
                               ->where('merchants.status', 'active')
                               ->with(['categories' => function ($q) {
                                     $q->select(
@@ -1004,7 +1010,7 @@ class StoreAPIController extends PubControllerAPI
                                         ) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                             ->active();
             } else {
-                $mall = $mall->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where merchant_id = {$this->quote($merchantId)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
+                $mall = $mall->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                             ->active();
             }
 
