@@ -27,6 +27,7 @@ use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
+use Orbit\Helper\Util\SimpleCache;
 
 class StoreAPIController extends PubControllerAPI
 {
@@ -53,6 +54,18 @@ class StoreAPIController extends PubControllerAPI
         $mall_name = NULL;
         $user = NULL;
         $httpCode = 200;
+
+        $cacheKey = [];
+        $serializedCacheKey = [];
+
+        // Cache result of all possible calls to backend storage
+        $cacheConfig = Config::get('orbit.cache.context');
+        $cacheContext = 'store-list';
+        $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
+        $featuredRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                          ->setKeyPrefix($cacheContext . '-featured');
+        $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-total-rec');
         try {
             $user = $this->getUser();
 
@@ -68,8 +81,11 @@ class StoreAPIController extends PubControllerAPI
             $lat = 0;
             $list_type = OrbitInput::get('list_type', 'preferred');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
+            $category_id = OrbitInput::get('category_id');
             $mallId = OrbitInput::get('mall_id', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
+            $take = PaginationNumber::parseTakeFromGet('retailer');
+            $skip = PaginationNumber::parseSkipFromGet();
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -91,6 +107,20 @@ class StoreAPIController extends PubControllerAPI
                     'sortby'   => 'in:name,location',
                 )
             );
+
+            // Pass all possible parameters to be used as cache key.
+            // Make sure there is no missing one.
+            $cacheKey = [
+                'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
+                'location' => $location, 'ul' => $ul,
+                'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
+                'distance' => $distance, 'mall_id' => $mallId,
+                'list_type' => $list_type,
+                'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
+                'no_total_record' => $no_total_records,
+                'take' => $take, 'skip' => $skip,
+
+            ];
 
             // Run the validation
             if ($validator->fails()) {
@@ -209,12 +239,15 @@ class StoreAPIController extends PubControllerAPI
                     ->whereIn(DB::raw("cm.category_id"), $category_id);
             });
 
-            OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag) {
+            OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag, &$cacheKey) {
+                $cacheKey['partner_id'] = $partner_id;
                 $searchFlag = $searchFlag || TRUE;
                 $store = ObjectPartnerBuilder::getQueryBuilder($store, $partner_id, 'tenant');
             });
 
-            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag) {
+            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag, &$cacheKey) {
+                $cacheKey['keyword'] = $keyword;
+
                 $searchFlag = $searchFlag || TRUE;
                 if (! empty($keyword)) {
                     $store = $store->leftJoin('keyword_object', 'merchants.merchant_id', '=', 'keyword_object.object_id')
@@ -341,6 +374,7 @@ class StoreAPIController extends PubControllerAPI
             }
 
             $_store = clone $store;
+            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
 
             // Cache the result of database calls
             OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($store);
@@ -350,30 +384,37 @@ class StoreAPIController extends PubControllerAPI
             // Set defaul 0 when get variable no_total_records = yes
             if ($no_total_records !== 'yes') {
                 $recordCounter = RecordCounter::create($_store);
-                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
                 $recordCounterRealStores = RecordCounter::create($_realStore);
                 OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounterRealStores->getQueryBuilder());
 
+                // Try to get the result from cache
+                $totalRecMerchant = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
+                    return $recordCounter->count();
+                });
+
                 $totalRecStore = $recordCounterRealStores->count();
-                $totalRecMerchant = $recordCounter->count();
             }
 
-            $take = PaginationNumber::parseTakeFromGet('retailer');
             $store->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
             $store->skip($skip);
 
-            $liststore = $store->get();
+            // Try to get the result from cache
+            $listStore = $recordCache->get($serializedCacheKey, function() use ($store) {
+                return $store->get();
+            });
+            $recordCache->put($serializedCacheKey, $listStore);
 
             // random featured adv
             if ($list_type === 'featured') {
                 $featuredStoreBuilder = clone $_store;
                 $featuredStoreBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
-                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($featuredStoreBuilder);
 
-                $featuredStore = $featuredStoreBuilder->get();
+                $featuredStore = $featuredRecordCache->get($serializedCacheKey, function() use ($featuredStoreBuilder) {
+                    return $featuredStoreBuilder->get();
+                });
+                $featuredRecordCache->put($serializedCacheKey, $featuredStore);
+
                 $advertedCampaigns = array_filter($featuredStore, function($v) {
                     return ($v->placement_type_orig === 'featured_list');
                 });
@@ -390,7 +431,7 @@ class StoreAPIController extends PubControllerAPI
                         $random = $advertedCampaigns[$listSlide];
                     }
 
-                    $liststore = $random;
+                    $listStore = $random;
                     if ($no_total_records !== 'yes') {
                         $totalRecMerchant = count($random);
                     }
@@ -402,11 +443,11 @@ class StoreAPIController extends PubControllerAPI
             $extras->total_stores = $totalRecStore;
             $extras->total_merchants = $totalRecMerchant;
 
-            $data->returned_records = count($liststore);
+            $data->returned_records = count($listStore);
             $data->total_records = $totalRecMerchant;
             $data->extras = $extras;
             $data->mall_name = $mall_name;
-            $data->records = $liststore;
+            $data->records = $listStore;
 
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'

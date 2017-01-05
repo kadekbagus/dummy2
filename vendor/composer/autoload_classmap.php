@@ -1509,6 +1509,7 @@ return array(
     'Orbit\\Queue\\ElasticSearch\\ESMallDeleteQueue' => $baseDir . '/app/queue/Orbit/Queue/Elasticsearch/ESMallDeleteQueue.php',
     'Orbit\\Queue\\ElasticSearch\\ESMallUpdateQueue' => $baseDir . '/app/queue/Orbit/Queue/Elasticsearch/ESMallUpdateQueue.php',
     'Orbit\\Queue\\ElasticSearch\\ESNewsUpdateQueue' => $baseDir . '/app/queue/Orbit/Queue/Elasticsearch/ESNewsUpdateQueue.php',
+    'Orbit\\Queue\\ElasticSearch\\ESPromotionUpdateQueue' => $baseDir . '/app/queue/Orbit/Queue/Elasticsearch/ESPromotionUpdateQueue.php',
     'Orbit\\Queue\\FeedbackMail' => $baseDir . '/app/queue/Orbit/Queue/FeedbackMail.php',
     'Orbit\\Queue\\IssuedCouponMailQueue' => $baseDir . '/app/queue/Orbit/Queue/IssuedCouponMailQueue.php',
     'Orbit\\Queue\\LandingPageShareMail' => $baseDir . '/app/queue/Orbit/Queue/LandingPageShareMail.php',
