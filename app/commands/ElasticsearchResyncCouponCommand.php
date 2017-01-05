@@ -45,6 +45,7 @@ class ElasticsearchResyncCouponCommand extends Command {
     {
         try {
             $input = ! empty($this->argument('id')) ? $this->argument('id') : file_get_contents("php://stdin");
+            $input = trim($input);
 
             if (empty($input)) {
                 throw new Exception("Input needed.", 1);
@@ -79,7 +80,7 @@ class ElasticsearchResyncCouponCommand extends Command {
     protected function getArguments()
     {
         return array(
-            array('id', null, InputOption::VALUE_OPTIONAL, 'Coupon ID.', null)
+            array('id', null, InputOption::VALUE_OPTIONAL, null)
         );
     }
 
