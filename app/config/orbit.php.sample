@@ -5159,7 +5159,7 @@ return array(
             ],
 
             // news location list specific cache setting
-            'news-location-list' => [
+            'event-location-list' => [
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
