@@ -211,15 +211,15 @@ class SimpleCache
     }
 
     /**
-     * Transform an arrays key to hash
+     * Transform an arrays or data key to hash
      *
-     * @param array $array
+     * @param mixed $data
      * @param int $keyLength
      * @return string
      */
-    public static function transformArrayToHash($array, $keyLength=12)
+    public static function transformDataToHash($data, $keyLength=12)
     {
-        return substr(sha1( serialize($array) ), 0, $keyLength);
+        return substr(sha1( serialize($data) ), 0, $keyLength);
     }
 
     /**
