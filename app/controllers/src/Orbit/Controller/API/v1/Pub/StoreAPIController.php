@@ -114,7 +114,7 @@ class StoreAPIController extends PubControllerAPI
                 'location' => $location, 'ul' => $ul,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
-                'with_premium' => $withPremium, 'list_type' => $list_type,
+                'list_type' => $list_type,
                 'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
