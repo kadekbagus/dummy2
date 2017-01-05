@@ -24,6 +24,7 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
+use Orbit\Helper\Util\SimpleCache;
 
 class CouponListAPIController extends PubControllerAPI
 {
@@ -48,6 +49,18 @@ class CouponListAPIController extends PubControllerAPI
         $mall = NULL;
         $user = NULL;
         $httpCode = 200;
+        $cacheKey = [];
+        $serializedCacheKey = [];
+
+        // Cache result of all possible calls to backend storage
+        $cacheConfig = Config::get('orbit.cache.context');
+        $cacheContext = 'coupon-list';
+        $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
+        $featuredRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                          ->setKeyPrefix($cacheContext . '-featured');
+        $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-total-rec');
+
         try {
             $this->checkAuth();
             $user = $this->api->user;
@@ -68,6 +81,8 @@ class CouponListAPIController extends PubControllerAPI
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $category_id = OrbitInput::get('category_id');
             $no_total_records = OrbitInput::get('no_total_records', null);
+            $take = PaginationNumber::parseTakeFromGet('coupon');
+            $skip = PaginationNumber::parseSkipFromGet();
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -88,6 +103,19 @@ class CouponListAPIController extends PubControllerAPI
                 array(
                 )
             );
+
+            // Pass all possible parameters to be used as cache key.
+            // Make sure there is no missing one.
+            $cacheKey = [
+                'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
+                'location' => $location, 'ul' => $ul,
+                'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
+                'distance' => $distance, 'mall_id' => $mallId,
+                'with_premium' => $withPremium, 'list_type' => $list_type,
+                'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
+                'no_total_record' => $no_total_records,
+                'take' => $take, 'skip' => $skip,
+            ];
 
             // Run the validation
             if ($validator->fails()) {
@@ -269,7 +297,8 @@ class CouponListAPIController extends PubControllerAPI
                 }
             });
 
-            OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag) {
+            OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag, &$chacheKey) {
+                $cacheKey['partner_id'] = $partner_id;
                 $searchFlag = $searchFlag || TRUE;
                 $coupons = ObjectPartnerBuilder::getQueryBuilder($coupons, $partner_id, 'coupon');
             });
@@ -369,7 +398,8 @@ class CouponListAPIController extends PubControllerAPI
                 $coupon = $coupon->orderBy($sort_by, $sort_mode);
             }
 
-            OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
+            OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix, &$chacheKey) {
+                $cacheKey['filter_name'] = $filterName;
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
                         $coupon->whereRaw("SUBSTR(sub_query.coupon_name,1,1) not between 'a' and 'z'");
@@ -380,7 +410,8 @@ class CouponListAPIController extends PubControllerAPI
                 }
             });
 
-            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix, &$searchFlag) {
+            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix, &$searchFlag, &$chacheKey) {
+                $cacheKey['keyword'] = $keyword;
                 $searchFlag = $searchFlag || TRUE;
                 if (! empty($keyword)) {
                     $coupon = $coupon->leftJoin('keyword_object', DB::Raw("sub_query.coupon_id"), '=', 'keyword_object.object_id')
@@ -418,40 +449,52 @@ class CouponListAPIController extends PubControllerAPI
 
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
-            $_coupon = clone $coupon;
 
+            $_coupon = clone ($coupon);
+            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
 
             $totalRec = 0;
             // Set defaul 0 when get variable no_total_records = yes
             if ($no_total_records !== 'yes') {
                 $recordCounter = RecordCounter::create($_coupon);
-                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
 
-                $totalRec = $recordCounter->count();
+                // Try to get the result from cache
+                $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
+                    return $recordCounter->count();
+                });
+                // Put the result in cache if it is applicable
+                $totalRecordCache->put($serializedCacheKey, $totalRec);
             }
 
-            // Cache the result of database calls
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($coupon);
-
-            $take = PaginationNumber::parseTakeFromGet('coupon');
             $coupon->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
             $coupon->skip($skip);
 
-            $listcoupon = $coupon->get();
+            // Try to get the result from cache
+            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($coupon) {
+                return $coupon->get();
+            });
+            $recordCache->put($serializedCacheKey, $listOfRec);
 
             $data = new \stdclass();
-            $data->returned_records = count($listcoupon);
+            $data->returned_records = count($listOfRec);
             $data->total_records = $totalRec;
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
             }
-            $data->records = $listcoupon;
+            $data->records = $listOfRec;
 
             // random featured adv
-            $randomCoupon = $_coupon->get();
+            // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
             if ($list_type === 'featured') {
+                $randomCouponBuilder = clone $_coupon;
+                // Take 100 value right now to prevent memory leak
+                $randomCouponBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
+
+                $randomCoupon = $featuredRecordCache->get($serializedCacheKey, function() use ($randomCouponBuilder) {
+                    return $randomCouponBuilder->get();
+                });
+                $featuredRecordCache->put($serializedCacheKey, $randomCoupon);
+
                 $advertedCampaigns = array_filter($randomCoupon, function($v) {
                     return ($v->placement_type_orig === 'featured_list');
                 });
@@ -467,7 +510,7 @@ class CouponListAPIController extends PubControllerAPI
                         $random = $advertedCampaigns[$listSlide];
                     }
 
-                    $data->returned_records = count($listcoupon);
+                    $data->returned_records = count($listOfRec);
                     $data->total_records = count($random);
                     $data->records = $random;
                 }
