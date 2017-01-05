@@ -71,6 +71,7 @@ class ESPromotionUpdateQueue
                     "))
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where('news.news_id', $newsId)
+                    ->where('news.object_type', 'promotion')
                     ->whereRaw("{$prefix}news.status = 'active'")
                     ->havingRaw("campaign_status = 'ongoing'")
                     ->orderBy('news.news_id', 'asc')
