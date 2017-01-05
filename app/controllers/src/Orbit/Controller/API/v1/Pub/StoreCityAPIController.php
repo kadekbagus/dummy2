@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
 use Mall;
+use Tenant;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
@@ -50,17 +51,18 @@ class StoreCityAPIController extends PubControllerAPI
 
             $sort_by = OrbitInput::get('sortby', 'city');
             $sort_mode = OrbitInput::get('sortmode','asc');
-            $storename = OrbitInput::get('store_name');
+            $merchant_id = OrbitInput::get('merchant_id');
+            $store_name = null;
 
             $validator = Validator::make(
                 array(
-                    'store_name' => $storename,
+                    'merchant_id' => $merchant_id,
                 ),
                 array(
-                    'store_name' => 'required',
+                    'merchant_id' => 'required',
                 ),
                 array(
-                    'required' => 'Store name is required',
+                    'required' => 'Merchant id is required',
                 )
             );
 
@@ -72,9 +74,15 @@ class StoreCityAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            // Get store name base in merchant_id
+            $store = Tenant::select('merchant_id', 'name')->where('merchant_id', $merchant_id)->active()->first();
+            if (! empty($store)) {
+                $store_name = $store->name;
+            }
+
             // Query without searching keyword
             $mall = Mall::select('merchants.city')
-                        ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
+                        ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($store_name)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                         ->active();
 
             $mall = $mall->groupBy('merchants.city')->orderBy($sort_by, $sort_mode);
@@ -94,7 +102,7 @@ class StoreCityAPIController extends PubControllerAPI
                     ->setActivityName('view_city_location')
                     ->setActivityNameLong('View City Location Page')
                     ->setObject(null)
-                    ->setObjectDisplayName($storename)
+                    ->setObjectDisplayName($store_name)
                     ->setModuleName('Store')
                     ->setNotes($activityNotes)
                     ->responseOK()
