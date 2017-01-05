@@ -5158,6 +5158,7 @@ return array(
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
+        ],
     ],
 
     /**
