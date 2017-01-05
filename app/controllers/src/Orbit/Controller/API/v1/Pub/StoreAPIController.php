@@ -66,6 +66,8 @@ class StoreAPIController extends PubControllerAPI
                                           ->setKeyPrefix($cacheContext . '-featured');
         $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-total-rec');
+        $totalRecordCacheStore = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-total-rec-store');
         try {
             $user = $this->getUser();
 
@@ -384,16 +386,20 @@ class StoreAPIController extends PubControllerAPI
             // Set defaul 0 when get variable no_total_records = yes
             if ($no_total_records !== 'yes') {
                 $recordCounter = RecordCounter::create($_store);
-
                 $recordCounterRealStores = RecordCounter::create($_realStore);
-                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounterRealStores->getQueryBuilder());
 
                 // Try to get the result from cache
                 $totalRecMerchant = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
                     return $recordCounter->count();
                 });
 
-                $totalRecStore = $recordCounterRealStores->count();
+                $totalRecStore = $totalRecordCacheStore->get($serializedCacheKey, function() use ($recordCounterRealStores) {
+                    return $recordCounterRealStores->count();
+                });
+
+                // Put the result in cache if it is applicable
+                $totalRecordCache->put($serializedCacheKey, $totalRecMerchant);
+                $totalRecordCacheStore->put($serializedCacheKey, $totalRecStore);
             }
 
             $store->take($take);
