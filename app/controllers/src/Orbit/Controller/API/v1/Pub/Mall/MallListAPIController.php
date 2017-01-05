@@ -20,6 +20,7 @@ use DB;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Util\SimpleCache;
 
 class MallListAPIController extends PubControllerAPI
 {
@@ -38,7 +39,13 @@ class MallListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $user = $this->getUser();
+            $this->checkAuth();
+            $user = $this->api->user;
+
+            // Cache result of all possible calls to backend storage
+            $cacheConfig = Config::get('orbit.cache.context');
+            $cacheContext = 'mall-list';
+            $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
 
             $keyword = OrbitInput::get('keyword');
             $location = OrbitInput::get('location', null);
@@ -265,7 +272,11 @@ class MallListAPIController extends PubControllerAPI
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
-            $response = $client->search($param_area);
+            $serializedCacheKey = SimpleCache::transformDataToHash($json_area);
+            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$param_area) {
+                return $client->search($param_area);
+            });
+            $recordCache->put($serializedCacheKey, $response);
 
             $area_data = $response['hits'];
             $listmall = array();
