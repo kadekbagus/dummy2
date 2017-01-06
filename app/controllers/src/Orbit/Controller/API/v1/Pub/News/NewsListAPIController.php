@@ -221,9 +221,9 @@ class NewsListAPIController extends PubControllerAPI
             });
 
             // sort by name or location
-            if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
+            if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $sort = array("_geo_distance" => array("position" => array("lon" => $longitude, "lat" => $latitude), "order" => $sort_mode, "unit" => "km", "distance_type" => "plane"));
+                $sort = array("_geo_distance" => array("position" => array("lon" => $lon, "lat" => $lat), "order" => $sort_mode, "unit" => "km", "distance_type" => "plane"));
             } elseif ($sort_by === 'created_date') {
                 $sort = array("begin_date" => array("order" => $sort_mode));
             } else {
