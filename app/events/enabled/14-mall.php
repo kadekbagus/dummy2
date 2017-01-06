@@ -143,6 +143,23 @@ Event::listen('orbit.mall.postnewmall.after.commit', function($controller, $mall
     Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallCreateQueue', [
         'mall_id' => $mall->merchant_id
     ]);
+
+    // find coupon relate with mall to update ESCoupon
+    $coupons = Coupon::excludeDeleted('promotions')
+                ->join('promotion_retailer as pr', DB::raw('pr.promotion_id'), '=', 'promotions.promotion_id')
+                ->leftJoin('merchants as mp', function ($q) {
+                    $q->on(DB::raw('mp.merchant_id'), '=', DB::raw('pr.retailer_id'))
+                      ->on(DB::raw('mp.object_type'), '=', DB::raw("'tenant'"));
+                })
+                ->whereRaw("CASE WHEN pr.object_type = 'mall' THEN pr.retailer_id ELSE mp.parent_id END = '{$mall->merchant_id}'")
+                ->get();
+
+    foreach ($coupons as $coupon) {
+        // Notify the queueing system to update Elasticsearch document
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+            'coupon_id' => $coupon->promotion_id
+        ]);
+    }
 });
 
 /**
@@ -160,6 +177,23 @@ Event::listen('orbit.mall.postupdatemall.after.commit', function($controller, $m
     Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
         'mall_id' => $mall->merchant_id
     ]);
+
+    // find coupon relate with mall to update ESCoupon
+    $coupons = Coupon::excludeDeleted('promotions')
+                ->join('promotion_retailer as pr', DB::raw('pr.promotion_id'), '=', 'promotions.promotion_id')
+                ->leftJoin('merchants as mp', function ($q) {
+                    $q->on(DB::raw('mp.merchant_id'), '=', DB::raw('pr.retailer_id'))
+                      ->on(DB::raw('mp.object_type'), '=', DB::raw("'tenant'"));
+                })
+                ->whereRaw("CASE WHEN pr.object_type = 'mall' THEN pr.retailer_id ELSE mp.parent_id END = '{$mall->merchant_id}'")
+                ->get();
+
+    foreach ($coupons as $coupon) {
+        // Notify the queueing system to update Elasticsearch document
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+            'coupon_id' => $coupon->promotion_id
+        ]);
+    }
 });
 
 /**

@@ -166,3 +166,59 @@ Event::listen('orbit.tenant.postupdatetenant.after.save', function($controller, 
     }
     $tenant->load('mediaImage');
 });
+
+/**
+ * Listen on:    `orbit.tenant.postnewtenant.after.commit`
+ * Purpose:      Post actions after the data has been successfully commited
+ *
+ * @author Irianto <irianto@dominopos.com>
+ *
+ * @param TenantAPIController $controller - The instance of the TenantAPIController or its subclass
+ * @param Tenant $tenant - Instance of object Tenant
+ */
+Event::listen('orbit.tenant.postnewtenant.after.commit', function($controller, $tenant)
+{
+    // find coupon relate with tenant to update ESCoupon
+    $coupons = Coupon::excludeDeleted()
+                ->join('promotion_retailer', function($q) {
+                    $q->on('promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                      ->on('promotion_retailer.object_type', '=', DB::raw("'tenant'"));
+                })
+                ->where('promotion_retailer.retailer_id', '=', $tenant->merchant_id)
+                ->get();
+
+    foreach ($coupons as $coupon) {
+        // Notify the queueing system to update Elasticsearch document
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+            'coupon_id' => $coupon->promotion_id
+        ]);
+    }
+});
+
+/**
+ * Listen on:    `orbit.tenant.postnewtenant.after.commit`
+ * Purpose:      Post actions after the data has been successfully commited
+ *
+ * @author Irianto <irianto@dominopos.com>
+ *
+ * @param TenantAPIController $controller - The instance of the TenantAPIController or its subclass
+ * @param Tenant $tenant - Instance of object Tenant
+ */
+Event::listen('orbit.tenant.postupdatetenant.after.commit', function($controller, $tenant)
+{
+    // find coupon relate with tenant to update ESCoupon
+    $coupons = Coupon::excludeDeleted()
+                ->join('promotion_retailer', function($q) {
+                    $q->on('promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                      ->on('promotion_retailer.object_type', '=', DB::raw("'tenant'"));
+                })
+                ->where('promotion_retailer.retailer_id', '=', $tenant->merchant_id)
+                ->get();
+
+    foreach ($coupons as $coupon) {
+        // Notify the queueing system to update Elasticsearch document
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+            'coupon_id' => $coupon->promotion_id
+        ]);
+    }
+});
