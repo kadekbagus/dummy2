@@ -301,7 +301,7 @@ class PromotionListAPIController extends PubControllerAPI
             });
 
             // filter promotions by mall id
-            OrbitInput::get('mall_id', function($mallid) use ($promotions) {cac
+            OrbitInput::get('mall_id', function($mallid) use ($promotions) {
                 $promotions->where(function($q) use($mallid) {
                             $q->where(DB::raw("m.parent_id"), '=', $mallid)
                                 ->orWhere(DB::raw("m.merchant_id"), '=', $mallid);
