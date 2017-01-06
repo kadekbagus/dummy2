@@ -53,10 +53,12 @@ class ESPromotionUpdateQueue
                             'translations.media_orig',
                             'campaignLocations.categories',
                             'esCampaignLocations.geofence',
-                            'keywords',
                             'campaignObjectPartners',
                             'adverts.media_orig'
                         )
+                    ->with (['keywords' => function ($q) {
+                                $q->groupBy('keyword');
+                            }])
                     ->select(DB::raw("
                         {$prefix}news.*,
                         CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
