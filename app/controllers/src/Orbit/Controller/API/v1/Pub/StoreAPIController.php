@@ -1061,8 +1061,6 @@ class StoreAPIController extends PubControllerAPI
                 $mall->where('merchants.merchant_id', '=', $mallId)->first();
             }
 
-            $mall = $mall->groupBy('merchants.merchant_id');
-
             // Order data by nearby or city alphabetical
             if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
                 $mall->orderBy('distance', 'asc');
@@ -1071,10 +1069,10 @@ class StoreAPIController extends PubControllerAPI
                 $mall->orderBy('merchants.name', 'asc');
             }
 
+            $mall = $mall->groupBy('merchants.merchant_id');
+
             $_mall = clone $mall;
-
             $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-
             $recordCounter = RecordCounter::create($_mall);
 
             // Try to get the result from cache
@@ -1087,6 +1085,12 @@ class StoreAPIController extends PubControllerAPI
 
             $mall->take($take);
             $mall->skip($skip);
+
+            // Try to get the result from cache
+            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($mall) {
+                return $mall->get();
+            });
+            $recordCache->put($serializedCacheKey, $listOfRec);
 
             // moved from generic activity number 40
             if (empty($skip)) {
@@ -1102,10 +1106,8 @@ class StoreAPIController extends PubControllerAPI
                     ->save();
             }
 
-            $listOfRec = $mall->get();
-
             $this->response->data = new stdClass();
-            $this->response->data->total_records = $recordCounter;
+            $this->response->data->total_records = $totalRec;
             $this->response->data->returned_records = count($listOfRec);
             $this->response->data->records = $listOfRec;
         } catch (ACLForbiddenException $e) {
