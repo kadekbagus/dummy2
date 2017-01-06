@@ -12,37 +12,37 @@ use Orbit\Queue\ElasticSearch\ESNewsUpdateQueue;
 
 class ElasticsearchResyncNewsCommand extends Command {
 
-	/**
-	 * The console command name.
-	 *
-	 * @var string
-	 */
-	protected $name = 'elasticsearch:resync-news';
+    /**
+     * The console command name.
+     *
+     * @var string
+     */
+    protected $name = 'elasticsearch:resync-news';
 
-	/**
-	 * The console command description.
-	 *
-	 * @var string
-	 */
-	protected $description = 'Resync news data from MySQL to Elasticsearch based on news id';
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Resync news data from MySQL to Elasticsearch based on news id';
 
-	/**
-	 * Create a new command instance.
-	 *
-	 * @return void
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-	}
+    /**
+     * Create a new command instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
-	/**
-	 * Execute the console command.
-	 *
-	 * @return mixed
-	 */
-	public function fire()
-	{
+    /**
+     * Execute the console command.
+     *
+     * @return mixed
+     */
+    public function fire()
+    {
         try {
             $input = ! empty($this->argument('id')) ? $this->argument('id') : file_get_contents("php://stdin");
             $input = trim($input);
@@ -56,42 +56,63 @@ class ElasticsearchResyncNewsCommand extends Command {
                 'news_id' => $input
             ];
             try {
-                $esQueue = new ESNewsUpdateQueue();
-                $response = $esQueue->fire($job, $data);
+                $response = $this->syncData($job, $data);
 
                 if ($response['status'] === 'fail') {
                     throw new Exception($response['message'], 1);
                 }
 
-                $this->info(sprintf('News ID: "%s" has been successfully synced to Elasticsearch server', $data['news_id']));
+                $this->info(sprintf('%sNews ID: "%s" has been successfully synced to Elasticsearch server', $this->stdoutPrefix, $data['news_id']));
             } catch (Exception $e) {
-                $this->error(sprintf('Failed to sync News ID "%s", message: %s', $data['news_id'], $e->getMessage()));
+                $this->error(sprintf('%sFailed to sync promotion ID "%s", message: %s', $this->stdoutPrefix, $data['news_id'], $e->getMessage()));
             }
         } catch (\Exception $e) {
             $this->error($e->getMessage());
         }
     }
 
-	/**
-	 * Get the console command arguments.
-	 *
-	 * @return array
-	 */
-	protected function getArguments()
-	{
-		return array(
-			array('id', null, InputOption::VALUE_OPTIONAL, null)
-		);
-	}
+    /**
+     * Get the console command arguments.
+     *
+     * @return array
+     */
+    protected function getArguments()
+    {
+        return array(
+            array('id', null, InputOption::VALUE_OPTIONAL, null)
+        );
+    }
 
-	/**
-	 * Get the console command options.
-	 *
-	 * @return array
-	 */
-	protected function getOptions()
-	{
-		return array();
-	}
+    /**
+     * Get the console command options.
+     *
+     * @return array
+     */
+    protected function getOptions()
+    {
+        return array();
+    }
+
+    /**
+     * Fake response
+     *
+     * @param boolean $dryRun
+     */
+    protected function syncData($job, $data)
+    {
+        if ($this->option('dry-run')) {
+            $this->stdoutPrefix = '[DRY RUN] ';
+
+            return [
+                'status' => 'ok',
+                'message' => 'Dry run mode'
+            ];
+        }
+
+        $esQueue = new ESNewsUpdateQueue();
+        $response = $esQueue->fire($job, $data);
+
+        return $response;
+    }
 
 }
