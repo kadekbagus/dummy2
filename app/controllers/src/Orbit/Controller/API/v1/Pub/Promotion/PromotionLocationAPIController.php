@@ -182,6 +182,14 @@ class PromotionLocationAPIController extends PubControllerAPI
                 }
             }
 
+            // Order data by nearby or city alphabetical
+            if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                $promotionLocation->orderBy('distance', 'asc');
+            } else {
+                $promotionLocation->orderBy('city', 'asc');
+                $promotionLocation->orderBy('name', 'asc');
+            }
+
             if ($group_by === 'mall') {
                 $promotionLocation->groupBy('mall_id');
             } else {
@@ -202,19 +210,14 @@ class PromotionLocationAPIController extends PubControllerAPI
             // Put the result in cache if it is applicable
             $totalRecordCache->put($serializedCacheKey, $totalRec);
 
-
             $promotionLocation->take($take);
             $promotionLocation->skip($skip);
 
-            // Order data by nearby or city alphabetical
-            if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                $promotionLocation->orderBy('distance', 'asc');
-            } else {
-                $promotionLocation->orderBy('city', 'asc');
-                $promotionLocation->orderBy('name', 'asc');
-            }
-
-            $listOfRec = $promotionLocation->get();
+            // Try to get the result from cache
+            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($promotionLocation) {
+                return $promotionLocation->get();
+            });
+            $recordCache->put($serializedCacheKey, $listOfRec);
 
             // moved from generic activity number 36
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
@@ -236,7 +239,7 @@ class PromotionLocationAPIController extends PubControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = $recordCounter;
+            $data->total_records = $totalRec;
             $data->records = $listOfRec;
 
             $this->response->data = $data;

@@ -184,6 +184,14 @@ class CouponLocationAPIController extends PubControllerAPI
                 }
             }
 
+            // Order data by nearby or city alphabetical
+            if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                $couponLocations->orderBy('distance', 'asc');
+            } else {
+                $couponLocations->orderBy('city', 'asc');
+                $couponLocations->orderBy('name', 'asc');
+            }
+
             if ($group_by === 'mall') {
                 $couponLocations->groupBy('mall_id');
             } else {
@@ -207,15 +215,11 @@ class CouponLocationAPIController extends PubControllerAPI
             $couponLocations->take($take);
             $couponLocations->skip($skip);
 
-            // Order data by nearby or city alphabetical
-            if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                $couponLocations->orderBy('distance', 'asc');
-            } else {
-                $couponLocations->orderBy('city', 'asc');
-                $couponLocations->orderBy('name', 'asc');
-            }
-
-            $listOfRec = $couponLocations->get();
+            // Try to get the result from cache
+            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($couponLocations) {
+                return $couponLocations->get();
+            });
+            $recordCache->put($serializedCacheKey, $listOfRec);
 
             // moved from generic activity number 38
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
@@ -237,7 +241,7 @@ class CouponLocationAPIController extends PubControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = $recordCounter;
+            $data->total_records = $totalRec;
             $data->records = $listOfRec;
 
             $this->response->data = $data;
