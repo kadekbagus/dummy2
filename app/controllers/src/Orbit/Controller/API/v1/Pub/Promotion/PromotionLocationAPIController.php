@@ -18,6 +18,7 @@ use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
+use Orbit\Helper\Util\SimpleCache;
 
 class PromotionLocationAPIController extends PubControllerAPI
 {
@@ -35,7 +36,6 @@ class PromotionLocationAPIController extends PubControllerAPI
      * @param string mall_id
      * @param string is_detail
      * @param string location
-     * @param string orbit.user_location.cookie.name
      * @param string orbit.geo_location.distance
      * @param string ul
      * @param string take
@@ -49,22 +49,34 @@ class PromotionLocationAPIController extends PubControllerAPI
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
         $user = null;
+        $mall = null;
+
+        $cacheKey = [];
+        $serializedCacheKey = [];
+
+        // Cache result of all possible calls to backend storage
+        $cacheConfig = Config::get('orbit.cache.context');
+        $cacheContext = 'promotion-location-list';
+
+        $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
+        $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-total-rec');
 
         try{
             $user = $this->getUser();
 
-            $promotionId = OrbitInput::get('promotion_id', null);
-            $mallId = OrbitInput::get('mall_id', null);
+            $promotion_id = OrbitInput::get('promotion_id', null);
+            $mall_id = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
             $location = OrbitInput::get('location');
-            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance', 10);
             $ul = OrbitInput::get('ul', null);
-            $mall = null;
+            $take = PaginationNumber::parseTakeFromGet('news');
+            $skip = PaginationNumber::parseSkipFromGet();
 
             $validator = Validator::make(
                 array(
-                    'promotion_id' => $promotionId,
+                    'promotion_id' => $promotion_id,
                 ),
                 array(
                     'promotion_id' => 'required',
@@ -74,14 +86,29 @@ class PromotionLocationAPIController extends PubControllerAPI
                 )
             );
 
+            // Pass all possible parameters to be used as cache key.
+            // Make sure there is no missing one.
+            $cacheKey = [
+                'promotion_id' => $promotion_id,
+                'mall_id' => $mall_id,
+                'is_detail' => $is_detail,
+                'location' => $location,
+                'distance' => $distance,
+                'ul' => $ul,
+                'mall' => $mall,
+                'take' => $take,
+                'skip' => $skip,
+            ];
+
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if (! empty($mallId)) {
-                $mall = Mall::where('merchant_id', '=', $mallId)->first();
+            if (! empty($mall_id)) {
+                $mall = Mall::where('merchant_id', '=', $mall_id)->first();
             }
 
             $prefix = DB::getTablePrefix();
@@ -127,7 +154,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                                             "))
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
-                                    ->where('news_merchant.news_id', '=', $promotionId)
+                                    ->where('news_merchant.news_id', '=', $promotion_id)
                                     ->where('merchants.status', '=', 'active');
 
             // filter news by mall id
@@ -163,10 +190,20 @@ class PromotionLocationAPIController extends PubControllerAPI
 
             $_promotionLocation = clone($promotionLocation);
 
-            $take = PaginationNumber::parseTakeFromGet('news');
-            $promotionLocation->take($take);
+            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
 
-            $skip = PaginationNumber::parseSkipFromGet();
+            $recordCounter = RecordCounter::create($_promotionLocation);
+
+            // Try to get the result from cache
+            $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
+                return $recordCounter->count();
+            });
+
+            // Put the result in cache if it is applicable
+            $totalRecordCache->put($serializedCacheKey, $totalRec);
+
+
+            $promotionLocation->take($take);
             $promotionLocation->skip($skip);
 
             // Order data by nearby or city alphabetical
@@ -182,7 +219,7 @@ class PromotionLocationAPIController extends PubControllerAPI
             // moved from generic activity number 36
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
                 $promotion = News::excludeDeleted()
-                    ->where('news_id', $promotionId)
+                    ->where('news_id', $promotion_id)
                     ->first();
 
                 $activityNotes = sprintf('Page viewed: Promotion location list');
@@ -199,7 +236,7 @@ class PromotionLocationAPIController extends PubControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = RecordCounter::create($_promotionLocation)->count();
+            $data->total_records = $recordCounter;
             $data->records = $listOfRec;
 
             $this->response->data = $data;
