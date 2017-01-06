@@ -888,15 +888,27 @@ class StoreAPIController extends PubControllerAPI
         $user = null;
         $storename = null;
 
+        $cacheKey = [];
+        $serializedCacheKey = [];
+
+        // Cache result of all possible calls to backend storage
+        $cacheConfig = Config::get('orbit.cache.context');
+        $cacheContext = 'store-location-list';
+
+        $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
+        $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-total-rec');
+
         try {
             $user = $this->getUser();
             $mallId = OrbitInput::get('mall_id', null);
-            $storename = OrbitInput::get('store_name');
             $merchantId = OrbitInput::get('merchant_id');
             $location = OrbitInput::get('location');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance', 10);
             $ul = OrbitInput::get('ul', null);
+            $take = PaginationNumber::parseTakeFromGet('retailer');
+            $skip = PaginationNumber::parseSkipFromGet();
 
             $keyword = OrbitInput::get('keyword');
 
@@ -911,6 +923,19 @@ class StoreAPIController extends PubControllerAPI
                     'required' => 'Merchant id is required',
                 )
             );
+
+            // Pass all possible parameters to be used as cache key.
+            // Make sure there is no missing one.
+            $cacheKey = [
+                'mall_id' => $mallId,
+                'merchant_id' => $merchantId,
+                'location' => $location,
+                'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
+                'distance' => $distance,
+                'ul' => $ul,
+                'take' => $take,
+                'skip' => $skip,
+            ];
 
             // Run the validation
             if ($validator->fails()) {
@@ -988,6 +1013,9 @@ class StoreAPIController extends PubControllerAPI
 
             // Query list mall based on keyword. Handling description and keyword can be different with other stores
             if (! empty($keyword)) {
+
+                $cacheKey['keyword'] = $keyword;
+
                 $words = explode(" ", $keyword);
                 $keywordSql = " 1=1 ";
                 foreach ($words as $key => $value) {
@@ -1033,8 +1061,6 @@ class StoreAPIController extends PubControllerAPI
                 $mall->where('merchants.merchant_id', '=', $mallId)->first();
             }
 
-            $mall = $mall->groupBy('merchants.merchant_id');
-
             // Order data by nearby or city alphabetical
             if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
                 $mall->orderBy('distance', 'asc');
@@ -1043,13 +1069,28 @@ class StoreAPIController extends PubControllerAPI
                 $mall->orderBy('merchants.name', 'asc');
             }
 
+            $mall = $mall->groupBy('merchants.merchant_id');
+
             $_mall = clone $mall;
+            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+            $recordCounter = RecordCounter::create($_mall);
 
-            $take = PaginationNumber::parseTakeFromGet('retailer');
+            // Try to get the result from cache
+            $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
+                return $recordCounter->count();
+            });
+
+            // Put the result in cache if it is applicable
+            $totalRecordCache->put($serializedCacheKey, $totalRec);
+
             $mall->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
             $mall->skip($skip);
+
+            // Try to get the result from cache
+            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($mall) {
+                return $mall->get();
+            });
+            $recordCache->put($serializedCacheKey, $listOfRec);
 
             // moved from generic activity number 40
             if (empty($skip)) {
@@ -1065,13 +1106,10 @@ class StoreAPIController extends PubControllerAPI
                     ->save();
             }
 
-            $listmall = $mall->get();
-            $count = RecordCounter::create($_mall)->count();
-
             $this->response->data = new stdClass();
-            $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($listmall);
-            $this->response->data->records = $listmall;
+            $this->response->data->total_records = $totalRec;
+            $this->response->data->returned_records = count($listOfRec);
+            $this->response->data->records = $listOfRec;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
