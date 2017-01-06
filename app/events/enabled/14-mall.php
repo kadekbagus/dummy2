@@ -194,6 +194,7 @@ Event::listen('orbit.mall.postupdatemall.after.commit', function($controller, $m
                 ->whereRaw("CASE WHEN pr.object_type = 'mall' THEN pr.retailer_id ELSE mp.parent_id END = '{$mall->merchant_id}'")
                 ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                 ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
+                ->groupBy('promotions.promotion_id')
                 ->get();
 
     foreach ($coupons as $coupon) {
