@@ -294,14 +294,14 @@ class PromotionListAPIController extends PubControllerAPI
                 }
             });
 
-            OrbitInput::get('partner_id', function($partner_id) use ($promotions, $prefix, &$searchFlag, &$chacheKey) {
+            OrbitInput::get('partner_id', function($partner_id) use ($promotions, $prefix, &$searchFlag, &$cacheKey) {
                 $cacheKey['partner_id'] = $partner_id;
                 $searchFlag = $searchFlag || TRUE;
                 $promotions = ObjectPartnerBuilder::getQueryBuilder($promotions, $partner_id, 'promotion');
             });
 
             // filter promotions by mall id
-            OrbitInput::get('mall_id', function($mallid) use ($promotions) {
+            OrbitInput::get('mall_id', function($mallid) use ($promotions) {cac
                 $promotions->where(function($q) use($mallid) {
                             $q->where(DB::raw("m.parent_id"), '=', $mallid)
                                 ->orWhere(DB::raw("m.merchant_id"), '=', $mallid);
@@ -390,7 +390,7 @@ class PromotionListAPIController extends PubControllerAPI
                 $promotion = $promotion->orderBy($sort_by, $sort_mode);
             }
 
-            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix, &$searchFlag, &$chacheKey) {
+            OrbitInput::get('keyword', function($keyword) use ($promotion, $prefix, &$searchFlag, &$cacheKey) {
                 $cacheKey['keyword'] = $keyword;
 
                 $searchFlag = $searchFlag || TRUE;
