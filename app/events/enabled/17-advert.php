@@ -71,3 +71,28 @@ Event::listen('orbit.advert.postupdateadvert.after.save', function($controller, 
     }
 
 });
+
+/**
+ * Listen on:    `orbit.advert.postnewadvert.after.`
+ * Purpose:      Post actions after the data has been successfully commited
+ *
+ * @author Irianto <irianto@dominopos.com>
+ *
+ * @param AdvertAPIController $controller - The instance of the AdvertAPIController or its subclass
+ * @param Advert $advert - Instance of object Advert
+ */
+Event::listen('orbit.advert.postnewadvert.after.commit', function($controller, $advert)
+{
+    // find coupon relate with advert to update ESCoupon
+    $coupons = Coupon::excludeDeleted('promotions')
+                ->join('adverts', 'adverts.link_object_id', '=', 'promotions.promotion_id')
+                ->where('adverts.advert_id', '=', $advert->advert_id)
+                ->get();
+
+    foreach ($coupons as $coupon) {
+        // Notify the queueing system to update Elasticsearch document
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+            'coupon_id' => $coupon->promotion_id
+        ]);
+    }
+});
