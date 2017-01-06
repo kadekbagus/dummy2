@@ -210,6 +210,7 @@ Event::listen('orbit.tenant.postupdatetenant.after.commit', function($controller
                 ->where('promotion_retailer.retailer_id', '=', $tenant->merchant_id)
                 ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                 ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
+                ->groupBy('promotions.promotion_id')
                 ->get();
 
     foreach ($coupons as $coupon) {
