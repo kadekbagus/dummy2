@@ -182,6 +182,14 @@ class NewsLocationAPIController extends PubControllerAPI
                 }
             }
 
+            // Order data by nearby or city alphabetical
+            if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                $newsLocations->orderBy('distance', 'asc');
+            } else {
+                $newsLocations->orderBy('city', 'asc');
+                $newsLocations->orderBy('name', 'asc');
+            }
+
             if ($group_by === 'mall') {
                 $newsLocations->groupBy('mall_id');
             } else {
@@ -205,15 +213,11 @@ class NewsLocationAPIController extends PubControllerAPI
             $newsLocations->take($take);
             $newsLocations->skip($skip);
 
-            // Order data by nearby or city alphabetical
-            if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                $newsLocations->orderBy('distance', 'asc');
-            } else {
-                $newsLocations->orderBy('city', 'asc');
-                $newsLocations->orderBy('name', 'asc');
-            }
-
-            $listOfRec = $newsLocations->get();
+            // Try to get the result from cache
+            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($newsLocations) {
+                return $newsLocations->get();
+            });
+            $recordCache->put($serializedCacheKey, $listOfRec);
 
             // moved from generic activity number 34
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
@@ -235,7 +239,7 @@ class NewsLocationAPIController extends PubControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = $recordCounter;
+            $data->total_records = $totalRec;
             $data->records = $listOfRec;
 
             $this->response->data = $data;
