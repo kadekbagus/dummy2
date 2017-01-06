@@ -54,7 +54,7 @@ class ESNewsDeleteQueue
         $prefix = DB::getTablePrefix();
         $newsId = $data['news_id'];
         $news = News::select(DB::raw("
-                        {$prefix}news.*,
+                        {$prefix}news.news_id,
                         CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                         THEN {$prefix}campaign_status.campaign_status_name
                         ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
