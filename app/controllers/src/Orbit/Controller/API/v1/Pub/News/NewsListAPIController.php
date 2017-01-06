@@ -153,7 +153,7 @@ class NewsListAPIController extends PubControllerAPI
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
-                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("name^6", "object_type^5", "keywords^5", "province^5", "keywords^4", "address_line^2", "country^2", "description^1")));
+                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("translation.name^6", "object_type^5", "keywords^4", "translation.description^3", "link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^1")));
                     $jsonArea['query']['filtered']['query'] = $filterKeyword;
                 }
             });
@@ -223,7 +223,7 @@ class NewsListAPIController extends PubControllerAPI
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $sort = array("_geo_distance" => array("position" => array("lon" => $lon, "lat" => $lat), "order" => $sort_mode, "unit" => "km", "distance_type" => "plane"));
+                $sort = array("_geo_distance" => array("link_to_tenant.position" => array("lon" => $lon, "lat" => $lat), "order" => $sort_mode, "unit" => "km", "distance_type" => "plane"));
             } elseif ($sort_by === 'created_date') {
                 $sort = array("begin_date" => array("order" => $sort_mode));
             } else {
