@@ -291,17 +291,17 @@ Event::listen('orbit.tenant.postupdatetenant.after.commit', function($controller
             ->get();
 
     if (!(count($promotions) < 1)) {
-        foreach ($promotions as $_promotion) {
+        foreach ($promotions as $_promotions) {
 
-            if ($promotion->campaign_status === 'stopped' || $promotion->campaign_status === 'expired') {
+            if ($_promotions->campaign_status === 'stopped' || $_promotions->campaign_status === 'expired') {
                 // Notify the queueing system to delete Elasticsearch document
                 Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionDeleteQueue', [
-                    'news_id' => $promotion->news_id
+                    'news_id' => $_promotions->news_id
                 ]);
             } else {
                 // Notify the queueing system to update Elasticsearch document
                 Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
-                    'news_id' => $promotion->news_id
+                    'news_id' => $_promotions->news_id
                 ]);
             }
         }
