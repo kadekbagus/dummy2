@@ -68,21 +68,16 @@ class MallListAPIController extends PubControllerAPI
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
 
-            $filterStatus = '';
+            $take = PaginationNumber::parseTakeFromGet('retailer');
+            $skip = PaginationNumber::parseSkipFromGet();
+
+            $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("is_subscribed" => "Y"))))))));
+
+            $filterStatus = array("query" => array("match" => array("status" => "active")));
             if ($usingDemo) {
-                $filterStatus = '
-                    "not" : {
-                        "term" : {
-                            "status" : "deleted"
-                        }
-                    }';
-            } else {
-                // Production
-                $filterStatus = '
-                    "match" : {
-                        "status" : "active"
-                    }';
+                $filterStatus = array("query" => array("not" => array("term" => array("status" => "deleted"))));
             }
+            $jsonArea['query']['filtered']['filter']['and'][] = $filterStatus;
 
             // get user location, latitude and longitude. If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
             if (empty($ul)) {
@@ -98,164 +93,93 @@ class MallListAPIController extends PubControllerAPI
             }
 
             // search by keyword
-            $filterKeyword = '';
-            $withscore = '';
-            if ($keyword != '') {
-                $searchFlag = $searchFlag || TRUE;
-                $withscore = '"_score",';
-                $filterKeyword = '"query": {
-                                    "multi_match" : {
-                                        "query": "' . $keyword . '",
-                                        "fields": [
-                                            "name^6",
-                                            "object_type^5",
-                                            "city^5",
-                                            "province^5",
-                                            "keywords^4",
-                                            "address_line^2",
-                                            "country^2",
-                                            "description^1"
-                                        ]
-                                    }
-                                  },';
-            }
+            $withScore = false;
+            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore)
+            {
+                if ($keyword != '') {
+                    $searchFlag = $searchFlag || TRUE;
+                    $withScore = true;
+                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("name^6", "object_type^5", "city^5", "province^5", "keywords^4", "address_line^2", "country^2", "description^1")));
+                    $jsonArea['query']['filtered']['query'] = $filterKeyword;
+                }
+            });
 
             // filter by location (city or user location)
             $words = 0;
-            if (! empty($location)) {
-                $searchFlag = $searchFlag || TRUE;
-                $words = count(explode(" ", $location));
-                if ($location === "mylocation") {
-                    $words = 0;
-                }
+            OrbitInput::get('location', function($location) use (&$jsonArea, &$searchFlag, &$withScore, &$words, $latitude, $longitude, $radius)
+            {
+                if (! empty($location)) {
+                    $searchFlag = $searchFlag || TRUE;
+                    $words = count(explode(" ", $location));
 
-                $locationFilter = '{
-                            "match":{
-                                "city": {
-                                    "query":    "' . $location . '",
-                                    "operator": "and"
-                                }
-                            }
-                        },';
+                    if ($location === "mylocation") {
+                        $words = 0;
+                    }
 
-                if ($location === "mylocation" && $latitude != '' && $longitude != '') {
-                    $locationFilter = '{
-                                "geo_distance" : {
-                                    "distance" : "' . $radius . 'km",
-                                    "position" : {
-                                        "lon": ' . $longitude . ',
-                                        "lat": ' . $latitude . '
-                                    }
-                                }
-                            },';
-                }
-            }
-
-            // filter by partner_id
-            $partner_filter = '';
-            if (! empty($partner_id)) {
-                $searchFlag = $searchFlag || TRUE;
-                $partner_affected = PartnerAffectedGroup::join('affected_group_names', function($join) {
-                                                            $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                                                                 ->where('affected_group_names.group_type', '=', 'mall');
-                                                        })
-                                                        ->where('partner_id', $partner_id)
-                                                        ->first();
-
-                if (is_object($partner_affected)) {
-                    $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
-                    $partner_filter = '{
-                                    "query": {
-                                        "match": { "partner_ids": "' . $partner_id . '" }
-                                    }
-                                },';
-
-                    if (in_array($partner_id, $exception)) {
-                        $partner_exception = PartnerCompetitor::where("partner_id", $partner_id)->lists("competitor_id");
-                        $partnerIds = implode('", "', $partner_exception);
-                        $partner_filter = '{
-                                    "query": {
-                                        "not" : {
-                                            "terms": { "partner_ids": ["' . $partnerIds . '"] }
-                                        }
-                                    }
-                                },';
+                    if ($location === "mylocation" && $latitude != '' && $longitude != '') {
+                        $locationFilter = array("geo_distance" => array("distance" => $radius."km", "position" => array("lon" => $longitude, "lat" => $latitude)));
+                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
+                    } elseif ($location !== "mylocation") {
+                        $locationFilter = array("match" => array("city" => array("query" => $location, "operator" => "and")));
+                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
                     }
                 }
-            }
+            });
+
+            // filter by partner_id
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, &$searchFlag, &$withScore)
+            {
+                $partnerFilter = '';
+                if (! empty($partnerId)) {
+                    $searchFlag = $searchFlag || TRUE;
+                    $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
+                                                                $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+                                                                     ->where('affected_group_names.group_type', '=', 'mall');
+                                                            })
+                                                            ->where('partner_id', $partnerId)
+                                                            ->first();
+
+                    if (is_object($partnerAffected)) {
+                        $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
+                        $partnerFilter = array("query" => array("match" => array("partner_ids" => $partnerId)));
+
+                        if (in_array($partnerId, $exception)) {
+                            $partnerException = PartnerCompetitor::where("partner_id", $partnerId)->lists("competitor_id");
+                            $partnerIds = implode('", "', $partnerException);
+                            $partnerFilter = array("query" => array("not" => array("terms" => array("partner_ids" => $partnerIds))));
+                        }
+                        $jsonArea['query']['filtered']['filter']['and'][] = $partnerFilter;
+                    }
+                }
+            });
 
             // sort by name or location
-            $sortby = '{"name.raw" : {"order" : "asc"}}';
+            $sort = array("name.raw" => array("order" => "asc"));
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $sortby = ' {
-                                "_geo_distance": {
-                                    "position": {
-                                        "lon": ' . $longitude . ',
-                                        "lat": ' . $latitude . '
-                                    },
-                                    "order": "' . $sort_mode . '",
-                                    "unit": "km",
-                                    "distance_type": "plane"
-                                }
-                            }';
-
+                $sort = array("_geo_distance" => array("position" => array("lon" => $longitude, "lat" => $latitude), "order" => $sort_mode, "unit" => "km", "distance_type" => "plane"));
             }
 
             if (! $searchFlag) {
                 $mallConfig =  Config::get('orbit.featured.mall_ids', null);
                 if (! empty($mallConfig)) {
-                    $mallIds = implode('", "', $mallConfig);
-                    $withscore = '"_score",';
-                    $filterKeyword = '"query":{
-                                       "bool": {
-                                          "should": [
-                                            {"terms": {"_id": ["' . $mallIds . '"]}},
-                                            {"match_all": {}}
-                                          ]
-                                        }
-                                     },';
+                    $withScore = true;
+                    $filterKeyword = array("bool" => array("should" => array(array("terms" => array("_id" => $mallConfig)), array("match_all" => new stdClass()))));
+                    $jsonArea['query']['filtered']['query'] = $filterKeyword;
                 }
             }
 
-            $take = PaginationNumber::parseTakeFromGet('retailer');
-            $skip = PaginationNumber::parseSkipFromGet();
-            $json_area = '{
-                        "from" : ' . $skip . ', "size" : ' . $take . ',
-                            "query": {
-                                "filtered": {
-                                    ' . $filterKeyword . '
-                                    "filter": {
-                                        "and": [
-                                            ' . $locationFilter .
-                                                $partner_filter .'
-                                            {
-                                                "query": {
-                                                    ' . $filterStatus . '
-                                                }
-                                            },
-                                            {
-                                                "query": {
-                                                    "match" : {
-                                                        "is_subscribed" : "Y"
-                                                    }
-                                                }
-                                            }
-                                        ]
-                                    }
-                                }
-                            },
-                            "sort": [
-                                ' . $withscore . '
-                                ' . $sortby . '
-                            ]
-                        }';
+            $sortby = $sort;
+            if ($withScore) {
+                $sortby = array("_score", $sort);
+            }
+            $jsonArea["sort"] = $sortby;
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $param_area = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.malldata.type'),
-                'body' => $json_area
+                'body' => json_encode($jsonArea)
             ];
 
             // record GTM search activity
@@ -272,7 +196,7 @@ class MallListAPIController extends PubControllerAPI
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
-            $serializedCacheKey = SimpleCache::transformDataToHash($json_area);
+            $serializedCacheKey = SimpleCache::transformDataToHash($jsonArea);
             $response = $recordCache->get($serializedCacheKey, function() use ($client, &$param_area) {
                 return $client->search($param_area);
             });
