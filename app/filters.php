@@ -204,7 +204,7 @@ Route::filter('pub-fb-bot', function() {
                 'news'       => Config::get('orbit.campaign_share_email.news_detail_base_url'),
             ];
 
-            $redirect_to = URL::to(sprintf($config[$type], Input::get('id'), rawurlencode(Input::get('name', ''))));
+            $redirect_to = URL::to(sprintf($config[$type], Input::get('id'), Str::slug(Input::get('name', '', $separator = '-'))));
         } else {
             $redirect_to = URL::to($gtmUrl);
         }
