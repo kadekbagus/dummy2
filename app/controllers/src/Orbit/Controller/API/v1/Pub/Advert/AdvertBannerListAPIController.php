@@ -74,6 +74,9 @@ class AdvertBannerListAPIController extends PubControllerAPI
                             ->select(
                                 'adverts.advert_id',
                                 'adverts.advert_name as title',
+                                DB::raw('n.news_name as promotion_name'),
+                                DB::raw('c.promotion_name as coupon_name'),
+                                DB::raw('s.name as store_name'),
                                 'adverts.link_url',
                                 'adverts.link_object_id as object_id',
                                 DB::raw('alt.advert_type'),
@@ -102,6 +105,20 @@ class AdvertBannerListAPIController extends PubControllerAPI
                                     ->on(DB::raw('t.object_type'), '=', DB::raw("'tenant'"))
                                     ->on(DB::raw('t.status'), '=', DB::raw("'active'"));
                             })
+
+                            // For name of promotion, coupon, and store
+                            ->leftJoin('news as n', function ($q) {
+                                $q->on(DB::raw('n.news_id'), '=', 'adverts.link_object_id');
+                            })
+
+                            ->leftJoin('promotions as c', function ($q) {
+                                $q->on(DB::raw('c.promotion_id'), '=', 'adverts.link_object_id');
+                            })
+
+                            ->leftJoin('merchants as s', function ($q) {
+                                $q->on(DB::raw('s.merchant_id'), '=', 'adverts.link_object_id');
+                            })
+
                             ->where('adverts.status', 'active')
                             ->whereRaw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}') between {$prefix}adverts.start_date and {$prefix}adverts.end_date");
 

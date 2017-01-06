@@ -297,7 +297,7 @@ class CouponListAPIController extends PubControllerAPI
                 }
             });
 
-            OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag, &$chacheKey) {
+            OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag, &$cacheKey) {
                 $cacheKey['partner_id'] = $partner_id;
                 $searchFlag = $searchFlag || TRUE;
                 $coupons = ObjectPartnerBuilder::getQueryBuilder($coupons, $partner_id, 'coupon');
@@ -398,7 +398,7 @@ class CouponListAPIController extends PubControllerAPI
                 $coupon = $coupon->orderBy($sort_by, $sort_mode);
             }
 
-            OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix, &$chacheKey) {
+            OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix, &$cacheKey) {
                 $cacheKey['filter_name'] = $filterName;
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
@@ -410,7 +410,7 @@ class CouponListAPIController extends PubControllerAPI
                 }
             });
 
-            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix, &$searchFlag, &$chacheKey) {
+            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix, &$searchFlag, &$cacheKey) {
                 $cacheKey['keyword'] = $keyword;
                 $searchFlag = $searchFlag || TRUE;
                 if (! empty($keyword)) {
