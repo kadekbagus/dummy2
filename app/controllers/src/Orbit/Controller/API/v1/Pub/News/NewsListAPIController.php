@@ -296,6 +296,7 @@ class NewsListAPIController extends PubControllerAPI
                         }
                     }
                 }
+                $data['score'] = $record['_score'];
                 $listOfRec[] = $data;
             }
 
