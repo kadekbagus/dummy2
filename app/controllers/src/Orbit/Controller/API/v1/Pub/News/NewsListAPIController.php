@@ -153,8 +153,15 @@ class NewsListAPIController extends PubControllerAPI
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
-                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("translation.name^6", "object_type^5", "keywords^4", "translation.description^3", "link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^1")));
-                    $jsonArea['query']['filtered']['query'] = $filterKeyword;
+
+                    $filterTranslation = array("nested" => array("path" => "translation", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("translation.name^6", "translation.description^3")))));
+                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
+
+                    $filterTenant = array("nested" => array("path" => "link_to_tenant", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^1")))));
+                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterTenant;
+
+                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("object_type^5", "keywords^4")));
+                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
                 }
             });
 
