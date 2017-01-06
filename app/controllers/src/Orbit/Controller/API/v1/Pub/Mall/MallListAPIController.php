@@ -106,7 +106,7 @@ class MallListAPIController extends PubControllerAPI
 
             // filter by location (city or user location)
             $words = 0;
-            OrbitInput::get('location', function($location) use (&$jsonArea, &$searchFlag, &$withScore, &$words)
+            OrbitInput::get('location', function($location) use (&$jsonArea, &$searchFlag, &$withScore, &$words, $latitude, $longitude, $radius)
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
@@ -116,13 +116,13 @@ class MallListAPIController extends PubControllerAPI
                         $words = 0;
                     }
 
-                    $locationFilter = array("match" => array("city" => array("query" => $location, "operator" => "and")));
-
                     if ($location === "mylocation" && $latitude != '' && $longitude != '') {
                         $locationFilter = array("geo_distance" => array("distance" => $radius."km", "position" => array("lon" => $longitude, "lat" => $latitude)));
+                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
+                    } elseif ($location !== "mylocation") {
+                        $locationFilter = array("match" => array("city" => array("query" => $location, "operator" => "and")));
+                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
                     }
-
-                    $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
                 }
             });
 
