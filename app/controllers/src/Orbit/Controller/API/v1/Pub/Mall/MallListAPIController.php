@@ -99,7 +99,7 @@ class MallListAPIController extends PubControllerAPI
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
-                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("name^6", "object_type^5", "city^5", "province^5", "keywords^4", "address_line^2", "country^2", "description^1")));
+                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("name^6", "object_type^5", "city^3", "province^2", "keywords", "address_line", "country", "description")));
                     $jsonArea['query']['filtered']['query'] = $filterKeyword;
                 }
             });
