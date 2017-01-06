@@ -1,6 +1,6 @@
 <?php namespace Orbit\Queue\ElasticSearch;
 /**
- * Delete Elasticsearch index when news has been deleted.
+ * Delete Elasticsearch index when promotion has been deleted.
  *
  * @author kadek <kadek@dominopos.com>
  */
@@ -12,7 +12,7 @@ use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 
-class ESNewsDeleteQueue
+class ESPromotionDeleteQueue
 {
     /**
      * Poster. The object which post the data to external system.
@@ -67,7 +67,7 @@ class ESNewsDeleteQueue
                     "))
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where('news.news_id', $newsId)
-                    ->where('news.object_type', 'news')
+                    ->where('news.object_type', 'promotion')
                     ->havingRaw("campaign_status in ('stopped', 'expired')")
                     ->first();
 
@@ -85,8 +85,8 @@ class ESNewsDeleteQueue
 
         try {
             $params = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.news.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.promotions.type'),
                 'id' => $news->news_id
             ];
 
@@ -116,8 +116,8 @@ class ESNewsDeleteQueue
                 'status' => 'ok',
                 'message' => sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['news']['index'],
-                                $esConfig['indices']['news']['type'])
+                                $esConfig['indices']['promotions']['index'],
+                                $esConfig['indices']['promotions']['type'])
             ];
         } catch (Exception $e) {
             // Bury the job for later inspection
@@ -130,8 +130,8 @@ class ESNewsDeleteQueue
                 'status' => 'fail',
                 'message' => sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['news']['index'],
-                                $esConfig['indices']['news']['type'],
+                                $esConfig['indices']['promotions']['index'],
+                                $esConfig['indices']['promotions']['type'],
                                 $e->getCode(),
                                 $e->getMessage())
             ];
