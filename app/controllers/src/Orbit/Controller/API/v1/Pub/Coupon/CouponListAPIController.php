@@ -130,28 +130,19 @@ class CouponListAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $advert_location_type = 'gtm';
-            $advert_location_id = '0';
-            if (! empty($mallId)) {
-                $advert_location_type = 'mall';
-                $advert_location_id = $mallId;
-            }
-
-            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
-
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
 
-            $withScore = false;
-
             //Get now time, time must be 2017-01-09T15:30:00Z
+            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
+            $withScore = false;
             $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => $dateTimeEs))), array("range" => array("end_date" => array("gte" => $dateTimeEs))))))));
 
             // get user lat and lon
@@ -267,6 +258,13 @@ class CouponListAPIController extends PubControllerAPI
                 $sortby = array("_score", $sort);
             }
             $jsonArea["sort"] = $sortby;
+
+            $advert_location_type = 'gtm';
+            $advert_location_id = '0';
+            if (! empty($mallId)) {
+                $advert_location_type = 'mall';
+                $advert_location_id = $mallId;
+            }
 
             $adverts = Advert::select('adverts.advert_id',
                                     'adverts.link_object_id',
