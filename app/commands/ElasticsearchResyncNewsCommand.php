@@ -71,7 +71,7 @@ class ElasticsearchResyncNewsCommand extends Command {
 
                 $this->info(sprintf('%sNews ID: "%s" has been successfully synced to Elasticsearch server', $this->stdoutPrefix, $data['news_id']));
             } catch (Exception $e) {
-                $this->error(sprintf('%sFailed to sync promotion ID "%s", message: %s', $this->stdoutPrefix, $data['news_id'], $e->getMessage()));
+                $this->error(sprintf('%sFailed to sync news ID "%s", message: %s', $this->stdoutPrefix, $data['news_id'], $e->getMessage()));
             }
         } catch (\Exception $e) {
             $this->error($e->getMessage());

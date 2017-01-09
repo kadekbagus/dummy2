@@ -1,29 +1,29 @@
 <?php
 /**
- * Command for clearing all coupons data from Elasticsearch index.
+ * Command for clearing all news data from Elasticsearch index.
  *
- * @author Rio Astamal <rio@dominopos.com>
+ * @author kadek <kadek@dominopos.com>
  */
 use Elasticsearch\ClientBuilder as ESBuilder;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class ElasticsearchClearPromotionCommand extends Command
+class ElasticsearchClearNewsCommand extends Command
 {
     /**
      * The console command name.
      *
      * @var string
      */
-    protected $name = 'elasticsearch:clear-promotion';
+    protected $name = 'elasticsearch:clear-news';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Clear all promotions data in Elasticsearch';
+    protected $description = 'Clear all news data in Elasticsearch';
 
     /**
      * Total data has been deleted.
@@ -56,7 +56,7 @@ class ElasticsearchClearPromotionCommand extends Command
      */
     public function fire()
     {
-        $confirm = $this->confirm('Are you sure want to clear all promotions? [yes|no]', FALSE);
+        $confirm = $this->confirm('Are you sure want to clear all news? [yes|no]', FALSE);
         if (! $confirm) {
             $this->info('Aborted');
             return;
@@ -70,8 +70,8 @@ class ElasticsearchClearPromotionCommand extends Command
             'search_type' => 'scan',    // use search_type=scan
             'scroll' => '15s',          // how long between scroll requests. should be small!
             'size' => 25,               // how many results *per shard* you want back
-            'index' => $esPrefix . $esConfig['indices']['promotions']['index'],
-            'type' => $esConfig['indices']['promotions']['type'],
+            'index' => $esPrefix . $esConfig['indices']['news']['index'],
+            'type' => $esConfig['indices']['news']['type'],
             'body' => [
                 'query' => [
                     'match_all' => []
@@ -85,8 +85,8 @@ class ElasticsearchClearPromotionCommand extends Command
 
             // the document id will be provided inside loop
             $deleteParams = [
-                'index' => $esPrefix . $esConfig['indices']['promotions']['index'],
-                'type' => $esConfig['indices']['promotions']['type'],
+                'index' => $esPrefix . $esConfig['indices']['news']['index'],
+                'type' => $esConfig['indices']['news']['type'],
             ];
 
             while (TRUE) {
@@ -111,7 +111,7 @@ class ElasticsearchClearPromotionCommand extends Command
             $this->error($e->getMessage());
         }
 
-        $this->info(sprintf('Total deleted promotion(s): %s', $this->totalDeleted));
+        $this->info(sprintf('Total deleted news(s): %s', $this->totalDeleted));
     }
 
     /**
@@ -149,7 +149,7 @@ class ElasticsearchClearPromotionCommand extends Command
             $params['id'] = $doc['_id'];
             $this->delete($client, $params);
 
-            $message = sprintf('%sPromotion ID: %s has been deleted.', $this->stdoutPrefix, $doc['_id']);
+            $message = sprintf('%sNews ID: %s has been deleted.', $this->stdoutPrefix, $doc['_id']);
             $this->info($message);
         }
     }
