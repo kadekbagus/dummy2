@@ -125,6 +125,9 @@ Artisan::add(new ElasticsearchResyncNewsCommand);
 // Initial Promotion data migration
 Artisan::add(new ElasticsearchResyncPromotionCommand);
 
+// Clear Promotion data in ES
+Artisan::add(new ElasticsearchClearPromotionCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

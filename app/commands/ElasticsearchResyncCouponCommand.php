@@ -118,7 +118,7 @@ class ElasticsearchResyncCouponCommand extends Command {
             ];
         }
 
-        $esQueue = new ESPromotionUpdateQueue();
+        $esQueue = new ESCouponUpdateQueue();
         $response = $esQueue->fire($job, $data);
 
         return $response;
