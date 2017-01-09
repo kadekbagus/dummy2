@@ -192,7 +192,7 @@ class PromotionListAPIController extends PubControllerAPI
                 }
             });
 
-            OrbitInput::get('mall_id', function($mallid) use ($jsonArea) {
+            OrbitInput::get('mall_id', function($mallId) use (&$jsonArea) {
                 if (! empty($mallId)) {
                     $withMallId = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.parent_id" => $mallId))))));
                     $jsonArea['query']['filtered']['filter']['and'][] = $withMallId;
