@@ -158,6 +158,8 @@ class NewsListAPIController extends PubControllerAPI
 
             OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore)
             {
+                $cacheKey['keyword'] = $keyword;
+
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
@@ -194,7 +196,8 @@ class NewsListAPIController extends PubControllerAPI
             });
 
             OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
+                $cacheKey['partner_id'] = $partnerId;
+
                 $partnerFilter = '';
                 if (! empty($partnerId)) {
                     $searchFlag = $searchFlag || TRUE;
