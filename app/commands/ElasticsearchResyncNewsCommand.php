@@ -27,6 +27,13 @@ class ElasticsearchResyncNewsCommand extends Command {
     protected $description = 'Resync news data from MySQL to Elasticsearch based on news id';
 
     /**
+     * Prefix for message list.
+     *
+     * @var string
+     */
+    protected $stdoutPrefix = '';
+
+    /**
      * Create a new command instance.
      *
      * @return void
@@ -90,7 +97,9 @@ class ElasticsearchResyncNewsCommand extends Command {
      */
     protected function getOptions()
     {
-        return array();
+        return array(
+            array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, no data will be sent to Elasticsearch.', null),
+        );
     }
 
     /**
