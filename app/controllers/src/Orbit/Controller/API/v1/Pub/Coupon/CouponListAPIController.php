@@ -17,6 +17,8 @@ use Activity;
 use Mall;
 use Advert;
 use Lang;
+use Role;
+use IssuedCoupon;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Helper\Util\GTMSearchRecorder;
@@ -25,6 +27,7 @@ use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
+use Elasticsearch\ClientBuilder;
 
 class CouponListAPIController extends PubControllerAPI
 {
@@ -64,7 +67,7 @@ class CouponListAPIController extends PubControllerAPI
         try {
             $this->checkAuth();
             $user = $this->api->user;
-
+            $host = Config::get('orbit.elasticsearch');
             $sort_by = OrbitInput::get('sortby', 'created_date');
             $sort_mode = OrbitInput::get('sortmode','desc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
@@ -126,10 +129,6 @@ class CouponListAPIController extends PubControllerAPI
             $valid_language = $couponHelper->getValidLanguage();
 
             $prefix = DB::getTablePrefix();
-            $withMallId = '';
-            if (! empty($mallId)) {
-                $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
-            }
 
             $advert_location_type = 'gtm';
             $advert_location_id = '0';
@@ -140,12 +139,141 @@ class CouponListAPIController extends PubControllerAPI
 
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
 
+            $client = ClientBuilder::create() // Instantiate a new ClientBuilder
+                    ->setHosts($host['hosts']) // Set the hosts
+                    ->build();
+
+            $withScore = false;
+
+            //Get now time, time must be 2017-01-09T15:30:00Z
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+            $dateTime = explode(' ', $dateTime);
+            $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
+
+            $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => $dateTimeEs))), array("range" => array("end_date" => array("gte" => $dateTimeEs))))))));
+
+            // get user lat and lon
+            if ($sort_by == 'location' || $location == 'mylocation') {
+                if (! empty($ul)) {
+                    $position = explode("|", $ul);
+                    $lon = $position[0];
+                    $lat = $position[1];
+                } else {
+                    // get lon lat from cookie
+                    $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                    if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                        $lon = $userLocationCookieArray[0];
+                        $lat = $userLocationCookieArray[1];
+                    }
+                }
+            }
+
+            $withKeywordSearch = false;
+            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey)
+            {
+                $cacheKey['keyword'] = $keyword;
+                if ($keyword != '') {
+                    $searchFlag = $searchFlag || TRUE;
+                    $withScore = true;
+                    $withKeywordSearch = true;
+
+                    $filterTranslation = array("nested" => array("path" => "translation", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("translation.name^6", "translation.description^3")))));
+                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
+
+                    $filterTenant = array("nested" => array("path" => "link_to_tenant", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^1")))));
+                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterTenant;
+
+                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("object_type^5", "keywords^4")));
+                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
+                }
+            });
+
+            OrbitInput::get('mall_id', function($mallid) use ($jsonArea) {
+                if (! empty($mallId)) {
+                    $withMallId = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.parent_id" => $mallId))))));
+                    $jsonArea['query']['filtered']['filter']['and'][] = $withMallId;
+                }
+             });
+
+            // filter by category_id
+            OrbitInput::get('category_id', function($categoryIds) use (&$jsonArea, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
+                if (! is_array($categoryIds)) {
+                    $categoryIds = (array)$categoryIds;
+                }
+
+                foreach ($categoryIds as $key => $value) {
+                    $categoryFilter["or"][] = array("match" => array("category_ids" => $value));
+                }
+                $jsonArea['query']['filtered']['filter']['and'][] = $categoryFilter;
+            });
+
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag, &$cacheKey) {
+                $cacheKey['partner_id'] = $partner_id;
+                $partnerFilter = '';
+                if (! empty($partnerId)) {
+                    $searchFlag = $searchFlag || TRUE;
+                    $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
+                                                                $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+                                                                     ->where('affected_group_names.group_type', '=', 'coupons');
+                                                            })
+                                                            ->where('partner_id', $partnerId)
+                                                            ->first();
+
+                    if (is_object($partnerAffected)) {
+                        $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
+                        $partnerFilter = array("query" => array("match" => array("partner_ids" => $partnerId)));
+
+                        if (in_array($partnerId, $exception)) {
+                            $partnerException = PartnerCompetitor::where("partner_id", $partnerId)->lists("competitor_id");
+                            $partnerIds = implode('", "', $partnerException);
+                            $partnerFilter = array("query" => array("not" => array("terms" => array("partner_ids" => $partnerIds))));
+                        }
+                        $jsonArea['query']['filtered']['filter']['and'][] = $partnerFilter;
+                    }
+                }
+            });
+
+            // filter by location (city or user location)
+            OrbitInput::get('location', function($location) use (&$jsonArea, &$searchFlag, &$withScore, $lat, $lon, $distance)
+            {
+                if (! empty($location)) {
+                    $searchFlag = $searchFlag || TRUE;
+
+                    if ($location === "mylocation" && $lat != '' && $lon != '') {
+                        $locationFilter = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("geo_distance" => array("distance" => $distance."km", "link_to_tenant.position" => array("lon" => $lon, "lat" => $lat)))))));
+                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
+                    } elseif ($location !== "mylocation") {
+                        $locationFilter = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.city.raw" => $location))))));
+                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
+                    }
+                }
+            });
+
+            // sort by name or location
+            if ($sort_by === 'location' && $lat != '' && $lon != '') {
+                $searchFlag = $searchFlag || TRUE;
+                $sort = array("_geo_distance" => array("link_to_tenant.position" => array("lon" => $lon, "lat" => $lat), "order" => $sort_mode, "unit" => "km", "distance_type" => "plane"));
+            } elseif ($sort_by === 'created_date') {
+                $sort = array("begin_date" => array("order" => $sort_mode));
+            } else {
+                $sort = array("name.raw" => array("order" => $sort_mode));
+            }
+
+            $sortby = $sort;
+            if ($withScore) {
+                $sortby = array("_score", $sort);
+            }
+            $jsonArea["sort"] = $sortby;
+
             $adverts = Advert::select('adverts.advert_id',
                                     'adverts.link_object_id',
                                     'advert_placements.placement_type',
                                     'advert_placements.placement_order',
-                                    'advert_locations.location_type',
-                                    'advert_link_types.advert_link_name')
+                                    'media.path',
+                                    DB::raw("CASE WHEN placement_type = 'featured_list' THEN 0 ELSE 1 END AS with_preferred"))
                             ->join('advert_link_types', function ($q) {
                                 $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                                 $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Coupon'"));
@@ -163,278 +291,168 @@ class CouponListAPIController extends PubControllerAPI
                                     $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
                                 }
                             })
+                            ->leftJoin('media', function ($q) {
+                                $q->on("object_id", '=', "adverts.advert_id");
+                                $q->on("media_name_long", '=', DB::raw("'advert_image_orig'"));
+                            })
                             ->where('adverts.status', '=', DB::raw("'active'"))
                             ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
-                            ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"));
+                            ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
+                            ->orderBy('advert_placements.placement_order', 'desc');
 
-            $advertSql = $adverts->toSql();
-            foreach($adverts->getBindings() as $binding)
-            {
-              $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $advertSql = preg_replace('/\?/', $value, $advertSql, 1);
+            $advertData = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
+                         ->mergeBindings($adverts->getQuery())
+                         ->select(DB::raw("adv.advert_id, 
+                                    adv.link_object_id,
+                                    adv.placement_order, 
+                                    adv.path, 
+                                    CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
+                         ->groupBy(DB::raw("adv.link_object_id"))
+                         ->take(100)
+                         ->get();
+
+            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+            $_jsonArea = $jsonArea;
+
+            if ($withKeywordSearch) {
+                // if user searching, we call es twice, first for get coupon data that match with keyword and then get the id,
+                // and second, call es data combine with advert
+                unset($jsonArea['query']['filtered']['query']);
+
+                $_paramArea = [
+                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
+                    'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),
+                    'body' => json_encode($_jsonArea)
+                ];
+                $searchResponse = $client->search($_paramArea);
+
+                $searchData = $searchResponse['hits'];
+
+                $couponIds = array();
+                foreach ($searchData['hits'] as $content) {
+                    foreach ($content as $key => $val) {
+                        if ($key === "_id") {
+                            $couponIds[] = $val;
+                        }
+                    }
+                    
+                }
+                $jsonArea['query']['filtered']['filter']['and'][] = array("terms" => array("_id" => $couponIds));
             }
 
-            $coupons = DB::table('promotions')->select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
-                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
-                                CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
-                                {$prefix}promotions.status,
-                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name
-                                    ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
-                                                                                    FROM {$prefix}promotion_retailer opt
-                                                                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                                                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                    WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                                                                        {$withMallId})
-                                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
-                                CASE WHEN (SELECT count(opt.promotion_retailer_id)
-                                            FROM {$prefix}promotion_retailer opt
-                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                            WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                            {$withMallId}
-                                            AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
-                                THEN 'true' ELSE 'false' END AS is_started"),
-                                DB::raw("
-                                        CASE WHEN advert_media.path is null THEN
-                                            CASE WHEN {$prefix}media.path is null THEN (
-                                                select m.path
-                                                from {$prefix}coupon_translations ct
-                                                join {$prefix}media m
-                                                    on m.object_id = ct.coupon_translation_id
-                                                    and m.media_name_long = 'coupon_translation_image_orig'
-                                                where ct.promotion_id = {$prefix}promotions.promotion_id
-                                                group by ct.promotion_id
-                                            ) ELSE {$prefix}media.path END
-                                        ELSE advert_media.path END
-                                        as image_url
-                                    "),
-                            DB::raw("advert.placement_type, advert.placement_order"),
-                            DB::raw("
-                                    CASE WHEN {$prefix}issued_coupons.user_id is null
-                                        THEN 'false'
-                                        ELSE 'true'
-                                    END as owned
-                                "),
-                            'promotions.created_at',
-                            'promotions.begin_date')
-                            ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
-                            ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
-                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
-                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
-                            })
-                            ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                            ->leftJoin('media', function ($q) {
-                                $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
-                                $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
-                            })
-                            ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
-                            ->leftJoin('issued_coupons', function ($q) use ($user) {
-                                $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id')
-                                  ->on('issued_coupons.user_id', '=', DB::raw("{$this->quote($user->user_id)}"))
-                                  ->on('issued_coupons.status', '=', DB::raw("'issued'"));
-                            })
-                            ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.link_object_id"), '=', 'promotions.promotion_id')
-                            ->leftJoin('media as advert_media', function ($q) {
-                                $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
-                                $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
-                            })
-                            ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
-                            ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
-                            ->whereRaw("available.tot > 0")
-                            ->whereRaw("{$prefix}promotions.status = 'active'")
-                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->orderBy(DB::raw("advert.placement_order"), 'desc')
-                            ->orderBy('coupon_name', 'asc');
-
-            // left join when need link to mall
-            if ($sort_by == 'location' || ! empty($category_id) || ! empty($mallId) || ! empty($location)) {
-                $coupons = $coupons->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                                ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
+            // call es
+            if (! empty($advertData)) {
+                unset($jsonArea["sort"]);
+                $withScore = true;
+                foreach ($advertData as $dt) {
+                    $esAdvert = array("match" => array("_id" => array("query" => $dt->link_object_id, "boost" => $dt->placement_order)));
+                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $esAdvert;
+                }
+                $jsonArea['query']['filtered']['query']['bool']['should'][] = array("match_all" => new stdclass());
             }
 
-            //calculate distance if user using my current location as filter and sort by location for listing
-            if ($sort_by == 'location' || $location == 'mylocation') {
-                if (! empty($ul)) {
-                    $position = explode("|", $ul);
-                    $lon = $position[0];
-                    $lat = $position[1];
-                } else {
-                    // get lon lat from cookie
-                    $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                    if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                        $lon = $userLocationCookieArray[0];
-                        $lat = $userLocationCookieArray[1];
+            $sortby = $sort;
+            if ($withScore) {
+                $sortby = array("_score", $sort);
+            }
+            $jsonArea["sort"] = $sortby;
+
+            $paramArea = [
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
+                'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),
+                'body' => json_encode($jsonArea)
+            ];
+
+            $userRole = Role::select('role_name')->where('role_id', $user->user_role_id)->first();
+            if ($userRole->role_name !== "Guest") {
+                $myCoupons = IssuedCoupon::select('issued_coupon_id')
+                                ->where('issued_coupons.user_id', '=', $this->quote($user->user_id))
+                                ->where('issued_coupons.status', '=', 'issued')
+                                ->orderBy('created_at', 'desc')
+                                ->take(100)
+                                ->get();
+            }
+
+            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$paramArea) {
+                return $client->search($paramArea);
+            });
+            $recordCache->put($serializedCacheKey, $response);
+
+            $records = $response['hits'];
+
+            $listOfRec = array();
+            foreach ($records['hits'] as $record) {
+                $data = array();
+                $isOwned = false;
+                foreach ($record['_source'] as $key => $value) {
+                    if ($key === "name") {
+                        $key = "coupon_name";
+                    } elseif ($key === "promotion_id") {
+                        $key = "coupon_id";
+                    }
+                    $data[$key] = $value;
+
+                    // translation, to get name, desc and image
+                    if ($key === "translation") {
+                        foreach ($record['_source']['translation'] as $dt) {
+                            if ($dt['language_id'] === $valid_language->language_id) {
+                                // name & desc
+                                if (! empty($dt['name'])) {
+                                    $data['coupon_name'] = $dt['name'];
+                                    $data['description'] = $dt['description'];
+                                }
+
+                                // image
+                                if (! empty($dt['image_url'])) {
+                                    $data['image_url'] = $dt['image_url'];
+                                }
+                            } else {
+                                // name & desc
+                                if (! empty($dt['name']) && empty($data['coupon_name'])) {
+                                    $data['coupon_name'] = $dt['name'];
+                                    $data['description'] = $dt['description'];
+                                }
+
+                                // image
+                                if (! empty($dt['image_url']) && empty($data['image_url'])) {
+                                    $data['image_url'] = $dt['image_url'];
+                                }
+                            }
+                        }
+                    }
+
+                    // advert
+                    if ($key === "coupon_id") {
+                        $data['placement_type'] = null;
+                        foreach ($advertData as $advData) {
+
+                            if ($advData->link_object_id === $value) {
+                                $data['placement_type'] = $advData->placement_type;
+
+                                // image
+                                if (! empty($advData->path)) {
+                                    $data['image_url'] = $advData->path;
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($userRole->role_name !== "Guest") {
+                        foreach ($myCoupons as $myCoupon) {
+
+                            if ($myCoupon->promotion_id === $value) {
+                                $isOwned = true;
+                                break;
+                            }
+                        }
                     }
                 }
-
-                if (!empty($lon) && !empty($lat)) {
-                    $coupons = $coupons->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
-                                    ->leftJoin('merchant_geofences', function ($q) use($prefix) {
-                                            $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END"));
-                                    });
-                }
+                $data['owned'] = $isOwned;
+                $data['score'] = $record['_score'];
+                $listOfRec[] = $data;
             }
-
-            // filter by category_id
-            OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                if (! is_array($category_id)) {
-                    $category_id = (array)$category_id;
-                }
-
-                if (in_array("mall", $category_id)) {
-                    $coupons = $coupons->whereIn(DB::raw("t.object_type"), $category_id);
-                } else {
-                    $coupons = $coupons->leftJoin('category_merchant as cm', function($q) {
-                                    $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("t.merchant_id"));
-                                    $q->on(DB::raw("t.object_type"), '=', DB::raw("'tenant'"));
-                                })
-                        ->whereIn(DB::raw('cm.category_id'), $category_id);
-                }
-            });
-
-            OrbitInput::get('partner_id', function($partner_id) use ($coupons, $prefix, &$searchFlag, &$cacheKey) {
-                $cacheKey['partner_id'] = $partner_id;
-                $searchFlag = $searchFlag || TRUE;
-                $coupons = ObjectPartnerBuilder::getQueryBuilder($coupons, $partner_id, 'coupon');
-            });
-
-            // filter by city
-            OrbitInput::get('location', function($location) use ($coupons, $prefix, $lat, $lon, $distance, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                $coupons = $coupons->leftJoin('merchants as mp', function($q) {
-                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("t.parent_id"));
-                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
-                                $q->on(DB::raw("mp.status"), '=', DB::raw("'active'"));
-                            });
-
-                if ($location === 'mylocation' && !empty($lon) && !empty($lat)) {
-                    $coupons = $coupons->havingRaw("distance <= {$distance}");
-                } else {
-                    $coupons = $coupons->where(DB::raw("(CASE WHEN t.object_type = 'tenant' THEN mp.city ELSE t.city END)"), $location);
-                }
-            });
-
-            $querySql = $coupons->toSql();
-            foreach($coupons->getBindings() as $binding)
-            {
-              $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $querySql = preg_replace('/\?/', $value, $querySql, 1);
-            }
-
-            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"));
-
-            if ($list_type === 'featured') {
-                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"),
-                                    DB::raw("sub_query.status"), 'campaign_status', 'is_started',
-                                    'image_url', 'placement_order',DB::raw("sub_query.created_at"), DB::raw("sub_query.begin_date"),
-                                    DB::raw("placement_type AS placement_type_orig"),
-                                    DB::raw("CASE WHEN SUM(
-                                                CASE
-                                                    WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
-                                                    THEN 1
-                                                    ELSE 0
-                                                END) > 0
-                                            THEN 'preferred_list_large'
-                                            ELSE placement_type
-                                            END AS placement_type"),
-                                    'owned'
-                                    )
-                                 ->groupBy('coupon_id');
-
-            } else {
-                $coupon = $coupon->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"),
-                                    'campaign_status', 'is_started', 'image_url',
-                                    'placement_type', 'placement_order', DB::raw("sub_query.created_at"), DB::raw("sub_query.begin_date"), 'owned')
-                                 ->groupBy('coupon_id');
-            }
-
-            if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-                $coupon = $coupon->addSelect(DB::raw("min(distance) as distance"))->orderBy('placement_order', 'desc')
-                                 ->orderBy('distance', 'asc');
-
-            } else {
-                $coupon = $coupon->orderBy('placement_order', 'desc');
-            }
-
-            OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
-                $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END as mall_id"));
-                $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN m.name ELSE t.name END as mall_name"));
-                $coupon->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'coupon_id')
-                    ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                    ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
-                $coupon->where(function($q) use ($mallId) {
-                    $q->where(DB::raw('t.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
-                    $q->orWhere(DB::raw('m.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
-                });
-
-                $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $mallId)
-                        ->first();
-            });
-
-            if ($sort_by !== 'location') {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    'name'            => 'coupon_name',
-                    'created_date'    => 'begin_date'
-                );
-
-                $sort_by = $sortByMapping[$sort_by];
-            }
-
-            OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
-            {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sort_mode = 'desc';
-                }
-            });
-
-            if ($sort_by !== 'location') {
-                $coupon = $coupon->orderBy($sort_by, $sort_mode);
-            }
-
-            OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix, &$cacheKey) {
-                $cacheKey['filter_name'] = $filterName;
-                if (! empty($filterName)) {
-                    if ($filterName === '#') {
-                        $coupon->whereRaw("SUBSTR(sub_query.coupon_name,1,1) not between 'a' and 'z'");
-                    } else {
-                        $filter = explode("-", $filterName);
-                        $coupon->whereRaw("SUBSTR(sub_query.coupon_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
-                    }
-                }
-            });
-
-            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix, &$searchFlag, &$cacheKey) {
-                $cacheKey['keyword'] = $keyword;
-                $searchFlag = $searchFlag || TRUE;
-                if (! empty($keyword)) {
-                    $coupon = $coupon->leftJoin('keyword_object', DB::Raw("sub_query.coupon_id"), '=', 'keyword_object.object_id')
-                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
-                                ->where(function($query) use ($keyword, $prefix)
-                                {
-                                    $word = explode(" ", $keyword);
-                                    foreach ($word as $key => $value) {
-                                        if (strlen($value) === 1 && $value === '%') {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->whereRaw("sub_query.coupon_name like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}keywords.keyword = '|{$value}' escape '|'");
-                                            });
-                                        } else {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->where(DB::raw('sub_query.coupon_name'), 'like', '%' . $value . '%')
-                                                  ->orWhere('keywords.keyword', '=', $value);
-                                            });
-                                        }
-                                    }
-                                });
-                }
-            });
 
             // record GTM search activity
             if ($searchFlag) {
@@ -450,71 +468,52 @@ class CouponListAPIController extends PubControllerAPI
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
-            $_coupon = clone ($coupon);
-            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-
-            $totalRec = 0;
-            // Set defaul 0 when get variable no_total_records = yes
-            if ($no_total_records !== 'yes') {
-                $recordCounter = RecordCounter::create($_coupon);
-
-                // Try to get the result from cache
-                $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
-                    return $recordCounter->count();
-                });
-                // Put the result in cache if it is applicable
-                $totalRecordCache->put($serializedCacheKey, $totalRec);
+            // frontend need the mall name
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
-
-            $coupon->take($take);
-            $coupon->skip($skip);
-
-            // Try to get the result from cache
-            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($coupon) {
-                return $coupon->get();
-            });
-            $recordCache->put($serializedCacheKey, $listOfRec);
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = $totalRec;
+            $data->total_records = count($listOfRec);
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
             }
             $data->records = $listOfRec;
 
-            // random featured adv
-            // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
-            if ($list_type === 'featured') {
-                $randomCouponBuilder = clone $_coupon;
-                // Take 100 value right now to prevent memory leak
-                $randomCouponBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
+            // // random featured adv
+            // // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
+            // if ($list_type === 'featured') {
+            //     $randomCouponBuilder = clone $_coupon;
+            //     // Take 100 value right now to prevent memory leak
+            //     $randomCouponBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
 
-                $randomCoupon = $featuredRecordCache->get($serializedCacheKey, function() use ($randomCouponBuilder) {
-                    return $randomCouponBuilder->get();
-                });
-                $featuredRecordCache->put($serializedCacheKey, $randomCoupon);
+            //     $randomCoupon = $featuredRecordCache->get($serializedCacheKey, function() use ($randomCouponBuilder) {
+            //         return $randomCouponBuilder->get();
+            //     });
+            //     $featuredRecordCache->put($serializedCacheKey, $randomCoupon);
 
-                $advertedCampaigns = array_filter($randomCoupon, function($v) {
-                    return ($v->placement_type_orig === 'featured_list');
-                });
+            //     $advertedCampaigns = array_filter($randomCoupon, function($v) {
+            //         return ($v->placement_type_orig === 'featured_list');
+            //     });
 
-                if (count($advertedCampaigns) > $take) {
-                    $random = array();
-                    $listSlide = array_rand($advertedCampaigns, $take);
-                    if (count($listSlide) > 1) {
-                        foreach ($listSlide as $key => $value) {
-                            $random[] = $advertedCampaigns[$value];
-                        }
-                    } else {
-                        $random = $advertedCampaigns[$listSlide];
-                    }
+            //     if (count($advertedCampaigns) > $take) {
+            //         $random = array();
+            //         $listSlide = array_rand($advertedCampaigns, $take);
+            //         if (count($listSlide) > 1) {
+            //             foreach ($listSlide as $key => $value) {
+            //                 $random[] = $advertedCampaigns[$value];
+            //             }
+            //         } else {
+            //             $random = $advertedCampaigns[$listSlide];
+            //         }
 
-                    $data->returned_records = count($listOfRec);
-                    $data->total_records = count($random);
-                    $data->records = $random;
-                }
-            }
+            //         $data->returned_records = count($listOfRec);
+            //         $data->total_records = count($random);
+            //         $data->records = $random;
+            //     }
+            // }
 
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
@@ -557,7 +556,7 @@ class CouponListAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
 
@@ -566,7 +565,7 @@ class CouponListAPIController extends PubControllerAPI
             $this->response->message = $e->getMessage();
             $result['total_records'] = 0;
             $result['returned_records'] = 0;
-            $result['records'] = null;
+            $result['records'] = $e->getLine();
 
             $this->response->data = $result;
             $httpCode = 403;
@@ -581,14 +580,14 @@ class CouponListAPIController extends PubControllerAPI
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
             $httpCode = 500;
         } catch (Exception $e) {
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getLine();
             $httpCode = 500;
         }
 
@@ -600,5 +599,10 @@ class CouponListAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    protected function getCouponData() {
+
+        $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => "now", "time_zone" => "+07:00"))), array("range" => array("end_date" => array("gte" => "now", "time_zone" => "+07:00"))))))));
     }
 }
