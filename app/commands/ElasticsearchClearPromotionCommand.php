@@ -1,6 +1,6 @@
 <?php
 /**
- * Command for clearing all coupons data from Elasticsearch index.
+ * Command for clearing all promotions data from Elasticsearch index.
  *
  * @author Rio Astamal <rio@dominopos.com>
  */
