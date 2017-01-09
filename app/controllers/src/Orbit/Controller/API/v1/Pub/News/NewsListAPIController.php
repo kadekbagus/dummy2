@@ -156,7 +156,7 @@ class NewsListAPIController extends PubControllerAPI
                 }
             }
 
-            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore, &$cacheKey)
             {
                 $cacheKey['keyword'] = $keyword;
 
@@ -195,7 +195,7 @@ class NewsListAPIController extends PubControllerAPI
                 $jsonArea['query']['filtered']['filter']['and'][] = $categoryFilter;
             });
 
-            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag) {
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag, &$cacheKey) {
                 $cacheKey['partner_id'] = $partnerId;
 
                 $partnerFilter = '';
