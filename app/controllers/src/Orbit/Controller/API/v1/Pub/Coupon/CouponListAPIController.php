@@ -556,7 +556,7 @@ class CouponListAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = $e->getLine();
+            $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
 
@@ -565,7 +565,7 @@ class CouponListAPIController extends PubControllerAPI
             $this->response->message = $e->getMessage();
             $result['total_records'] = 0;
             $result['returned_records'] = 0;
-            $result['records'] = $e->getLine();
+            $result['records'] = null;
 
             $this->response->data = $result;
             $httpCode = 403;
@@ -580,14 +580,14 @@ class CouponListAPIController extends PubControllerAPI
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
-            $this->response->data = $e->getLine();
+            $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = $e->getLine();
+            $this->response->data = null;
             $httpCode = 500;
         }
 
