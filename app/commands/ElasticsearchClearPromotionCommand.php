@@ -56,7 +56,7 @@ class ElasticsearchClearPromotionCommand extends Command
      */
     public function fire()
     {
-        $confirm = $this->confirm('Are you sure want to clear all coupons? [yes|no]', FALSE);
+        $confirm = $this->confirm('Are you sure want to clear all promotions? [yes|no]', FALSE);
         if (! $confirm) {
             $this->info('Aborted');
             return;
