@@ -156,8 +156,10 @@ class NewsListAPIController extends PubControllerAPI
                 }
             }
 
-            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore, &$cacheKey)
             {
+                $cacheKey['keyword'] = $keyword;
+
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
@@ -173,7 +175,7 @@ class NewsListAPIController extends PubControllerAPI
                 }
             });
 
-            OrbitInput::get('mall_id', function($mallid) use ($jsonArea) {
+            OrbitInput::get('mall_id', function($mallId) use (&$jsonArea) {
                 if (! empty($mallId)) {
                     $withMallId = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.parent_id" => $mallId))))));
                     $jsonArea['query']['filtered']['filter']['and'][] = $withMallId;
@@ -193,8 +195,9 @@ class NewsListAPIController extends PubControllerAPI
                 $jsonArea['query']['filtered']['filter']['and'][] = $categoryFilter;
             });
 
-            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag, &$cacheKey) {
+                $cacheKey['partner_id'] = $partnerId;
+
                 $partnerFilter = '';
                 if (! empty($partnerId)) {
                     $searchFlag = $searchFlag || TRUE;

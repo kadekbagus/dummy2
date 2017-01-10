@@ -166,6 +166,7 @@ class ESCouponUpdateQueue
                     'name' => $translationCollection->promotion_name,
                     'description' => $translationCollection->description,
                     'language_id' => $translationCollection->merchant_language_id,
+                    'language_code' => $translationCollection->name,
                     'image_url' => NULL
                 );
 

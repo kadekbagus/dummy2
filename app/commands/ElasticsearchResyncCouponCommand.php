@@ -69,7 +69,7 @@ class ElasticsearchResyncCouponCommand extends Command {
                     throw new Exception($response['message'], 1);
                 }
 
-                $this->info(sprintf('%Coupon ID: "%s" has been successfully synced to Elasticsearch server', $this->stdoutPrefix, $data['coupon_id']));
+                $this->info(sprintf('%sCoupon ID: "%s" has been successfully synced to Elasticsearch server', $this->stdoutPrefix, $data['coupon_id']));
             } catch (Exception $e) {
                 $this->error(sprintf('%sFailed to sync Coupon ID "%s", message: %s', $this->stdoutPrefix, $data['coupon_id'], $e->getMessage()));
             }
