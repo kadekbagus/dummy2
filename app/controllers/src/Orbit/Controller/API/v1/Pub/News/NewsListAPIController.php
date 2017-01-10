@@ -30,6 +30,7 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\SimpleCache;
 use Elasticsearch\ClientBuilder;
+use Carbon\Carbon as Carbon;
 
 class NewsListAPIController extends PubControllerAPI
 {
@@ -130,7 +131,14 @@ class NewsListAPIController extends PubControllerAPI
 
             $withScore = false;
 
-            $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => "now", "time_zone" => "+07:00"))), array("range" => array("end_date" => array("gte" => "now", "time_zone" => "+07:00"))))))));
+            //Get now time, time must be 2017-01-09T15:30:00Z
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+            $dateTime = explode(' ', $dateTime);
+            $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
+
+            $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => $dateTimeEs))), array("range" => array("end_date" => array("gte" => $dateTimeEs))))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -148,8 +156,10 @@ class NewsListAPIController extends PubControllerAPI
                 }
             }
 
-            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore, &$cacheKey)
             {
+                $cacheKey['keyword'] = $keyword;
+
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
@@ -165,7 +175,7 @@ class NewsListAPIController extends PubControllerAPI
                 }
             });
 
-            OrbitInput::get('mall_id', function($mallid) use ($jsonArea) {
+            OrbitInput::get('mall_id', function($mallId) use (&$jsonArea) {
                 if (! empty($mallId)) {
                     $withMallId = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.parent_id" => $mallId))))));
                     $jsonArea['query']['filtered']['filter']['and'][] = $withMallId;
@@ -185,8 +195,9 @@ class NewsListAPIController extends PubControllerAPI
                 $jsonArea['query']['filtered']['filter']['and'][] = $categoryFilter;
             });
 
-            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag, &$cacheKey) {
+                $cacheKey['partner_id'] = $partnerId;
+
                 $partnerFilter = '';
                 if (! empty($partnerId)) {
                     $searchFlag = $searchFlag || TRUE;

@@ -74,8 +74,6 @@ class ESNewsUpdateQueue
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where('news.news_id', $newsId)
                     ->where('news.object_type', 'news')
-                    ->whereRaw("{$prefix}news.status = 'active'")
-                    ->havingRaw("campaign_status = 'ongoing'")
                     ->orderBy('news.news_id', 'asc')
                     ->first();
 
@@ -159,6 +157,7 @@ class ESNewsUpdateQueue
                     'name' => $translationCollection->news_name,
                     'description' => $translationCollection->description,
                     'language_id' => $translationCollection->merchant_language_id,
+                    'language_code' => $translationCollection->name,
                     'image_url' => NULL
                 );
 

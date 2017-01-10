@@ -150,7 +150,10 @@ class Coupon extends Eloquent
      */
     public function translations()
     {
-        return $this->hasMany('CouponTranslation', 'promotion_id', 'promotion_id')->excludeDeleted()->has('language');
+        return $this->hasMany('CouponTranslation', 'promotion_id', 'promotion_id')
+                    ->where('coupon_translations.status', '!=', 'deleted')
+                    ->has('language')
+                    ->join('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id');
     }
 
     /**

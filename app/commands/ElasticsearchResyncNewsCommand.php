@@ -27,6 +27,13 @@ class ElasticsearchResyncNewsCommand extends Command {
     protected $description = 'Resync news data from MySQL to Elasticsearch based on news id';
 
     /**
+     * Prefix for message list.
+     *
+     * @var string
+     */
+    protected $stdoutPrefix = '';
+
+    /**
      * Create a new command instance.
      *
      * @return void
@@ -64,7 +71,7 @@ class ElasticsearchResyncNewsCommand extends Command {
 
                 $this->info(sprintf('%sNews ID: "%s" has been successfully synced to Elasticsearch server', $this->stdoutPrefix, $data['news_id']));
             } catch (Exception $e) {
-                $this->error(sprintf('%sFailed to sync promotion ID "%s", message: %s', $this->stdoutPrefix, $data['news_id'], $e->getMessage()));
+                $this->error(sprintf('%sFailed to sync news ID "%s", message: %s', $this->stdoutPrefix, $data['news_id'], $e->getMessage()));
             }
         } catch (\Exception $e) {
             $this->error($e->getMessage());
@@ -90,7 +97,9 @@ class ElasticsearchResyncNewsCommand extends Command {
      */
     protected function getOptions()
     {
-        return array();
+        return array(
+            array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, no data will be sent to Elasticsearch.', null),
+        );
     }
 
     /**

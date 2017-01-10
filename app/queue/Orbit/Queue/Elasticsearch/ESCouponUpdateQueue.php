@@ -83,8 +83,6 @@ class ESCouponUpdateQueue
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                     ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
-                    ->whereRaw("{$prefix}promotions.status = 'active'")
-                    ->havingRaw("campaign_status = 'ongoing'")
                     ->orderBy('promotions.promotion_id', 'asc')
                     ->first();
 
@@ -168,6 +166,7 @@ class ESCouponUpdateQueue
                     'name' => $translationCollection->promotion_name,
                     'description' => $translationCollection->description,
                     'language_id' => $translationCollection->merchant_language_id,
+                    'language_code' => $translationCollection->name,
                     'image_url' => NULL
                 );
 
