@@ -178,7 +178,7 @@ class CouponListAPIController extends PubControllerAPI
                     $filterTranslation = array("nested" => array("path" => "translation", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("translation.name^6", "translation.description^3")))));
                     $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
 
-                    $filterTenant = array("nested" => array("path" => "link_to_tenant", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^2")))));
+                    $filterTenant = array("nested" => array("path" => "link_to_tenant", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^2", "link_to_tenant.mall_name^3")))));
                     $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTenant;
 
                     $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("object_type^5", "keywords^4")));
@@ -505,7 +505,7 @@ class CouponListAPIController extends PubControllerAPI
                         $output = $advertedCampaigns[$listSlide];
                     }
                 } else {
-                    $output = array_slice($listOfRec, 0, 4);
+                    $output = array_slice($listOfRec, 0, $take);
                 }
 
                 $data->returned_records = count($listOfRec);
