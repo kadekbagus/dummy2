@@ -148,7 +148,7 @@ class CouponListAPIController extends PubControllerAPI
             if ($list_type === 'featured') {
                 $esTake = 50;
             }
-            $jsonArea = array("from" => $skip, "size" => $esTake, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => $dateTimeEs))), array("range" => array("end_date" => array("gte" => $dateTimeEs))))))));
+            $jsonQuery = array("from" => $skip, "size" => $esTake, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => $dateTimeEs))), array("range" => array("end_date" => array("gte" => $dateTimeEs))))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -167,7 +167,7 @@ class CouponListAPIController extends PubControllerAPI
             }
 
             $withKeywordSearch = false;
-            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey)
             {
                 $cacheKey['keyword'] = $keyword;
                 if ($keyword != '') {
@@ -176,25 +176,25 @@ class CouponListAPIController extends PubControllerAPI
                     $withKeywordSearch = true;
 
                     $filterTranslation = array("nested" => array("path" => "translation", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("translation.name^6", "translation.description^3")))));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
 
                     $filterTenant = array("nested" => array("path" => "link_to_tenant", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^1")))));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterTenant;
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTenant;
 
                     $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("object_type^5", "keywords^4")));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
                 }
             });
 
-            OrbitInput::get('mall_id', function($mallId) use (&$jsonArea) {
+            OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery) {
                 if (! empty($mallId)) {
                     $withMallId = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.parent_id" => $mallId))))));
-                    $jsonArea['query']['filtered']['filter']['and'][] = $withMallId;
+                    $jsonQuery['query']['filtered']['filter']['and'][] = $withMallId;
                 }
              });
 
             // filter by category_id
-            OrbitInput::get('category_id', function($categoryIds) use (&$jsonArea, &$searchFlag) {
+            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
@@ -203,10 +203,10 @@ class CouponListAPIController extends PubControllerAPI
                 foreach ($categoryIds as $key => $value) {
                     $categoryFilter["or"][] = array("match" => array("category_ids" => $value));
                 }
-                $jsonArea['query']['filtered']['filter']['and'][] = $categoryFilter;
+                $jsonQuery['query']['filtered']['filter']['and'][] = $categoryFilter;
             });
 
-            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag, &$cacheKey) {
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
                 $cacheKey['partner_id'] = $partnerId;
                 $partnerFilter = '';
                 if (! empty($partnerId)) {
@@ -227,23 +227,23 @@ class CouponListAPIController extends PubControllerAPI
                             $partnerIds = implode('", "', $partnerException);
                             $partnerFilter = array("query" => array("not" => array("terms" => array("partner_ids" => $partnerIds))));
                         }
-                        $jsonArea['query']['filtered']['filter']['and'][] = $partnerFilter;
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $partnerFilter;
                     }
                 }
             });
 
             // filter by location (city or user location)
-            OrbitInput::get('location', function($location) use (&$jsonArea, &$searchFlag, &$withScore, $lat, $lon, $distance)
+            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance)
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
 
                     if ($location === "mylocation" && $lat != '' && $lon != '') {
                         $locationFilter = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("geo_distance" => array("distance" => $distance."km", "link_to_tenant.position" => array("lon" => $lon, "lat" => $lat)))))));
-                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
                     } elseif ($location !== "mylocation") {
                         $locationFilter = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.city.raw" => $location))))));
-                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
                     }
                 }
             });
@@ -262,7 +262,7 @@ class CouponListAPIController extends PubControllerAPI
             if ($withScore) {
                 $sortby = array("_score", $sort);
             }
-            $jsonArea["sort"] = $sortby;
+            $jsonQuery["sort"] = $sortby;
 
             $advert_location_type = 'gtm';
             $advert_location_id = '0';
@@ -316,19 +316,19 @@ class CouponListAPIController extends PubControllerAPI
                          ->get();
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $_jsonArea = $jsonArea;
+            $_jsonQuery = $jsonQuery;
 
             if ($withKeywordSearch) {
                 // if user searching, we call es twice, first for get coupon data that match with keyword and then get the id,
                 // and second, call es data combine with advert
-                unset($jsonArea['query']['filtered']['query']);
+                unset($jsonQuery['query']['filtered']['query']);
 
-                $_paramArea = [
+                $_esParam = [
                     'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
                     'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),
-                    'body' => json_encode($_jsonArea)
+                    'body' => json_encode($_jsonQuery)
                 ];
-                $searchResponse = $client->search($_paramArea);
+                $searchResponse = $client->search($_esParam);
 
                 $searchData = $searchResponse['hits'];
 
@@ -340,30 +340,30 @@ class CouponListAPIController extends PubControllerAPI
                         }
                     }
                 }
-                $jsonArea['query']['filtered']['filter']['and'][] = array("terms" => array("_id" => $couponIds));
+                $jsonQuery['query']['filtered']['filter']['and'][] = array("terms" => array("_id" => $couponIds));
             }
 
             // call es
             if (! empty($advertData)) {
-                unset($jsonArea["sort"]);
+                unset($jsonQuery["sort"]);
                 $withScore = true;
                 foreach ($advertData as $dt) {
                     $esAdvert = array("match" => array("_id" => array("query" => $dt->link_object_id, "boost" => $dt->placement_order)));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $esAdvert;
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $esAdvert;
                 }
-                $jsonArea['query']['filtered']['query']['bool']['should'][] = array("match_all" => new stdclass());
+                $jsonQuery['query']['filtered']['query']['bool']['should'][] = array("match_all" => new stdclass());
             }
 
             $sortby = $sort;
             if ($withScore) {
                 $sortby = array("_score", $sort);
             }
-            $jsonArea["sort"] = $sortby;
+            $jsonQuery["sort"] = $sortby;
 
-            $paramArea = [
+            $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),
-                'body' => json_encode($jsonArea)
+                'body' => json_encode($jsonQuery)
             ];
 
             $userRole = Role::select('role_name')->where('role_id', $user->user_role_id)->first();
@@ -377,8 +377,8 @@ class CouponListAPIController extends PubControllerAPI
             }
 
             $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$paramArea) {
-                return $client->search($paramArea);
+            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
+                return $client->search($esParam);
             });
             $recordCache->put($serializedCacheKey, $response);
 
@@ -597,10 +597,5 @@ class CouponListAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
-    }
-
-    protected function getCouponData() {
-
-        $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => "now", "time_zone" => "+07:00"))), array("range" => array("end_date" => array("gte" => "now", "time_zone" => "+07:00"))))))));
     }
 }
