@@ -32,6 +32,7 @@ use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
 use Elasticsearch\ClientBuilder;
+use PartnerAffectedGroup;
 
 class PromotionListAPIController extends PubControllerAPI
 {
@@ -306,7 +307,7 @@ class PromotionListAPIController extends PubControllerAPI
 
             $advertData = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
                          ->mergeBindings($adverts->getQuery())
-                         ->select(DB::raw("adv.advert_id, 
+                         ->select(DB::raw("adv.advert_id,
                                     adv.link_object_id,
                                     adv.placement_order, 
                                     adv.path,
@@ -340,7 +341,6 @@ class PromotionListAPIController extends PubControllerAPI
                             $couponIds[] = $val;
                         }
                     }
-                    
                 }
                 $jsonArea['query']['filtered']['filter']['and'][] = array("terms" => array("_id" => $couponIds));
             }
@@ -467,8 +467,8 @@ class PromotionListAPIController extends PubControllerAPI
             }
             $data->records = $listOfRec;
 
-            // // random featured adv
-            // // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
+            // random featured adv
+            // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
             if ($list_type === 'featured') {
                 $advertedCampaigns = array_filter($listOfRec, function($v) {
                     return ($v['placement_type_orig'] === 'featured_list');
@@ -485,7 +485,7 @@ class PromotionListAPIController extends PubControllerAPI
                         $output = $advertedCampaigns[$listSlide];
                     }
                 } else {
-                    $output = array_slice($input, 0, 3);
+                    $output = array_slice($listOfRec, 0, $take);
                 }
 
                 $data->returned_records = count($listOfRec);

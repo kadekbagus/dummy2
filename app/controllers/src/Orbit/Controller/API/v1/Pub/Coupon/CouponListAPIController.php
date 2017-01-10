@@ -28,6 +28,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
 use Elasticsearch\ClientBuilder;
+use PartnerAffectedGroup;
 
 class CouponListAPIController extends PubControllerAPI
 {
@@ -304,7 +305,7 @@ class CouponListAPIController extends PubControllerAPI
 
             $advertData = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
                          ->mergeBindings($adverts->getQuery())
-                         ->select(DB::raw("adv.advert_id, 
+                         ->select(DB::raw("adv.advert_id,
                                     adv.link_object_id,
                                     adv.placement_order, 
                                     adv.path,
@@ -504,7 +505,7 @@ class CouponListAPIController extends PubControllerAPI
                         $output = $advertedCampaigns[$listSlide];
                     }
                 } else {
-                    $output = array_slice($input, 0, 3);
+                    $output = array_slice($listOfRec, 0, 4);
                 }
 
                 $data->returned_records = count($listOfRec);
