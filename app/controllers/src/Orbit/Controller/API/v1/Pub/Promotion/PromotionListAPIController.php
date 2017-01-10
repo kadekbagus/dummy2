@@ -177,14 +177,14 @@ class PromotionListAPIController extends PubControllerAPI
                     $withScore = true;
                     $withKeywordSearch = true;
 
-                    $priority['name'] = Config::get('orbit.elasticsearch.priority.news.name', '^6');
-                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.news.object_type', '^5');
-                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.news.keywords', '^4');
-                    $priority['description'] = Config::get('orbit.elasticsearch.priority.news.description', '^3');
-                    $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.news.mall_name', '^3');
-                    $priority['city'] = Config::get('orbit.elasticsearch.priority.news.city', '^2');
-                    $priority['province'] = Config::get('orbit.elasticsearch.priority.news.province', '^2');
-                    $priority['country'] = Config::get('orbit.elasticsearch.priority.news.country', '^2');
+                    $priority['name'] = Config::get('orbit.elasticsearch.priority.promotions.name', '^6');
+                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.promotions.object_type', '^5');
+                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.promotions.keywords', '^4');
+                    $priority['description'] = Config::get('orbit.elasticsearch.priority.promotions.description', '^3');
+                    $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.promotions.mall_name', '^3');
+                    $priority['city'] = Config::get('orbit.elasticsearch.priority.promotions.city', '^2');
+                    $priority['province'] = Config::get('orbit.elasticsearch.priority.promotions.province', '^2');
+                    $priority['country'] = Config::get('orbit.elasticsearch.priority.promotions.country', '^2');
 
                     $filterTranslation = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.name'.$priority['name'], 'translation.description'.$priority['description'])))));
                     $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
