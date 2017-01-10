@@ -131,6 +131,12 @@ class Coupon extends Eloquent
                             THEN {$prefix}merchants.parent_id
                             ELSE {$prefix}merchants.merchant_id
                         END) as merchant_id
+                    "),
+                    DB::raw("
+                        (CASE WHEN {$prefix}merchants.object_type = 'tenant'
+                            THEN oms.name
+                            ELSE {$prefix}merchants.name
+                        END) as mall_name
                     ")
                 )
                 ->leftJoin(DB::raw("{$prefix}merchants oms"), DB::raw("oms.merchant_id"), '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END"))
