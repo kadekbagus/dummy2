@@ -132,6 +132,7 @@ class ESCouponUpdateQueue
                     "merchant_id" => $esCampaignLocation->merchant_id,
                     "parent_id" => $esCampaignLocation->parent_id,
                     "name" => $esCampaignLocation->name,
+                    "mall_name" => $esCampaignLocation->mall_name,
                     "object_type" => $esCampaignLocation->object_type,
                     "city" => $esCampaignLocation->city,
                     "province" => $esCampaignLocation->province,
