@@ -178,7 +178,7 @@ class CouponListAPIController extends PubControllerAPI
                     $filterTranslation = array("nested" => array("path" => "translation", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("translation.name^6", "translation.description^3")))));
                     $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
 
-                    $filterTenant = array("nested" => array("path" => "link_to_tenant", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^1")))));
+                    $filterTenant = array("nested" => array("path" => "link_to_tenant", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^2")))));
                     $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTenant;
 
                     $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("object_type^5", "keywords^4")));
@@ -307,7 +307,7 @@ class CouponListAPIController extends PubControllerAPI
                          ->mergeBindings($adverts->getQuery())
                          ->select(DB::raw("adv.advert_id,
                                     adv.link_object_id,
-                                    adv.placement_order, 
+                                    adv.placement_order,
                                     adv.path,
                                     adv.placement_type as placement_type_orig,
                                     CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
