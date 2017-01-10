@@ -130,7 +130,7 @@ Event::listen('orbit.advert.postnewadvert.after.commit', function($controller, $
     }
 
     // checking promotions for updating elasticsearch data
-    $promotions = News::excludeDeleted('news')
+    $promotion = News::excludeDeleted('news')
             ->select(DB::raw("
                 {$prefix}news.news_id,
                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -148,22 +148,19 @@ Event::listen('orbit.advert.postnewadvert.after.commit', function($controller, $
             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
             ->where('news.object_type', '=', 'promotion')
             ->groupBy('news.news_id')
-            ->get();
+            ->first();
 
-    if (!(count($promotions) < 1)) {
-        foreach ($promotions as $_promotions) {
-
-            if ($_promotions->campaign_status === 'stopped' || $_promotions->campaign_status === 'expired') {
-                // Notify the queueing system to delete Elasticsearch document
-                Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionDeleteQueue', [
-                    'news_id' => $_promotions->news_id
-                ]);
-            } else {
-                // Notify the queueing system to update Elasticsearch document
-                Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
-                    'news_id' => $_promotions->news_id
-                ]);
-            }
-        }
+    if (is_object($promotion))
+    if ($promotion->campaign_status === 'stopped' || $promotion->campaign_status === 'expired') {
+        // Notify the queueing system to delete Elasticsearch document
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionDeleteQueue', [
+            'news_id' => $promotion->news_id
+        ]);
+    } else {
+        // Notify the queueing system to update Elasticsearch document
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
+            'news_id' => $promotion->news_id
+        ]);
     }
+
 });

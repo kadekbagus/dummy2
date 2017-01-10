@@ -100,9 +100,9 @@ class News extends Eloquent
 
     public function adverts()
     {
-        return $this->hasMany('Advert', 'link_object_id', 'promotion_id')
+        return $this->hasMany('Advert', 'link_object_id', 'news_id')
             ->leftJoin('advert_link_types', 'adverts.advert_link_type_id', '=', 'advert_link_types.advert_link_type_id')
-            ->where('advert_link_types.advert_type', '=', 'coupon');
+            ->where('advert_link_types.advert_type', '=', 'promotion');
     }
 
     /**
