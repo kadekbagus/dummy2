@@ -150,17 +150,18 @@ Event::listen('orbit.advert.postnewadvert.after.commit', function($controller, $
             ->groupBy('news.news_id')
             ->first();
 
-    if (is_object($promotion))
-    if ($promotion->campaign_status === 'stopped' || $promotion->campaign_status === 'expired') {
-        // Notify the queueing system to delete Elasticsearch document
-        Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionDeleteQueue', [
-            'news_id' => $promotion->news_id
-        ]);
-    } else {
-        // Notify the queueing system to update Elasticsearch document
-        Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
-            'news_id' => $promotion->news_id
-        ]);
+    if (is_object($promotion)) {
+        if ($promotion->campaign_status === 'stopped' || $promotion->campaign_status === 'expired') {
+            // Notify the queueing system to delete Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionDeleteQueue', [
+                'news_id' => $promotion->news_id
+            ]);
+        } else {
+            // Notify the queueing system to update Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
+                'news_id' => $promotion->news_id
+            ]);
+        }
     }
 
 });
