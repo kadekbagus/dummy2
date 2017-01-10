@@ -143,7 +143,11 @@ class CouponListAPIController extends PubControllerAPI
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
             $withScore = false;
-            $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => $dateTimeEs))), array("range" => array("end_date" => array("gte" => $dateTimeEs))))))));
+            $esTake = $take;
+            if ($list_type === 'featured') {
+                $esTake = 50;
+            }
+            $jsonArea = array("from" => $skip, "size" => $esTake, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => $dateTimeEs))), array("range" => array("end_date" => array("gte" => $dateTimeEs))))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -202,7 +206,7 @@ class CouponListAPIController extends PubControllerAPI
             });
 
             OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag, &$cacheKey) {
-                $cacheKey['partner_id'] = $partner_id;
+                $cacheKey['partner_id'] = $partnerId;
                 $partnerFilter = '';
                 if (! empty($partnerId)) {
                     $searchFlag = $searchFlag || TRUE;
@@ -303,7 +307,8 @@ class CouponListAPIController extends PubControllerAPI
                          ->select(DB::raw("adv.advert_id, 
                                     adv.link_object_id,
                                     adv.placement_order, 
-                                    adv.path, 
+                                    adv.path,
+                                    adv.placement_type as placement_type_orig,
                                     CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
                          ->groupBy(DB::raw("adv.link_object_id"))
                          ->take(100)
@@ -333,7 +338,6 @@ class CouponListAPIController extends PubControllerAPI
                             $couponIds[] = $val;
                         }
                     }
-                    
                 }
                 $jsonArea['query']['filtered']['filter']['and'][] = array("terms" => array("_id" => $couponIds));
             }
@@ -423,10 +427,12 @@ class CouponListAPIController extends PubControllerAPI
                     // advert
                     if ($key === "coupon_id") {
                         $data['placement_type'] = null;
+                        $data['placement_type_orig'] = null;
                         foreach ($advertData as $advData) {
 
                             if ($advData->link_object_id === $value) {
                                 $data['placement_type'] = $advData->placement_type;
+                                $data['placement_type_orig'] = $advData->placement_type_orig;
 
                                 // image
                                 if (! empty($advData->path)) {
@@ -482,36 +488,29 @@ class CouponListAPIController extends PubControllerAPI
 
             // // random featured adv
             // // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
-            // if ($list_type === 'featured') {
-            //     $randomCouponBuilder = clone $_coupon;
-            //     // Take 100 value right now to prevent memory leak
-            //     $randomCouponBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
+            if ($list_type === 'featured') {
+                $advertedCampaigns = array_filter($listOfRec, function($v) {
+                    return ($v['placement_type_orig'] === 'featured_list');
+                });
 
-            //     $randomCoupon = $featuredRecordCache->get($serializedCacheKey, function() use ($randomCouponBuilder) {
-            //         return $randomCouponBuilder->get();
-            //     });
-            //     $featuredRecordCache->put($serializedCacheKey, $randomCoupon);
+                if (count($advertedCampaigns) > $take) {
+                    $output = array();
+                    $listSlide = array_rand($advertedCampaigns, $take);
+                    if (count($listSlide) > 1) {
+                        foreach ($listSlide as $key => $value) {
+                            $output[] = $advertedCampaigns[$value];
+                        }
+                    } else {
+                        $output = $advertedCampaigns[$listSlide];
+                    }
+                } else {
+                    $output = array_slice($input, 0, 3);
+                }
 
-            //     $advertedCampaigns = array_filter($randomCoupon, function($v) {
-            //         return ($v->placement_type_orig === 'featured_list');
-            //     });
-
-            //     if (count($advertedCampaigns) > $take) {
-            //         $random = array();
-            //         $listSlide = array_rand($advertedCampaigns, $take);
-            //         if (count($listSlide) > 1) {
-            //             foreach ($listSlide as $key => $value) {
-            //                 $random[] = $advertedCampaigns[$value];
-            //             }
-            //         } else {
-            //             $random = $advertedCampaigns[$listSlide];
-            //         }
-
-            //         $data->returned_records = count($listOfRec);
-            //         $data->total_records = count($random);
-            //         $data->records = $random;
-            //     }
-            // }
+                $data->returned_records = count($listOfRec);
+                $data->total_records = count($output);
+                $data->records = $output;
+            }
 
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
