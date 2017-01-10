@@ -71,11 +71,11 @@ class MallListAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
 
-            $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("is_subscribed" => "Y"))))))));
+            $jsonArea = array('from' => $skip, 'size' => $take, 'query' => array('filtered' => array('filter' => array('and' => array( array('query' => array('match' => array('is_subscribed' => 'Y'))))))));
 
-            $filterStatus = array("query" => array("match" => array("status" => "active")));
+            $filterStatus = array('query' => array('match' => array('status' => 'active')));
             if ($usingDemo) {
-                $filterStatus = array("query" => array("not" => array("term" => array("status" => "deleted"))));
+                $filterStatus = array('query' => array('not' => array('term' => array('status' => 'deleted'))));
             }
             $jsonArea['query']['filtered']['filter']['and'][] = $filterStatus;
 
@@ -99,7 +99,18 @@ class MallListAPIController extends PubControllerAPI
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
-                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("name^6", "object_type^5", "city^3", "province^2", "keywords", "address_line", "country", "description")));
+
+                    $priority['name'] = Config::get('orbit.elasticsearch.priority.mall.name', '^6');
+                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.mall.object_type', '^5');
+                    $priority['city'] = Config::get('orbit.elasticsearch.priority.mall.city', '^3');
+                    $priority['province'] = Config::get('orbit.elasticsearch.priority.mall.province', '^2');
+                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.mall.keywords', '');
+                    $priority['address_line'] = Config::get('orbit.elasticsearch.priority.mall.address_line', '');
+                    $priority['country'] = Config::get('orbit.elasticsearch.priority.mall.country', '');
+                    $priority['description'] = Config::get('orbit.elasticsearch.priority.mall.description', '');
+
+
+                    $filterKeyword = array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'], 'object_type'.$priority['object_type'], 'city'.$priority['city'], 'province'.$priority['province'], 'keywords'.$priority['keywords'], 'address_line'.$priority['address_line'], 'country'.$priority['country'], 'description'.$priority['description'])));
                     $jsonArea['query']['filtered']['query'] = $filterKeyword;
                 }
             });
@@ -110,17 +121,17 @@ class MallListAPIController extends PubControllerAPI
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
-                    $words = count(explode(" ", $location));
+                    $words = count(explode(' ', $location));
 
-                    if ($location === "mylocation") {
+                    if ($location === 'mylocation') {
                         $words = 0;
                     }
 
-                    if ($location === "mylocation" && $latitude != '' && $longitude != '') {
-                        $locationFilter = array("geo_distance" => array("distance" => $radius."km", "position" => array("lon" => $longitude, "lat" => $latitude)));
+                    if ($location === 'mylocation' && $latitude != '' && $longitude != '') {
+                        $locationFilter = array('geo_distance' => array('distance' => $radius.'km', 'position' => array('lon' => $longitude, 'lat' => $latitude)));
                         $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
-                    } elseif ($location !== "mylocation") {
-                        $locationFilter = array("match" => array("city" => array("query" => $location, "operator" => "and")));
+                    } elseif ($location !== 'mylocation') {
+                        $locationFilter = array('match' => array('city' => array('query' => $location, 'operator' => 'and')));
                         $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
                     }
                 }
@@ -141,12 +152,11 @@ class MallListAPIController extends PubControllerAPI
 
                     if (is_object($partnerAffected)) {
                         $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
-                        $partnerFilter = array("query" => array("match" => array("partner_ids" => $partnerId)));
+                        $partnerFilter = array('query' => array('match' => array('partner_ids' => $partnerId)));
 
                         if (in_array($partnerId, $exception)) {
-                            $partnerException = PartnerCompetitor::where("partner_id", $partnerId)->lists("competitor_id");
-                            $partnerIds = implode('", "', $partnerException);
-                            $partnerFilter = array("query" => array("not" => array("terms" => array("partner_ids" => $partnerIds))));
+                            $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
+                            $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
                         $jsonArea['query']['filtered']['filter']['and'][] = $partnerFilter;
                     }
@@ -154,24 +164,24 @@ class MallListAPIController extends PubControllerAPI
             });
 
             // sort by name or location
-            $sort = array("name.raw" => array("order" => "asc"));
+            $sort = array('name.raw' => array('order' => 'asc'));
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $sort = array("_geo_distance" => array("position" => array("lon" => $longitude, "lat" => $latitude), "order" => $sort_mode, "unit" => "km", "distance_type" => "plane"));
+                $sort = array('_geo_distance' => array('position' => array('lon' => $longitude, 'lat' => $latitude), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             }
 
             if (! $searchFlag) {
                 $mallConfig =  Config::get('orbit.featured.mall_ids', null);
                 if (! empty($mallConfig)) {
                     $withScore = true;
-                    $filterKeyword = array("bool" => array("should" => array(array("terms" => array("_id" => $mallConfig)), array("match_all" => new stdClass()))));
+                    $filterKeyword = array('bool' => array('should' => array(array('terms' => array('_id' => $mallConfig)), array('match_all' => new stdClass()))));
                     $jsonArea['query']['filtered']['query'] = $filterKeyword;
                 }
             }
 
             $sortby = $sort;
             if ($withScore) {
-                $sortby = array("_score", $sort);
+                $sortby = array('_score', $sort);
             }
             $jsonArea["sort"] = $sortby;
 

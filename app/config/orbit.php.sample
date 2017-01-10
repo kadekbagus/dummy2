@@ -55,6 +55,53 @@ return array(
         'nearest' => [
             'multiple' => 5,
             'max_try' => 10
+        ],
+
+        'priority' => [
+
+            'mall' => [
+                'name'         => '^6',
+                'object_type'  => '^5',
+                'city'         => '^3',
+                'province'     => '^2',
+                'keywords'     => '',
+                'address_line' => '',
+                'country'      => '',
+                'description'  => ''
+            ],
+
+            'news' => [
+                'name'        => '^6',
+                'object_type' => '^5',
+                'keywords'    => '^4',
+                'description' => '^3',
+                'mall_name'   => '^3',
+                'city'        => '^2',
+                'province'    => '^2',
+                'country'     => '^2'
+            ],
+
+            'promotions' => [
+                'name'        => '^6',
+                'object_type' => '^5',
+                'keywords'    => '^4',
+                'description' => '^3',
+                'mall_name'   => '^3',
+                'city'        => '^2',
+                'province'    => '^2',
+                'country'     => '^2'
+            ],
+
+            'coupons' => [
+                'name'        => '^6',
+                'object_type' => '^5',
+                'keywords'    => '^4',
+                'description' => '^3',
+                'mall_name'   => '^3',
+                'city'        => '^2',
+                'province'    => '^2',
+                'country'     => '^2'
+            ],
         ]
     ],
 
