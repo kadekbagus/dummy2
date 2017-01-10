@@ -28,6 +28,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
 use Elasticsearch\ClientBuilder;
+use PartnerAffectedGroup;
 
 class CouponListAPIController extends PubControllerAPI
 {
@@ -202,7 +203,7 @@ class CouponListAPIController extends PubControllerAPI
             });
 
             OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag, &$cacheKey) {
-                $cacheKey['partner_id'] = $partner_id;
+                $cacheKey['partner_id'] = $partnerId;
                 $partnerFilter = '';
                 if (! empty($partnerId)) {
                     $searchFlag = $searchFlag || TRUE;
@@ -300,10 +301,10 @@ class CouponListAPIController extends PubControllerAPI
 
             $advertData = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
                          ->mergeBindings($adverts->getQuery())
-                         ->select(DB::raw("adv.advert_id, 
+                         ->select(DB::raw("adv.advert_id,
                                     adv.link_object_id,
-                                    adv.placement_order, 
-                                    adv.path, 
+                                    adv.placement_order,
+                                    adv.path,
                                     CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
                          ->groupBy(DB::raw("adv.link_object_id"))
                          ->take(100)
@@ -333,7 +334,7 @@ class CouponListAPIController extends PubControllerAPI
                             $couponIds[] = $val;
                         }
                     }
-                    
+
                 }
                 $jsonArea['query']['filtered']['filter']['and'][] = array("terms" => array("_id" => $couponIds));
             }
