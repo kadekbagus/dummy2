@@ -505,7 +505,7 @@ class CouponListAPIController extends PubControllerAPI
                         $output = $advertedCampaigns[$listSlide];
                     }
                 } else {
-                    $output = array_slice($listOfRec, 0, 4);
+                    $output = array_slice($listOfRec, 0, $take);
                 }
 
                 $data->returned_records = count($listOfRec);
