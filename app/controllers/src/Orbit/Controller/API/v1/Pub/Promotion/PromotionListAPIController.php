@@ -358,7 +358,8 @@ class PromotionListAPIController extends PubControllerAPI
                 unset($jsonQuery['sort']);
                 $withScore = true;
                 foreach ($advertData as $dt) {
-                    $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $dt->placement_order)));
+                    $boost = $dt->placement_order * 3;
+                    $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
                     $jsonQuery['query']['filtered']['query']['bool']['should'][] = $esAdvert;
                 }
                 $jsonQuery['query']['filtered']['query']['bool']['should'][] = array('match_all' => new stdclass());
