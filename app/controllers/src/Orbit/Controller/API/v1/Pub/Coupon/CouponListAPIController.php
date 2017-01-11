@@ -222,7 +222,7 @@ class CouponListAPIController extends PubControllerAPI
                     $searchFlag = $searchFlag || TRUE;
                     $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
                                                                 $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                                                                     ->where('affected_group_names.group_type', '=', 'coupons');
+                                                                     ->where('affected_group_names.group_type', '=', 'coupon');
                                                             })
                                                             ->where('partner_id', $partnerId)
                                                             ->first();
