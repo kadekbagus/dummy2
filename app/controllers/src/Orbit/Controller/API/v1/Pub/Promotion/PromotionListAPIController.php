@@ -493,7 +493,7 @@ class PromotionListAPIController extends PubControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = count($listOfRec);
+            $data->total_records = $records['total'];
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
             }
@@ -521,7 +521,7 @@ class PromotionListAPIController extends PubControllerAPI
                 }
 
                 $data->returned_records = count($output);
-                $data->total_records = count($listOfRec);
+                $data->total_records = $records['total'];
                 $data->records = $output;
             }
 
