@@ -32,6 +32,7 @@ use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
 use Elasticsearch\ClientBuilder;
+use PartnerAffectedGroup;
 
 class PromotionListAPIController extends PubControllerAPI
 {
@@ -145,7 +146,11 @@ class PromotionListAPIController extends PubControllerAPI
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
             $withScore = false;
-            $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => $dateTimeEs))), array("range" => array("end_date" => array("gte" => $dateTimeEs))))))));
+            $esTake = $take;
+            if ($list_type === 'featured') {
+                $esTake = 50;
+            }
+            $jsonQuery = array('from' => $skip, 'size' => $esTake, 'query' => array('filtered' => array('filter' => array('and' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs))))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -164,7 +169,7 @@ class PromotionListAPIController extends PubControllerAPI
             }
 
             $withKeywordSearch = false;
-            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey)
             {
                 $cacheKey['keyword'] = $keyword;
                 if ($keyword != '') {
@@ -172,39 +177,48 @@ class PromotionListAPIController extends PubControllerAPI
                     $withScore = true;
                     $withKeywordSearch = true;
 
-                    $filterTranslation = array("nested" => array("path" => "translation", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("translation.name^6", "translation.description^3")))));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
+                    $priority['name'] = Config::get('orbit.elasticsearch.priority.promotions.name', '^6');
+                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.promotions.object_type', '^5');
+                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.promotions.keywords', '^4');
+                    $priority['description'] = Config::get('orbit.elasticsearch.priority.promotions.description', '^3');
+                    $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.promotions.mall_name', '^3');
+                    $priority['city'] = Config::get('orbit.elasticsearch.priority.promotions.city', '^2');
+                    $priority['province'] = Config::get('orbit.elasticsearch.priority.promotions.province', '^2');
+                    $priority['country'] = Config::get('orbit.elasticsearch.priority.promotions.country', '^2');
 
-                    $filterTenant = array("nested" => array("path" => "link_to_tenant", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^1")))));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterTenant;
+                    $filterTranslation = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.name'.$priority['name'], 'translation.description'.$priority['description'])))));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
 
-                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("object_type^5", "keywords^4")));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
+                    $filterTenant = array('nested' => array('path' => 'link_to_tenant', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('link_to_tenant.city'.$priority['city'], 'link_to_tenant.province'.$priority['province'], 'link_to_tenant.country'.$priority['country'], 'link_to_tenant.mall_name'.$priority['mall_name'])))));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTenant;
+
+                    $filterKeyword = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
                 }
             });
 
-            OrbitInput::get('mall_id', function($mallId) use (&$jsonArea) {
+            OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery) {
                 if (! empty($mallId)) {
-                    $withMallId = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.parent_id" => $mallId))))));
-                    $jsonArea['query']['filtered']['filter']['and'][] = $withMallId;
+                    $withMallId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.parent_id' => $mallId))))));
+                    $jsonQuery['query']['filtered']['filter']['and'][] = $withMallId;
                 }
              });
 
             // filter by category_id
-            OrbitInput::get('category_id', function($categoryIds) use (&$jsonArea, &$searchFlag) {
+            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
 
                 foreach ($categoryIds as $key => $value) {
-                    $categoryFilter["or"][] = array("match" => array("category_ids" => $value));
+                    $categoryFilter['or'][] = array('match' => array('category_ids' => $value));
                 }
-                $jsonArea['query']['filtered']['filter']['and'][] = $categoryFilter;
+                $jsonQuery['query']['filtered']['filter']['and'][] = $categoryFilter;
             });
 
-            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag, &$cacheKey) {
-                $cacheKey['partner_id'] = $partner_id;
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
+                $cacheKey['partner_id'] = $partnerId;
                 $partnerFilter = '';
                 if (! empty($partnerId)) {
                     $searchFlag = $searchFlag || TRUE;
@@ -217,30 +231,29 @@ class PromotionListAPIController extends PubControllerAPI
 
                     if (is_object($partnerAffected)) {
                         $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
-                        $partnerFilter = array("query" => array("match" => array("partner_ids" => $partnerId)));
+                        $partnerFilter = array('query' => array('match' => array('partner_ids' => $partnerId)));
 
                         if (in_array($partnerId, $exception)) {
-                            $partnerException = PartnerCompetitor::where("partner_id", $partnerId)->lists("competitor_id");
-                            $partnerIds = implode('", "', $partnerException);
-                            $partnerFilter = array("query" => array("not" => array("terms" => array("partner_ids" => $partnerIds))));
+                            $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
+                            $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
-                        $jsonArea['query']['filtered']['filter']['and'][] = $partnerFilter;
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $partnerFilter;
                     }
                 }
             });
 
             // filter by location (city or user location)
-            OrbitInput::get('location', function($location) use (&$jsonArea, &$searchFlag, &$withScore, $lat, $lon, $distance)
+            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance)
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
 
-                    if ($location === "mylocation" && $lat != '' && $lon != '') {
-                        $locationFilter = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("geo_distance" => array("distance" => $distance."km", "link_to_tenant.position" => array("lon" => $lon, "lat" => $lat)))))));
-                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
-                    } elseif ($location !== "mylocation") {
-                        $locationFilter = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.city.raw" => $location))))));
-                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
+                    if ($location === 'mylocation' && $lat != '' && $lon != '') {
+                        $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat)))))));
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
+                    } elseif ($location !== 'mylocation') {
+                        $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $location))))));
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
                     }
                 }
             });
@@ -248,18 +261,18 @@ class PromotionListAPIController extends PubControllerAPI
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $sort = array("_geo_distance" => array("link_to_tenant.position" => array("lon" => $lon, "lat" => $lat), "order" => $sort_mode, "unit" => "km", "distance_type" => "plane"));
+                $sort = array('_geo_distance' => array('link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'created_date') {
-                $sort = array("begin_date" => array("order" => $sort_mode));
+                $sort = array('begin_date' => array('order' => $sort_mode));
             } else {
-                $sort = array("name.raw" => array("order" => $sort_mode));
+                $sort = array('name.raw' => array('order' => $sort_mode));
             }
 
             $sortby = $sort;
             if ($withScore) {
                 $sortby = array("_score", $sort);
             }
-            $jsonArea["sort"] = $sortby;
+            $jsonQuery["sort"] = $sortby;
 
             $advert_location_type = 'gtm';
             $advert_location_id = '0';
@@ -302,29 +315,30 @@ class PromotionListAPIController extends PubControllerAPI
 
             $advertData = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
                          ->mergeBindings($adverts->getQuery())
-                         ->select(DB::raw("adv.advert_id, 
+                         ->select(DB::raw("adv.advert_id,
                                     adv.link_object_id,
-                                    adv.placement_order, 
-                                    adv.path, 
+                                    adv.placement_order,
+                                    adv.path,
+                                    adv.placement_type as placement_type_orig,
                                     CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
                          ->groupBy(DB::raw("adv.link_object_id"))
                          ->take(100)
                          ->get();
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $_jsonArea = $jsonArea;
+            $_jsonQuery = $jsonQuery;
 
             if ($withKeywordSearch) {
                 // if user searching, we call es twice, first for get coupon data that match with keyword and then get the id,
                 // and second, call es data combine with advert
-                unset($jsonArea['query']['filtered']['query']);
+                unset($jsonQuery['query']['filtered']['query']);
 
-                $_paramArea = [
+                $_esParam = [
                     'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
                     'type'   => Config::get('orbit.elasticsearch.indices.promotions.type'),
-                    'body' => json_encode($_jsonArea)
+                    'body' => json_encode($_jsonQuery)
                 ];
-                $searchResponse = $client->search($_paramArea);
+                $searchResponse = $client->search($_esParam);
 
                 $searchData = $searchResponse['hits'];
 
@@ -335,37 +349,37 @@ class PromotionListAPIController extends PubControllerAPI
                             $couponIds[] = $val;
                         }
                     }
-                    
                 }
-                $jsonArea['query']['filtered']['filter']['and'][] = array("terms" => array("_id" => $couponIds));
+                $jsonQuery['query']['filtered']['filter']['and'][] = array('terms' => array('_id' => $couponIds));
             }
 
             // call es
             if (! empty($advertData)) {
-                unset($jsonArea["sort"]);
+                unset($jsonQuery['sort']);
                 $withScore = true;
                 foreach ($advertData as $dt) {
-                    $esAdvert = array("match" => array("_id" => array("query" => $dt->link_object_id, "boost" => $dt->placement_order)));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $esAdvert;
+                    $boost = $dt->placement_order * 3;
+                    $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $esAdvert;
                 }
-                $jsonArea['query']['filtered']['query']['bool']['should'][] = array("match_all" => new stdclass());
+                $jsonQuery['query']['filtered']['query']['bool']['should'][] = array('match_all' => new stdclass());
             }
 
             $sortby = $sort;
             if ($withScore) {
-                $sortby = array("_score", $sort);
+                $sortby = array('_score', $sort);
             }
-            $jsonArea["sort"] = $sortby;
+            $jsonQuery['sort'] = $sortby;
 
-            $paramArea = [
+            $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.promotions.type'),
-                'body' => json_encode($jsonArea)
+                'body' => json_encode($jsonQuery)
             ];
 
             $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$paramArea) {
-                return $client->search($paramArea);
+            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
+                return $client->search($esParam);
             });
             $recordCache->put($serializedCacheKey, $response);
 
@@ -413,10 +427,12 @@ class PromotionListAPIController extends PubControllerAPI
                     // advert
                     if ($key === "news_id") {
                         $data['placement_type'] = null;
+                        $data['placement_type_orig'] = null;
                         foreach ($advertData as $advData) {
 
                             if ($advData->link_object_id === $value) {
                                 $data['placement_type'] = $advData->placement_type;
+                                $data['placement_type_orig'] = $advData->placement_type_orig;
 
                                 // image
                                 if (! empty($advData->path)) {
@@ -460,38 +476,31 @@ class PromotionListAPIController extends PubControllerAPI
             }
             $data->records = $listOfRec;
 
-            // // random featured adv
-            // // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
-            // if ($list_type === 'featured') {
-            //     $randomPromotionBuilder = clone $_promotion;
-            //     // Take 100 value right now to prevent memory leak
-            //     $randomPromotionBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
+            // random featured adv
+            // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
+            if ($list_type === 'featured') {
+                $advertedCampaigns = array_filter($listOfRec, function($v) {
+                    return ($v['placement_type_orig'] === 'featured_list');
+                });
 
-            //     $randomPromotion = $featuredRecordCache->get($serializedCacheKey, function() use ($randomPromotionBuilder) {
-            //         return $randomPromotionBuilder->get();
-            //     });
-            //     $featuredRecordCache->put($serializedCacheKey, $randomPromotion);
+                if (count($advertedCampaigns) > $take) {
+                    $output = array();
+                    $listSlide = array_rand($advertedCampaigns, $take);
+                    if (count($listSlide) > 1) {
+                        foreach ($listSlide as $key => $value) {
+                            $output[] = $advertedCampaigns[$value];
+                        }
+                    } else {
+                        $output = $advertedCampaigns[$listSlide];
+                    }
+                } else {
+                    $output = array_slice($listOfRec, 0, $take);
+                }
 
-            //     $advertedCampaigns = array_filter($randomPromotion, function($v) {
-            //         return ($v->placement_type_orig === 'featured_list');
-            //     });
-
-            //     if (count($advertedCampaigns) > $take) {
-            //         $random = array();
-            //         $listSlide = array_rand($advertedCampaigns, $take);
-            //         if (count($listSlide) > 1) {
-            //             foreach ($listSlide as $key => $value) {
-            //                 $random[] = $advertedCampaigns[$value];
-            //             }
-            //         } else {
-            //             $random = $advertedCampaigns[$listSlide];
-            //         }
-
-            //         $data->returned_records = count($listOfRec);
-            //         $data->total_records = count($random);
-            //         $data->records = $random;
-            //     }
-            // }
+                $data->returned_records = count($listOfRec);
+                $data->total_records = count($output);
+                $data->records = $output;
+            }
 
             if (OrbitInput::get('from_homepage', '') !== 'y') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {

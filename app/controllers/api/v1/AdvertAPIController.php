@@ -141,10 +141,9 @@ class AdvertAPIController extends ControllerAPI
             $advertLocations = array();
 
             foreach ($locations as $location_id) {
-
                 $locationType = 'mall';
 
-                if ($location_id === 'gtm') {
+                if ($location_id == 'gtm' || $location_id == 'GTM') {
                     $location_id = '0';
                     $locationType = 'gtm';
                 }
@@ -367,6 +366,7 @@ class AdvertAPIController extends ControllerAPI
             $updatedadvert->touch();
 
             OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id) {
+
                 // Delete old data
                 $delete_retailer = AdvertLocation::where('advert_id', '=', $advert_id);
                 $delete_retailer->delete();
@@ -374,16 +374,12 @@ class AdvertAPIController extends ControllerAPI
                 // Insert new data
                 $advertLocations = array();
 
-
                 foreach ($locations as $location_id) {
-
                     $locationType = 'mall';
-
-                    if ($location_id === 'gtm') {
+                    if ($location_id == 'gtm' || $location_id == 'GTM') {
                         $location_id = '0';
                         $locationType = 'gtm';
                     }
-
                     $advertLocation = new AdvertLocation();
                     $advertLocation->advert_id = $advert_id;
                     $advertLocation->location_id = $location_id;
@@ -391,9 +387,9 @@ class AdvertAPIController extends ControllerAPI
                     $advertLocation->save();
                     $advertLocations[] = $advertLocation;
                 }
+
                 $updatedadvert->locations = $advertLocations;
             });
-
 
             Event::fire('orbit.advert.postupdateadvert.after.save', array($this, $updatedadvert));
             $this->response->data = $updatedadvert;
@@ -523,9 +519,7 @@ class AdvertAPIController extends ControllerAPI
         $activity->save();
 
         return $this->render($httpCode);
-
     }
-
 
     /**
      * GET - Search Advert
@@ -857,7 +851,6 @@ class AdvertAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
-
         // Validate the time format for over 23 hour
         Validator::extend('orbit.empty.hour_format', function ($attribute, $value, $parameters) {
             // explode the format Y-m-d H:i:s
@@ -959,86 +952,6 @@ class AdvertAPIController extends ControllerAPI
             return true;
         });
 
-        // Check the existance of advert id for update with permission check
-        Validator::extend('orbit.update.advert', function ($attribute, $value, $parameters) {
-            $user = $this->api->user;
-            $object_type = $parameters[0];
-
-            $advert = Advert::allowedForPMPUser($user, $object_type)->excludeStoppedOrExpired('advert')
-                        ->where('advert_id', $value)
-                        ->first();
-
-            if (empty($advert)) {
-                return false;
-            }
-
-            App::instance('orbit.update.advert', $advert);
-
-            return true;
-        });
-
-        // Check the existance of mall id
-        Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
-            $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $value)
-                        ->first();
-
-            if (empty($mall)) {
-                return false;
-            }
-
-            App::instance('orbit.empty.mall', $mall);
-
-            return true;
-        });
-
-        // Check the existence of the advert status
-        Validator::extend('orbit.empty.advert_status', function ($attribute, $value, $parameters) {
-            $valid = false;
-            $statuses = array('active', 'inactive', 'pending', 'blocked', 'deleted');
-            foreach ($statuses as $status) {
-                if($value === $status) $valid = $valid || true;
-            }
-
-            return $valid;
-        });
-
-        // Check the existence of the advert object type
-        Validator::extend('orbit.empty.advert_object_type', function ($attribute, $value, $parameters) {
-            $valid = false;
-            $objectTypes = array('promotion', 'advert');
-            foreach ($objectTypes as $objectType) {
-                if($value === $objectType) $valid = $valid || true;
-            }
-
-            return $valid;
-        });
-
-        // Check the existence of the link object type
-        Validator::extend('orbit.empty.link_object_type', function ($attribute, $value, $parameters) {
-            $valid = false;
-            $linkobjecttypes = array('tenant', 'tenant_category');
-            foreach ($linkobjecttypes as $linkobjecttype) {
-                if($value === $linkobjecttype) $valid = $valid || true;
-            }
-
-            return $valid;
-        });
-
-        // Check the existance of tenant id
-        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
-            $tenant = Tenant::excludeDeleted()
-                        ->where('merchant_id', $value)
-                        ->first();
-
-            if (empty($tenant)) {
-                return false;
-            }
-
-            App::instance('orbit.empty.tenant', $tenant);
-
-            return true;
-        });
     }
 
     protected function quote($arg)

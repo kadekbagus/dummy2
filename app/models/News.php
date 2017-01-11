@@ -78,6 +78,12 @@ class News extends Eloquent
                             THEN {$prefix}merchants.parent_id
                             ELSE {$prefix}merchants.merchant_id
                         END) as merchant_id
+                    "),
+                    DB::raw("
+                        (CASE WHEN {$prefix}merchants.object_type = 'tenant'
+                            THEN oms.name
+                            ELSE {$prefix}merchants.name
+                        END) as mall_name
                     ")
                 )
                 ->leftJoin(DB::raw("{$prefix}merchants oms"), DB::raw("oms.merchant_id"), '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END"))
@@ -94,9 +100,9 @@ class News extends Eloquent
 
     public function adverts()
     {
-        return $this->hasMany('Advert', 'link_object_id', 'promotion_id')
+        return $this->hasMany('Advert', 'link_object_id', 'news_id')
             ->leftJoin('advert_link_types', 'adverts.advert_link_type_id', '=', 'advert_link_types.advert_link_type_id')
-            ->where('advert_link_types.advert_type', '=', 'coupon');
+            ->where('advert_link_types.advert_type', '=', 'promotion');
     }
 
     /**

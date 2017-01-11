@@ -152,8 +152,9 @@ class GenericActivityAPIController extends PubControllerAPI
             // Get notes
             $notes = OrbitInput::post('notes', null);
 
-            // Menu specific block, to set object_display_name to 'sidebar' or else
+            // Menu specific block,
             if ($activityName === 'click_menu') {
+                // to set object_display_name to 'sidebar' or else
                 $menuSource = OrbitInput::post('menu_location', null);
 
                 if (! empty($menuSource)) {
@@ -165,6 +166,35 @@ class GenericActivityAPIController extends PubControllerAPI
                         case 'topmenu':
                         default:
                             $activity->setObjectDisplayName('Top Menu');
+                            break;
+                    }
+                }
+            } elseif ($activityName === 'click_tab_menu') {
+                $menu = OrbitInput::post('menu', null);
+                if (! empty($menu)) {
+                    switch ($menu) {
+                        case 'promotions':
+                            $activity->setObjectDisplayName('Promotions');
+                            break;
+
+                        case 'coupons':
+                            $activity->setObjectDisplayName('Coupons');
+                            break;
+
+                        case 'stores':
+                            $activity->setObjectDisplayName('Stores');
+                            break;
+
+                        case 'malls':
+                            $activity->setObjectDisplayName('Malls');
+                            break;
+
+                        case 'events':
+                            $activity->setObjectDisplayName('Events');
+                            break;
+
+                        default:
+                            $activity->setObjectDisplayName('undefined');
                             break;
                     }
                 }

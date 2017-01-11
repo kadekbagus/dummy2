@@ -138,7 +138,7 @@ class NewsListAPIController extends PubControllerAPI
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
-            $jsonArea = array("from" => $skip, "size" => $take, "query" => array("filtered" => array("filter" => array("and" => array( array("query" => array("match" => array("status" => "active"))), array("range" => array("begin_date" => array("lte" => $dateTimeEs))), array("range" => array("end_date" => array("gte" => $dateTimeEs))))))));
+            $jsonQuery = array('from' => $skip, 'size' => $take, 'query' => array('filtered' => array('filter' => array('and' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs))))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -156,7 +156,7 @@ class NewsListAPIController extends PubControllerAPI
                 }
             }
 
-            OrbitInput::get('keyword', function($keyword) use (&$jsonArea, &$searchFlag, &$withScore, &$cacheKey)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey)
             {
                 $cacheKey['keyword'] = $keyword;
 
@@ -164,38 +164,47 @@ class NewsListAPIController extends PubControllerAPI
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
 
-                    $filterTranslation = array("nested" => array("path" => "translation", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("translation.name^6", "translation.description^3")))));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
+                    $priority['name'] = Config::get('orbit.elasticsearch.priority.news.name', '^6');
+                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.news.object_type', '^5');
+                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.news.keywords', '^4');
+                    $priority['description'] = Config::get('orbit.elasticsearch.priority.news.description', '^3');
+                    $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.news.mall_name', '^3');
+                    $priority['city'] = Config::get('orbit.elasticsearch.priority.news.city', '^2');
+                    $priority['province'] = Config::get('orbit.elasticsearch.priority.news.province', '^2');
+                    $priority['country'] = Config::get('orbit.elasticsearch.priority.news.country', '^2');
 
-                    $filterTenant = array("nested" => array("path" => "link_to_tenant", "query" => array("multi_match" => array("query" => $keyword, "fields" => array("link_to_tenant.city^2", "link_to_tenant.province^2", "link_to_tenant.country^1")))));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterTenant;
+                    $filterTranslation = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.name'.$priority['name'], 'translation.description'.$priority['description'])))));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
 
-                    $filterKeyword = array("multi_match" => array("query" => $keyword, "fields" => array("object_type^5", "keywords^4")));
-                    $jsonArea['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
+                    $filterTenant = array('nested' => array('path' => 'link_to_tenant', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('link_to_tenant.city'.$priority['city'], 'link_to_tenant.province'.$priority['province'], 'link_to_tenant.country'.$priority['country'], 'link_to_tenant.mall_name'.$priority['mall_name'])))));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTenant;
+
+                    $filterKeyword = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
                 }
             });
 
-            OrbitInput::get('mall_id', function($mallId) use (&$jsonArea) {
+            OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery) {
                 if (! empty($mallId)) {
-                    $withMallId = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.parent_id" => $mallId))))));
-                    $jsonArea['query']['filtered']['filter']['and'][] = $withMallId;
+                    $withMallId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.parent_id' => $mallId))))));
+                    $jsonQuery['query']['filtered']['filter']['and'][] = $withMallId;
                 }
              });
 
             // filter by category_id
-            OrbitInput::get('category_id', function($categoryIds) use (&$jsonArea, &$searchFlag) {
+            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
 
                 foreach ($categoryIds as $key => $value) {
-                    $categoryFilter["or"][] = array("match" => array("category_ids" => $value));
+                    $categoryFilter['or'][] = array('match' => array('category_ids' => $value));
                 }
-                $jsonArea['query']['filtered']['filter']['and'][] = $categoryFilter;
+                $jsonQuery['query']['filtered']['filter']['and'][] = $categoryFilter;
             });
 
-            OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, $prefix, &$searchFlag, &$cacheKey) {
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
                 $cacheKey['partner_id'] = $partnerId;
 
                 $partnerFilter = '';
@@ -210,30 +219,29 @@ class NewsListAPIController extends PubControllerAPI
 
                     if (is_object($partnerAffected)) {
                         $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
-                        $partnerFilter = array("query" => array("match" => array("partner_ids" => $partnerId)));
+                        $partnerFilter = array('query' => array('match' => array('partner_ids' => $partnerId)));
 
                         if (in_array($partnerId, $exception)) {
-                            $partnerException = PartnerCompetitor::where("partner_id", $partnerId)->lists("competitor_id");
-                            $partnerIds = implode('", "', $partnerException);
-                            $partnerFilter = array("query" => array("not" => array("terms" => array("partner_ids" => $partnerIds))));
+                            $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
+                            $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
-                        $jsonArea['query']['filtered']['filter']['and'][] = $partnerFilter;
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $partnerFilter;
                     }
                 }
             });
 
             // filter by location (city or user location)
-            OrbitInput::get('location', function($location) use (&$jsonArea, &$searchFlag, &$withScore, $lat, $lon, $distance)
+            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance)
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
 
-                    if ($location === "mylocation" && $lat != '' && $lon != '') {
-                        $locationFilter = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("geo_distance" => array("distance" => $distance."km", "link_to_tenant.position" => array("lon" => $lon, "lat" => $lat)))))));
-                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
-                    } elseif ($location !== "mylocation") {
-                        $locationFilter = array("nested" => array("path" => "link_to_tenant", "query" => array("filtered" => array("filter" => array("match" => array("link_to_tenant.city.raw" => $location))))));
-                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
+                    if ($location === 'mylocation' && $lat != '' && $lon != '') {
+                        $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat)))))));
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
+                    } elseif ($location !== 'mylocation') {
+                        $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $location))))));
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
                     }
                 }
             });
@@ -241,29 +249,29 @@ class NewsListAPIController extends PubControllerAPI
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $sort = array("_geo_distance" => array("link_to_tenant.position" => array("lon" => $lon, "lat" => $lat), "order" => $sort_mode, "unit" => "km", "distance_type" => "plane"));
+                $sort = array('_geo_distance' => array('link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'created_date') {
-                $sort = array("begin_date" => array("order" => $sort_mode));
+                $sort = array('begin_date' => array('order' => $sort_mode));
             } else {
-                $sort = array("name.raw" => array("order" => $sort_mode));
+                $sort = array('name.raw' => array('order' => $sort_mode));
             }
 
             $sortby = $sort;
             if ($withScore) {
-                $sortby = array("_score", $sort);
+                $sortby = array('_score', $sort);
             }
-            $jsonArea["sort"] = $sortby;
+            $jsonQuery['sort'] = $sortby;
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $param_area = [
+            $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.news.type'),
-                'body' => json_encode($jsonArea)
+                'body' => json_encode($jsonQuery)
             ];
 
             $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$param_area) {
-                return $client->search($param_area);
+            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
+                return $client->search($esParam);
             });
             $recordCache->put($serializedCacheKey, $response);
 
