@@ -384,7 +384,7 @@ class CouponListAPIController extends PubControllerAPI
                 } else {
                     $jsonQuery['query']['filtered']['query']['bool']['should'][] = array('match_all' => new stdclass());
                 }
-                
+
             }
 
             $sortby = $sort;
@@ -540,8 +540,8 @@ class CouponListAPIController extends PubControllerAPI
                     $output = array_slice($listOfRec, 0, $take);
                 }
 
-                $data->returned_records = count($listOfRec);
-                $data->total_records = count($output);
+                $data->returned_records = count($output);
+                $data->total_records = count($listOfRec);
                 $data->records = $output;
             }
 

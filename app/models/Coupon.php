@@ -120,7 +120,7 @@ class Coupon extends Eloquent
         $prefix = DB::getTablePrefix();
         return $this->belongsToMany('CampaignLocation', 'promotion_retailer', 'promotion_id', 'retailer_id')
                 ->select(
-                    'merchants.parent_id',
+                    'merchants.merchant_id',
                     'merchants.name',
                     'merchants.object_type',
                     DB::raw('oms.city,
@@ -130,7 +130,7 @@ class Coupon extends Eloquent
                         (CASE WHEN {$prefix}merchants.object_type = 'tenant'
                             THEN {$prefix}merchants.parent_id
                             ELSE {$prefix}merchants.merchant_id
-                        END) as merchant_id
+                        END) as parent_id
                     "),
                     DB::raw("
                         (CASE WHEN {$prefix}merchants.object_type = 'tenant'

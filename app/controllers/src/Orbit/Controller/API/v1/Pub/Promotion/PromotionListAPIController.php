@@ -343,7 +343,7 @@ class PromotionListAPIController extends PubControllerAPI
                     'type'   => Config::get('orbit.elasticsearch.indices.promotions.type'),
                     'body' => json_encode($_jsonQuery)
                 ];
-                
+
                 $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
                     return $client->search($_esParam);
                 });
@@ -386,7 +386,7 @@ class PromotionListAPIController extends PubControllerAPI
                 } else {
                     $jsonQuery['query']['filtered']['query']['bool']['should'][] = array('match_all' => new stdclass());
                 }
-                
+
             }
 
             $sortby = $sort;
@@ -520,8 +520,8 @@ class PromotionListAPIController extends PubControllerAPI
                     $output = array_slice($listOfRec, 0, $take);
                 }
 
-                $data->returned_records = count($listOfRec);
-                $data->total_records = count($output);
+                $data->returned_records = count($output);
+                $data->total_records = count($listOfRec);
                 $data->records = $output;
             }
 
