@@ -401,11 +401,12 @@ class CouponListAPIController extends PubControllerAPI
 
             $userRole = Role::select('role_name')->where('role_id', $user->user_role_id)->first();
             if ($userRole->role_name !== "Guest") {
-                $myCoupons = IssuedCoupon::select('issued_coupon_id')
-                                ->where('issued_coupons.user_id', '=', $this->quote($user->user_id))
+                $myCoupons = IssuedCoupon::select('promotion_id')
+                                ->where('issued_coupons.user_id', '=', $user->user_id)
                                 ->where('issued_coupons.status', '=', 'issued')
                                 ->orderBy('created_at', 'desc')
                                 ->take(100)
+                                ->groupBy('promotion_id')
                                 ->get();
             }
 
