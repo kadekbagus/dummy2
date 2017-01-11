@@ -59,7 +59,7 @@ class CouponLocationAPIController extends PubControllerAPI
 
         // Cache result of all possible calls to backend storage
         $cacheConfig = Config::get('orbit.cache.context');
-        $cacheContext = 'coupon-location-list';
+        $cacheContext = 'location-coupon-list';
 
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
         $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)

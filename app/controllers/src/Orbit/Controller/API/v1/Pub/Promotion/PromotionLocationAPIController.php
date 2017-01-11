@@ -56,7 +56,7 @@ class PromotionLocationAPIController extends PubControllerAPI
 
         // Cache result of all possible calls to backend storage
         $cacheConfig = Config::get('orbit.cache.context');
-        $cacheContext = 'promotion-location-list';
+        $cacheContext = 'location-promotion-list';
 
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
         $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
