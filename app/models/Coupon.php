@@ -130,7 +130,7 @@ class Coupon extends Eloquent
                         (CASE WHEN {$prefix}merchants.object_type = 'tenant'
                             THEN {$prefix}merchants.parent_id
                             ELSE {$prefix}merchants.merchant_id
-                        END) as parent_id
+                        END) as mall_id
                     "),
                     DB::raw("
                         (CASE WHEN {$prefix}merchants.object_type = 'tenant'
