@@ -399,16 +399,6 @@ class CouponListAPIController extends PubControllerAPI
                 'body' => json_encode($jsonQuery)
             ];
 
-            $userRole = Role::select('role_name')->where('role_id', $user->user_role_id)->first();
-            if ($userRole->role_name !== "Guest") {
-                $myCoupons = IssuedCoupon::select('issued_coupon_id')
-                                ->where('issued_coupons.user_id', '=', $this->quote($user->user_id))
-                                ->where('issued_coupons.status', '=', 'issued')
-                                ->orderBy('created_at', 'desc')
-                                ->take(100)
-                                ->get();
-            }
-
             $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
                 return $client->search($esParam);
             });
@@ -416,6 +406,7 @@ class CouponListAPIController extends PubControllerAPI
 
             $records = $response['hits'];
 
+            $promotionIds = array();
             $listOfRec = array();
             foreach ($records['hits'] as $record) {
                 $data = array();
@@ -425,6 +416,7 @@ class CouponListAPIController extends PubControllerAPI
                         $key = "coupon_name";
                     } elseif ($key === "promotion_id") {
                         $key = "coupon_id";
+                        $promotionIds[] = $value;
                     }
                     $data[$key] = $value;
 
@@ -475,20 +467,27 @@ class CouponListAPIController extends PubControllerAPI
                             }
                         }
                     }
-
-                    if ($userRole->role_name !== "Guest") {
-                        foreach ($myCoupons as $myCoupon) {
-
-                            if ($myCoupon->promotion_id === $value) {
-                                $isOwned = true;
-                                break;
-                            }
-                        }
-                    }
                 }
                 $data['owned'] = $isOwned;
                 $data['score'] = $record['_score'];
                 $listOfRec[] = $data;
+            }
+
+            if ($user->isConsumer() && ! empty($promotionIds)) {
+                $myCoupons = IssuedCoupon::select('promotion_id')
+                                ->where('issued_coupons.user_id', '=', $user->user_id)
+                                ->where('issued_coupons.status', '=', 'issued')
+                                ->whereIn('promotion_id', $promotionIds)
+                                ->orderBy('created_at', 'desc')
+                                ->groupBy('promotion_id')
+                                ->get()
+                                ->lists('promotion_id');
+
+                foreach ($listOfRec as &$couponData) {
+                    if (in_array($couponData['coupon_id'], $myCoupons)) {
+                        $couponData['owned'] = true;
+                    }
+                }
             }
 
             // record GTM search activity

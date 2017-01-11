@@ -22,6 +22,7 @@ use Mall;
 use IssuedCoupon;
 use Orbit\Helper\Security\Encrypter;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use Event;
 
 class CouponAddToWalletAPIController extends PubControllerAPI
 {
