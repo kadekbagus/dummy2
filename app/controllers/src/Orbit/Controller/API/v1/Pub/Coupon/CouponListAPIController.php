@@ -148,7 +148,7 @@ class CouponListAPIController extends PubControllerAPI
             if ($list_type === 'featured') {
                 $esTake = 50;
             }
-            $jsonQuery = array('from' => $skip, 'size' => $esTake, 'query' => array('filtered' => array('filter' => array('and' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs))))))));
+            $jsonQuery = array('from' => $skip, 'size' => $esTake, 'query' => array('filtered' => array('filter' => array('and' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('available' => array('gt' => 0))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs))))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
