@@ -133,6 +133,8 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             $issuedCoupon = $newIssuedCoupon->issueCouponViaWallet($coupon->promotion_id, $user->user_email, $user->user_id, $issued_coupon_code);
             $this->commit();
 
+            Event::fire('orbit.coupon.postaddtowallet.after.commit', array($this, $coupon_id));
+
             if (! empty($mallId)) {
                 $retailer = Mall::excludeDeleted()
                     ->where('merchant_id', $mallId)

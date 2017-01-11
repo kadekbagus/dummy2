@@ -205,3 +205,12 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
     }
 
 });
+
+
+Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller, $coupon_id)
+{
+    // Notify the queueing system to update Elasticsearch document
+    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+        'coupon_id' => $coupon_id
+    ]);
+});
