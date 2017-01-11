@@ -57,6 +57,7 @@ return array(
             'max_try' => 10
         ],
 
+        // The priority boost used in query
         'priority' => [
 
             'mall' => [
@@ -5237,7 +5238,6 @@ return array(
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
-
         ],
     ],
 
