@@ -70,7 +70,8 @@ class CampaignLocation extends Eloquent
     public function geofence()
     {
         $prefix = DB::getTablePrefix();
-        return $this->hasOne('MerchantGeofence', 'mall_id', 'merchant_id')
+        // parent_id should be mall_id
+        return $this->hasOne('MerchantGeofence', 'merchant_id', 'parent_id')
             ->addSelect(DB::raw("
                 {$prefix}merchant_geofences.merchant_id,
                 x(position) as latitude,
