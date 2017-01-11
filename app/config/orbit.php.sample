@@ -5214,26 +5214,26 @@ return array(
                 'cache_ttl' => 60
             ],
 
-            // news location list specific cache setting
-            'event-location-list' => [
+            // event location list specific cache setting
+            'location-event-list' => [
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
 
             // promotion location list specific cache setting
-            'promotion-location-list' => [
+            'location-promotion-list' => [
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
 
             // coupon location list specific cache setting
-            'coupon-location-list' => [
+            'location-coupon-list' => [
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
 
             // store location list specific cache setting
-            'store-location-list' => [
+            'location-store-list' => [
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],

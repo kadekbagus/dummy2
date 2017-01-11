@@ -2268,7 +2268,8 @@ class TenantAPIController extends ControllerAPI
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
                                         )
                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
-                                       ->where('merchants.status', '!=', 'deleted');
+                                       ->where('merchants.status', '!=', 'deleted')
+                                       ->whereIn('merchants.object_type', ['mall', 'tenant']);
 
             // Need to overide the query for advert
             if ($from === 'advert') {

@@ -893,7 +893,7 @@ class StoreAPIController extends PubControllerAPI
 
         // Cache result of all possible calls to backend storage
         $cacheConfig = Config::get('orbit.cache.context');
-        $cacheContext = 'store-location-list';
+        $cacheContext = 'location-store-list';
 
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
         $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
