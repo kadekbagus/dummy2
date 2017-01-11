@@ -66,10 +66,10 @@ class PromotionListAPIController extends PubControllerAPI
         $cacheConfig = Config::get('orbit.cache.context');
         $cacheContext = 'promotion-list';
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
-        $featuredRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
-                                          ->setKeyPrefix($cacheContext . '-featured');
-        $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
-                                       ->setKeyPrefix($cacheContext . '-total-rec');
+        $keywordSearchCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-keyword-search');
+        $advertCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-adverts');
 
         try {
             $this->checkAuth();
@@ -313,7 +313,7 @@ class PromotionListAPIController extends PubControllerAPI
                             ->where('adverts.status', '=', DB::raw("'active'"))
                             ->orderBy('advert_placements.placement_order', 'desc');
 
-            $advertData = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
+            $advertList = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
                          ->mergeBindings($adverts->getQuery())
                          ->select(DB::raw("adv.advert_id,
                                     adv.link_object_id,
@@ -322,8 +322,13 @@ class PromotionListAPIController extends PubControllerAPI
                                     adv.placement_type as placement_type_orig,
                                     CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
                          ->groupBy(DB::raw("adv.link_object_id"))
-                         ->take(100)
-                         ->get();
+                         ->take(100);
+
+            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+            $advertData = $advertCache->get($serializedCacheKey, function() use ($advertList) {
+                return $advertList->get();
+            });
+            $advertCache->put($serializedCacheKey, $advertData);
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $_jsonQuery = $jsonQuery;
@@ -338,7 +343,11 @@ class PromotionListAPIController extends PubControllerAPI
                     'type'   => Config::get('orbit.elasticsearch.indices.promotions.type'),
                     'body' => json_encode($_jsonQuery)
                 ];
-                $searchResponse = $client->search($_esParam);
+                
+                $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
+                    return $client->search($_esParam);
+                });
+                $keywordSearchCache->put($serializedCacheKey, $searchResponse);
 
                 $searchData = $searchResponse['hits'];
 
@@ -347,6 +356,10 @@ class PromotionListAPIController extends PubControllerAPI
                     foreach ($content as $key => $val) {
                         if ($key === "_id") {
                             $couponIds[] = $val;
+                            $cId = $val;
+                        }
+                        if ($key === "_score") {
+                            $couponScore[$cId] = $val;
                         }
                     }
                 }
@@ -358,11 +371,22 @@ class PromotionListAPIController extends PubControllerAPI
                 unset($jsonQuery['sort']);
                 $withScore = true;
                 foreach ($advertData as $dt) {
+                    $advertIds[] = $dt->advert_id;
                     $boost = $dt->placement_order * 3;
                     $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
                     $jsonQuery['query']['filtered']['query']['bool']['should'][] = $esAdvert;
                 }
-                $jsonQuery['query']['filtered']['query']['bool']['should'][] = array('match_all' => new stdclass());
+
+                if ($withKeywordSearch) {
+                    $withoutAdv = array_diff($couponIds, $advertIds);
+                    foreach ($withoutAdv as $wa) {
+                        $esWithoutAdvert = array('match' => array('_id' => array('query' => $wa, 'boost' => $couponScore[$wa])));
+                        $jsonQuery['query']['filtered']['query']['bool']['should'][] = $esWithoutAdvert;
+                    }
+                } else {
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = array('match_all' => new stdclass());
+                }
+                
             }
 
             $sortby = $sort;
@@ -377,7 +401,6 @@ class PromotionListAPIController extends PubControllerAPI
                 'body' => json_encode($jsonQuery)
             ];
 
-            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
             $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
                 return $client->search($esParam);
             });
