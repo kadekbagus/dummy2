@@ -28,10 +28,13 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
+use Lang;
 
 class StoreAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
+    protected $store = NULL;
+
     /**
      * GET - get all store in all mall, group by name
      *
@@ -1199,12 +1202,13 @@ class StoreAPIController extends PubControllerAPI
                     'sortby'   => $sort_by,
                 ),
                 array(
-                    'merchant_id' => 'required',
-                    'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:campaign_name,name,location,created_date',
+                    'merchant_id' => 'required|orbit.empty.tenant',
+                    'language'    => 'required|orbit.empty.language_default',
+                    'sortby'      => 'in:campaign_name,name,location,created_date',
                 ),
                 array(
-                    'required' => 'Merchant id is required',
+                    'required'           => 'Merchant id is required',
+                    'orbit.empty.tenant' => Lang::get('validation.orbit.empty.tenant'),
                 )
             );
 
@@ -1218,7 +1222,7 @@ class StoreAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $storeIds = Tenant::whereRaw("name = (SELECT name FROM {$prefix}merchants WHERE merchant_id = {$this->quote($merchant_id)})")->lists('merchant_id');
+            $storeIds = Tenant::where('name', $this->store->name)->lists('merchant_id');
 
             // get news list
             $news = DB::table('news')->select(
@@ -1240,7 +1244,6 @@ class StoreAPIController extends PubControllerAPI
                                             LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                             LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                         WHERE onm.news_id = {$prefix}news.news_id
-                                        AND om.merchant_id = {$this->quote($merchant_id)}
                                     )
                                     THEN 'expired'
                                     ELSE {$prefix}campaign_status.campaign_status_name
@@ -1611,6 +1614,20 @@ class StoreAPIController extends PubControllerAPI
             }
 
             $this->valid_language = $language;
+            return TRUE;
+        });
+
+        // Check store is exists
+        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
+            $store = Tenant::where('status', 'active')
+                            ->where('merchant_id', $value)
+                            ->first();
+
+            if (empty($store)) {
+                return FALSE;
+            }
+
+            $this->store = $store;
             return TRUE;
         });
     }
