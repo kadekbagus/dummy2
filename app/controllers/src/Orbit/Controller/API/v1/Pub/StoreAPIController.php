@@ -28,10 +28,13 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
+use Lang;
 
 class StoreAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
+    protected $store = NULL;
+
     /**
      * GET - get all store in all mall, group by name
      *
@@ -1199,12 +1202,13 @@ class StoreAPIController extends PubControllerAPI
                     'sortby'   => $sort_by,
                 ),
                 array(
-                    'merchant_id' => 'required',
-                    'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:campaign_name,name,location,created_date',
+                    'merchant_id' => 'required|orbit.empty.tenant',
+                    'language'    => 'required|orbit.empty.language_default',
+                    'sortby'      => 'in:campaign_name,name,location,created_date',
                 ),
                 array(
-                    'required' => 'Merchant id is required',
+                    'required'           => 'Merchant id is required',
+                    'orbit.empty.tenant' => Lang::get('validation.orbit.empty.tenant'),
                 )
             );
 
@@ -1217,6 +1221,8 @@ class StoreAPIController extends PubControllerAPI
             $valid_language = $this->valid_language;
 
             $prefix = DB::getTablePrefix();
+
+            $storeIds = Tenant::where('name', $this->store->name)->lists('merchant_id');
 
             // get news list
             $news = DB::table('news')->select(
@@ -1238,7 +1244,6 @@ class StoreAPIController extends PubControllerAPI
                                             LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
                                             LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                         WHERE onm.news_id = {$prefix}news.news_id
-                                        AND om.merchant_id = {$this->quote($merchant_id)}
                                     )
                                     THEN 'expired'
                                     ELSE {$prefix}campaign_status.campaign_status_name
@@ -1277,7 +1282,7 @@ class StoreAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
-                        ->where('merchants.merchant_id', $merchant_id)
+                        ->whereIn('merchants.merchant_id', $storeIds)
                         ->where('news.object_type', '=', 'news')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
@@ -1375,7 +1380,7 @@ class StoreAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
-                        ->where('merchants.merchant_id', $merchant_id)
+                        ->whereIn('merchants.merchant_id', $storeIds)
                         ->where('news.object_type', '=', 'promotion')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
@@ -1473,7 +1478,7 @@ class StoreAPIController extends PubControllerAPI
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
                             ->whereRaw("available.tot > 0")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
-                            ->where('merchants.merchant_id', $merchant_id)
+                            ->whereIn('merchants.merchant_id', $storeIds)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
                             ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');
@@ -1609,6 +1614,20 @@ class StoreAPIController extends PubControllerAPI
             }
 
             $this->valid_language = $language;
+            return TRUE;
+        });
+
+        // Check store is exists
+        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
+            $store = Tenant::where('status', 'active')
+                            ->where('merchant_id', $value)
+                            ->first();
+
+            if (empty($store)) {
+                return FALSE;
+            }
+
+            $this->store = $store;
             return TRUE;
         });
     }
