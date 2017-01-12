@@ -477,11 +477,8 @@ class AdvertAPIController extends ControllerAPI
             $this->response->status = 'error';
 
             // Only shows full query error when we are in debug mode
-            if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
-            } else {
-                $this->response->message = Lang::get('validation.orbit.queryerror');
-            }
+            $this->response->message = $e->getMessage();
+
             $this->response->data = null;
             $httpCode = 500;
 
