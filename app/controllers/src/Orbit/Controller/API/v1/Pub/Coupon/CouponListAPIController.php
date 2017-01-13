@@ -29,6 +29,7 @@ use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
 use Elasticsearch\ClientBuilder;
 use PartnerAffectedGroup;
+use PartnerCompetitor;
 
 class CouponListAPIController extends PubControllerAPI
 {
