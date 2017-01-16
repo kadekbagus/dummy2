@@ -175,46 +175,43 @@ return array(
 
     // cdn path
     'cdn' => array(
-        'jquery' => array(
-            '2_1_1' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'
-        ),
-        'bootstrap' => array(
-            '3_3_1' => 'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.1/js/bootstrap.min.js'
-        ),
-        'jqueryui' => array(
-            '1_11_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js'
-        ),
-        'lightslider' => array(
-            '1_1_2' => 'https://cdnjs.cloudflare.com/ajax/libs/lightslider/1.1.2/js/lightslider.min.js'
-        ),
-        'panzoom' => array(
-            '2_0_5' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery.panzoom/2.0.5/jquery.panzoom.min.js'
-        ),
-        'featherlight' => array(
-            '1_0_3' => 'https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.0.3/featherlight.min.js'
-        ),
-        'countdown' => array(
-            '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.countdown.min.js'
-        ),
-        // this is for countdown above
-        'jquery_plugin' => array(
-            '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.plugin.min.js'
-        ),
-        'moment' => array(
-            '2_13_0' => 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js'
-        ),
-        'moment_timezone_data' => array(
-            '0_5_4' => 'https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.4/moment-timezone-with-data.min.js'
-        ),
-        //font
-        'fonts' => array(
-            'ubuntu' => 'https://fonts.googleapis.com/css?family=Ubuntu:400',
-            'font_awesome' => array(
-                '4_2_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/fonts/fontawesome-webfont', // this url without font extension
-                '4_5_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/fonts/fontawesome-webfont' // this url without font extension
-            ),
-            'glyphicon' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/fonts/glyphicons-halflings-regular' // this url without font extension
-        ),
+        // Whether to use CDN or default URL for the uploaded files
+        'enable_cdn' => FALSE,
+
+        // Do we need to upload to CDN?
+        'upload_to_cdn' => FALSE,
+
+        // provider used
+        'provider' => 'S3',
+
+        // CDN Provider
+        'providers' => [
+            // Dummy
+            'dummy' => [
+                // Just dummy provider
+                'name' => 'Dummy provider',
+
+                // Name of the bucket or directory
+                'bucket_name' => NULL,
+
+                'url_prefix' => NULL
+            ],
+
+            // AWS S3
+            'S3' => [
+                // Name of the provider
+                'name' => 'Amazon S3',
+
+                // Name of the S3 bucket
+                'bucket_name' => 'dev-dotcool',
+
+                // Prefix of the CDN URL, without the bucket name (without trailing slash)
+                // When saving to database this prefix should be concat with bucket name
+                // and the path of the file. So the cdn_url field in table media has aboslute
+                // url like: https://s3-ap-southeast-1.amazonaws.com/dev-dotcool/uploads/retailers/2016/01/some-file.jpg
+                'url_prefix' => 'https://s3-ap-southeast-1.amazonaws.com'
+            ]
+        ]
     ),
 
     'assets' => array(
@@ -5274,5 +5271,33 @@ return array(
         'exception_behaviour' => [
             'partner_ids' => ['']
         ]
-    ]
+    ],
+
+    // AWS PHP SDK Configuration. It will act as base configuration
+    // for all client instance.
+    'aws-sdk' => [
+        // Default version
+        'version' => 'latest',
+
+        // Default region (Singapore)
+        'region' => 'ap-southeast-1',
+
+        // S3 specific configuration
+        'S3' => [
+            // Credentials for S3
+            'credentials' => [
+                // Access Key ID
+                'key' => '',
+
+                // Secret Key
+                'secret' => '',
+            ],
+
+            // Region for S3
+            'region' => 'ap-southeast-1',
+
+            // Version for S3
+            'version' => '2006-03-01'
+        ]
+    ],
 );
