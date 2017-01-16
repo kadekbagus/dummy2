@@ -48,6 +48,13 @@ return array(
 			'ttr'    => 60,
 		),
 
+		'cdn_upload' => array(
+			'driver' => 'beanstalkd',
+			'host'   => 'localhost',
+			'queue'  => 'cdn_upload',
+			'ttr'    => 60,
+		),
+
 		'sqs' => array(
 			'driver' => 'sqs',
 			'key'    => 'your-public-key',
