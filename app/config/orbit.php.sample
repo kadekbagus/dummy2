@@ -5384,7 +5384,7 @@ return array(
             'misc' => array(
                 'home' => array(
                     'uri' => '',
-                    'changefreq' => 'monthly',
+                    'changefreq' => 'daily',
                 ),
                 'about' => array(
                     'uri' => 'about-us',
