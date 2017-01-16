@@ -134,6 +134,9 @@ Artisan::add(new ElasticsearchClearNewsCommand);
 // Clear Coupon data in ES
 Artisan::add(new ElasticsearchClearCouponCommand);
 
+// Generate Sitemap
+Artisan::add(new GenerateSitemapCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
