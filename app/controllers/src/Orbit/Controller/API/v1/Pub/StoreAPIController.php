@@ -223,7 +223,7 @@ class StoreAPIController extends PubControllerAPI
                 ->orderBy(DB::raw("advert.placement_order"), 'desc')
                 ->orderBy('merchants.created_at', 'asc');
 
-            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall, &$mall_name) {
+            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall, &$mall_name, &$mall_city) {
                 $store->where('merchants.parent_id', '=', DB::raw("{$this->quote($mallId)}"));
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
