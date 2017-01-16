@@ -20,7 +20,8 @@
         "fideloper/proxy": "2.1.1",
         "artdarek/oauth-4-laravel": "^1.0",
         "elasticsearch/elasticsearch": "2.0",
-        "defuse/php-encryption": "~2.0"
+        "defuse/php-encryption": "~2.0",
+        "aws/aws-sdk-php": "^3.20.13"
     },
     "autoload": {
                 "psr-0": {
