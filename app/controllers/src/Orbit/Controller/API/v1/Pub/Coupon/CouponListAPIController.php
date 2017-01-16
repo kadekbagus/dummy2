@@ -516,6 +516,7 @@ class CouponListAPIController extends PubControllerAPI
             $data->total_records = $records['total'];
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
+                $data->mall_city = $mall->city;
             }
             $data->records = $listOfRec;
 
