@@ -131,6 +131,9 @@ class PromotionDetailAPIController extends PubControllerAPI
                         ->where('news.news_id', $promotionId)
                         ->where('news.object_type', '=', 'promotion')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                        ->with(['keywords' => function ($q) {
+                                $q->addSelect('keyword', 'object_id');
+                            }])
                         ->first();
 
             $message = 'Request Ok';

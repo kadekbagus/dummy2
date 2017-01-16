@@ -136,7 +136,8 @@ class News extends Eloquent
     public function keywords()
     {
         return $this->hasMany('KeywordObject', 'object_id', 'news_id')
-                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id')
+                    ->groupBy('keyword');
     }
 
     public function campaign_status()
