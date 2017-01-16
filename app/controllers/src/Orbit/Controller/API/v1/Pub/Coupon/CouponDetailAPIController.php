@@ -146,6 +146,9 @@ class CouponDetailAPIController extends PubControllerAPI
                             })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                        ->with(['keywords' => function ($q) {
+                                $q->addSelect('keyword', 'object_id');
+                            }])
                         ->where('promotions.promotion_id', $couponId);
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
