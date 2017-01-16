@@ -4918,6 +4918,15 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - User clicks on filter (Location, Category, Partner, Sort By)
+            '99' => array(
+                'name' => 'click_filter',
+                'name_long' => 'Click Filter',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
