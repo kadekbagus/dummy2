@@ -233,6 +233,96 @@ class SocMedAPIController extends PubControllerAPI
     }
 
     /**
+     * GET - FB Store Share dummy page
+     *
+     * @param string    `name`          (required)
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getStoreDetailView()
+    {
+        $languageEnId = null;
+        $language = Language::where('name', 'en')->first();
+
+        if (! empty($language)) {
+            $languageEnId = $language->language_id;
+        }
+
+        $storeId = OrbitInput::get('id');
+
+        $prefix = DB::getTablePrefix();
+
+        $store = Tenant::select(
+                            'merchants.merchant_id',
+                            'merchants.name',
+                            DB::Raw("CASE WHEN (
+                                            select mt.description
+                                            from {$prefix}merchant_translations mt
+                                            where mt.merchant_id = {$prefix}merchants.merchant_id
+                                                and mt.merchant_language_id = '$languageEnId'
+                                        ) = ''
+                                        THEN {$prefix}merchants.description
+                                        ELSE (
+                                            select mt.description
+                                            from {$prefix}merchant_translations mt
+                                            where mt.merchant_id = {$prefix}merchants.merchant_id
+                                                and mt.merchant_language_id = '$languageEnId'
+                                        )
+                                    END as description
+                                "),
+                            'merchants.url'
+                        )
+            ->with(['mediaLogo' => function ($q) {
+                $q->select(
+                        'media.path',
+                        'media.object_id'
+                    );
+            }, 'mediaImageOrig' => function ($q) {
+                $q->select(
+                        'media.path',
+                        'media.object_id'
+                    );
+            }, 'mediaImageCroppedDefault' => function ($q) {
+                $q->select(
+                        'media.path',
+                        'media.object_id'
+                    );
+            }])
+            ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+            ->where('merchants.status', 'active')
+            ->whereRaw("oms.status = 'active'")
+            ->where('merchants.merchant_id', $storeId)
+            ->orderBy('merchants.created_at', 'asc')
+            ->first();
+
+        if (! is_object($store)) {
+            // item not found
+            $data = $this->createEmptyViewData();
+
+            return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+        }
+
+        $data = new stdclass();
+        $data->url = static::getSharedUrl('store', $store->merchant_id, $store->name);
+        $data->title = $store->name;
+        $data->description = $store->description;
+        $data->mall = new stdclass();
+        $data->mall->name = 'Gotomalls.com';
+
+        if (empty($store->mediaLogo)) {
+            $data->image_url = NULL;
+        } else {
+            $data->image_url = $store->mediaLogo[0]->path;
+        }
+
+        $data->image_dimension = $this->getImageDimension($store->mediaLogo[0]->path);
+
+        return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+    }
+
+    /**
      * GET - FB Coupon Share dummy page
      *
      * @param string    `id`          (required)
@@ -347,6 +437,9 @@ class SocMedAPIController extends PubControllerAPI
                 break;
             case 'coupon':
                 $routeName = 'pub-share-coupon';
+                break;
+            case 'store':
+                $routeName = 'pub-share-store';
                 break;
 
             default:

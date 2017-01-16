@@ -27,8 +27,23 @@ class ElasticsearchErrorChecker
         }
 
         $_shards = $response['_shards'];
-        if (isset($_shards['successful']) && $_shards['successful'] < 1) {
-            throw new Exception('The document indexing seems fail because the successful value is less than 1.', 1);
+        if (isset($_shards['failed']) && $_shards['failed'] > 0) {
+            throw new Exception('The document indexing seems fail because the failed value is more than 0.', 1);
+        }
+    }
+
+    /**
+     * Throw an exception if there is an error when doing bulk index for
+     * documents.
+     *
+     * @param array $response
+     * @return void
+     * @throws Exception
+     */
+    public static function throwExceptionOnBulkDocumentError($response)
+    {
+        if (isset($response['errors']) && $response['errors']) {
+            throw new Exception('Response: ' . serialize($response));
         }
     }
 }

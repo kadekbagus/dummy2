@@ -34,12 +34,75 @@ return array(
             'activities' => [
                 'index' => 'activities',
                 'type'  => 'activity'
+            ],
+
+            'coupons' => [
+                'index' => 'coupons',
+                'type'  => 'basic'
+            ],
+
+            'news' => [
+                 'index' => 'news',
+                 'type'  => 'basic'
+            ],
+
+            'promotions' => [
+                 'index' => 'promotions',
+                 'type'  => 'basic'
             ]
         ],
 
         'nearest' => [
             'multiple' => 5,
             'max_try' => 10
+        ],
+
+        // The priority boost used in query
+        'priority' => [
+
+            'mall' => [
+                'name'         => '^6',
+                'object_type'  => '^5',
+                'city'         => '^3',
+                'province'     => '^2',
+                'keywords'     => '',
+                'address_line' => '',
+                'country'      => '',
+                'description'  => ''
+            ],
+
+            'news' => [
+                'name'        => '^6',
+                'object_type' => '^5',
+                'keywords'    => '^4',
+                'description' => '^3',
+                'mall_name'   => '^3',
+                'city'        => '^2',
+                'province'    => '^2',
+                'country'     => '^2'
+            ],
+
+            'promotions' => [
+                'name'        => '^6',
+                'object_type' => '^5',
+                'keywords'    => '^4',
+                'description' => '^3',
+                'mall_name'   => '^3',
+                'city'        => '^2',
+                'province'    => '^2',
+                'country'     => '^2'
+            ],
+
+            'coupons' => [
+                'name'        => '^6',
+                'object_type' => '^5',
+                'keywords'    => '^4',
+                'description' => '^3',
+                'mall_name'   => '^3',
+                'city'        => '^2',
+                'province'    => '^2',
+                'country'     => '^2'
+            ],
         ]
     ],
 
@@ -278,7 +341,7 @@ return array(
         'back_to_map_url' => 'https://www.gotomalls.cool/#/?redirect_ci=false',
 
         // after sign in social url
-        'after_social_sign_in' => 'https://www.gotomalls.cool',
+        'after_social_sign_in' => 'https://www.gotomalls.cool/#!/auth',
 
         // enable or disable the google analytics tracking
         'enable_google_analytics' => FALSE,
@@ -575,6 +638,18 @@ return array(
         'mall_location' => array(
             'per_page'      => 50,
             'max_record'    => 200,
+        ),
+
+        // affected group name
+        'affected_group_name' => array(
+            'per_page'      => 50,
+            'max_record'    => 200,
+        ),
+
+        // you might also like
+        'you_might_also_like' => array(
+            'per_page'      => 4,
+            'max_record'    => 4,
         ),
     ),
 
@@ -4837,6 +4912,15 @@ return array(
                 'object_type' => 'Partner',
                 'parameter_name' => 'partner_id'
             ),
+            // - User clicks on tabs menu (Promotions, Coupons, Stores, Malls, Events)
+            '98' => array(
+                'name' => 'click_tab_menu',
+                'name_long' => 'Click Tab Menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
@@ -4942,11 +5026,13 @@ return array(
         'subject' => '[%s] %s - Gotomalls.com',
 
         // base url of the campaign detail, needed for showing link on the email
-        'news_detail_base_url' => 'https://v211.gotomalls.cool/#!/news/detail/%s/%s',
+        'news_detail_base_url' => 'https://v215.gotomalls.cool/#!/events/%s/%s',
 
-        'promotion_detail_base_url' => 'https://v211.gotomalls.cool/#!/promotions/detail/%s/%s',
+        'promotion_detail_base_url' => 'https://v215.gotomalls.cool/#!/promotions/%s/%s',
 
-        'coupon_detail_base_url' => 'https://v211.gotomalls.cool/#!/coupons/detail/%s/%s',
+        'coupon_detail_base_url' => 'https://v215.gotomalls.cool/#!/coupons/%s/%s',
+
+        'store_detail_base_url' => 'https://v215.gotomalls.cool/#!/stores/%s/%s',
     ),
 
     /**
@@ -5090,7 +5176,69 @@ return array(
 
             // Cache the result for X minutes
             'cache_ttl' => 15
-        ]
+        ],
+
+        // Cache per context
+        'context' => [
+            'default' => [
+                'enable' => FALSE,
+                'cache_ttl' => 30,
+            ],
+
+            // promotion list specific cache setting
+            'promotion-list' => [
+                'enable' => TRUE,
+                'cache_ttl' => 60
+            ],
+
+            // coupon list specific cache setting
+            'coupon-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // store list specific cache setting
+            'store-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // mall list specific cache setting
+            'mall-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // event list specific cache setting
+            'event-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // event location list specific cache setting
+            'location-event-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // promotion location list specific cache setting
+            'location-promotion-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // coupon location list specific cache setting
+            'location-coupon-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // store location list specific cache setting
+            'location-store-list' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+        ],
     ],
 
     /**
@@ -5117,6 +5265,14 @@ return array(
     'mdm' => [
         'synchronization' => [
             'chunk' => 50
+        ]
+    ],
+
+    // partner config
+    'partner' => [
+        // exception behaviour for query in listing (ex: dompetku)
+        'exception_behaviour' => [
+            'partner_ids' => ['']
         ]
     ]
 );

@@ -39,7 +39,10 @@ class News extends Eloquent
      */
     public function translations()
     {
-        return $this->hasMany('NewsTranslation', 'news_id', 'news_id')->excludeDeleted()->has('language');
+        return $this->hasMany('NewsTranslation', 'news_id', 'news_id')
+                ->where('news_translations.status', '!=', 'deleted')
+                ->has('language')
+                ->join('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id');
     }
 
     public function tenants()
@@ -57,6 +60,49 @@ class News extends Eloquent
                 ->select('merchants.*', DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language"))
                 ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
             ->withPivot('object_type');
+    }
+
+    public function esCampaignLocations()
+    {
+        $prefix = DB::getTablePrefix();
+        return $this->belongsToMany('CampaignLocation', 'news_merchant', 'news_id', 'merchant_id')
+                ->select(
+                    'merchants.merchant_id',
+                    'merchants.name',
+                    'merchants.object_type',
+                    DB::raw('oms.city,
+                    oms.province,
+                    oms.country'),
+                    DB::raw("
+                        (CASE WHEN {$prefix}merchants.object_type = 'tenant'
+                            THEN {$prefix}merchants.parent_id
+                            ELSE {$prefix}merchants.merchant_id
+                        END) as parent_id
+                    "),
+                    DB::raw("
+                        (CASE WHEN {$prefix}merchants.object_type = 'tenant'
+                            THEN oms.name
+                            ELSE {$prefix}merchants.name
+                        END) as mall_name
+                    ")
+                )
+                ->leftJoin(DB::raw("{$prefix}merchants oms"), DB::raw("oms.merchant_id"), '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END"))
+                ;
+    }
+
+    public function campaignObjectPartners()
+    {
+        $prefix = DB::getTablePrefix();
+        return $this->hasMany('ObjectPartner', 'object_id', 'news_id')
+                      ->select('object_partner.object_id',DB::raw("{$prefix}partners.partner_id"), DB::raw("{$prefix}partners.partner_name"))
+                      ->leftjoin('partners', 'partners.partner_id', '=', 'object_partner.partner_id');
+    }
+
+    public function adverts()
+    {
+        return $this->hasMany('Advert', 'link_object_id', 'news_id')
+            ->leftJoin('advert_link_types', 'adverts.advert_link_type_id', '=', 'advert_link_types.advert_link_type_id')
+            ->where('advert_link_types.advert_type', '=', 'promotion');
     }
 
     /**

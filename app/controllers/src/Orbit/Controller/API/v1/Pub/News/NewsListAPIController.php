@@ -1,5 +1,4 @@
 <?php namespace Orbit\Controller\API\v1\Pub\News;
-
 /**
  * @author firmansyah <firmansyah@dominopos.com>
  * @desc Controller for news list and search in landing page
@@ -19,13 +18,19 @@ use News;
 use NewsMerchant;
 use Language;
 use Validator;
+use PartnerAffectedGroup;
+use PartnerCompetitor;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
+use Orbit\Helper\Util\SimpleCache;
+use Elasticsearch\ClientBuilder;
+use Carbon\Carbon as Carbon;
 
 class NewsListAPIController extends PubControllerAPI
 {
@@ -34,6 +39,7 @@ class NewsListAPIController extends PubControllerAPI
      * GET - get active news in all mall, and also provide for searching
      *
      * @author Firmansyayh <firmansyah@dominopos.com>
+     * @author Rio Astamal <rio@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -53,10 +59,19 @@ class NewsListAPIController extends PubControllerAPI
         $keyword = null;
         $user = null;
         $mall = null;
+        $cacheKey = [];
+        $serializedCacheKey = [];
 
-        try{
+        // Cache result of all possible calls to backend storage
+        $cacheConfig = Config::get('orbit.cache.context');
+        $cacheContext = 'event-list';
+        $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
+        $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-total-rec');
+
+        try {
             $user = $this->getUser();
-
+            $host = Config::get('orbit.elasticsearch');
             $sort_by = OrbitInput::get('sortby', 'created_date');
             $sort_mode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
@@ -67,7 +82,11 @@ class NewsListAPIController extends PubControllerAPI
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
+            $category_id = OrbitInput::get('category_id');
+            $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
+            $take = PaginationNumber::parseTakeFromGet('news');
+            $skip = PaginationNumber::parseSkipFromGet();
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -85,6 +104,18 @@ class NewsListAPIController extends PubControllerAPI
                 )
             );
 
+            // Pass all possible parameters to be used as cache key.
+            // Make sure there is no missing one.
+            $cacheKey = [
+                'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
+                'location' => $location, 'ul' => $ul,
+                'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
+                'distance' => $distance, 'mall_id' => $mallId,
+                'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
+                'no_total_record' => $no_total_records,
+                'take' => $take, 'skip' => $skip,
+            ];
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -94,69 +125,22 @@ class NewsListAPIController extends PubControllerAPI
             $valid_language = $newsHelper->getValidLanguage();
             $prefix = DB::getTablePrefix();
 
-            $withMallId = '';
-            if (! empty($mallId)) {
-                $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
-            }
+            $client = ClientBuilder::create() // Instantiate a new ClientBuilder
+                    ->setHosts($host['hosts']) // Set the hosts
+                    ->build();
 
-            $news = News::select(
-                                'news.news_id as news_id',
-                                DB::Raw("
-                                    CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
-                                    CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
-                                    CASE WHEN {$prefix}media.path is null THEN (
-                                            select m.path
-                                            from {$prefix}news_translations nt
-                                            join {$prefix}media m
-                                                on m.object_id = nt.news_translation_id
-                                                and m.media_name_long = 'news_translation_image_orig'
-                                            where nt.news_id = {$prefix}news.news_id
-                                            group by nt.news_id
-                                        ) ELSE {$prefix}media.path END as image_url
-                                "),
-                                'news.object_type',
-                        // query for get status active based on timezone
-                        DB::raw("
-                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
-                                        THEN {$prefix}campaign_status.campaign_status_name
-                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
-                                                                                    FROM {$prefix}news_merchant onm
-                                                                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
-                                                                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                                    WHERE onm.news_id = {$prefix}news.news_id
-                                                                                    {$withMallId})
-                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
-                                CASE WHEN (SELECT count(onm.merchant_id)
-                                            FROM {$prefix}news_merchant onm
-                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
-                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                            WHERE onm.news_id = {$prefix}news.news_id
-                                            {$withMallId}
-                                            AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
-                                THEN 'true' ELSE 'false' END AS is_started
-                            "),
-                        'news.created_at')
-                        ->leftJoin('news_translations', function ($q) use ($valid_language) {
-                            $q->on('news_translations.news_id', '=', 'news.news_id')
-                              ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
-                        })
-                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', function ($q) {
-                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
-                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
-                        })
-                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                        ->leftJoin('merchants as m', function ($q) {
-                                $q->on(DB::raw("m.merchant_id"), '=', 'news_merchant.merchant_id');
-                                $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
-                        })
-                        ->whereRaw("{$prefix}news.object_type = 'news'")
-                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                        ->orderBy('news_name', 'asc');
+            $withScore = false;
 
-            //calculate distance if user using my current location as filter and sort by location for listing
+            //Get now time, time must be 2017-01-09T15:30:00Z
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+            $dateTime = explode(' ', $dateTime);
+            $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
+
+            $jsonQuery = array('from' => $skip, 'size' => $take, 'query' => array('filtered' => array('filter' => array('and' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs))))))));
+
+            // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
                 if (! empty($ul)) {
                     $position = explode("|", $ul);
@@ -170,158 +154,170 @@ class NewsListAPIController extends PubControllerAPI
                         $lat = $userLocationCookieArray[1];
                     }
                 }
-
-                if (! empty($lon) && ! empty($lat)) {
-                    $news = $news->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance")
-                                                )
-                                            ->leftJoin('merchant_geofences', function ($q) use($prefix) {
-                                                        $q->on('merchant_geofences.merchant_id', '=',
-                                                        DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END"));
-                                                });
-                }
             }
 
-            // filter by category_id
-            OrbitInput::get('category_id', function($category_id) use ($news, $prefix, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                if (! is_array($category_id)) {
-                    $category_id = (array)$category_id;
-                }
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey)
+            {
+                $cacheKey['keyword'] = $keyword;
 
-                if (in_array("mall", $category_id)) {
-                    $news = $news->whereIn(DB::raw("m.object_type"), $category_id);
-                } else {
-                    $news = $news->leftJoin('category_merchant as cm', function($q) {
-                                    $q->on(DB::raw('cm.merchant_id'), '=', DB::raw("m.merchant_id"));
-                                    $q->on(DB::raw("m.object_type"), '=', DB::raw("'tenant'"));
-                                })
-                        ->whereIn(DB::raw('cm.category_id'), $category_id);
+                if ($keyword != '') {
+                    $searchFlag = $searchFlag || TRUE;
+                    $withScore = true;
+
+                    $priority['name'] = Config::get('orbit.elasticsearch.priority.news.name', '^6');
+                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.news.object_type', '^5');
+                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.news.keywords', '^4');
+                    $priority['description'] = Config::get('orbit.elasticsearch.priority.news.description', '^3');
+                    $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.news.mall_name', '^3');
+                    $priority['city'] = Config::get('orbit.elasticsearch.priority.news.city', '^2');
+                    $priority['province'] = Config::get('orbit.elasticsearch.priority.news.province', '^2');
+                    $priority['country'] = Config::get('orbit.elasticsearch.priority.news.country', '^2');
+
+                    $filterTranslation = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.name'.$priority['name'], 'translation.description'.$priority['description'])))));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
+
+                    $filterTenant = array('nested' => array('path' => 'link_to_tenant', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('link_to_tenant.city'.$priority['city'], 'link_to_tenant.province'.$priority['province'], 'link_to_tenant.country'.$priority['country'], 'link_to_tenant.mall_name'.$priority['mall_name'])))));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTenant;
+
+                    $filterKeyword = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
                 }
             });
 
-            OrbitInput::get('partner_id', function($partner_id) use ($news, $prefix, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                $news = $news->leftJoin('object_partner',function($q) use ($partner_id){
-                            $q->on('object_partner.object_id', '=', 'news.news_id')
-                              ->where('object_partner.object_type', '=', 'news')
-                              ->where('object_partner.partner_id', '=', $partner_id);
-                        })
-                        ->whereNotExists(function($query) use ($partner_id, $prefix)
-                        {
-                            $query->select('object_partner.object_id')
-                                  ->from('object_partner')
-                                  ->join('partner_competitor', function($q) {
-                                        $q->on('partner_competitor.competitor_id', '=', 'object_partner.partner_id');
-                                    })
-                                  ->whereRaw("{$prefix}object_partner.object_type = 'news'")
-                                  ->whereRaw("{$prefix}partner_competitor.partner_id = '{$partner_id}'")
-                                  ->whereRaw("{$prefix}object_partner.object_id = {$prefix}news.news_id")
-                                  ->groupBy('object_partner.object_id');
-                        });
-            });
-
-            // filter news by mall id
-             OrbitInput::get('mall_id', function($mallid) use ($news) {
-                $news->where(function($q) use ($mallid){
-                        $q->where(DB::raw("m.parent_id"), '=', $mallid)
-                          ->orWhere(DB::raw("m.merchant_id"), '=', $mallid);
-                    });
+            OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery) {
+                if (! empty($mallId)) {
+                    $withMallId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.parent_id' => $mallId))))));
+                    $jsonQuery['query']['filtered']['filter']['and'][] = $withMallId;
+                }
              });
 
-             // frontend need the mall name
-             $mall = null;
-             if (! empty($mallId)) {
-                $mall = Mall::where('merchant_id', '=', $mallId)->first();
-             }
-
-            // filter by city
-            OrbitInput::get('location', function($location) use ($news, $prefix, $lon, $lat, $userLocationCookieName, $distance, &$searchFlag) {
+            // filter by category_id
+            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $news = $news->leftJoin('merchants as mp', function($q) {
-                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("m.parent_id"));
-                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
-                                $q->on(DB::raw("m.status"), '=', DB::raw("'active'"));
-                            });
-
-                if ($location === 'mylocation' && !empty($lon) && !empty($lat)) {
-                    $news = $news->havingRaw("distance <= {$distance}");
-                } else {
-                    $news = $news->where(DB::raw("(CASE WHEN m.object_type = 'tenant' THEN mp.city ELSE m.city END)"), $location);
+                if (! is_array($categoryIds)) {
+                    $categoryIds = (array)$categoryIds;
                 }
-            });
 
-            $querySql = $news->toSql();
-
-            $news = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($news->getQuery());
-
-            if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-                $searchFlag = $searchFlag || TRUE;
-                $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.created_at"))
-                                       ->orderBy('distance', 'asc');
-            } else {
-                $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.created_at"));
-            }
-
-            $news = $news->groupBy(DB::Raw("sub_query.news_id"));
-
-            if ($sort_by !== 'location') {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    'name'          => 'news_name',
-                    'created_date'  => 'created_at'
-                );
-
-                $sort_by = $sortByMapping[$sort_by];
-            }
-
-            OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
-            {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sort_mode = 'desc';
+                foreach ($categoryIds as $key => $value) {
+                    $categoryFilter['or'][] = array('match' => array('category_ids' => $value));
                 }
+                $jsonQuery['query']['filtered']['filter']['and'][] = $categoryFilter;
             });
 
-            if ($sort_by !== 'location') {
-                $news = $news->orderBy($sort_by, $sort_mode);
-            }
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
+                $cacheKey['partner_id'] = $partnerId;
 
-            OrbitInput::get('keyword', function($keyword) use ($news, $prefix, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                 if (! empty($keyword)) {
-                    $news = $news->leftJoin('keyword_object', DB::Raw("sub_query.news_id"), '=', 'keyword_object.object_id')
-                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
-                                ->where(function($query) use ($keyword, $prefix){
-                                    //Search per word
-                                    $words = explode(' ', $keyword);
-                                    foreach ($words as $key => $word) {
-                                        if (strlen($word) === 1 && $word === '%') {
-                                            $query->orWhere(function($q) use ($word, $prefix){
-                                                $q->whereRaw("sub_query.news_name like '%|{$word}%' escape '|'")
-                                                  ->orWhereRaw("sub_query.description like '%|{$word}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}keywords.keyword like '%|{$word}%' escape '|'");
-                                            });
-                                        } else {
-                                            $query->orWhere(function($q) use ($word, $prefix){
-                                                $q->where(DB::raw('sub_query.news_name'), 'like', '%' . $word . '%')
-                                                  ->orWhere(DB::raw('sub_query.description'), 'like', '%' . $word . '%')
-                                                  ->orWhere('keywords.keyword', 'like', '%' . $word . '%');
-                                            });
-                                        }
-                                    }
-                                });
-                 }
-            });
+                $partnerFilter = '';
+                if (! empty($partnerId)) {
+                    $searchFlag = $searchFlag || TRUE;
+                    $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
+                                                                $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+                                                                     ->where('affected_group_names.group_type', '=', 'news');
+                                                            })
+                                                            ->where('partner_id', $partnerId)
+                                                            ->first();
 
-            OrbitInput::get('filter_name', function ($filterName) use ($news, $prefix) {
-                if (! empty($filterName)) {
-                    if ($filterName === '#') {
-                        $news->whereRaw("SUBSTR(sub_query.news_name,1,1) not between 'a' and 'z'");
-                    } else {
-                        $filter = explode("-", $filterName);
-                        $news->whereRaw("SUBSTR(sub_query.news_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
+                    if (is_object($partnerAffected)) {
+                        $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
+                        $partnerFilter = array('query' => array('match' => array('partner_ids' => $partnerId)));
+
+                        if (in_array($partnerId, $exception)) {
+                            $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
+                            $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
+                        }
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $partnerFilter;
                     }
                 }
             });
+
+            // filter by location (city or user location)
+            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance)
+            {
+                if (! empty($location)) {
+                    $searchFlag = $searchFlag || TRUE;
+
+                    if ($location === 'mylocation' && $lat != '' && $lon != '') {
+                        $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat)))))));
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
+                    } elseif ($location !== 'mylocation') {
+                        $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $location))))));
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
+                    }
+                }
+            });
+
+            // sort by name or location
+            if ($sort_by === 'location' && $lat != '' && $lon != '') {
+                $searchFlag = $searchFlag || TRUE;
+                $sort = array('_geo_distance' => array('link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
+            } elseif ($sort_by === 'created_date') {
+                $sort = array('begin_date' => array('order' => $sort_mode));
+            } else {
+                $sort = array('name.raw' => array('order' => $sort_mode));
+            }
+
+            $sortby = $sort;
+            if ($withScore) {
+                $sortby = array('_score', $sort);
+            }
+            $jsonQuery['sort'] = $sortby;
+
+            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+            $esParam = [
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index'),
+                'type'   => Config::get('orbit.elasticsearch.indices.news.type'),
+                'body' => json_encode($jsonQuery)
+            ];
+
+            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
+                return $client->search($esParam);
+            });
+            $recordCache->put($serializedCacheKey, $response);
+
+            $records = $response['hits'];
+
+            $listOfRec = array();
+            foreach ($records['hits'] as $record) {
+                $data = array();
+                foreach ($record['_source'] as $key => $value) {
+                    if ($key === "name") {
+                        $key = "news_name";
+                    }
+                    $data[$key] = $value;
+
+                    // translation, to get name, desc and image
+                    if ($key === "translation") {
+                        foreach ($record['_source']['translation'] as $dt) {
+                            if ($dt['language_id'] === $valid_language->language_id) {
+                                // name & desc
+                                if (! empty($dt['name'])) {
+                                    $data['news_name'] = $dt['name'];
+                                    $data['description'] = $dt['description'];
+                                }
+
+                                // image
+                                if (! empty($dt['image_url'])) {
+                                    $data['image_url'] = $dt['image_url'];
+                                }
+                            } else {
+                                // name & desc
+                                if (! empty($dt['name']) && empty($data['news_name'])) {
+                                    $data['news_name'] = $dt['name'];
+                                    $data['description'] = $dt['description'];
+                                }
+
+                                // image
+                                if (! empty($dt['image_url']) && empty($data['image_url'])) {
+                                    $data['image_url'] = $dt['image_url'];
+                                }
+                            }
+                        }
+                    }
+                }
+                $data['score'] = $record['_score'];
+                $listOfRec[] = $data;
+            }
 
             // record GTM search activity
             if ($searchFlag) {
@@ -337,35 +333,20 @@ class NewsListAPIController extends PubControllerAPI
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
-            $totalRec = 0;
-            // Set defaul 0 when get variable no_total_records = yes
-            if ($no_total_records !== 'yes') {
-                $_news = clone($news);
-
-                $recordCounter = RecordCounter::create($_news);
-                OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($recordCounter->getQueryBuilder());
-
-                $totalRec = $recordCounter->count();
+            // frontend need the mall name
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
-
-            // Cache the result of database calls
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($news);
-
-            $take = PaginationNumber::parseTakeFromGet('news');
-            $news->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
-            $news->skip($skip);
-
-            $listOfRec = $news->get();
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = $totalRec;
+            $data->total_records = $records['total'];
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
             }
             $data->records = $listOfRec;
+
 
             if (OrbitInput::get('from_homepage', '') !== 'y') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {

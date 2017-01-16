@@ -180,4 +180,71 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
         'mode'               => 'update'
     ]);
 
+    $prefix = DB::getTablePrefix();
+    if ($news->object_type === 'promotion') {
+        $promotions = News::excludeDeleted('news')
+                        ->select(DB::raw("
+                            {$prefix}news.news_id,
+                            CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                            THEN {$prefix}campaign_status.campaign_status_name
+                            ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                            FROM {$prefix}news_merchant onm
+                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                            WHERE onm.news_id = {$prefix}news.news_id)
+                           THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
+                        "))
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->where('news.news_id', '=', $news->news_id)
+                        ->where('news.object_type', '=', 'promotion')
+                        ->first();
+
+        // delete the es document if the promotion stopped or expired
+        if ($promotions->campaign_status === 'stopped' || $promotions->campaign_status === 'expired') {
+            // Notify the queueing system to delete Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionDeleteQueue', [
+                'news_id' => $promotions->news_id
+            ]);
+        } else {
+            // Notify the queueing system to update Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
+                'news_id' => $promotions->news_id
+            ]);
+        }
+    }
+
+    if ($news->object_type === 'news') {
+        $news = News::excludeDeleted('news')
+                        ->select(DB::raw("
+                            {$prefix}news.news_id,
+                            CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                            THEN {$prefix}campaign_status.campaign_status_name
+                            ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                            FROM {$prefix}news_merchant onm
+                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                            WHERE onm.news_id = {$prefix}news.news_id)
+                           THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
+                        "))
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->where('news.news_id', '=', $news->news_id)
+                        ->where('news.object_type', '=', 'news')
+                        ->first();
+
+        // delete the es document if the promotion stopped or expired
+        if ($news->campaign_status === 'stopped' || $news->campaign_status === 'expired') {
+            // Notify the queueing system to delete Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsDeleteQueue', [
+                'news_id' => $news->news_id
+            ]);
+        } else {
+            // Notify the queueing system to update Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
+                'news_id' => $news->news_id
+            ]);
+        }
+    }
+
 });

@@ -138,6 +138,7 @@ Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $
  * Listen on:    `orbit.coupon.postupdatecoupon.after.commit`
  * Purpose:      Send email to marketing after create coupon
  *
+ * @author irianto <irianto@dominopos.com>
  * @author kadek <kadek@dominopos.com>
  *
  * @param CouponAPIController $controller
@@ -160,4 +161,56 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
         'mode'               => 'update'
     ]);
 
+    // check coupon before update elasticsearch
+    $prefix = DB::getTablePrefix();
+    $coupon = Coupon::select(
+                DB::raw("
+                    {$prefix}promotions.promotion_id,
+                    CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                        THEN {$prefix}campaign_status.campaign_status_name
+                        ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                        FROM {$prefix}promotion_retailer opt
+                                                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                        WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                                                    )
+                        THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
+                    END AS campaign_status,
+                    COUNT({$prefix}issued_coupons.issued_coupon_id) as available
+                "))
+                ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
+                ->join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                ->leftJoin('issued_coupons', function($q) {
+                    $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                        ->where('issued_coupons.status', '=', "available");
+                })
+                ->where('promotions.promotion_id', $coupon->promotion_id)
+                ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
+                ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
+                ->first();
+
+    if (! empty($coupon)) {
+        if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0) {
+            // Notify the queueing system to delete Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+        } else {
+            // Notify the queueing system to update Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
+        }
+    }
+
+});
+
+
+Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller, $coupon_id)
+{
+    // Notify the queueing system to update Elasticsearch document
+    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+        'coupon_id' => $coupon_id
+    ]);
 });

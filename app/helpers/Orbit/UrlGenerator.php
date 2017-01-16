@@ -174,6 +174,13 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
             }
         }
 
+        if (isset($_POST['plain'])) {
+            if ($_POST['plain']) {
+                unset($_POST['plain']);
+                return $path;
+            }
+        }
+
         if ($insert_at !== -1) {
             $pre = substr($original, 0, $insert_at);
             $post = substr($original, $insert_at);

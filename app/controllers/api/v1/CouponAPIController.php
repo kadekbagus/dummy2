@@ -177,6 +177,8 @@ class CouponAPIController extends ControllerAPI
             $linkToTenantIds = (array) $linkToTenantIds;
             $sticky_order = OrbitInput::post('sticky_order');
             $couponCodes = OrbitInput::post('coupon_codes');
+            $partner_ids = OrbitInput::post('partner_ids');
+            $partner_ids = (array) $partner_ids;
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -633,6 +635,18 @@ class CouponAPIController extends ControllerAPI
             }
             $newcoupon->keywords = $couponKeywords;
 
+            // save ObjectPartner (link to partner)
+            $objectPartners = array();
+            foreach ($partner_ids as $partner_id) {
+                $objectPartner = new ObjectPartner();
+                $objectPartner->object_id = $newcoupon->promotion_id;
+                $objectPartner->object_type = 'coupon';
+                $objectPartner->partner_id = $partner_id;
+                $objectPartner->save();
+                $objectPartners[] = $objectPartner;
+            }
+            $newcoupon->partners = $objectPartners;
+
             Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
 
             //save campaign price
@@ -1012,6 +1026,8 @@ class CouponAPIController extends ControllerAPI
             $retailer_ids = (array) $retailer_ids;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
+            $partner_ids = OrbitInput::post('partner_ids');
+            $partner_ids = (array) $partner_ids;
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -1711,6 +1727,29 @@ class CouponAPIController extends ControllerAPI
                 }
                 $updatedcoupon->age = $couponAges;
 
+            });
+
+            OrbitInput::post('partner_ids', function($partner_ids) use ($updatedcoupon, $promotion_id) {
+                // validate retailer_ids
+                $partner_ids = (array) $partner_ids;
+
+                // Delete old data
+                $delete_object_partner = ObjectPartner::where('object_id', '=', $promotion_id);
+                $delete_object_partner->delete();
+
+                $objectPartners = array();
+                // Insert new data
+                if(array_filter($partner_ids)) {
+                    foreach ($partner_ids as $partner_id) {
+                        $objectPartner = new ObjectPartner();
+                        $objectPartner->object_id = $promotion_id;
+                        $objectPartner->object_type = 'coupon';
+                        $objectPartner->partner_id = $partner_id;
+                        $objectPartner->save();
+                        $objectPartners[] = $objectPartner;
+                    }
+                }
+                $updatedcoupon->partners = $objectPartners;
             });
 
             // Delete old data
@@ -2708,6 +2747,8 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('ages');
                     } elseif ($relation === 'keywords') {
                         $coupons->with('keywords');
+                    } elseif ($relation === 'campaignObjectPartners') {
+                        $coupons->with('campaignObjectPartners');
                     }
                 }
             });

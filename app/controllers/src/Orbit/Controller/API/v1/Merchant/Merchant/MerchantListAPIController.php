@@ -99,6 +99,17 @@ class MerchantListAPIController extends ControllerAPI
                 $merchants->where('base_merchants.name', 'like', "%$name%");
             });
 
+            // Add new relation based on request
+            OrbitInput::get('with', function ($with) use ($merchants) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'partners') {
+                        $merchants->with('partners');
+                    }
+                }
+            });
+
             $merchants->groupBy('base_merchants.base_merchant_id');
 
             // Clone the query builder which still does not include the take,

@@ -140,8 +140,65 @@ class GenericActivityAPIController extends PubControllerAPI
                         ->first();
             }
 
+            // Get mall object for set setLocation activity
+            $mallId = OrbitInput::post('mall_id', null);
+
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
+            }
+
             // Get notes
             $notes = OrbitInput::post('notes', null);
+
+            // Menu specific block,
+            if ($activityName === 'click_menu') {
+                // to set object_display_name to 'sidebar' or else
+                $menuSource = OrbitInput::post('menu_location', null);
+
+                if (! empty($menuSource)) {
+                    switch ($menuSource) {
+                        case 'sidebar':
+                            $activity->setObjectDisplayName('Sidebar Menu');
+                            break;
+
+                        case 'topmenu':
+                        default:
+                            $activity->setObjectDisplayName('Top Menu');
+                            break;
+                    }
+                }
+            } elseif ($activityName === 'click_tab_menu') {
+                $menu = OrbitInput::post('menu', null);
+                if (! empty($menu)) {
+                    switch ($menu) {
+                        case 'promotions':
+                            $activity->setObjectDisplayName('Promotions');
+                            break;
+
+                        case 'coupons':
+                            $activity->setObjectDisplayName('Coupons');
+                            break;
+
+                        case 'stores':
+                            $activity->setObjectDisplayName('Stores');
+                            break;
+
+                        case 'malls':
+                            $activity->setObjectDisplayName('Malls');
+                            break;
+
+                        case 'events':
+                            $activity->setObjectDisplayName('Events');
+                            break;
+
+                        default:
+                            $activity->setObjectDisplayName('undefined');
+                            break;
+                    }
+                }
+            }
 
             $activity->setUser($user)
                 ->setActivityName($activityName)

@@ -109,34 +109,42 @@ class PartnerAPIController extends ControllerAPI
             $logo = OrbitInput::files('logo');
             $image = OrbitInput::files('image');
 
+            $affected_group_name_id = OrbitInput::post('affected_group_name_id');
+
+            if (is_array($affected_group_name_id)) {
+                $affected_group_name_validation = $this->generate_validation_affected_group_name($affected_group_name_id);
+            }
+
             // generate array validation image
             $logo_validation = $this->generate_validation_image('partner_logo', $logo, 'orbit.upload.partner.logo');
             $image_validation = $this->generate_validation_image('info_image_page', $image, 'orbit.upload.partner.image');
 
             $validation_data = [
-                'partner_name'        => $partner_name,
-                'start_date'          => $start_date,
-                'end_date'            => $end_date,
-                'status'              => $status,
-                'address'             => $address,
-                'city'                => $city,
-                'country_id'          => $country_id,
-                'phone'               => $phone,
-                'contact_firstname'   => $contact_firstname,
-                'contact_lastname'    => $contact_lastname,
+                'partner_name'           => $partner_name,
+                'start_date'             => $start_date,
+                'end_date'               => $end_date,
+                'status'                 => $status,
+                'address'                => $address,
+                'city'                   => $city,
+                'country_id'             => $country_id,
+                'phone'                  => $phone,
+                'contact_firstname'      => $contact_firstname,
+                'contact_lastname'       => $contact_lastname,
+                'affected_group_name_id' => $affected_group_name_id,
             ];
 
             $validation_error = [
-                'partner_name'        => 'required',
-                'start_date'          => 'date|orbit.empty.hour_format',
-                'end_date'            => 'date|orbit.empty.hour_format',
-                'status'              => 'required|in:active,inactive',
-                'address'             => 'required',
-                'city'                => 'required',
-                'country_id'          => 'required',
-                'phone'               => 'required',
-                'contact_firstname'   => 'required',
-                'contact_lastname'    => 'required',
+                'partner_name'           => 'required',
+                'start_date'             => 'date|orbit.empty.hour_format',
+                'end_date'               => 'date|orbit.empty.hour_format',
+                'status'                 => 'required|in:active,inactive',
+                'address'                => 'required',
+                'city'                   => 'required',
+                'country_id'             => 'required',
+                'phone'                  => 'required',
+                'contact_firstname'      => 'required',
+                'contact_lastname'       => 'required',
+                'affected_group_name_id' => 'array',
             ];
 
             $validation_error_message = [];
@@ -152,6 +160,11 @@ class PartnerAPIController extends ControllerAPI
                 $validation_data += $image_validation['data'];
                 $validation_error += $image_validation['error'];
                 $validation_error_message += $image_validation['error_message'];
+            }
+
+            if (! empty($affected_group_name_validation)) {
+                $validation_data += $affected_group_name_validation['data'];
+                $validation_error += $affected_group_name_validation['error'];
             }
 
             $validator = Validator::make(
@@ -221,6 +234,15 @@ class PartnerAPIController extends ControllerAPI
                 $newObjectSocialMedia->save();
 
                 $newPartner->social_media = $newObjectSocialMedia;
+            }
+
+            if (is_array($affected_group_name_id)) {
+                foreach ($affected_group_name_id as $idx => $group_name_id) {
+                    $newPartnerAffectedGroup = new PartnerAffectedGroup();
+                    $newPartnerAffectedGroup->affected_group_name_id = $group_name_id;
+                    $newPartnerAffectedGroup->partner_id = $newPartner->partner_id;
+                    $newPartnerAffectedGroup->save();
+                }
             }
 
             Event::fire('orbit.partner.postnewpartner.after.save', array($this, $newPartner));
@@ -408,36 +430,44 @@ class PartnerAPIController extends ControllerAPI
             $logo = OrbitInput::files('logo');
             $image = OrbitInput::files('image');
 
+            $affected_group_name_id = OrbitInput::post('affected_group_name_id');
+
+            if (is_array($affected_group_name_id)) {
+                $affected_group_name_validation = $this->generate_validation_affected_group_name($affected_group_name_id);
+            }
+
             // generate array validation image
             $logo_validation = $this->generate_validation_image('partner_logo', $logo, 'orbit.upload.partner.logo');
             $image_validation = $this->generate_validation_image('info_image_page', $image, 'orbit.upload.partner.image');
 
             $validation_data = [
-                'partner_name'        => $partner_name,
-                'partner_id'          => $partner_id,
-                'start_date'          => $start_date,
-                'end_date'            => $end_date,
-                'status'              => $status,
-                'address'             => $address,
-                'city'                => $city,
-                'country_id'          => $country_id,
-                'phone'               => $phone,
-                'contact_firstname'   => $contact_firstname,
-                'contact_lastname'    => $contact_lastname,
+                'partner_name'           => $partner_name,
+                'partner_id'             => $partner_id,
+                'start_date'             => $start_date,
+                'end_date'               => $end_date,
+                'status'                 => $status,
+                'address'                => $address,
+                'city'                   => $city,
+                'country_id'             => $country_id,
+                'phone'                  => $phone,
+                'contact_firstname'      => $contact_firstname,
+                'contact_lastname'       => $contact_lastname,
+                'affected_group_name_id' => $affected_group_name_id,
             ];
 
             $validation_error = [
-                'partner_name'        => 'required',
-                'partner_id'          => 'required',
-                'start_date'          => 'date|orbit.empty.hour_format',
-                'end_date'            => 'date|orbit.empty.hour_format',
-                'status'              => 'required|in:active,inactive',
-                'address'             => 'required',
-                'city'                => 'required',
-                'country_id'          => 'required',
-                'phone'               => 'required',
-                'contact_firstname'   => 'required',
-                'contact_lastname'    => 'required',
+                'partner_name'           => 'required',
+                'partner_id'             => 'required',
+                'start_date'             => 'date|orbit.empty.hour_format',
+                'end_date'               => 'date|orbit.empty.hour_format',
+                'status'                 => 'required|in:active,inactive',
+                'address'                => 'required',
+                'city'                   => 'required',
+                'country_id'             => 'required',
+                'phone'                  => 'required',
+                'contact_firstname'      => 'required',
+                'contact_lastname'       => 'required',
+                'affected_group_name_id' => 'array',
             ];
 
             $validation_error_message = [];
@@ -453,6 +483,11 @@ class PartnerAPIController extends ControllerAPI
                 $validation_data += $image_validation['data'];
                 $validation_error += $image_validation['error'];
                 $validation_error_message += $image_validation['error_message'];
+            }
+
+            if (! empty($affected_group_name_validation)) {
+                $validation_data += $affected_group_name_validation['data'];
+                $validation_error += $affected_group_name_validation['error'];
             }
 
             $validator = Validator::make(
@@ -596,6 +631,22 @@ class PartnerAPIController extends ControllerAPI
                     $socialMedia->social_media_id = $sosmed->social_media_id;
                     $socialMedia->social_media_uri = $social_media_uri;
                     $socialMedia->save();
+                }
+            });
+
+            OrbitInput::post('affected_group_name_id', function($affected_group_name_id) use ($updatedpartner) {
+                // del partner affected group
+                $del_partner_affected_group = PartnerAffectedGroup::where('partner_id', $updatedpartner->partner_id)->delete();
+
+                if (is_array($affected_group_name_id)) {
+                    foreach ($affected_group_name_id as $idx => $group_name_id) {
+                        if ($group_name_id !== '') {
+                            $newPartnerAffectedGroup = new PartnerAffectedGroup();
+                            $newPartnerAffectedGroup->affected_group_name_id = $group_name_id;
+                            $newPartnerAffectedGroup->partner_id = $updatedpartner->partner_id;
+                            $newPartnerAffectedGroup->save();
+                        }
+                    }
                 }
             });
 
@@ -832,7 +883,8 @@ class PartnerAPIController extends ControllerAPI
                             'partners.contact_position',
                             'partners.contact_phone',
                             'partners.contact_email',
-                            'partners.is_visible'
+                            'partners.is_visible',
+                            'partners.is_shown_in_filter'
                         )
                         ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id')
                         ->leftJoin('deeplinks', function($qDeepLink) {
@@ -878,7 +930,7 @@ class PartnerAPIController extends ControllerAPI
             });
 
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($partners) {
+            OrbitInput::get('with', function ($with) use ($partners, $prefix) {
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
@@ -900,12 +952,159 @@ class PartnerAPIController extends ControllerAPI
                                     'metadata'
                                 );
                             }]);
+                    } else if ($relation === 'partnerAffectedGroup') {
+                        $partners->with([$relation => function ($qGroupName) use ($prefix) {
+                            $qGroupName->select(DB::raw("
+                                        `subQuery`.`partner_id`,
+                                        `subQuery`.`affected_group_name_id`,
+                                        `subQuery`.`group_name`,
+                                        SUM(if (`subQuery`.campaign_status = 'ongoing' and `subQuery`.is_started = 'true', 1, 0)) AS item_count
+                                    "))
+                                ->leftJoin(
+                                    DB::raw("
+                                        (SELECT
+                                            `{$prefix}partner_affected_group`.`partner_affected_group_id`,
+                                            `{$prefix}partner_affected_group`.`partner_id`,
+                                            `{$prefix}partner_affected_group`.`affected_group_name_id`,
+                                            `{$prefix}object_partner`.`object_id`,
+                                            `group_name`,
+                                            `group_type`,
+                                            CASE
+                                                WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name
+                                                ELSE (
+                                                  CASE
+                                                    WHEN
+                                                        {$prefix}object_partner.object_type = 'news'
+                                                            OR {$prefix}object_partner.object_type = 'promotion'
+                                                    THEN
+                                                        CASE
+                                                            WHEN
+                                                                {$prefix}news.end_date < (SELECT
+                                                                        MIN(CONVERT_TZ(UTC_TIMESTAMP(),
+                                                                                    '+00:00',
+                                                                                    ot.timezone_name))
+                                                                    FROM
+                                                                        {$prefix}news_merchant onm
+                                                                            LEFT JOIN
+                                                                        {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                            LEFT JOIN
+                                                                        {$prefix}merchants oms ON oms.merchant_id = om.parent_id
+                                                                            LEFT JOIN
+                                                                        {$prefix}timezones ot ON ot.timezone_id = (CASE
+                                                                            WHEN om.object_type = 'tenant' THEN oms.timezone_id
+                                                                            ELSE om.timezone_id
+                                                                        END)
+                                                                    WHERE
+                                                                        onm.news_id = {$prefix}news.news_id)
+                                                            THEN
+                                                                'expired'
+                                                            ELSE {$prefix}campaign_status.campaign_status_name
+                                                        END
+                                                    WHEN
+                                                        {$prefix}object_partner.object_type = 'coupon'
+                                                    THEN
+                                                        CASE
+                                                            WHEN
+                                                                {$prefix}promotions.end_date < (SELECT
+                                                                        MIN(CONVERT_TZ(UTC_TIMESTAMP(),
+                                                                                    '+00:00',
+                                                                                    ot.timezone_name))
+                                                                    FROM
+                                                                        {$prefix}promotion_retailer opt
+                                                                            LEFT JOIN
+                                                                        {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                                            LEFT JOIN
+                                                                        {$prefix}merchants oms ON oms.merchant_id = om.parent_id
+                                                                            LEFT JOIN
+                                                                        {$prefix}timezones ot ON ot.timezone_id = (CASE
+                                                                            WHEN om.object_type = 'tenant' THEN oms.timezone_id
+                                                                            ELSE om.timezone_id
+                                                                        END)
+                                                                    WHERE
+                                                                        opt.promotion_id = {$prefix}promotions.promotion_id)
+                                                            THEN
+                                                                'expired'
+                                                            ELSE {$prefix}campaign_status.campaign_status_name
+                                                        END
+                                                    WHEN
+                                                        {$prefix}object_partner.object_type = 'mall' AND {$prefix}merchants.status = 'active'
+                                                    THEN
+                                                        'ongoing'
+                                                    WHEN
+                                                        {$prefix}base_object_partner.object_type = 'tenant'
+                                                    THEN
+                                                        'ongoing'
+                                                END)
+                                            END AS campaign_status,
+
+                                            CASE
+                                                WHEN
+                                                    {$prefix}object_partner.object_type = 'news'
+                                                        OR {$prefix}object_partner.object_type = 'promotion'
+                                                THEN
+                                                    CASE WHEN (SELECT count(onm.merchant_id)
+                                                                FROM {$prefix}news_merchant onm
+                                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                WHERE onm.news_id = {$prefix}news.news_id
+                                                                AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
+                                                    THEN 'true' ELSE 'false' END
+                                                WHEN
+                                                    {$prefix}object_partner.object_type = 'coupon'
+                                                THEN
+                                                    CASE WHEN (SELECT count(opt.promotion_retailer_id)
+                                                                FROM {$prefix}promotion_retailer opt
+                                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                                                AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
+                                                    THEN 'true' ELSE 'false' END
+                                                WHEN
+                                                    {$prefix}object_partner.object_type = 'mall' AND {$prefix}merchants.status = 'active'
+                                                THEN
+                                                    'true'
+                                                WHEN
+                                                    {$prefix}base_object_partner.object_type = 'tenant'
+                                                THEN
+                                                    'true'
+                                            END AS is_started
+                                        FROM
+                                            `{$prefix}partner_affected_group`
+                                                INNER JOIN
+                                            `{$prefix}affected_group_names` ON `{$prefix}affected_group_names`.`affected_group_name_id` = `{$prefix}partner_affected_group`.`affected_group_name_id`
+                                                LEFT JOIN
+                                            `{$prefix}object_partner` ON `{$prefix}object_partner`.`partner_id` = `{$prefix}partner_affected_group`.`partner_id`
+                                                AND `{$prefix}object_partner`.`object_type` = {$prefix}affected_group_names.group_type
+                                                AND `{$prefix}object_partner`.`object_type` != 'tenant'
+                                                LEFT JOIN
+                                            `{$prefix}base_object_partner` ON `{$prefix}base_object_partner`.`partner_id` = `{$prefix}partner_affected_group`.`partner_id`
+                                                AND `{$prefix}base_object_partner`.`object_type` = {$prefix}affected_group_names.group_type
+                                                LEFT JOIN
+                                            `{$prefix}news` ON `{$prefix}object_partner`.`object_id` = `{$prefix}news`.`news_id`
+                                                LEFT JOIN
+                                            `{$prefix}promotions` ON `{$prefix}object_partner`.`object_id` = `{$prefix}promotions`.`promotion_id`
+                                                LEFT JOIN
+                                            `{$prefix}merchants` ON `{$prefix}object_partner`.`object_id` = `{$prefix}merchants`.`merchant_id`
+                                                AND {$prefix}merchants.object_type = 'mall'
+                                                LEFT JOIN
+                                            `{$prefix}base_merchants` ON `{$prefix}base_object_partner`.`object_id` = `{$prefix}base_merchants`.`base_merchant_id`
+                                                LEFT JOIN
+                                            `{$prefix}campaign_status`
+                                                ON
+                                                `{$prefix}campaign_status`.`campaign_status_id` = `{$prefix}news`.`campaign_status_id`
+                                                OR
+                                                `{$prefix}campaign_status`.`campaign_status_id` = `{$prefix}promotions`.`campaign_status_id`
+                                        ) as subQuery
+                                    "), DB::raw('subQuery.partner_affected_group_id'), '=', 'partner_affected_group.partner_affected_group_id')
+                                ->groupBy(DB::raw("subQuery.partner_id"), DB::raw("subQuery.group_name"));
+                            }]);
                     } else {
                         $partners->with($relation);
                     }
                 }
             });
-
 
             $_partners = clone $partners;
 
@@ -1074,6 +1273,21 @@ class PartnerAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+        // Check the affected group name is exists
+        Validator::extend('orbit.empty.affected_group_name', function ($attribute, $value, $parameters) {
+            $affected_group_name_id = $value;
+
+            $affected_group_name = AffectedGroupName::excludeDeleted()
+                                    ->where('affected_group_name_id', $affected_group_name_id)
+                                    ->first();
+
+            if (empty($affected_group_name)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
     }
 
     protected function generate_validation_image($image_name, $images, $config, $max_count = 1) {
@@ -1107,6 +1321,19 @@ class PartnerAPIController extends ControllerAPI
                 $validation['error_message'][$image_name . '_' . $idx . '_type' . '.in'] = Lang::get('validation.orbit.file.type', array('ext' => $ext));
                 $validation['error_message'][$image_name . '_' . $idx . '_size' . '.orbit.file.max_size'] = ($max_count > 1) ? Lang::get('validation.orbit.file.max_size', array('size' => $image_units['newsize'], 'unit' => $image_units['unit'])) : Lang::get('validation.orbit.file.max_size_one', array('name' => ucfirst(str_replace('_', ' ', $image_name)), 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
             }
+        }
+
+        return $validation;
+    }
+
+    protected function generate_validation_affected_group_name($group_names) {
+        $validation = [];
+
+        foreach ($group_names as $idx => $group_name) {
+            $idx+=1;
+
+            $validation['data'][$group_name] = $group_name;
+            $validation['error'][$group_name] = 'orbit.empty.affected_group_name';
         }
 
         return $validation;

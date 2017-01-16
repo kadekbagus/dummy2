@@ -61,4 +61,22 @@ class CampaignLocation extends Eloquent
     {
         return $this->belongsTo('Timezone', 'timezone_id', 'timezone_id');
     }
+
+    public function categories()
+    {
+        return $this->belongsToMany('Category', 'category_merchant', 'merchant_id', 'category_id');
+    }
+
+    public function geofence()
+    {
+        $prefix = DB::getTablePrefix();
+        // parent_id should be mall_id
+        return $this->hasOne('MerchantGeofence', 'merchant_id', 'parent_id')
+            ->addSelect(DB::raw("
+                {$prefix}merchant_geofences.merchant_id,
+                x(position) as latitude,
+                y(position) as longitude
+            "))
+            ;
+    }
 }

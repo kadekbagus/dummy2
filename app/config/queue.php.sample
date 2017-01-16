@@ -41,6 +41,13 @@ return array(
 			'ttr'    => 60,
 		),
 
+		'store_sync' => array(
+			'driver' => 'beanstalkd',
+			'host'   => 'localhost',
+			'queue'  => 'store_sync',
+			'ttr'    => 60,
+		),
+
 		'sqs' => array(
 			'driver' => 'sqs',
 			'key'    => 'your-public-key',

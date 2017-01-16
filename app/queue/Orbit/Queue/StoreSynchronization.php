@@ -13,6 +13,8 @@ use BaseMerchantKeyword;
 use Tenant;
 use KeywordObject;
 use CategoryMerchant;
+use ObjectPartner;
+use BaseObjectPartner;
 use MerchantTranslation;
 use Media;
 use PreSync;
@@ -166,6 +168,7 @@ class StoreSynchronization
                     $tenant->floor_id = empty($store->floor_id) ? 0 : $store->floor_id;
                     $tenant->floor = $store->object_name;
                     $tenant->unit = $store->unit;
+                    $tenant->phone = $store->phone;
                     $tenant->masterbox_number = $store->verification_number;
                     $tenant->save();
 
@@ -211,7 +214,7 @@ class StoreSynchronization
                     // delete category
                     $delete_category = CategoryMerchant::where('merchant_id', $base_store_id)->delete(true);
                     // insert category
-                    $base_categories = BaseMerchantCategory::leftJoin('categories', 'categories.category_id', '=', 'base_merchant_category.category_id')
+                    $base_categories = BaseMerchantCategory::join('categories', 'categories.category_id', '=', 'base_merchant_category.category_id')
                                                             ->where('base_merchant_category.base_merchant_id', $base_merchant_id)
                                                             ->where('categories.status', '!=', 'deleted')->get();
                     $categories = array();
@@ -224,6 +227,26 @@ class StoreSynchronization
                     }
                     if (! empty($categories)) {
                         DB::table('category_merchant')->insert($categories);
+                    }
+
+                    // save to object_partner
+                    // delete object_partner
+                    $delete_object_partner = ObjectPartner::where('object_id', $base_store_id)->where('object_type', 'tenant')->delete(true);
+                    // insert object_partner
+                    $base_object_partners = BaseObjectPartner::join('partners', 'partners.partner_id', '=', 'base_object_partner.partner_id')
+                                                            ->where('base_object_partner.object_id', $base_merchant_id)
+                                                            ->where('base_object_partner.object_type', 'tenant')->get();
+                    $object_partner = array();
+                    foreach ($base_object_partners as $base_object_partner) {
+                        $object_partner[] = [ 'object_partner_id' => ObjectID::make(),
+                                          'object_id' => $base_store_id,
+                                          'object_type' => 'tenant',
+                                          'partner_id' => $base_object_partner->partner_id,
+                                           "created_at" => date("Y-m-d H:i:s"),
+                                           "updated_at" => date("Y-m-d H:i:s") ];
+                    }
+                    if (! empty($object_partner)) {
+                        DB::table('object_partner')->insert($object_partner);
                     }
 
                     // save to media

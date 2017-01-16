@@ -22,6 +22,7 @@ use Mall;
 use IssuedCoupon;
 use Orbit\Helper\Security\Encrypter;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use Event;
 
 class CouponAddToWalletAPIController extends PubControllerAPI
 {
@@ -132,6 +133,8 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             $newIssuedCoupon = new IssuedCoupon();
             $issuedCoupon = $newIssuedCoupon->issueCouponViaWallet($coupon->promotion_id, $user->user_email, $user->user_id, $issued_coupon_code);
             $this->commit();
+
+            Event::fire('orbit.coupon.postaddtowallet.after.commit', array($this, $coupon_id));
 
             if (! empty($mallId)) {
                 $retailer = Mall::excludeDeleted()
