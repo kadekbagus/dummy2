@@ -49,6 +49,11 @@ return array(
             'promotions' => [
                  'index' => 'promotions',
                  'type'  => 'basic'
+            ],
+
+            'stores' => [
+                 'index' => 'stores',
+                 'type'  => 'basic'
             ]
         ],
 
@@ -103,6 +108,18 @@ return array(
                 'province'    => '^2',
                 'country'     => '^2'
             ],
+
+            'store' => [
+                'name'         => '^6',
+                'object_type'  => '^5',
+                'mall_name'    => '^4',
+                'city'         => '^3',
+                'province'     => '^2',
+                'keywords'     => '',
+                'address_line' => '',
+                'country'      => '',
+                'description'  => ''
+            ]
         ]
     ],
 
