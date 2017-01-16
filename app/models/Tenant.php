@@ -131,7 +131,8 @@ class Tenant extends Eloquent
     public function keywords()
     {
         return $this->hasMany('KeywordObject', 'object_id', 'merchant_id')
-                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id')
+                    ->groupBy('keyword');
     }
 
     /**
@@ -162,7 +163,7 @@ class Tenant extends Eloquent
         if ( ! $this->parent_id) {
             return null;
         }
-        
+
         $mallName = Mall::find($this->parent_id)->name;
 
         return $this->name.' at '.$mallName;
@@ -415,7 +416,7 @@ class Tenant extends Eloquent
 
     public static function getStatus($idtenant)
     {
-        return Tenant::where('merchant_id', '=', $idtenant)->pluck('status'); 
+        return Tenant::where('merchant_id', '=', $idtenant)->pluck('status');
     }
 
     public function merchantSocialMedia() {
