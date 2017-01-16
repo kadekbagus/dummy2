@@ -55,6 +55,7 @@ class StoreAPIController extends PubControllerAPI
         $activity = Activity::mobileci()->setActivityType('view');
         $mall = NULL;
         $mall_name = NULL;
+        $mall_city = NULL;
         $user = NULL;
         $httpCode = 200;
 
@@ -230,6 +231,7 @@ class StoreAPIController extends PubControllerAPI
 
                 if (! empty($mall)) {
                     $mall_name = $mall->name;
+                    $mall_city = $mall->city;
                 }
             });
 
@@ -456,6 +458,7 @@ class StoreAPIController extends PubControllerAPI
             $data->total_records = $totalRecMerchant;
             $data->extras = $extras;
             $data->mall_name = $mall_name;
+            $data->mall_city = $mall_city;
             $data->records = $listStore;
 
             // save activity when accessing listing
