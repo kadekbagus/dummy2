@@ -204,19 +204,19 @@ class GenericActivityAPIController extends PubControllerAPI
                 $notes = implode(',', $filter_values);
                 if (! empty($filter)) {
                     switch ($filter) {
-                        case 'location':
+                        case 'locations':
                             $activity->setObjectDisplayName('Location');
                             break;
 
-                        case 'category':
+                        case 'categories':
                             $activity->setObjectDisplayName('Category');
                             break;
 
-                        case 'partner':
+                        case 'partners':
                             $activity->setObjectDisplayName('Partner');
                             break;
 
-                        case 'sortby':
+                        case 'orders':
                             $activity->setObjectDisplayName('Sort By');
                             break;
 
