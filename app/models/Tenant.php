@@ -79,9 +79,10 @@ class Tenant extends Eloquent
      */
     public function translations()
     {
-        return $this->hasMany('MerchantTranslation', 'merchant_id', 'merchant_id')->excludeDeleted()->whereHas('language', function($has) {
+        return $this->hasMany('MerchantTranslation', 'merchant_id', 'merchant_id')->excludeDeleted('languages')->whereHas('language', function($has) {
             $has->where('merchant_languages.status', 'active');
-        });
+        })
+        ->leftJoin('languages', 'languages.language_id', '=', 'merchant_translations.merchant_language_id');
 
     }
 
@@ -188,6 +189,21 @@ class Tenant extends Eloquent
     public function categories()
     {
         return $this->belongsToMany('Category', 'category_merchant', 'merchant_id', 'category_id');
+    }
+
+    public function adverts()
+    {
+        return $this->hasMany('Advert', 'link_object_id', 'merchant_id')
+            ->leftJoin('advert_link_types', 'adverts.advert_link_type_id', '=', 'advert_link_types.advert_link_type_id')
+            ->where('advert_link_types.advert_type', '=', 'store');
+    }
+
+    public function campaignObjectPartners()
+    {
+        $prefix = DB::getTablePrefix();
+        return $this->hasMany('ObjectPartner', 'object_id', 'merchant_id')
+                      ->select('object_partner.object_id',DB::raw("{$prefix}partners.partner_id"), DB::raw("{$prefix}partners.partner_name"))
+                      ->leftjoin('partners', 'partners.partner_id', '=', 'object_partner.partner_id');
     }
 
     /**

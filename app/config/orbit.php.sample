@@ -5390,6 +5390,10 @@ return array(
                     'uri' => 'about-us',
                     'changefreq' => 'monthly',
                 ),
+                'discover' => array(
+                    'uri' => 'discover',
+                    'changefreq' => 'monthly',
+                ),
                 'map' => array(
                     'uri' => 'map',
                     'changefreq' => 'weekly',
