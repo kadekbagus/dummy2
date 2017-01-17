@@ -30,10 +30,11 @@ class GenerateSitemapCommand extends Command
 
     protected $hashBang = '';
 
-    protected $languageName = 'id';
-
-    protected $languageId = '';
-
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
     protected $formatOutput = FALSE;
 
     protected $sitemapType = '';
@@ -41,6 +42,13 @@ class GenerateSitemapCommand extends Command
     protected $priority = '0.8';
 
     protected $user = NULL;
+
+    /**
+     * Sleep in microsecond
+     *
+     * @var integer
+     */
+    protected $sleep = 0;
 
     /**
      * Url template: http://www.gotomalls.com/#!/%s
@@ -60,15 +68,13 @@ class GenerateSitemapCommand extends Command
         $this->appUrl = rtrim(Config::get('app.url'), '/');
         $this->hashBang = Config::get('orbit.sitemap.hashbang', FALSE) ? '/#!/' : '/';
         $this->urlTemplate = $this->appUrl . $this->hashBang . '%s';
-        $this->languageId = $language = Language::where('status', '=', 'active')
-            ->where('name', $this->languageName)
-            ->first()
-            ->language_id;
 
         $this->user = User::with('apikey')
             ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
             ->where('role_name', 'Super Admin')
             ->first();
+
+        $this->sitemapType = 'all';
     }
 
     /**
@@ -81,6 +87,7 @@ class GenerateSitemapCommand extends Command
         try {
             $this->formatOutput = $this->option('format-output');
             $this->sitemapType = $this->option('type');
+            $this->sleep = $this->option('sleep');
 
             $xml = new DOMDocument('1.0', 'UTF-8');
             $xml->formatOutput = $this->formatOutput;
@@ -121,6 +128,10 @@ class GenerateSitemapCommand extends Command
 
                 case 'partner-detail':
                     $returnedXML = $this->generatePartnerDetailsSitemap($xml);
+                    break;
+
+                case 'misc':
+                    $returnedXML = $this->generateMiscListSitemap($xml);
                     break;
 
                 case 'all':
@@ -215,10 +226,13 @@ class GenerateSitemapCommand extends Command
      * @param $xml DOMDocument
      * @return $xml DOMDocument
      */
-    protected function generatePromotionDetailsSitemap($xml)
+    protected function generatePromotionDetailsSitemap($xml, $mall_id = null, $mall_slug = null)
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.promotion', []);
         $root = $xml->firstChild;
+        if (! empty($mall_id)) {
+            $_GET['mall_id'] = $mall_id;
+        }
         $_GET['from_homepage'] = 'y';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
@@ -226,9 +240,19 @@ class GenerateSitemapCommand extends Command
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
 
+        $urlTemplate = $this->urlTemplate;
+        if (! empty($mall_id)) {
+            $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+            $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+        }
+
         foreach ($response->data->records as $record) {
             $xmlSitemapUrl = $xml->createElement('url');
-            $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
+            if (! empty($mall_id)) {
+                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name']))));
+            } else {
+                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
+            }
             // todo: use updated_at instead after updating campaign elastic search index
             // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
             $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
@@ -247,7 +271,11 @@ class GenerateSitemapCommand extends Command
 
             foreach ($response->data->records as $record) {
                 $xmlSitemapUrl = $xml->createElement('url');
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
+                if (! empty($mall_id)) {
+                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name']))));
+                } else {
+                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
+                }
                 // todo: use updated_at instead after updating campaign elastic search index
                 // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
                 $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
@@ -261,6 +289,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -274,10 +303,13 @@ class GenerateSitemapCommand extends Command
      * @param $xml DOMDocument
      * @return $xml DOMDocument
      */
-    protected function generateEventDetailsSitemap($xml)
+    protected function generateEventDetailsSitemap($xml, $mall_id = null, $mall_slug = null)
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.event', []);
         $root = $xml->firstChild;
+        if (! empty($mall_id)) {
+            $_GET['mall_id'] = $mall_id;
+        }
         $_GET['from_homepage'] = 'y';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
@@ -285,9 +317,19 @@ class GenerateSitemapCommand extends Command
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
 
+        $urlTemplate = $this->urlTemplate;
+        if (! empty($mall_id)) {
+            $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+            $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+        }
+
         foreach ($response->data->records as $record) {
             $xmlSitemapUrl = $xml->createElement('url');
-            $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
+            if (! empty($mall_id)) {
+                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name']))));
+            } else {
+                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
+            }
             // todo: use updated_at instead after updating campaign elastic search index
             // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
             $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
@@ -306,7 +348,11 @@ class GenerateSitemapCommand extends Command
 
             foreach ($response->data->records as $record) {
                 $xmlSitemapUrl = $xml->createElement('url');
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
+                if (! empty($mall_id)) {
+                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name']))));
+                } else {
+                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
+                }
                 // todo: use updated_at instead after updating campaign elastic search index
                 // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
                 $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
@@ -320,6 +366,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -333,10 +380,13 @@ class GenerateSitemapCommand extends Command
      * @param $xml DOMDocument
      * @return $xml DOMDocument
      */
-    protected function generateCouponDetailsSitemap($xml)
+    protected function generateCouponDetailsSitemap($xml, $mall_id = null, $mall_slug = null)
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.coupon', []);
         $root = $xml->firstChild;
+        if (! empty($mall_id)) {
+            $_GET['mall_id'] = $mall_id;
+        }
         $_GET['from_homepage'] = 'y';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
@@ -344,9 +394,19 @@ class GenerateSitemapCommand extends Command
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
 
+        $urlTemplate = $this->urlTemplate;
+        if (! empty($mall_id)) {
+            $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+            $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+        }
+
         foreach ($response->data->records as $record) {
             $xmlSitemapUrl = $xml->createElement('url');
-            $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['coupon_id'], Str::slug($record['coupon_name'])));
+            if (! empty($mall_id)) {
+                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['coupon_id'], Str::slug($record['coupon_name']))));
+            } else {
+                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['coupon_id'], Str::slug($record['coupon_name'])));
+            }
             // todo: use updated_at instead after updating campaign elastic search index
             // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
             $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
@@ -365,7 +425,11 @@ class GenerateSitemapCommand extends Command
 
             foreach ($response->data->records as $record) {
                 $xmlSitemapUrl = $xml->createElement('url');
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['coupon_id'], Str::slug($record['coupon_name'])));
+                if (! empty($mall_id)) {
+                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['coupon_id'], Str::slug($record['coupon_name']))));
+                } else {
+                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['coupon_id'], Str::slug($record['coupon_name'])));
+                }
                 // todo: use updated_at instead after updating campaign elastic search index
                 // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
                 $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
@@ -379,6 +443,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -402,6 +467,7 @@ class GenerateSitemapCommand extends Command
         $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
+        $listUrlTemplate = sprintf($this->urlTemplate, $detailUri['uri']) . '/%s';
 
         foreach ($response->data->records as $record) {
             $xmlSitemapUrl = $xml->createElement('url');
@@ -416,6 +482,33 @@ class GenerateSitemapCommand extends Command
             $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
             $xmlSitemapUrl->appendChild($xmlSitemapPriority);
             $root->appendChild($xmlSitemapUrl);
+
+            // lists inside mall
+            $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
+            foreach ($listUris as $key => $uri) {
+                if ($key !== 'mall') {
+                    $xmlSitemapUrl = $xml->createElement('url');
+                    $xmlSitemapLoc = $xml->createElement('loc', sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']));
+                    $xmlSitemapLastMod = $xml->createElement('lastmod', date('c'));
+                    $xmlSitemapChangeFreq = $xml->createElement('changefreq', $uri['changefreq']);
+                    $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
+                    $xmlSitemapUrl->appendChild($xmlSitemapLoc);
+                    $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
+                    $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
+                    $xmlSitemapUrl->appendChild($xmlSitemapPriority);
+                    $root->appendChild($xmlSitemapUrl);
+                }
+            }
+
+            $xml->appendChild($root);
+            // mall promotions
+            $xml = $this->generatePromotionDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+            // mall events
+            $xml = $this->generateEventDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+            // mall coupons
+            $xml = $this->generateCouponDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+            // mall stores
+            $xml = $this->generateStoreDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
         }
 
         while ($counter < $response->data->total_records) {
@@ -435,12 +528,40 @@ class GenerateSitemapCommand extends Command
                 $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
                 $xmlSitemapUrl->appendChild($xmlSitemapPriority);
                 $root->appendChild($xmlSitemapUrl);
+
+                // lists inside mall
+                $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
+                foreach ($listUris as $key => $uri) {
+                    if ($key !== 'mall') {
+                        $xmlSitemapUrl = $xml->createElement('url');
+                        $xmlSitemapLoc = $xml->createElement('loc', sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']));
+                        $xmlSitemapLastMod = $xml->createElement('lastmod', date('c'));
+                        $xmlSitemapChangeFreq = $xml->createElement('changefreq', $uri['changefreq']);
+                        $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
+                        $xmlSitemapUrl->appendChild($xmlSitemapLoc);
+                        $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
+                        $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
+                        $xmlSitemapUrl->appendChild($xmlSitemapPriority);
+                        $root->appendChild($xmlSitemapUrl);
+                    }
+                }
+
+                $xml->appendChild($root);
+                // mall promotions
+                $xml = $this->generatePromotionDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                // mall events
+                $xml = $this->generateEventDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                // mall coupons
+                $xml = $this->generateCouponDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                // mall stores
+                $xml = $this->generateStoreDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
-        $xml->appendChild($root);
+
 
         return $xml;
     }
@@ -451,10 +572,13 @@ class GenerateSitemapCommand extends Command
      * @param $xml DOMDocument
      * @return $xml DOMDocument
      */
-    protected function generateStoreDetailsSitemap($xml)
+    protected function generateStoreDetailsSitemap($xml, $mall_id = null, $mall_slug = null)
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.store', []);
         $root = $xml->firstChild;
+        if (! empty($mall_id)) {
+            $_GET['mall_id'] = $mall_id;
+        }
         $_GET['from_homepage'] = 'y';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
@@ -462,10 +586,20 @@ class GenerateSitemapCommand extends Command
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
 
+        $urlTemplate = $this->urlTemplate;
+        if (! empty($mall_id)) {
+            $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+            $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+        }
+
         // todo: change access to record property to array after elastic search for store list is done
         foreach ($response->data->records as $record) {
             $xmlSitemapUrl = $xml->createElement('url');
-            $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record->merchant_id, Str::slug($record->name)));
+            if (! empty($mall_id)) {
+                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record->merchant_id, Str::slug($record->name))));
+            } else {
+                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record->merchant_id, Str::slug($record->name)));
+            }
             // todo: use updated_at instead after updating campaign elastic search index
             // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
             $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
@@ -484,7 +618,11 @@ class GenerateSitemapCommand extends Command
 
             foreach ($response->data->records as $record) {
                 $xmlSitemapUrl = $xml->createElement('url');
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record->merchant_id, Str::slug($record->name)));
+                if (! empty($mall_id)) {
+                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record->merchant_id, Str::slug($record->name))));
+                } else {
+                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record->merchant_id, Str::slug($record->name)));
+                }
                 // todo: use updated_at instead after updating campaign elastic search index
                 // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
                 $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
@@ -498,6 +636,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -559,6 +698,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -612,7 +752,8 @@ class GenerateSitemapCommand extends Command
     protected function getOptions()
     {
         return array(
-                array('type', NULL, InputOption::VALUE_OPTIONAL, 'URL type', 'all'),
+                array('type', NULL, InputOption::VALUE_OPTIONAL, 'URL type.', 'all'),
+                array('sleep', NULL, InputOption::VALUE_OPTIONAL, 'Sleep value.', 500000),
                 array('format-output', 0, InputOption::VALUE_NONE, 'Format sitemap XML file output.'),
             );
     }
