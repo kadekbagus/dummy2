@@ -5547,13 +5547,19 @@ class UploadAPIController extends ControllerAPI
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id] = $oldMedia->path;
+
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
             }
 
             // Delete from database
+            $isUpdate = false;
             if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
                 $pastMedia->delete();
             }
 
@@ -5577,6 +5583,9 @@ class UploadAPIController extends ControllerAPI
             Event::fire('orbit.upload.postuploadnewsimage.after.save', array($this, $news, $uploader));
 
             $this->response->data = $mediaList;
+            $this->response->isUpdate = $isUpdate;
+            $this->response->oldPath = $oldPath;
+            $this->response->mediaNameId = 'news_image';
             $this->response->message = Lang::get('statuses.orbit.uploaded.news.main');
 
             // Commit the changes
@@ -5952,13 +5961,19 @@ class UploadAPIController extends ControllerAPI
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id] = $oldMedia->path;
+
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
             }
 
             // Delete from database
+            $isUpdate = false;
             if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
                 $pastMedia->delete();
             }
 
@@ -5982,6 +5997,9 @@ class UploadAPIController extends ControllerAPI
             Event::fire('orbit.upload.postuploadnewstranslationimage.after.save', array($this, $news_translations, $uploader));
 
             $this->response->data = $mediaList;
+            $this->response->isUpdate = $isUpdate;
+            $this->response->oldPath = $oldPath;
+            $this->response->mediaNameId = 'news_translation_image';
             $this->response->message = Lang::get('statuses.orbit.uploaded.news_translation.main');
 
             if (! $this->calledFrom('news.translations')) {
