@@ -65,12 +65,12 @@ class GenerateSitemapCommand extends Command
     public function __construct()
     {
         try {
+            parent::__construct();
             $sitemapConfig = Config::get('orbit.sitemap', null);
             if (empty($sitemapConfig)) {
                 throw new Exception("Cannot find sitemap config.", 1);
             }
 
-            parent::__construct();
             $this->appUrl = rtrim(Config::get('app.url'), '/');
             $this->hashBang = Config::get('orbit.sitemap.hashbang', FALSE) ? '/#!/' : '/';
             $this->urlTemplate = $this->appUrl . $this->hashBang . '%s';
@@ -575,25 +575,30 @@ class GenerateSitemapCommand extends Command
     protected function detailAppender($xml, $root, $records, $type, $urlTemplate, $detailUri, $mall_id = null, $mall_slug = null)
     {
         foreach ($records as $record) {
-            // todo : just use $record['updated_at'] if store list already in elasticsearch
-            $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
-
             switch ($type) {
                 case 'promotion':
                 case 'event':
                     $id = $record['news_id'];
                     $name = $record['news_name'];
+                    $updatedAt = strtotime($record['begin_date']);
                     break;
 
                 case 'coupon':
                     $id = $record['coupon_id'];
                     $name = $record['coupon_name'];
+                    $updatedAt = strtotime($record['begin_date']);
                     break;
 
                 case 'store':
-                    // change to array if store list already on elasticsearch
-                    $id = $record->merchant_id;
-                    $name = $record->name;
+                    if (is_object($record)) {
+                        // remove this and use array instead if store already in elasticsearch
+                        $id = $record->merchant_id;
+                        $name = $record->name;
+                    } elseif(is_array($record)) {
+                        $id = $record['merchant_id'];
+                        $name = $record['name'];
+                    }
+                    $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
                     break;
 
                 case 'partner':
