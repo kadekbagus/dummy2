@@ -84,7 +84,8 @@ class PartnerListAPIController extends PubControllerAPI
                     'description',
                     'is_shown_in_filter',
                     'is_visible',
-                    'path as logo_url'
+                    'path as logo_url',
+                    'partners.updated_at'
                 )
                 ->leftJoin('media', function ($q) {
                     $q->on('media.object_id', '=', 'partners.partner_id');
