@@ -5582,11 +5582,13 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadnewsimage.after.save', array($this, $news, $uploader));
 
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'news_image';
+            $mediaList['extras'] = $extras;
+
             $this->response->data = $mediaList;
-            $this->response->data->extras = new stdClass();
-            $this->response->data->extras->isUpdate = $isUpdate;
-            $this->response->data->extras->oldPath = $oldPath;
-            $this->response->data->extras->mediaNameId = 'news_image';
             $this->response->message = Lang::get('statuses.orbit.uploaded.news.main');
 
             // Commit the changes
@@ -5997,11 +5999,13 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postuploadnewstranslationimage.after.save', array($this, $news_translations, $uploader));
 
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'news_translation_image';
+            $mediaList['extras'] = $extras;
+
             $this->response->data = $mediaList;
-            $this->response->data->extras = new stdClass();
-            $this->response->data->extras->isUpdate = $isUpdate;
-            $this->response->data->extras->oldPath = $oldPath;
-            $this->response->data->extras->mediaNameId = 'news_translation_image';
             $this->response->message = Lang::get('statuses.orbit.uploaded.news_translation.main');
 
             if (! $this->calledFrom('news.translations')) {
