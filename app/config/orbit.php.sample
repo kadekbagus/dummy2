@@ -5326,4 +5326,75 @@ return array(
             'version' => '2006-03-01'
         ]
     ],
+
+    /**
+     * Sitemap generator config
+     */
+    'sitemap' => array(
+        'hashbang' => TRUE,
+        'uri_properties' => array(
+            'list' => array(
+                'promotion' => array(
+                    'uri' => 'promotions',
+                    'changefreq' => 'daily',
+                ),
+                'event' => array(
+                    'uri' => 'events',
+                    'changefreq' => 'daily',
+                ),
+                'coupon' => array(
+                    'uri' => 'coupons',
+                    'changefreq' => 'daily',
+                ),
+                'store' => array(
+                    'uri' => 'stores',
+                    'changefreq' => 'daily',
+                ),
+                'mall' => array(
+                    'uri' => 'malls',
+                    'changefreq' => 'daily',
+                ),
+            ),
+            'detail' => array(
+                'promotion' => array(
+                    'uri' => 'promotions/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'event' => array(
+                    'uri' => 'events/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'coupon' => array(
+                    'uri' => 'coupons/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'store' => array(
+                    'uri' => 'stores/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'mall' => array(
+                    'uri' => 'malls/%s/%s',
+                    'changefreq' => 'weekly',
+                ),
+                'partner' => array(
+                    'uri' => 'partner/%s/%s',
+                    'changefreq' => 'weekly',
+                ),
+            ),
+            'misc' => array(
+                'home' => array(
+                    'uri' => '',
+                    'changefreq' => 'daily',
+                ),
+                'about' => array(
+                    'uri' => 'about-us',
+                    'changefreq' => 'monthly',
+                ),
+                'map' => array(
+                    'uri' => 'map',
+                    'changefreq' => 'weekly',
+                ),
+            ),
+        ),
+    ),
 );

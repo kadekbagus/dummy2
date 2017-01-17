@@ -30,10 +30,11 @@ class GenerateSitemapCommand extends Command
 
     protected $hashBang = '';
 
-    protected $languageName = 'id';
-
-    protected $languageId = '';
-
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
     protected $formatOutput = FALSE;
 
     protected $sitemapType = '';
@@ -41,6 +42,13 @@ class GenerateSitemapCommand extends Command
     protected $priority = '0.8';
 
     protected $user = NULL;
+
+    /**
+     * Sleep in microsecond
+     *
+     * @var integer
+     */
+    protected $sleep = 0;
 
     /**
      * Url template: http://www.gotomalls.com/#!/%s
@@ -60,15 +68,13 @@ class GenerateSitemapCommand extends Command
         $this->appUrl = rtrim(Config::get('app.url'), '/');
         $this->hashBang = Config::get('orbit.sitemap.hashbang', FALSE) ? '/#!/' : '/';
         $this->urlTemplate = $this->appUrl . $this->hashBang . '%s';
-        $this->languageId = $language = Language::where('status', '=', 'active')
-            ->where('name', $this->languageName)
-            ->first()
-            ->language_id;
 
         $this->user = User::with('apikey')
             ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
             ->where('role_name', 'Super Admin')
             ->first();
+
+        $this->sitemapType = 'all';
     }
 
     /**
@@ -81,6 +87,7 @@ class GenerateSitemapCommand extends Command
         try {
             $this->formatOutput = $this->option('format-output');
             $this->sitemapType = $this->option('type');
+            $this->sleep = $this->option('sleep');
 
             $xml = new DOMDocument('1.0', 'UTF-8');
             $xml->formatOutput = $this->formatOutput;
@@ -121,6 +128,10 @@ class GenerateSitemapCommand extends Command
 
                 case 'partner-detail':
                     $returnedXML = $this->generatePartnerDetailsSitemap($xml);
+                    break;
+
+                case 'misc':
+                    $returnedXML = $this->generateMiscListSitemap($xml);
                     break;
 
                 case 'all':
@@ -261,6 +272,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -320,6 +332,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -379,6 +392,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -438,6 +452,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -498,6 +513,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -559,6 +575,7 @@ class GenerateSitemapCommand extends Command
             }
 
             $counter = $counter + $response->data->returned_records;
+            usleep($this->sleep);
         }
 
         $xml->appendChild($root);
@@ -612,7 +629,8 @@ class GenerateSitemapCommand extends Command
     protected function getOptions()
     {
         return array(
-                array('type', NULL, InputOption::VALUE_OPTIONAL, 'URL type', 'all'),
+                array('type', NULL, InputOption::VALUE_OPTIONAL, 'URL type.', 'all'),
+                array('sleep', NULL, InputOption::VALUE_OPTIONAL, 'Sleep value.', 500000),
                 array('format-output', 0, InputOption::VALUE_NONE, 'Format sitemap XML file output.'),
             );
     }
