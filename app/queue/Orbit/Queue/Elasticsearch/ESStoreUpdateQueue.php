@@ -59,6 +59,8 @@ class ESStoreUpdateQueue
                             'merchants.unit',
                             'merchants.url',
                             'merchants.object_type',
+                            'merchants.created_at',
+                            'merchants.updated_at',
                             'media.path',
                             'media.cdn_url',
                             DB::raw("x({$prefix}merchant_geofences.position) as latitude"),
@@ -69,8 +71,7 @@ class ESStoreUpdateQueue
                             DB::raw('oms.province'),
                             DB::raw('oms.country'),
                             DB::raw('oms.address_line1 as address'),
-                            DB::raw('oms.operating_hours')
-                            )
+                            DB::raw('oms.operating_hours'))
                         ->join(DB::raw("(
                             select merchant_id, name, status, parent_id, city,
                                    province, country, address_line1, operating_hours
@@ -92,7 +93,7 @@ class ESStoreUpdateQueue
                         ->orderBy('merchants.created_at', 'asc')
                         ->get();
 
-        if (! is_object($store)) {
+        if ($store->isEmpty()) {
             $job->delete();
 
             return [
@@ -216,7 +217,7 @@ class ESStoreUpdateQueue
             // Safely delete the object
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
+            $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Store ID : %s; Store Name: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['stores']['index'],
                                 $esConfig['indices']['stores']['type'],
