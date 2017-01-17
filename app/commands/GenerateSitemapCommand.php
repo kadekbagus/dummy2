@@ -64,31 +64,11 @@ class GenerateSitemapCommand extends Command
      */
     public function __construct()
     {
-        try {
-            parent::__construct();
-            $sitemapConfig = Config::get('orbit.sitemap', null);
-            if (empty($sitemapConfig)) {
-                throw new Exception("Cannot find sitemap config.", 1);
-            }
-
-            $this->appUrl = rtrim(Config::get('app.url'), '/');
-            $this->hashBang = Config::get('orbit.sitemap.hashbang', FALSE) ? '/#!/' : '/';
-            $this->urlTemplate = $this->appUrl . $this->hashBang . '%s';
-
-            $this->user = User::with('apikey')
-                ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
-                ->where('role_name', 'Super Admin')
-                ->first();
-
-            if (! is_object($this->user)) {
-                throw new Exception("Cannot find super admin user.", 1);
-            }
-
-            $this->sitemapType = 'all';
-        } catch (\Exception $e) {
-            print($e->getMessage());
-            die();
-        }
+        parent::__construct();
+        $this->appUrl = rtrim(Config::get('app.url'), '/');
+        $this->hashBang = Config::get('orbit.sitemap.hashbang', FALSE) ? '/#!/' : '/';
+        $this->urlTemplate = $this->appUrl . $this->hashBang . '%s';
+        $this->sitemapType = 'all';
     }
 
     /**
@@ -99,6 +79,20 @@ class GenerateSitemapCommand extends Command
     public function fire()
     {
         try {
+            $sitemapConfig = Config::get('orbit.sitemap', null);
+            if (empty($sitemapConfig)) {
+                throw new Exception("Cannot find sitemap config.", 1);
+            }
+
+            $this->user = User::with('apikey')
+                ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
+                ->where('role_name', 'Super Admin')
+                ->first();
+
+            if (! is_object($this->user)) {
+                throw new Exception("Cannot find super admin user.", 1);
+            }
+
             $this->formatOutput = $this->option('format-output');
             $this->sitemapType = $this->option('type');
             $this->sleep = $this->option('sleep');
