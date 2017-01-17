@@ -199,9 +199,12 @@ class GenericActivityAPIController extends PubControllerAPI
                     }
                 }
             } elseif ($activityName === 'click_filter') {
+                $notes = '';
                 $filter = OrbitInput::post('filter', null);
                 $filter_values = OrbitInput::post('filter_values', null);
-                $notes = implode(',', $filter_values);
+                if (! empty($filter_values)) {
+                    $notes = implode(',', $filter_values);
+                }
                 if (! empty($filter)) {
                     switch ($filter) {
                         case 'locations':
