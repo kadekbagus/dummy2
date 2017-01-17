@@ -64,17 +64,31 @@ class GenerateSitemapCommand extends Command
      */
     public function __construct()
     {
-        parent::__construct();
-        $this->appUrl = rtrim(Config::get('app.url'), '/');
-        $this->hashBang = Config::get('orbit.sitemap.hashbang', FALSE) ? '/#!/' : '/';
-        $this->urlTemplate = $this->appUrl . $this->hashBang . '%s';
+        try {
+            $sitemapConfig = Config::get('orbit.sitemap', null);
+            if (empty($sitemapConfig)) {
+                throw new Exception("Cannot find sitemap config.", 1);
+            }
 
-        $this->user = User::with('apikey')
-            ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
-            ->where('role_name', 'Super Admin')
-            ->first();
+            parent::__construct();
+            $this->appUrl = rtrim(Config::get('app.url'), '/');
+            $this->hashBang = Config::get('orbit.sitemap.hashbang', FALSE) ? '/#!/' : '/';
+            $this->urlTemplate = $this->appUrl . $this->hashBang . '%s';
 
-        $this->sitemapType = 'all';
+            $this->user = User::with('apikey')
+                ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
+                ->where('role_name', 'Super Admin')
+                ->first();
+
+            if (! is_object($this->user)) {
+                throw new Exception("Cannot find super admin user.", 1);
+            }
+
+            $this->sitemapType = 'all';
+        } catch (\Exception $e) {
+            print($e->getMessage());
+            die();
+        }
     }
 
     /**
@@ -142,7 +156,7 @@ class GenerateSitemapCommand extends Command
                     break;
             }
         } catch (\Exception $e) {
-            print_r([$e->getMessage(), $e->getLine()]);
+            return print($e->getMessage());
         }
 
         return print($returnedXML->saveXML());
@@ -240,25 +254,27 @@ class GenerateSitemapCommand extends Command
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
 
-        $urlTemplate = $this->urlTemplate;
-        if (! empty($mall_id)) {
-            $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-            $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-        }
-
-        $root = $this->detailAppender($xml, $root, $response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
-
-        while ($counter < $response->data->total_records) {
-            $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-            $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
+        if (! empty($total_records)) {
+            $urlTemplate = $this->urlTemplate;
+            if (! empty($mall_id)) {
+                $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+            }
 
             $root = $this->detailAppender($xml, $root, $response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
-            $counter = $counter + $response->data->returned_records;
-            usleep($this->sleep);
-        }
+            while ($counter < $response->data->total_records) {
+                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
 
-        $xml->appendChild($root);
+                $root = $this->detailAppender($xml, $root, $response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                $counter = $counter + $response->data->returned_records;
+                usleep($this->sleep);
+            }
+
+            $xml->appendChild($root);
+        }
 
         return $xml;
     }
@@ -283,25 +299,27 @@ class GenerateSitemapCommand extends Command
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
 
-        $urlTemplate = $this->urlTemplate;
-        if (! empty($mall_id)) {
-            $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-            $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-        }
-
-        $root = $this->detailAppender($xml, $root, $response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
-
-        while ($counter < $response->data->total_records) {
-            $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-            $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
+        if (! empty($total_records)) {
+            $urlTemplate = $this->urlTemplate;
+            if (! empty($mall_id)) {
+                $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+            }
 
             $root = $this->detailAppender($xml, $root, $response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
-            $counter = $counter + $response->data->returned_records;
-            usleep($this->sleep);
-        }
+            while ($counter < $response->data->total_records) {
+                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
 
-        $xml->appendChild($root);
+                $root = $this->detailAppender($xml, $root, $response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                $counter = $counter + $response->data->returned_records;
+                usleep($this->sleep);
+            }
+
+            $xml->appendChild($root);
+        }
 
         return $xml;
     }
@@ -326,25 +344,27 @@ class GenerateSitemapCommand extends Command
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
 
-        $urlTemplate = $this->urlTemplate;
-        if (! empty($mall_id)) {
-            $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-            $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-        }
-
-        $root = $this->detailAppender($xml, $root, $response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
-
-        while ($counter < $response->data->total_records) {
-            $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-            $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
+        if (! empty($total_records)) {
+            $urlTemplate = $this->urlTemplate;
+            if (! empty($mall_id)) {
+                $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+            }
 
             $root = $this->detailAppender($xml, $root, $response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
-            $counter = $counter + $response->data->returned_records;
-            usleep($this->sleep);
-        }
+            while ($counter < $response->data->total_records) {
+                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
 
-        $xml->appendChild($root);
+                $root = $this->detailAppender($xml, $root, $response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                $counter = $counter + $response->data->returned_records;
+                usleep($this->sleep);
+            }
+
+            $xml->appendChild($root);
+        }
 
         return $xml;
     }
@@ -365,53 +385,9 @@ class GenerateSitemapCommand extends Command
         $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
-        $listUrlTemplate = sprintf($this->urlTemplate, $detailUri['uri']) . '/%s';
 
-        foreach ($response->data->records as $record) {
-            $xmlSitemapUrl = $xml->createElement('url');
-            $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])));
-            // todo: use updated_at instead after updating campaign elastic search index
-            // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-            $root->appendChild($xmlSitemapUrl);
-
-            // lists inside mall
-            $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
-            foreach ($listUris as $key => $uri) {
-                if ($key !== 'mall') {
-                    $xmlSitemapUrl = $xml->createElement('url');
-                    $xmlSitemapLoc = $xml->createElement('loc', sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']));
-                    $xmlSitemapLastMod = $xml->createElement('lastmod', date('c'));
-                    $xmlSitemapChangeFreq = $xml->createElement('changefreq', $uri['changefreq']);
-                    $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-                    $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-                    $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-                    $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-                    $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-                    $root->appendChild($xmlSitemapUrl);
-                }
-            }
-
-            $xml->appendChild($root);
-            // mall promotions
-            $xml = $this->generatePromotionDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
-            // mall events
-            $xml = $this->generateEventDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
-            // mall coupons
-            $xml = $this->generateCouponDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
-            // mall stores
-            $xml = $this->generateStoreDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
-        }
-
-        while ($counter < $response->data->total_records) {
-            $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-            $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
+        if (! empty($total_records)) {
+            $listUrlTemplate = sprintf($this->urlTemplate, $detailUri['uri']) . '/%s';
 
             foreach ($response->data->records as $record) {
                 $xmlSitemapUrl = $xml->createElement('url');
@@ -455,11 +431,56 @@ class GenerateSitemapCommand extends Command
                 $xml = $this->generateStoreDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
             }
 
-            $counter = $counter + $response->data->returned_records;
-            usleep($this->sleep);
+            while ($counter < $response->data->total_records) {
+                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
+
+                foreach ($response->data->records as $record) {
+                    $xmlSitemapUrl = $xml->createElement('url');
+                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])));
+                    // todo: use updated_at instead after updating campaign elastic search index
+                    // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
+                    $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
+                    $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
+                    $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
+                    $xmlSitemapUrl->appendChild($xmlSitemapLoc);
+                    $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
+                    $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
+                    $xmlSitemapUrl->appendChild($xmlSitemapPriority);
+                    $root->appendChild($xmlSitemapUrl);
+
+                    // lists inside mall
+                    $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
+                    foreach ($listUris as $key => $uri) {
+                        if ($key !== 'mall') {
+                            $xmlSitemapUrl = $xml->createElement('url');
+                            $xmlSitemapLoc = $xml->createElement('loc', sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']));
+                            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c'));
+                            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $uri['changefreq']);
+                            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
+                            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
+                            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
+                            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
+                            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
+                            $root->appendChild($xmlSitemapUrl);
+                        }
+                    }
+
+                    $xml->appendChild($root);
+                    // mall promotions
+                    $xml = $this->generatePromotionDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                    // mall events
+                    $xml = $this->generateEventDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                    // mall coupons
+                    $xml = $this->generateCouponDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                    // mall stores
+                    $xml = $this->generateStoreDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                }
+
+                $counter = $counter + $response->data->returned_records;
+                usleep($this->sleep);
+            }
         }
-
-
 
         return $xml;
     }
@@ -484,25 +505,27 @@ class GenerateSitemapCommand extends Command
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
 
-        $urlTemplate = $this->urlTemplate;
-        if (! empty($mall_id)) {
-            $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-            $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-        }
-
-        $root = $this->detailAppender($xml, $root, $response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
-
-        while ($counter < $response->data->total_records) {
-            $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-            $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
+        if (! empty($total_records)) {
+            $urlTemplate = $this->urlTemplate;
+            if (! empty($mall_id)) {
+                $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+            }
 
             $root = $this->detailAppender($xml, $root, $response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
-            $counter = $counter + $response->data->returned_records;
-            usleep($this->sleep);
-        }
+            while ($counter < $response->data->total_records) {
+                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
 
-        $xml->appendChild($root);
+                $root = $this->detailAppender($xml, $root, $response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                $counter = $counter + $response->data->returned_records;
+                usleep($this->sleep);
+            }
+
+            $xml->appendChild($root);
+        }
 
         return $xml;
     }
@@ -517,7 +540,6 @@ class GenerateSitemapCommand extends Command
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.partner', []);
         $root = $xml->firstChild;
-        $_GET['from_homepage'] = 'y';
         $_GET['visible'] = 'yes';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
@@ -525,46 +547,21 @@ class GenerateSitemapCommand extends Command
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
 
-        // todo: change access to record property to array after elastic search for partner list is done
-        foreach ($response->data->records as $record) {
-            $xmlSitemapUrl = $xml->createElement('url');
-            $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record->partner_id, Str::slug($record->partner_name)));
-            // todo: use updated_at instead after updating campaign elastic search index
-            // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-            $root->appendChild($xmlSitemapUrl);
-        }
+        if (! empty($total_records)) {
+            $root = $this->detailAppender($xml, $root, $response->data->records, 'partner', $this->urlTemplate, $detailUri);
 
-        while ($counter < $response->data->total_records) {
-            $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-            $response = Orbit\Controller\API\v1\Pub\Partner\PartnerListAPIController::create('raw')->setUser($this->user)->getSearchPartner();
+            while ($counter < $response->data->total_records) {
+                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                $response = Orbit\Controller\API\v1\Pub\Partner\PartnerListAPIController::create('raw')->setUser($this->user)->getSearchPartner();
 
-            foreach ($response->data->records as $record) {
-                $xmlSitemapUrl = $xml->createElement('url');
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record->partner_id, Str::slug($record->partner_name)));
-                // todo: use updated_at instead after updating campaign elastic search index
-                // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-                $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-                $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-                $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-                $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-                $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-                $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-                $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-                $root->appendChild($xmlSitemapUrl);
+                $root = $this->detailAppender($xml, $root, $response->data->records, 'partner', $this->urlTemplate, $detailUri);
+
+                $counter = $counter + $response->data->returned_records;
+                usleep($this->sleep);
             }
 
-            $counter = $counter + $response->data->returned_records;
-            usleep($this->sleep);
+            $xml->appendChild($root);
         }
-
-        $xml->appendChild($root);
 
         return $xml;
     }
@@ -578,6 +575,9 @@ class GenerateSitemapCommand extends Command
     protected function detailAppender($xml, $root, $records, $type, $urlTemplate, $detailUri, $mall_id = null, $mall_slug = null)
     {
         foreach ($records as $record) {
+            // todo : just use $record['updated_at'] if store list already in elasticsearch
+            $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
+
             switch ($type) {
                 case 'promotion':
                 case 'event':
@@ -596,13 +596,17 @@ class GenerateSitemapCommand extends Command
                     $name = $record->name;
                     break;
 
+                case 'partner':
+                    // change to array if partner list already on elasticsearch
+                    $id = $record->partner_id;
+                    $name = $record->partner_name;
+                    $updatedAt = strtotime($record->updated_at);
+                    break;
+
                 default:
                     # code...
                     break;
             }
-
-            // todo : just use $record['updated_at'] if store list already in elasticsearch
-            $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
 
             $xmlSitemapUrl = $xml->createElement('url');
             if (! empty($mall_id)) {
