@@ -246,47 +246,13 @@ class GenerateSitemapCommand extends Command
             $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
         }
 
-        foreach ($response->data->records as $record) {
-            $xmlSitemapUrl = $xml->createElement('url');
-            if (! empty($mall_id)) {
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name']))));
-            } else {
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
-            }
-            // todo: use updated_at instead after updating campaign elastic search index
-            // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-            $root->appendChild($xmlSitemapUrl);
-        }
+        $root = $this->detailAppender($xml, $root, $response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
         while ($counter < $response->data->total_records) {
             $_GET['skip'] = $_GET['skip'] + $_GET['take'];
             $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
 
-            foreach ($response->data->records as $record) {
-                $xmlSitemapUrl = $xml->createElement('url');
-                if (! empty($mall_id)) {
-                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name']))));
-                } else {
-                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
-                }
-                // todo: use updated_at instead after updating campaign elastic search index
-                // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-                $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-                $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-                $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-                $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-                $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-                $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-                $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-                $root->appendChild($xmlSitemapUrl);
-            }
+            $root = $this->detailAppender($xml, $root, $response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
             $counter = $counter + $response->data->returned_records;
             usleep($this->sleep);
@@ -323,47 +289,13 @@ class GenerateSitemapCommand extends Command
             $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
         }
 
-        foreach ($response->data->records as $record) {
-            $xmlSitemapUrl = $xml->createElement('url');
-            if (! empty($mall_id)) {
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name']))));
-            } else {
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
-            }
-            // todo: use updated_at instead after updating campaign elastic search index
-            // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-            $root->appendChild($xmlSitemapUrl);
-        }
+        $root = $this->detailAppender($xml, $root, $response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
         while ($counter < $response->data->total_records) {
             $_GET['skip'] = $_GET['skip'] + $_GET['take'];
             $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
 
-            foreach ($response->data->records as $record) {
-                $xmlSitemapUrl = $xml->createElement('url');
-                if (! empty($mall_id)) {
-                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name']))));
-                } else {
-                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['news_id'], Str::slug($record['news_name'])));
-                }
-                // todo: use updated_at instead after updating campaign elastic search index
-                // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-                $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-                $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-                $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-                $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-                $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-                $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-                $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-                $root->appendChild($xmlSitemapUrl);
-            }
+            $root = $this->detailAppender($xml, $root, $response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
             $counter = $counter + $response->data->returned_records;
             usleep($this->sleep);
@@ -400,47 +332,13 @@ class GenerateSitemapCommand extends Command
             $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
         }
 
-        foreach ($response->data->records as $record) {
-            $xmlSitemapUrl = $xml->createElement('url');
-            if (! empty($mall_id)) {
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['coupon_id'], Str::slug($record['coupon_name']))));
-            } else {
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['coupon_id'], Str::slug($record['coupon_name'])));
-            }
-            // todo: use updated_at instead after updating campaign elastic search index
-            // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-            $root->appendChild($xmlSitemapUrl);
-        }
+        $root = $this->detailAppender($xml, $root, $response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
         while ($counter < $response->data->total_records) {
             $_GET['skip'] = $_GET['skip'] + $_GET['take'];
             $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
 
-            foreach ($response->data->records as $record) {
-                $xmlSitemapUrl = $xml->createElement('url');
-                if (! empty($mall_id)) {
-                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record['coupon_id'], Str::slug($record['coupon_name']))));
-                } else {
-                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record['coupon_id'], Str::slug($record['coupon_name'])));
-                }
-                // todo: use updated_at instead after updating campaign elastic search index
-                // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-                $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-                $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-                $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-                $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-                $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-                $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-                $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-                $root->appendChild($xmlSitemapUrl);
-            }
+            $root = $this->detailAppender($xml, $root, $response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
             $counter = $counter + $response->data->returned_records;
             usleep($this->sleep);
@@ -592,48 +490,13 @@ class GenerateSitemapCommand extends Command
             $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
         }
 
-        // todo: change access to record property to array after elastic search for store list is done
-        foreach ($response->data->records as $record) {
-            $xmlSitemapUrl = $xml->createElement('url');
-            if (! empty($mall_id)) {
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record->merchant_id, Str::slug($record->name))));
-            } else {
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record->merchant_id, Str::slug($record->name)));
-            }
-            // todo: use updated_at instead after updating campaign elastic search index
-            // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-            $root->appendChild($xmlSitemapUrl);
-        }
+        $root = $this->detailAppender($xml, $root, $response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
         while ($counter < $response->data->total_records) {
             $_GET['skip'] = $_GET['skip'] + $_GET['take'];
             $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
 
-            foreach ($response->data->records as $record) {
-                $xmlSitemapUrl = $xml->createElement('url');
-                if (! empty($mall_id)) {
-                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $record->merchant_id, Str::slug($record->name))));
-                } else {
-                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $record->merchant_id, Str::slug($record->name)));
-                }
-                // todo: use updated_at instead after updating campaign elastic search index
-                // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-                $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-                $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-                $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-                $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-                $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-                $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-                $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-                $root->appendChild($xmlSitemapUrl);
-            }
+            $root = $this->detailAppender($xml, $root, $response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
             $counter = $counter + $response->data->returned_records;
             usleep($this->sleep);
@@ -704,6 +567,60 @@ class GenerateSitemapCommand extends Command
         $xml->appendChild($root);
 
         return $xml;
+    }
+
+    /**
+     * Single function to append urls
+     *
+     * @param $xml DOMDocument
+     * @return $xml DOMDocument
+     */
+    protected function detailAppender($xml, $root, $records, $type, $urlTemplate, $detailUri, $mall_id = null, $mall_slug = null)
+    {
+        foreach ($records as $record) {
+            switch ($type) {
+                case 'promotion':
+                case 'event':
+                    $id = $record['news_id'];
+                    $name = $record['news_name'];
+                    break;
+
+                case 'coupon':
+                    $id = $record['coupon_id'];
+                    $name = $record['coupon_name'];
+                    break;
+
+                case 'store':
+                    // change to array if store list already on elasticsearch
+                    $id = $record->merchant_id;
+                    $name = $record->name;
+                    break;
+
+                default:
+                    # code...
+                    break;
+            }
+
+            // todo : just use $record['updated_at'] if store list already in elasticsearch
+            $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
+
+            $xmlSitemapUrl = $xml->createElement('url');
+            if (! empty($mall_id)) {
+                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $id, Str::slug($name))));
+            } else {
+                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)));
+            }
+            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', $updatedAt));
+            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
+            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
+            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
+            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
+            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
+            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
+            $root->appendChild($xmlSitemapUrl);
+        }
+
+        return $root;
     }
 
     /**
