@@ -184,6 +184,7 @@ class ESCouponUpdateQueue
                 'object_type' => 'coupon',
                 'begin_date' => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
                 'end_date' => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
+                'updated_at' => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
                 'status' => $coupon->status,
                 'available' => $coupon->available,
                 'campaign_status' => $coupon->campaign_status,
