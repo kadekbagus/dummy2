@@ -164,6 +164,7 @@ class GenerateSitemapCommand extends Command
      */
     protected function generateAllListSitemap($xml)
     {
+        // todo: modify lastmod to use latest updated_at for each list
         $root = $xml->firstChild;
         $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
         foreach ($listUris as $uri) {
@@ -379,6 +380,8 @@ class GenerateSitemapCommand extends Command
         $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
+        $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
+        $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
 
         if (! empty($total_records)) {
             $listUrlTemplate = sprintf($this->urlTemplate, $detailUri['uri']) . '/%s';
@@ -387,8 +390,7 @@ class GenerateSitemapCommand extends Command
                 $xmlSitemapUrl = $xml->createElement('url');
                 $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])));
                 // todo: use updated_at instead after updating campaign elastic search index
-                // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-                $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
+                $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', $updatedAt));
                 $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
                 $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
                 $xmlSitemapUrl->appendChild($xmlSitemapLoc);
@@ -398,7 +400,7 @@ class GenerateSitemapCommand extends Command
                 $root->appendChild($xmlSitemapUrl);
 
                 // lists inside mall
-                $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
+                // todo: modify lastmod to use latest updated_at for each list
                 foreach ($listUris as $key => $uri) {
                     if ($key !== 'mall') {
                         $xmlSitemapUrl = $xml->createElement('url');
@@ -444,7 +446,7 @@ class GenerateSitemapCommand extends Command
                     $root->appendChild($xmlSitemapUrl);
 
                     // lists inside mall
-                    $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
+                    // todo: modify lastmod to use latest updated_at for each list
                     foreach ($listUris as $key => $uri) {
                         if ($key !== 'mall') {
                             $xmlSitemapUrl = $xml->createElement('url');
@@ -568,19 +570,19 @@ class GenerateSitemapCommand extends Command
      */
     protected function detailAppender($xml, $root, $records, $type, $urlTemplate, $detailUri, $mall_id = null, $mall_slug = null)
     {
+        $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
+
         foreach ($records as $record) {
             switch ($type) {
                 case 'promotion':
                 case 'event':
                     $id = $record['news_id'];
                     $name = $record['news_name'];
-                    $updatedAt = strtotime($record['begin_date']);
                     break;
 
                 case 'coupon':
                     $id = $record['coupon_id'];
                     $name = $record['coupon_name'];
-                    $updatedAt = strtotime($record['begin_date']);
                     break;
 
                 case 'store':
@@ -592,7 +594,6 @@ class GenerateSitemapCommand extends Command
                         $id = $record['merchant_id'];
                         $name = $record['name'];
                     }
-                    $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
                     break;
 
                 case 'partner':
