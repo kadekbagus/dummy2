@@ -39,7 +39,7 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
     $news->image = $response->data[0]->path;
 
     // queue for data amazon s3
-    $usingCdn = Config::get('cdn.upload_to_cdn', false);
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
@@ -85,7 +85,7 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
         $news->image = $response->data[0]->path;
 
         // queue for data amazon s3
-        $usingCdn = Config::get('cdn.upload_to_cdn', false);
+        $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
         if ($usingCdn) {
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
@@ -143,7 +143,7 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
     $news_translations->image_translation = $response->data[0]->path;
 
     // queue for data amazon s3
-    $usingCdn = Config::get('cdn.upload_to_cdn', false);
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
          $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
