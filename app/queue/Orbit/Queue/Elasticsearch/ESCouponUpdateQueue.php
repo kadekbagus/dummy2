@@ -173,6 +173,7 @@ class ESCouponUpdateQueue
 
                 foreach ($translationCollection->media_orig as $media) {
                     $translation['image_url'] = $media->path;
+                    $translation['image_cdn_url'] = $media->cdn_url;
                 }
                 $translations[] = $translation;
             }

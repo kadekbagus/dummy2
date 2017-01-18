@@ -97,126 +97,109 @@ class GenerateSitemapCommand extends Command
             $this->sitemapType = $this->option('type');
             $this->sleep = $this->option('sleep');
 
-            $xml = new DOMDocument('1.0', 'UTF-8');
-            $xml->formatOutput = $this->formatOutput;
-            $xmlSitemapUrlSet = $xml->createElement('urlset');
-            $xmlSitemapUrlSetAttr = $xml->createAttribute('xmlns');
-            $xmlSitemapUrlSetAttr->value = 'http://www.sitemaps.org/schemas/sitemap/0.9';
-            $xmlSitemapUrlSet->appendChild($xmlSitemapUrlSetAttr);
-            $xml->appendChild($xmlSitemapUrlSet);
+            $xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" .
+                   '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
 
+            print($xmlHeader);
             switch ($this->sitemapType) {
                 case 'all-list':
-                    $returnedXML = $this->generateAllListSitemap($xml);
+                    $this->generateAllListSitemap();
                     break;
 
                 case 'all-detail':
-                    $returnedXML = $this->generateAllDetailSitemap($xml);
+                    $this->generateAllDetailSitemap();
                     break;
 
                 case 'promotion-detail':
-                    $returnedXML = $this->generatePromotionDetailsSitemap($xml);
+                    $this->generatePromotionDetailsSitemap();
                     break;
 
                 case 'coupon-detail':
-                    $returnedXML = $this->generateCouponDetailsSitemap($xml);
+                    $this->generateCouponDetailsSitemap();
                     break;
 
                 case 'store-detail':
-                    $returnedXML = $this->generateStoreDetailsSitemap($xml);
+                    $this->generateStoreDetailsSitemap();
                     break;
 
                 case 'event-detail':
-                    $returnedXML = $this->generateEventDetailsSitemap($xml);
+                    $this->generateEventDetailsSitemap();
                     break;
 
                 case 'mall-detail':
-                    $returnedXML = $this->generateMallDetailsSitemap($xml);
+                    $this->generateMallDetailsSitemap();
                     break;
 
                 case 'partner-detail':
-                    $returnedXML = $this->generatePartnerDetailsSitemap($xml);
+                    $this->generatePartnerDetailsSitemap();
                     break;
 
                 case 'misc':
-                    $returnedXML = $this->generateMiscListSitemap($xml);
+                    $this->generateMiscListSitemap();
                     break;
 
                 case 'all':
                 default:
-                    $returnedXML = $this->generateMiscListSitemap($xml);
-                    $returnedXML = $this->generateAllListSitemap($returnedXML);
-                    $returnedXML = $this->generateAllDetailSitemap($returnedXML);
+                    $this->generateMiscListSitemap();
+                    $this->generateAllListSitemap();
+                    $this->generateAllDetailSitemap();
+
                     break;
             }
         } catch (\Exception $e) {
             return print($e->getMessage());
         }
 
-        return print($returnedXML->saveXML());
+        $xmlFooter = '</urlset>';
+        print($xmlFooter);
     }
 
     /**
      * Generate all list sitemap
      *
-     * @param $xml DOMDocument
-     * @return $xml DOMDocument
+     * @return void
      */
-    protected function generateAllListSitemap($xml)
+    protected function generateAllListSitemap()
     {
-        $root = $xml->firstChild;
+        // todo: modify lastmod to use latest updated_at for each list
         $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
         foreach ($listUris as $uri) {
-            $xmlSitemapUrl = $xml->createElement('url');
-            $xmlSitemapLoc = $xml->createElement('loc', sprintf($this->urlTemplate, $uri['uri']));
-            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c'));
-            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $uri['changefreq']);
-            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-            $root->appendChild($xmlSitemapUrl);
+            print $this->urlStringGenerator(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
         }
-
-        $xml->appendChild($root);
-
-        return $xml;
     }
 
     /**
      * Generate all list sitemap
      *
-     * @param $xml DOMDocument
-     * @return $xml DOMDocument
+     * @return void
      */
-    protected function generateAllDetailSitemap($xml)
+    protected function generateAllDetailSitemap()
     {
         $listUris = Config::get('orbit.sitemap.uri_properties.detail', []);
         foreach ($listUris as $key => $uri) {
             switch ($key) {
                 case 'promotion':
-                    $xml = $this->generatePromotionDetailsSitemap($xml);
+                    $xml = $this->generatePromotionDetailsSitemap();
                     break;
 
                 case 'event':
-                    $xml = $this->generateEventDetailsSitemap($xml);
+                    $xml = $this->generateEventDetailsSitemap();
                     break;
 
                 case 'coupon':
-                    $xml = $this->generateCouponDetailsSitemap($xml);
+                    $xml = $this->generateCouponDetailsSitemap();
                     break;
 
                 case 'mall':
-                    $xml = $this->generateMallDetailsSitemap($xml);
+                    $xml = $this->generateMallDetailsSitemap();
                     break;
 
                 case 'store':
-                    $xml = $this->generateStoreDetailsSitemap($xml);
+                    $xml = $this->generateStoreDetailsSitemap();
                     break;
 
                 case 'partner':
-                    $xml = $this->generatePartnerDetailsSitemap($xml);
+                    $xml = $this->generatePartnerDetailsSitemap();
                     break;
 
                 default:
@@ -231,13 +214,13 @@ class GenerateSitemapCommand extends Command
     /**
      * Generate all Promotion detail sitemap
      *
-     * @param $xml DOMDocument
-     * @return $xml DOMDocument
+     * @param string $mall_id
+     * @param string $mall_slug
+     * @return void
      */
-    protected function generatePromotionDetailsSitemap($xml, $mall_id = null, $mall_slug = null)
+    protected function generatePromotionDetailsSitemap($mall_id = null, $mall_slug = null)
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.promotion', []);
-        $root = $xml->firstChild;
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
@@ -255,34 +238,30 @@ class GenerateSitemapCommand extends Command
                 $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
             }
 
-            $root = $this->detailAppender($xml, $root, $response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+            $this->detailAppender($response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
             while ($counter < $response->data->total_records) {
                 $_GET['skip'] = $_GET['skip'] + $_GET['take'];
                 $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
 
-                $root = $this->detailAppender($xml, $root, $response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+                $this->detailAppender($response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
                 $counter = $counter + $response->data->returned_records;
                 usleep($this->sleep);
             }
-
-            $xml->appendChild($root);
         }
-
-        return $xml;
     }
 
     /**
      * Generate all Event detail sitemap
      *
-     * @param $xml DOMDocument
-     * @return $xml DOMDocument
+     * @param string $mall_id
+     * @param string $mall_slug
+     * @return void
      */
-    protected function generateEventDetailsSitemap($xml, $mall_id = null, $mall_slug = null)
+    protected function generateEventDetailsSitemap($mall_id = null, $mall_slug = null)
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.event', []);
-        $root = $xml->firstChild;
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
@@ -300,34 +279,30 @@ class GenerateSitemapCommand extends Command
                 $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
             }
 
-            $root = $this->detailAppender($xml, $root, $response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+            $this->detailAppender($response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
             while ($counter < $response->data->total_records) {
                 $_GET['skip'] = $_GET['skip'] + $_GET['take'];
                 $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
 
-                $root = $this->detailAppender($xml, $root, $response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+                $this->detailAppender($response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
                 $counter = $counter + $response->data->returned_records;
                 usleep($this->sleep);
             }
-
-            $xml->appendChild($root);
         }
-
-        return $xml;
     }
 
     /**
      * Generate all Coupon detail sitemap
      *
-     * @param $xml DOMDocument
-     * @return $xml DOMDocument
+     * @param string $mall_id
+     * @param string $mall_slug
+     * @return void
      */
-    protected function generateCouponDetailsSitemap($xml, $mall_id = null, $mall_slug = null)
+    protected function generateCouponDetailsSitemap($mall_id = null, $mall_slug = null)
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.coupon', []);
-        $root = $xml->firstChild;
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
@@ -345,84 +320,61 @@ class GenerateSitemapCommand extends Command
                 $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
             }
 
-            $root = $this->detailAppender($xml, $root, $response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+            $this->detailAppender($response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
             while ($counter < $response->data->total_records) {
                 $_GET['skip'] = $_GET['skip'] + $_GET['take'];
                 $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
 
-                $root = $this->detailAppender($xml, $root, $response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+                $this->detailAppender($response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
                 $counter = $counter + $response->data->returned_records;
                 usleep($this->sleep);
             }
-
-            $xml->appendChild($root);
         }
-
-        return $xml;
     }
 
     /**
      * Generate all Mall detail sitemap
      *
-     * @param $xml DOMDocument
-     * @return $xml DOMDocument
+     * @param string $mall_id
+     * @param string $mall_slug
+     * @return void
      */
-    protected function generateMallDetailsSitemap($xml)
+    protected function generateMallDetailsSitemap()
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-        $root = $xml->firstChild;
         $_GET['from_homepage'] = 'y';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
         $counter = $response->data->returned_records;
         $total_records = $response->data->total_records;
+        $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
 
         if (! empty($total_records)) {
             $listUrlTemplate = sprintf($this->urlTemplate, $detailUri['uri']) . '/%s';
 
             foreach ($response->data->records as $record) {
-                $xmlSitemapUrl = $xml->createElement('url');
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])));
-                // todo: use updated_at instead after updating campaign elastic search index
-                // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-                $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-                $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-                $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-                $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-                $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-                $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-                $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-                $root->appendChild($xmlSitemapUrl);
+                $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
+                print $this->urlStringGenerator(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
 
                 // lists inside mall
-                $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
+                // todo: modify lastmod to use latest updated_at for each list
                 foreach ($listUris as $key => $uri) {
                     if ($key !== 'mall') {
-                        $xmlSitemapUrl = $xml->createElement('url');
-                        $xmlSitemapLoc = $xml->createElement('loc', sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']));
-                        $xmlSitemapLastMod = $xml->createElement('lastmod', date('c'));
-                        $xmlSitemapChangeFreq = $xml->createElement('changefreq', $uri['changefreq']);
-                        $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-                        $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-                        $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-                        $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-                        $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-                        $root->appendChild($xmlSitemapUrl);
+                        print $this->urlStringGenerator(sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']), date('c'), $uri['changefreq']);
                     }
                 }
 
-                $xml->appendChild($root);
                 // mall promotions
-                $xml = $this->generatePromotionDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                $this->generatePromotionDetailsSitemap($record['id'], Str::slug($record['name']));
                 // mall events
-                $xml = $this->generateEventDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                $this->generateEventDetailsSitemap($record['id'], Str::slug($record['name']));
                 // mall coupons
-                $xml = $this->generateCouponDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                $this->generateCouponDetailsSitemap($record['id'], Str::slug($record['name']));
                 // mall stores
-                $xml = $this->generateStoreDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                $this->generateStoreDetailsSitemap($record['id'], Str::slug($record['name']));
             }
 
             while ($counter < $response->data->total_records) {
@@ -430,65 +382,43 @@ class GenerateSitemapCommand extends Command
                 $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
 
                 foreach ($response->data->records as $record) {
-                    $xmlSitemapUrl = $xml->createElement('url');
-                    $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])));
-                    // todo: use updated_at instead after updating campaign elastic search index
-                    // $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', strtotime($record['updated_at'])));
-                    $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', time()));
-                    $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-                    $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-                    $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-                    $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-                    $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-                    $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-                    $root->appendChild($xmlSitemapUrl);
+                    $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
+                    print $this->urlStringGenerator(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
 
                     // lists inside mall
-                    $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
+                    // todo: modify lastmod to use latest updated_at for each list
                     foreach ($listUris as $key => $uri) {
                         if ($key !== 'mall') {
-                            $xmlSitemapUrl = $xml->createElement('url');
-                            $xmlSitemapLoc = $xml->createElement('loc', sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']));
-                            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c'));
-                            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $uri['changefreq']);
-                            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-                            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-                            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-                            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-                            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-                            $root->appendChild($xmlSitemapUrl);
+                            print $this->urlStringGenerator(sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']), date('c'), $uri['changefreq']);
                         }
                     }
 
-                    $xml->appendChild($root);
                     // mall promotions
-                    $xml = $this->generatePromotionDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                    $this->generatePromotionDetailsSitemap($record['id'], Str::slug($record['name']));
                     // mall events
-                    $xml = $this->generateEventDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                    $this->generateEventDetailsSitemap($record['id'], Str::slug($record['name']));
                     // mall coupons
-                    $xml = $this->generateCouponDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                    $this->generateCouponDetailsSitemap($record['id'], Str::slug($record['name']));
                     // mall stores
-                    $xml = $this->generateStoreDetailsSitemap($xml, $record['id'], Str::slug($record['name']));
+                    $this->generateStoreDetailsSitemap($record['id'], Str::slug($record['name']));
                 }
 
                 $counter = $counter + $response->data->returned_records;
                 usleep($this->sleep);
             }
         }
-
-        return $xml;
     }
 
     /**
      * Generate all Store detail sitemap
      *
-     * @param $xml DOMDocument
-     * @return $xml DOMDocument
+     * @param string $mall_id
+     * @param string $mall_slug
+     * @return void
      */
-    protected function generateStoreDetailsSitemap($xml, $mall_id = null, $mall_slug = null)
+    protected function generateStoreDetailsSitemap($mall_id = null, $mall_slug = null)
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.store', []);
-        $root = $xml->firstChild;
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
@@ -506,34 +436,28 @@ class GenerateSitemapCommand extends Command
                 $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
             }
 
-            $root = $this->detailAppender($xml, $root, $response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+            $this->detailAppender($response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
             while ($counter < $response->data->total_records) {
                 $_GET['skip'] = $_GET['skip'] + $_GET['take'];
                 $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
 
-                $root = $this->detailAppender($xml, $root, $response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+                $this->detailAppender($response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
                 $counter = $counter + $response->data->returned_records;
                 usleep($this->sleep);
             }
-
-            $xml->appendChild($root);
         }
-
-        return $xml;
     }
 
     /**
      * Generate all Partner detail sitemap
      *
-     * @param $xml DOMDocument
-     * @return $xml DOMDocument
+     * @return void
      */
-    protected function generatePartnerDetailsSitemap($xml)
+    protected function generatePartnerDetailsSitemap()
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.partner', []);
-        $root = $xml->firstChild;
         $_GET['visible'] = 'yes';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
@@ -542,45 +466,41 @@ class GenerateSitemapCommand extends Command
         $total_records = $response->data->total_records;
 
         if (! empty($total_records)) {
-            $root = $this->detailAppender($xml, $root, $response->data->records, 'partner', $this->urlTemplate, $detailUri);
+            $this->detailAppender($response->data->records, 'partner', $this->urlTemplate, $detailUri);
 
             while ($counter < $response->data->total_records) {
                 $_GET['skip'] = $_GET['skip'] + $_GET['take'];
                 $response = Orbit\Controller\API\v1\Pub\Partner\PartnerListAPIController::create('raw')->setUser($this->user)->getSearchPartner();
 
-                $root = $this->detailAppender($xml, $root, $response->data->records, 'partner', $this->urlTemplate, $detailUri);
+                $this->detailAppender($response->data->records, 'partner', $this->urlTemplate, $detailUri);
 
                 $counter = $counter + $response->data->returned_records;
                 usleep($this->sleep);
             }
-
-            $xml->appendChild($root);
         }
-
-        return $xml;
     }
 
     /**
      * Single function to append urls
      *
      * @param $xml DOMDocument
-     * @return $xml DOMDocument
+     * @return void
      */
-    protected function detailAppender($xml, $root, $records, $type, $urlTemplate, $detailUri, $mall_id = null, $mall_slug = null)
+    protected function detailAppender($records, $type, $urlTemplate, $detailUri, $mall_id = null, $mall_slug = null)
     {
         foreach ($records as $record) {
+            $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
+
             switch ($type) {
                 case 'promotion':
                 case 'event':
                     $id = $record['news_id'];
                     $name = $record['news_name'];
-                    $updatedAt = strtotime($record['begin_date']);
                     break;
 
                 case 'coupon':
                     $id = $record['coupon_id'];
                     $name = $record['coupon_name'];
-                    $updatedAt = strtotime($record['begin_date']);
                     break;
 
                 case 'store':
@@ -592,7 +512,6 @@ class GenerateSitemapCommand extends Command
                         $id = $record['merchant_id'];
                         $name = $record['name'];
                     }
-                    $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
                     break;
 
                 case 'partner':
@@ -607,23 +526,14 @@ class GenerateSitemapCommand extends Command
                     break;
             }
 
-            $xmlSitemapUrl = $xml->createElement('url');
             if (! empty($mall_id)) {
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $id, Str::slug($name))));
+                print $this->urlStringGenerator(sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $id, Str::slug($name))), date('c', $updatedAt), $detailUri['changefreq']);
             } else {
-                $xmlSitemapLoc = $xml->createElement('loc', sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)));
+                print $this->urlStringGenerator(sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)), date('c', $updatedAt), $detailUri['changefreq']);
             }
-            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c', $updatedAt));
-            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $detailUri['changefreq']);
-            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-            $root->appendChild($xmlSitemapUrl);
+            echo "not real: ".(memory_get_peak_usage(false)/1024/1024)." MiB\n";
+            echo "real: ".(memory_get_peak_usage(true)/1024/1024)." MiB\n\n";
         }
-
-        return $root;
     }
 
     /**
@@ -632,26 +542,29 @@ class GenerateSitemapCommand extends Command
      * @param $xml DOMDocument
      * @return $xml DOMDocument
      */
-    protected function generateMiscListSitemap($xml)
+    protected function generateMiscListSitemap()
     {
-        $root = $xml->firstChild;
         $listUris = Config::get('orbit.sitemap.uri_properties.misc', []);
         foreach ($listUris as $uri) {
-            $xmlSitemapUrl = $xml->createElement('url');
-            $xmlSitemapLoc = $xml->createElement('loc', sprintf($this->urlTemplate, $uri['uri']));
-            $xmlSitemapLastMod = $xml->createElement('lastmod', date('c'));
-            $xmlSitemapChangeFreq = $xml->createElement('changefreq', $uri['changefreq']);
-            $xmlSitemapPriority = $xml->createElement('priority', $this->priority);
-            $xmlSitemapUrl->appendChild($xmlSitemapLoc);
-            $xmlSitemapUrl->appendChild($xmlSitemapLastMod);
-            $xmlSitemapUrl->appendChild($xmlSitemapChangeFreq);
-            $xmlSitemapUrl->appendChild($xmlSitemapPriority);
-            $root->appendChild($xmlSitemapUrl);
+            print $this->urlStringGenerator(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
         }
+    }
 
-        $xml->appendChild($root);
+    /**
+     * Generate url property string
+     *
+     * @param $url string
+     * @param $lastmod string
+     * @param $changefreq string
+     * @param $priority string
+     * @return $urlProp string
+     */
+    protected function urlStringGenerator($url, $lastmod, $changefreq, $priority = null)
+    {
+        $priority = is_null($priority) ? $this->priority : $priority;
+        $urlProp = "<url>\n<loc>" . $url . "</loc>\n<lastmod>" . $lastmod . "</lastmod>\n<changefreq>" . $changefreq . "</changefreq>\n<priority>" . $priority . "</priority>\n</url>\n";
 
-        return $xml;
+        return $urlProp;
     }
 
     /**
