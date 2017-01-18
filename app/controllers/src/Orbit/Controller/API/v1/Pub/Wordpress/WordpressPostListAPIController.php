@@ -15,7 +15,6 @@ use Config;
 use Exception;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use Activity;
 use stdClass;
 use Mall;
 
@@ -40,7 +39,6 @@ class WordpressPostListAPIController extends PubControllerAPI
     public function getPostList()
     {
         $httpCode = 200;
-        $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
         $this->setMallObject();
 
@@ -72,17 +70,6 @@ class WordpressPostListAPIController extends PubControllerAPI
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = $message;
-
-            $activityNotes = sprintf('Total posts returned %s', $data->total_records);
-            $activity->setUser($user)
-                ->setActivityName('view_blog_list')
-                ->setActivityNameLong('View Blog List')
-                ->setObject(NULL)
-                ->setLocation($this->mall)
-                ->setModuleName('Application')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
