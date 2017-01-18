@@ -5550,7 +5550,8 @@ class UploadAPIController extends ControllerAPI
             $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
                 //get old path before delete
-                $oldPath[$oldMedia->media_id] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
 
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
@@ -5967,7 +5968,8 @@ class UploadAPIController extends ControllerAPI
             $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
                 //get old path before delete
-                $oldPath[$oldMedia->media_id] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
 
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
