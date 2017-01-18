@@ -1,7 +1,7 @@
 <?php
 /**
- * Command for resync coupon data from MySQL to Elasticsearch based on coupon id
- * @author Firmansyah <firmansyah@dominopos.com>
+ * Command for resync store data from MySQL to Elasticsearch based on store name
+ * @author kadek<kadek@dominopos.com>
  */
 
 use Illuminate\Console\Command;
@@ -24,7 +24,7 @@ class ElasticsearchResyncStoreCommand extends Command {
      *
      * @var string
      */
-    protected $description = 'Resync news data from MySQL to Elasticsearch based on news id';
+    protected $description = 'Resync store data from MySQL to Elasticsearch based on store name';
 
     /**
      * Prefix for message list.
@@ -60,7 +60,7 @@ class ElasticsearchResyncStoreCommand extends Command {
 
             $job = new FakeJob();
             $data = [
-                'news_id' => $input
+                'name' => $input
             ];
             try {
                 $response = $this->syncData($job, $data);
@@ -69,9 +69,9 @@ class ElasticsearchResyncStoreCommand extends Command {
                     throw new Exception($response['message'], 1);
                 }
 
-                $this->info(sprintf('%sNews ID: "%s" has been successfully synced to Elasticsearch server', $this->stdoutPrefix, $data['news_id']));
+                $this->info(sprintf('%sStore Name: "%s" has been successfully synced to Elasticsearch server', $this->stdoutPrefix, $data['name']));
             } catch (Exception $e) {
-                $this->error(sprintf('%sFailed to sync news ID "%s", message: %s', $this->stdoutPrefix, $data['news_id'], $e->getMessage()));
+                $this->error(sprintf('%sFailed to sync Store Name "%s", message: %s', $this->stdoutPrefix, $data['name'], $e->getMessage()));
             }
         } catch (\Exception $e) {
             $this->error($e->getMessage());
