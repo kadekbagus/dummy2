@@ -531,8 +531,6 @@ class GenerateSitemapCommand extends Command
             } else {
                 print $this->urlStringGenerator(sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)), date('c', $updatedAt), $detailUri['changefreq']);
             }
-            echo "not real: ".(memory_get_peak_usage(false)/1024/1024)." MiB\n";
-            echo "real: ".(memory_get_peak_usage(true)/1024/1024)." MiB\n\n";
         }
     }
 
