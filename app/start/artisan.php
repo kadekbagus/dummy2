@@ -125,6 +125,9 @@ Artisan::add(new ElasticsearchResyncNewsCommand);
 // Initial Promotion data migration
 Artisan::add(new ElasticsearchResyncPromotionCommand);
 
+// Initial Promotion data migration
+Artisan::add(new ElasticsearchResyncStoreCommand);
+
 // Clear Promotion data in ES
 Artisan::add(new ElasticsearchClearPromotionCommand);
 
