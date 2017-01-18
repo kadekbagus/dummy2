@@ -164,7 +164,7 @@ class GenerateSitemapCommand extends Command
         // todo: modify lastmod to use latest updated_at for each list
         $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
         foreach ($listUris as $uri) {
-            print $this->urlStringGenerator(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
+            $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
         }
     }
 
@@ -357,13 +357,13 @@ class GenerateSitemapCommand extends Command
 
             foreach ($response->data->records as $record) {
                 $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
-                print $this->urlStringGenerator(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
+                $this->urlStringPrinter(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
 
                 // lists inside mall
                 // todo: modify lastmod to use latest updated_at for each list
                 foreach ($listUris as $key => $uri) {
                     if ($key !== 'mall') {
-                        print $this->urlStringGenerator(sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']), date('c'), $uri['changefreq']);
+                        $this->urlStringPrinter(sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']), date('c'), $uri['changefreq']);
                     }
                 }
 
@@ -383,13 +383,13 @@ class GenerateSitemapCommand extends Command
 
                 foreach ($response->data->records as $record) {
                     $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
-                    print $this->urlStringGenerator(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
+                    $this->urlStringPrinter(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
 
                     // lists inside mall
                     // todo: modify lastmod to use latest updated_at for each list
                     foreach ($listUris as $key => $uri) {
                         if ($key !== 'mall') {
-                            print $this->urlStringGenerator(sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']), date('c'), $uri['changefreq']);
+                            $this->urlStringPrinter(sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']), date('c'), $uri['changefreq']);
                         }
                     }
 
@@ -527,9 +527,9 @@ class GenerateSitemapCommand extends Command
             }
 
             if (! empty($mall_id)) {
-                print $this->urlStringGenerator(sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $id, Str::slug($name))), date('c', $updatedAt), $detailUri['changefreq']);
+                $this->urlStringPrinter(sprintf(sprintf(sprintf($urlTemplate, $mall_id, $mall_slug, $detailUri['uri']), $id, Str::slug($name))), date('c', $updatedAt), $detailUri['changefreq']);
             } else {
-                print $this->urlStringGenerator(sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)), date('c', $updatedAt), $detailUri['changefreq']);
+                $this->urlStringPrinter(sprintf(sprintf($urlTemplate, $detailUri['uri']), $id, Str::slug($name)), date('c', $updatedAt), $detailUri['changefreq']);
             }
         }
     }
@@ -544,7 +544,7 @@ class GenerateSitemapCommand extends Command
     {
         $listUris = Config::get('orbit.sitemap.uri_properties.misc', []);
         foreach ($listUris as $uri) {
-            print $this->urlStringGenerator(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
+            $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
         }
     }
 
@@ -555,14 +555,14 @@ class GenerateSitemapCommand extends Command
      * @param $lastmod string
      * @param $changefreq string
      * @param $priority string
-     * @return $urlProp string
+     * @return void
      */
-    protected function urlStringGenerator($url, $lastmod, $changefreq, $priority = null)
+    protected function urlStringPrinter($url, $lastmod, $changefreq, $priority = null)
     {
         $priority = is_null($priority) ? $this->priority : $priority;
-        $urlProp = "<url>\n<loc>" . $url . "</loc>\n<lastmod>" . $lastmod . "</lastmod>\n<changefreq>" . $changefreq . "</changefreq>\n<priority>" . $priority . "</priority>\n</url>\n";
+        $urlProp = sprintf("<url>\n<loc>%s</loc>\n<lastmod>%s</lastmod>\n<changefreq>%s</changefreq>\n<priority>%s</priority>\n</url>\n", $url, $lastmod, $changefreq, $priority);
 
-        return $urlProp;
+        print $urlProp;
     }
 
     /**

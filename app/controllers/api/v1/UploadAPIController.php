@@ -9275,6 +9275,7 @@ class UploadAPIController extends ControllerAPI
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
             $partner = App::make('orbit.empty.partner_id');
+            $partner->touch();
 
             // Delete old partner logo
             $pastMedia = Media::where('object_id', $partner->partner_id)
@@ -9444,6 +9445,7 @@ class UploadAPIController extends ControllerAPI
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
             $partner = App::make('orbit.empty.partner_id');
+            $partner->touch();
 
             // Delete old partner logo
             $pastMedia = Media::where('object_id', $partner->partner_id)
