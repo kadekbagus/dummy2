@@ -64,31 +64,11 @@ class GenerateSitemapCommand extends Command
      */
     public function __construct()
     {
-        try {
-            $sitemapConfig = Config::get('orbit.sitemap', null);
-            if (empty($sitemapConfig)) {
-                throw new Exception("Cannot find sitemap config.", 1);
-            }
-
-            parent::__construct();
-            $this->appUrl = rtrim(Config::get('app.url'), '/');
-            $this->hashBang = Config::get('orbit.sitemap.hashbang', FALSE) ? '/#!/' : '/';
-            $this->urlTemplate = $this->appUrl . $this->hashBang . '%s';
-
-            $this->user = User::with('apikey')
-                ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
-                ->where('role_name', 'Super Admin')
-                ->first();
-
-            if (! is_object($this->user)) {
-                throw new Exception("Cannot find super admin user.", 1);
-            }
-
-            $this->sitemapType = 'all';
-        } catch (\Exception $e) {
-            print($e->getMessage());
-            die();
-        }
+        parent::__construct();
+        $this->appUrl = rtrim(Config::get('app.url'), '/');
+        $this->hashBang = Config::get('orbit.sitemap.hashbang', FALSE) ? '/#!/' : '/';
+        $this->urlTemplate = $this->appUrl . $this->hashBang . '%s';
+        $this->sitemapType = 'all';
     }
 
     /**
@@ -99,6 +79,20 @@ class GenerateSitemapCommand extends Command
     public function fire()
     {
         try {
+            $sitemapConfig = Config::get('orbit.sitemap', null);
+            if (empty($sitemapConfig)) {
+                throw new Exception("Cannot find sitemap config.", 1);
+            }
+
+            $this->user = User::with('apikey')
+                ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
+                ->where('role_name', 'Super Admin')
+                ->first();
+
+            if (! is_object($this->user)) {
+                throw new Exception("Cannot find super admin user.", 1);
+            }
+
             $this->formatOutput = $this->option('format-output');
             $this->sitemapType = $this->option('type');
             $this->sleep = $this->option('sleep');
@@ -575,25 +569,30 @@ class GenerateSitemapCommand extends Command
     protected function detailAppender($xml, $root, $records, $type, $urlTemplate, $detailUri, $mall_id = null, $mall_slug = null)
     {
         foreach ($records as $record) {
-            // todo : just use $record['updated_at'] if store list already in elasticsearch
-            $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
-
             switch ($type) {
                 case 'promotion':
                 case 'event':
                     $id = $record['news_id'];
                     $name = $record['news_name'];
+                    $updatedAt = strtotime($record['begin_date']);
                     break;
 
                 case 'coupon':
                     $id = $record['coupon_id'];
                     $name = $record['coupon_name'];
+                    $updatedAt = strtotime($record['begin_date']);
                     break;
 
                 case 'store':
-                    // change to array if store list already on elasticsearch
-                    $id = $record->merchant_id;
-                    $name = $record->name;
+                    if (is_object($record)) {
+                        // remove this and use array instead if store already in elasticsearch
+                        $id = $record->merchant_id;
+                        $name = $record->name;
+                    } elseif(is_array($record)) {
+                        $id = $record['merchant_id'];
+                        $name = $record['name'];
+                    }
+                    $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
                     break;
 
                 case 'partner':

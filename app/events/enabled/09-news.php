@@ -40,14 +40,14 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
 
     // queue for data amazon s3
     $queueFile = 'Orbit\\Queue\\CdnUploadNewQueue';
-    if ($response->isUpdate) {
+    if ($response->data['extras']->isUpdate) {
         $queueFile = 'Orbit\\Queue\\CdnUploadUpdateQueue';
     }
 
     Queue::push($queueFile, [
         'object_id' => $news->news_id,
-        'media_name_id' => $response->mediaNameId,
-        'old_path' => $response->oldPath
+        'media_name_id' => $response->data['extras']->mediaNameId,
+        'old_path' => $response->data['extras']->oldPath
     ], 'cdn_upload');
 });
 
@@ -82,14 +82,14 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
 
         // queue for data amazon s3
         $queueFile = 'Orbit\\Queue\\CdnUploadNewQueue';
-        if ($response->isUpdate) {
+        if ($response->data['extras']->isUpdate) {
             $queueFile = 'Orbit\\Queue\\CdnUploadUpdateQueue';
         }
 
         Queue::push($queueFile, [
             'object_id' => $news->news_id,
-            'media_name_id' => $response->mediaNameId,
-            'old_path' => $response->oldPath
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path' => $response->data['extras']->oldPath
         ], 'cdn_upload');
     }
 });
@@ -136,14 +136,14 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
 
     // queue for data amazon s3
     $queueFile = 'Orbit\\Queue\\CdnUploadNewQueue';
-    if ($response->isUpdate) {
+    if ($response->data['extras']->isUpdate) {
         $queueFile = 'Orbit\\Queue\\CdnUploadUpdateQueue';
     }
 
     Queue::push($queueFile, [
         'object_id' => $news_translations->news_translation_id,
-        'media_name_id' => $response->mediaNameId,
-        'old_path' => $response->oldPath
+        'media_name_id' => $response->data['extras']->mediaNameId,
+        'old_path' => $response->data['extras']->oldPath
     ], 'cdn_upload');
 });
 
