@@ -55,6 +55,7 @@ class StoreAPIController extends PubControllerAPI
         $activity = Activity::mobileci()->setActivityType('view');
         $mall = NULL;
         $mall_name = NULL;
+        $mall_city = NULL;
         $user = NULL;
         $httpCode = 200;
 
@@ -222,7 +223,7 @@ class StoreAPIController extends PubControllerAPI
                 ->orderBy(DB::raw("advert.placement_order"), 'desc')
                 ->orderBy('merchants.created_at', 'asc');
 
-            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall, &$mall_name) {
+            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall, &$mall_name, &$mall_city) {
                 $store->where('merchants.parent_id', '=', DB::raw("{$this->quote($mallId)}"));
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
@@ -230,6 +231,7 @@ class StoreAPIController extends PubControllerAPI
 
                 if (! empty($mall)) {
                     $mall_name = $mall->name;
+                    $mall_city = $mall->city;
                 }
             });
 
@@ -456,6 +458,7 @@ class StoreAPIController extends PubControllerAPI
             $data->total_records = $totalRecMerchant;
             $data->extras = $extras;
             $data->mall_name = $mall_name;
+            $data->mall_city = $mall_city;
             $data->records = $listStore;
 
             // save activity when accessing listing
@@ -782,6 +785,8 @@ class StoreAPIController extends PubControllerAPI
                                 'media.path',
                                 'media.object_id'
                             );
+                    },  'keywords' => function ($q) {
+                        $q->addSelect('keyword', 'object_id');
                     }])
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')

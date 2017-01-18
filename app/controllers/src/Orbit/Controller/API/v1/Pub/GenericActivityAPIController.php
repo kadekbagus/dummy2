@@ -198,6 +198,36 @@ class GenericActivityAPIController extends PubControllerAPI
                             break;
                     }
                 }
+            } elseif ($activityName === 'click_filter') {
+                $notes = '';
+                $filter = OrbitInput::post('filter', null);
+                $filter_values = OrbitInput::post('filter_values', null);
+                if (! empty($filter_values)) {
+                    $notes = implode(',', $filter_values);
+                }
+                if (! empty($filter)) {
+                    switch ($filter) {
+                        case 'locations':
+                            $activity->setObjectDisplayName('Location');
+                            break;
+
+                        case 'categories':
+                            $activity->setObjectDisplayName('Category');
+                            break;
+
+                        case 'partners':
+                            $activity->setObjectDisplayName('Partner');
+                            break;
+
+                        case 'orders':
+                            $activity->setObjectDisplayName('Sort By');
+                            break;
+
+                        default:
+                            $activity->setObjectDisplayName('undefined');
+                            break;
+                    }
+                }
             }
 
             $activity->setUser($user)

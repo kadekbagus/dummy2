@@ -49,6 +49,11 @@ return array(
             'promotions' => [
                  'index' => 'promotions',
                  'type'  => 'basic'
+            ],
+
+            'stores' => [
+                 'index' => 'stores',
+                 'type'  => 'basic'
             ]
         ],
 
@@ -103,6 +108,18 @@ return array(
                 'province'    => '^2',
                 'country'     => '^2'
             ],
+
+            'store' => [
+                'name'         => '^6',
+                'object_type'  => '^5',
+                'mall_name'    => '^4',
+                'city'         => '^3',
+                'province'     => '^2',
+                'keywords'     => '',
+                'address_line' => '',
+                'country'      => '',
+                'description'  => ''
+            ]
         ]
     ],
 
@@ -4918,6 +4935,15 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - User clicks on filter (Location, Category, Partner, Sort By)
+            '99' => array(
+                'name' => 'click_filter',
+                'name_long' => 'Click Filter',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
@@ -5300,4 +5326,79 @@ return array(
             'version' => '2006-03-01'
         ]
     ],
+
+    /**
+     * Sitemap generator config
+     */
+    'sitemap' => array(
+        'hashbang' => TRUE,
+        'uri_properties' => array(
+            'list' => array(
+                'promotion' => array(
+                    'uri' => 'promotions',
+                    'changefreq' => 'daily',
+                ),
+                'event' => array(
+                    'uri' => 'events',
+                    'changefreq' => 'daily',
+                ),
+                'coupon' => array(
+                    'uri' => 'coupons',
+                    'changefreq' => 'daily',
+                ),
+                'store' => array(
+                    'uri' => 'stores',
+                    'changefreq' => 'daily',
+                ),
+                'mall' => array(
+                    'uri' => 'malls',
+                    'changefreq' => 'daily',
+                ),
+            ),
+            'detail' => array(
+                'promotion' => array(
+                    'uri' => 'promotions/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'event' => array(
+                    'uri' => 'events/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'coupon' => array(
+                    'uri' => 'coupons/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'store' => array(
+                    'uri' => 'stores/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'mall' => array(
+                    'uri' => 'malls/%s/%s',
+                    'changefreq' => 'weekly',
+                ),
+                'partner' => array(
+                    'uri' => 'partner/%s/%s',
+                    'changefreq' => 'weekly',
+                ),
+            ),
+            'misc' => array(
+                'home' => array(
+                    'uri' => '',
+                    'changefreq' => 'daily',
+                ),
+                'about' => array(
+                    'uri' => 'about-us',
+                    'changefreq' => 'monthly',
+                ),
+                'discover' => array(
+                    'uri' => 'discover',
+                    'changefreq' => 'monthly',
+                ),
+                'map' => array(
+                    'uri' => 'map',
+                    'changefreq' => 'weekly',
+                ),
+            ),
+        ),
+    ),
 );
