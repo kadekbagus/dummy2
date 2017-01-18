@@ -28,6 +28,7 @@ class MailchimpSubscriberAddQueue
     public function fire($job, $data)
     {
         $activityId = $data['activity_id'];
+        $user = new \stdClass();
 
         try {
             $activity = Activity::where('activity_id', $activityId)->firstOrFail();
