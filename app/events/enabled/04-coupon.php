@@ -37,7 +37,7 @@ Event::listen('orbit.coupon.postnewcoupon.after.save', function($controller, $co
     $coupon->image = $response->data[0]->path;
 
     // queue for data amazon s3
-    $usingCdn = Config::get('cdn.enable_cdn', false);
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
@@ -82,7 +82,7 @@ Event::listen('orbit.coupon.postupdatecoupon.after.save', function($controller, 
     $coupon->image = $response->data[0]->path;
 
     // queue for data amazon s3
-    $usingCdn = Config::get('cdn.enable_cdn', false);
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
@@ -137,7 +137,7 @@ Event::listen('orbit.coupon.after.translation.save', function($controller, $coup
     $coupon_translations->image_translation = $response->data[0]->path;
 
     // queue for data amazon s3
-    $usingCdn = Config::get('cdn.enable_cdn', false);
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
