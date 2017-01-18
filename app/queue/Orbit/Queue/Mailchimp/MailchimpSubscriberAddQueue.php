@@ -59,8 +59,8 @@ class MailchimpSubscriberAddQueue
             $message = sprintf('[Job ID: `%s`] MAILCHIMP QUEUE -- Add Subscriber: %s -- Status: FAIL -- Message: %s',
                                 $job->getJobId(), $user->user_email, $e->getMessage());
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] MAILCHIMP QUEUE -- Add Subscriber: %s -- Status: FAIL -- Message: %s',
-                                $job->getJobId(), $user->user_email, $e->getMessage());
+            $message = sprintf('[Job ID: `%s`] MAILCHIMP QUEUE -- Status: FAIL -- Message: %s',
+                                $job->getJobId(), $e->getMessage());
         }
 
         // Bury the job for later inspection
