@@ -49,11 +49,13 @@ class CdnUploadUpdateQueue
                     'Key' => $file->path
                 ]);
 
-                // delete
-                $delResponse = $s3->deleteObject([
-                    'Bucket' => $file->cdn_bucket_name,
-                    'Key' => $oldPath[$file->media_id];
-                ]);
+                if (! empty($oldPath[$file->media_id]['cdn_url'])) {
+                    // delete
+                    $delResponse = $s3->deleteObject([
+                        'Bucket' => $file->cdn_bucket_name,
+                        'Key' => $oldPath[$file->media_id]['path'];
+                    ]);
+                }
 
                 $s3Media = Media::find($file->media_id);
                 $s3Media->cdn_url = $addResponse['ObjectURL'];
