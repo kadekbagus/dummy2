@@ -39,9 +39,9 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
     $news->image = $response->data[0]->path;
 
     // queue for data amazon s3
-    $queueFile = 'Orbit\\Queue\\CdnUploadNewQueue';
+    $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
     if ($response->data['extras']->isUpdate) {
-        $queueFile = 'Orbit\\Queue\\CdnUploadUpdateQueue';
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
     }
 
     Queue::push($queueFile, [
@@ -81,9 +81,9 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
         $news->image = $response->data[0]->path;
 
         // queue for data amazon s3
-        $queueFile = 'Orbit\\Queue\\CdnUploadNewQueue';
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
         if ($response->data['extras']->isUpdate) {
-            $queueFile = 'Orbit\\Queue\\CdnUploadUpdateQueue';
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
         }
 
         Queue::push($queueFile, [
@@ -135,9 +135,9 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
     $news_translations->image_translation = $response->data[0]->path;
 
     // queue for data amazon s3
-    $queueFile = 'Orbit\\Queue\\CdnUploadNewQueue';
+    $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
     if ($response->data['extras']->isUpdate) {
-        $queueFile = 'Orbit\\Queue\\CdnUploadUpdateQueue';
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
     }
 
     Queue::push($queueFile, [

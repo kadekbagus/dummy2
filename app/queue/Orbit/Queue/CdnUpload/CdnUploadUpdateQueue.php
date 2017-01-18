@@ -28,13 +28,12 @@ class CdnUploadUpdateQueue
         $mediaNameId = $data['media_name_id'];
         $oldPath = $data['old_path'];
         $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
-        $contentType = 'image/png';
 
         try {
             $sdk = new Aws\Sdk(Config::get('orbit.aws-sdk', []));
             $s3 = $sdk->createS3();
 
-            $media = Media::select('media_id', 'path', 'realpath', 'cdn_url', 'cdn_bucket_name')->where('object_id', $objectId);
+            $media = Media::select('media_id', 'path', 'realpath', 'cdn_url', 'cdn_bucket_name', 'mime_type')->where('object_id', $objectId);
 
             if (! empty($mediaNameId)) {
                 $media->where('media_name_id', $mediaNameId);
@@ -44,19 +43,15 @@ class CdnUploadUpdateQueue
             $message = array();
             foreach ($media as $file) {
                 // insert new
-                $addResponse = $s3->putObject([
+                $response = $s3->putObject([
                     'Bucket' => $bucketName,
-                    'Key' => $file->path
-                ]);
-
-                // delete
-                $delResponse = $s3->deleteObject([
-                    'Bucket' => $file->cdn_bucket_name,
-                    'Key' => $oldPath[$file->media_id];
+                    'Key' => $file->path,
+                    'SourceFile' => $file->realpath,
+                    'ContentType' => $file->mime_type
                 ]);
 
                 $s3Media = Media::find($file->media_id);
-                $s3Media->cdn_url = $addResponse['ObjectURL'];
+                $s3Media->cdn_url = $response['ObjectURL'];
                 $s3Media->cdn_bucket_name = $bucketName;
                 $s3Media->save();
 
@@ -75,6 +70,16 @@ class CdnUploadUpdateQueue
 
                 $message[] = $contentMessage;
                 Log::info($contentMessage);
+            }
+
+            // delete old image in s3
+            foreach ($oldPath as $oldFile) {
+                if (! empty($oldFile['cdn_url'])) {
+                    $delResponse = $s3->deleteObject([
+                        'Bucket' => $oldFile['cdn_bucket_name'],
+                        'Key' => $oldFile['path']
+                    ]);
+                }
             }
 
             return [
