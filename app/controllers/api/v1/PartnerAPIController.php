@@ -650,6 +650,7 @@ class PartnerAPIController extends ControllerAPI
                 }
             });
 
+            $updatedpartner->setUpdatedAt($updatedpartner->freshTimestamp());
             $updatedpartner->save();
 
             Event::fire('orbit.partner.postupdatepartner.after.save', array($this, $updatedpartner));

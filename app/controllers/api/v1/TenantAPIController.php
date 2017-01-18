@@ -1209,6 +1209,7 @@ class TenantAPIController extends ControllerAPI
 
             Event::fire('orbit.tenant.postupdatetenant.before.save', array($this, $updatedtenant));
 
+            $updatedtenant->setUpdatedAt($updatedtenant->freshTimestamp());
             $updatedtenant->save();
 
             OrbitInput::post('facebook_uri', function($facebook_uri) use($updatedtenant, $retailer_id) {
