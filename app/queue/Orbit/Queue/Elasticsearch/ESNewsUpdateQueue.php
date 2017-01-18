@@ -164,6 +164,7 @@ class ESNewsUpdateQueue
 
                 foreach ($translationCollection->media_orig as $media) {
                     $translation['image_url'] = $media->path;
+                    $translation['image_cdn_url'] = $media->cdn_url;
                 }
                 $translations[] = $translation;
             }
@@ -175,6 +176,7 @@ class ESNewsUpdateQueue
                 'object_type' => $news->object_type,
                 'begin_date' => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
                 'end_date' => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z',
+                'updated_at' => date('Y-m-d', strtotime($news->updated_at)) . 'T' . date('H:i:s', strtotime($news->updated_at)) . 'Z',
                 'status' => $news->status,
                 'campaign_status' => $news->campaign_status,
                 'is_all_gender' => $news->is_all_gender,

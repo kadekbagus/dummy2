@@ -118,6 +118,7 @@ class ESMallUpdateQueue
                 'status'          => $mall->status,
                 'ci_domain'       => $mall->ci_domain,
                 'is_subscribed'   => $mall->is_subscribed,
+                'updated_at'      => $mall->updated_at,
                 'keywords'        => '',
                 'position'        => [
                     'lon' => $geofence->longitude,

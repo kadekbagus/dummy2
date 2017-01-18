@@ -39,16 +39,20 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
     $news->image = $response->data[0]->path;
 
     // queue for data amazon s3
-    $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
-    if ($response->data['extras']->isUpdate) {
-        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
-    }
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
-    Queue::push($queueFile, [
-        'object_id' => $news->news_id,
-        'media_name_id' => $response->data['extras']->mediaNameId,
-        'old_path' => $response->data['extras']->oldPath
-    ], 'cdn_upload');
+    if ($usingCdn) {
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id' => $news->news_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path' => $response->data['extras']->oldPath
+        ], 'cdn_upload');
+    }
 });
 
 /**
@@ -81,16 +85,20 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
         $news->image = $response->data[0]->path;
 
         // queue for data amazon s3
-        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
-        if ($response->data['extras']->isUpdate) {
-            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
-        }
+        $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
-        Queue::push($queueFile, [
-            'object_id' => $news->news_id,
-            'media_name_id' => $response->data['extras']->mediaNameId,
-            'old_path' => $response->data['extras']->oldPath
-        ], 'cdn_upload');
+        if ($usingCdn) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+            if ($response->data['extras']->isUpdate) {
+                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+            }
+
+            Queue::push($queueFile, [
+                'object_id' => $news->news_id,
+                'media_name_id' => $response->data['extras']->mediaNameId,
+                'old_path' => $response->data['extras']->oldPath
+            ], 'cdn_upload');
+        }
     }
 });
 
@@ -135,16 +143,20 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
     $news_translations->image_translation = $response->data[0]->path;
 
     // queue for data amazon s3
-    $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
-    if ($response->data['extras']->isUpdate) {
-        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
-    }
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
-    Queue::push($queueFile, [
-        'object_id' => $news_translations->news_translation_id,
-        'media_name_id' => $response->data['extras']->mediaNameId,
-        'old_path' => $response->data['extras']->oldPath
-    ], 'cdn_upload');
+    if ($usingCdn) {
+         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id' => $news_translations->news_translation_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path' => $response->data['extras']->oldPath
+        ], 'cdn_upload');
+    }
 });
 
 

@@ -173,6 +173,7 @@ class ESCouponUpdateQueue
 
                 foreach ($translationCollection->media_orig as $media) {
                     $translation['image_url'] = $media->path;
+                    $translation['image_cdn_url'] = $media->cdn_url;
                 }
                 $translations[] = $translation;
             }
@@ -184,6 +185,7 @@ class ESCouponUpdateQueue
                 'object_type' => 'coupon',
                 'begin_date' => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
                 'end_date' => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
+                'updated_at' => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
                 'status' => $coupon->status,
                 'available' => $coupon->available,
                 'campaign_status' => $coupon->campaign_status,
