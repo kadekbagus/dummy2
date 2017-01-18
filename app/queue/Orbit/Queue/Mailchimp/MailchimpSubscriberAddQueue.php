@@ -10,6 +10,7 @@ use User;
 use Config;
 use Orbit\Mailchimp\MailchimpFactory;
 use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class MailchimpSubscriberAddQueue
 {
