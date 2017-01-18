@@ -110,7 +110,7 @@ class ESStoreUpdateQueue
                 'body' => [
                     'query' => [
                         'match' => [
-                            'name' => $storeName
+                            'name.raw' => $storeName
                         ]
                     ]
                 ]
@@ -221,8 +221,8 @@ class ESStoreUpdateQueue
                                 $job->getJobId(),
                                 $esConfig['indices']['stores']['index'],
                                 $esConfig['indices']['stores']['type'],
-                                $store->merchant_id,
-                                $store->name);
+                                $store[0]->merchant_id,
+                                $store[0]->name);
             Log::info($message);
 
             return [
