@@ -100,7 +100,7 @@ class NewsListAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,created_date',
+                    'sortby'   => 'in:name,location,created_date,updated_date',
                 )
             );
 
@@ -252,6 +252,8 @@ class NewsListAPIController extends PubControllerAPI
                 $sort = array('_geo_distance' => array('link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'created_date') {
                 $sort = array('begin_date' => array('order' => $sort_mode));
+            } elseif ($sort_by === 'updated_date') {
+                $sort = array('updated_at' => array('order' => $sort_mode));
             } else {
                 $sort = array('name.raw' => array('order' => $sort_mode));
             }
