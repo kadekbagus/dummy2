@@ -110,7 +110,7 @@ class ESStoreUpdateQueue
                 'body' => [
                     'query' => [
                         'match' => [
-                            'name' => $storeName
+                            'name.raw' => $storeName
                         ]
                     ]
                 ]
@@ -221,8 +221,8 @@ class ESStoreUpdateQueue
                                 $job->getJobId(),
                                 $esConfig['indices']['stores']['index'],
                                 $esConfig['indices']['stores']['type'],
-                                $store->merchant_id,
-                                $store->name);
+                                $store[0]->merchant_id,
+                                $store[0]->name);
             Log::info($message);
 
             return [
@@ -230,12 +230,6 @@ class ESStoreUpdateQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            // Bury the job for later inspection
-            JobBurier::create($job, function($theJob) {
-                // The queue driver does not support bury.
-                $theJob->delete();
-            })->bury();
-
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['stores']['index'],
@@ -243,11 +237,17 @@ class ESStoreUpdateQueue
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);
-
-            return [
-                'status' => 'fail',
-                'message' => $message
-            ];
         }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 }

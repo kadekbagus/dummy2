@@ -35,6 +35,22 @@ Event::listen('orbit.coupon.postnewcoupon.after.save', function($controller, $co
     $coupon->setRelation('media', $response->data);
     $coupon->media = $response->data;
     $coupon->image = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id' => $coupon->promotion_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path' => $response->data['extras']->oldPath
+        ], 'cdn_upload');
+    }
 });
 
 /**
@@ -64,6 +80,22 @@ Event::listen('orbit.coupon.postupdatecoupon.after.save', function($controller, 
 
     $coupon->load('media');
     $coupon->image = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id' => $coupon->promotion_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path' => $response->data['extras']->oldPath
+        ], 'cdn_upload');
+    }
 });
 
 /**
@@ -103,6 +135,22 @@ Event::listen('orbit.coupon.after.translation.save', function($controller, $coup
     $coupon_translations->setRelation('media', $response->data);
     $coupon_translations->media = $response->data;
     $coupon_translations->image_translation = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id' => $coupon_translations->coupon_translation_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path' => $response->data['extras']->oldPath
+        ], 'cdn_upload');
+    }
 });
 
 

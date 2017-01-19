@@ -26,14 +26,14 @@ class CdnUploadNewQueue
         $prefix = DB::getTablePrefix();
         $objectId = $data['object_id'];
         $mediaNameId = $data['media_name_id'];
+        $oldPath = $data['old_path'];
         $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
-        $contentType = 'image/png';
 
         try {
             $sdk = new Aws\Sdk(Config::get('orbit.aws-sdk', []));
             $s3 = $sdk->createS3();
 
-            $localMedia = Media::select('media_id', 'path', 'realpath')->where('object_id', $objectId);
+            $localMedia = Media::select('media_id', 'path', 'realpath', 'cdn_url', 'cdn_bucket_name', 'mime_type')->where('object_id', $objectId);
 
             if (! empty($mediaNameId)) {
                 $localMedia->where('media_name_id', $mediaNameId);
@@ -46,7 +46,7 @@ class CdnUploadNewQueue
                     'Bucket' => $bucketName,
                     'Key' => $localFile->path,
                     'SourceFile' => $localFile->realpath,
-                    'ContentType' => $contentType
+                    'ContentType' => $localFile->mime_type
                 ]);
 
                 $s3Media = Media::find($localFile->media_id);
@@ -71,6 +71,10 @@ class CdnUploadNewQueue
                 Log::info($contentMessage);
             }
 
+            // // Don't care if the job success or not we will provide user
+            // // another link to resend the activation
+            $job->delete();
+
             return [
                 'status' => 'ok',
                 'message' => $message
@@ -88,15 +92,17 @@ class CdnUploadNewQueue
             }
 
             Log::info($message);
-
-            return [
-                'status' => 'fail',
-                'message' => $message
-            ];
         }
 
-        // // Don't care if the job success or not we will provide user
-        // // another link to resend the activation
-        $job->delete();
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 }

@@ -2027,13 +2027,21 @@ class UploadAPIController extends ControllerAPI
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
             }
 
             // Delete from database
+            $isUpdate = false;
             if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
                 $pastMedia->delete();
             }
 
@@ -2055,6 +2063,12 @@ class UploadAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.upload.postuploadcouponimage.after.save', array($this, $coupon, $uploader));
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'coupon_image';
+            $mediaList['extras'] = $extras;
 
             $this->response->data = $mediaList;
             $this->response->message = Lang::get('statuses.orbit.uploaded.coupon.main');
@@ -3260,13 +3274,20 @@ class UploadAPIController extends ControllerAPI
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
             }
 
             // Delete from database
+            $isUpdate = false;
             if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
                 $pastMedia->delete();
             }
 
@@ -3287,6 +3308,12 @@ class UploadAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.upload.postuploadcoupontranslationimage.after.save', array($this, $coupon_translations, $uploader));
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'coupon_image';
+            $mediaList['extras'] = $extras;
 
             $this->response->data = $mediaList;
             $this->response->message = Lang::get('statuses.orbit.uploaded.coupon_translation.main');
@@ -5550,7 +5577,9 @@ class UploadAPIController extends ControllerAPI
             $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
                 //get old path before delete
-                $oldPath[$oldMedia->media_id] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
 
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
@@ -5967,7 +5996,9 @@ class UploadAPIController extends ControllerAPI
             $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
                 //get old path before delete
-                $oldPath[$oldMedia->media_id] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
 
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
@@ -9244,6 +9275,7 @@ class UploadAPIController extends ControllerAPI
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
             $partner = App::make('orbit.empty.partner_id');
+            $partner->touch();
 
             // Delete old partner logo
             $pastMedia = Media::where('object_id', $partner->partner_id)
@@ -9413,6 +9445,7 @@ class UploadAPIController extends ControllerAPI
             // We already had Product instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
             $partner = App::make('orbit.empty.partner_id');
+            $partner->touch();
 
             // Delete old partner logo
             $pastMedia = Media::where('object_id', $partner->partner_id)

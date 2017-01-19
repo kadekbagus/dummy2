@@ -164,6 +164,7 @@ class ESNewsUpdateQueue
 
                 foreach ($translationCollection->media_orig as $media) {
                     $translation['image_url'] = $media->path;
+                    $translation['image_cdn_url'] = $media->cdn_url;
                 }
                 $translations[] = $translation;
             }
@@ -175,6 +176,7 @@ class ESNewsUpdateQueue
                 'object_type' => $news->object_type,
                 'begin_date' => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
                 'end_date' => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z',
+                'updated_at' => date('Y-m-d', strtotime($news->updated_at)) . 'T' . date('H:i:s', strtotime($news->updated_at)) . 'Z',
                 'status' => $news->status,
                 'campaign_status' => $news->campaign_status,
                 'is_all_gender' => $news->is_all_gender,
@@ -216,12 +218,6 @@ class ESNewsUpdateQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            // Bury the job for later inspection
-            JobBurier::create($job, function($theJob) {
-                // The queue driver does not support bury.
-                $theJob->delete();
-            })->bury();
-
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['news']['index'],
@@ -229,11 +225,17 @@ class ESNewsUpdateQueue
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);
-
-            return [
-                'status' => 'fail',
-                'message' => $message
-            ];
         }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 }

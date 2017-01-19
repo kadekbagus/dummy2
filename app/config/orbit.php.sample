@@ -203,15 +203,15 @@ return array(
 
         // CDN Provider
         'providers' => [
-            // Dummy
-            'dummy' => [
+            // gotomalls as default when not using cdn
+            'default' => [
                 // Just dummy provider
-                'name' => 'Dummy provider',
+                'name' => 'Gotomalls',
 
                 // Name of the bucket or directory
                 'bucket_name' => NULL,
 
-                'url_prefix' => NULL
+                'url_prefix' => 'https://mall-api.gotomalls.cool'
             ],
 
             // AWS S3
@@ -4943,6 +4943,15 @@ return array(
                 'type' => 'click',
                 'object_type' => null,
                 'parameter_name' => null
+            ),
+            // - User clicks on get coupon
+            '100' => array(
+                'name' => 'click_get_coupon',
+                'name_long' => 'Click Get Coupon',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
             ),
         ),
     ),
