@@ -37,6 +37,8 @@ use PartnerCompetitor;
 
 class PromotionListAPIController extends PubControllerAPI
 {
+    protected $withoutScore = FALSE;
+
     /**
      * GET - get active promotion in all mall, and also provide for searching
      *
@@ -396,6 +398,14 @@ class PromotionListAPIController extends PubControllerAPI
             if ($withScore) {
                 $sortby = array('_score', $sort);
             }
+
+            if ($this->withoutScore) {
+                // remove _score sort
+                $sortby = array_filter($sortby, function($val) { return $val !== '_score'; });
+                // reindex array
+                $sortby = array_values($sortby);
+            }
+
             $jsonQuery['sort'] = $sortby;
 
             $esParam = [
@@ -601,6 +611,17 @@ class PromotionListAPIController extends PubControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    /**
+     * Force $withScore value to FALSE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setWithOutScore()
+    {
+        $this->withoutScore = TRUE;
+
+        return $this;
     }
 
     protected function quote($arg)
