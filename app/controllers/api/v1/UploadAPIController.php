@@ -3312,7 +3312,7 @@ class UploadAPIController extends ControllerAPI
             $extras = new \stdClass();
             $extras->isUpdate = $isUpdate;
             $extras->oldPath = $oldPath;
-            $extras->mediaNameId = 'coupon_image';
+            $extras->mediaNameId = 'coupon_translation_image';
             $mediaList['extras'] = $extras;
 
             $this->response->data = $mediaList;
@@ -5378,7 +5378,13 @@ class UploadAPIController extends ControllerAPI
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
             }
