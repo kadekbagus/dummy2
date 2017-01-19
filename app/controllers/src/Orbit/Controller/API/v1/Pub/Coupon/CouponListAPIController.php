@@ -33,6 +33,8 @@ use PartnerCompetitor;
 
 class CouponListAPIController extends PubControllerAPI
 {
+    protected $withoutScore = FALSE;
+
     /**
      * GET - get all coupon in all mall
      *
@@ -272,6 +274,11 @@ class CouponListAPIController extends PubControllerAPI
             $sortby = $sort;
             if ($withScore) {
                 $sortby = array('_score', $sort);
+            }
+
+            if ($this->withoutScore) {
+                // remove _score sort
+                $sortby = array_filter($sortby, function($val) { return $val !== '_score'; });
             }
             $jsonQuery['sort'] = $sortby;
 
@@ -627,6 +634,17 @@ class CouponListAPIController extends PubControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    /**
+     * Force $withScore value to FALSE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setWithOutScore()
+    {
+        $this->withoutScore = TRUE;
+
+        return $this;
     }
 
     protected function quote($arg)

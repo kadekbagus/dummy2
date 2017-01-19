@@ -35,6 +35,8 @@ use Carbon\Carbon as Carbon;
 class NewsListAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
+    protected $withoutScore = FALSE;
+
     /**
      * GET - get active news in all mall, and also provide for searching
      *
@@ -262,6 +264,11 @@ class NewsListAPIController extends PubControllerAPI
             if ($withScore) {
                 $sortby = array('_score', $sort);
             }
+
+            if ($this->withoutScore) {
+                // remove _score sort
+                $sortby = array_filter($sortby, function($val) { return $val !== '_score'; });
+            }
             $jsonQuery['sort'] = $sortby;
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
@@ -423,6 +430,17 @@ class NewsListAPIController extends PubControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    /**
+     * Force $withScore value to FALSE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setWithOutScore()
+    {
+        $this->withoutScore = TRUE;
+
+        return $this;
     }
 
     protected function quote($arg)

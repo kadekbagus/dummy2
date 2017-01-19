@@ -24,6 +24,8 @@ use Orbit\Helper\Util\SimpleCache;
 
 class MallListAPIController extends PubControllerAPI
 {
+    protected $withoutScore = FALSE;
+
     /**
      * GET - check if mall inside map area
      *
@@ -184,6 +186,11 @@ class MallListAPIController extends PubControllerAPI
             $sortby = $sort;
             if ($withScore) {
                 $sortby = array('_score', $sort);
+            }
+
+            if ($this->withoutScore) {
+                // remove _score sort
+                $sortby = array_filter($sortby, function($val) { return $val !== '_score'; });
             }
             $jsonArea["sort"] = $sortby;
 
@@ -371,5 +378,16 @@ class MallListAPIController extends PubControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    /**
+     * Force $withScore value to FALSE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setWithOutScore()
+    {
+        $this->withoutScore = TRUE;
+
+        return $this;
     }
 }

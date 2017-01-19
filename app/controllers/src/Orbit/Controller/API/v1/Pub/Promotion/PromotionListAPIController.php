@@ -402,10 +402,7 @@ class PromotionListAPIController extends PubControllerAPI
             if ($this->withoutScore) {
                 // remove _score sort
                 $sortby = array_filter($sortby, function($val) { return $val !== '_score'; });
-                // reindex array
-                $sortby = array_values($sortby);
             }
-
             $jsonQuery['sort'] = $sortby;
 
             $esParam = [
