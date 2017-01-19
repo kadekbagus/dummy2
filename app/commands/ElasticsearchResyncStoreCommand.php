@@ -86,7 +86,6 @@ class ElasticsearchResyncStoreCommand extends Command {
     protected function getArguments()
     {
         return array(
-            array('store_name', null, InputOption::VALUE_OPTIONAL, null)
         );
     }
 
@@ -98,6 +97,7 @@ class ElasticsearchResyncStoreCommand extends Command {
     protected function getOptions()
     {
         return array(
+            array('store-name', null, InputOption::VALUE_OPTIONAL, 'Store name to sync.', null),
             array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, no data will be sent to Elasticsearch.', null),
         );
     }
