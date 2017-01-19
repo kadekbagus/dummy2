@@ -573,7 +573,7 @@ class GenerateSitemapCommand extends Command
                         // remove this and use array instead if store already in elasticsearch
                         $id = $record->merchant_id;
                         $name = $record->name;
-                        $updatedAt = $record->updated_at;
+                        $updatedAt = strtotime($record->updated_at);
                     } elseif(is_array($record)) {
                         $id = $record['merchant_id'];
                         $name = $record['name'];
