@@ -10,6 +10,7 @@ use User;
 use Config;
 use Orbit\Mailchimp\MailchimpFactory;
 use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class MailchimpSubscriberAddQueue
 {
@@ -27,6 +28,7 @@ class MailchimpSubscriberAddQueue
     public function fire($job, $data)
     {
         $activityId = $data['activity_id'];
+        $user = new \stdClass();
 
         try {
             $activity = Activity::where('activity_id', $activityId)->firstOrFail();
@@ -57,8 +59,8 @@ class MailchimpSubscriberAddQueue
             $message = sprintf('[Job ID: `%s`] MAILCHIMP QUEUE -- Add Subscriber: %s -- Status: FAIL -- Message: %s',
                                 $job->getJobId(), $user->user_email, $e->getMessage());
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] MAILCHIMP QUEUE -- Add Subscriber: %s -- Status: FAIL -- Message: %s',
-                                $job->getJobId(), $user->user_email, $e->getMessage());
+            $message = sprintf('[Job ID: `%s`] MAILCHIMP QUEUE -- Status: FAIL -- Message: %s',
+                                $job->getJobId(), $e->getMessage());
         }
 
         // Bury the job for later inspection
