@@ -110,7 +110,7 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
     // Update logo
     if (empty($logo)) {
         // Delete mall logo
-        OrbitInput::post('logo', function($logo_string) use ($controller) {
+        OrbitInput::post('logo', function($logo_string) use ($controller, $mall) {
             if (empty(trim($logo_string))) {
                 // This will be used on UploadAPIController
                 App::instance('orbit.upload.user', $controller->api->user);
