@@ -227,14 +227,16 @@ class MallListAPIController extends PubControllerAPI
                     // handle if user filter location with one word, ex "jakarta", data in city "jakarta selatan", "jakarta barat" etc will be dissapear
                     if (strtolower($dt['_source']['city']) === strtolower($location)) {
                         $areadata['id'] = $dt['_id'];
+                        $localPath = '';
+                        $cdnPath = '';
+
                         foreach ($dt['_source'] as $source => $val) {
+
                             if (strtolower($dt['_source']['city']) === strtolower($location)) {
-                                $localPath = '';
                                 if ($source == 'logo_url') {
                                     $localPath = $val;
                                 }
 
-                                $cdnPath = '';
                                 if ($source == 'logo_cdn_url') {
                                     $cdnPath = $val;
                                 }
@@ -243,18 +245,20 @@ class MallListAPIController extends PubControllerAPI
                                 $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                             }
                         }
+
                         $listmall[] = $areadata;
                     }
                     $total = count($listmall);
                 } else {
                     $areadata['id'] = $dt['_id'];
+                    $localPath = '';
+                    $cdnPath = '';
+
                     foreach ($dt['_source'] as $source => $val) {
-                        $localPath = '';
                         if ($source == 'logo_url') {
                             $localPath = $val;
                         }
 
-                        $cdnPath = '';
                         if ($source == 'logo_cdn_url') {
                             $cdnPath = $val;
                         }
@@ -262,6 +266,7 @@ class MallListAPIController extends PubControllerAPI
                         $areadata[$source] = $val;
                         $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                     }
+
                     $listmall[] = $areadata;
                 }
             }
