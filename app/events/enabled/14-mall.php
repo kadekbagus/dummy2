@@ -18,6 +18,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  */
 Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
 {
+    //Upload mall logo
     $logo = OrbitInput::files('logo');
 
     if (! empty($logo)) {
@@ -34,11 +35,27 @@ Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
         {
             throw new \Exception($response->message, $response->code);
         }
+
+        // queue for data amazon s3
+        $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+        if ($usingCdn) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+            if ($response->data['extras']->isUpdate) {
+                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+            }
+
+            Queue::push($queueFile, [
+                'object_id' => $mall->merchant_id,
+                'media_name_id' => $response->data['extras']->mediaNameId,
+                'old_path' => $response->data['extras']->oldPath
+            ], 'cdn_upload');
+        }
     }
     $mall->load('mediaLogo');
 
+    // Update mall maps
     $maps = OrbitInput::files('maps');
-
     if (! empty($maps)) {
         $_POST['merchant_id'] = $mall->merchant_id;
 
@@ -56,6 +73,22 @@ Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
 
         $mall->setRelation('media_map', $response->data);
         $mall->media_map = $response->data;
+
+        // queue for data amazon s3
+        $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+        if ($usingCdn) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+            if ($response->data['extras']->isUpdate) {
+                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+            }
+
+            Queue::push($queueFile, [
+                'object_id' => $mall->merchant_id,
+                'media_name_id' => $response->data['extras']->mediaNameId,
+                'old_path' => $response->data['extras']->oldPath
+            ], 'cdn_upload');
+        }
     }
     $mall->load('mediaMap');
 });
@@ -74,7 +107,9 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
     $logo = OrbitInput::files('logo');
     $_POST['merchant_id'] = $mall->merchant_id;
 
+    // Update logo
     if (empty($logo)) {
+        // Delete mall logo
         OrbitInput::post('logo', function($logo_string) use ($controller) {
             if (empty(trim($logo_string))) {
                 // This will be used on UploadAPIController
@@ -86,6 +121,17 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
                 if ($response->code !== 0)
                 {
                     throw new \Exception($response->message, $response->code);
+                }
+
+                // queue for data amazon s3
+                $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+                if ($usingCdn) {
+                    $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadDeleteQueue';
+                    Queue::push($queueFile, [
+                        'object_id' => $mall->merchant_id,
+                        'media_name_id' => 'mall_logo',
+                    ], 'cdn_upload');
                 }
             }
         });
@@ -101,13 +147,27 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
         {
             throw new \Exception($response->message, $response->code);
         }
+
+        // queue for data amazon s3
+        $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+        if ($usingCdn) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+            if ($response->data['extras']->isUpdate) {
+                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+            }
+
+            Queue::push($queueFile, [
+                'object_id' => $mall->merchant_id,
+                'media_name_id' => $response->data['extras']->mediaNameId,
+                'old_path' => $response->data['extras']->oldPath
+            ], 'cdn_upload');
+        }
     }
     $mall->load('mediaLogo');
 
+    // Upload map
     $maps = OrbitInput::files('maps');
-    $_POST['merchant_id'] = $mall->merchant_id;
-
-    // upload map
     if (! empty($maps)) {
         // This will be used on UploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
@@ -123,6 +183,22 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
 
         $mall->setRelation('media_map', $response->data);
         $mall->media_map = $response->data;
+
+        // queue for data amazon s3
+        $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+        if ($usingCdn) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+            if ($response->data['extras']->isUpdate) {
+                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+            }
+
+            Queue::push($queueFile, [
+                'object_id' => $mall->merchant_id,
+                'media_name_id' => $response->data['extras']->mediaNameId,
+                'old_path' => $response->data['extras']->oldPath
+            ], 'cdn_upload');
+        }
     }
     $mall->load('mediaMap');
 
