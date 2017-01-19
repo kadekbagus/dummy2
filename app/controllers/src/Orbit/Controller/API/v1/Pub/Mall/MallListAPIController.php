@@ -168,6 +168,8 @@ class MallListAPIController extends PubControllerAPI
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $sort = array('_geo_distance' => array('position' => array('lon' => $longitude, 'lat' => $latitude), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
+            } elseif ($sort_by === 'updated_date') {
+                $sort = array('updated_at' => array('order' => 'desc'));
             }
 
             if (! $searchFlag) {
