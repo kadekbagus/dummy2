@@ -46,14 +46,14 @@ class CdnUploadDeleteQueue
                     $contentMessage = sprintf('Delete file from S3; Status: OK; Object_id: %s; Bucket_name: %s; Path: %s;',
                                 $objectId,
                                 $oldFile['cdn_bucket_name'],
-                                'Key' => $oldFile['path']);
+                                $oldFile['path']);
 
                     if (! empty($mediaNameId)) {
                         $contentMessage = sprintf('Delete file from S3; Status: OK; Media name: %s, Object_id: %s; Bucket_name: %s; Path: %s;',
                                     $mediaNameId,
                                     $objectId,
                                     $oldFile['cdn_bucket_name'],
-                                    'Key' => $oldFile['path']);
+                                    $oldFile['path']);
                     }
 
                     $message[] = $contentMessage;
