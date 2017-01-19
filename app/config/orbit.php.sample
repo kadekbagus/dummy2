@@ -4953,6 +4953,42 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'coupon_id'
             ),
+            // - User click cancel on choose location popup after clicking use
+            '101' => array(
+                'name' => 'click_cancel_use',
+                'name_long' => 'Click Cancel Use',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on "Next" on choose location popup after clicking "✁ Use
+            '102' => array(
+                'name' => 'click_next_use',
+                'name_long' => 'Click Next Use',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on "Go Back" on verification popup after clicking "Next"
+            '103' => array(
+                'name' => 'click_go_back_use',
+                'name_long' => 'Click Go Back Use',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on "Use" button
+            '104' => array(
+                'name' => 'click_use',
+                'name_long' => 'Click Use',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
         ),
     ),
 
