@@ -370,6 +370,28 @@ Event::listen('orbit.mall.postupdatemall.after.commit', function($controller, $m
         }
     }
 
+    // check all store that belongs to the mall and then update store index on es
+    $store = Tenant::select('merchants.name')
+                    ->excludeDeleted('merchants')
+                    ->join(DB::raw("(
+                            select merchant_id
+                            from {$prefix}merchants
+                            where status = 'active'
+                            and object_type = 'mall'
+                        ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                    ->where('merchants.status', '=', 'active')
+                    ->where(DB::raw('oms.merchant_id'), '=', $mall->merchant_id)
+                    ->get();
+
+    if (!$store->isEmpty()) {
+        foreach ($store as $_store) {
+            // Notify the queueing system to update Elasticsearch document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
+                'name' => $_store->name
+            ]);
+        }
+    }
+
 });
 
 /**
