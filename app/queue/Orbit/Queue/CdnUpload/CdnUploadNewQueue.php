@@ -93,7 +93,9 @@ class CdnUploadNewQueue
                     break;
 
                 case 'mall':
-                    // to be edit
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
+                        'mall_id' => $esId
+                    ]);
                     break;
 
                 case 'store':
