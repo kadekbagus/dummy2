@@ -147,7 +147,7 @@ class GenerateSitemapCommand extends Command
                     break;
             }
         } catch (\Exception $e) {
-            return print($e->getMessage());
+            return print_r([$e->getMessage(), $e->getLine(), $e->getFile()]);
         }
 
         $xmlFooter = '</urlset>';
@@ -159,12 +159,63 @@ class GenerateSitemapCommand extends Command
      *
      * @return void
      */
-    protected function generateAllListSitemap()
+    protected function generateAllListSitemap($mall_id = null, $mall_slug = null)
     {
-        // todo: modify lastmod to use latest updated_at for each list
         $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
-        foreach ($listUris as $uri) {
-            $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
+        foreach ($listUris as $key => $uri) {
+            $response = null;
+            $_GET['sortby'] = 'updated_date';
+            $_GET['sortmode'] = 'desc';
+            $_GET['from_homepage'] = 'y';
+            $_GET['take'] = 1;
+            $_GET['skip'] = 0;
+            if (! empty($mall_id)) {
+                $_GET['mall_id'] = $mall_id;
+            }
+
+            switch ($key) {
+                case 'promotion':
+                    $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
+                    break;
+
+                case 'event':
+                    $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
+                    break;
+
+                case 'coupon':
+                    $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
+                    break;
+
+                case 'store':
+                    $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
+                    break;
+
+                case 'mall':
+                    if (! empty($mall_id)) {
+                        $response = null;
+                    } else {
+                        $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
+                    }
+                    break;
+
+                default:
+                    # code...
+                    break;
+            }
+
+            if ($this->responseCheck($response)) {
+                if (! empty($response->data->total_records)) {
+                    $updatedAt = (isset($response->data->records[0]) && ! is_object($response->data->records[0]) && isset($response->data->records[0]['updated_at']) && ! empty($response->data->records[0]['updated_at'])) ? strtotime($response->data->records[0]['updated_at']) : time();
+                    if (! empty($mall_id)) {
+                        // from mall detail
+                        $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                        $listUrlTemplate = sprintf($this->urlTemplate, $mallUri['uri']) . '/%s';
+                        $this->urlStringPrinter(sprintf($listUrlTemplate, $mall_id, $mall_slug, $uri['uri']), date('c', $updatedAt), $uri['changefreq']);
+                    } else {
+                        $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c', $updatedAt), $uri['changefreq']);
+                    }
+                }
+            }
         }
     }
 
@@ -228,26 +279,29 @@ class GenerateSitemapCommand extends Command
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
-        $counter = $response->data->returned_records;
-        $total_records = $response->data->total_records;
 
-        if (! empty($total_records)) {
-            $urlTemplate = $this->urlTemplate;
-            if (! empty($mall_id)) {
-                $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-                $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-            }
+        if ($this->responseCheck($response)) {
+            $counter = $response->data->returned_records;
+            $total_records = $response->data->total_records;
 
-            $this->detailAppender($response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
-
-            while ($counter < $response->data->total_records) {
-                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
+            if (! empty($total_records)) {
+                $urlTemplate = $this->urlTemplate;
+                if (! empty($mall_id)) {
+                    $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                    $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+                }
 
                 $this->detailAppender($response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
-                $counter = $counter + $response->data->returned_records;
-                usleep($this->sleep);
+                while ($counter < $response->data->total_records) {
+                    $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                    $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
+
+                    $this->detailAppender($response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                    $counter = $counter + $response->data->returned_records;
+                    usleep($this->sleep);
+                }
             }
         }
     }
@@ -269,26 +323,29 @@ class GenerateSitemapCommand extends Command
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
-        $counter = $response->data->returned_records;
-        $total_records = $response->data->total_records;
 
-        if (! empty($total_records)) {
-            $urlTemplate = $this->urlTemplate;
-            if (! empty($mall_id)) {
-                $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-                $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-            }
+        if ($this->responseCheck($response)) {
+            $counter = $response->data->returned_records;
+            $total_records = $response->data->total_records;
 
-            $this->detailAppender($response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
-
-            while ($counter < $response->data->total_records) {
-                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
+            if (! empty($total_records)) {
+                $urlTemplate = $this->urlTemplate;
+                if (! empty($mall_id)) {
+                    $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                    $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+                }
 
                 $this->detailAppender($response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
-                $counter = $counter + $response->data->returned_records;
-                usleep($this->sleep);
+                while ($counter < $response->data->total_records) {
+                    $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                    $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
+
+                    $this->detailAppender($response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                    $counter = $counter + $response->data->returned_records;
+                    usleep($this->sleep);
+                }
             }
         }
     }
@@ -310,26 +367,29 @@ class GenerateSitemapCommand extends Command
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
-        $counter = $response->data->returned_records;
-        $total_records = $response->data->total_records;
 
-        if (! empty($total_records)) {
-            $urlTemplate = $this->urlTemplate;
-            if (! empty($mall_id)) {
-                $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-                $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-            }
+        if ($this->responseCheck($response)) {
+            $counter = $response->data->returned_records;
+            $total_records = $response->data->total_records;
 
-            $this->detailAppender($response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
-
-            while ($counter < $response->data->total_records) {
-                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
+            if (! empty($total_records)) {
+                $urlTemplate = $this->urlTemplate;
+                if (! empty($mall_id)) {
+                    $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                    $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+                }
 
                 $this->detailAppender($response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
-                $counter = $counter + $response->data->returned_records;
-                usleep($this->sleep);
+                while ($counter < $response->data->total_records) {
+                    $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                    $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
+
+                    $this->detailAppender($response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                    $counter = $counter + $response->data->returned_records;
+                    usleep($this->sleep);
+                }
             }
         }
     }
@@ -347,51 +407,22 @@ class GenerateSitemapCommand extends Command
         $_GET['from_homepage'] = 'y';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
+        $mallSkip = 0;
         $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
-        $counter = $response->data->returned_records;
-        $total_records = $response->data->total_records;
-        $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
 
-        if (! empty($total_records)) {
-            $listUrlTemplate = sprintf($this->urlTemplate, $detailUri['uri']) . '/%s';
+        if ($this->responseCheck($response)) {
+            $counter = $response->data->returned_records;
+            $total_records = $response->data->total_records;
+            $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
 
-            foreach ($response->data->records as $record) {
-                $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
-                $this->urlStringPrinter(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
-
-                // lists inside mall
-                // todo: modify lastmod to use latest updated_at for each list
-                foreach ($listUris as $key => $uri) {
-                    if ($key !== 'mall') {
-                        $this->urlStringPrinter(sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']), date('c'), $uri['changefreq']);
-                    }
-                }
-
-                // mall promotions
-                $this->generatePromotionDetailsSitemap($record['id'], Str::slug($record['name']));
-                // mall events
-                $this->generateEventDetailsSitemap($record['id'], Str::slug($record['name']));
-                // mall coupons
-                $this->generateCouponDetailsSitemap($record['id'], Str::slug($record['name']));
-                // mall stores
-                $this->generateStoreDetailsSitemap($record['id'], Str::slug($record['name']));
-            }
-
-            while ($counter < $response->data->total_records) {
-                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
+            if (! empty($total_records)) {
+                $listUrlTemplate = sprintf($this->urlTemplate, $detailUri['uri']) . '/%s';
 
                 foreach ($response->data->records as $record) {
-                    $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
+                    $updatedAt = $this->getLastPromotionUpdatedAt($record['id']);
                     $this->urlStringPrinter(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
 
-                    // lists inside mall
-                    // todo: modify lastmod to use latest updated_at for each list
-                    foreach ($listUris as $key => $uri) {
-                        if ($key !== 'mall') {
-                            $this->urlStringPrinter(sprintf($listUrlTemplate, $record['id'], Str::slug($record['name']), $uri['uri']), date('c'), $uri['changefreq']);
-                        }
-                    }
+                    $this->generateAllListSitemap($record['id'], Str::slug($record['name']));
 
                     // mall promotions
                     $this->generatePromotionDetailsSitemap($record['id'], Str::slug($record['name']));
@@ -403,8 +434,35 @@ class GenerateSitemapCommand extends Command
                     $this->generateStoreDetailsSitemap($record['id'], Str::slug($record['name']));
                 }
 
-                $counter = $counter + $response->data->returned_records;
-                usleep($this->sleep);
+                while ($counter < $response->data->total_records) {
+                    unset($_GET);
+                    $_GET['from_homepage'] = 'y';
+                    $_GET['take'] = 50;
+                    $mallSkip = $mallSkip + $_GET['take'];
+                    $_GET['skip'] = $mallSkip;
+                    $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
+
+                    if ($this->responseCheck($response)) {
+                        foreach ($response->data->records as $record) {
+                            $updatedAt = $this->getLastPromotionUpdatedAt($record['id']);
+                            $this->urlStringPrinter(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
+
+                            $this->generateAllListSitemap($record['id'], Str::slug($record['name']));
+
+                            // mall promotions
+                            $this->generatePromotionDetailsSitemap($record['id'], Str::slug($record['name']));
+                            // mall events
+                            $this->generateEventDetailsSitemap($record['id'], Str::slug($record['name']));
+                            // mall coupons
+                            $this->generateCouponDetailsSitemap($record['id'], Str::slug($record['name']));
+                            // mall stores
+                            $this->generateStoreDetailsSitemap($record['id'], Str::slug($record['name']));
+                        }
+                    }
+
+                    $counter = $counter + $response->data->returned_records;
+                    usleep($this->sleep);
+                }
             }
         }
     }
@@ -426,26 +484,29 @@ class GenerateSitemapCommand extends Command
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
-        $counter = $response->data->returned_records;
-        $total_records = $response->data->total_records;
 
-        if (! empty($total_records)) {
-            $urlTemplate = $this->urlTemplate;
-            if (! empty($mall_id)) {
-                $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-                $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-            }
+        if ($this->responseCheck($response)) {
+            $counter = $response->data->returned_records;
+            $total_records = $response->data->total_records;
 
-            $this->detailAppender($response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
-
-            while ($counter < $response->data->total_records) {
-                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
+            if (! empty($total_records)) {
+                $urlTemplate = $this->urlTemplate;
+                if (! empty($mall_id)) {
+                    $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                    $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+                }
 
                 $this->detailAppender($response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
-                $counter = $counter + $response->data->returned_records;
-                usleep($this->sleep);
+                while ($counter < $response->data->total_records) {
+                    $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                    $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
+
+                    $this->detailAppender($response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                    $counter = $counter + $response->data->returned_records;
+                    usleep($this->sleep);
+                }
             }
         }
     }
@@ -457,25 +518,29 @@ class GenerateSitemapCommand extends Command
      */
     protected function generatePartnerDetailsSitemap()
     {
+        unset($_GET);
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.partner', []);
         $_GET['visible'] = 'yes';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\Partner\PartnerListAPIController::create('raw')->setUser($this->user)->getSearchPartner();
-        $counter = $response->data->returned_records;
-        $total_records = $response->data->total_records;
 
-        if (! empty($total_records)) {
-            $this->detailAppender($response->data->records, 'partner', $this->urlTemplate, $detailUri);
+        if ($this->responseCheck($response)) {
+            $counter = $response->data->returned_records;
+            $total_records = $response->data->total_records;
 
-            while ($counter < $response->data->total_records) {
-                $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                $response = Orbit\Controller\API\v1\Pub\Partner\PartnerListAPIController::create('raw')->setUser($this->user)->getSearchPartner();
-
+            if (! empty($total_records)) {
                 $this->detailAppender($response->data->records, 'partner', $this->urlTemplate, $detailUri);
 
-                $counter = $counter + $response->data->returned_records;
-                usleep($this->sleep);
+                while ($counter < $response->data->total_records) {
+                    $_GET['skip'] = $_GET['skip'] + $_GET['take'];
+                    $response = Orbit\Controller\API\v1\Pub\Partner\PartnerListAPIController::create('raw')->setUser($this->user)->getSearchPartner();
+
+                    $this->detailAppender($response->data->records, 'partner', $this->urlTemplate, $detailUri);
+
+                    $counter = $counter + $response->data->returned_records;
+                    usleep($this->sleep);
+                }
             }
         }
     }
@@ -543,8 +608,12 @@ class GenerateSitemapCommand extends Command
     protected function generateMiscListSitemap()
     {
         $listUris = Config::get('orbit.sitemap.uri_properties.misc', []);
-        foreach ($listUris as $uri) {
-            $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
+        foreach ($listUris as $key => $uri) {
+            if ($key === 'home') {
+                $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c', $this->getLastPromotionUpdatedAt()), $uri['changefreq']);
+            } else {
+                $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c'), $uri['changefreq']);
+            }
         }
     }
 
@@ -563,6 +632,45 @@ class GenerateSitemapCommand extends Command
         $urlProp = sprintf("<url>\n<loc>%s</loc>\n<lastmod>%s</lastmod>\n<changefreq>%s</changefreq>\n<priority>%s</priority>\n</url>\n", $url, $lastmod, $changefreq, $priority);
 
         print $urlProp;
+    }
+
+    /**
+     * Check for response code
+     *
+     * @return boolean
+     */
+    protected function responseCheck($response)
+    {
+        $ok = (is_object($response) && $response->code === 0) ? TRUE : FALSE;
+        return $ok;
+    }
+
+    /**
+     * Get latest updated promotion updated_at in timestamp for lastmod of some urls
+     *
+     * @return $updatedAt double (timestamp)
+     */
+    protected function getLastPromotionUpdatedAt($mall_id = null)
+    {
+        $updatedAt = time();
+        $_GET['sortby'] = 'updated_date';
+        $_GET['sortmode'] = 'desc';
+        $_GET['from_homepage'] = 'y';
+        $_GET['take'] = 1;
+        $_GET['skip'] = 0;
+        if (! empty($mall_id)) {
+            $_GET['mall_id'] = $mall_id;
+        }
+
+        $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
+
+        if ($this->responseCheck($response)) {
+            if (! empty($response->data->total_records)) {
+                $updatedAt = (! is_object($response->data->records[0]) && isset($response->data->records[0]['updated_at']) && ! empty($response->data->records[0]['updated_at'])) ? strtotime($response->data->records[0]['updated_at']) : time();
+            }
+        }
+
+        return $updatedAt;
     }
 
     /**

@@ -110,7 +110,7 @@ class StoreAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location',
+                    'sortby'   => 'in:name,location,updated_date',
                 )
             );
 
@@ -201,7 +201,8 @@ class StoreAPIController extends PubControllerAPI
                     DB::raw("CASE WHEN advert_media.path is null THEN {$prefix}media.path
                             ELSE advert_media.path END
                             as logo_url"),
-                    DB::raw("advert.placement_type, advert.placement_order"))
+                    DB::raw("advert.placement_type, advert.placement_order"),
+                    DB::raw("{$prefix}merchants.updated_at"))
                 ->join(DB::raw("(
                     select merchant_id, name, status, parent_id, city
                     from {$prefix}merchants
@@ -337,7 +338,7 @@ class StoreAPIController extends PubControllerAPI
             $store = DB::table(DB::raw("({$realStore}) as subQuery"));
 
             if ($list_type === "featured") {
-                $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_order',
+                $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_order', 'updated_at',
                         DB::raw("placement_type AS placement_type_orig"),
                             DB::raw("CASE WHEN SUM(
                                         CASE
@@ -349,7 +350,7 @@ class StoreAPIController extends PubControllerAPI
                                     ELSE placement_type
                                     END AS placement_type"));
             } else {
-                $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_type', 'placement_order');
+                $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_type', 'placement_order', 'updated_at');
             }
 
             if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
@@ -360,6 +361,10 @@ class StoreAPIController extends PubControllerAPI
                                 ->orderBy('placement_order', 'desc')
                                 ->orderBy($sort_by, $sort_mode)
                                 ->orderBy('name', 'asc');
+            } elseif ($sort_by === 'updated_date') {
+                // for sitemap purpose only
+                $store = $store->groupBy('name')
+                                ->orderBy('updated_at', 'desc');
             } else {
                 $store = $store->groupBy('name')
                                 ->orderBy('placement_order', 'desc')
