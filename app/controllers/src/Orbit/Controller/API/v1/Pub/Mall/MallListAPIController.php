@@ -21,6 +21,7 @@ use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\SimpleCache;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 class MallListAPIController extends PubControllerAPI
 {
@@ -216,6 +217,9 @@ class MallListAPIController extends PubControllerAPI
 
             $area_data = $response['hits'];
             $listmall = array();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
             $total = $area_data['total'];
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
@@ -225,7 +229,18 @@ class MallListAPIController extends PubControllerAPI
                         $areadata['id'] = $dt['_id'];
                         foreach ($dt['_source'] as $source => $val) {
                             if (strtolower($dt['_source']['city']) === strtolower($location)) {
+                                $localPath = '';
+                                if ($source == 'logo_url') {
+                                    $localPath = $val;
+                                }
+
+                                $cdnPath = '';
+                                if ($source == 'logo_cdn_url') {
+                                    $cdnPath = $val;
+                                }
+
                                 $areadata[$source] = $val;
+                                $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                             }
                         }
                         $listmall[] = $areadata;
@@ -234,7 +249,18 @@ class MallListAPIController extends PubControllerAPI
                 } else {
                     $areadata['id'] = $dt['_id'];
                     foreach ($dt['_source'] as $source => $val) {
+                        $localPath = '';
+                        if ($source == 'logo_url') {
+                            $localPath = $val;
+                        }
+
+                        $cdnPath = '';
+                        if ($source == 'logo_cdn_url') {
+                            $cdnPath = $val;
+                        }
+
                         $areadata[$source] = $val;
+                        $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                     }
                     $listmall[] = $areadata;
                 }
