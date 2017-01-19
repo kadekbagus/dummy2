@@ -3312,7 +3312,7 @@ class UploadAPIController extends ControllerAPI
             $extras = new \stdClass();
             $extras->isUpdate = $isUpdate;
             $extras->oldPath = $oldPath;
-            $extras->mediaNameId = 'coupon_image';
+            $extras->mediaNameId = 'coupon_translation_image';
             $mediaList['extras'] = $extras;
 
             $this->response->data = $mediaList;
