@@ -9,8 +9,8 @@ use Config;
 use DB;
 use Aws;
 use Media;
-use Orbit\Database\ObjectID;
 use Log;
+use Queue;
 
 class CdnUploadUpdateQueue
 {
@@ -27,6 +27,8 @@ class CdnUploadUpdateQueue
         $objectId = $data['object_id'];
         $mediaNameId = $data['media_name_id'];
         $oldPath = $data['old_path'];
+        $esType = $data['es_type'];
+        $esId = $data['es_id'];
         $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
 
         try {
@@ -80,6 +82,34 @@ class CdnUploadUpdateQueue
                         'Key' => $oldFile['path']
                     ]);
                 }
+            }
+
+            switch ($esType) {
+                case 'news':
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
+                        'news_id' => $esId
+                    ]);
+                    break;
+
+                case 'promotion':
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
+                        'news_id' => $esId
+                    ]);
+                    break;
+
+                case 'coupon':
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                        'coupon_id' => $esId
+                    ]);
+                    break;
+
+                case 'mall':
+                    // to be edit
+                    break;
+
+                case 'store':
+                    // to be edit
+                    break;
             }
 
             // // Don't care if the job success or not we will provide user

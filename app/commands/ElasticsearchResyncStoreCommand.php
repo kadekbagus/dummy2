@@ -51,7 +51,7 @@ class ElasticsearchResyncStoreCommand extends Command {
     public function fire()
     {
         try {
-            $input = ! empty($this->argument('store_name')) ? $this->argument('store_name') : file_get_contents("php://stdin");
+            $input = ! empty($this->option('store-name')) ? $this->option('store-name') : file_get_contents("php://stdin");
             $input = trim($input);
 
             if (empty($input)) {
