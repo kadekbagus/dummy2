@@ -2621,6 +2621,7 @@ class NewsAPIController extends ControllerAPI
                 // Fire an news which listen on orbit.news.after.translation.save
                 // @param ControllerAPI $this
                 // @param NewsTranslation $new_transalation
+                $new_translation->object_type = $news->object_type;
                 Event::fire('orbit.news.after.translation.save', array($this, $new_translation));
 
                 $news->setRelation('translation_'. $new_translation->merchant_language_id, $new_translation);
@@ -2640,6 +2641,7 @@ class NewsAPIController extends ControllerAPI
                 // Fire an news which listen on orbit.news.after.translation.save
                 // @param ControllerAPI $this
                 // @param NewsTranslation $existing_transalation
+                $existing_translation->object_type = $news->object_type;
                 Event::fire('orbit.news.after.translation.save', array($this, $existing_translation));
 
                 // return respones if any upload image or no

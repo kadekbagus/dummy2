@@ -14,7 +14,7 @@ class DeleteUser extends Command {
      *
      * @var string
      */
-    protected $name = 'users:delete';
+    protected $name = 'user:delete';
 
     /**
      * The console command description.
@@ -64,6 +64,8 @@ class DeleteUser extends Command {
             $usr->apikey->delete();
             $this->info('    Deleting User...');
             $usr->delete();
+            $this->info('    Deleting Session...');
+            DB::table('sessions')->where('session_data', 'like', '%' . $usr->user_email . '%')->delete();
         }
         $this->info('done.');
     }

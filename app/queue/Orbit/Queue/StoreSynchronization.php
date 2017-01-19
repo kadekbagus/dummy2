@@ -26,6 +26,7 @@ use Orbit\Database\ObjectID;
 use User;
 use Event;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Queue;
 
 class StoreSynchronization
 {
@@ -139,7 +140,8 @@ class StoreSynchronization
                 DB::commit();
             });
 
-            $stores->chunk($chunk, function($_stores) use ($sync_id, $user)
+            $storeName = '';
+            $stores->chunk($chunk, function($_stores) use ($sync_id, $user, &$storeName)
             {
                 foreach ($_stores as $store) {
                     $this->debug(sprintf("memory usage: %s\n", memory_get_peak_usage() / 1024));
@@ -155,6 +157,7 @@ class StoreSynchronization
                         $tenant = new Tenant;
                     }
 
+                    $storeName = $store->name;
                     $tenant->merchant_id = $base_store_id;
                     $tenant->name = $store->name;
                     $tenant->description = $store->description;
@@ -317,6 +320,13 @@ class StoreSynchronization
                     }
                 }
             });
+
+            if (!empty($storeName)) {
+                // Notify the queueing system to update Elasticsearch document
+                Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
+                    'name' => $storeName
+                ]);
+            }
 
             Event::fire('orbit.basestore.sync.complete', $newSync);
         } catch (InvalidArgsException $e) {

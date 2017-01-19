@@ -164,4 +164,17 @@ Event::listen('orbit.advert.postnewadvert.after.commit', function($controller, $
         }
     }
 
+    // checking store/tenant data for updating elasticsearch data
+    $store = Tenant::select('merchants.name')
+                    ->excludeDeleted('merchants')
+                    ->join('adverts', 'adverts.link_object_id', '=', 'merchants.merchant_id')
+                    ->where('adverts.advert_id', '=', $advert->advert_id)
+                    ->first();
+
+    if (is_object($store)) {
+        // Notify the queueing system to update Elasticsearch document
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
+            'name' => $store->name
+        ]);
+    }
 });

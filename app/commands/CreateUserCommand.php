@@ -1,11 +1,22 @@
 <?php
-
+/**
+ * Create users based on particular role.
+ *
+ * Sample file:
+ * {
+ *     "email": "mdm-example@gotomalls.com",
+ *     "first_name": "John",
+ *     "last_name": "Doe",
+ *     "password": "hello123",
+ *     "role": "Merchant Database Admin"
+ * }
+ */
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class CreateUserCommand extends Command {
-
+class CreateUserCommand extends Command
+{
     /**
      * The console command name.
      *
@@ -18,7 +29,7 @@ class CreateUserCommand extends Command {
      *
      * @var string
      */
-    protected $description = 'Command for import user from json file. ';
+    protected $description = 'Command for import user from json file.';
 
     /**
      * Create a new command instance.
@@ -39,28 +50,21 @@ class CreateUserCommand extends Command {
            throw new Exception('Could not found json file.');
         }
 
-        $conf = @json_decode(file_get_contents($file), true);
-        $basefile = $basefile = basename($file);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception( sprintf('Error JSON %s: %s', $basefile, json_last_error_msg()) );
-        }
-
-        return $conf;
+        $json = file_get_contents($file);
+        return $this->readJSONString($json);
     }
 
     /**
-     * Read the json file.
+     * Read JSON from string
+     *
+     * @return string|mixed
      */
-    protected function validate()
+    protected function readJSONString($json)
     {
-        if (! file_exists($file) ) {
-           throw new Exception('Could not found json file.');
-        }
+        $conf = @json_decode($json, TRUE);
 
-        $conf = @json_decode(file_get_contents($file), true);
-        $basefile = $basefile = basename($file);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception( sprintf('Error JSON %s: %s', $basefile, json_last_error_msg()) );
+            throw new Exception( sprintf('Error parsing JSON: %s', json_last_error_msg()) );
         }
 
         return $conf;
@@ -74,11 +78,16 @@ class CreateUserCommand extends Command {
     public function fire()
     {
         try {
-
             $fileName = $this->option('json-file');
-            $basefile = basename($fileName);
+            $data = '';
 
-            $data = $this->readJSON($fileName);
+            if ($fileName === 'stdin') {
+                $json = file_get_contents('php://stdin');
+                $data = $this->readJSONString($json);
+            } else {
+                $data = $this->readJSON($fileName);
+            }
+
             $email = trim($data['email']);
             $first_name = trim($data['first_name']);
             $last_name = trim($data['last_name']);
@@ -159,7 +168,7 @@ class CreateUserCommand extends Command {
     {
         // Check the existance of user email
         Validator::extend('orbit.exist.email', function ($attribute, $value, $parameters) {
-            $checkEmail = User::where('user_email', $value)->first();
+            $checkEmail = User::excludeDeleted()->where('user_email', $value)->first();
 
             if (! empty($checkEmail)) {
                 return FALSE;
