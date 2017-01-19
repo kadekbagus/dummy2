@@ -5404,6 +5404,11 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeletemalllogo.after.save', array($this, $merchant));
 
+            $extras = new \stdClass();
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'mall_logo';
+            $merchant['extras'] = $extras;
+
             $this->response->data = $merchant;
             $this->response->message = Lang::get('statuses.orbit.uploaded.mall.delete_logo');
 
