@@ -173,6 +173,7 @@ class ESCouponUpdateQueue
 
                 foreach ($translationCollection->media_orig as $media) {
                     $translation['image_url'] = $media->path;
+                    $translation['image_cdn_url'] = $media->cdn_url;
                 }
                 $translations[] = $translation;
             }
@@ -184,6 +185,7 @@ class ESCouponUpdateQueue
                 'object_type' => 'coupon',
                 'begin_date' => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
                 'end_date' => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
+                'updated_at' => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
                 'status' => $coupon->status,
                 'available' => $coupon->available,
                 'campaign_status' => $coupon->campaign_status,
@@ -226,12 +228,6 @@ class ESCouponUpdateQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            // Bury the job for later inspection
-            JobBurier::create($job, function($theJob) {
-                // The queue driver does not support bury.
-                $theJob->delete();
-            })->bury();
-
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['coupons']['index'],
@@ -239,11 +235,17 @@ class ESCouponUpdateQueue
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);
+        }
 
-            return [
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
                 'status' => 'fail',
                 'message' => $message
             ];
-        }
     }
 }

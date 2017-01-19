@@ -82,6 +82,10 @@ class CdnUploadUpdateQueue
                 }
             }
 
+            // // Don't care if the job success or not we will provide user
+            // // another link to resend the activation
+            $job->delete();
+
             return [
                 'status' => 'ok',
                 'message' => $message
@@ -100,15 +104,17 @@ class CdnUploadUpdateQueue
             }
 
             Log::info($message);
-
-            return [
-                'status' => 'fail',
-                'message' => $message
-            ];
         }
 
-        // // Don't care if the job success or not we will provide user
-        // // another link to resend the activation
-        $job->delete();
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 }

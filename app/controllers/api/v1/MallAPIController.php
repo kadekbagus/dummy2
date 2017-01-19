@@ -1985,6 +1985,7 @@ class MallAPIController extends ControllerAPI
 
             Event::fire('orbit.mall.postupdatemall.before.save', array($this, $updatedmall));
 
+            $updatedmall->setUpdatedAt($updatedmall->freshTimestamp());
             $updatedmall->save();
 
             OrbitInput::post('facebook_uri', function ($fb_uri) use ($updatedmall) {

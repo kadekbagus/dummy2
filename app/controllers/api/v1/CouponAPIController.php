@@ -1380,6 +1380,7 @@ class CouponAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postupdatecoupon.before.save', array($this, $updatedcoupon));
 
+            $updatedcoupon->setUpdatedAt($updatedcoupon->freshTimestamp());
             $updatedcoupon->save();
 
             // save CouponRule.
