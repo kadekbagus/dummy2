@@ -46,9 +46,11 @@ Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
             }
 
             Queue::push($queueFile, [
-                'object_id' => $mall->merchant_id,
+                'object_id'     => $mall->merchant_id,
                 'media_name_id' => $response->data['extras']->mediaNameId,
-                'old_path' => $response->data['extras']->oldPath
+                'old_path'      => $response->data['extras']->oldPath,
+                'es_type'       => 'mall',
+                'es_id'         => $mall->merchant_id
             ], 'cdn_upload');
         }
     }
@@ -84,9 +86,11 @@ Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
             }
 
             Queue::push($queueFile, [
-                'object_id' => $mall->merchant_id,
+                'object_id'     => $mall->merchant_id,
                 'media_name_id' => $response->data['extras']->mediaNameId,
-                'old_path' => $response->data['extras']->oldPath
+                'old_path'      => $response->data['extras']->oldPath,
+                'es_type'       => 'mall',
+                'es_id'         => $mall->merchant_id
             ], 'cdn_upload');
         }
     }
@@ -131,6 +135,7 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
                     Queue::push($queueFile, [
                         'object_id' => $mall->merchant_id,
                         'media_name_id' => 'mall_logo',
+                        'old_path' => $response->data['extras']->oldPath
                     ], 'cdn_upload');
                 }
             }
@@ -158,9 +163,11 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
             }
 
             Queue::push($queueFile, [
-                'object_id' => $mall->merchant_id,
+                'object_id'     => $mall->merchant_id,
                 'media_name_id' => $response->data['extras']->mediaNameId,
-                'old_path' => $response->data['extras']->oldPath
+                'old_path'      => $response->data['extras']->oldPath,
+                'es_type'       => 'mall',
+                'es_id'         => $mall->merchant_id
             ], 'cdn_upload');
         }
     }
@@ -194,9 +201,11 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
             }
 
             Queue::push($queueFile, [
-                'object_id' => $mall->merchant_id,
+                'object_id'     => $mall->merchant_id,
                 'media_name_id' => $response->data['extras']->mediaNameId,
-                'old_path' => $response->data['extras']->oldPath
+                'old_path'      => $response->data['extras']->oldPath,
+                'es_type'       => 'mall',
+                'es_id'         => $mall->merchant_id
             ], 'cdn_upload');
         }
     }

@@ -9,8 +9,8 @@ use Config;
 use DB;
 use Aws;
 use Media;
-use Orbit\Database\ObjectID;
 use Log;
+use Queue;
 
 class CdnUploadNewQueue
 {
@@ -26,7 +26,9 @@ class CdnUploadNewQueue
         $prefix = DB::getTablePrefix();
         $objectId = $data['object_id'];
         $mediaNameId = $data['media_name_id'];
-        $oldPath = $data['old_path'];
+        $oldPath = (! empty($data['old_path'])) ? $data['old_path'] : array();
+        $esType = (! empty($data['es_type'])) ? $data['es_type'] : '';
+        $esId = (! empty($data['es_id'])) ? $data['es_id'] : '';
         $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
 
         try {
@@ -69,6 +71,36 @@ class CdnUploadNewQueue
 
                 $message[] = $contentMessage;
                 Log::info($contentMessage);
+            }
+
+            switch ($esType) {
+                case 'news':
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
+                        'news_id' => $esId
+                    ]);
+                    break;
+
+                case 'promotion':
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
+                        'news_id' => $esId
+                    ]);
+                    break;
+
+                case 'coupon':
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                        'coupon_id' => $esId
+                    ]);
+                    break;
+
+                case 'mall':
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
+                        'mall_id' => $esId
+                    ]);
+                    break;
+
+                case 'store':
+                    // to be edit
+                    break;
             }
 
             // // Don't care if the job success or not we will provide user

@@ -114,6 +114,7 @@ class ESMallUpdateQueue
                 'operating_hours' => $mall->operating_hours,
                 'object_type'     => $mall->object_type,
                 'logo_url'        => $mall->path,
+                'logo_cdn_url'    => $mall->cdn_url,
                 'maps_url'        => $maps_url,
                 'status'          => $mall->status,
                 'ci_domain'       => $mall->ci_domain,

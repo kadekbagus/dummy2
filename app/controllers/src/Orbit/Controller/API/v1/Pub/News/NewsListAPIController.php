@@ -29,6 +29,7 @@ use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\SimpleCache;
+use Orbit\Helper\Util\CdnUrlGenerator;
 use Elasticsearch\ClientBuilder;
 use Carbon\Carbon as Carbon;
 
@@ -280,6 +281,9 @@ class NewsListAPIController extends PubControllerAPI
             $records = $response['hits'];
 
             $listOfRec = array();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
             foreach ($records['hits'] as $record) {
                 $data = array();
                 foreach ($record['_source'] as $key => $value) {
@@ -290,8 +294,13 @@ class NewsListAPIController extends PubControllerAPI
 
                     // translation, to get name, desc and image
                     if ($key === "translation") {
+                        $data['image_url'] = '';
+
                         foreach ($record['_source']['translation'] as $dt) {
-                            if ($dt['language_id'] === $valid_language->language_id) {
+                            $localPath = (! empty($dt['image_url'])) ? $dt['image_url'] : '';
+                            $cdnPath = (! empty($dt['image_cdn_url'])) ? $dt['image_cdn_url'] : '';
+
+                            if ($dt['language_code'] == $language) {
                                 // name & desc
                                 if (! empty($dt['name'])) {
                                     $data['news_name'] = $dt['name'];
@@ -300,7 +309,7 @@ class NewsListAPIController extends PubControllerAPI
 
                                 // image
                                 if (! empty($dt['image_url'])) {
-                                    $data['image_url'] = $dt['image_url'];
+                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                                 }
                             } else {
                                 // name & desc
@@ -310,8 +319,8 @@ class NewsListAPIController extends PubControllerAPI
                                 }
 
                                 // image
-                                if (! empty($dt['image_url']) && empty($data['image_url'])) {
-                                    $data['image_url'] = $dt['image_url'];
+                                if (empty($data['image_url'])) {
+                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                                 }
                             }
                         }

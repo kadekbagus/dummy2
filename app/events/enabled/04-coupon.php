@@ -46,9 +46,11 @@ Event::listen('orbit.coupon.postnewcoupon.after.save', function($controller, $co
         }
 
         Queue::push($queueFile, [
-            'object_id' => $coupon->promotion_id,
+            'object_id'     => $coupon->promotion_id,
             'media_name_id' => $response->data['extras']->mediaNameId,
-            'old_path' => $response->data['extras']->oldPath
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => 'coupon',
+            'es_id'         => $coupon->promotion_id
         ], 'cdn_upload');
     }
 });
@@ -91,9 +93,11 @@ Event::listen('orbit.coupon.postupdatecoupon.after.save', function($controller, 
         }
 
         Queue::push($queueFile, [
-            'object_id' => $coupon->promotion_id,
+            'object_id'     => $coupon->promotion_id,
             'media_name_id' => $response->data['extras']->mediaNameId,
-            'old_path' => $response->data['extras']->oldPath
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => 'coupon',
+            'es_id'         => $coupon->promotion_id
         ], 'cdn_upload');
     }
 });
@@ -146,9 +150,11 @@ Event::listen('orbit.coupon.after.translation.save', function($controller, $coup
         }
 
         Queue::push($queueFile, [
-            'object_id' => $coupon_translations->coupon_translation_id,
+            'object_id'     => $coupon_translations->coupon_translation_id,
             'media_name_id' => $response->data['extras']->mediaNameId,
-            'old_path' => $response->data['extras']->oldPath
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => 'coupon',
+            'es_id'         => $coupon_translations->promotion_id
         ], 'cdn_upload');
     }
 });

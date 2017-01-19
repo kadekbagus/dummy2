@@ -573,6 +573,7 @@ class GenerateSitemapCommand extends Command
                         // remove this and use array instead if store already in elasticsearch
                         $id = $record->merchant_id;
                         $name = $record->name;
+                        $updatedAt = strtotime($record->updated_at);
                     } elseif(is_array($record)) {
                         $id = $record['merchant_id'];
                         $name = $record['name'];
@@ -656,13 +657,14 @@ class GenerateSitemapCommand extends Command
         $_GET['sortby'] = 'updated_date';
         $_GET['sortmode'] = 'desc';
         $_GET['from_homepage'] = 'y';
+        $_GET['list_type'] = 'preferred';
         $_GET['take'] = 1;
         $_GET['skip'] = 0;
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
 
-        $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
+        $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getSearchPromotion();
 
         if ($this->responseCheck($response)) {
             if (! empty($response->data->total_records)) {
