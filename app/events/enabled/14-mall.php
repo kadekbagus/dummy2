@@ -131,6 +131,7 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
                     Queue::push($queueFile, [
                         'object_id' => $mall->merchant_id,
                         'media_name_id' => 'mall_logo',
+                        'old_path' => $response->data['extras']->oldPath
                     ], 'cdn_upload');
                 }
             }
