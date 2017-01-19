@@ -86,7 +86,6 @@ class ESStoreUpdateQueue
                         ->leftJoin('merchant_geofences', function($q) {
                             $q->on('merchant_geofences.merchant_id', '=', 'merchants.parent_id');
                         })
-                        ->whereRaw("{$prefix}merchants.object_type = 'tenant'")
                         ->whereRaw("{$prefix}merchants.status = 'active'")
                         ->whereRaw("oms.status = 'active'")
                         ->where('merchants.name', '=', $storeName)
