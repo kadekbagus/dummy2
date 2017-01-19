@@ -26,7 +26,7 @@ class CdnUploadNewQueue
         $prefix = DB::getTablePrefix();
         $objectId = $data['object_id'];
         $mediaNameId = $data['media_name_id'];
-        $oldPath = $data['old_path'];
+        $oldPath = (! empty($data['old_path'])) ? $data['old_path'] : '';
         $esType = $data['es_type'];
         $esId = $data['es_id'];
         $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
