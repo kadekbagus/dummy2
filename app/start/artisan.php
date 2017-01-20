@@ -140,6 +140,9 @@ Artisan::add(new ElasticsearchClearCouponCommand);
 // Generate Sitemap
 Artisan::add(new GenerateSitemapCommand);
 
+// Generate Sitemap
+Artisan::add(new CdnS3UploadCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

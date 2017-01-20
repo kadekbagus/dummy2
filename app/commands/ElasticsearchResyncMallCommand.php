@@ -39,13 +39,20 @@ class ElasticsearchResyncMallCommand extends Command {
 	 */
 	public function fire()
 	{
-		$job = new FakeJob();
-        $data = [
-            'mall_id' => $this->option('mall-id')
-        ];
         try {
-            $esQueue = new ESMallUpdateQueue();
-            $response = $esQueue->fire($job, $data);
+			$input = ! empty($this->option('id')) ? $this->option('id') : file_get_contents("php://stdin");
+            $input = trim($input);
+
+            if (empty($input)) {
+                throw new Exception("Input needed.", 1);
+            }
+
+            $job = new FakeJob();
+            $data = [
+                'mall_id' => $input
+            ];
+
+            $response = $this->syncData($job, $data);
 
             if ($response['status'] === 'fail') {
                 throw new Exception($response['message'], 1);
@@ -76,8 +83,31 @@ class ElasticsearchResyncMallCommand extends Command {
 	protected function getOptions()
 	{
 		return array(
-            array('mall-id', null, InputOption::VALUE_REQUIRED, 'The mall id from MySQL source.', null),
+            array('id', null, InputOption::VALUE_OPTIONAL, 'Mall id to sync.', null),
+            array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, no data will be sent to Elasticsearch.', null),
         );
 	}
+
+	/**
+     * Fake response
+     *
+     * @param boolean $dryRun
+     */
+    protected function syncData($job, $data)
+    {
+        if ($this->option('dry-run')) {
+            $this->stdoutPrefix = '[DRY RUN] ';
+
+            return [
+                'status' => 'ok',
+                'message' => 'Dry run mode'
+            ];
+        }
+
+        $esQueue = new ESMallUpdateQueue();
+        $response = $esQueue->fire($job, $data);
+
+        return $response;
+    }
 
 }

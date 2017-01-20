@@ -21,9 +21,12 @@ use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\SimpleCache;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 class MallListAPIController extends PubControllerAPI
 {
+    protected $withoutScore = FALSE;
+
     /**
      * GET - check if mall inside map area
      *
@@ -185,6 +188,11 @@ class MallListAPIController extends PubControllerAPI
             if ($withScore) {
                 $sortby = array('_score', $sort);
             }
+
+            if ($this->withoutScore) {
+                // remove _score sort
+                $sortby = array_filter($sortby, function($val) { return $val !== '_score'; });
+            }
             $jsonArea["sort"] = $sortby;
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
@@ -216,6 +224,9 @@ class MallListAPIController extends PubControllerAPI
 
             $area_data = $response['hits'];
             $listmall = array();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
             $total = $area_data['total'];
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
@@ -223,19 +234,46 @@ class MallListAPIController extends PubControllerAPI
                     // handle if user filter location with one word, ex "jakarta", data in city "jakarta selatan", "jakarta barat" etc will be dissapear
                     if (strtolower($dt['_source']['city']) === strtolower($location)) {
                         $areadata['id'] = $dt['_id'];
+                        $localPath = '';
+                        $cdnPath = '';
+
                         foreach ($dt['_source'] as $source => $val) {
+
                             if (strtolower($dt['_source']['city']) === strtolower($location)) {
+                                if ($source == 'logo_url') {
+                                    $localPath = $val;
+                                }
+
+                                if ($source == 'logo_cdn_url') {
+                                    $cdnPath = $val;
+                                }
+
                                 $areadata[$source] = $val;
+                                $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                             }
                         }
+
                         $listmall[] = $areadata;
                     }
                     $total = count($listmall);
                 } else {
                     $areadata['id'] = $dt['_id'];
+                    $localPath = '';
+                    $cdnPath = '';
+
                     foreach ($dt['_source'] as $source => $val) {
+                        if ($source == 'logo_url') {
+                            $localPath = $val;
+                        }
+
+                        if ($source == 'logo_cdn_url') {
+                            $cdnPath = $val;
+                        }
+
                         $areadata[$source] = $val;
+                        $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                     }
+
                     $listmall[] = $areadata;
                 }
             }
@@ -371,5 +409,16 @@ class MallListAPIController extends PubControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    /**
+     * Force $withScore value to FALSE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setWithOutScore()
+    {
+        $this->withoutScore = TRUE;
+
+        return $this;
     }
 }

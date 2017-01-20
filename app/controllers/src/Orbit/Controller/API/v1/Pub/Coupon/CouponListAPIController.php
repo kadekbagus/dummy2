@@ -27,12 +27,15 @@ use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
+use Orbit\Helper\Util\CdnUrlGenerator;
 use Elasticsearch\ClientBuilder;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
 
 class CouponListAPIController extends PubControllerAPI
 {
+    protected $withoutScore = FALSE;
+
     /**
      * GET - get all coupon in all mall
      *
@@ -273,6 +276,11 @@ class CouponListAPIController extends PubControllerAPI
             if ($withScore) {
                 $sortby = array('_score', $sort);
             }
+
+            if ($this->withoutScore) {
+                // remove _score sort
+                $sortby = array_filter($sortby, function($val) { return $val !== '_score'; });
+            }
             $jsonQuery['sort'] = $sortby;
 
             $advert_location_type = 'gtm';
@@ -411,6 +419,9 @@ class CouponListAPIController extends PubControllerAPI
 
             $promotionIds = array();
             $listOfRec = array();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
             foreach ($records['hits'] as $record) {
                 $data = array();
                 $isOwned = false;
@@ -425,8 +436,13 @@ class CouponListAPIController extends PubControllerAPI
 
                     // translation, to get name, desc and image
                     if ($key === "translation") {
+                        $data['image_url'] = '';
+
                         foreach ($record['_source']['translation'] as $dt) {
-                            if ($dt['language_id'] === $valid_language->language_id) {
+                            $localPath = (! empty($dt['image_url'])) ? $dt['image_url'] : '';
+                            $cdnPath = (! empty($dt['image_cdn_url'])) ? $dt['image_cdn_url'] : '';
+
+                            if ($dt['language_code'] == $language) {
                                 // name & desc
                                 if (! empty($dt['name'])) {
                                     $data['coupon_name'] = $dt['name'];
@@ -435,7 +451,7 @@ class CouponListAPIController extends PubControllerAPI
 
                                 // image
                                 if (! empty($dt['image_url'])) {
-                                    $data['image_url'] = $dt['image_url'];
+                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                                 }
                             } else {
                                 // name & desc
@@ -445,8 +461,8 @@ class CouponListAPIController extends PubControllerAPI
                                 }
 
                                 // image
-                                if (! empty($dt['image_url']) && empty($data['image_url'])) {
-                                    $data['image_url'] = $dt['image_url'];
+                                if (empty($data['image_url'])) {
+                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                                 }
                             }
                         }
@@ -627,6 +643,17 @@ class CouponListAPIController extends PubControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    /**
+     * Force $withScore value to FALSE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setWithOutScore()
+    {
+        $this->withoutScore = TRUE;
+
+        return $this;
     }
 
     protected function quote($arg)

@@ -25,6 +25,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
+use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 
@@ -121,6 +122,25 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             $news->skip($skip);
 
             $listOfRec = $news->get();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $localPath = '';
+            $cdnPath = '';
+            $listId = '';
+
+            if (! empty($listOfRec)) {
+                foreach ($listOfRec as $list) {
+                    if ($listId != $list->news_id) {
+                        $localPath = '';
+                        $cdnPath = '';
+                        $list->image_url = '';
+                    }
+                    $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
+                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
+                    $list->image_url = $imgUrl->getImageUrl($localPath, $cdnPath);
+                    $listId = $list->news_id;
+                }
+            }
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
@@ -240,7 +260,16 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                                             and m.media_name_long = 'news_translation_image_orig'
                                         where nt.news_id = {$prefix}news.news_id
                                         group by nt.news_id
-                                    ) ELSE {$prefix}media.path END as image_url
+                                    ) ELSE {$prefix}media.path END as localPath,
+                                CASE WHEN {$prefix}media.cdn_url is null THEN (
+                                    select m.cdn_url
+                                    from {$prefix}news_translations nt
+                                    join {$prefix}media m
+                                        on m.object_id = nt.news_translation_id
+                                        and m.media_name_long = 'news_translation_image_orig'
+                                    where nt.news_id = {$prefix}news.news_id
+                                    group by nt.news_id
+                                ) ELSE {$prefix}media.cdn_url END as cdnPath
                             "),
                             'news.object_type',
                     // query for get status active based on timezone
@@ -392,10 +421,10 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         $news = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($news_query);
 
         if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-            $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.begin_date"))
+            $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'localPath', 'cdnPath', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.begin_date"))
                                    ->orderBy('distance', 'asc');
         } else {
-            $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.begin_date"));
+            $news = $news->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'localPath', 'cdnPath', 'campaign_status', 'is_started', DB::raw("sub_query.begin_date"));
         }
 
         $news = $news->groupBy(DB::Raw("sub_query.news_id"));

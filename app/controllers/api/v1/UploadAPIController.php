@@ -1634,13 +1634,21 @@ class UploadAPIController extends ControllerAPI
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
             }
 
             // Delete from database
+            $isUpdate = false;
             if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
                 $pastMedia->delete();
             }
 
@@ -1662,6 +1670,12 @@ class UploadAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.upload.postuploaduserimage.after.save', array($this, $user, $uploader));
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'user_profile_picture';
+            $mediaList['extras'] = $extras;
 
             $this->response->data = $mediaList;
             $this->response->message = Lang::get('statuses.orbit.uploaded.user.profile_picture');
@@ -5404,6 +5418,11 @@ class UploadAPIController extends ControllerAPI
 
             Event::fire('orbit.upload.postdeletemalllogo.after.save', array($this, $merchant));
 
+            $extras = new \stdClass();
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'mall_logo';
+            $merchant['extras'] = $extras;
+
             $this->response->data = $merchant;
             $this->response->message = Lang::get('statuses.orbit.uploaded.mall.delete_logo');
 
@@ -8351,7 +8370,13 @@ class UploadAPIController extends ControllerAPI
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
             }
@@ -8370,6 +8395,18 @@ class UploadAPIController extends ControllerAPI
             $merchant->save();
 
             Event::fire('orbit.upload.postdeletemallmap.after.save', array($this, $merchant));
+
+            // queue for data amazon s3
+            $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+            if ($usingCdn) {
+                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadDeleteQueue';
+                Queue::push($queueFile, [
+                    'object_id'     => $merchant_id,
+                    'media_name_id' => 'mall_map',
+                    'old_path'      => $oldPath
+                ], 'cdn_upload');
+            }
 
             $this->response->data = $merchant;
             $this->response->message = Lang::get('statuses.orbit.uploaded.retailer.delete_image');
@@ -8937,13 +8974,21 @@ class UploadAPIController extends ControllerAPI
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
             }
 
             // Delete from database
+            $isUpdate = false;
             if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
                 $pastMedia->delete();
             }
 
@@ -8957,6 +9002,12 @@ class UploadAPIController extends ControllerAPI
             $mediaList = $this->saveMetadata($object, $uploaded);
 
             Event::fire('orbit.upload.postuploadpartnerlogo.after.save', array($this, $partner, $uploader));
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'partner_logo';
+            $mediaList['extras'] = $extras;
 
             $this->response->data = $mediaList;
             $this->response->message = Lang::get('statuses.orbit.uploaded.partner.logo');
@@ -9142,13 +9193,21 @@ class UploadAPIController extends ControllerAPI
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
             }
 
             // Delete from database
+            $isUpdate = false;
             if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
                 $pastMedia->delete();
             }
 
@@ -9162,6 +9221,12 @@ class UploadAPIController extends ControllerAPI
             $mediaList = $this->saveMetadata($object, $uploaded);
 
             Event::fire('orbit.upload.postuploadpartnerimage.after.save', array($this, $partner, $uploader));
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'partner_image';
+            $mediaList['extras'] = $extras;
 
             $this->response->data = $mediaList;
             $this->response->message = Lang::get('statuses.orbit.uploaded.partner.main');

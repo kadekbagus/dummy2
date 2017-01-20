@@ -77,20 +77,21 @@ class CouponDetailAPIController extends PubControllerAPI
                                         END as get_coupon_status ";
             }
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, media.path) as original_media_path";
+            if ($usingCdn) {
+                $image = "CASE WHEN (media.cdn_url is null or media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, media.path) ELSE media.cdn_url END as original_media_path";
+            }
+
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
-                                    CASE WHEN {$prefix}media.path is null THEN (
-                                            select m.path
-                                            from {$prefix}coupon_translations ct
-                                            join {$prefix}media m
-                                                on m.object_id = ct.coupon_translation_id
-                                                and m.media_name_long = 'coupon_translation_image_orig'
-                                            where ct.promotion_id = {$prefix}promotions.promotion_id
-                                            group by ct.promotion_id
-                                        ) ELSE {$prefix}media.path END as original_media_path
+                                    {$image}
                                 "),
                             'promotions.end_date',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
@@ -135,10 +136,15 @@ class CouponDetailAPIController extends PubControllerAPI
                               ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin('media', function ($q) {
-                            $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
-                            $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
-                        })
+                        ->leftJoin(DB::raw("(SELECT {$prefix}coupon_translations.promotion_id, {$prefix}media.path,
+                                (CASE WHEN ({$prefix}media.path = '' OR {$prefix}media.path is null) THEN 0 ELSE 1 END) AS totalRow,
+                                {$prefix}media.cdn_url
+                            FROM {$prefix}media
+                            LEFT JOIN {$prefix}coupon_translations ON {$prefix}media.object_id = {$prefix}coupon_translations.coupon_translation_id
+                                AND {$prefix}media.media_name_long = 'coupon_translation_image_orig'
+                            GROUP BY object_id
+                            HAVING totalRow > 0
+                            ORDER BY {$prefix}media.object_id = (SELECT coupon_translation_id FROM {$prefix}coupon_translations WHERE merchant_language_id = {$this->quote($valid_language->language_id)} and promotion_id = {$this->quote($couponId)}) DESC) as media"), DB::raw("media.promotion_id"), '=', 'promotions.promotion_id')
                         ->leftJoin('issued_coupons', function ($q) use ($user) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
