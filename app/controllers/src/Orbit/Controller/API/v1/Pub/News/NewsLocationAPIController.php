@@ -112,6 +112,17 @@ class NewsLocationAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $mallLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as location_logo";
+            $mallMap = "CONCAT({$this->quote($urlPrefix)}, map.path) as map_image";
+            if ($usingCdn) {
+                $mallLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as location_logo";
+                $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
+            }
+
             $newsLocations = NewsMerchant::select(
                                         DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END as mall_id"),
@@ -124,8 +135,8 @@ class NewsLocationAPIController extends PubControllerAPI
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.operating_hours ELSE '' END as operating_hours"),
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.is_subscribed ELSE {$prefix}merchants.is_subscribed END as is_subscribed"),
                                         DB::raw("{$prefix}merchants.object_type as location_type"),
-                                        DB::raw("img.path as location_logo"),
-                                        DB::raw("map.path as map_image"),
+                                        DB::raw("{$mallLogo}"),
+                                        DB::raw("{$mallMap}"),
                                         DB::raw("{$prefix}merchants.phone as phone"),
                                         DB::raw("x(position) as latitude"),
                                         DB::raw("y(position) as longitude")
@@ -288,4 +299,10 @@ class NewsLocationAPIController extends PubControllerAPI
 
         return $this->render($httpCode);
     }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
+
 }
