@@ -144,7 +144,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                 AND {$prefix}media.media_name_long = 'coupon_translation_image_orig'
                             GROUP BY object_id
                             HAVING totalRow > 0
-                            ORDER BY {$prefix}media.object_id = {$this->quote($valid_language->language_id)} DESC) as media"), DB::raw("media.promotion_id"), '=', 'promotions.promotion_id')
+                            ORDER BY {$prefix}media.object_id = (SELECT coupon_translation_id FROM {$prefix}coupon_translations WHERE merchant_language_id = {$this->quote($valid_language->language_id)} and promotion_id = {$this->quote($couponId)}) DESC) as media"), DB::raw("media.promotion_id"), '=', 'promotions.promotion_id')
                         ->leftJoin('issued_coupons', function ($q) use ($user) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
