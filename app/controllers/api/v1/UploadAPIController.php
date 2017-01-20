@@ -1634,13 +1634,21 @@ class UploadAPIController extends ControllerAPI
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
             foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
                 // No need to check the return status, just delete and forget
                 @unlink($oldMedia->realpath);
             }
 
             // Delete from database
+            $isUpdate = false;
             if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
                 $pastMedia->delete();
             }
 
@@ -1662,6 +1670,12 @@ class UploadAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.upload.postuploaduserimage.after.save', array($this, $user, $uploader));
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'user_profile_picture';
+            $mediaList['extras'] = $extras;
 
             $this->response->data = $mediaList;
             $this->response->message = Lang::get('statuses.orbit.uploaded.user.profile_picture');

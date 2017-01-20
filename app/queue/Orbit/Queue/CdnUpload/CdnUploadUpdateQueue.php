@@ -11,6 +11,7 @@ use Aws;
 use Media;
 use Log;
 use Queue;
+use Orbit\Helper\Util\JobBurier;
 
 class CdnUploadUpdateQueue
 {
