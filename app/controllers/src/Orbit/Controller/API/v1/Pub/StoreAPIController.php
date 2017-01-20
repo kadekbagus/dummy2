@@ -38,6 +38,7 @@ class StoreAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
     protected $store = NULL;
+    protected $withoutScore = FALSE;
 
     /**
      * GET - get all store in all mall, group by name
@@ -113,7 +114,7 @@ class StoreAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location',
+                    'sortby'   => 'in:name,location,updated_date',
                 )
             );
 
@@ -275,8 +276,8 @@ class StoreAPIController extends PubControllerAPI
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $sort = array('_geo_distance' => array('tenant_detail.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
-            } elseif ($sort_by === 'created_date') {
-                $sort = array('begin_date' => array('order' => $sort_mode));
+            } elseif ($sort_by === 'updated_date') {
+                $sort = array('updated_at' => array('order' => $sort_mode));
             } else {
                 $sort = array('name.raw' => array('order' => $sort_mode));
             }
@@ -284,6 +285,22 @@ class StoreAPIController extends PubControllerAPI
             $sortby = $sort;
             if ($withScore) {
                 $sortby = array('_score', $sort);
+            }
+
+            if ($this->withoutScore) {
+                // remove _score sort
+                $found = FALSE;
+                $sortby = array_filter($sortby, function($val) use(&$found) {
+                        if ($val === '_score') {
+                            $found = $found || TRUE;
+                        }
+                        return $val !== '_score';
+                    });
+
+                if($found) {
+                    // redindex array if _score is eliminated
+                    $sortby = array_values($sortby);
+                }
             }
             $jsonQuery['sort'] = $sortby;
 
@@ -352,8 +369,8 @@ class StoreAPIController extends PubControllerAPI
                 unset($jsonQuery['query']['filtered']['query']);
 
                 $_esParam = [
-                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.store.index'),
-                    'type'   => Config::get('orbit.elasticsearch.indices.store.type'),
+                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                    'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
                     'body' => json_encode($_jsonQuery)
                 ];
 
@@ -409,8 +426,8 @@ class StoreAPIController extends PubControllerAPI
             $jsonQuery["sort"] = $sortby;
 
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.store.index', 'stores'),
-                'type'   => Config::get('orbit.elasticsearch.indices.store.type', 'basic'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
                 'body' => json_encode($jsonQuery)
             ];
 
@@ -1023,6 +1040,17 @@ class StoreAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $mallLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as location_logo";
+            $mallMap = "CONCAT({$this->quote($urlPrefix)}, map.path) as map_image";
+            if ($usingCdn) {
+                $mallLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as location_logo";
+                $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
+            }
+
             // Get store name base in merchant_id
             $store = Tenant::select('merchant_id', 'name')->where('merchant_id', $merchantId)->active()->first();
             if (! empty($store)) {
@@ -1039,8 +1067,8 @@ class StoreAPIController extends PubControllerAPI
                                     'merchants.operating_hours',
                                     'merchants.is_subscribed',
                                     'merchants.object_type as location_type',
-                                    DB::raw("img.path as location_logo"),
-                                    DB::raw("map.path as map_image"),
+                                    DB::raw("{$mallLogo}"),
+                                    DB::raw("{$mallMap}"),
                                     'merchants.phone',
                                     DB::raw("x(position) as latitude"),
                                     DB::raw("y(position) as longitude")
@@ -1746,5 +1774,16 @@ class StoreAPIController extends PubControllerAPI
                 }
 
         return $query;
+    }
+
+    /**
+     * Force $withScore value to FALSE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setWithOutScore()
+    {
+        $this->withoutScore = TRUE;
+
+        return $this;
     }
 }
