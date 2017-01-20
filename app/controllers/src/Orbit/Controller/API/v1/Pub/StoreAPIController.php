@@ -459,7 +459,9 @@ class StoreAPIController extends PubControllerAPI
                     }
                 }
 
-                $innerHitsCount = $innerHitsCount + $record['inner_hits']['tenant_detail']['hits']['total'];
+                if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
+                    $innerHitsCount = $innerHitsCount + $record['inner_hits']['tenant_detail']['hits']['total'];
+                }
                 $data['score'] = $record['_score'];
                 $listOfRec[] = $data;
             }
