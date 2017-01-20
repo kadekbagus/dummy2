@@ -78,14 +78,23 @@ class PartnerListAPIController extends PubControllerAPI
             $valid_language = $partnerHelper->getValidLanguage();
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $logo = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as logo_url";
+            if ($usingCdn) {
+                $logo = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as logo_url";
+            }
+
             $partners = Partner::select(
                     'partner_id',
                     'partner_name',
                     'description',
                     'is_shown_in_filter',
                     'is_visible',
-                    'path as logo_url',
-                    'partners.updated_at'
+                    'partners.updated_at',
+                    DB::raw("{$logo}")
                 )
                 ->leftJoin('media', function ($q) {
                     $q->on('media.object_id', '=', 'partners.partner_id');
