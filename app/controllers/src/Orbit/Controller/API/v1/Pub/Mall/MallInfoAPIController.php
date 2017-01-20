@@ -17,6 +17,7 @@ use Activity;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 class MallInfoAPIController extends PubControllerAPI
 {
@@ -117,13 +118,29 @@ class MallInfoAPIController extends PubControllerAPI
 
             $area_data = $response['hits'];
             $listmall = array();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
             $total = $area_data['total'];
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
                 $areadata['id'] = $dt['_id'];
+                $localPath = '';
+                $cdnPath = '';
+
                 foreach ($dt['_source'] as $source => $val) {
+                    if ($source == 'logo_url') {
+                        $localPath = $val;
+                    }
+
+                    if ($source == 'logo_cdn_url') {
+                        $cdnPath = $val;
+                    }
+
                     $areadata[$source] = $val;
+                    $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                 }
+
                 $listmall[] = $areadata;
             }
 
