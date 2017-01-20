@@ -1040,6 +1040,17 @@ class StoreAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $mallLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as location_logo";
+            $mallMap = "CONCAT({$this->quote($urlPrefix)}, map.path) as map_image";
+            if ($usingCdn) {
+                $mallLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as location_logo";
+                $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
+            }
+
             // Get store name base in merchant_id
             $store = Tenant::select('merchant_id', 'name')->where('merchant_id', $merchantId)->active()->first();
             if (! empty($store)) {
@@ -1056,8 +1067,8 @@ class StoreAPIController extends PubControllerAPI
                                     'merchants.operating_hours',
                                     'merchants.is_subscribed',
                                     'merchants.object_type as location_type',
-                                    DB::raw("img.path as location_logo"),
-                                    DB::raw("map.path as map_image"),
+                                    DB::raw("{$mallLogo}"),
+                                    DB::raw("{$mallMap}"),
                                     'merchants.phone',
                                     DB::raw("x(position) as latitude"),
                                     DB::raw("y(position) as longitude")
