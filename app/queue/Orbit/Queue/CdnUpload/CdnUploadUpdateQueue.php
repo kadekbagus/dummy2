@@ -11,6 +11,7 @@ use Aws;
 use Media;
 use Log;
 use Queue;
+use Orbit\FakeJob;
 
 class CdnUploadUpdateQueue
 {
@@ -19,8 +20,16 @@ class CdnUploadUpdateQueue
      *
      * @author shelgi prasetyo <shelgi@dominopos.com>
      * @param Job $job
-     * @param array $data [user_id => NUM]
-     */
+     * @param array $data [
+     *    'object_id' => The object Id in the media
+     *    'media_name_id' => Value of media_name_id in media table
+     *    'old_path' => Value of old media path
+     *    'es_type' => Type of the object used to update the Elasticsearch
+     *    'es_id' => Id of the object used to update the Elasticsearch
+     *    'use_relative_path' => Whether using path from realpath field in media table or using relative path
+     *    'bucket_name' => Bucket name in the S3
+     * ]
+    */
     public function fire($job, $data)
     {
         $prefix = DB::getTablePrefix();
@@ -29,6 +38,7 @@ class CdnUploadUpdateQueue
         $oldPath = (! empty($data['old_path'])) ? $data['old_path'] : array();
         $esType = (! empty($data['es_type'])) ? $data['es_type'] : '';
         $esId = (! empty($data['es_id'])) ? $data['es_id'] : '';
+        $useRelativePath = (! empty($data['use_relative_path'])) ? $data['use_relative_path'] : TRUE;
         $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
 
         try {
@@ -43,12 +53,16 @@ class CdnUploadUpdateQueue
 
             $media = $media->get();
             $message = array();
+            $publicPath = public_path();
+
             foreach ($media as $file) {
+                $sourceFile = $useRelativePath ? $publicPath . '/' . $file->path : $file->realpath;
+
                 // insert new
                 $response = $s3->putObject([
                     'Bucket' => $bucketName,
                     'Key' => $file->path,
-                    'SourceFile' => $file->realpath,
+                    'SourceFile' => $sourceFile,
                     'ContentType' => $file->mime_type
                 ]);
 
@@ -84,29 +98,26 @@ class CdnUploadUpdateQueue
                 }
             }
 
+            $fakeJob = new FakeJob();
             switch ($esType) {
                 case 'news':
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
-                        'news_id' => $esId
-                    ]);
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['news_id' => $esId]);
                     break;
 
                 case 'promotion':
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
-                        'news_id' => $esId
-                    ]);
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['news_id' => $esId]);
                     break;
 
                 case 'coupon':
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                        'coupon_id' => $esId
-                    ]);
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['coupon_id' => $esId]);
                     break;
 
                 case 'mall':
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
-                        'mall_id' => $esId
-                    ]);
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESMallUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['mall_id' => $esId]);
                     break;
 
                 case 'store':
