@@ -126,8 +126,6 @@ class CdnUploadUpdateQueue
                     break;
             }
 
-            // // Don't care if the job success or not we will provide user
-            // // another link to resend the activation
             $job->delete();
 
             return [
