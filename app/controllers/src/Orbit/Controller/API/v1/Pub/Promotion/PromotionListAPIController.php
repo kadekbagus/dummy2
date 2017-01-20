@@ -437,6 +437,8 @@ class PromotionListAPIController extends PubControllerAPI
 
                     // translation, to get name, desc and image
                     if ($key === "translation") {
+                        $data['image_url'] = '';
+
                         foreach ($record['_source']['translation'] as $dt) {
                             $localPath = (! empty($dt['image_url'])) ? $dt['image_url'] : '';
                             $cdnPath = (! empty($dt['image_cdn_url'])) ? $dt['image_cdn_url'] : '';
@@ -449,7 +451,9 @@ class PromotionListAPIController extends PubControllerAPI
                                 }
 
                                 // image
-                                $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                if (! empty($dt['image_url'])) {
+                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                }
                             } else {
                                 // name & desc
                                 if (! empty($dt['name']) && empty($data['coupon_name'])) {
