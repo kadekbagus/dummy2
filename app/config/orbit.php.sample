@@ -4998,7 +4998,7 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
-            // - User clicks on expand category button on Homepage
+            // - User clicks on three dots mobile menu
             '106' => array(
                 'name' => 'click_mobile_menu',
                 'name_long' => 'Click Mobile Menu',
