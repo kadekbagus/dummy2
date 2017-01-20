@@ -352,8 +352,8 @@ class StoreAPIController extends PubControllerAPI
                 unset($jsonQuery['query']['filtered']['query']);
 
                 $_esParam = [
-                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.store.index'),
-                    'type'   => Config::get('orbit.elasticsearch.indices.store.type'),
+                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                    'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
                     'body' => json_encode($_jsonQuery)
                 ];
 
@@ -409,8 +409,8 @@ class StoreAPIController extends PubControllerAPI
             $jsonQuery["sort"] = $sortby;
 
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.store.index', 'stores'),
-                'type'   => Config::get('orbit.elasticsearch.indices.store.type', 'basic'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
                 'body' => json_encode($jsonQuery)
             ];
 
