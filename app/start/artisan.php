@@ -146,6 +146,9 @@ Artisan::add(new CdnS3UploadCommand);
 // List all active promotions
 Artisan::add(new GetListActivePromotionCommand);
 
+// List all active news
+Artisan::add(new GetListActiveNewsCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

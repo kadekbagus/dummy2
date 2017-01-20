@@ -4,7 +4,7 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class GetListActivePromotionCommand extends Command
+class GetListActiveNewsCommand extends Command
 {
 
     /**
@@ -12,14 +12,14 @@ class GetListActivePromotionCommand extends Command
      *
      * @var string
      */
-    protected $name = 'promotion:list-active';
+    protected $name = 'news:list-active';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'List all active promotions.';
+    protected $description = 'List all active news (events).';
 
     /**
      * Create a new command instance.
@@ -50,7 +50,7 @@ class GetListActivePromotionCommand extends Command
         do {
             $promotions = DB::select("SELECT {$fields}
                 FROM {$prefix}news
-                WHERE {$prefix}news.object_type='promotion' AND
+                WHERE {$prefix}news.object_type='news' AND
                 {$prefix}news.status='active' AND
                 {$prefix}news.end_date > '{$now}'
                 {$raw}
