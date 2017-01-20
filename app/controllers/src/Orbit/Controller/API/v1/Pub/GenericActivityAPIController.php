@@ -140,15 +140,6 @@ class GenericActivityAPIController extends PubControllerAPI
                         ->first();
             }
 
-            // Get mall object for set setLocation activity
-            $mallId = OrbitInput::post('mall_id', null);
-
-            if (! empty($mallId)) {
-                $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $mallId)
-                        ->first();
-            }
-
             // Get notes
             $notes = OrbitInput::post('notes', null);
 

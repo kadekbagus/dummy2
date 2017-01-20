@@ -140,7 +140,7 @@ class NewsDetailAPIController extends PubControllerAPI
                                 AND {$prefix}media.media_name_long = 'news_translation_image_orig'
                             GROUP BY object_id
                             HAVING totalRow > 0
-                            ORDER BY {$prefix}media.object_id = {$this->quote($valid_language->language_id)} DESC) as media"), DB::raw("media.news_id"), '=', 'news.news_id')
+                            ORDER BY {$prefix}media.object_id = (SELECT news_translation_id FROM {$prefix}news_translations WHERE merchant_language_id = {$this->quote($valid_language->language_id)} and news_id = {$this->quote($newsId)}) DESC) as media"), DB::raw("media.news_id"), '=', 'news.news_id')
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
