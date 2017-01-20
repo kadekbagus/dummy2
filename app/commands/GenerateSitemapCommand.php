@@ -166,6 +166,7 @@ class GenerateSitemapCommand extends Command
             $response = null;
             $_GET['sortby'] = 'updated_date';
             $_GET['sortmode'] = 'desc';
+            $_GET['list_type'] = 'preferred';
             $_GET['from_homepage'] = 'y';
             $_GET['take'] = 1;
             $_GET['skip'] = 0;
@@ -175,18 +176,19 @@ class GenerateSitemapCommand extends Command
 
             switch ($key) {
                 case 'promotion':
-                    $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
+                    $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getSearchPromotion();
                     break;
 
                 case 'event':
-                    $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
+                    $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getSearchNews();
                     break;
 
                 case 'coupon':
-                    $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
+                    $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getCouponList();
                     break;
 
                 case 'store':
+                    // todo: add setWithOutScore() if store list query already pointing to ES
                     $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
                     break;
 
@@ -194,7 +196,7 @@ class GenerateSitemapCommand extends Command
                     if (! empty($mall_id)) {
                         $response = null;
                     } else {
-                        $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
+                        $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getMallList();
                     }
                     break;
 
@@ -657,13 +659,14 @@ class GenerateSitemapCommand extends Command
         $_GET['sortby'] = 'updated_date';
         $_GET['sortmode'] = 'desc';
         $_GET['from_homepage'] = 'y';
+        $_GET['list_type'] = 'preferred';
         $_GET['take'] = 1;
         $_GET['skip'] = 0;
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
 
-        $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
+        $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getSearchPromotion();
 
         if ($this->responseCheck($response)) {
             if (! empty($response->data->total_records)) {

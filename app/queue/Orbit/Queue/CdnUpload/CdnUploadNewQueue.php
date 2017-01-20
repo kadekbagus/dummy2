@@ -11,6 +11,7 @@ use Aws;
 use Media;
 use Log;
 use Queue;
+use Orbit\Helper\Util\JobBurier;
 
 class CdnUploadNewQueue
 {
@@ -93,7 +94,9 @@ class CdnUploadNewQueue
                     break;
 
                 case 'mall':
-                    // to be edit
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
+                        'mall_id' => $esId
+                    ]);
                     break;
 
                 case 'store':
