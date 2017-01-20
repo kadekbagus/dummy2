@@ -12,6 +12,7 @@ use Media;
 use Log;
 use Queue;
 use Orbit\FakeJob;
+use Orbit\Helper\Util\JobBurier;
 
 class CdnUploadUpdateQueue
 {

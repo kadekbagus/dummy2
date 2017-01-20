@@ -20,6 +20,7 @@ use App;
 use Lang;
 use User;
 use Activity;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 class UserCIAPIController extends BaseAPIController
 {
@@ -46,13 +47,18 @@ class UserCIAPIController extends BaseAPIController
             }
 
             $image = null;
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
             $media = $user->profilePicture()
                 ->where('media_name_long', 'user_profile_picture_orig')
                 ->get();
 
             if (count($media) > 0) {
                 if (! empty($media[0]->path)) {
-                    $image = $media[0]->path;
+                    $localPath = (! empty($media[0]->path)) ? $media[0]->path : '';
+                    $cdnPath = (! empty($media[0]->cdn_url)) ? $media[0]->cdn_url : '';
+                    $image = $imgUrl->getImageUrl($localPath, $cdnPath);
                 }
             }
 

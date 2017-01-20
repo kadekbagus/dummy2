@@ -82,13 +82,25 @@ class PartnerDetailAPIController extends PubControllerAPI
             $valid_language = $partnerHelper->getValidLanguage();
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $logo = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as logo_url";
+            $image = "CONCAT({$this->quote($urlPrefix)}, image_media.path) as image_url";
+            if ($usingCdn) {
+                $logo = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as logo_url";
+
+                $image = "CASE WHEN (image_media.cdn_url is null or image_media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, image_media.path) ELSE image_media.cdn_url END as image_url";
+            }
+
             $partner = Partner::select(
                     'partner_id',
                     'partner_name',
                     'description',
-                    'media.path as logo_url',
-                    DB::raw('image_media.path as image_url'),
-                    'deeplinks.deeplink_url'
+                    'deeplinks.deeplink_url',
+                    DB::raw("{$logo}"),
+                    DB::raw("{$image}")
                 )
                 ->leftJoin('media', function ($q) {
                     $q->on('media.object_id', '=', 'partners.partner_id');
