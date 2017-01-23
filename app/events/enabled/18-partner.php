@@ -45,6 +45,9 @@ Event::listen('orbit.partner.postnewpartner.after.save', function($controller, $
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
         if ($response->data['extras']->isUpdate) {
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -55,8 +58,9 @@ Event::listen('orbit.partner.postnewpartner.after.save', function($controller, $
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
             'es_type'       => null,
-            'es_id'         => null
-        ], 'cdn_upload');
+            'es_id'         => null,
+            'bucket_name'   => $bucketName
+        ], $queueName);
     }
 });
 
@@ -91,6 +95,9 @@ Event::listen('orbit.partner.postnewpartner.after.save2', function($controller, 
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
         if ($response->data['extras']->isUpdate) {
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -101,8 +108,9 @@ Event::listen('orbit.partner.postnewpartner.after.save2', function($controller, 
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
             'es_type'       => null,
-            'es_id'         => null
-        ], 'cdn_upload');
+            'es_id'         => null,
+            'bucket_name'   => $bucketName
+        ], $queueName);
     }
 });
 
@@ -137,6 +145,9 @@ Event::listen('orbit.partner.postupdatepartner.after.save', function($controller
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
         if ($response->data['extras']->isUpdate) {
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -147,8 +158,9 @@ Event::listen('orbit.partner.postupdatepartner.after.save', function($controller
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
             'es_type'       => null,
-            'es_id'         => null
-        ], 'cdn_upload');
+            'es_id'         => null,
+            'bucket_name'   => $bucketName
+        ], $queueName);
     }
 });
 
@@ -183,6 +195,9 @@ Event::listen('orbit.partner.postupdatepartner.after.save2', function($controlle
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
         if ($response->data['extras']->isUpdate) {
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -193,7 +208,8 @@ Event::listen('orbit.partner.postupdatepartner.after.save2', function($controlle
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
             'es_type'       => null,
-            'es_id'         => null
-        ], 'cdn_upload');
+            'es_id'         => null,
+            'bucket_name'   => $bucketName
+        ], $queueName);
     }
 });

@@ -96,6 +96,20 @@ class CdnS3UploadCommand extends Command
                 $this->genericObjectUpload($object, $objectType, $options);
                 break;
 
+            case 'store':
+                $stores = Tenant::with('media')->where('name', $objectId)->get();
+                $options = [
+                    'primary_key' => 'name',
+                    'translation_primary_key' => '',
+                    'using_translation' => FALSE,
+                    'bucket_name' => $bucketName
+                ];
+
+                foreach ($stores as $object) {
+                    $this->genericObjectUpload($object, $objectType, $options);
+                }
+                break;
+
             default:
                 throw new Exception('Unknown object-type value');
         }

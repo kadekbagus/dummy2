@@ -40,6 +40,9 @@ Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
         $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
         if ($usingCdn) {
+            $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+            $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
             if ($response->data['extras']->isUpdate) {
                 $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -50,8 +53,9 @@ Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
                 'media_name_id' => $response->data['extras']->mediaNameId,
                 'old_path'      => $response->data['extras']->oldPath,
                 'es_type'       => 'mall',
-                'es_id'         => $mall->merchant_id
-            ], 'cdn_upload');
+                'es_id'         => $mall->merchant_id,
+                'bucket_name'   => $bucketName
+            ], $queueName);
         }
     }
     $mall->load('mediaLogo');
@@ -80,6 +84,9 @@ Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
         $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
         if ($usingCdn) {
+            $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+            $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
             if ($response->data['extras']->isUpdate) {
                 $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -90,8 +97,9 @@ Event::listen('orbit.mall.postnewmall.after.save', function($controller, $mall)
                 'media_name_id' => $response->data['extras']->mediaNameId,
                 'old_path'      => $response->data['extras']->oldPath,
                 'es_type'       => 'mall',
-                'es_id'         => $mall->merchant_id
-            ], 'cdn_upload');
+                'es_id'         => $mall->merchant_id,
+                'bucket_name'   => $bucketName
+            ], $queueName);
         }
     }
     $mall->load('mediaMap');
@@ -129,14 +137,17 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
 
                 // queue for data amazon s3
                 $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+                $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+                $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
 
                 if ($usingCdn) {
                     $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadDeleteQueue';
                     Queue::push($queueFile, [
                         'object_id' => $mall->merchant_id,
                         'media_name_id' => 'mall_logo',
-                        'old_path' => $response->data['extras']->oldPath
-                    ], 'cdn_upload');
+                        'old_path' => $response->data['extras']->oldPath,
+                        'bucket_name'   => $bucketName
+                    ], $queueName);
                 }
             }
         });
@@ -157,6 +168,9 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
         $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
         if ($usingCdn) {
+            $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+            $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
             if ($response->data['extras']->isUpdate) {
                 $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -167,8 +181,9 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
                 'media_name_id' => $response->data['extras']->mediaNameId,
                 'old_path'      => $response->data['extras']->oldPath,
                 'es_type'       => 'mall',
-                'es_id'         => $mall->merchant_id
-            ], 'cdn_upload');
+                'es_id'         => $mall->merchant_id,
+                'bucket_name'   => $bucketName
+            ], $queueName);
         }
     }
     $mall->load('mediaLogo');
@@ -195,6 +210,9 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
         $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
         if ($usingCdn) {
+            $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+            $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
             if ($response->data['extras']->isUpdate) {
                 $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -205,8 +223,9 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
                 'media_name_id' => $response->data['extras']->mediaNameId,
                 'old_path'      => $response->data['extras']->oldPath,
                 'es_type'       => 'mall',
-                'es_id'         => $mall->merchant_id
-            ], 'cdn_upload');
+                'es_id'         => $mall->merchant_id,
+                'bucket_name'   => $bucketName
+            ], $queueName);
         }
     }
     $mall->load('mediaMap');

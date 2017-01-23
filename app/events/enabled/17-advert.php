@@ -38,6 +38,24 @@ Event::listen('orbit.advert.postnewadvert.after.save', function($controller, $ad
     $advert->setRelation('media', $response->data);
     $advert->media = $response->data;
     $advert->image = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $advert->advert_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => null,
+            'es_id'         => null
+        ], 'cdn_upload');
+    }
 });
 
 /**
@@ -68,6 +86,24 @@ Event::listen('orbit.advert.postupdateadvert.after.save', function($controller, 
 
         $advert->load('media');
         $advert->image = $response->data[0]->path;
+
+        // queue for data amazon s3
+        $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+        if ($usingCdn) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+            if ($response->data['extras']->isUpdate) {
+                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+            }
+
+            Queue::push($queueFile, [
+                'object_id'     => $advert->advert_id,
+                'media_name_id' => $response->data['extras']->mediaNameId,
+                'old_path'      => $response->data['extras']->oldPath,
+                'es_type'       => null,
+                'es_id'         => null
+            ], 'cdn_upload');
+        }
     }
 
 });
