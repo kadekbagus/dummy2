@@ -42,6 +42,9 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
         if ($response->data['extras']->isUpdate) {
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -52,8 +55,9 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
             'es_type'       => $news->object_type,
-            'es_id'         => $news->news_id
-        ], 'cdn_upload');
+            'es_id'         => $news->news_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
     }
 });
 
@@ -90,6 +94,9 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
         $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
         if ($usingCdn) {
+            $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+            $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
             if ($response->data['extras']->isUpdate) {
                 $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -100,8 +107,9 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
                 'media_name_id' => $response->data['extras']->mediaNameId,
                 'old_path'      => $response->data['extras']->oldPath,
                 'es_type'       => $news->object_type,
-                'es_id'         => $news->news_id
-            ], 'cdn_upload');
+                'es_id'         => $news->news_id,
+                'bucket_name'   => $bucketName
+            ], $queueName);
         }
     }
 });
@@ -150,7 +158,10 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
-         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
         if ($response->data['extras']->isUpdate) {
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
         }
@@ -160,8 +171,9 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
             'es_type'       => $news_translations->object_type,
-            'es_id'         => $news_translations->news_id
-        ], 'cdn_upload');
+            'es_id'         => $news_translations->news_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
     }
 });
 

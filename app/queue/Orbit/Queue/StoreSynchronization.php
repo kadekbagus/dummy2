@@ -335,6 +335,9 @@ class StoreSynchronization
                     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
                     if ($usingCdn) {
+                        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+                        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
                         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
                         if ($isUpdate) {
                             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -345,8 +348,9 @@ class StoreSynchronization
                             'media_name_id' => null,
                             'old_path'      => $oldPath,
                             'es_type'       => 'store',
-                            'es_id'         => $storeName
-                        ], 'cdn_upload');
+                            'es_id'         => $storeName,
+                            'bucket_name'   => $bucketName
+                        ], $queueName);
                     }
 
                 }

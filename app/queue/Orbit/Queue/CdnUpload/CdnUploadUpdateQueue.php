@@ -40,7 +40,7 @@ class CdnUploadUpdateQueue
         $esType = (! empty($data['es_type'])) ? $data['es_type'] : '';
         $esId = (! empty($data['es_id'])) ? $data['es_id'] : '';
         $useRelativePath = (! empty($data['use_relative_path'])) ? $data['use_relative_path'] : TRUE;
-        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $bucketName = $data['bucket_name'];
 
         try {
             $sdk = new Aws\Sdk(Config::get('orbit.aws-sdk', []));

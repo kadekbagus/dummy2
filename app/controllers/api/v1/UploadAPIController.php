@@ -8400,12 +8400,15 @@ class UploadAPIController extends ControllerAPI
             $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
             if ($usingCdn) {
-                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadDeleteQueue';
-                Queue::push($queueFile, [
+                $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+                $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+                Queue::push('Orbit\\Queue\\CdnUpload\\CdnUploadDeleteQueue', [
                     'object_id'     => $merchant_id,
                     'media_name_id' => 'mall_map',
-                    'old_path'      => $oldPath
-                ], 'cdn_upload');
+                    'old_path'      => $oldPath,
+                    'bucket_name'   => $bucketName
+                ], $queueName);
             }
 
             $this->response->data = $merchant;
