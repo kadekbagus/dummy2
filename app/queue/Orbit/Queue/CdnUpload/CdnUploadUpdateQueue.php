@@ -122,7 +122,8 @@ class CdnUploadUpdateQueue
                     break;
 
                 case 'store':
-                    // to be edit
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['name' => $esId]);
                     break;
             }
 

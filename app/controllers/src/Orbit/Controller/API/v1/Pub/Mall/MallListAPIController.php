@@ -191,7 +191,18 @@ class MallListAPIController extends PubControllerAPI
 
             if ($this->withoutScore) {
                 // remove _score sort
-                $sortby = array_filter($sortby, function($val) { return $val !== '_score'; });
+                $found = FALSE;
+                $sortby = array_filter($sortby, function($val) use(&$found) {
+                        if ($val === '_score') {
+                            $found = $found || TRUE;
+                        }
+                        return $val !== '_score';
+                    });
+
+                if($found) {
+                    // redindex array if _score is eliminated
+                    $sortby = array_values($sortby);
+                }
             }
             $jsonArea["sort"] = $sortby;
 
