@@ -185,6 +185,7 @@ class StoreAPIController extends PubControllerAPI
             {
                 $cacheKey['keyword'] = $keyword;
                 if ($keyword != '') {
+                    $keyword = strtolower($keyword);
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
                     $withKeywordSearch = true;

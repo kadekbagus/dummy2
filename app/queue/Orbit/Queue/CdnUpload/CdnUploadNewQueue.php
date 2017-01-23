@@ -39,6 +39,7 @@ class CdnUploadNewQueue
         $oldPath = (! empty($data['old_path'])) ? $data['old_path'] : array();
         $esType = (! empty($data['es_type'])) ? $data['es_type'] : '';
         $esId = (! empty($data['es_id'])) ? $data['es_id'] : '';
+        $useRelativePath = (! empty($data['use_relative_path'])) ? $data['use_relative_path'] : TRUE;
         $bucketName = (! empty($data['bucket_name'])) ? $data['bucket_name'] : '';
 
         try {
@@ -54,11 +55,14 @@ class CdnUploadNewQueue
             $localMedia = $localMedia->get();
 
             $message = array();
+            $publicPath = public_path();
             foreach ($localMedia as $localFile) {
+                $sourceFile = $useRelativePath ? $publicPath . '/' . $localFile->path : $localFile->realpath;
+
                 $response = $s3->putObject([
                     'Bucket' => $bucketName,
                     'Key' => $localFile->path,
-                    'SourceFile' => $localFile->realpath,
+                    'SourceFile' => $sourceFile,
                     'ContentType' => $localFile->mime_type
                 ]);
 
