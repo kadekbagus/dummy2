@@ -11,6 +11,7 @@ use Aws;
 use Media;
 use Log;
 use Queue;
+use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
 
 class CdnUploadNewQueue
@@ -20,7 +21,15 @@ class CdnUploadNewQueue
      *
      * @author shelgi prasetyo <shelgi@dominopos.com>
      * @param Job $job
-     * @param array $data [user_id => NUM]
+     * @param array $data [
+     *    'object_id' => The object Id in the media
+     *    'media_name_id' => Value of media_name_id in media table
+     *    'old_path' => Value of old media path
+     *    'es_type' => Type of the object used to update the Elasticsearch
+     *    'es_id' => Id of the object used to update the Elasticsearch
+     *    'use_relative_path' => Whether using path from realpath field in media table or using relative path
+     *    'bucket_name' => Bucket name in the S3
+     * ]
      */
     public function fire($job, $data)
     {
@@ -74,33 +83,31 @@ class CdnUploadNewQueue
                 Log::info($contentMessage);
             }
 
+            $fakeJob = new FakeJob();
             switch ($esType) {
                 case 'news':
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
-                        'news_id' => $esId
-                    ]);
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['news_id' => $esId]);
                     break;
 
                 case 'promotion':
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
-                        'news_id' => $esId
-                    ]);
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['news_id' => $esId]);
                     break;
 
                 case 'coupon':
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                        'coupon_id' => $esId
-                    ]);
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['coupon_id' => $esId]);
                     break;
 
                 case 'mall':
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
-                        'mall_id' => $esId
-                    ]);
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESMallUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['mall_id' => $esId]);
                     break;
 
                 case 'store':
-                    // to be edit
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['name' => $esId]);
                     break;
             }
 
