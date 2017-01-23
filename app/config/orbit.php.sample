@@ -201,6 +201,9 @@ return array(
         // provider used
         'provider' => 'S3',
 
+        // Queue name
+        'queue_name' => 'cdn_upload',
+
         // CDN Provider
         'providers' => [
             // gotomalls as default when not using cdn
