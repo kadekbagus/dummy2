@@ -149,6 +149,9 @@ Artisan::add(new GetListActivePromotionCommand);
 // List all active news
 Artisan::add(new GetListActiveNewsCommand);
 
+// List all active coupon
+Artisan::add(new GetListActiveCouponCommand);
+
 // List all active stores
 Artisan::add(new GetListActiveStoreCommand);
 
