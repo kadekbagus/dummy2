@@ -295,8 +295,15 @@ class ESStoreUpdateQueue
                         ->get();
 
             foreach ($coupons as $key => $coupon) {
-                $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponUpdateQueue();
-                $response = $esQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+                if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0) {
+                    // Notify the queueing system to delete Elasticsearch document
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponDeleteQueue();
+                    $response = $esQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+                } else {
+                    // Notify the queueing system to update Elasticsearch document
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+                }
             }
         }
     }
