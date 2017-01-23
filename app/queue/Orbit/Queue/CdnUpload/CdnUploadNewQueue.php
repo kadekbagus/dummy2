@@ -39,7 +39,7 @@ class CdnUploadNewQueue
         $oldPath = (! empty($data['old_path'])) ? $data['old_path'] : array();
         $esType = (! empty($data['es_type'])) ? $data['es_type'] : '';
         $esId = (! empty($data['es_id'])) ? $data['es_id'] : '';
-        $bucketName = $data['bucket_name'];
+        $bucketName = (! empty($data['bucket_name'])) ? $data['bucket_name'] : '';
 
         try {
             $sdk = new Aws\Sdk(Config::get('orbit.aws-sdk', []));
@@ -52,14 +52,6 @@ class CdnUploadNewQueue
             }
 
             $localMedia = $localMedia->get();
-
-            if (count($localMedia) > 0) {
-                $message = sprintf('Object ID %s in media table is not found!', $objectId);
-                return [
-                    'status' => 'fail',
-                    'message' => $message
-                ];
-            }
 
             $message = array();
             foreach ($localMedia as $localFile) {
