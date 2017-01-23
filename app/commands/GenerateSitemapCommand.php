@@ -422,17 +422,6 @@ class GenerateSitemapCommand extends Command
                 foreach ($response->data->records as $record) {
                     $updatedAt = $this->getLastPromotionUpdatedAt($record['id']);
                     $this->urlStringPrinter(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
-
-                    $this->generateAllListSitemap($record['id'], Str::slug($record['name']));
-
-                    // mall promotions
-                    $this->generatePromotionDetailsSitemap($record['id'], Str::slug($record['name']));
-                    // mall events
-                    $this->generateEventDetailsSitemap($record['id'], Str::slug($record['name']));
-                    // mall coupons
-                    $this->generateCouponDetailsSitemap($record['id'], Str::slug($record['name']));
-                    // mall stores
-                    $this->generateStoreDetailsSitemap($record['id'], Str::slug($record['name']));
                 }
 
                 while ($counter < $response->data->total_records) {
@@ -447,17 +436,6 @@ class GenerateSitemapCommand extends Command
                         foreach ($response->data->records as $record) {
                             $updatedAt = $this->getLastPromotionUpdatedAt($record['id']);
                             $this->urlStringPrinter(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
-
-                            $this->generateAllListSitemap($record['id'], Str::slug($record['name']));
-
-                            // mall promotions
-                            $this->generatePromotionDetailsSitemap($record['id'], Str::slug($record['name']));
-                            // mall events
-                            $this->generateEventDetailsSitemap($record['id'], Str::slug($record['name']));
-                            // mall coupons
-                            $this->generateCouponDetailsSitemap($record['id'], Str::slug($record['name']));
-                            // mall stores
-                            $this->generateStoreDetailsSitemap($record['id'], Str::slug($record['name']));
                         }
                     }
 
