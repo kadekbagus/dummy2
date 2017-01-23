@@ -7,6 +7,8 @@
 
 use Advert;
 use Coupon;
+use News;
+use Tenant;
 use Config;
 use DB;
 use Orbit\Helper\Util\JobBurier;

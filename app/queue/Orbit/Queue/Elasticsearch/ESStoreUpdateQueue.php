@@ -318,7 +318,7 @@ class ESStoreUpdateQueue
             // check news before update elasticsearch
             $prefix = DB::getTablePrefix();
 
-            $news = News::excludeDeleted('news')
+            $news = \News::excludeDeleted('news')
                     ->select(DB::raw("
                         {$prefix}news.news_id,
                         CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -365,7 +365,7 @@ class ESStoreUpdateQueue
             // check promotion before update elasticsearch
             $prefix = DB::getTablePrefix();
 
-            $promotions = News::excludeDeleted('news')
+            $promotions = \News::excludeDeleted('news')
                     ->select(DB::raw("
                         {$prefix}news.news_id,
                         CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'

@@ -270,7 +270,7 @@ class ESMallUpdateQueue
         // check news before update elasticsearch
         $prefix = DB::getTablePrefix();
         // check news data related to the mall, for update or delete elasticsearch news
-        $news = News::select(DB::raw("
+        $news = \News::select(DB::raw("
                     {$prefix}news.news_id,
                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                     THEN {$prefix}campaign_status.campaign_status_name
@@ -316,7 +316,7 @@ class ESMallUpdateQueue
         // check news before update elasticsearch
         $prefix = DB::getTablePrefix();
         // check promotions data related to the mall, for update or delete elasticsearch promotions
-        $promotions = News::select(DB::raw("
+        $promotions = \News::select(DB::raw("
                     {$prefix}news.news_id,
                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                     THEN {$prefix}campaign_status.campaign_status_name
@@ -361,7 +361,7 @@ class ESMallUpdateQueue
         $prefix = DB::getTablePrefix();
 
         // check all store that belongs to the mall and then update store index on es
-        $store = Tenant::select('merchants.name')
+        $store = \Tenant::select('merchants.name')
                         ->excludeDeleted('merchants')
                         ->join(DB::raw("(
                                 select merchant_id
