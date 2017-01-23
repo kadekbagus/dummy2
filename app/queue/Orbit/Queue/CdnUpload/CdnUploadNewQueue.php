@@ -53,14 +53,6 @@ class CdnUploadNewQueue
 
             $localMedia = $localMedia->get();
 
-            if (count($localMedia) > 0) {
-                $message = sprintf('Object ID %s in media table is not found!', $objectId);
-                return [
-                    'status' => 'fail',
-                    'message' => $message
-                ];
-            }
-
             $message = array();
             foreach ($localMedia as $localFile) {
                 $response = $s3->putObject([
