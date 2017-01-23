@@ -18,6 +18,7 @@ use Mall;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
+use Orbit\Helper\Util\CdnUrlGenerator;
 use PromotionRetailer;
 use Helper\EloquentRecordCounter as RecordCounter;
 
@@ -84,15 +85,8 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}promotions.promotion_id as promotion_id,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
-                                    CASE WHEN {$prefix}media.path is null THEN (
-                                            select m.path
-                                            from {$prefix}coupon_translations ct
-                                            join {$prefix}media m
-                                                on m.object_id = ct.coupon_translation_id
-                                                and m.media_name_long = 'coupon_translation_image_orig'
-                                            where ct.promotion_id = {$prefix}promotions.promotion_id
-                                            group by ct.promotion_id
-                                        ) ELSE {$prefix}media.path END as original_media_path,
+                                    CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                    CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath,
                                     {$prefix}promotions.end_date,
                                     {$prefix}promotions.coupon_validity_in_date,
                                     {$prefix}promotions.status,
@@ -140,6 +134,12 @@ class CouponWalletListAPIController extends PubControllerAPI
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $join->where('issued_coupons.status', '=', 'issued');
                             })
+                            ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
+                                        FROM {$prefix}coupon_translations ct
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = ct.coupon_translation_id
+                                            AND m.media_name_long = 'coupon_translation_image_orig'
+                                        GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('promotion_id');
@@ -207,6 +207,26 @@ class CouponWalletListAPIController extends PubControllerAPI
 
             $listcoupon = $coupon->get();
             $count = RecordCounter::create($_coupon)->count();
+
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $localPath = '';
+            $cdnPath = '';
+            $listId = '';
+
+            if (count($listcoupon) > 0) {
+                foreach ($listcoupon as $list) {
+                    if ($listId != $list->campaign_id) {
+                        $localPath = '';
+                        $cdnPath = '';
+                        $list->image_url = '';
+                    }
+                    $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
+                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
+                    $list->original_media_path = $imgUrl->getImageUrl($localPath, $cdnPath);
+                    $listId = $list->campaign_id;
+                }
+            }
 
             if (empty($skip)) {
                 $activityNotes = sprintf('Page viewed: Landing Page Coupon Wallet List Page');
