@@ -122,7 +122,10 @@ class CdnUploadUpdateQueue
                     break;
 
                 case 'store':
-                    // to be edit
+                    // Notify the queueing system to update Elasticsearch document
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
+                        'name' => $esId
+                    ]);
                     break;
             }
 

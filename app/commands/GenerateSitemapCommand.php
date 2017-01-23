@@ -188,8 +188,7 @@ class GenerateSitemapCommand extends Command
                     break;
 
                 case 'store':
-                    // todo: add setWithOutScore() if store list query already pointing to ES
-                    $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
+                    $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getStoreList();
                     break;
 
                 case 'mall':
@@ -571,15 +570,9 @@ class GenerateSitemapCommand extends Command
                     break;
 
                 case 'store':
-                    if (is_object($record)) {
-                        // remove this and use array instead if store already in elasticsearch
-                        $id = $record->merchant_id;
-                        $name = $record->name;
-                        $updatedAt = strtotime($record->updated_at);
-                    } elseif(is_array($record)) {
-                        $id = $record['merchant_id'];
-                        $name = $record['name'];
-                    }
+                    $id = $record['merchant_id'];
+                    $name = $record['name'];
+
                     break;
 
                 case 'partner':

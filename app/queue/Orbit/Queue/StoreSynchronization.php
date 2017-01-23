@@ -256,8 +256,20 @@ class StoreSynchronization
                     // delete media (logo, image, map)
                     $oldMedia = Media::where('object_name', 'retailer')->where('object_id', $base_store_id)->get();
                     $realpath = array();
+                    $oldPath = array();
+                    $isUpdate = false;
+
                     foreach ($oldMedia as $file) {
+                        $isUpdate = true;
                         $realpath[] = $file->realpath;
+
+                        //get old path before delete
+                        $oldPath[$file->media_id]['path'] = $file->path;
+                        $oldPath[$file->media_id]['cdn_url'] = $file->cdn_url;
+                        $oldPath[$file->media_id]['cdn_bucket_name'] = $file->cdn_bucket_name;
+
+                        // No need to check the return status, just delete and forget
+                        @unlink($file->realpath);
                     }
 
                     $delete_media = Media::where('object_name', 'retailer')->where('object_id', $base_store_id)->delete(true);
@@ -318,6 +330,25 @@ class StoreSynchronization
                             $this->debug("Failed to unlink\n");
                         }
                     }
+
+                    // queue for data amazon s3
+                    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+                    if ($usingCdn) {
+                        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+                        if ($isUpdate) {
+                            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+                        }
+
+                        Queue::push($queueFile, [
+                            'object_id'     => $base_store_id,
+                            'media_name_id' => null,
+                            'old_path'      => $oldPath,
+                            'es_type'       => 'store',
+                            'es_id'         => $storeName
+                        ], 'cdn_upload');
+                    }
+
                 }
             });
 
