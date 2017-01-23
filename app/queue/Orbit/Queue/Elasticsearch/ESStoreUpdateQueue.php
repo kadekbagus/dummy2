@@ -92,14 +92,6 @@ class ESStoreUpdateQueue
                         ->orderBy('merchants.created_at', 'asc')
                         ->get();
 
-        if ($store->isEmpty()) {
-            $job->delete();
-
-            return [
-                'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Store Name %s is not found.', $job->getJobId(), $storeName)
-            ];
-        }
 
         try {
             // check exist elasticsearch index
@@ -116,6 +108,29 @@ class ESStoreUpdateQueue
             ];
 
             $response_search = $this->poster->search($params_search);
+
+            // delete the store document if the status inactive
+            if (($response_search['hits']['total'] > 0) && $store->isEmpty()) {
+                $params = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.news.type'),
+                    'id' => $response_search['hits']['hits']['_id']
+                ];
+
+                $response = $this->poster->delete($params);
+                $job->delete();
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] There is no store %s active.', $job->getJobId(), $storeName)
+                ];
+            } else if ($store->isEmpty()) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] Store Name %s is not found.', $job->getJobId(), $storeName)
+                ];
+            }
 
             $response = NULL;
             $params = [
