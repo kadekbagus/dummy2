@@ -216,7 +216,7 @@ class CouponWalletListAPIController extends PubControllerAPI
 
             if (count($listcoupon) > 0) {
                 foreach ($listcoupon as $list) {
-                    if ($listId != $list->campaign_id) {
+                    if ($listId != $list->promotion_id) {
                         $localPath = '';
                         $cdnPath = '';
                         $list->image_url = '';
@@ -224,7 +224,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                     $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
                     $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
                     $list->original_media_path = $imgUrl->getImageUrl($localPath, $cdnPath);
-                    $listId = $list->campaign_id;
+                    $listId = $list->promotion_id;
                 }
             }
 
