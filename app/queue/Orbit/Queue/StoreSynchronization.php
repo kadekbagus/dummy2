@@ -27,6 +27,7 @@ use User;
 use Event;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Queue;
+use Orbit\FakeJob;
 
 class StoreSynchronization
 {
@@ -272,6 +273,25 @@ class StoreSynchronization
                         @unlink($file->realpath);
                     }
 
+                    // queue for data amazon s3
+                    $fakeJob = new FakeJob();
+                    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+                    $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+                    $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+                    if ($usingCdn) {
+                        $data = [
+                            'object_id'     => $base_store_id,
+                            'media_name_id' => null,
+                            'old_path'      => $oldPath,
+                            'es_type'       => 'store',
+                            'es_id'         => $storeName,
+                            'bucket_name'   => $bucketName
+                        ];
+
+                        $esQueue = new \Orbit\Queue\CdnUpload\CdnUploadDeleteQueue();
+                        $response = $esQueue->fire($fakeJob, $data);
+                    }
                     $delete_media = Media::where('object_name', 'retailer')->where('object_id', $base_store_id)->delete(true);
 
                     // copy logo from base_store directory to retailer directory
@@ -332,25 +352,17 @@ class StoreSynchronization
                     }
 
                     // queue for data amazon s3
-                    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
-
                     if ($usingCdn) {
-                        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
-                        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
-
-                        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
-                        if ($isUpdate) {
-                            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
-                        }
-
-                        Queue::push($queueFile, [
+                        $dataUpdate = [
                             'object_id'     => $base_store_id,
                             'media_name_id' => null,
-                            'old_path'      => $oldPath,
+                            'old_path'      => null,
                             'es_type'       => 'store',
                             'es_id'         => $storeName,
                             'bucket_name'   => $bucketName
-                        ], $queueName);
+                        ];
+                        $esCdnQueue = new \Orbit\Queue\CdnUpload\CdnUploadNewQueue();
+                        $response = $esCdnQueue->fire($fakeJob, $dataUpdate);
                     }
 
                 }

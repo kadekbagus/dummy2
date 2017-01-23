@@ -34,6 +34,7 @@ class CdnUploadDeleteQueue
         try {
             $sdk = new Aws\Sdk(Config::get('orbit.aws-sdk', []));
             $s3 = $sdk->createS3();
+            $message = array();
 
             // delete old image in s3
             foreach ($oldPath as $oldFile) {
