@@ -811,6 +811,14 @@ class StoreAPIController extends PubControllerAPI
             $valid_language = $this->valid_language;
 
             $prefix = DB::getTablePrefix();
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as path";
+            if ($usingCdn) {
+                $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as path";
+            }
 
             $store = Tenant::select(
                                 'merchants.merchant_id',
@@ -857,19 +865,19 @@ class StoreAPIController extends PubControllerAPI
                             ->groupBy('categories.category_id')
                             ->orderBy('category_name')
                             ;
-                    }, 'mediaLogo' => function ($q) {
+                    }, 'mediaLogo' => function ($q) use ($image) {
                         $q->select(
-                                'media.path',
+                                DB::raw("{$image}"),
                                 'media.object_id'
                             );
-                    }, 'mediaImageOrig' => function ($q) {
+                    }, 'mediaImageOrig' => function ($q) use ($image) {
                         $q->select(
-                                'media.path',
+                                DB::raw("{$image}"),
                                 'media.object_id'
                             );
-                    }, 'mediaImageCroppedDefault' => function ($q) {
+                    }, 'mediaImageCroppedDefault' => function ($q) use ($image) {
                         $q->select(
-                                'media.path',
+                                DB::raw("{$image}"),
                                 'media.object_id'
                             );
                     },  'keywords' => function ($q) {
