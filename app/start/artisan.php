@@ -149,6 +149,9 @@ Artisan::add(new GetListActivePromotionCommand);
 // List all active news
 Artisan::add(new GetListActiveNewsCommand);
 
+// List all active news
+Artisan::add(new GetListActiveCouponCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
