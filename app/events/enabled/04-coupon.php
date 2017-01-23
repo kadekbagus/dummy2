@@ -40,6 +40,8 @@ Event::listen('orbit.coupon.postnewcoupon.after.save', function($controller, $co
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
         if ($response->data['extras']->isUpdate) {
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -50,8 +52,9 @@ Event::listen('orbit.coupon.postnewcoupon.after.save', function($controller, $co
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
             'es_type'       => 'coupon',
-            'es_id'         => $coupon->promotion_id
-        ], 'cdn_upload');
+            'es_id'         => $coupon->promotion_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
     }
 });
 
@@ -87,6 +90,8 @@ Event::listen('orbit.coupon.postupdatecoupon.after.save', function($controller, 
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
         if ($response->data['extras']->isUpdate) {
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -97,8 +102,9 @@ Event::listen('orbit.coupon.postupdatecoupon.after.save', function($controller, 
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
             'es_type'       => 'coupon',
-            'es_id'         => $coupon->promotion_id
-        ], 'cdn_upload');
+            'es_id'         => $coupon->promotion_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
     }
 });
 
@@ -144,6 +150,8 @@ Event::listen('orbit.coupon.after.translation.save', function($controller, $coup
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
         if ($response->data['extras']->isUpdate) {
             $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
@@ -154,8 +162,9 @@ Event::listen('orbit.coupon.after.translation.save', function($controller, $coup
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
             'es_type'       => 'coupon',
-            'es_id'         => $coupon_translations->promotion_id
-        ], 'cdn_upload');
+            'es_id'         => $coupon_translations->promotion_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
     }
 });
 

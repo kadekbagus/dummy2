@@ -1364,15 +1364,8 @@ class StoreAPIController extends PubControllerAPI
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
-                                CASE WHEN {$prefix}media.path is null THEN (
-                                        select m.path
-                                        from {$prefix}news_translations nt
-                                        join {$prefix}media m
-                                            on m.object_id = nt.news_translation_id
-                                            and m.media_name_long = 'news_translation_image_orig'
-                                        where nt.news_id = {$prefix}news.news_id
-                                        group by nt.news_id
-                                    ) ELSE {$prefix}media.path END as original_media_path
+                                CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
                             "))
                         ->leftJoin('news_translations', function ($q) use ($valid_language) {
                             $q->on('news_translations.news_id', '=', 'news.news_id')
@@ -1385,6 +1378,12 @@ class StoreAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
+                        ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, nt.news_id
+                                        FROM {$prefix}news_translations nt
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = nt.news_translation_id
+                                            AND m.media_name_long = 'news_translation_image_orig'
+                                        GROUP BY nt.news_id) AS med"), DB::raw("med.news_id"), '=', 'news.news_id')
                         ->whereIn('merchants.merchant_id', $storeIds)
                         ->where('news.object_type', '=', 'news')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -1461,21 +1460,13 @@ class StoreAPIController extends PubControllerAPI
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
-                                CASE WHEN {$prefix}media.path is null THEN (
-                                        select m.path
-                                        from {$prefix}news_translations nt
-                                        join {$prefix}media m
-                                            on m.object_id = nt.news_translation_id
-                                            and m.media_name_long = 'news_translation_image_orig'
-                                        where nt.news_id = {$prefix}news.news_id
-                                        group by nt.news_id
-                                    ) ELSE {$prefix}media.path END as original_media_path
+                                CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
                             "))
                         ->leftJoin('news_translations', function ($q) use ($valid_language) {
                             $q->on('news_translations.news_id', '=', 'news.news_id')
                               ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                         })
-
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
@@ -1483,6 +1474,12 @@ class StoreAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
+                        ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, nt.news_id
+                                        FROM {$prefix}news_translations nt
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = nt.news_translation_id
+                                            AND m.media_name_long = 'news_translation_image_orig'
+                                        GROUP BY nt.news_id) AS med"), DB::raw("med.news_id"), '=', 'news.news_id')
                         ->whereIn('merchants.merchant_id', $storeIds)
                         ->where('news.object_type', '=', 'promotion')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -1555,15 +1552,8 @@ class StoreAPIController extends PubControllerAPI
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
-                                CASE WHEN {$prefix}media.path is null THEN (
-                                        select m.path
-                                        from {$prefix}coupon_translations ct
-                                        join {$prefix}media m
-                                            on m.object_id = ct.coupon_translation_id
-                                            and m.media_name_long = 'coupon_translation_image_orig'
-                                        where ct.promotion_id = {$prefix}promotions.promotion_id
-                                        group by ct.promotion_id
-                                    ) ELSE {$prefix}media.path END as original_media_path
+                                CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
                             "))
                             ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -1579,6 +1569,12 @@ class StoreAPIController extends PubControllerAPI
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
+                            ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
+                                        FROM {$prefix}coupon_translations ct
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = ct.coupon_translation_id
+                                            AND m.media_name_long = 'coupon_translation_image_orig'
+                                        GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
                             ->whereRaw("available.tot > 0")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereIn('merchants.merchant_id', $storeIds)
@@ -1652,7 +1648,27 @@ class StoreAPIController extends PubControllerAPI
 
             $recordCounter = RecordCounter::create($_campaign);
             $totalRec = $recordCounter->count();
+
             $listcampaign = $campaign->get();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $localPath = '';
+            $cdnPath = '';
+            $listId = '';
+
+            if (count($listcampaign) > 0) {
+                foreach ($listcampaign as $list) {
+                    if ($listId != $list->campaign_id) {
+                        $localPath = '';
+                        $cdnPath = '';
+                        $list->image_url = '';
+                    }
+                    $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
+                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
+                    $list->original_media_path = $imgUrl->getImageUrl($localPath, $cdnPath);
+                    $listId = $list->campaign_id;
+                }
+            }
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $totalRec;
