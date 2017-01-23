@@ -70,6 +70,15 @@ class AdvertBannerListAPIController extends PubControllerAPI
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, img.path) as img_url";
+            if ($usingCdn) {
+                $image = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as img_url";
+            }
+
             $advert = DB::table('adverts')
                             ->select(
                                 'adverts.advert_id',
@@ -80,7 +89,7 @@ class AdvertBannerListAPIController extends PubControllerAPI
                                 'adverts.link_url',
                                 'adverts.link_object_id as object_id',
                                 DB::raw('alt.advert_type'),
-                                DB::raw('img.path as img_url'),
+                                DB::raw("{$image}"),
                                 DB::raw('t.name as store_name')
                             )
                             ->join('advert_link_types as alt', function ($q) {
