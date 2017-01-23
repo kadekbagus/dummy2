@@ -122,10 +122,8 @@ class CdnUploadUpdateQueue
                     break;
 
                 case 'store':
-                    // Notify the queueing system to update Elasticsearch document
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
-                        'name' => $esId
-                    ]);
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['name' => $esId]);
                     break;
             }
 
