@@ -92,7 +92,6 @@ class ESStoreUpdateQueue
                         ->orderBy('merchants.created_at', 'asc')
                         ->get();
 
-
         try {
             // check exist elasticsearch index
             $params_search = [
@@ -112,9 +111,9 @@ class ESStoreUpdateQueue
             // delete the store document if the status inactive
             if (($response_search['hits']['total'] > 0) && $store->isEmpty()) {
                 $params = [
-                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index'),
-                    'type' => Config::get('orbit.elasticsearch.indices.news.type'),
-                    'id' => $response_search['hits']['hits']['_id']
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.stores.type'),
+                    'id' => $response_search['hits']['hits'][0]['_id']
                 ];
 
                 $response = $this->poster->delete($params);
