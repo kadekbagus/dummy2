@@ -140,8 +140,14 @@ Artisan::add(new ElasticsearchClearCouponCommand);
 // Generate Sitemap
 Artisan::add(new GenerateSitemapCommand);
 
-// Generate Sitemap
+// Upload images to S3
 Artisan::add(new CdnS3UploadCommand);
+
+// List all active promotions
+Artisan::add(new GetListActivePromotionCommand);
+
+// List all active news
+Artisan::add(new GetListActiveNewsCommand);
 
 // Insert or update data on settings table
 // @Todo investigate why its error
