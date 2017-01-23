@@ -45,6 +45,10 @@ class GetListActiveStoreCommand extends Command
         $raw = $this->option('raw-query');
         $prefix = DB::getTablePrefix();
 
+        if ($fields === 'name') {
+            $raw = "group by t.name " . $raw;
+        }
+
         do {
             $stores = DB::select("SELECT t.{$fields}
                 FROM {$prefix}merchants t
