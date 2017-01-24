@@ -299,4 +299,9 @@ class PromotionLocationAPIController extends PubControllerAPI
 
         return $this->render($httpCode);
     }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
 }
