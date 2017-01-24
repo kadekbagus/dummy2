@@ -121,6 +121,10 @@ class MallInfoAPIController extends PubControllerAPI
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
             $total = $area_data['total'];
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
@@ -129,16 +133,28 @@ class MallInfoAPIController extends PubControllerAPI
                 $cdnPath = '';
 
                 foreach ($dt['_source'] as $source => $val) {
-                    if ($source == 'logo_url') {
+                    if ($source === 'logo_url') {
                         $localPath = $val;
                     }
 
-                    if ($source == 'logo_cdn_url') {
+                    if ($source === 'logo_cdn_url') {
                         $cdnPath = $val;
+                    }
+
+                    if ($source === 'maps_url') {
+                        array_walk($val, function (&$value, $key) use ($urlPrefix) {
+                           $value = $urlPrefix . $value;
+                        });
+
+                        $areadata['maps_url'] = $val;
                     }
 
                     $areadata[$source] = $val;
                     $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+
+                    if ($usingCdn && $source === 'maps_cdn_url' && (! empty($val))) {
+                        $areadata['maps_url'] = $val;
+                    }
                 }
 
                 $listmall[] = $areadata;
