@@ -12,6 +12,8 @@ use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 use Log;
+use Queue;
+use Orbit\FakeJob;
 
 class ESStoreUpdateQueue
 {
@@ -227,6 +229,11 @@ class ESStoreUpdateQueue
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
+            // update es coupon, news, and promotion
+            $this->updateESCoupon($store);
+            $this->updateESNews($store);
+            $this->updateESPromotion($store);
+
             // Safely delete the object
             $job->delete();
 
@@ -262,5 +269,152 @@ class ESStoreUpdateQueue
             'status' => 'fail',
             'message' => $message
         ];
+    }
+
+    protected function updateESCoupon($stores) {
+        foreach ($stores as $key => $store) {
+            $fakeJob = new FakeJob();
+
+            // find coupon relate with tenant to update ESCoupon
+            // check coupon before update elasticsearch
+            $prefix = DB::getTablePrefix();
+            $coupons = \Coupon::excludeDeleted('promotions')
+                        ->select(DB::raw("
+                            {$prefix}promotions.promotion_id,
+                            CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                THEN {$prefix}campaign_status.campaign_status_name
+                                ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                FROM {$prefix}promotion_retailer opt
+                                                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                                                            )
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
+                            END AS campaign_status,
+                            COUNT({$prefix}issued_coupons.issued_coupon_id) as available
+                        "))
+                        ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
+                        ->join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                        ->leftJoin('issued_coupons', function($q) {
+                            $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                                ->where('issued_coupons.status', '=', "available");
+                        })
+                        ->join('promotion_retailer', function($q) {
+                            $q->on('promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                              ->on('promotion_retailer.object_type', '=', DB::raw("'tenant'"));
+                        })
+                        ->where('promotion_retailer.retailer_id', '=', $store->merchant_id)
+                        ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
+                        ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
+                        ->groupBy('promotions.promotion_id')
+                        ->get();
+
+            foreach ($coupons as $key => $coupon) {
+                if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0) {
+                    // Notify the queueing system to delete Elasticsearch document
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponDeleteQueue();
+                    $response = $esQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+                } else {
+                    // Notify the queueing system to update Elasticsearch document
+                    $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponUpdateQueue();
+                    $response = $esQueue->fire($fakeJob, ['coupon_id' => $coupon->promotion_id]);
+                }
+            }
+        }
+    }
+
+    protected function updateESNews($stores) {
+        foreach ($stores as $key => $store) {
+            $fakeJob = new FakeJob();
+
+            // find news relate with tenant to update ESNews
+            // check news before update elasticsearch
+            $prefix = DB::getTablePrefix();
+
+            $news = \News::excludeDeleted('news')
+                    ->select(DB::raw("
+                        {$prefix}news.news_id,
+                        CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                        THEN {$prefix}campaign_status.campaign_status_name
+                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                        FROM {$prefix}news_merchant onm
+                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                        WHERE onm.news_id = {$prefix}news.news_id)
+                       THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
+                    "))
+                    ->join('news_merchant', function($q) {
+                            $q->on('news_merchant.news_id', '=', 'news.news_id')
+                              ->on('news_merchant.object_type', '=', DB::raw("'retailer'"));
+                      })
+                    ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                    ->where('news_merchant.merchant_id', '=', $store->merchant_id)
+                    ->where('news.object_type', '=', 'news')
+                    ->get();
+
+            if (!(count($news) < 1)) {
+                foreach ($news as $_news) {
+
+                    if ($_news->campaign_status === 'stopped' || $_news->campaign_status === 'expired') {
+                        // Notify the queueing system to delete Elasticsearch document
+                        $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsDeleteQueue();
+                        $response = $esQueue->fire($fakeJob, ['news_id' => $_news->news_id]);
+                    } else {
+                        // Notify the queueing system to update Elasticsearch document
+                        $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsUpdateQueue();
+                        $response = $esQueue->fire($fakeJob, ['news_id' => $_news->news_id]);
+                    }
+                }
+            }
+        }
+    }
+
+    protected function updateESPromotion($stores) {
+        foreach ($stores as $key => $store) {
+            $fakeJob = new FakeJob();
+
+            // find promotion relate with tenant to update ESPromotion
+            // check promotion before update elasticsearch
+            $prefix = DB::getTablePrefix();
+
+            $promotions = \News::excludeDeleted('news')
+                    ->select(DB::raw("
+                        {$prefix}news.news_id,
+                        CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                        THEN {$prefix}campaign_status.campaign_status_name
+                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                        FROM {$prefix}news_merchant onm
+                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                        WHERE onm.news_id = {$prefix}news.news_id)
+                       THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
+                    "))
+                    ->join('news_merchant', function($q) {
+                            $q->on('news_merchant.news_id', '=', 'news.news_id')
+                              ->on('news_merchant.object_type', '=', DB::raw("'retailer'"));
+                      })
+                    ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                    ->where('news_merchant.merchant_id', '=', $store->merchant_id)
+                    ->where('news.object_type', '=', 'promotion')
+                    ->get();
+
+            if (!(count($promotions) < 1)) {
+                foreach ($promotions as $_promotions) {
+
+                    if ($_promotions->campaign_status === 'stopped' || $_promotions->campaign_status === 'expired') {
+                        // Notify the queueing system to delete Elasticsearch document
+                        $esQueue = new \Orbit\Queue\Elasticsearch\ESPromotionDeleteQueue();
+                        $response = $esQueue->fire($fakeJob, ['news_id' => $_promotions->news_id]);
+                    } else {
+                        // Notify the queueing system to update Elasticsearch document
+                        $esQueue = new \Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue();
+                        $response = $esQueue->fire($fakeJob, ['news_id' => $_promotions->news_id]);
+                    }
+                }
+            }
+        }
     }
 }
