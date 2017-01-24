@@ -1059,9 +1059,11 @@ class StoreAPIController extends PubControllerAPI
 
             $mallLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as location_logo";
             $mallMap = "CONCAT({$this->quote($urlPrefix)}, map.path) as map_image";
+            $imageMapTenant = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as path";
             if ($usingCdn) {
                 $mallLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as location_logo";
                 $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
+                $imageMapTenant = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as path";
             }
 
             // Get store name base in merchant_id
@@ -1099,8 +1101,7 @@ class StoreAPIController extends PubControllerAPI
                           ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"))
                           ;
                     })
-
-                    ->with(['tenants' => function ($q) use ($prefix, $storename) {
+                    ->with(['tenants' => function ($q) use ($prefix, $storename, $imageMapTenant) {
                             $q->select('merchants.merchant_id',
                                         'merchants.name as title',
                                         'merchants.phone',
@@ -1117,10 +1118,10 @@ class StoreAPIController extends PubControllerAPI
                                     $q->select(
                                             'category_name'
                                         );
-                                }, 'mediaMap' => function ($q) {
+                                }, 'mediaMap' => function ($q) use ($imageMapTenant) {
                                     $q->select(
                                             'media.object_id',
-                                            'media.path'
+                                            DB::raw("{$imageMapTenant}")
                                         );
                                 }]);
                         }, 'mediaLogo' => function ($q) {
