@@ -143,9 +143,11 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
                 if ($usingCdn) {
                     $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadDeleteQueue';
                     Queue::push($queueFile, [
-                        'object_id' => $mall->merchant_id,
+                        'object_id'     => $mall->merchant_id,
                         'media_name_id' => 'mall_logo',
-                        'old_path' => $response->data['extras']->oldPath,
+                        'old_path'      => $response->data['extras']->oldPath,
+                        'es_type'       => 'mall',
+                        'es_id'         => $mall->merchant_id,
                         'bucket_name'   => $bucketName
                     ], $queueName);
                 }
