@@ -353,16 +353,14 @@ class StoreSynchronization
 
                     // queue for data amazon s3
                     if ($usingCdn) {
-                        $dataUpdate = [
+                        Queue::push('Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue', [
                             'object_id'     => $base_store_id,
                             'media_name_id' => null,
                             'old_path'      => null,
                             'es_type'       => 'store',
                             'es_id'         => $storeName,
                             'bucket_name'   => $bucketName
-                        ];
-                        $esCdnQueue = new \Orbit\Queue\CdnUpload\CdnUploadNewQueue();
-                        $response = $esCdnQueue->fire($fakeJob, $dataUpdate);
+                        ], $queueName);
                     }
 
                 }
