@@ -97,9 +97,9 @@ class CdnS3UploadCommand extends Command
                 break;
 
             case 'store':
-                $stores = Tenant::with('media')->where('name', $objectId)->get();
+                $stores = Tenant::with('media')->where('merchant_id', $objectId)->get();
                 $options = [
-                    'primary_key' => 'name',
+                    'primary_key' => 'merchant_id',
                     'translation_primary_key' => '',
                     'using_translation' => FALSE,
                     'bucket_name' => $bucketName
@@ -137,12 +137,17 @@ class CdnS3UploadCommand extends Command
                 continue;
             }
 
+            $esId = $object->{$options['primary_key']};
+            if ($objectType === 'store') {
+                $esId = $object->name;
+            }
+
             $queueData = [
                 'object_id' => $object->{$options['primary_key']},
                 'media_name_id' => $media->media_name_id,
                 'old_path' => [], // No need to delete, we just reupload
                 'es_type' => $objectType,
-                'es_id' => $object->{$options['primary_key']},
+                'es_id' => $esId,
                 'use_relative_path' => TRUE,
                 'bucket_name' => $options['bucket_name']
             ];
