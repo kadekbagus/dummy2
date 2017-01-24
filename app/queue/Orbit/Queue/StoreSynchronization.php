@@ -425,6 +425,7 @@ class StoreSynchronization
                 $name_long = str_replace('base_merchant_', 'retailer_', $dt->media_name_long);
             } else {
                 $name_long = str_replace('base_store_', 'retailer_', $dt->media_name_long);
+                $name_long = str_replace('base_', 'retailer_', $name_long);
             }
 
             $newMedia = new Media;
