@@ -479,6 +479,10 @@ class StoreAPIController extends PubControllerAPI
 
                 if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
                     $innerHitsCount = $innerHitsCount + $record['inner_hits']['tenant_detail']['hits']['total'];
+
+                    if (! empty($mallId)) {
+                        $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
+                    }
                 }
                 $data['score'] = $record['_score'];
                 $listOfRec[] = $data;
