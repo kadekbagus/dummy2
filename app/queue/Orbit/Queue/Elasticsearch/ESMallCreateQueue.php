@@ -74,6 +74,7 @@ class ESMallCreateQueue
         }
 
         $maps_url = $mall->mediaMapOrig->lists('path');
+        $maps_cdn_url = $mall->mediaMapOrig->lists('cdn_url');
 
         $esConfig = Config::get('orbit.elasticsearch');
         $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
@@ -95,7 +96,9 @@ class ESMallCreateQueue
                     'operating_hours' => $mall->operating_hours,
                     'object_type'     => $mall->object_type,
                     'logo_url'        => $mall->path,
+                    'logo_cdn_url'    => $mall->cdn_url,
                     'maps_url'        => $maps_url,
+                    'maps_cdn_url'    => $maps_cdn_url,
                     'status'          => $mall->status,
                     'ci_domain'       => $mall->ci_domain,
                     'is_subscribed'   => $mall->is_subscribed,
