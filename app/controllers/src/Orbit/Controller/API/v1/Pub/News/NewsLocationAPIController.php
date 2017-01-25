@@ -73,6 +73,7 @@ class NewsLocationAPIController extends PubControllerAPI
             $ul = OrbitInput::get('ul', null);
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
+            $withCache = TRUE;
 
             $validator = Validator::make(
                 array(
@@ -94,7 +95,6 @@ class NewsLocationAPIController extends PubControllerAPI
                 'is_detail' => $is_detail,
                 'location' => $location,
                 'distance' => $distance,
-                'ul' => $ul,
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
@@ -186,6 +186,7 @@ class NewsLocationAPIController extends PubControllerAPI
             // Filter by location
             if (! empty($location)) {
                 if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                    $withCache = FALSE;
                     $newsLocations->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                         ->havingRaw("distance <= {$distance}");
                 } else {
@@ -195,6 +196,7 @@ class NewsLocationAPIController extends PubControllerAPI
 
             // Order data by nearby or city alphabetical
             if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                $withCache = FALSE;
                 $newsLocations->orderBy('distance', 'asc');
             } else {
                 $newsLocations->orderBy('city', 'asc');
@@ -214,21 +216,27 @@ class NewsLocationAPIController extends PubControllerAPI
             $recordCounter = RecordCounter::create($_newsLocations);
 
             // Try to get the result from cache
-            $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
-                return $recordCounter->count();
-            });
-
-            // Put the result in cache if it is applicable
-            $totalRecordCache->put($serializedCacheKey, $totalRec);
+            if ($withCache) {
+                $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
+                    return $recordCounter->count();
+                });
+                $totalRecordCache->put($serializedCacheKey, $totalRec);
+            } else {
+                $totalRec = $recordCounter->count();
+            }
 
             $newsLocations->take($take);
             $newsLocations->skip($skip);
 
             // Try to get the result from cache
-            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($newsLocations) {
-                return $newsLocations->get();
-            });
-            $recordCache->put($serializedCacheKey, $listOfRec);
+            if ($withCache) {
+                $listOfRec = $recordCache->get($serializedCacheKey, function() use ($newsLocations) {
+                    return $newsLocations->get();
+                });
+                $recordCache->put($serializedCacheKey, $listOfRec);
+            } else {
+                $listOfRec = $newsLocations->get();
+            }
 
             // moved from generic activity number 34
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
