@@ -19,7 +19,7 @@ class FillTableDBIPCities extends Command
      *
      * @var string
      */
-    protected $description = 'Fill table db ip cities.';
+    protected $description = 'Fill table db_ip_cities.';
 
     /**
      * Create a new command instance.
@@ -92,7 +92,7 @@ class FillTableDBIPCities extends Command
     protected function getOptions()
     {
         return array(
-            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to mall_countries.', null),
+            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to db_ip_cities.', null),
         );
     }
 

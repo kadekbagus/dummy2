@@ -19,7 +19,7 @@ class FillTableMallCountries extends Command
      *
      * @var string
      */
-    protected $description = 'Fill table mall countries.';
+    protected $description = 'Fill table mall_countries.';
 
     /**
      * Create a new command instance.

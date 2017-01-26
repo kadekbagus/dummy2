@@ -19,7 +19,7 @@ class FillTableMallCities extends Command
      *
      * @var string
      */
-    protected $description = 'Fill table mall cities.';
+    protected $description = 'Fill table mall_cities.';
 
     /**
      * Create a new command instance.
@@ -95,7 +95,7 @@ class FillTableMallCities extends Command
     protected function getOptions()
     {
         return array(
-            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to mall_countries.', null),
+            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to mall_cities.', null),
             array('mall-status', null, InputOption::VALUE_OPTIONAL, 'Status to be injected.', NULL),
         );
     }
