@@ -76,6 +76,7 @@ class CouponLocationAPIController extends PubControllerAPI
             $ul = OrbitInput::get('ul', null);
             $take = PaginationNumber::parseTakeFromGet('promotions');
             $skip = PaginationNumber::parseSkipFromGet();
+            $withCache = TRUE;
 
             $validator = Validator::make(
                 array(
@@ -97,7 +98,6 @@ class CouponLocationAPIController extends PubControllerAPI
                 'is_detail' => $is_detail,
                 'location' => $location,
                 'distance' => $distance,
-                'ul' => $ul,
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
@@ -188,6 +188,7 @@ class CouponLocationAPIController extends PubControllerAPI
 
             if (! empty($location)) {
                 if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                    $withCache = FALSE;
                     $couponLocations->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                         ->havingRaw("distance <= {$distance}");
                 } else {
@@ -197,6 +198,7 @@ class CouponLocationAPIController extends PubControllerAPI
 
             // Order data by nearby or city alphabetical
             if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                $withCache = FALSE;
                 $couponLocations->orderBy('distance', 'asc');
             } else {
                 $couponLocations->orderBy('city', 'asc');
@@ -215,22 +217,27 @@ class CouponLocationAPIController extends PubControllerAPI
 
             $recordCounter = RecordCounter::create($_couponLocations);
 
-            // Try to get the result from cache
-            $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
-                return $recordCounter->count();
-            });
-
-            // Put the result in cache if it is applicable
-            $totalRecordCache->put($serializedCacheKey, $totalRec);
+            if ($withCache) {
+                $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
+                    return $recordCounter->count();
+                });
+                $totalRecordCache->put($serializedCacheKey, $totalRec);
+            } else {
+                $totalRec = $recordCounter->count();
+            }
 
             $couponLocations->take($take);
             $couponLocations->skip($skip);
 
             // Try to get the result from cache
-            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($couponLocations) {
-                return $couponLocations->get();
-            });
-            $recordCache->put($serializedCacheKey, $listOfRec);
+            if ($withCache) {
+                $listOfRec = $recordCache->get($serializedCacheKey, function() use ($couponLocations) {
+                    return $couponLocations->get();
+                });
+                $recordCache->put($serializedCacheKey, $listOfRec);
+            } else {
+                $listOfRec = $couponLocations->get();
+            }
 
             // moved from generic activity number 38
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
