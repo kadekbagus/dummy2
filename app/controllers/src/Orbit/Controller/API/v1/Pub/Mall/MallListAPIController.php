@@ -63,6 +63,7 @@ class MallListAPIController extends PubControllerAPI
             $latitude = '';
             $longitude = '';
             $locationFilter = '';
+            $withCache = TRUE;
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -120,7 +121,7 @@ class MallListAPIController extends PubControllerAPI
 
             // filter by location (city or user location)
             $words = 0;
-            OrbitInput::get('location', function($location) use (&$jsonArea, &$searchFlag, &$withScore, &$words, $latitude, $longitude, $radius)
+            OrbitInput::get('location', function($location) use (&$jsonArea, &$searchFlag, &$withScore, &$words, $latitude, $longitude, $radius, &$withCache)
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
@@ -131,6 +132,7 @@ class MallListAPIController extends PubControllerAPI
                     }
 
                     if ($location === 'mylocation' && $latitude != '' && $longitude != '') {
+                        $withCache = FALSE;
                         $locationFilter = array('geo_distance' => array('distance' => $radius.'km', 'position' => array('lon' => $longitude, 'lat' => $latitude)));
                         $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
                     } elseif ($location !== 'mylocation') {
@@ -170,6 +172,7 @@ class MallListAPIController extends PubControllerAPI
             $sort = array('name.raw' => array('order' => 'asc'));
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
+                $withCache = FALSE;
                 $sort = array('_geo_distance' => array('position' => array('lon' => $longitude, 'lat' => $latitude), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'updated_date') {
                 $sort = array('updated_at' => array('order' => 'desc'));
@@ -227,11 +230,15 @@ class MallListAPIController extends PubControllerAPI
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
-            $serializedCacheKey = SimpleCache::transformDataToHash($jsonArea);
-            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$param_area) {
-                return $client->search($param_area);
-            });
-            $recordCache->put($serializedCacheKey, $response);
+            if ($withCache) {
+                $serializedCacheKey = SimpleCache::transformDataToHash($jsonArea);
+                $response = $recordCache->get($serializedCacheKey, function() use ($client, &$param_area) {
+                    return $client->search($param_area);
+                });
+                $recordCache->put($serializedCacheKey, $response);
+            } else {
+                $response = $client->search($param_area);
+            }
 
             $area_data = $response['hits'];
             $listmall = array();
