@@ -123,7 +123,7 @@ class MapVendorCoutriesCommand extends Command
             } else {
                 $this->info( sprintf('Vendor Country %s to GTM Country %s, already exist.', $vendor_country, $gtm_country) );
             }
-
+            $this->info("Done");
         } catch (Exception $e) {
             $this->error('Line #' . $e->getLine() . ': ' . $e->getMessage());
         }
