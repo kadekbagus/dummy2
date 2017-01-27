@@ -320,6 +320,8 @@ class MallAPIController extends ControllerAPI
             $is_subscribed = OrbitInput::post('is_subscribed', 'Y');
             $logo = OrbitInput::files('logo');
             $maps = OrbitInput::files('maps');
+            $ipcountry = OrbitInput::files('ipcountry');
+            $ipcity = OrbitInput::files('ipcity');
 
             // generate array validation image
             $logo_validation = $this->generate_validation_image('mall_logo', $logo, 'orbit.upload.mall.logo');
@@ -362,6 +364,8 @@ class MallAPIController extends ControllerAPI
                 'floors'                        => $floors,
                 'free_wifi_status'              => $free_wifi_status,
                 'description'                   => $description,
+                'ipcountry'                     => $ipcountry,
+                'ipcity'                        => $ipcity,
             ];
 
             $validation_error = [
@@ -397,6 +401,8 @@ class MallAPIController extends ControllerAPI
                 'floors'                        => 'required|array',
                 'free_wifi_status'              => 'in:active,inactive',
                 'description'                   => 'max:25',
+                'ipcountry'                     => 'required',
+                'ipcity'                        => 'required|array',
             ];
 
             $validation_error_message = [
@@ -433,8 +439,8 @@ class MallAPIController extends ControllerAPI
                 unset($validation_error['phone']);
                 unset($validation_error['contact_person_firstname']);
                 unset($validation_error['contact_person_lastname']);
-                $validation_error['domain']                  = 'orbit.exists.domain';
-                $validation_error['geo_area']                = 'orbit.formaterror.geo_area';
+                $validation_error['domain'] = 'orbit.exists.domain';
+                $validation_error['geo_area'] = 'orbit.formaterror.geo_area';
 
                 unset($validation_error_message['phone.required']);
                 unset($validation_error_message['contact_person_firstname.required']);
@@ -544,6 +550,51 @@ class MallAPIController extends ControllerAPI
             Event::fire('orbit.mall.postnewmall.before.save', array($this, $newmall));
 
             $newmall->save();
+
+            // Insert to mall_countries
+            $checkMallCountry = MallCountry::where('country_id', $country_id)->first();
+            if (empty($checkMallCountry)) {
+              $countryName = Country::where('code', $country_id)->first();
+
+              $new_mall_country = new MallCountry();
+              $new_mall_country->country_id = $country_id;
+              $new_mall_country->country = $countryName->name;
+              $new_mall_country->save();
+            }
+
+            // Insert to mall_cities
+            $checkMallCity = MallCity::where('city', $city)->first();
+            if (empty($checkMallCity)) {
+              $new_mall_city = new MallCity();
+              $new_mall_city->city = $city;
+              $new_mall_city->save();
+            }
+
+            // Insert vendor_gtm_country
+            $checkVendorGtmCountry = VendorGTMCountry::where('gtm_city', $city)->first();
+            if (empty($checkVendorGtmCountry)) {
+                $countryName = Country::where('code', $country_id)->first();
+
+                $new_vendor_gtm_country = new VendorGTMCountry();
+                $new_vendor_gtm_country->vendor_country = $ipcountry;
+                $new_vendor_gtm_country->gtm_country =$countryName->name;
+                $new_vendor_gtm_country->save();
+            }
+
+            // Insert vendor_gtm_city
+            $checkVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->first();
+            if (! empty($checkVendorGtmCity)) {
+              // Delete first if exist gtm_city
+              $deleteVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->delete();
+            }
+
+            foreach ($ipcity => $vendorCity) {
+              $new_vendor_gtm_city = new VendorGTMCity();
+              $new_vendor_gtm_city->vendor_city = $vendorCity;
+              $new_vendor_gtm_city->gtm_city = $city;
+              $new_vendor_gtm_city->country_id = $country_id;
+              $new_vendor_gtm_city->save();
+            }
 
             // languages
             // @author irianto <irianto@dominopos.com>
@@ -737,6 +788,13 @@ class MallAPIController extends ControllerAPI
                 // For response
                 $newmall->facebook_uri = OrbitInput::post('facebook_uri');
             }
+
+
+
+
+
+
+
 
             // save geo location mall
             // @author irianto <irianto@dominopos.com>
