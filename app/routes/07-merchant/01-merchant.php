@@ -63,3 +63,15 @@ Route::get('/api/v1/merchant/merchant/partner', function()
 });
 
 Route::get('/app/v1/merchant/merchant/partner', ['as' => 'merchant-api-merchant-partner', 'uses' => 'IntermediateMerchantAuthController@Merchant\MerchantPartner_getMerchantPartner']);
+
+/**
+ * List/Search country
+ */
+Route::get('/api/v1/merchant/country/{search}', function()
+{
+    return Orbit\Controller\API\v1\Merchant\CountryListAPIController::create()->getSearchCountry();
+})
+->where('search', '(list|search)');
+
+Route::get('/app/v1/merchant/country/{search}', ['as' => 'merchant-api-country-list', 'uses' => 'IntermediateMerchantAuthController@CountryList_getSearchCountry'])
+	->where('search', '(list|search)');

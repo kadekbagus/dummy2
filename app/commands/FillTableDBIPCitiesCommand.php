@@ -4,7 +4,7 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class FillTableDBIPCountries extends Command
+class FillTableDBIPCitiesCommand extends Command
 {
 
     /**
@@ -12,14 +12,14 @@ class FillTableDBIPCountries extends Command
      *
      * @var string
      */
-    protected $name = 'db-ip:fill-countries';
+    protected $name = 'db-ip:fill-cities';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Fill table db_ip_countries.';
+    protected $description = 'Fill table db_ip_cities.';
 
     /**
      * Create a new command instance.
@@ -44,28 +44,30 @@ class FillTableDBIPCountries extends Command
             $this->info('[DRY RUN MODE - Not Insert on DB] ');
         }
 
-        // get country from DB IP
+        // get city from DB IP
         $db_ip = DB::connection(Config::get('orbit.dbip.connection_id'))
                             ->table(Config::get('orbit.dbip.table'))
-                            ->select('country')
-                            ->groupby('country')
+                            ->select('country', 'city')
+                            ->groupby('city')
                             ->get();
 
         foreach ($db_ip as $key => $_db_ip) {
-            $db_ip_country = DBIPCountry::where('country', $_db_ip->country)
+            $db_ip_city = DBIPCity::where('country', $_db_ip->country)
+                                ->where('city', $_db_ip->city)
                                 ->first();
 
-            if (empty($db_ip_country)) {
-                $new_db_ip_country = new DBIPCountry();
-                $new_db_ip_country->country = $_db_ip->country;
+            if (empty($db_ip_city)) {
+                $new_db_ip_city = new DBIPCity();
+                $new_db_ip_city->country = $_db_ip->country;
+                $new_db_ip_city->city = $_db_ip->city;
 
                 if (! $dryRun) {
-                    $new_db_ip_country->save();
+                    $new_db_ip_city->save();
                 }
 
-                $this->info(sprintf("Insert country %s", $_db_ip->country));
+                $this->info(sprintf("Insert city %s on country %s", $_db_ip->city, $_db_ip->country));
             } else {
-                $this->info(sprintf("Country %s, already exist", $_db_ip->country));
+                $this->info(sprintf("City %s on country %s, already exist", $_db_ip->city, $_db_ip->country));
             }
         }
         $this->info("Done");
@@ -90,7 +92,7 @@ class FillTableDBIPCountries extends Command
     protected function getOptions()
     {
         return array(
-            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to db_ip_countries.', null),
+            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to db_ip_cities.', null),
         );
     }
 

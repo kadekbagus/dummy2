@@ -75,6 +75,8 @@ class StoreAPIController extends PubControllerAPI
                                        ->setKeyPrefix($cacheContext . '-keyword-search');
         $advertCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-adverts');
+        $countCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-store-count');
 
         try {
             $user = $this->getUser();
@@ -96,6 +98,7 @@ class StoreAPIController extends PubControllerAPI
             $no_total_records = OrbitInput::get('no_total_records', null);
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
+            $withCache = TRUE;
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -122,7 +125,7 @@ class StoreAPIController extends PubControllerAPI
             // Make sure there is no missing one.
             $cacheKey = [
                 'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
-                'location' => $location, 'ul' => $ul,
+                'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
                 'list_type' => $list_type,
@@ -258,12 +261,13 @@ class StoreAPIController extends PubControllerAPI
             });
 
             // filter by location (city or user location)
-            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance, &$withInnerHits)
+            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance, &$withInnerHits, &$withCache)
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
                     $withInnerHits = true;
                     if ($location === 'mylocation' && $lat != '' && $lon != '') {
+                        $withCache = FALSE;
                         $locationFilter = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'tenant_detail.position' => array('lon' => $lon, 'lat' => $lat))))), 'inner_hits' => new stdclass()));
                         $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
                     } elseif ($location !== 'mylocation') {
@@ -276,7 +280,8 @@ class StoreAPIController extends PubControllerAPI
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $sort = array('_geo_distance' => array('tenant_detail.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
+                $withCache = FALSE;
+                $sort = array('_geo_distance' => array('nested_path' => 'tenant_detail', 'tenant_detail.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'updated_date') {
                 $sort = array('updated_at' => array('order' => $sort_mode));
             } else {
@@ -355,11 +360,15 @@ class StoreAPIController extends PubControllerAPI
                          ->groupBy(DB::raw("adv.link_object_id"))
                          ->take(100);
 
-            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-            $advertData = $advertCache->get($serializedCacheKey, function() use ($advertList) {
-                return $advertList->get();
-            });
-            $advertCache->put($serializedCacheKey, $advertData);
+            if ($withCache) {
+                $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+                $advertData = $advertCache->get($serializedCacheKey, function() use ($advertList) {
+                    return $advertList->get();
+                });
+                $advertCache->put($serializedCacheKey, $advertData);
+            } else {
+                $advertData = $advertList->get();
+            }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $_jsonQuery = $jsonQuery;
@@ -375,10 +384,14 @@ class StoreAPIController extends PubControllerAPI
                     'body' => json_encode($_jsonQuery)
                 ];
 
-                $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
-                    return $client->search($_esParam);
-                });
-                $keywordSearchCache->put($serializedCacheKey, $searchResponse);
+                if ($withCache) {
+                    $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
+                        return $client->search($_esParam);
+                    });
+                    $keywordSearchCache->put($serializedCacheKey, $searchResponse);
+                } else {
+                    $searchResponse = $client->search($_esParam);
+                }
 
                 $searchData = $searchResponse['hits'];
 
@@ -432,10 +445,14 @@ class StoreAPIController extends PubControllerAPI
                 'body' => json_encode($jsonQuery)
             ];
 
-            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
-                return $client->search($esParam);
-            });
-            $recordCache->put($serializedCacheKey, $response);
+            if ($withCache) {
+                $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
+                    return $client->search($esParam);
+                });
+                $recordCache->put($serializedCacheKey, $response);
+            } else {
+                $response = $client->search($esParam);
+            }
 
             $records = $response['hits'];
 
@@ -456,6 +473,24 @@ class StoreAPIController extends PubControllerAPI
 
                     $data[$key] = $value;
                     $data['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+
+                    // translation, to get name, desc and image
+                    if ($key === "translation") {
+                        foreach ($record['_source']['translation'] as $dt) {
+
+                            if ($dt['language_code'] == $language) {
+                                // name & desc
+                                if (! empty($dt['description'])) {
+                                    $data['description'] = $dt['description'];
+                                }
+                            } else {
+                                // name & desc
+                                if (! empty($dt['description']) && empty($data['description'])) {
+                                    $data['description'] = $dt['description'];
+                                }
+                            }
+                        }
+                    }
 
                     // advert
                     if ($key === "merchant_id") {
@@ -478,8 +513,6 @@ class StoreAPIController extends PubControllerAPI
                 }
 
                 if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
-                    $innerHitsCount = $innerHitsCount + $record['inner_hits']['tenant_detail']['hits']['total'];
-
                     if (! empty($mallId)) {
                         $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
                     }
@@ -506,6 +539,32 @@ class StoreAPIController extends PubControllerAPI
             $mall = null;
             if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
+            }
+
+            if ($withInnerHits) {
+                $jsonQueryCount = $jsonQuery;
+                $jsonQueryCount['from'] = 0;
+                $jsonQueryCount['size'] = $records['total'];
+                $esParamCount = [
+                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                    'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
+                    'body' => json_encode($jsonQueryCount)
+                ];
+
+                if ($withCache) {
+                    $responseCount = $countCache->get($serializedCacheKey, function() use ($client, &$esParamCount) {
+                        return $client->search($esParamCount);
+                    });
+                    $countCache->put($serializedCacheKey, $responseCount);
+                } else {
+                    $responseCount = $client->search($esParamCount);
+                }
+
+                foreach ($responseCount['hits']['hits'] as $record) {
+                    if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
+                        $innerHitsCount = $innerHitsCount + $record['inner_hits']['tenant_detail']['hits']['total'];
+                    }
+                }
             }
 
             $totalStores = $response['aggregations']['count']['doc_count'];
@@ -1040,7 +1099,6 @@ class StoreAPIController extends PubControllerAPI
                 'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance,
-                'ul' => $ul,
                 'take' => $take,
                 'skip' => $skip,
             ];

@@ -79,6 +79,8 @@ class NewsListAPIController extends PubControllerAPI
             $sort_mode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
+            $cityFilters = OrbitInput::get('cities', null);
+            $countryFilter = OrbitInput::get('country', null);
             $ul = OrbitInput::get('ul', null);
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance', 10);
@@ -90,6 +92,7 @@ class NewsListAPIController extends PubControllerAPI
             $no_total_records = OrbitInput::get('no_total_records', null);
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
+            $withCache = TRUE;
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -111,12 +114,13 @@ class NewsListAPIController extends PubControllerAPI
             // Make sure there is no missing one.
             $cacheKey = [
                 'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
-                'location' => $location, 'ul' => $ul,
+                'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
                 'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
+                'country' => $countryFilter, 'cities' => $cityFilters,
             ];
 
             // Run the validation
@@ -234,12 +238,13 @@ class NewsListAPIController extends PubControllerAPI
             });
 
             // filter by location (city or user location)
-            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance)
+            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance, &$withCache)
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
 
                     if ($location === 'mylocation' && $lat != '' && $lon != '') {
+                        $withCache = FALSE;
                         $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat)))))));
                         $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
                     } elseif ($location !== 'mylocation') {
@@ -249,10 +254,28 @@ class NewsListAPIController extends PubControllerAPI
                 }
             });
 
+            // filter by country and city
+            if (! empty($countryFilter) && ! empty((array) $cityFilters))
+            {
+                $searchFlag = $searchFlag || TRUE;
+
+                $countryFilterArr = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.country.raw' => $countryFilter))))));
+
+                $jsonQuery['query']['filtered']['filter']['and'][] = $countryFilterArr;
+
+                $cityFilterArr = [];
+                foreach ((array) $cityFilters as $cityFilter) {
+                    $cityFilterArr[] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $cityFilter))))));
+                }
+
+                $jsonQuery['query']['filtered']['filter']['and'][]['or'] = $cityFilterArr;
+            };
+
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $sort = array('_geo_distance' => array('link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
+                $withCache = FALSE;
+                $sort = array('_geo_distance' => array('nested_path' => 'link_to_tenant', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'created_date') {
                 $sort = array('begin_date' => array('order' => $sort_mode));
             } elseif ($sort_by === 'updated_date') {
@@ -290,11 +313,15 @@ class NewsListAPIController extends PubControllerAPI
                 'body' => json_encode($jsonQuery)
             ];
 
-            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
-                return $client->search($esParam);
-            });
-            $recordCache->put($serializedCacheKey, $response);
+            if ($withCache) {
+                $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+                $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
+                    return $client->search($esParam);
+                });
+                $recordCache->put($serializedCacheKey, $response);
+            } else {
+                $response = $client->search($esParam);
+            }
 
             $records = $response['hits'];
 

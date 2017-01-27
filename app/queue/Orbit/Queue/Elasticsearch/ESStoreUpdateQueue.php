@@ -49,6 +49,7 @@ class ESStoreUpdateQueue
         $prefix = DB::getTablePrefix();
         $esConfig = Config::get('orbit.elasticsearch');
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+        $updateRelated = (empty($data['updated_related']) ? FALSE : $data['updated_related']);
 
         $storeName = $data['name'];
         $store = Tenant::with('keywords','translations','adverts','campaignObjectPartners', 'categories')
@@ -229,10 +230,12 @@ class ESStoreUpdateQueue
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
-            // update es coupon, news, and promotion
-            $this->updateESCoupon($store);
-            $this->updateESNews($store);
-            $this->updateESPromotion($store);
+            if ($updateRelated) {
+                // update es coupon, news, and promotion
+                $this->updateESCoupon($store);
+                $this->updateESNews($store);
+                $this->updateESPromotion($store);
+            }
 
             // Safely delete the object
             $job->delete();

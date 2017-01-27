@@ -81,6 +81,7 @@ class ESMallUpdateQueue
         $esConfig = Config::get('orbit.elasticsearch');
         $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+        $updateRelated = (empty($data['updated_related']) ? FALSE : $data['updated_related']);
 
         try {
             // check exist elasticsearch index
@@ -172,11 +173,13 @@ class ESMallUpdateQueue
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
-            // update es coupon, news, and promotion
-            $this->updateESCoupon($mall);
-            $this->updateESNews($mall);
-            $this->updateESPromotion($mall);
-            $this->updateESStore($mall);
+            if ($updateRelated) {
+                // update es coupon, news, and promotion
+                $this->updateESCoupon($mall);
+                $this->updateESNews($mall);
+                $this->updateESPromotion($mall);
+                $this->updateESStore($mall);
+            }
 
             // Safely delete the object
             $job->delete();
