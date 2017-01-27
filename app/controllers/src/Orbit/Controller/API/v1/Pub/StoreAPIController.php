@@ -75,6 +75,8 @@ class StoreAPIController extends PubControllerAPI
                                        ->setKeyPrefix($cacheContext . '-keyword-search');
         $advertCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-adverts');
+        $countCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-store-count');
 
         try {
             $user = $this->getUser();
@@ -493,8 +495,6 @@ class StoreAPIController extends PubControllerAPI
                 }
 
                 if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
-                    $innerHitsCount = $innerHitsCount + $record['inner_hits']['tenant_detail']['hits']['total'];
-
                     if (! empty($mallId)) {
                         $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
                     }
@@ -521,6 +521,32 @@ class StoreAPIController extends PubControllerAPI
             $mall = null;
             if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
+            }
+
+            if ($withInnerHits) {
+                $jsonQueryCount = $jsonQuery;
+                $jsonQueryCount['from'] = 0;
+                $jsonQueryCount['size'] = $records['total'];
+                $esParamCount = [
+                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                    'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
+                    'body' => json_encode($jsonQueryCount)
+                ];
+
+                if ($withCache) {
+                    $responseCount = $countCache->get($serializedCacheKey, function() use ($client, &$esParamCount) {
+                        return $client->search($esParamCount);
+                    });
+                    $countCache->put($serializedCacheKey, $responseCount);
+                } else {
+                    $responseCount = $client->search($esParamCount);
+                }
+
+                foreach ($responseCount['hits']['hits'] as $record) {
+                    if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
+                        $innerHitsCount = $innerHitsCount + $record['inner_hits']['tenant_detail']['hits']['total'];
+                    }
+                }
             }
 
             $totalStores = $response['aggregations']['count']['doc_count'];
