@@ -41,8 +41,6 @@ class DBIPAPIController extends ControllerAPI
 
             Event::fire('orbit.mall.getsearchdbipcountry.after.authz', array($this, $user));
 
-            $this->registerCustomValidation();
-
             $sort_by = OrbitInput::get('sortby');
             $validator = Validator::make(
                 array(
@@ -241,8 +239,6 @@ class DBIPAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.mall.getsearchdbipcity.after.authz', array($this, $user));
-
-            $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
             $validator = Validator::make(
