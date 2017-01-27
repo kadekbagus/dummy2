@@ -155,6 +155,19 @@ Artisan::add(new GetListActiveCouponCommand);
 // List all active stores
 Artisan::add(new GetListActiveStoreCommand);
 
+// Fill table mall_countries
+Artisan::add(new FillTableMallCountries);
+
+// Fill table mall_cities
+Artisan::add(new FillTableMallCities);
+
+// Fill table db_ip_countries
+Artisan::add(new FillTableDBIPCountries);
+
+// Fill table db_ip_cities
+Artisan::add(new FillTableDBIPCities);
+
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
