@@ -167,6 +167,11 @@ Artisan::add(new FillTableDBIPCountries);
 // Fill table db_ip_cities
 Artisan::add(new FillTableDBIPCities);
 
+// Map Country Vendor to GTM
+Artisan::add(new MapVendorCoutries);
+
+// Map Country Vendor to GTM
+Artisan::add(new MapVendorCities);
 
 // Insert or update data on settings table
 // @Todo investigate why its error
