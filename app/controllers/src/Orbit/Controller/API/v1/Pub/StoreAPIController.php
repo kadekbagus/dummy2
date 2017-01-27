@@ -474,6 +474,24 @@ class StoreAPIController extends PubControllerAPI
                     $data[$key] = $value;
                     $data['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
 
+                    // translation, to get name, desc and image
+                    if ($key === "translation") {
+                        foreach ($record['_source']['translation'] as $dt) {
+
+                            if ($dt['language_code'] == $language) {
+                                // name & desc
+                                if (! empty($dt['description'])) {
+                                    $data['description'] = $dt['description'];
+                                }
+                            } else {
+                                // name & desc
+                                if (! empty($dt['description']) && empty($data['description'])) {
+                                    $data['description'] = $dt['description'];
+                                }
+                            }
+                        }
+                    }
+
                     // advert
                     if ($key === "merchant_id") {
                         $data['placement_type'] = null;
