@@ -281,7 +281,7 @@ class StoreAPIController extends PubControllerAPI
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withCache = FALSE;
-                $sort = array('_geo_distance' => array('tenant_detail.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
+                $sort = array('_geo_distance' => array('nested_path' => 'tenant_detail', 'tenant_detail.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'updated_date') {
                 $sort = array('updated_at' => array('order' => $sort_mode));
             } else {
