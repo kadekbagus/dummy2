@@ -155,6 +155,9 @@ Artisan::add(new GetListActiveCouponCommand);
 // List all active stores
 Artisan::add(new GetListActiveStoreCommand);
 
+// List all active malls
+Artisan::add(new GetListActiveMallCommand);
+
 // Fill table mall_countries
 Artisan::add(new FillTableMallCountries);
 

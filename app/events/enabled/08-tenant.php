@@ -181,7 +181,8 @@ Event::listen('orbit.tenant.postupdatetenant.after.commit', function($controller
     // update the store on elasticsearch
     // Notify the queueing system to update Elasticsearch document
     Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
-        'name' => $tenant->name
+        'name' => $tenant->name,
+        'updated_related' => TRUE
     ]);
 });
 
