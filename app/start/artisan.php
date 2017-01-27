@@ -155,6 +155,9 @@ Artisan::add(new GetListActiveCouponCommand);
 // List all active stores
 Artisan::add(new GetListActiveStoreCommand);
 
+// List all active stores
+Artisan::add(new GetListActiveMallCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
