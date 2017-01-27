@@ -67,7 +67,7 @@ class LocationDetectionAPIController extends PubControllerAPI
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = [$e->getMessage(), $e->getLine()];
+            $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
         }
@@ -134,8 +134,7 @@ class LocationDetectionAPIController extends PubControllerAPI
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
 
         // get the client IP
-        // $clientIpAddress = $_SERVER['REMOTE_ADDR'];
-        $clientIpAddress = '101.128.117.61';
+        $clientIpAddress = $_SERVER['REMOTE_ADDR'];
 
         // set cache key for this IP Address
         $cacheKey = ['ip_address' => $clientIpAddress];
