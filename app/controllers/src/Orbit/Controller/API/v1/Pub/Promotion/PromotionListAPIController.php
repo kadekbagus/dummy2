@@ -96,6 +96,7 @@ class PromotionListAPIController extends PubControllerAPI
             $no_total_records = OrbitInput::get('no_total_records', null);
             $take = PaginationNumber::parseTakeFromGet('promotion');
             $skip = PaginationNumber::parseSkipFromGet();
+            $withCache = TRUE;
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -117,7 +118,7 @@ class PromotionListAPIController extends PubControllerAPI
             // Make sure there is no missing one.
             $cacheKey = [
                 'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
-                'location' => $location, 'ul' => $ul,
+                'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
                 'with_premium' => $withPremium, 'list_type' => $list_type,
@@ -247,11 +248,11 @@ class PromotionListAPIController extends PubControllerAPI
             });
 
             // filter by location (city or user location)
-            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance)
+            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance, &$withCache)
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
-
+                    $withCache = FALSE;
                     if ($location === 'mylocation' && $lat != '' && $lon != '') {
                         $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat)))))));
                         $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
@@ -265,7 +266,8 @@ class PromotionListAPIController extends PubControllerAPI
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $sort = array('_geo_distance' => array('link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
+                $withCache = FALSE;
+                $sort = array('_geo_distance' => array('nested_path' => 'link_to_tenant', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'created_date') {
                 $sort = array('begin_date' => array('order' => $sort_mode));
             } elseif ($sort_by === 'updated_date') {
@@ -330,11 +332,15 @@ class PromotionListAPIController extends PubControllerAPI
                          ->groupBy(DB::raw("adv.link_object_id"))
                          ->take(100);
 
-            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-            $advertData = $advertCache->get($serializedCacheKey, function() use ($advertList) {
-                return $advertList->get();
-            });
-            $advertCache->put($serializedCacheKey, $advertData);
+            if ($withCache) {
+                $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+                $advertData = $advertCache->get($serializedCacheKey, function() use ($advertList) {
+                    return $advertList->get();
+                });
+                $advertCache->put($serializedCacheKey, $advertData);
+            } else {
+                $advertData = $advertList->get();
+            }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $_jsonQuery = $jsonQuery;
@@ -350,10 +356,14 @@ class PromotionListAPIController extends PubControllerAPI
                     'body' => json_encode($_jsonQuery)
                 ];
 
-                $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
-                    return $client->search($_esParam);
-                });
-                $keywordSearchCache->put($serializedCacheKey, $searchResponse);
+                if ($withCache) {
+                    $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
+                        return $client->search($_esParam);
+                    });
+                    $keywordSearchCache->put($serializedCacheKey, $searchResponse);
+                } else {
+                    $searchResponse = $client->search($_esParam);
+                }
 
                 $searchData = $searchResponse['hits'];
 
@@ -423,10 +433,14 @@ class PromotionListAPIController extends PubControllerAPI
                 'body' => json_encode($jsonQuery)
             ];
 
-            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
-                return $client->search($esParam);
-            });
-            $recordCache->put($serializedCacheKey, $response);
+            if ($withCache) {
+                $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
+                    return $client->search($esParam);
+                });
+                $recordCache->put($serializedCacheKey, $response);
+            } else {
+                $response = $client->search($esParam);
+            }
 
             $records = $response['hits'];
 
