@@ -9,9 +9,8 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
-use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
-use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
+
 
 class DBIPAPIController extends ControllerAPI
 {
@@ -41,8 +40,6 @@ class DBIPAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.mall.getsearchdbipcountry.after.authz', array($this, $user));
-
-            $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
             $validator = Validator::make(
@@ -242,8 +239,6 @@ class DBIPAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.mall.getsearchdbipcity.after.authz', array($this, $user));
-
-            $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
             $validator = Validator::make(
