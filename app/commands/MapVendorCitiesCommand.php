@@ -3,7 +3,7 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class MapVendorCities extends Command
+class MapVendorCitiesCommand extends Command
 {
     /**
      * The console command name.
@@ -86,9 +86,9 @@ class MapVendorCities extends Command
                 $this->info('[DRY RUN MODE - Not Insert on DB] ');
             }
 
-            $gtm_country = trim($data["country"]);
-            $vendor_city = trim($data["vendor_city"]);
-            $gtm_cities = $data["gtm_cities"];
+            $gtm_country = trim($data['country']);
+            $vendor_city = trim($data['vendor_city']);
+            $gtm_cities = $data['gtm_cities'];
 
             $validation_data = [
                 'gtm_country' => $gtm_country,
