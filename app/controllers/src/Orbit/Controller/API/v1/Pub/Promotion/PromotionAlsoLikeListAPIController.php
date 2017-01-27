@@ -123,25 +123,6 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
             $promotion->skip($skip);
 
             $listOfRec = $promotion->get();
-            $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-            $localPath = '';
-            $cdnPath = '';
-            $listId = '';
-
-            if (! empty($listOfRec)) {
-                foreach ($listOfRec as $list) {
-                    if ($listId != $list->news_id) {
-                        $localPath = '';
-                        $cdnPath = '';
-                        $list->image_url = '';
-                    }
-                    $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
-                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
-                    $list->image_url = $imgUrl->getImageUrl($localPath, $cdnPath);
-                    $listId = $list->news_id;
-                }
-            }
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
@@ -249,29 +230,24 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
             $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
         }
 
+        $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+        $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+        $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+        $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+        if ($usingCdn) {
+            $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+        }
+
         $promotions = News::select(
                         'news.news_id as news_id',
                         DB::Raw("
                             CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                             CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
-                            CASE WHEN {$prefix}media.path is null THEN (
-                                select m.path
-                                from {$prefix}news_translations nt
-                                join {$prefix}media m
-                                    on m.object_id = nt.news_translation_id
-                                    and m.media_name_long = 'news_translation_image_orig'
-                                where nt.news_id = {$prefix}news.news_id
-                                group by nt.news_id
-                            ) ELSE {$prefix}media.path END as localPath,
-                            CASE WHEN {$prefix}media.cdn_url is null THEN (
-                                select m.cdn_url
-                                from {$prefix}news_translations nt
-                                join {$prefix}media m
-                                    on m.object_id = nt.news_translation_id
-                                    and m.media_name_long = 'news_translation_image_orig'
-                                where nt.news_id = {$prefix}news.news_id
-                                group by nt.news_id
-                            ) ELSE {$prefix}media.cdn_url END as cdnPath
+                            (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id) AS image_url
                         "),
                         'news.object_type',
                         // query for get status active based on timezone
@@ -302,10 +278,6 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
                             $q->on('news_translations.news_id', '=', 'news.news_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', function ($q) {
-                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
-                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
-                        })
                         ->whereRaw("{$prefix}news.object_type = 'promotion'")
                         ->whereRaw("{$prefix}news.status = 'active'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -423,10 +395,10 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
         $promotions = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($promotions_query);
 
         if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-            $promotions = $promotions->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'localPath', 'cdnPath', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.begin_date"))
+            $promotions = $promotions->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.begin_date"))
                                    ->orderBy('distance', 'asc');
         } else {
-            $promotions = $promotions->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'localPath', 'cdnPath', 'campaign_status', 'is_started', DB::raw("sub_query.begin_date"));
+            $promotions = $promotions->select(DB::raw("sub_query.news_id"), 'news_name', 'description', DB::raw("sub_query.object_type"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.begin_date"));
         }
 
         $promotions = $promotions->groupBy(DB::Raw("sub_query.news_id"));

@@ -81,9 +81,9 @@ class CouponDetailAPIController extends PubControllerAPI
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
-            $image = "CONCAT({$this->quote($urlPrefix)}, media.path) as original_media_path";
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
             if ($usingCdn) {
-                $image = "CASE WHEN (media.cdn_url is null or media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, media.path) ELSE media.cdn_url END as original_media_path";
+                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
             }
 
             $coupon = Coupon::select(
@@ -91,7 +91,10 @@ class CouponDetailAPIController extends PubControllerAPI
                             DB::Raw("
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
-                                    {$image}
+                                    (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) AS original_media_path
                                 "),
                             'promotions.end_date',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
@@ -136,15 +139,6 @@ class CouponDetailAPIController extends PubControllerAPI
                               ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin(DB::raw("(SELECT {$prefix}coupon_translations.promotion_id, {$prefix}media.path,
-                                (CASE WHEN ({$prefix}media.path = '' OR {$prefix}media.path is null) THEN 0 ELSE 1 END) AS totalRow,
-                                {$prefix}media.cdn_url
-                            FROM {$prefix}media
-                            LEFT JOIN {$prefix}coupon_translations ON {$prefix}media.object_id = {$prefix}coupon_translations.coupon_translation_id
-                                AND {$prefix}media.media_name_long = 'coupon_translation_image_orig'
-                            GROUP BY object_id
-                            HAVING totalRow > 0
-                            ORDER BY {$prefix}media.object_id = (SELECT coupon_translation_id FROM {$prefix}coupon_translations WHERE merchant_language_id = {$this->quote($valid_language->language_id)} and promotion_id = {$this->quote($couponId)}) DESC) as media"), DB::raw("media.promotion_id"), '=', 'promotions.promotion_id')
                         ->leftJoin('issued_coupons', function ($q) use ($user) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));

@@ -124,25 +124,6 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
-            $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-            $localPath = '';
-            $cdnPath = '';
-            $listId = '';
-
-            if (! empty($listcoupon)) {
-                foreach ($listcoupon as $list) {
-                    if ($listId != $list->coupon_id) {
-                        $localPath = '';
-                        $cdnPath = '';
-                        $list->image_url = '';
-                    }
-                    $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
-                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
-                    $list->image_url = $imgUrl->getImageUrl($localPath, $cdnPath);
-                    $listId = $list->coupon_id;
-                }
-            }
 
             $data = new \stdclass();
             $data->returned_records = count($listcoupon);
@@ -257,6 +238,15 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
             $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
         }
 
+        $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+        $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+        $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+        $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+        if ($usingCdn) {
+            $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+        }
+
         $coupons = DB::table('promotions')->select(DB::raw("{$prefix}promotions.promotion_id as coupon_id,
                             CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                             CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
@@ -280,24 +270,10 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
                                         AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
                             THEN 'true' ELSE 'false' END AS is_started"),
                             DB::raw("
-                                    CASE WHEN {$prefix}media.path is null THEN (
-                                        select m.path
-                                        from {$prefix}coupon_translations ct
-                                        join {$prefix}media m
-                                            on m.object_id = ct.coupon_translation_id
-                                            and m.media_name_long = 'coupon_translation_image_orig'
-                                        where ct.promotion_id = {$prefix}promotions.promotion_id
-                                        group by ct.promotion_id
-                                    ) ELSE {$prefix}media.cdn_url END as localPath,
-                                    CASE WHEN {$prefix}media.cdn_url is null THEN (
-                                        select m.cdn_url
-                                        from {$prefix}coupon_translations ct
-                                        join {$prefix}media m
-                                            on m.object_id = ct.coupon_translation_id
-                                            and m.media_name_long = 'coupon_translation_image_orig'
-                                        where ct.promotion_id = {$prefix}promotions.promotion_id
-                                        group by ct.promotion_id
-                                    ) ELSE {$prefix}media.cdn_url END as cdnPath
+                                (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) AS image_url
                                 "),
                             'promotions.begin_date')
                         ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
@@ -307,10 +283,6 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
                               ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                         })
                         ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-                        ->leftJoin('media', function ($q) {
-                            $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
-                            $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
-                        })
                         ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
                         ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                         ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
@@ -427,10 +399,10 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
         $coupons = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupons);
 
         if ($sort_by === 'location' && !empty($lon) && !empty($lat)) {
-            $coupons = $coupons->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'localPath', 'cdnPath', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.begin_date"))
+            $coupons = $coupons->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'image_url', 'campaign_status', 'is_started', DB::raw("min(distance) as distance"), DB::raw("sub_query.begin_date"))
                                    ->orderBy('distance', 'asc');
         } else {
-            $coupons = $coupons->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'localPath', 'cdnPath', 'campaign_status', 'is_started', DB::raw("sub_query.begin_date"));
+            $coupons = $coupons->select('coupon_id', 'coupon_name', DB::raw("sub_query.description"), DB::raw("sub_query.status"), 'image_url', 'campaign_status', 'is_started', DB::raw("sub_query.begin_date"));
         }
 
         $coupons = $coupons->groupBy(DB::Raw("coupon_id"));
