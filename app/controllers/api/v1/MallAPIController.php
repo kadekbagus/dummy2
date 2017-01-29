@@ -320,8 +320,8 @@ class MallAPIController extends ControllerAPI
             $is_subscribed = OrbitInput::post('is_subscribed', 'Y');
             $logo = OrbitInput::files('logo');
             $maps = OrbitInput::files('maps');
-            $ipcountry = OrbitInput::files('ipcountry');
-            $ipcity = OrbitInput::files('ipcity');
+            $ipcountry = OrbitInput::post('ipcountry');
+            $ipcity = OrbitInput::post('ipcity', []);
 
             // generate array validation image
             $logo_validation = $this->generate_validation_image('mall_logo', $logo, 'orbit.upload.mall.logo');
@@ -552,12 +552,11 @@ class MallAPIController extends ControllerAPI
             $newmall->save();
 
             // Insert to mall_countries
-            $checkMallCountry = MallCountry::where('country_id', $country_id)->first();
-            if (empty($checkMallCountry)) {
-              $countryName = Country::where('code', $country_id)->first();
-
+            $countryName = Country::where('country_id', $country)->first();
+            $existkMallCountry = MallCountry::where('country_id', $country)->first();
+            if (empty($existkMallCountry)) {
               $new_mall_country = new MallCountry();
-              $new_mall_country->country_id = $country_id;
+              $new_mall_country->country_id = $country;
               $new_mall_country->country = $countryName->name;
               $new_mall_country->save();
             }
@@ -571,10 +570,8 @@ class MallAPIController extends ControllerAPI
             }
 
             // Insert vendor_gtm_country
-            $checkVendorGtmCountry = VendorGTMCountry::where('gtm_city', $city)->first();
-            if (empty($checkVendorGtmCountry)) {
-                $countryName = Country::where('code', $country_id)->first();
-
+            $existVendorGtmCountry = VendorGTMCountry::where('gtm_country', $countryName->name)->first();
+            if (empty($existVendorGtmCountry)) {
                 $new_vendor_gtm_country = new VendorGTMCountry();
                 $new_vendor_gtm_country->vendor_country = $ipcountry;
                 $new_vendor_gtm_country->gtm_country =$countryName->name;
@@ -588,11 +585,11 @@ class MallAPIController extends ControllerAPI
               $deleteVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->delete();
             }
 
-            foreach ($ipcity => $vendorCity) {
+            foreach ($ipcity as $vendorCity) {
               $new_vendor_gtm_city = new VendorGTMCity();
               $new_vendor_gtm_city->vendor_city = $vendorCity;
               $new_vendor_gtm_city->gtm_city = $city;
-              $new_vendor_gtm_city->country_id = $country_id;
+              $new_vendor_gtm_city->country_id = $country;
               $new_vendor_gtm_city->save();
             }
 
