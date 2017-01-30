@@ -1054,6 +1054,7 @@ class MallAPIController extends ControllerAPI
             $malls = Mall::excludeDeleted('merchants')
                                 ->select(
                                         'merchants.*',
+                                        'countries.code as country_code',
                                         DB::raw("TRIM(TRAILING {$this->quote($subdomain)} FROM {$prefix}merchants.ci_domain) as subdomain"),
                                         DB::raw('count(tenant.merchant_id) AS total_tenant'),
                                         DB::raw('mall_group.name AS mall_group_name'),
@@ -1118,6 +1119,7 @@ class MallAPIController extends ControllerAPI
                                     })
                                 ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
                                 ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
+                                ->join('countries', 'countries.country_id', '=', 'merchants.country_id')
                                 ->groupBy('merchants.merchant_id');
 
             // Filter mall by Ids
