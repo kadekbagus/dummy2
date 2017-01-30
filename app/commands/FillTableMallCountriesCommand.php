@@ -50,15 +50,15 @@ class FillTableMallCountriesCommand extends Command
         }
 
         // get country from mall
-        $malls = Mall::select('merchant_id', 'country', 'country_id')
+        $malls = Mall::select('merchant_id', DB::raw('ctr.name as country'), DB::raw('ctr.country_id'))
+                    ->join('countries as ctr', DB::raw('ctr.country_id'), '=', 'merchants.country_id')
                     ->where('object_type', 'mall')
                     ->where('status', $status)
                     ->groupby('country')
                     ->get();
 
         foreach ($malls as $key => $mall) {
-            $mall_country = MallCountry::where('country', $mall->country)
-                                ->where('country_id', $mall->country_id)
+            $mall_country = MallCountry::where('country_id', $mall->country_id)
                                 ->first();
 
             if (empty($mall_country)) {

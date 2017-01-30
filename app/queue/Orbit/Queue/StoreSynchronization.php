@@ -17,6 +17,7 @@ use ObjectPartner;
 use BaseObjectPartner;
 use MerchantTranslation;
 use Media;
+use Country;
 use PreSync;
 use Sync;
 use Config;
@@ -158,10 +159,16 @@ class StoreSynchronization
                         $tenant = new Tenant;
                     }
 
+                    //country
+                    $countryId = $store->country_id;
+                    $countryName = Country::where('country_id', $countryId)->first();
+
                     $storeName = $store->name;
                     $tenant->merchant_id = $base_store_id;
                     $tenant->name = $store->name;
                     $tenant->description = $store->description;
+                    $tenant->country_id = $countryId;
+                    $tenant->country = $countryName->name;
                     $tenant->status = $store->status;
                     $tenant->logo = $store->path;
                     $tenant->object_type = 'tenant';

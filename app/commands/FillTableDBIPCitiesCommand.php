@@ -48,7 +48,7 @@ class FillTableDBIPCitiesCommand extends Command
         $db_ip = DB::connection(Config::get('orbit.dbip.connection_id'))
                             ->table(Config::get('orbit.dbip.table'))
                             ->select('country', 'city')
-                            ->groupby('city')
+                            ->groupby('city', 'country')
                             ->get();
 
         foreach ($db_ip as $key => $_db_ip) {
