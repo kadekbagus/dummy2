@@ -136,6 +136,7 @@ class BaseStore extends Eloquent
                                 'base_merchants.base_merchant_id',
                                 'base_merchants.name',
                                 'base_merchants.description',
+                                'base_merchants.country_id',
                                 'base_stores.status',
                                 DB::raw("media.path"),
                                 'base_stores.merchant_id',

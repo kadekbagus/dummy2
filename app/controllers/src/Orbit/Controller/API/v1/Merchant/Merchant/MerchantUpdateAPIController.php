@@ -63,8 +63,10 @@ class MerchantUpdateAPIController extends ControllerAPI
             $merchantHelper->merchantCustomValidator();
 
             $baseMerchantId = OrbitInput::post('base_merchant_id');
+            $merchantName = OrbitInput::post('merchant_name');
             $translations = OrbitInput::post('translations');
             $language = OrbitInput::get('language', 'en');
+            $countryId = OrbitInput::post('country_id');
             $keywords = OrbitInput::post('keywords');
             $keywords = (array) $keywords;
 
@@ -75,13 +77,18 @@ class MerchantUpdateAPIController extends ControllerAPI
                 array(
                     'baseMerchantId' => $baseMerchantId,
                     'translations'   => $translations,
+                    'merchantName'   => $merchantName,
+                    'country'        => $countryId
                 ),
                 array(
                     'baseMerchantId' => 'required|orbit.exist.base_merchant_id',
                     'translations'   => 'required',
+                    'merchantName'   => 'required|orbit.exist.merchant_name:' . $countryId,
+                    'country'        => 'required'
                 ),
                 array(
-                    'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid'
+                    'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid',
+                    'orbit.exist.merchant_name'    => 'Merchant is already exist'
                )
             );
 
@@ -97,6 +104,10 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             OrbitInput::post('website_url', function($website_url) use ($updatedBaseMerchant) {
                 $updatedBaseMerchant->url = $website_url;
+            });
+
+            OrbitInput::post('country_id', function($countryId) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->country_id = $countryId;
             });
 
             OrbitInput::post('facebook_url', function($facebook_url) use ($updatedBaseMerchant) {
