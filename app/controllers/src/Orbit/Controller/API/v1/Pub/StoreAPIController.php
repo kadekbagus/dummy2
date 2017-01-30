@@ -84,6 +84,8 @@ class StoreAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $location = OrbitInput::get('location', null);
+            $cityFilters = OrbitInput::get('cities', null);
+            $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $language = OrbitInput::get('language', 'id');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
@@ -132,7 +134,7 @@ class StoreAPIController extends PubControllerAPI
                 'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
-
+                'country' => $countryFilter, 'cities' => $cityFilters,
             ];
 
             // Run the validation
@@ -276,6 +278,27 @@ class StoreAPIController extends PubControllerAPI
                     }
                 }
             });
+
+            // filter by country and city
+            if (! empty($countryFilter) && ! empty((array) $cityFilters))
+            {
+                $searchFlag = $searchFlag || TRUE;
+                $withInnerHits = true;
+                $innerHitsCity = true;
+
+                $countryCityFilterArr = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => []], 'inner_hits' => ["name" => "country_city_hits"]]];
+
+                $countryCityFilterArr['nested']['query']['bool']['must'] = ['match' => ['tenant_detail.country.raw' => $countryFilter]];
+
+
+                foreach ((array) $cityFilters as $cityFilter) {
+                    $cityFilterArr[] = ['match' => ['tenant_detail.city.raw' => $cityFilter]];
+                }
+
+                $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
+
+                $jsonQuery['query']['filtered']['filter']['and'][] = $countryCityFilterArr;
+            };
 
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
@@ -561,8 +584,14 @@ class StoreAPIController extends PubControllerAPI
                 }
 
                 foreach ($responseCount['hits']['hits'] as $record) {
-                    if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
-                        $innerHitsCount = $innerHitsCount + $record['inner_hits']['tenant_detail']['hits']['total'];
+                    if ($innerHitsCity) {
+                        $hitsName = 'country_city_hits';
+                    } else {
+                        $hitsName = 'tenant_detail';
+                    }
+
+                    if (! empty($record['inner_hits'][$hitsName]['hits']['total'])) {
+                        $innerHitsCount = $innerHitsCount + $record['inner_hits'][$hitsName]['hits']['total'];
                     }
                 }
             }
