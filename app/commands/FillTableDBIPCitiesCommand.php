@@ -4,7 +4,7 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class FillTableMallCities extends Command
+class FillTableDBIPCitiesCommand extends Command
 {
 
     /**
@@ -12,14 +12,14 @@ class FillTableMallCities extends Command
      *
      * @var string
      */
-    protected $name = 'mall:fill-cities';
+    protected $name = 'db-ip:fill-cities';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Fill table mall_cities.';
+    protected $description = 'Fill table db_ip_cities.';
 
     /**
      * Create a new command instance.
@@ -38,39 +38,36 @@ class FillTableMallCities extends Command
      */
     public function fire()
     {
-        $status = $this->option('mall-status');
         $dryRun = $this->option('dry-run');
-
-        if (empty($status)) {
-            $status = 'active';
-        }
 
         if ($dryRun) {
             $this->info('[DRY RUN MODE - Not Insert on DB] ');
         }
 
-        // get country from mall
-        $malls = Mall::select('merchant_id', 'city', 'city_id')
-                    ->where('object_type', 'mall')
-                    ->where('status', $status)
-                    ->groupby('city')
-                    ->get();
+        // get city from DB IP
+        $db_ip = DB::connection(Config::get('orbit.dbip.connection_id'))
+                            ->table(Config::get('orbit.dbip.table'))
+                            ->select('country', 'city')
+                            ->groupby('city', 'country')
+                            ->get();
 
-        foreach ($malls as $key => $mall) {
-            $mall_city = MallCity::where('city', $mall->city)
+        foreach ($db_ip as $key => $_db_ip) {
+            $db_ip_city = DBIPCity::where('country', $_db_ip->country)
+                                ->where('city', $_db_ip->city)
                                 ->first();
 
-            if (empty($mall_city)) {
-                $new_mall_city = new MallCity();
-                $new_mall_city->city = $mall->city;
+            if (empty($db_ip_city)) {
+                $new_db_ip_city = new DBIPCity();
+                $new_db_ip_city->country = $_db_ip->country;
+                $new_db_ip_city->city = $_db_ip->city;
 
                 if (! $dryRun) {
-                    $new_mall_city->save();
+                    $new_db_ip_city->save();
                 }
 
-                $this->info(sprintf("Insert city %s", $mall->city));
+                $this->info(sprintf("Insert city %s on country %s", $_db_ip->city, $_db_ip->country));
             } else {
-                $this->info(sprintf("City %s, already exist", $mall->city));
+                $this->info(sprintf("City %s on country %s, already exist", $_db_ip->city, $_db_ip->country));
             }
         }
         $this->info("Done");
@@ -95,8 +92,7 @@ class FillTableMallCities extends Command
     protected function getOptions()
     {
         return array(
-            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to mall_cities.', null),
-            array('mall-status', null, InputOption::VALUE_OPTIONAL, 'Status to be injected.', NULL),
+            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to db_ip_cities.', null),
         );
     }
 

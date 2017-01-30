@@ -320,6 +320,8 @@ class MallAPIController extends ControllerAPI
             $is_subscribed = OrbitInput::post('is_subscribed', 'Y');
             $logo = OrbitInput::files('logo');
             $maps = OrbitInput::files('maps');
+            $ipcountry = OrbitInput::post('ipcountry');
+            $ipcity = OrbitInput::post('ipcity', []);
 
             // generate array validation image
             $logo_validation = $this->generate_validation_image('mall_logo', $logo, 'orbit.upload.mall.logo');
@@ -362,6 +364,8 @@ class MallAPIController extends ControllerAPI
                 'floors'                        => $floors,
                 'free_wifi_status'              => $free_wifi_status,
                 'description'                   => $description,
+                'ipcountry'                     => $ipcountry,
+                'ipcity'                        => $ipcity,
             ];
 
             $validation_error = [
@@ -397,6 +401,8 @@ class MallAPIController extends ControllerAPI
                 'floors'                        => 'required|array',
                 'free_wifi_status'              => 'in:active,inactive',
                 'description'                   => 'max:25',
+                'ipcountry'                     => 'required',
+                'ipcity'                        => 'required|array',
             ];
 
             $validation_error_message = [
@@ -433,8 +439,8 @@ class MallAPIController extends ControllerAPI
                 unset($validation_error['phone']);
                 unset($validation_error['contact_person_firstname']);
                 unset($validation_error['contact_person_lastname']);
-                $validation_error['domain']                  = 'orbit.exists.domain';
-                $validation_error['geo_area']                = 'orbit.formaterror.geo_area';
+                $validation_error['domain'] = 'orbit.exists.domain';
+                $validation_error['geo_area'] = 'orbit.formaterror.geo_area';
 
                 unset($validation_error_message['phone.required']);
                 unset($validation_error_message['contact_person_firstname.required']);
@@ -544,6 +550,48 @@ class MallAPIController extends ControllerAPI
             Event::fire('orbit.mall.postnewmall.before.save', array($this, $newmall));
 
             $newmall->save();
+
+            // Insert to mall_countries
+            $countryName = Country::where('country_id', $country)->first();
+            $existkMallCountry = MallCountry::where('country_id', $country)->first();
+            if (empty($existkMallCountry)) {
+              $new_mall_country = new MallCountry();
+              $new_mall_country->country_id = $country;
+              $new_mall_country->country = $countryName->name;
+              $new_mall_country->save();
+            }
+
+            // Insert to mall_cities
+            $checkMallCity = MallCity::where('city', $city)->first();
+            if (empty($checkMallCity)) {
+              $new_mall_city = new MallCity();
+              $new_mall_city->city = $city;
+              $new_mall_city->save();
+            }
+
+            // Insert vendor_gtm_country
+            $existVendorGtmCountry = VendorGTMCountry::where('gtm_country', $countryName->name)->first();
+            if (empty($existVendorGtmCountry)) {
+                $new_vendor_gtm_country = new VendorGTMCountry();
+                $new_vendor_gtm_country->vendor_country = $ipcountry;
+                $new_vendor_gtm_country->gtm_country =$countryName->name;
+                $new_vendor_gtm_country->save();
+            }
+
+            // Insert vendor_gtm_city
+            $checkVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->first();
+            if (! empty($checkVendorGtmCity)) {
+              // Delete first if exist gtm_city
+              $deleteVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->delete();
+            }
+
+            foreach ($ipcity as $vendorCity) {
+              $new_vendor_gtm_city = new VendorGTMCity();
+              $new_vendor_gtm_city->vendor_city = $vendorCity;
+              $new_vendor_gtm_city->gtm_city = $city;
+              $new_vendor_gtm_city->country_id = $country;
+              $new_vendor_gtm_city->save();
+            }
 
             // languages
             // @author irianto <irianto@dominopos.com>
@@ -737,6 +785,13 @@ class MallAPIController extends ControllerAPI
                 // For response
                 $newmall->facebook_uri = OrbitInput::post('facebook_uri');
             }
+
+
+
+
+
+
+
 
             // save geo location mall
             // @author irianto <irianto@dominopos.com>
@@ -1583,6 +1638,7 @@ class MallAPIController extends ControllerAPI
             $email = OrbitInput::post('email');
             $password = OrbitInput::post('password');
             $country = OrbitInput::post('country');
+            $city = OrbitInput::post('city');
             $url = OrbitInput::post('url');
             $contact_person_email = OrbitInput::post('contact_person_email');
             $status = OrbitInput::post('status');
@@ -1602,59 +1658,65 @@ class MallAPIController extends ControllerAPI
             $description = OrbitInput::post('description');
             $logo = OrbitInput::files('logo');
             $maps = OrbitInput::files('maps');
+            $ipcountry = OrbitInput::post('ipcountry');
+            $ipcity = OrbitInput::post('ipcity', []);
 
             // generate array validation image
             $logo_validation = $this->generate_validation_image('mall_logo', $logo, 'orbit.upload.mall.logo');
             $maps_validation = $this->generate_validation_image('mall_map', $maps, 'orbit.upload.mall.map', 3);
 
             $validation_data = [
-                'merchant_id'                      => $merchant_id,
-                'name'                             => $name,
-                'email'                            => $email,
-                'password'                         => $password,
-                'country'                          => $country,
-                'url'                              => $url,
-                'contact_person_email'             => $contact_person_email,
-                'status'                           => $status,
-                'parent_id'                        => $parent_id,
-                'ticket_header'                    => $ticket_header,
-                'ticket_footer'                    => $ticket_footer,
-                'start_date_activity'              => $start_date_activity,
-                'end_date_activity'                => $end_date_activity,
-                'languages'                        => $languages,
-                'domain'                           => $domain,
-                'mobile_default_language'          => $mobile_default_language,
-                'floors'                           => $floors,
-                'description'                      => $description,
-                'free_wifi_status'                 => $free_wifi_status,
-                'geo_point_latitude'               => $geo_point_latitude,
-                'geo_point_longitude'              => $geo_point_longitude,
-                'geo_area'                         => $geo_area
+                'merchant_id'             => $merchant_id,
+                'name'                    => $name,
+                'email'                   => $email,
+                'password'                => $password,
+                'country'                 => $country,
+                'url'                     => $url,
+                'contact_person_email'    => $contact_person_email,
+                'status'                  => $status,
+                'parent_id'               => $parent_id,
+                'ticket_header'           => $ticket_header,
+                'ticket_footer'           => $ticket_footer,
+                'start_date_activity'     => $start_date_activity,
+                'end_date_activity'       => $end_date_activity,
+                'languages'               => $languages,
+                'domain'                  => $domain,
+                'mobile_default_language' => $mobile_default_language,
+                'floors'                  => $floors,
+                'description'             => $description,
+                'free_wifi_status'        => $free_wifi_status,
+                'geo_point_latitude'      => $geo_point_latitude,
+                'geo_point_longitude'     => $geo_point_longitude,
+                'geo_area'                => $geo_area,
+                'ipcountry'               => $ipcountry,
+                'ipcity'                  => $ipcity
             ];
             $validation_error = [
-                'merchant_id'                      => 'required|orbit.empty.mall',
-                'name'                             => 'mall_name_exists_but_me',
-                'email'                            => 'email|email_exists_but_me',
-                'password'                         => 'min:6',
-                'country'                          => 'orbit.empty.country',
-                'url'                              => 'orbit.formaterror.url.web',
-                'contact_person_email'             => 'email',
-                'status'                           => 'orbit.empty.mall_status|orbit_check_link_mallgroup|orbit_check_link_campaign|orbit_check_tenant_mall',
-                'parent_id'                        => 'orbit.empty.mallgroup',
-                'ticket_header'                    => 'ticket_header_max_length',
-                'ticket_footer'                    => 'ticket_footer_max_length',
-                'start_date_activity'              => 'date_format:Y-m-d H:i:s',
-                'end_date_activity'                => 'date_format:Y-m-d H:i:s',
-                'vat_included'                     => 'in:yes,no',
-                'languages'                        => 'array',
-                'domain'                           => 'domain_exist_but_not_me:' . $merchant_id,
-                'mobile_default_language'          => 'size:2|orbit.formaterror.language',
-                'floors'                           => 'array',
-                'description'                      => 'max:25',
-                'free_wifi_status'                 => 'in:active,inactive',
-                'geo_point_latitude'               => 'orbit.formaterror.geo_latitude',
-                'geo_point_longitude'              => 'orbit.formaterror.geo_longitude',
-                'geo_area'                         => 'orbit.formaterror.geo_area'
+                'merchant_id'             => 'required|orbit.empty.mall',
+                'name'                    => 'mall_name_exists_but_me',
+                'email'                   => 'email|email_exists_but_me',
+                'password'                => 'min:6',
+                'country'                 => 'orbit.empty.country',
+                'url'                     => 'orbit.formaterror.url.web',
+                'contact_person_email'    => 'email',
+                'status'                  => 'orbit.empty.mall_status|orbit_check_link_mallgroup|orbit_check_link_campaign|orbit_check_tenant_mall',
+                'parent_id'               => 'orbit.empty.mallgroup',
+                'ticket_header'           => 'ticket_header_max_length',
+                'ticket_footer'           => 'ticket_footer_max_length',
+                'start_date_activity'     => 'date_format:Y-m-d H:i:s',
+                'end_date_activity'       => 'date_format:Y-m-d H:i:s',
+                'vat_included'            => 'in:yes,no',
+                'languages'               => 'array',
+                'domain'                  => 'domain_exist_but_not_me:' . $merchant_id,
+                'mobile_default_language' => 'size:2|orbit.formaterror.language',
+                'floors'                  => 'array',
+                'description'             => 'max:25',
+                'free_wifi_status'        => 'in:active,inactive',
+                'geo_point_latitude'      => 'orbit.formaterror.geo_latitude',
+                'geo_point_longitude'     => 'orbit.formaterror.geo_longitude',
+                'geo_area'                => 'orbit.formaterror.geo_area',
+                'ipcountry'               => 'required',
+                'ipcity'                  => 'required|array',
             ];
             $validation_error_message = [
                'domain_exist_but_not_me'    => Lang::get('validation.orbit.exists.domain'),
@@ -2276,6 +2338,51 @@ class MallAPIController extends ControllerAPI
                     $new_fence->save();
                 }
             }
+
+            // Insert to mall_countries
+            $countryName = Country::where('country_id', $country)->first();
+            $existkMallCountry = MallCountry::where('country_id', $country)->first();
+            if (empty($existkMallCountry)) {
+              $new_mall_country = new MallCountry();
+              $new_mall_country->country_id = $country;
+              $new_mall_country->country = $countryName->name;
+              $new_mall_country->save();
+            }
+
+            // Insert to mall_cities
+            $checkMallCity = MallCity::where('city', $city)->first();
+            if (empty($checkMallCity)) {
+              $new_mall_city = new MallCity();
+              $new_mall_city->city = $city;
+              $new_mall_city->save();
+            }
+
+            // Insert vendor_gtm_country
+            $existVendorGtmCountry = VendorGTMCountry::where('gtm_country', $countryName->name)->first();
+            if (empty($existVendorGtmCountry)) {
+                $new_vendor_gtm_country = new VendorGTMCountry();
+                $new_vendor_gtm_country->vendor_country = $ipcountry;
+                $new_vendor_gtm_country->gtm_country =$countryName->name;
+                $new_vendor_gtm_country->save();
+            }
+
+            // Insert vendor_gtm_city
+            $checkVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->first();
+            if (! empty($checkVendorGtmCity)) {
+              // Delete first if exist gtm_city
+              $deleteVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->delete();
+            }
+
+            foreach ($ipcity as $vendorCity) {
+              $new_vendor_gtm_city = new VendorGTMCity();
+              $new_vendor_gtm_city->vendor_city = $vendorCity;
+              $new_vendor_gtm_city->gtm_city = $city;
+              $new_vendor_gtm_city->country_id = $country;
+              $new_vendor_gtm_city->save();
+            }
+
+
+
 
             // update user status
             OrbitInput::post('status', function($status) use ($updatedmall) {

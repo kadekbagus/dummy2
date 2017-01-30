@@ -4,7 +4,7 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class FillTableMallCountries extends Command
+class FillTableMallCitiesCommand extends Command
 {
 
     /**
@@ -12,14 +12,14 @@ class FillTableMallCountries extends Command
      *
      * @var string
      */
-    protected $name = 'mall:fill-countries';
+    protected $name = 'mall:fill-cities';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Fill table mall_countries.';
+    protected $description = 'Fill table mall_cities.';
 
     /**
      * Create a new command instance.
@@ -50,29 +50,27 @@ class FillTableMallCountries extends Command
         }
 
         // get country from mall
-        $malls = Mall::select('merchant_id', 'country', 'country_id')
+        $malls = Mall::select('merchant_id', 'city', 'city_id')
                     ->where('object_type', 'mall')
                     ->where('status', $status)
-                    ->groupby('country')
+                    ->groupby('city')
                     ->get();
 
         foreach ($malls as $key => $mall) {
-            $mall_country = MallCountry::where('country', $mall->country)
-                                ->where('country_id', $mall->country_id)
+            $mall_city = MallCity::where('city', $mall->city)
                                 ->first();
 
-            if (empty($mall_country)) {
-                $new_mall_country = new MallCountry();
-                $new_mall_country->country_id = $mall->country_id;
-                $new_mall_country->country = $mall->country;
+            if (empty($mall_city)) {
+                $new_mall_city = new MallCity();
+                $new_mall_city->city = $mall->city;
 
                 if (! $dryRun) {
-                    $new_mall_country->save();
+                    $new_mall_city->save();
                 }
 
-                $this->info(sprintf("Insert country %s with country_id %s", $mall->country, $mall->country_id));
+                $this->info(sprintf("Insert city %s", $mall->city));
             } else {
-                $this->info(sprintf("Country %s with country_id %s, already exist", $mall->country, $mall->country_id));
+                $this->info(sprintf("City %s, already exist", $mall->city));
             }
         }
         $this->info("Done");
@@ -97,7 +95,7 @@ class FillTableMallCountries extends Command
     protected function getOptions()
     {
         return array(
-            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to mall_countries.', null),
+            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to mall_cities.', null),
             array('mall-status', null, InputOption::VALUE_OPTIONAL, 'Status to be injected.', NULL),
         );
     }

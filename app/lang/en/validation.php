@@ -356,6 +356,10 @@ return array(
             'partner_sortby'     => 'The sort by argument you specified is not valid, the valid values are: partner name, location, start date, end date, partner url, status',
             'affectedgroupname_sortby' => 'The sort by argument you specified is not valid, the valid values are: group name, group order, status',
             'affected_group_name' => 'The Affected Group Name you specified is not found',
+            'vendor_country' => 'The :attribute is not found',
+            'gtm_country' => 'The :attribute is not found',
+            'vendor_city' => 'The :attribute is not found',
+            'gtm_city' => 'The :attribute is not found',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(

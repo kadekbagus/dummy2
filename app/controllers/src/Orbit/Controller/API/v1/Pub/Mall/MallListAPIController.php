@@ -52,6 +52,8 @@ class MallListAPIController extends PubControllerAPI
 
             $keyword = OrbitInput::get('keyword');
             $location = OrbitInput::get('location', null);
+            $cityFilters = OrbitInput::get('cities', null);
+            $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
             $sort_by = OrbitInput::get('sortby', null);
@@ -141,6 +143,23 @@ class MallListAPIController extends PubControllerAPI
                     }
                 }
             });
+
+            // filter by country and city
+            if (! empty($countryFilter) && ! empty((array) $cityFilters))
+            {
+                $searchFlag = $searchFlag || TRUE;
+
+                $countryFilterArr = array('match' => array('country.raw' => array('query' => $countryFilter)));;
+
+                $jsonArea['query']['filtered']['filter']['and'][] = $countryFilterArr;
+
+                $cityFilterArr = [];
+                foreach ((array) $cityFilters as $cityFilter) {
+                    $cityFilterArr[] = array('match' => array('city.raw' => array('query' => $cityFilter)));;
+                }
+
+                $jsonArea['query']['filtered']['filter']['and'][]['or'] = $cityFilterArr;
+            };
 
             // filter by partner_id
             OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, &$searchFlag, &$withScore)
