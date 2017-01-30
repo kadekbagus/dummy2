@@ -45,7 +45,9 @@ class MerchantHelper
 
         // Check existing merchant name
         Validator::extend('orbit.exist.merchant_name', function ($attribute, $value, $parameters) {
+            $country = $parameters[0];
             $merchant = BaseMerchant::where('name', '=', $value)
+                            ->where('country_id', $country)
                             ->first();
 
             if (! empty($merchant)) {
