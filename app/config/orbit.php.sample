@@ -668,6 +668,18 @@ return array(
             'per_page'      => 4,
             'max_record'    => 4,
         ),
+
+        // mall country
+        'mall_country' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // mall city
+        'mall_city' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
     ),
 
     'reset_password' => array(
