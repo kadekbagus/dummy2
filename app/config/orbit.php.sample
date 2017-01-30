@@ -5327,6 +5327,12 @@ return array(
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
+
+            // location detection specific cache setting
+            'location-detection' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
         ],
     ],
 

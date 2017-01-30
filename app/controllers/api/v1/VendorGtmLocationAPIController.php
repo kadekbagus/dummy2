@@ -1,7 +1,8 @@
 <?php
 /**
- * An API controller for managing DB-IP.
+ * An API controller for managing Vendor Gtm City and Country.
  */
+
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -12,24 +13,24 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 
 
-class DBIPAPIController extends ControllerAPI
+class VendorGtmLocationAPIController extends ControllerAPI
 {
-    public function getSearchDBIPCountry()
+    public function getSearchVendorGtmCountry()
     {
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.mall.getsearchdbipcountry.before.auth', array($this));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcountry.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.mall.getsearchdbipcountry.after.auth', array($this));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcountry.after.auth', array($this));
 
             // Try to check access control list, does this mall allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.mall.getsearchdbipcountry.before.authz', array($this, $user));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcountry.before.authz', array($this, $user));
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
@@ -39,7 +40,7 @@ class DBIPAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            Event::fire('orbit.mall.getsearchdbipcountry.after.authz', array($this, $user));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcountry.after.authz', array($this, $user));
 
             $sort_by = OrbitInput::get('sortby');
             $validator = Validator::make(
@@ -47,14 +48,14 @@ class DBIPAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:db_ip_country_id, country',
+                    'sort_by' => 'in:vendor_country',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.dbip_country_sortby'),
                 )
             );
 
-            Event::fire('orbit.mall.getsearchdbipcountry.before.validation', array($this, $validator));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcountry.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
@@ -62,7 +63,7 @@ class DBIPAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            Event::fire('orbit.mall.getsearchdbipcountry.after.validation', array($this, $validator));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcountry.after.validation', array($this, $validator));
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.dbip_country.max_record');
@@ -85,21 +86,16 @@ class DBIPAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $dbIpCountry = DBIPCountry::select('db_ip_country_id', 'country');
+            $vendorGtmCountry = VendorGTMCountry::select('vendor_country');
 
-            // Filter DB IP Country by db_ip_country_id
-            OrbitInput::get('db_ip_country_id', function ($dbIpCountryIds) use ($dbIpCountry) {
-                $dbIpCountry->whereIn('db_ip_countries.db_ip_country_id', $dbIpCountryIds);
-            });
-
-            // Filter DB IP Country by country_like
-            OrbitInput::get('country_like', function ($country_like) use ($dbIpCountry) {
-                $dbIpCountry->where('country', 'like', "%$country_like%");
+            // Filter DB IP Country by country
+            OrbitInput::get('country', function ($country) use ($vendorGtmCountry) {
+                $vendorGtmCountry->where('gtm_country', $country);
             });
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_dbIpCountry = clone $dbIpCountry;
+            $_vendorGtmCountry = clone $vendorGtmCountry;
 
             // Get the take args
             $take = $perPage;
@@ -113,7 +109,7 @@ class DBIPAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $dbIpCountry->take($take);
+            $vendorGtmCountry->take($take);
 
             $skip = 0;
             OrbitInput::get('skip', function ($_skip) use (&$skip) {
@@ -123,16 +119,16 @@ class DBIPAPIController extends ControllerAPI
 
                 $skip = $_skip;
             });
-            $dbIpCountry->skip($skip);
+            $vendorGtmCountry->skip($skip);
 
             // Default sort by
-            $sortBy = 'country';
+            $sortBy = 'vendor_country';
             // Default sort mode
             $sortMode = 'asc';
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'country' => 'country'
+                    'vendor_country' => 'vendor_country'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -143,10 +139,10 @@ class DBIPAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $dbIpCountry->orderBy($sortBy, $sortMode);
+            $vendorGtmCountry->orderBy($sortBy, $sortMode);
 
-            $totalCountry = RecordCounter::create($_dbIpCountry)->count();
-            $listCountry = $dbIpCountry->get();
+            $totalCountry = RecordCounter::create($_vendorGtmCountry)->count();
+            $listCountry = $vendorGtmCountry->get();
 
             $data = new stdclass();
             $data->total_records = $totalCountry;
@@ -160,7 +156,7 @@ class DBIPAPIController extends ControllerAPI
 
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.country.getsearchcountry.access.forbidden', array($this, $e));
+            Event::fire('orbit.country.getsearchvendorgtmcountry.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -168,7 +164,7 @@ class DBIPAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.country.getsearchcountry.invalid.arguments', array($this, $e));
+            Event::fire('orbit.country.getsearchvendorgtmcountry.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -180,7 +176,7 @@ class DBIPAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-            Event::fire('orbit.country.getsearchcountry.query.error', array($this, $e));
+            Event::fire('orbit.country.getsearchvendorgtmcountry.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -194,7 +190,7 @@ class DBIPAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.country.getsearchcountry.general.exception', array($this, $e));
+            Event::fire('orbit.country.getsearchvendorgtmcountry.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -208,27 +204,27 @@ class DBIPAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.country.getsearchcountry.before.render', array($this, &$output));
+        Event::fire('orbit.country.getsearchvendorgtmcountry.before.render', array($this, &$output));
 
         return $output;
     }
 
-    public function getSearchDBIPCity()
+    public function getSearchVendorGtmCity()
     {
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.mall.getsearchdbipcity.before.auth', array($this));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.before.auth', array($this));
 
             // Require authentication
             $this->checkAuth();
 
-            Event::fire('orbit.mall.getsearchdbipcity.after.auth', array($this));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.after.auth', array($this));
 
             // Try to check access control list, does this mall allowed to
             // perform this action
             $user = $this->api->user;
-            Event::fire('orbit.mall.getsearchdbipcity.before.authz', array($this, $user));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.before.authz', array($this, $user));
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
@@ -238,7 +234,7 @@ class DBIPAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            Event::fire('orbit.mall.getsearchdbipcity.after.authz', array($this, $user));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.after.authz', array($this, $user));
 
             $sort_by = OrbitInput::get('sortby');
             $validator = Validator::make(
@@ -246,14 +242,14 @@ class DBIPAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:db_ip_city_id, country', 'city',
+                    'sort_by' => 'in:vendor_city, gtm_city',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.dbip_city_sortby'),
                 )
             );
 
-            Event::fire('orbit.mall.getsearchdbipcity.before.validation', array($this, $validator));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.before.validation', array($this, $validator));
 
             // Run the validation
             if ($validator->fails()) {
@@ -261,7 +257,7 @@ class DBIPAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            Event::fire('orbit.mall.getsearchdbipcity.after.validation', array($this, $validator));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.after.validation', array($this, $validator));
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.dbip_city.max_record');
@@ -284,21 +280,16 @@ class DBIPAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $dbIpCity = DBIPCity::select('db_ip_city_id', 'country', 'city');
+            $vendorGtmCity = VendorGTMCity::select('vendor_city');
 
             // Filter DB IP Country by country_like
-            OrbitInput::get('country', function ($country_like) use ($dbIpCity) {
-                $dbIpCity->where('country', $country_like);
-            });
-
-            // Filter DB IP Country by city_like
-            OrbitInput::get('city_like', function ($city_like) use ($dbIpCity) {
-                $dbIpCity->where('city', 'like', "%$city_like%");
+            OrbitInput::get('gtm_city', function ($gtm_city) use ($vendorGtmCity) {
+                $vendorGtmCity->where('gtm_city', $gtm_city);
             });
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_dbIpCity = clone $dbIpCity;
+            $_vendorGtmCity = clone $vendorGtmCity;
 
             // Get the take args
             $take = $perPage;
@@ -312,7 +303,7 @@ class DBIPAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $dbIpCity->take($take);
+            $vendorGtmCity->take($take);
 
             $skip = 0;
             OrbitInput::get('skip', function ($_skip) use (&$skip) {
@@ -322,16 +313,16 @@ class DBIPAPIController extends ControllerAPI
 
                 $skip = $_skip;
             });
-            $dbIpCity->skip($skip);
+            $vendorGtmCity->skip($skip);
 
             // Default sort by
-            $sortBy = 'country';
+            $sortBy = 'vendor_city';
             // Default sort mode
             $sortMode = 'asc';
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'country' => 'country'
+                    'vendor_city' => 'vendor_city'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -342,10 +333,10 @@ class DBIPAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $dbIpCity->orderBy($sortBy, $sortMode);
+            $vendorGtmCity->orderBy($sortBy, $sortMode);
 
-            $totalCountry = RecordCounter::create($_dbIpCity)->count();
-            $listCountry = $dbIpCity->get();
+            $totalCountry = RecordCounter::create($_vendorGtmCity)->count();
+            $listCountry = $vendorGtmCity->get();
 
             $data = new stdclass();
             $data->total_records = $totalCountry;
@@ -359,7 +350,7 @@ class DBIPAPIController extends ControllerAPI
 
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.city.getsearchcity.access.forbidden', array($this, $e));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -367,7 +358,7 @@ class DBIPAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.city.getsearchcity.invalid.arguments', array($this, $e));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -379,7 +370,7 @@ class DBIPAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-            Event::fire('orbit.city.getsearchcity.query.error', array($this, $e));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -393,7 +384,7 @@ class DBIPAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.city.getsearchcity.general.exception', array($this, $e));
+            Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.general.exception', array($this, $e));
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
@@ -407,7 +398,7 @@ class DBIPAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.city.getsearchcity.before.render', array($this, &$output));
+        Event::fire('orbit.vendorgtmlocation.getsearchvendorgtmcity.before.render', array($this, &$output));
 
         return $output;
     }

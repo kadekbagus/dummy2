@@ -155,6 +155,27 @@ Artisan::add(new GetListActiveCouponCommand);
 // List all active stores
 Artisan::add(new GetListActiveStoreCommand);
 
+// List all active malls
+Artisan::add(new GetListActiveMallCommand);
+
+// Fill table mall_countries
+Artisan::add(new FillTableMallCountriesCommand);
+
+// Fill table mall_cities
+Artisan::add(new FillTableMallCitiesCommand);
+
+// Fill table db_ip_countries
+Artisan::add(new FillTableDBIPCountriesCommand);
+
+// Fill table db_ip_cities
+Artisan::add(new FillTableDBIPCitiesCommand);
+
+// Map Country Vendor to GTM
+Artisan::add(new MapVendorCoutriesCommand);
+
+// Map Country Vendor to GTM
+Artisan::add(new MapVendorCitiesCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
