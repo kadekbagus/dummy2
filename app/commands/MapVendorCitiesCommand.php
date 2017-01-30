@@ -143,7 +143,7 @@ class MapVendorCitiesCommand extends Command
                     $this->info( sprintf('Country %s, Vendor City %s to GTM City %s, already exist.', $gtm_country, $vendor_city, $gtm_city) );
                 }
             }
-
+            $this->info("Done");
         } catch (Exception $e) {
             $this->error('Line #' . $e->getLine() . ': ' . $e->getMessage());
         }
