@@ -168,7 +168,7 @@ class StoreSynchronization
                     $tenant->name = $store->name;
                     $tenant->description = $store->description;
                     $tenant->country_id = $countryId;
-                    $tenant->country = $countryName;
+                    $tenant->country = $countryName->name;
                     $tenant->status = $store->status;
                     $tenant->logo = $store->path;
                     $tenant->object_type = 'tenant';
