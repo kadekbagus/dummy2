@@ -54,5 +54,3 @@ Route::post('/app/v1/mall-map/delete', 'IntermediateAuthController@Upload_postDe
  * List and/or Search mall base price
  */
 Route::get('/app/v1/mall/baseprice', 'IntermediateAuthController@Mall_getMallBasePrice');
-
-?>
