@@ -51,7 +51,6 @@ class PartnerListAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
-            $cityFilters = OrbitInput::get('cities', null);
             $countryFilter = OrbitInput::get('country', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
 
@@ -114,16 +113,10 @@ class PartnerListAPIController extends PubControllerAPI
             });
 
             // filter by country and city
-            if (! empty($countryFilter) && ! empty((array) $cityFilters))
-            {
+            OrbitInput::get('country', function($countryFilter) use ($partners) {
                 $partners->leftJoin('countries', 'partners.country_id', '=', 'countries.country_id')
-                    ->where('countries.name', $countryFilter)
-                    ->where(function($q) use ($cityFilters) {
-                        foreach ((array) $cityFilters as $cityFilter) {
-                            $q->orWhere('partners.city', $cityFilter);
-                        }
-                    });
-            };
+                    ->where('countries.name', $countryFilter);
+            });
 
             // Map the sortby request to the real column name
             $sortByMapping = array(
