@@ -149,6 +149,7 @@ class MapVendorCitiesCommand extends Command
                         $newvendorcity->vendor_city = $vendor_city;
                         $newvendorcity->gtm_city = $gtm_city;
                         $newvendorcity->country_id = $valid_gtm_country->country_id;
+                        $newvendorcity->vendor_country = $valid_gtm_country->vendor_country;
 
                         if (! $dryRun) {
                             $newvendorcity->save();
