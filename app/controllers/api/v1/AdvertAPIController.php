@@ -655,6 +655,8 @@ class AdvertAPIController extends ControllerAPI
                                      'adverts.advert_link_type_id',
                                      'advert_placements.placement_name',
                                      'advert_link_types.advert_link_name',
+                                     'adverts.country_id',
+                                     'countries.name as country_name',
                                      DB::raw("CASE
                                                 WHEN {$prefix}adverts.end_date < {$this->quote($now)} THEN 'inactive'
                                                 ELSE {$prefix}adverts.status
@@ -675,6 +677,7 @@ class AdvertAPIController extends ControllerAPI
                             ->leftJoin('news', 'news.news_id', '=', 'adverts.link_object_id')
                             ->leftJoin('merchants as store', DB::raw('store.merchant_id'), '=', DB::raw("{$prefix}adverts.link_object_id"))
                             ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'advert_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'adverts.advert_id')
+                            ->leftJoin('countries', 'countries.country_id', '=', 'adverts.country_id')
                             ->groupBy('adverts.advert_id');
 
             // Filter advert by Ids
