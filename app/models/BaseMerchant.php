@@ -74,6 +74,11 @@ class BaseMerchant extends Eloquent
                     ->join('keywords', 'keywords.keyword_id', '=', 'base_merchant_keyword.keyword_id');
     }
 
+    public function country()
+    {
+        return $this->hasOne('Country', 'country_id', 'country_id');
+    }
+
     /**
      * Merchant has many partner
      *

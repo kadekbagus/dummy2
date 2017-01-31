@@ -66,7 +66,7 @@ class MerchantDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $baseMerchant = BaseMerchant::with('baseMerchantCategory', 'baseMerchantTranslation', 'keywords', 'mediaLogo', 'partners')
+            $baseMerchant = BaseMerchant::with('baseMerchantCategory', 'baseMerchantTranslation', 'keywords', 'mediaLogo', 'partners', 'country')
             						->where('base_merchant_id', '=', $baseMerchantId)
             						->first();
 
