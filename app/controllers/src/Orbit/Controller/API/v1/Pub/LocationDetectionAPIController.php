@@ -9,7 +9,7 @@ use Orbit\Controller\API\v1\Pub\Mall\MallListAPIController;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Orbit\Helper\Util\SimpleCache;
 use \DB;
-use VendorGTMCountry;
+use VendorGTMCity;
 use \stdClass;
 
 class LocationDetectionAPIController extends PubControllerAPI
