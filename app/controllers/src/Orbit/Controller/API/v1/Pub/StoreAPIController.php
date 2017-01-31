@@ -166,6 +166,7 @@ class StoreAPIController extends PubControllerAPI
 
             // value will be true if query to nested, *to get right number of stores
             $withInnerHits = false;
+            $innerHitsCity = false;
 
             $jsonQuery = array('from' => $skip, 'size' => $esTake, 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('filtered' => array('filter' => array('and' => array( array('range' => array('tenant_detail_count' => array('gt' => 0))))))));
 
