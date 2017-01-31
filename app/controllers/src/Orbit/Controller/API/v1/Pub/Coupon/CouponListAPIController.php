@@ -265,22 +265,24 @@ class CouponListAPIController extends PubControllerAPI
                 }
             });
 
-            // filter by country and city
-            if (! empty($countryFilter) && ! empty((array) $cityFilters))
-            {
-                $searchFlag = $searchFlag || TRUE;
-
+            // filter by country
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery) {
                 $countryFilterArr = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.country.raw' => $countryFilter))))));
 
                 $jsonQuery['query']['filtered']['filter']['and'][] = $countryFilterArr;
+            });
 
-                $cityFilterArr = [];
-                foreach ((array) $cityFilters as $cityFilter) {
-                    $cityFilterArr[] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $cityFilter))))));
+            // filter by city, only filter when countryFilter is not empty
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter) {
+                if (! empty($countryFilter)) {
+                    $cityFilterArr = [];
+                    foreach ((array) $cityFilters as $cityFilter) {
+                        $cityFilterArr[] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $cityFilter))))));
+                    }
+
+                    $jsonQuery['query']['filtered']['filter']['and'][]['or'] = $cityFilterArr;
                 }
-
-                $jsonQuery['query']['filtered']['filter']['and'][]['or'] = $cityFilterArr;
-            };
+            });
 
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
