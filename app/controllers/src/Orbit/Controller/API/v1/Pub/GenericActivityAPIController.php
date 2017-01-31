@@ -192,6 +192,7 @@ class GenericActivityAPIController extends PubControllerAPI
             } elseif ($activityName === 'click_filter') {
                 $notes = '';
                 $filter = OrbitInput::post('filter', null);
+                $country = OrbitInput::post('country', null);
                 $filter_values = OrbitInput::post('filter_values', null);
                 if (! empty($filter_values)) {
                     $notes = implode(',', $filter_values);
@@ -200,6 +201,7 @@ class GenericActivityAPIController extends PubControllerAPI
                     switch ($filter) {
                         case 'locations':
                             $activity->setObjectDisplayName('Location');
+                            $activity->setObjectName($country);
                             break;
 
                         case 'categories':

@@ -5031,6 +5031,15 @@ return array(
                 'object_type' => 'object_type',
                 'parameter_name' => 'object_id'
             ),
+            // - User clicks search button after entering keyword
+            '108' => array(
+                'name' => 'click_search',
+                'name_long' => 'Click Search',
+                'module_name' => 'Search',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            )
         ),
     ),
 
