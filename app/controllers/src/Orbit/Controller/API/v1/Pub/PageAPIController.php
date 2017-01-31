@@ -79,7 +79,6 @@ class PageAPIController extends PubControllerAPI
                     ->setActivityName('view_about_us')
                     ->setActivityNameLong('View About Us')
                     ->setObject(null)
-                    ->setObjectDisplayName($store_name)
                     ->setModuleName('Application')
                     ->setNotes($activityNotes)
                     ->responseOK()
