@@ -89,6 +89,11 @@ class AdvertAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $locations = OrbitInput::post('locations');
             $locations = (array) $locations;
+            $country_id = OrbitInput::post('country_id');
+            $is_all_city = OrbitInput::post('is_all_city');
+            $is_all_location = OrbitInput::post('is_all_location');
+            $city = OrbitInput::post('city');
+            $city = (array) $city;
 
             $validator = Validator::make(
                 array(
@@ -132,30 +137,34 @@ class AdvertAPIController extends ControllerAPI
             $newadvert->end_date = $end_date;
             $newadvert->notes = $notes;
             $newadvert->status = $status;
+            $newadvert->country_id = $country_id;
+            $newadvert->is_all_location = $is_all_location;
+            $newadvert->is_all_city = $is_all_city;
 
             Event::fire('orbit.advert.postnewadvert.before.save', array($this, $newadvert));
 
             $newadvert->save();
 
             // save advert locations.
-            $advertLocations = array();
+            if ($is_all_location == 'N') {
+                $advertLocations = array();
+                foreach ($locations as $location_id) {
+                    $locationType = 'mall';
 
-            foreach ($locations as $location_id) {
-                $locationType = 'mall';
+                    if ($location_id == 'gtm' || $location_id == 'GTM') {
+                        $location_id = '0';
+                        $locationType = 'gtm';
+                    }
 
-                if ($location_id == 'gtm' || $location_id == 'GTM') {
-                    $location_id = '0';
-                    $locationType = 'gtm';
+                    $advertLocation = new AdvertLocation();
+                    $advertLocation->advert_id = $newadvert->advert_id;
+                    $advertLocation->location_id = $location_id;
+                    $advertLocation->location_type = $locationType;
+                    $advertLocation->save();
+                    $advertLocations[] = $advertLocation;
                 }
-
-                $advertLocation = new AdvertLocation();
-                $advertLocation->advert_id = $newadvert->advert_id;
-                $advertLocation->location_id = $location_id;
-                $advertLocation->location_type = $locationType;
-                $advertLocation->save();
-                $advertLocations[] = $advertLocation;
+                $newadvert->locations = $advertLocations;
             }
-            $newadvert->locations = $advertLocations;
 
             //save to user campaign
             $usercampaign = new UserCampaign();
@@ -163,6 +172,19 @@ class AdvertAPIController extends ControllerAPI
             $usercampaign->campaign_id = $newadvert->advert_id;
             $usercampaign->campaign_type = 'advert';
             $usercampaign->save();
+
+            //save to advert cities
+            if ($is_all_city == 'N') {
+                $advertCities = array();
+                foreach($city as $city_id) {
+                    $advertCity = new AdvertCity();
+                    $advertCity->advert_id = $newadvert->advert_id;
+                    $advertCity->mall_city_id = $city_id;
+                    $advertCity->save();
+                    $advertCities[] = $advertCity;
+                }
+                $newadvert->cities = $advertCities;
+            }
 
             Event::fire('orbit.advert.postnewadvert.after.save', array($this, $newadvert));
 
