@@ -71,7 +71,7 @@ class ImportDBIP extends Command {
                     $fields = array("ip_start", "ip_end", "country", "stateprov", "city");
                     break;
                 case "location":
-                    $fields = array("ip_start", "ip_end", "country", "stateprov", "city", "latitude", "longitude", "timezone_offset", "timezone_name");
+                    $fields = array("ip_start", "ip_end", "country", "stateprov", "district", "city", "zipcode", "latitude", "longitude", "geoname_id", "timezone_offset", "timezone_name");
                     break;
                 case "isp":
                     $fields = array("ip_start", "ip_end", "country", "isp_name", "connection_type", "organization_name");
