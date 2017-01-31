@@ -28,7 +28,7 @@ class PageAPIController extends PubControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string country_name
+     * @param string country
      * @param string object_type
      * @param string language
      *
@@ -43,20 +43,20 @@ class PageAPIController extends PubControllerAPI
 
         try {
             $user = $this->getUser();
-            $country_name = OrbitInput::get('country_name');
+            $country = OrbitInput::get('country');
             $object_type = OrbitInput::get('object_type');
             $language = OrbitInput::get('language');
 
             $validator = Validator::make(
                 array(
-                    'country_name' => $country_name,
+                    'country' => $country,
                     'object_type' => $object_type,
-                    'country_name' => $country_name,
+                    'language' => $language,
                 ),
                 array(
-                    'country_name' => 'required',
+                    'country' => 'required',
                     'object_type' => 'required',
-                    'country_name' => 'required',
+                    'language' => 'required',
                 )
             );
 
@@ -68,7 +68,7 @@ class PageAPIController extends PubControllerAPI
 
             $page = Page::select('pages.content', 'pages.language')
                         ->join('countries', 'pages.country_id', '=', 'countries.country_id')
-                        ->where('countries.name' , $country_name)
+                        ->where('countries.name' , $country)
                         ->where('pages.object_type' , $object_type)
                         ->where('pages.language' , $language)
                         ->get();
