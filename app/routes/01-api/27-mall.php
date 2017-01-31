@@ -147,6 +147,16 @@ Route::get('/api/v1/pub/mall-location-list', function()
 Route::get('/app/v1/pub/mall-location-list', ['as' => 'mall-location-list', 'uses' => 'IntermediatePubAuthController@Mall\MallList_getMallLocationList']);
 
 /**
+ * Get Country list
+ */
+Route::get('/api/v1/pub/mall-country-list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create()->getMallLocationList();
+});
+
+Route::get('/app/v1/pub/mall-country-list', ['as' => 'mall-country-list', 'uses' => 'IntermediatePubAuthController@Mall\MallList_getMallCountryList']);
+
+/**
  * Get Mall Info
  */
 Route::get('/api/v1/pub/mall-info', function()
