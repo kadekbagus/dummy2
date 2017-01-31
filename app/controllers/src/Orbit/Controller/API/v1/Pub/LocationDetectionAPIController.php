@@ -12,15 +12,26 @@ use \DB;
 use VendorGTMCity;
 use VendorGTMCountry;
 use \stdClass;
+use \Activity;
 
 class LocationDetectionAPIController extends PubControllerAPI
 {
     public function getCountryAndCity()
     {
         $httpCode = 200;
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
+        $mall = null;
+
         try {
+
             $this->checkAuth();
             $user = $this->api->user;
+
+            $mallId = OrbitInput::get('mall_id', null);
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
+            }
 
             $userLocation = OrbitInput::get('ul', null);
 
@@ -34,6 +45,20 @@ class LocationDetectionAPIController extends PubControllerAPI
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
+
+            $cities = implode(',', $data->cities);
+
+            $activityNotes = sprintf($cities);
+            $activity->setUser($user)
+                ->setActivityName('detect_location')
+                ->setActivityNameLong('Detect Location')
+                ->setObject(null)
+                ->setObjectName($data->country)
+                ->setLocation($mall)
+                ->setModuleName('Location Auto Detection')
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
