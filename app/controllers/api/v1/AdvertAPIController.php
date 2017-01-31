@@ -90,8 +90,8 @@ class AdvertAPIController extends ControllerAPI
             $locations = OrbitInput::post('locations');
             $locations = (array) $locations;
             $country_id = OrbitInput::post('country_id');
-            $is_all_city = OrbitInput::post('is_all_city');
-            $is_all_location = OrbitInput::post('is_all_location');
+            $is_all_city = OrbitInput::post('is_all_city', 'N');
+            $is_all_location = OrbitInput::post('is_all_location', 'N');
             $city = OrbitInput::post('city');
             $city = (array) $city;
 
@@ -102,9 +102,11 @@ class AdvertAPIController extends ControllerAPI
                     'advert_name'         => $advert_name,
                     'start_date'          => $start_date,
                     'end_date'            => $end_date,
-                    'status'              => $status
+                    'status'              => $status,
+                    'country_id'          => $country_id
                 ),
                 array(
+                    'country_id'          => 'orbit.empty.country_id',
                     'advert_link_type_id' => 'required|orbit.empty.advert_link_type_id',
                     'advert_placement_id' => 'required|orbit.empty.advert_placement_id',
                     'advert_name'         => 'required',
@@ -343,14 +345,17 @@ class AdvertAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $locations = OrbitInput::post('locations');
             $locations = (array) $locations;
+            $country_id = OrbitInput::post('country_id');
 
             $validator = Validator::make(
                 array(
                     'advert_id' => $advert_id,
                     'end_date'  => $end_date,
                     'status'    => $status,
+                    'country_id'=> $country_id
                 ),
                 array(
+                    'country_id'=> 'orbit.empty.country_id',
                     'advert_id' => 'required|orbit.empty.advert_id',
                     'end_date'  => 'date||orbit.empty.hour_format',
                     'status'    => 'required|in:active,inactive|orbit.empty.advert_updatestatus:' . $advert_id
@@ -385,6 +390,18 @@ class AdvertAPIController extends ControllerAPI
                 $updatedadvert->status = $status;
             });
 
+            OrbitInput::post('country_id', function($country_id) use ($updatedadvert) {
+                $updatedadvert->country_id = $country_id;
+            });
+
+            OrbitInput::post('is_all_location', function($is_all_location) use ($updatedadvert) {
+                $updatedadvert->is_all_location = $is_all_location;
+            });
+
+            OrbitInput::post('is_all_city', function($is_all_city) use ($updatedadvert) {
+                $updatedadvert->is_all_city = $is_all_city;
+            });
+
             $updatedadvert->touch();
 
             OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id) {
@@ -411,6 +428,25 @@ class AdvertAPIController extends ControllerAPI
                 }
 
                 $updatedadvert->locations = $advertLocations;
+            });
+
+            OrbitInput::post('city', function($city) use ($updatedadvert, $advert_id) {
+                $city = (array) $city;
+                // Delete old data
+                $deleteAdvertCity = AdvertCity::where('advert_id', '=', $advert_id);
+                $deleteAdvertCity->delete();
+
+                // Insert new data
+                $advertCities = array();
+                foreach ($city as $city_id) {
+                    $advertCity = new AdvertCity();
+                    $advertCity->advert_id = $advert_id;
+                    $advertCity->mall_city_id = $city_id;
+                    $advertCity->save();
+                    $advertCities[] = $advertCity;
+                }
+
+                $updatedadvert->cities = $advertCities;
             });
 
             Event::fire('orbit.advert.postupdateadvert.after.save', array($this, $updatedadvert));
@@ -974,6 +1010,19 @@ class AdvertAPIController extends ControllerAPI
             return true;
         });
 
+        // Check the existance of country_id
+        Validator::extend('orbit.empty.country_id', function ($attribute, $value, $parameters) {
+            $mallCountry = MallCountry::where('country_id', $value)
+                                 ->first();
+
+            if (empty($mallCountry)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.country_id', $mallCountry);
+
+            return true;
+        });
     }
 
     protected function quote($arg)

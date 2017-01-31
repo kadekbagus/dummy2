@@ -1,16 +1,5 @@
 <?php
-/**
- * Create users based on particular role.
- *
- * Sample file:
- * {
- *     "email": "mdm-example@gotomalls.com",
- *     "first_name": "John",
- *     "last_name": "Doe",
- *     "password": "hello123",
- *     "role": "Merchant Database Admin"
- * }
- */
+
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -163,7 +152,6 @@ class CreateUserCommand extends Command
         }
     }
 
-
     protected function registerCustomValidation()
     {
         // Check the existance of user email
@@ -186,8 +174,6 @@ class CreateUserCommand extends Command
             return TRUE;
         });
     }
-
-
 
     /**
      * Get the console command arguments.

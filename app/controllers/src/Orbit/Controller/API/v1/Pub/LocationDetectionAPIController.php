@@ -9,7 +9,7 @@ use Orbit\Controller\API\v1\Pub\Mall\MallListAPIController;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Orbit\Helper\Util\SimpleCache;
 use \DB;
-use VendorGTMCountry;
+use VendorGTMCity;
 use \stdClass;
 
 class LocationDetectionAPIController extends PubControllerAPI
@@ -136,6 +136,11 @@ class LocationDetectionAPIController extends PubControllerAPI
         // get the client IP
         $clientIpAddress = $_SERVER['REMOTE_ADDR'];
 
+        // override ip address for testing purpose
+        if (Config::get('app.debug')) {
+            $clientIpAddress = isset($_COOKIE['USER_IP_ADDRESS']) ? $_COOKIE['USER_IP_ADDRESS'] : $clientIpAddress;
+        }
+
         // set cache key for this IP Address
         $cacheKey = ['ip_address' => $clientIpAddress];
 
@@ -165,7 +170,8 @@ class LocationDetectionAPIController extends PubControllerAPI
 
         if (is_object($response)) {
             // get GTM country/city mapping
-            $gtmLocations = VendorGTMCity::where('vendor_country', $response->country)
+            $gtmLocations = VendorGTMCity::leftJoin('vendor_gtm_countries', 'vendor_gtm_countries.vendor_country', '=', 'vendor_gtm_cities.vendor_country')
+                ->where('vendor_gtm_cities.vendor_country', $response->country)
                 ->where('vendor_city', $response->city)
                 ->get();
 
