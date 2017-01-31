@@ -33,5 +33,3 @@ Route::post('/app/v1/mallgroup-logo/upload', 'IntermediateAuthController@Upload_
  * Delete Mall Group Logo
  */
 Route::post('/app/v1/mallgroup-logo/delete', 'IntermediateAuthController@Upload_postDeleteMallGroupLogo');
-
-?>
