@@ -217,6 +217,7 @@ class MallLocationAPIController extends ControllerAPI
      * List of API Parameters
      * ----------------------
      * @param string            `mall_city_id`               (optional) - mall city id
+     * @param string            `country_id`                 (optional) - country id
      * @param string            `city_like`                  (optional) - city
      * @param string            `sort_by`                    (optional) - column order by
      * @param string            `sort_mode`                  (optional) - asc or desc
@@ -272,7 +273,7 @@ class MallLocationAPIController extends ControllerAPI
                 }
             }
 
-            $mallCity = MallCity::select('mall_city_id', 'city');
+            $mallCity = MallCity::select('mall_city_id', 'city', 'country_id');
 
             // Filter Mall City by mall_city_id
             OrbitInput::get('mall_city_id', function ($mallCityId) use ($mallCity) {
@@ -283,6 +284,11 @@ class MallLocationAPIController extends ControllerAPI
             // Filter Mall City by city_like
             OrbitInput::get('city_like', function ($cityLike) use ($mallCity) {
                 $mallCity->where('city', 'like', "%$cityLike%");
+            });
+
+            // Filter Mall City by country_id
+            OrbitInput::get('country_id', function ($country_id) use ($mallCity) {
+                $mallCity->where('country_id', '=', $country_id);
             });
 
             // Clone the query builder which still does not include the take,
