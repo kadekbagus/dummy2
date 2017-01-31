@@ -87,3 +87,11 @@ Route::get('/app/v1/pub/advert/{search}', [
     'as' => 'pub-advert-list',
     'uses' => 'IntermediatePubAuthController@Advert\AdvertBannerList_getAdvertBannerList'
 ])->where('search', '(search|list)');
+
+/**
+ * List/Search advert city
+ */
+Route::get('/api/v1/advert-city/{search}', function()
+{
+    return AdvertLocationAPIController::create()->getAdvertCities();
+})->where('search', '(list|search)');
