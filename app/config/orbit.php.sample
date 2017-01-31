@@ -5494,4 +5494,29 @@ return array(
             ),
         ),
     ),
+
+    // Social media account used for Gotomalls
+    'social_media_account' => [
+        'country' => [
+            'Indonesia' => [
+                [
+                    'social_media_name' => 'Facebook',
+                    'url' => 'https://www.facebook.com/Gotomalls.Indo',
+                ],
+                [
+                    'social_media_name' => 'Twitter',
+                    'url' => 'https://twitter.com/gotomalls',
+                ],
+                [
+                    'social_media_name' => 'Instagram',
+                    'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+            ],
+
+            'English' => [
+                'social_media_name' => 'facebook',
+                'url' => 'https://www.facebook.com/gotomalls.indo',
+            ]
+        ]
+    ],
 );
