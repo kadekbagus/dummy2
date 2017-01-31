@@ -126,22 +126,40 @@ class MapVendorCitiesCommand extends Command
                 $check_vendor_city = VendorGTMCity::where('vendor_city', $vendor_city)
                                             ->where('gtm_city', $gtm_city)
                                             ->where('country_id', $valid_gtm_country->country_id)
+                                            ->where('vendor_country', '')
                                             ->first();
 
-                if (empty($check_vendor_city)) {
-                    $newvendorcity = new VendorGTMCity();
-                    $newvendorcity->vendor_city = $vendor_city;
-                    $newvendorcity->gtm_city = $gtm_city;
-                    $newvendorcity->country_id = $valid_gtm_country->country_id;
+                if (! empty($check_vendor_city)) {
+                    $check_vendor_city->vendor_country = $valid_gtm_country->vendor_country;
 
                     if (! $dryRun) {
-                        // Insert user
-                        $newvendorcity->save();
+                        $check_vendor_city->save();
                     }
-                    $this->info( sprintf('Mapping Country %s, Vendor City %s to GTM City %s.', $gtm_country, $vendor_city, $gtm_city) );
+
+                    $this->info( sprintf('Update Country %s, Vendor City %s to GTM City %s with Vendor Country %s.', $gtm_country, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
                 } else {
-                    $this->info( sprintf('Country %s, Vendor City %s to GTM City %s, already exist.', $gtm_country, $vendor_city, $gtm_city) );
+                    $check_vendor_city = VendorGTMCity::where('vendor_city', $vendor_city)
+                                                ->where('gtm_city', $gtm_city)
+                                                ->where('country_id', $valid_gtm_country->country_id)
+                                                ->where('vendor_country', $valid_gtm_country->vendor_country)
+                                                ->first();
+
+                    if (empty($check_vendor_city)) {
+                        $newvendorcity = new VendorGTMCity();
+                        $newvendorcity->vendor_city = $vendor_city;
+                        $newvendorcity->gtm_city = $gtm_city;
+                        $newvendorcity->country_id = $valid_gtm_country->country_id;
+                        $newvendorcity->vendor_country = $valid_gtm_country->vendor_country;
+
+                        if (! $dryRun) {
+                            $newvendorcity->save();
+                        }
+                        $this->info( sprintf('Mapping Country %s, Vendor City %s to GTM City %s with Vendor Country %s.', $gtm_country, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
+                    } else {
+                        $this->info( sprintf('Country %s, Vendor City %s to GTM City %s with Vendor Country %s, already exist.', $gtm_country, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
+                    }
                 }
+
             }
             $this->info("Done");
         } catch (Exception $e) {
@@ -154,7 +172,9 @@ class MapVendorCitiesCommand extends Command
     {
         // Check the existance of mall country
         Validator::extend('orbit.empty.gtm_country', function ($attribute, $value, $parameters) {
-            $check_country = MallCountry::where('country', $value)->first();
+            $check_country = MallCountry::join('vendor_gtm_countries as vgc', DB::raw("vgc.gtm_country"), '=', 'mall_countries.country')
+                                ->where('country', $value)
+                                ->first();
 
             if (empty($check_country)) {
                 return FALSE;

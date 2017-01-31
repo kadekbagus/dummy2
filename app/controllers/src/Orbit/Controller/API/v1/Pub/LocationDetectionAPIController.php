@@ -9,7 +9,7 @@ use Orbit\Controller\API\v1\Pub\Mall\MallListAPIController;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Orbit\Helper\Util\SimpleCache;
 use \DB;
-use VendorGTMCountry;
+use VendorGTMCity;
 use \stdClass;
 
 class LocationDetectionAPIController extends PubControllerAPI
@@ -165,12 +165,12 @@ class LocationDetectionAPIController extends PubControllerAPI
 
         if (is_object($response)) {
             // get GTM country/city mapping
-            $gtmLocations = VendorGTMCountry::leftJoin('vendor_gtm_cities', 'vendor_gtm_countries.vendor_gtm_country_id', '=', 'vendor_gtm_cities.country_id')
-                ->where('vendor_gtm_countries.vendor_country', $response->country)
+            $gtmLocations = VendorGTMCity::where('vendor_country', $response->country)
+                ->where('vendor_city', $response->city)
                 ->get();
 
             if ($gtmLocations->count() > 0) {
-                $country = $gtmLocations[0]->country;
+                $country = $gtmLocations[0]->gtm_country;
                 foreach ($gtmLocations as $gtmLocation) {
                     $cities[] = $gtmLocation->gtm_city;
                 }

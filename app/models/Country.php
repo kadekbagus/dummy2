@@ -8,4 +8,9 @@ class Country extends Eloquent
 {
     protected $primaryKey = 'country_id';
     protected $table = 'countries';
+
+    public function baseMerchant()
+    {
+        return $this->belongsTo('BaseMerchant', 'country_id', 'country_id');
+    }
 }
