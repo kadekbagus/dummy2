@@ -22,6 +22,8 @@ use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
+use MallCountry;
+use MallCity;
 
 class MallListAPIController extends PubControllerAPI
 {
@@ -375,18 +377,13 @@ class MallListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-
-
-            $usingDemo = Config::get('orbit.is_demo', FALSE);
             $sort_by = OrbitInput::get('sortby', 'city');
             $sort_mode = OrbitInput::get('sortmode','asc');
-            $city = Mall::select('city')->groupBy('city')->orderBy($sort_by, $sort_mode);
+            $city = MallCity::select('city')->orderBy($sort_by, $sort_mode);
 
-            if ($usingDemo) {
-                $city = $city->excludeDeleted();
-            } else {
-                $city = $city->active();
-            }
+            OrbitInput::get('country_id', function($countryId) use ($city) {
+                $city->where('country_id', $countryId);
+            });
 
             $_city = clone $city;
 
@@ -403,6 +400,81 @@ class MallListAPIController extends PubControllerAPI
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = count($listcity);
             $this->response->data->records = $listcity;
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+    /**
+     * GET - Country list from mall
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getMallCountryList()
+    {
+        $httpCode = 200;
+        try {
+            $sort_by = OrbitInput::get('sortby', 'country');
+            $sort_mode = OrbitInput::get('sortmode','asc');
+            $countries = MallCountry::select('country')->orderBy($sort_by, $sort_mode);
+
+            $_countries = clone $countries;
+
+            $take = PaginationNumber::parseTakeFromGet('mall_country');
+            $countries->take($take);
+
+            $skip = PaginationNumber::parseSkipFromGet();
+            $countries->skip($skip);
+
+            $listcountries = $countries->get();
+            $count = count($_countries->get());
+
+            $this->response->data = new stdClass();
+            $this->response->data->total_records = $count;
+            $this->response->data->returned_records = count($listcountries);
+            $this->response->data->records = $listcountries;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
