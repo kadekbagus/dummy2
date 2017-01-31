@@ -381,8 +381,9 @@ class MallListAPIController extends PubControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
             $city = MallCity::select('city')->orderBy($sort_by, $sort_mode);
 
-            OrbitInput::get('country_id', function($countryId) use ($city) {
-                $city->where('country_id', $countryId);
+            OrbitInput::get('country', function($country) use ($city) {
+                $city->leftJoin('mall_countries', 'mall_countries.country_id', '=', 'mall_cities.country_id')
+                    ->where('mall_countries.country', $country);
             });
 
             $_city = clone $city;
