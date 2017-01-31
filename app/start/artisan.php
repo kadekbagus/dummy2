@@ -176,6 +176,9 @@ Artisan::add(new MapVendorCoutriesCommand);
 // Map Country Vendor to GTM
 Artisan::add(new MapVendorCitiesCommand);
 
+// Create or update page multilanguage
+Artisan::add(new CreatePageCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
