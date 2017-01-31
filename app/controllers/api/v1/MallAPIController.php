@@ -363,7 +363,6 @@ class MallAPIController extends ControllerAPI
                 'campaign_base_price_news'      => $campaign_base_price_news,
                 'floors'                        => $floors,
                 'free_wifi_status'              => $free_wifi_status,
-                'description'                   => $description,
                 'ipcountry'                     => $ipcountry,
                 'ipcity'                        => $ipcity,
             ];
@@ -400,7 +399,6 @@ class MallAPIController extends ControllerAPI
                 'campaign_base_price_news'      => 'required',
                 'floors'                        => 'required|array',
                 'free_wifi_status'              => 'in:active,inactive',
-                'description'                   => 'max:25',
                 'ipcountry'                     => 'required',
                 'ipcity'                        => 'required|array',
             ];
@@ -785,13 +783,6 @@ class MallAPIController extends ControllerAPI
                 // For response
                 $newmall->facebook_uri = OrbitInput::post('facebook_uri');
             }
-
-
-
-
-
-
-
 
             // save geo location mall
             // @author irianto <irianto@dominopos.com>
@@ -1685,7 +1676,6 @@ class MallAPIController extends ControllerAPI
                 'domain'                  => $domain,
                 'mobile_default_language' => $mobile_default_language,
                 'floors'                  => $floors,
-                'description'             => $description,
                 'free_wifi_status'        => $free_wifi_status,
                 'geo_point_latitude'      => $geo_point_latitude,
                 'geo_point_longitude'     => $geo_point_longitude,
@@ -1712,7 +1702,6 @@ class MallAPIController extends ControllerAPI
                 'domain'                  => 'domain_exist_but_not_me:' . $merchant_id,
                 'mobile_default_language' => 'size:2|orbit.formaterror.language',
                 'floors'                  => 'array',
-                'description'             => 'max:25',
                 'free_wifi_status'        => 'in:active,inactive',
                 'geo_point_latitude'      => 'orbit.formaterror.geo_latitude',
                 'geo_point_longitude'     => 'orbit.formaterror.geo_longitude',

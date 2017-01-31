@@ -50,28 +50,47 @@ class FillTableMallCitiesCommand extends Command
         }
 
         // get country from mall
-        $malls = Mall::select('merchant_id', 'city', 'city_id')
+        $malls = Mall::select('merchant_id', 'country_id', 'city', 'city_id')
                     ->where('object_type', 'mall')
                     ->where('status', $status)
-                    ->groupby('city')
+                    ->groupby('city', 'country_id')
                     ->get();
 
         foreach ($malls as $key => $mall) {
+            // first check to handle a first data without country_id
             $mall_city = MallCity::where('city', $mall->city)
+                                ->where('country_id', '')
                                 ->first();
 
-            if (empty($mall_city)) {
-                $new_mall_city = new MallCity();
-                $new_mall_city->city = $mall->city;
+            if (! empty($mall_city)) {
+                $mall_city->country_id = $mall->country_id;
 
                 if (! $dryRun) {
-                    $new_mall_city->save();
+                    $mall_city->save();
                 }
 
-                $this->info(sprintf("Insert city %s", $mall->city));
+                $this->info(sprintf("Update city %s with country_id %s", $mall->city, $mall->country_id));
             } else {
-                $this->info(sprintf("City %s, already exist", $mall->city));
+                // second check to handle data with country_id
+                $mall_city = MallCity::where('city', $mall->city)
+                                    ->where('country_id', $mall->country_id)
+                                    ->first();
+
+                if (empty($mall_city)) {
+                    $new_mall_city = new MallCity();
+                    $new_mall_city->city = $mall->city;
+                    $new_mall_city->country_id = $mall->country_id;
+
+                    if (! $dryRun) {
+                        $new_mall_city->save();
+                    }
+
+                    $this->info(sprintf("Insert city %s with country_id %s", $mall->city, $mall->country_id));
+                } else {
+                    $this->info(sprintf("City %s with country_id %s, already exist", $mall->city, $mall->country_id));
+                }
             }
+
         }
         $this->info("Done");
     }
