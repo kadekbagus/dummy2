@@ -12,6 +12,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use BaseMerchant;
 use Country;
+use Mall;
 use Validator;
 use Lang;
 use DB;
@@ -69,12 +70,13 @@ class CountryListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $countries = Country::select('country_id', 'name', 'code');
+            $mallCountry = Mall::groupBy('country')->lists('country');
+            $countries = Country::select('country_id', 'name', 'code')->whereIn('name', $mallCountry);
 
             // Filter country by name
             OrbitInput::get('name', function($name) use ($countries)
             {
-                $countries->whereIn('name', $name);
+                $countries->where('name', $name);
             });
 
             // Filter country by matching name pattern
