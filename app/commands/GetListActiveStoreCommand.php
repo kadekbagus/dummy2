@@ -45,9 +45,16 @@ class GetListActiveStoreCommand extends Command
         $raw = $this->option('raw-query');
         $prefix = DB::getTablePrefix();
 
+        //replace country
+        $fields = str_replace('country', 'p.country', $fields);
+        $fields = str_replace('merchant_id', 't.merchant_id', $fields);
+        $fields = str_replace('city', 'p.city', $fields);
+
         do {
-            $stores = DB::select("SELECT t.{$fields}
+            $stores = DB::select("SELECT {$fields}
                 FROM {$prefix}merchants t
+                LEFT JOIN (SELECT merchant_id, city, country FROM {$prefix}merchants WHERE object_type='mall') p
+                    ON p.merchant_id = t.parent_id
                 WHERE t.object_type = 'tenant'
                     AND t.status = 'active'
                 {$raw}
