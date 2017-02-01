@@ -51,16 +51,21 @@ class ElasticsearchResyncStoreCommand extends Command {
     public function fire()
     {
         try {
-            $input = ! empty($this->option('store-name')) ? $this->option('store-name') : file_get_contents("php://stdin");
-            $input = trim($input);
+            $name = ! empty($this->option('name')) ? $this->option('name') : file_get_contents("php://stdin");
+            $name = trim($name);
 
-            if (empty($input)) {
+            $separator = $this->option('separator');
+
+            if (empty($name) && empty($separator)) {
                 throw new Exception("Input needed.", 1);
             }
 
+            $input = explode($separator, $name);
+
             $job = new FakeJob();
             $data = [
-                'name' => $input
+                'name' => $input[0],
+                'country' => $input[1]
             ];
             try {
                 $response = $this->syncData($job, $data);
@@ -68,10 +73,10 @@ class ElasticsearchResyncStoreCommand extends Command {
                 if ($response['status'] === 'fail') {
                     throw new Exception($response['message'], 1);
                 }
-
-                $this->info(sprintf('%sStore Name: "%s" has been successfully synced to Elasticsearch server', $this->stdoutPrefix, $data['name']));
+                // $this->info($data['country']);
+                $this->info(sprintf('%sStore Name: "%s" in "%s" has been successfully synced to Elasticsearch server', $this->stdoutPrefix, $data['name'], $data['country']));
             } catch (Exception $e) {
-                $this->error(sprintf('%sFailed to sync Store Name "%s", message: %s', $this->stdoutPrefix, $data['name'], $e->getMessage()));
+                $this->error(sprintf('%sFailed to sync Store Name "%s" in "%s", message: %s', $this->stdoutPrefix, $data['name'], $data['country'], $e->getMessage()));
             }
         } catch (\Exception $e) {
             $this->error($e->getMessage());
@@ -97,7 +102,8 @@ class ElasticsearchResyncStoreCommand extends Command {
     protected function getOptions()
     {
         return array(
-            array('store-name', null, InputOption::VALUE_OPTIONAL, 'Store name to sync.', null),
+            array('name', null, InputOption::VALUE_OPTIONAL, 'Store name with country to sync.', null),
+            array('separator', null, InputOption::VALUE_OPTIONAL, 'Separator between the store name and the country', ','),
             array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, no data will be sent to Elasticsearch.', null),
         );
     }

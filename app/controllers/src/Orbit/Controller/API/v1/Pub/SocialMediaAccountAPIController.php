@@ -11,7 +11,6 @@ use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Config;
 use stdClass;
-use Validator;
 
 class SocialMediaAccountAPIController extends PubControllerAPI
 {
@@ -33,25 +32,11 @@ class SocialMediaAccountAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         $user = null;
+        $country = '';
 
         try {
             $user = $this->getUser();
             $country = OrbitInput::get('country');
-
-            $validator = Validator::make(
-                array(
-                    'country' => $country,
-                ),
-                array(
-                    'country' => 'required',
-                )
-            );
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
 
             $socielMediaAccount = Config::get('orbit.social_media_account.country.' . $country);
 

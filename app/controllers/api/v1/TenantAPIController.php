@@ -2354,7 +2354,7 @@ class TenantAPIController extends ControllerAPI
                                     'merchants.merchant_id',
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                     'merchants.status',
-                                    'merchants.object_type',
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language"),
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name")
                                 )
                                 ->leftjoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
@@ -2365,7 +2365,7 @@ class TenantAPIController extends ControllerAPI
                                     'merchants.merchant_id',
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                     'merchants.status',
-                                    'merchants.object_type',
+                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language"),
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name")
                                 )
                                 ->leftjoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
