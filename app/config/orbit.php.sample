@@ -82,6 +82,15 @@ return array(
             ]
         ],
 
+        // index list will be include in suggestion
+        'suggestion_indices' => [
+            'coupon_suggestions',
+            'news_suggestions',
+            'promotion_suggestions',
+            'store_suggestions',
+            'mall_suggestions'
+        ],
+
         'nearest' => [
             'multiple' => 5,
             'max_try' => 10
@@ -5529,7 +5538,7 @@ return array(
         ),
     ),
 
-    // Social media account used for Gotomalls
+    // Social media account used for Gotomalls with deferent country
     'social_media_account' => [
         'country' => [
             'Indonesia' => [
@@ -5547,10 +5556,20 @@ return array(
                 ],
             ],
 
-            'English' => [
-                'social_media_name' => 'facebook',
-                'url' => 'https://www.facebook.com/gotomalls.indo',
-            ]
+            'Singapore' => [
+                [
+                    'social_media_name' => 'Facebook',
+                    'url' => 'https://www.facebook.com/Gotomalls.Indo',
+                ],
+                [
+                    'social_media_name' => 'Twitter',
+                    'url' => 'https://twitter.com/gotomalls',
+                ],
+                [
+                    'social_media_name' => 'Instagram',
+                    'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+            ],
         ]
     ],
 );
