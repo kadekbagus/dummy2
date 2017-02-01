@@ -68,8 +68,8 @@ class ESMallSuggestionUpdateQueue
         try {
             // check exist elasticsearch index
             $params_search = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.malls_suggestion.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.malls_suggestion.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.mall_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.mall_suggestions.type'),
                 'body' => [
                     'query' => [
                         'match' => [
@@ -83,8 +83,8 @@ class ESMallSuggestionUpdateQueue
 
             $response = NULL;
             $params = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.malls_suggestion.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.malls_suggestion.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.mall_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.mall_suggestions.type'),
                 'id' => $mall->merchant_id,
                 'body' => []
             ];
@@ -112,6 +112,7 @@ class ESMallSuggestionUpdateQueue
             $esBody = [
                 'name'       => $mall->name,
                 'country'    => $mall->Country->name,
+                'city'       => $mall->city,
                 'suggest_id' => $suggest,
                 'suggest_en' => $suggest,
                 'suggest_zh' => $suggest,

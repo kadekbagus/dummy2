@@ -85,8 +85,8 @@ class ESPromotionSuggestionDeleteQueue
 
         try {
             $params = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions_suggestion.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.promotions_suggestion.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.promotion_suggestions.type'),
                 'id' => $news->news_id
             ];
 

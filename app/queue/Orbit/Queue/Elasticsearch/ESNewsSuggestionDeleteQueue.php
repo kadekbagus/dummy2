@@ -85,8 +85,8 @@ class ESNewsSuggestionDeleteQueue
 
         try {
             $params = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_suggestion.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.news_suggestion.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.news_suggestions.type'),
                 'id' => $news->news_id
             ];
 

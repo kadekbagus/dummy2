@@ -49,7 +49,7 @@ class ESCouponSuggestionUpdateQueue
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
 
         $couponId = $data['coupon_id'];
-        $coupon = Coupon::with('translations', 'country')
+        $coupon = Coupon::with('translations', 'country', 'city')
                     ->select(DB::raw("
                         {$prefix}promotions.*,
                         CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -89,8 +89,8 @@ class ESCouponSuggestionUpdateQueue
         try {
             // check exist elasticsearch index
             $params_search = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons_suggestion.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.coupons_suggestion.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupon_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.coupon_suggestions.type'),
                 'body' => [
                     'query' => [
                         'match' => [
@@ -104,8 +104,8 @@ class ESCouponSuggestionUpdateQueue
 
             $response = NULL;
             $params = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons_suggestion.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.coupons_suggestion.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupon_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.coupon_suggestions.type'),
                 'id' => $coupon->promotion_id,
                 'body' => []
             ];
@@ -115,9 +115,15 @@ class ESCouponSuggestionUpdateQueue
                 $country[] = $data->country;
             }
 
+            $city = array();
+            foreach($coupon->city as $data) {
+                $city[] = $data->city;
+            }
+
             $body = [
-                'name'       => $coupon->promotion_name,
-                'country'    => $country
+                'name'    => $coupon->promotion_name,
+                'country' => $country,
+                'city'    => $city
             ];
             
             foreach ($coupon->translations as $translationCollection) {

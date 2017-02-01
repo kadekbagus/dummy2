@@ -70,8 +70,8 @@ class ESMallSuggestionDeleteQueue
 
         try {
             $params = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.malls_suggestion.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.malls_suggestion.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.mall_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.mall_suggestions.type'),
                 'id' => $mall->merchant_id
             ];
 

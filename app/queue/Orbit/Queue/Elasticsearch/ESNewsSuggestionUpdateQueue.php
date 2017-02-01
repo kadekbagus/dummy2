@@ -49,7 +49,7 @@ class ESNewsSuggestionUpdateQueue
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
 
         $newsId = $data['news_id'];
-        $news = News::with('country', 'translations')
+        $news = News::with('country', 'city', 'translations')
                     ->select(DB::raw("
                         {$prefix}news.*,
                         CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -80,8 +80,8 @@ class ESNewsSuggestionUpdateQueue
         try {
             // check exist elasticsearch index
             $params_search = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_suggestion.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.news_suggestion.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.news_suggestions.type'),
                 'body' => [
                     'query' => [
                         'match' => [
@@ -95,8 +95,8 @@ class ESNewsSuggestionUpdateQueue
 
             $response = NULL;
             $params = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_suggestion.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.news_suggestion.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.news_suggestions.type'),
                 'id' => $news->news_id,
                 'body' => []
             ];
@@ -106,9 +106,15 @@ class ESNewsSuggestionUpdateQueue
                 $country[] = $data->country;
             }
 
+            $city = array();
+            foreach($news->city as $data) {
+                $city[] = $data->city;
+            }
+
             $body = [
-                'name'       => $news->news_name,
-                'country'    => $country
+                'name'    => $news->news_name,
+                'country' => $country,
+                'city'    => $city
             ];
             
             foreach ($news->translations as $translationCollection) {

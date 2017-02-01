@@ -56,28 +56,28 @@ return array(
                  'type'  => 'basic'
             ],
 
-            'coupons_suggestion' => [
-                'index' => 'coupons_suggestion',
+            'coupon_suggestions' => [
+                'index' => 'coupon_suggestions',
                 'type'  => 'basic'
             ],
 
-            'news_suggestion' => [
-                 'index' => 'news_suggestion',
+            'news_suggestions' => [
+                 'index' => 'news_suggestions',
                  'type'  => 'basic'
             ],
 
-            'promotions_suggestion' => [
-                 'index' => 'promotions_suggestion',
+            'promotion_suggestions' => [
+                 'index' => 'promotion_suggestions',
                  'type'  => 'basic'
             ],
 
-            'stores_suggestion' => [
-                 'index' => 'stores_suggestion',
+            'store_suggestions' => [
+                 'index' => 'store_suggestions',
                  'type'  => 'basic'
             ],
 
-            'malls_suggestion' => [
-                 'index' => 'malls_suggestion',
+            'mall_suggestions' => [
+                 'index' => 'mall_suggestions',
                  'type'  => 'basic'
             ]
         ],
