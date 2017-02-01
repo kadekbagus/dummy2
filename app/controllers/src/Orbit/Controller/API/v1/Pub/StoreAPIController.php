@@ -166,6 +166,7 @@ class StoreAPIController extends PubControllerAPI
 
             // value will be true if query to nested, *to get right number of stores
             $withInnerHits = false;
+            $innerHitsCountry = false;
             $innerHitsCity = false;
 
             $jsonQuery = array('from' => $skip, 'size' => $esTake, 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('filtered' => array('filter' => array('and' => array( array('range' => array('tenant_detail_count' => array('gt' => 0))))))));
@@ -280,26 +281,31 @@ class StoreAPIController extends PubControllerAPI
                 }
             });
 
-            // filter by country and city
-            if (! empty($countryFilter) && ! empty((array) $cityFilters))
-            {
-                $searchFlag = $searchFlag || TRUE;
+            $countryCityFilterArr = [];
+
+            // filter by country
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$withInnerHits, &$innerHitsCity, &$countryCityFilterArr) {
                 $withInnerHits = true;
                 $innerHitsCity = true;
 
-                $countryCityFilterArr = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => []], 'inner_hits' => ["name" => "country_city_hits"]]];
+                $countryCityFilterArr = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => []], 'inner_hits' => ['name' => 'country_city_hits']]];
 
                 $countryCityFilterArr['nested']['query']['bool']['must'] = ['match' => ['tenant_detail.country.raw' => $countryFilter]];
 
-
-                foreach ((array) $cityFilters as $cityFilter) {
-                    $cityFilterArr[] = ['match' => ['tenant_detail.city.raw' => $cityFilter]];
-                }
-
-                $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
-
                 $jsonQuery['query']['filtered']['filter']['and'][] = $countryCityFilterArr;
-            };
+            });
+
+            // filter by city, only filter when countryFilter is not empty
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter) {
+                if (! empty($countryFilter)) {
+                    $cityFilterArr = [];
+                    foreach ((array) $cityFilters as $cityFilter) {
+                        $cityFilterArr[] = ['match' => ['tenant_detail.city.raw' => $cityFilter]];
+                    }
+
+                    $jsonQuery['query']['filtered']['filter']['and'][1]['nested']['query']['bool']['should'] = $cityFilterArr;
+                }
+            });
 
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
