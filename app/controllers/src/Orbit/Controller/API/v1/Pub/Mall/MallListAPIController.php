@@ -146,22 +146,24 @@ class MallListAPIController extends PubControllerAPI
                 }
             });
 
-            // filter by country and city
-            if (! empty($countryFilter) && ! empty((array) $cityFilters))
-            {
-                $searchFlag = $searchFlag || TRUE;
-
+            // filter by country
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonArea) {
                 $countryFilterArr = array('match' => array('country.raw' => array('query' => $countryFilter)));;
 
                 $jsonArea['query']['filtered']['filter']['and'][] = $countryFilterArr;
+            });
 
-                $cityFilterArr = [];
-                foreach ((array) $cityFilters as $cityFilter) {
-                    $cityFilterArr[] = array('match' => array('city.raw' => array('query' => $cityFilter)));;
+            // filter by city, only filter when countryFilter is not empty
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonArea, $countryFilter) {
+                if (! empty($countryFilter)) {
+                    $cityFilterArr = [];
+                    foreach ((array) $cityFilters as $cityFilter) {
+                        $cityFilterArr[] = array('match' => array('city.raw' => array('query' => $cityFilter)));;
+                    }
+
+                    $jsonArea['query']['filtered']['filter']['and'][]['or'] = $cityFilterArr;
                 }
-
-                $jsonArea['query']['filtered']['filter']['and'][]['or'] = $cityFilterArr;
-            };
+            });
 
             // filter by partner_id
             OrbitInput::get('partner_id', function($partnerId) use (&$jsonArea, &$searchFlag, &$withScore)

@@ -54,7 +54,41 @@ return array(
             'stores' => [
                  'index' => 'stores',
                  'type'  => 'basic'
+            ],
+
+            'coupon_suggestions' => [
+                'index' => 'coupon_suggestions',
+                'type'  => 'basic'
+            ],
+
+            'news_suggestions' => [
+                 'index' => 'news_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'promotion_suggestions' => [
+                 'index' => 'promotion_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'store_suggestions' => [
+                 'index' => 'store_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'mall_suggestions' => [
+                 'index' => 'mall_suggestions',
+                 'type'  => 'basic'
             ]
+        ],
+
+        // index list will be include in suggestion
+        'suggestion_indices' => [
+            'coupon_suggestions',
+            'news_suggestions',
+            'promotion_suggestions',
+            'store_suggestions',
+            'mall_suggestions'
         ],
 
         'nearest' => [

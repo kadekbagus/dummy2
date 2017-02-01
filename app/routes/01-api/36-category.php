@@ -43,5 +43,4 @@ Route::get('/api/v1/pub/category-list', function()
 {
     return Orbit\Controller\API\v1\Pub\CategoryAPIController::create()->getCategoryList();
 });
-
 Route::get('/app/v1/pub/category-list', ['as' => 'pub-category-list', 'uses' => 'IntermediatePubAuthController@Category_getCategoryList']);
