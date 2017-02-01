@@ -26,13 +26,13 @@ class AdvertBannerListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-
-
             $take = PaginationNumber::parseTakeFromGet('advert');
             $skip = PaginationNumber::parseSkipFromGet();
             $banner_type = OrbitInput::get('banner_type', 'top_banner');
             $location_type = OrbitInput::get('location_type', 'mall');
             $location_id = OrbitInput::get('mall_id', null);
+            $country = OrbitInput::get('country');
+            $cities = OrbitInput::get('cities');
 
             $advertHelper = AdvertHelper::create();
             $advertHelper->advertCustomValidator();
@@ -115,6 +115,8 @@ class AdvertBannerListAPIController extends PubControllerAPI
                                     ->on(DB::raw('t.status'), '=', DB::raw("'active'"));
                             })
 
+
+
                             // For name of promotion, coupon, and store
                             ->leftJoin('news as n', function ($q) {
                                 $q->on(DB::raw('n.news_id'), '=', 'adverts.link_object_id');
@@ -130,6 +132,21 @@ class AdvertBannerListAPIController extends PubControllerAPI
 
                             ->where('adverts.status', 'active')
                             ->whereRaw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}') between {$prefix}adverts.start_date and {$prefix}adverts.end_date");
+
+            OrbitInput::get('country', function($country) use ($advert)
+            {
+                // Join to country and cities
+                $advert->leftJoin('countries', 'countries.country_id', '=', 'adverts.country_id');
+                $advert->where('countries.name', $country);
+            });
+
+            OrbitInput::get('cities', function($cities) use ($advert)
+            {
+                // Join to advert_cities
+                $advert->leftJoin('advert_cities', 'advert_cities.advert_id', '=', 'adverts.advert_id');
+                $advert->leftJoin('mall_cities', 'mall_cities.mall_city_id', '=', 'advert_cities.mall_city_id');
+                $advert->whereIn('mall_cities.city', (array)$cities);
+            });
 
             $slideshow = $advert->get();
 
