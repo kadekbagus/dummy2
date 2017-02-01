@@ -95,8 +95,8 @@ class ESCouponSuggestionDeleteQueue
 
         try {
             $params = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons_suggestion.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.coupons_suggestion.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupon_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.coupon_suggestions.type'),
                 'id' => $coupon->promotion_id
             ];
 
