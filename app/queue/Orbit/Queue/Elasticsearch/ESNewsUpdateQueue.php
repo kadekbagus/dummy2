@@ -12,6 +12,7 @@ use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 use Log;
+use Orbit\FakeJob;
 
 class ESNewsUpdateQueue
 {
@@ -201,6 +202,11 @@ class ESNewsUpdateQueue
 
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
+
+            // update suggestion
+            $fakeJob = new FakeJob();
+            $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsSuggestionUpdateQueue();
+            $suggestion = $esQueue->fire($fakeJob, ['news_id' => $newsId]);
 
             // Safely delete the object
             $job->delete();
