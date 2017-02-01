@@ -144,6 +144,16 @@ class Coupon extends Eloquent
                 ;
     }
 
+    public function country()
+    {
+        $prefix = DB::getTablePrefix();
+        return $this->belongsToMany('CampaignLocation', 'promotion_retailer', 'promotion_id', 'retailer_id')
+                ->select(DB::raw('oms.country'))
+                ->leftJoin(DB::raw("{$prefix}merchants oms"), DB::raw("oms.merchant_id"), '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END"))
+                ->groupBy(DB::raw('oms.country'));
+    }
+
+
     public function campaignObjectPartners()
     {
         $prefix = DB::getTablePrefix();

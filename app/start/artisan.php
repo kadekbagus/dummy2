@@ -179,6 +179,18 @@ Artisan::add(new MapVendorCitiesCommand);
 // Create or update page multilanguage
 Artisan::add(new CreatePageCommand);
 
+// Sync to elasticsearch from merchants table (mall) to mall suggestion index
+Artisan::add(new ElasticsearchResyncMallSuggestionCommand);
+
+// Sync to elasticsearch from news table to news suggestion index
+Artisan::add(new ElasticsearchResyncNewsSuggestionCommand);
+
+// Sync to elasticsearch from promotion table to promotion suggestion index
+Artisan::add(new ElasticsearchResyncPromotionSuggestionCommand);
+
+// Sync to elasticsearch from coupon table to coupon suggestion index
+Artisan::add(new ElasticsearchResyncCouponSuggestionCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
