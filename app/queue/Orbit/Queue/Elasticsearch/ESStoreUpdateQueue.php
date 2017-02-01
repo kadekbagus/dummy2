@@ -250,6 +250,11 @@ class ESStoreUpdateQueue
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
+            // update suggestion
+            $fakeJob = new FakeJob();
+            $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreSuggestionUpdateQueue();
+            $suggestion = $esQueue->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
+
             if ($updateRelated) {
                 // update es coupon, news, and promotion
                 $this->updateESCoupon($store);
