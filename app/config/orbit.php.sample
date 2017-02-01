@@ -54,7 +54,41 @@ return array(
             'stores' => [
                  'index' => 'stores',
                  'type'  => 'basic'
+            ],
+
+            'coupon_suggestions' => [
+                'index' => 'coupon_suggestions',
+                'type'  => 'basic'
+            ],
+
+            'news_suggestions' => [
+                 'index' => 'news_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'promotion_suggestions' => [
+                 'index' => 'promotion_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'store_suggestions' => [
+                 'index' => 'store_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'mall_suggestions' => [
+                 'index' => 'mall_suggestions',
+                 'type'  => 'basic'
             ]
+        ],
+
+        // index list will be include in suggestion
+        'suggestion_indices' => [
+            'coupon_suggestions',
+            'news_suggestions',
+            'promotion_suggestions',
+            'store_suggestions',
+            'mall_suggestions'
         ],
 
         'nearest' => [
@@ -5022,6 +5056,24 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - User clicks on auto complete search result
+            '107' => array(
+                'name' => 'click_auto_complete_search',
+                'name_long' => 'Click Auto Complete Search',
+                'module_name' => 'Search',
+                'type' => 'click',
+                'object_type' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // - User clicks search button after entering keyword
+            '108' => array(
+                'name' => 'click_search',
+                'name_long' => 'Click Search',
+                'module_name' => 'Search',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            )
         ),
     ),
 
@@ -5485,4 +5537,39 @@ return array(
             ),
         ),
     ),
+
+    // Social media account used for Gotomalls with deferent country
+    'social_media_account' => [
+        'country' => [
+            'Indonesia' => [
+                [
+                    'social_media_name' => 'Facebook',
+                    'url' => 'https://www.facebook.com/Gotomalls.Indo',
+                ],
+                [
+                    'social_media_name' => 'Twitter',
+                    'url' => 'https://twitter.com/gotomalls',
+                ],
+                [
+                    'social_media_name' => 'Instagram',
+                    'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+            ],
+
+            'Singapore' => [
+                [
+                    'social_media_name' => 'Facebook',
+                    'url' => 'https://www.facebook.com/Gotomalls.Indo',
+                ],
+                [
+                    'social_media_name' => 'Twitter',
+                    'url' => 'https://twitter.com/gotomalls',
+                ],
+                [
+                    'social_media_name' => 'Instagram',
+                    'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+            ],
+        ]
+    ],
 );

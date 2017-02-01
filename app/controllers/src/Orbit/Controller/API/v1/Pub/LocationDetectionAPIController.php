@@ -10,16 +10,28 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Orbit\Helper\Util\SimpleCache;
 use \DB;
 use VendorGTMCity;
+use VendorGTMCountry;
 use \stdClass;
+use \Activity;
 
 class LocationDetectionAPIController extends PubControllerAPI
 {
     public function getCountryAndCity()
     {
         $httpCode = 200;
+        $activity = Activity::mobileci()->setActivityType('view');
+        $user = null;
+        $mall = null;
+
         try {
+
             $this->checkAuth();
             $user = $this->api->user;
+
+            $mallId = OrbitInput::get('mall_id', null);
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
+            }
 
             $userLocation = OrbitInput::get('ul', null);
 
@@ -33,6 +45,20 @@ class LocationDetectionAPIController extends PubControllerAPI
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
+
+            $cities = implode(',', $data->cities);
+
+            $activityNotes = sprintf($cities);
+            $activity->setUser($user)
+                ->setActivityName('detect_location')
+                ->setActivityNameLong('Detect Location')
+                ->setObject(null)
+                ->setObjectName($data->country)
+                ->setLocation($mall)
+                ->setModuleName('Location Auto Detection')
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -157,6 +183,8 @@ class LocationDetectionAPIController extends PubControllerAPI
 
         // get the response from cache and fallback to query
         $response = $recordCache->get($serializedCacheKey, function() use ($clientIpAddress, $addr_type) {
+            $country = null;
+            $cities = [];
             $dbip = DB::connection(Config::get('orbit.dbip.connection_id'))
                 ->table(Config::get('orbit.dbip.table'))
                 ->where('ip_start', '<=', inet_pton($clientIpAddress))
@@ -164,23 +192,36 @@ class LocationDetectionAPIController extends PubControllerAPI
                 ->orderBy('ip_start', 'desc')
                 ->first();
 
-            return $dbip;
+            if (is_object($dbip)) {
+                // get GTM country mapping
+                $gtmCountry = VendorGTMCountry::where('vendor_country', $dbip->country)
+                    ->first();
+
+                $gtmCities = VendorGTMCity::where('vendor_city', $dbip->city)
+                    ->get();
+
+                if (is_object($gtmCountry)) {
+                    $country = $gtmCountry->gtm_country;
+                }
+
+                if ($gtmCities->count() > 0) {
+                    foreach ($gtmCities as $gtmCity) {
+                        $cities[] = $gtmCity->gtm_city;
+                    }
+                }
+            }
+
+            $locationData = new stdClass();
+            $locationData->country = $country;
+            $locationData->cities = $cities;
+
+            return $locationData;
         });
         $recordCache->put($serializedCacheKey, $response);
 
         if (is_object($response)) {
-            // get GTM country/city mapping
-            $gtmLocations = VendorGTMCity::leftJoin('vendor_gtm_countries', 'vendor_gtm_countries.vendor_country', '=', 'vendor_gtm_cities.vendor_country')
-                ->where('vendor_gtm_cities.vendor_country', $response->country)
-                ->where('vendor_city', $response->city)
-                ->get();
-
-            if ($gtmLocations->count() > 0) {
-                $country = $gtmLocations[0]->gtm_country;
-                foreach ($gtmLocations as $gtmLocation) {
-                    $cities[] = $gtmLocation->gtm_city;
-                }
-            }
+            $country = $response->country;
+            $cities = $response->cities;
         }
 
         return $this->dataFormatter($country, $cities);

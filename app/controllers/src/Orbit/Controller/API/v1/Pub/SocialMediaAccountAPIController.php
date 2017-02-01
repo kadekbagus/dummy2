@@ -10,90 +10,46 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Config;
-use Page;
 use stdClass;
-use Orbit\Helper\Util\PaginationNumber;
-use DB;
-use Validator;
-use Activity;
 
-class PageAPIController extends PubControllerAPI
+class SocialMediaAccountAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
 
     /**
-     * GET - get spesific page with spesific language
+     * GET - get social media
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string country
-     * @param string object_type
      * @param string language
      *
      * @return Illuminate\Support\Facades\Response
      */
 
-    public function getPage()
+    public function getSocialMediaAccount()
     {
         $httpCode = 200;
-        $activity = Activity::mobileci()->setActivityType('view');
         $user = null;
+        $country = '';
 
         try {
             $user = $this->getUser();
             $country = OrbitInput::get('country');
-            $object_type = OrbitInput::get('object_type');
-            $language = OrbitInput::get('language');
 
-            $validator = Validator::make(
-                array(
-                    'country' => $country,
-                    'object_type' => $object_type,
-                    'language' => $language,
-                ),
-                array(
-                    'country' => 'required',
-                    'object_type' => 'required',
-                    'language' => 'required',
-                )
-            );
+            $socielMediaAccount = Config::get('orbit.social_media_account.country.' . $country);
 
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            $page = Page::select('pages.content', 'pages.language')
-                        ->join('countries', 'pages.country_id', '=', 'countries.country_id')
-                        ->where('countries.name' , $country)
-                        ->where('pages.object_type' , $object_type)
-                        ->where('pages.language' , $language)
-                        ->get();
-
-            if (empty($skip)) {
-                $activityNotes = sprintf('Page viewed: View About Us');
-                $activity->setUser($user)
-                    ->setActivityName('view_about_us')
-                    ->setActivityNameLong('View About Us')
-                    ->setObject(null)
-                    ->setModuleName('Application')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
-            }
-
-            $count = count($page);
+            $count = count($socielMediaAccount);
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = $count;
-            $this->response->data->records = $page;
+            $this->response->data->records = $socielMediaAccount;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
+            $this->response->status = 'error';
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
