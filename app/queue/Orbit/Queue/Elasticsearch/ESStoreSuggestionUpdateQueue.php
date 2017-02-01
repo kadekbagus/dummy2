@@ -136,7 +136,7 @@ class ESStoreSuggestionUpdateQueue
             $city = array();
             foreach($store as $_store) {
                 if (! in_array($_store->city, $city)) {
-                    $city[] = $_store->country;
+                    $city[] = $_store->city;
                 }
 
                 if (! in_array($_store->country, $country)) {
