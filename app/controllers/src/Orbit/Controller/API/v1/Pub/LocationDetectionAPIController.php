@@ -197,7 +197,9 @@ class LocationDetectionAPIController extends PubControllerAPI
                 $gtmCountry = VendorGTMCountry::where('vendor_country', $dbip->country)
                     ->first();
 
-                $gtmCities = VendorGTMCity::where('vendor_city', $dbip->city)
+                $gtmCities = VendorGTMCity::leftJoin('vendor_gtm_countries', 'vendor_gtm_countries.vendor_country', '=', 'vendor_gtm_cities.vendor_country')
+                    ->where('vendor_gtm_cities.vendor_country', $dbip->country)
+                    ->where('vendor_city', $dbip->city)
                     ->get();
 
                 if (is_object($gtmCountry)) {
