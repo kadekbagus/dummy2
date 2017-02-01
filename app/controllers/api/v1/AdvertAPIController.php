@@ -89,7 +89,7 @@ class AdvertAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $locations = OrbitInput::post('locations');
             $locations = (array) $locations;
-            $country_id = OrbitInput::post('country_id');
+            $country_id = OrbitInput::post('country_id', '');
             $is_all_city = OrbitInput::post('is_all_city', 'N');
             $is_all_location = OrbitInput::post('is_all_location', 'N');
             $city = OrbitInput::post('city');
