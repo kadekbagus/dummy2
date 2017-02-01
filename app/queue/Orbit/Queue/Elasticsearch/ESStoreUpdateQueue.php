@@ -52,6 +52,7 @@ class ESStoreUpdateQueue
         $updateRelated = (empty($data['updated_related']) ? FALSE : $data['updated_related']);
 
         $storeName = $data['name'];
+        $countryName = $data['country'];
         $store = Tenant::with('keywords','translations','adverts','campaignObjectPartners', 'categories')
                         ->select(
                             'merchants.merchant_id',
@@ -92,6 +93,7 @@ class ESStoreUpdateQueue
                         ->whereRaw("{$prefix}merchants.status = 'active'")
                         ->whereRaw("oms.status = 'active'")
                         ->where('merchants.name', '=', $storeName)
+                        ->whereRaw("oms.country = '{$countryName}'")
                         ->orderBy('merchants.created_at', 'asc')
                         ->get();
 
@@ -102,8 +104,26 @@ class ESStoreUpdateQueue
                 'type' => Config::get('orbit.elasticsearch.indices.stores.type'),
                 'body' => [
                     'query' => [
-                        'match' => [
-                            'name.raw' => $storeName
+                        'filtered' => [
+                            'filter' => [
+                                'and' => [
+                                    [
+                                        'match' => [
+                                            'name.raw' => $storeName
+                                        ]
+                                    ],
+                                    [
+                                        'nested' => [
+                                            'path' => 'tenant_detail',
+                                            'query' => [
+                                                'match' => [
+                                                    'tenant_detail.country.raw' => $countryName
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
                         ]
                     ]
                 ]
