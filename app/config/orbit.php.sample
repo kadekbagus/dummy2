@@ -54,6 +54,31 @@ return array(
             'stores' => [
                  'index' => 'stores',
                  'type'  => 'basic'
+            ],
+
+            'coupons_suggestion' => [
+                'index' => 'coupons_suggestion',
+                'type'  => 'basic'
+            ],
+
+            'news_suggestion' => [
+                 'index' => 'news_suggestion',
+                 'type'  => 'basic'
+            ],
+
+            'promotions_suggestion' => [
+                 'index' => 'promotions_suggestion',
+                 'type'  => 'basic'
+            ],
+
+            'stores_suggestion' => [
+                 'index' => 'stores_suggestion',
+                 'type'  => 'basic'
+            ],
+
+            'malls_suggestion' => [
+                 'index' => 'malls_suggestion',
+                 'type'  => 'basic'
             ]
         ],
 
