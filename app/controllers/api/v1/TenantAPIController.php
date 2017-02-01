@@ -2272,6 +2272,22 @@ class TenantAPIController extends ControllerAPI
                                        ->where('merchants.status', '!=', 'deleted')
                                        ->whereIn('merchants.object_type', ['mall', 'tenant']);
 
+            if ($from === 'detail') {
+                if ($link_type === 'promotion' || $link_type === 'news') {
+                    $tenants = $tenants->join('news_merchant as nm', DB::raw("nm.merchant_id"), '=', 'merchants.merchant_id')
+                                    ->whereRaw("nm.news_id = {$this->quote($campaign_id)}");
+                } elseif ($link_type === 'coupon') {
+                    $tenants = $tenants->join('promotion_retailer as pr', DB::raw("pr.retailer_id"), '=', 'merchants.merchant_id')
+                                    ->whereRaw("pr.promotion_id = {$this->quote($campaign_id)}");
+                } elseif ($link_type === 'coupon_redeem') {
+                    $tenants = $tenants->join('promotion_retailer_redeem as prr', function ($q) use ($campaign_id) {
+                                                $q->on(DB::raw("prr.retailer_id"), '=', 'merchants.merchant_id')
+                                                  ->on(DB::raw("prr.object_type"), '=', DB::raw("'tenant'"));
+                                            })
+                                        ->whereRaw("prr.promotion_id = {$this->quote($campaign_id)}");
+                }
+            }
+
             // Need to overide the query for advert
             if ($from === 'advert') {
                 if ($link_type === 'coupon' ) {
