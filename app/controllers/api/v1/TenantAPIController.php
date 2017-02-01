@@ -2364,30 +2364,6 @@ class TenantAPIController extends ControllerAPI
                                ->where(DB::raw("pm.status"), '=', 'active')
                                ->groupBy('mall_id');
                 }
-            } elseif ($from === 'detail') {
-                if ($link_type === 'coupon' ) {
-                    $tenants = PromotionRetailer::select(
-                                    'merchants.merchant_id',
-                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
-                                    'merchants.status',
-                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language"),
-                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name")
-                                )
-                                ->leftjoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
-                                ->where('promotion_id', $campaign_id);
-                } elseif ($link_type === 'promotion' || $link_type === 'news') {
-                    $tenants = NewsMerchant::select(
-                                    'merchants.merchant_id',
-                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
-                                    'merchants.status',
-                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language"),
-                                    DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name")
-                                )
-                                ->leftjoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
-                                ->where('news_id', $campaign_id);
-                }
             }
 
             // this is for request from pmp account listing on admin portal
