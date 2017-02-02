@@ -170,16 +170,22 @@ class AdvertUpdateQueue
         // check store before update elasticsearch
         $prefix = DB::getTablePrefix();
         // checking store/tenant data for updating elasticsearch data
-        $store = Tenant::select('merchants.name')
+        $store = Tenant::select('merchants.name', DB::raw('oms.country'))
                         ->excludeDeleted('merchants')
                         ->join('adverts', 'adverts.link_object_id', '=', 'merchants.merchant_id')
-                        ->where('adverts.advert_id', '=', $advert->advert_id)
+                        ->join(DB::raw("(
+                            select merchant_id, name, country
+                            from {$prefix}merchants
+                            where status = 'active'
+                                and object_type = 'mall'
+                            ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                        ->where('adverts.advert_id', '=', $advert_id)
                         ->first();
 
         if (is_object($store)) {
             // Notify the queueing system to delete Elasticsearch document
             $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreUpdateQueue();
-            $response = $esQueue->fire($fakeJob, ['name' => $store->name]);
+            $response = $esQueue->fire($fakeJob, ['name' => $store->name, 'country' => $store->country]);
         }
     }
 }

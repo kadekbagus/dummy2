@@ -41,6 +41,7 @@ class CdnUploadUpdateQueue
         $esId = (! empty($data['es_id'])) ? $data['es_id'] : '';
         $useRelativePath = (! empty($data['use_relative_path'])) ? $data['use_relative_path'] : TRUE;
         $bucketName = (! empty($data['bucket_name'])) ? $data['bucket_name'] : '';
+        $esCountry = (! empty($data['es_country'])) ? $data['es_country'] : '';
 
         try {
             $sdk = new Aws\Sdk(Config::get('orbit.aws-sdk', []));
@@ -123,7 +124,7 @@ class CdnUploadUpdateQueue
 
                 case 'store':
                     $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreUpdateQueue();
-                    $response = $esQueue->fire($fakeJob, ['name' => $esId]);
+                    $response = $esQueue->fire($fakeJob, ['name' => $esId, 'country' => $esCountry]);
                     break;
             }
 
