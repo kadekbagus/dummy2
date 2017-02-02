@@ -143,7 +143,8 @@ class StoreSynchronization
             });
 
             $storeName = '';
-            $stores->chunk($chunk, function($_stores) use ($sync_id, $user, &$storeName)
+            $countryName = '';
+            $stores->chunk($chunk, function($_stores) use ($sync_id, $user, &$storeName, &$countryName)
             {
                 foreach ($_stores as $store) {
                     $this->debug(sprintf("memory usage: %s\n", memory_get_peak_usage() / 1024));
@@ -164,6 +165,7 @@ class StoreSynchronization
                     $countryName = Country::where('country_id', $countryId)->first();
 
                     $storeName = $store->name;
+                    $countryName = $countryName->name;
                     $tenant->merchant_id = $base_store_id;
                     $tenant->name = $store->name;
                     $tenant->description = $store->description;
@@ -366,6 +368,7 @@ class StoreSynchronization
                             'old_path'      => null,
                             'es_type'       => 'store',
                             'es_id'         => $storeName,
+                            'es_country'    => $countryName,
                             'bucket_name'   => $bucketName
                         ], $queueName);
                     }
@@ -376,7 +379,8 @@ class StoreSynchronization
             if (!empty($storeName)) {
                 // Notify the queueing system to update Elasticsearch document
                 Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
-                    'name' => $storeName
+                    'name' => $storeName,
+                    'country' => $countryName
                 ]);
             }
 
