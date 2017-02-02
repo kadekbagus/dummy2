@@ -194,6 +194,9 @@ Artisan::add(new ElasticsearchResyncCouponSuggestionCommand);
 // Sync to elasticsearch from suggestion table to suggestion suggestion index
 Artisan::add(new ElasticsearchResyncStoreSuggestionCommand);
 
+// Delete not active campaign in suggest index elasticsearch
+Artisan::add(new CampaignDeleteInactiveEsCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
