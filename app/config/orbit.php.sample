@@ -5091,7 +5091,16 @@ return array(
                 'type' => 'click',
                 'object_type' => null,
                 'parameter_name' => null
-            )
+            ),
+            // - User clicks on "Visit" button on map info popup / Store location
+            '111' => array(
+                'name' => 'click_mall',
+                'name_long' => 'Click Mall',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'visited_mall_id'
+            ),
         ),
     ),
 
