@@ -1210,7 +1210,7 @@ class MallAPIController extends ControllerAPI
 
             // Filter mall by countryID
             OrbitInput::get('country_id', function ($countryId) use ($malls) {
-                $malls->whereIn('merchants.country_id', $countryId);
+                $malls->where('merchants.country_id', $countryId);
             });
 
             // Filter mall by country

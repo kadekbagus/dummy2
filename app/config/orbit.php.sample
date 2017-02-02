@@ -5073,6 +5073,24 @@ return array(
                 'type' => 'click',
                 'object_type' => null,
                 'parameter_name' => null
+            ),
+            // - User clicks on one of the sign in mehod
+            '109' => array(
+                'name' => 'click_sign_in_method',
+                'name_long' => 'Click Sign In Method',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "Edit" profile button
+            '110' => array(
+                'name' => 'click_edit_profile',
+                'name_long' => 'Click Edit Profile',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
             )
         ),
     ),
