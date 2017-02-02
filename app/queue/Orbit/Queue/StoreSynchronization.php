@@ -368,6 +368,7 @@ class StoreSynchronization
                             'old_path'      => null,
                             'es_type'       => 'store',
                             'es_id'         => $storeName,
+                            'es_country'    => $countryName,
                             'bucket_name'   => $bucketName
                         ], $queueName);
                     }
