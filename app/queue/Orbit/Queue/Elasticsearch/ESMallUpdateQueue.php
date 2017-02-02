@@ -183,7 +183,7 @@ class ESMallUpdateQueue
                 $this->updateESCoupon($mall);
                 $this->updateESNews($mall);
                 $this->updateESPromotion($mall);
-                $this->updateESStore($mall);
+                $this->updateESStore($mall, $mall->Country->name);
             }
 
             // Safely delete the object
@@ -365,7 +365,7 @@ class ESMallUpdateQueue
         }
     }
 
-    protected function updateESStore($mall) {
+    protected function updateESStore($mall, $country) {
         $fakeJob = new FakeJob();
 
         $prefix = DB::getTablePrefix();
@@ -388,7 +388,7 @@ class ESMallUpdateQueue
             foreach ($store as $_store) {
                 // Notify the queueing system to delete Elasticsearch document
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreUpdateQueue();
-                $response = $esQueue->fire($fakeJob, ['name' => $_store->name]);
+                $response = $esQueue->fire($fakeJob, ['name' => $_store->name, 'country' => $country]);
             }
         }
     }
