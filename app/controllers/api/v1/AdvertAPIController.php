@@ -693,6 +693,8 @@ class AdvertAPIController extends ControllerAPI
                                      'advert_link_types.advert_link_name',
                                      'adverts.country_id',
                                      'countries.name as country_name',
+                                     'adverts.is_all_city',
+                                     'adverts.is_all_location',
                                      DB::raw("CASE
                                                 WHEN {$prefix}adverts.end_date < {$this->quote($now)} THEN 'inactive'
                                                 ELSE {$prefix}adverts.status
