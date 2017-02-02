@@ -114,7 +114,9 @@ class ESNewsSuggestionUpdateQueue
             $body = [
                 'name'    => $news->news_name,
                 'country' => $country,
-                'city'    => $city
+                'city'    => $city,
+                'begin_date' => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
+                'end_date' => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z'
             ];
             
             foreach ($news->translations as $translationCollection) {
