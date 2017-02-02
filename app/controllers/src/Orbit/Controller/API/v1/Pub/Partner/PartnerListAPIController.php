@@ -54,6 +54,16 @@ class PartnerListAPIController extends PubControllerAPI
             $countryFilter = OrbitInput::get('country', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
 
+            if (empty($countryFilter)) {
+                // return empty result if country filter is not around
+                $this->response->data = null;
+                $this->response->code = 0;
+                $this->response->status = 'success';
+                $this->response->message = 'Request Ok';
+
+                return $this->render($httpCode);
+            }
+
             $partnerHelper = PartnerHelper::create();
             $partnerHelper->registerCustomValidation();
             $validator = Validator::make(
