@@ -123,7 +123,9 @@ class ESCouponSuggestionUpdateQueue
             $body = [
                 'name'    => $coupon->promotion_name,
                 'country' => $country,
-                'city'    => $city
+                'city'    => $city,
+                'begin_date' => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
+                'end_date' => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z'
             ];
             
             foreach ($coupon->translations as $translationCollection) {
