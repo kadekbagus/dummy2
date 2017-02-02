@@ -39,6 +39,11 @@ class WordpressWebHooksPostAPIController extends PubControllerAPI
             }
 
             $config = Config::get("orbit.external_calls.wordpress.{$country}");
+
+            if (empty($config)) {
+                $this->thrownButOK = TRUE;
+                throw new Exception('Config wordpress for country ' . ucfirst($country) . ' is not found, no data returned');
+            }
             $jsonFile = isset($config['cache_file']) ? $config['cache_file'] : '/dev/shm/gtm-wordpress-post.json';
             $dirname = dirname($jsonFile);
 
