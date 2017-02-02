@@ -17,6 +17,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use stdClass;
 use Mall;
+use MallCountry;
 
 
 class WordpressPostListAPIController extends PubControllerAPI
@@ -46,14 +47,23 @@ class WordpressPostListAPIController extends PubControllerAPI
             $this->checkAuth();
             $user = $this->api->user;
 
-            $jsonFile = Config::get('orbit.external_calls.wordpress.cache_file');
+            $country = strtolower(trim(OrbitInput::get('country')));
+
+            $mallCountry = MallCountry::where('country', $country)->first();
+
+            if (empty($mallCountry)) {
+                $this->thrownButOK = TRUE;
+                throw new Exception('country not exist, no data returned');
+            }
+
+            $jsonFile = Config::get("orbit.external_calls.wordpress.{$country}.cache_file");
             $totalRec = 0;
             $listOfRec = [];
             $message = 'Request OK';
 
             if (! file_exists($jsonFile)) {
                 $this->thrownButOK = TRUE;
-                throw new Exception('Wordpress JSON file is not found, no data returned');
+                throw new Exception('Wordpress JSON file for country ' . ucfirst($country) . ' is not found, no data returned');
             }
 
             if (is_null($listOfRec = json_decode(file_get_contents($jsonFile)))) {

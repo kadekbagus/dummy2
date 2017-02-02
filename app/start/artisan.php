@@ -191,6 +191,9 @@ Artisan::add(new ElasticsearchResyncPromotionSuggestionCommand);
 // Sync to elasticsearch from coupon table to coupon suggestion index
 Artisan::add(new ElasticsearchResyncCouponSuggestionCommand);
 
+// Sync to elasticsearch from suggestion table to suggestion suggestion index
+Artisan::add(new ElasticsearchResyncStoreSuggestionCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

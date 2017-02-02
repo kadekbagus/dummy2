@@ -89,7 +89,7 @@ class AdvertAPIController extends ControllerAPI
             $status = OrbitInput::post('status');
             $locations = OrbitInput::post('locations');
             $locations = (array) $locations;
-            $country_id = OrbitInput::post('country_id');
+            $country_id = OrbitInput::post('country_id', '');
             $is_all_city = OrbitInput::post('is_all_city', 'N');
             $is_all_location = OrbitInput::post('is_all_location', 'N');
             $city = OrbitInput::post('city');
@@ -693,6 +693,8 @@ class AdvertAPIController extends ControllerAPI
                                      'advert_link_types.advert_link_name',
                                      'adverts.country_id',
                                      'countries.name as country_name',
+                                     'adverts.is_all_city',
+                                     'adverts.is_all_location',
                                      DB::raw("CASE
                                                 WHEN {$prefix}adverts.end_date < {$this->quote($now)} THEN 'inactive'
                                                 ELSE {$prefix}adverts.status
