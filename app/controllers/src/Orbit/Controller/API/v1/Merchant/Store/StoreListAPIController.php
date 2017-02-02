@@ -83,7 +83,7 @@ class StoreListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
             $store = BaseStore::excludeDeleted('base_stores')
-                            ->select('base_merchants.base_merchant_id',
+                            ->select('base_merchants.base_merchant_id', 'base_merchants.country_id',
                                 DB::raw("{$prefix}base_merchants.name AS merchant"),
                                 'base_stores.base_store_id',
                                 DB::raw("{$prefix}merchants.merchant_id AS mall_id"),

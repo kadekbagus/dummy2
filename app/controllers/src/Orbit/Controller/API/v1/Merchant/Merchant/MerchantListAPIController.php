@@ -74,6 +74,7 @@ class MerchantListAPIController extends ControllerAPI
 
             $merchants = BaseMerchant::select(
                     'base_merchants.base_merchant_id',
+                    'country_id',
                     'name',
                     DB::raw("
                             count({$prefix}base_stores.base_store_id) as location_count
