@@ -336,6 +336,17 @@ class Activity extends Eloquent
     }
 
     /**
+     * Set the value of object_name manually
+     * @author Irianto <irianto@dominopos.com>
+     */
+    public function setObjectName($name = NULL)
+    {
+        $this->object_name = $name;
+
+        return $this;
+    }
+
+    /**
      * Set the value of `object_id`, `object_name`, and `metadata_object`.
      *
      * @author Rio Astamal <me@rioastamal.net>

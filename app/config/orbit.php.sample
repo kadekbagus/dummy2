@@ -54,7 +54,41 @@ return array(
             'stores' => [
                  'index' => 'stores',
                  'type'  => 'basic'
+            ],
+
+            'coupon_suggestions' => [
+                'index' => 'coupon_suggestions',
+                'type'  => 'basic'
+            ],
+
+            'news_suggestions' => [
+                 'index' => 'news_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'promotion_suggestions' => [
+                 'index' => 'promotion_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'store_suggestions' => [
+                 'index' => 'store_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'mall_suggestions' => [
+                 'index' => 'mall_suggestions',
+                 'type'  => 'basic'
             ]
+        ],
+
+        // index list will be include in suggestion
+        'suggestion_indices' => [
+            'coupon_suggestions',
+            'news_suggestions',
+            'promotion_suggestions',
+            'store_suggestions',
+            'mall_suggestions'
         ],
 
         'nearest' => [
@@ -667,6 +701,18 @@ return array(
         'you_might_also_like' => array(
             'per_page'      => 4,
             'max_record'    => 4,
+        ),
+
+        // mall country
+        'mall_country' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // mall city
+        'mall_city' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
         ),
     ),
 
@@ -5010,6 +5056,51 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - User clicks on auto complete search result
+            '107' => array(
+                'name' => 'click_auto_complete_search',
+                'name_long' => 'Click Auto Complete Search',
+                'module_name' => 'Search',
+                'type' => 'click',
+                'object_type' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // - User clicks search button after entering keyword
+            '108' => array(
+                'name' => 'click_search',
+                'name_long' => 'Click Search',
+                'module_name' => 'Search',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on one of the sign in mehod
+            '109' => array(
+                'name' => 'click_sign_in_method',
+                'name_long' => 'Click Sign In Method',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "Edit" profile button
+            '110' => array(
+                'name' => 'click_edit_profile',
+                'name_long' => 'Click Edit Profile',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "Visit" button on map info popup / Store location
+            '111' => array(
+                'name' => 'click_mall',
+                'name_long' => 'Click Mall',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'visited_mall_id'
+            ),
         ),
     ),
 
@@ -5216,28 +5307,55 @@ return array(
      */
     'external_calls' => [
         'wordpress' => [
-            // Driver of the HTTP client
-            // Value: 'curl', 'fake'
-            'driver' => 'curl',
+            'indonesia' => [
+                // Driver of the HTTP client
+                // Value: 'curl', 'fake'
+                'driver' => 'curl',
 
-            // The base URL of the blog, e.g: https://blog.example.com
-            'base_blog_url' => NULL,
+                // The base URL of the blog, e.g: https://blog.example.com
+                'base_blog_url' => NULL,
 
-            // Number of posts to take
-            'take' => 6,
+                // Number of posts to take
+                'take' => 6,
 
-            // Default image used when the post does not have image URL
-            'default_image_url' => NULL,
+                // Default image used when the post does not have image URL
+                'default_image_url' => NULL,
 
-            // Cache file location, the web hooks will write to this file
-            'cache_file' => 'storage/wordpress/post-list.json',
+                // Cache file location, the web hooks will write to this file
+                'cache_file' => '../app/storage/wordpress/post-list-indonesia.json',
 
-            // When post is made - Wordpress try to call Orbit URLs
-            // For security reason we limit the IPs that able to hit
-            // this URL
-            // Value could be '*' (means all) or an array
-            // e.g: ['127.0.0.1', '192.168.0/24']
-            'web_hooks_allowed_ips' => '*'
+                // When post is made - Wordpress try to call Orbit URLs
+                // For security reason we limit the IPs that able to hit
+                // this URL
+                // Value could be '*' (means all) or an array
+                // e.g: ['127.0.0.1', '192.168.0/24']
+                'web_hooks_allowed_ips' => '*'
+            ],
+
+            'singapore' => [
+                // Driver of the HTTP client
+                // Value: 'curl', 'fake'
+                'driver' => 'curl',
+
+                // The base URL of the blog, e.g: https://blog.example.com
+                'base_blog_url' => NULL,
+
+                // Number of posts to take
+                'take' => 6,
+
+                // Default image used when the post does not have image URL
+                'default_image_url' => NULL,
+
+                // Cache file location, the web hooks will write to this file
+                'cache_file' => '../app/storage/wordpress/post-list-indonesia.json',
+
+                // When post is made - Wordpress try to call Orbit URLs
+                // For security reason we limit the IPs that able to hit
+                // this URL
+                // Value could be '*' (means all) or an array
+                // e.g: ['127.0.0.1', '192.168.0/24']
+                'web_hooks_allowed_ips' => '*'
+            ]
         ]
     ],
 
@@ -5473,4 +5591,39 @@ return array(
             ),
         ),
     ),
+
+    // Social media account used for Gotomalls with deferent country
+    'social_media_account' => [
+        'country' => [
+            'Indonesia' => [
+                [
+                    'social_media_name' => 'Facebook',
+                    'url' => 'https://www.facebook.com/Gotomalls.Indo',
+                ],
+                [
+                    'social_media_name' => 'Twitter',
+                    'url' => 'https://twitter.com/gotomalls',
+                ],
+                [
+                    'social_media_name' => 'Instagram',
+                    'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+            ],
+
+            'Singapore' => [
+                [
+                    'social_media_name' => 'Facebook',
+                    'url' => 'https://www.facebook.com/Gotomalls.Indo',
+                ],
+                [
+                    'social_media_name' => 'Twitter',
+                    'url' => 'https://twitter.com/gotomalls',
+                ],
+                [
+                    'social_media_name' => 'Instagram',
+                    'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+            ],
+        ]
+    ],
 );

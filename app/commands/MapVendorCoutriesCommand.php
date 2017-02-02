@@ -3,7 +3,7 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 
-class MapVendorCoutries extends Command
+class MapVendorCoutriesCommand extends Command
 {
     /**
      * The console command name.
@@ -18,9 +18,6 @@ class MapVendorCoutries extends Command
      * @var string
      */
     protected $description = 'Command for map vendor and gtm country from json file.';
-
-    protected $valid_vendor_country = NULL;
-    protected $valid_gtm_country = NULL;
 
     /**
      * Create a new command instance.
@@ -85,8 +82,8 @@ class MapVendorCoutries extends Command
                 $this->info('[DRY RUN MODE - Not Insert on DB] ');
             }
 
-            $vendor_country = trim($data["vendor_country"]);
-            $gtm_country = trim($data["gtm_country"]);
+            $vendor_country = trim($data['vendor_country']);
+            $gtm_country = trim($data['gtm_country']);
 
             $this->registerCustomValidation();
 
@@ -109,27 +106,24 @@ class MapVendorCoutries extends Command
                 throw new Exception($errorMessage);
             }
 
-            $valid_vendor_country = $this->valid_vendor_country;
-            $valid_gtm_country = $this->valid_gtm_country;
-
-            $check_vendor_country = VendorGTMCountry::where('vendor_country', $valid_vendor_country->country)
-                                        ->where('gtm_country', $valid_gtm_country->country)
+            $check_vendor_country = VendorGTMCountry::where('vendor_country', $vendor_country)
+                                        ->where('gtm_country', $gtm_country)
                                         ->first();
 
             if (empty($check_vendor_country)) {
                 $newvendorcountry = new VendorGTMCountry();
-                $newvendorcountry->vendor_country = $valid_vendor_country->country;
-                $newvendorcountry->gtm_country = $valid_gtm_country->country;
+                $newvendorcountry->vendor_country = $vendor_country;
+                $newvendorcountry->gtm_country = $gtm_country;
 
                 if (! $dryRun) {
                     // Insert user
                     $newvendorcountry->save();
                 }
-                $this->info( sprintf('Mapping Vendor Country %s to GTM Country %s.', $valid_vendor_country->country, $valid_gtm_country->country) );
+                $this->info( sprintf('Mapping Vendor Country %s to GTM Country %s.', $vendor_country, $gtm_country) );
             } else {
-                $this->info( sprintf('Vendor Country %s to GTM Country %s, already exist.', $valid_vendor_country->country, $valid_gtm_country->country) );
+                $this->info( sprintf('Vendor Country %s to GTM Country %s, already exist.', $vendor_country, $gtm_country) );
             }
-
+            $this->info("Done");
         } catch (Exception $e) {
             $this->error('Line #' . $e->getLine() . ': ' . $e->getMessage());
         }
@@ -146,7 +140,6 @@ class MapVendorCoutries extends Command
                 return FALSE;
             }
 
-            $this->valid_vendor_country = $check_country;
             return TRUE;
         });
 
@@ -158,7 +151,6 @@ class MapVendorCoutries extends Command
                 return FALSE;
             }
 
-            $this->valid_gtm_country = $check_country;
             return TRUE;
         });
     }

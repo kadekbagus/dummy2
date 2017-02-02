@@ -83,6 +83,8 @@ class PromotionListAPIController extends PubControllerAPI
             $sort_mode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
+            $cityFilters = OrbitInput::get('cities', null);
+            $countryFilter = OrbitInput::get('country', null);
             $ul = OrbitInput::get('ul', null);
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance', 10);
@@ -125,7 +127,7 @@ class PromotionListAPIController extends PubControllerAPI
                 'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
-
+                'country' => $countryFilter, 'cities' => $cityFilters,
             ];
 
             // Run the validation
@@ -263,7 +265,25 @@ class PromotionListAPIController extends PubControllerAPI
                 }
             });
 
-            // sort by name or location
+            // filter by country
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery) {
+                $countryFilterArr = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.country.raw' => $countryFilter))))));
+
+                $jsonQuery['query']['filtered']['filter']['and'][] = $countryFilterArr;
+            });
+
+            // filter by city, only filter when countryFilter is not empty
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter) {
+                if (! empty($countryFilter)) {
+                    $cityFilterArr = [];
+                    foreach ((array) $cityFilters as $cityFilter) {
+                        $cityFilterArr[] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $cityFilter))))));
+                    }
+
+                    $jsonQuery['query']['filtered']['filter']['and'][]['or'] = $cityFilterArr;
+                }
+            });
+
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withCache = FALSE;

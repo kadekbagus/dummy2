@@ -68,6 +68,7 @@ class MerchantNewAPIController extends ControllerAPI
             $translations = OrbitInput::post('translations');
             $language = OrbitInput::get('language', 'en');
             $keywords = OrbitInput::post('keywords');
+            $countryId = OrbitInput::post('country_id');
             $keywords = (array) $keywords;
 
             // Begin database transaction
@@ -75,13 +76,15 @@ class MerchantNewAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'merchantName'  => $merchantName
+                    'merchantName' => $merchantName,
+                    'country'      => $countryId
                 ),
                 array(
-                    'merchantName'  => 'required|orbit.exist.merchant_name'
+                    'merchantName' => 'required|orbit.exist.merchant_name:' . $countryId,
+                    'country'      => 'required'
                 ),
                 array(
-                    'orbit.exist.merchant_name' => 'Merchant name already exist'
+                    'orbit.exist.merchant_name' => 'Merchant is already exist'
                )
             );
 
@@ -124,6 +127,7 @@ class MerchantNewAPIController extends ControllerAPI
 
             $newBaseMerchant = new BaseMerchant;
             $newBaseMerchant->name = $merchantName;
+            $newBaseMerchant->country_id = $countryId;
             $newBaseMerchant->facebook_url = $facebookUrl;
             $newBaseMerchant->url = $websiteUrl;
             $newBaseMerchant->status = 'active';

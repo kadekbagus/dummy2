@@ -159,22 +159,40 @@ Artisan::add(new GetListActiveStoreCommand);
 Artisan::add(new GetListActiveMallCommand);
 
 // Fill table mall_countries
-Artisan::add(new FillTableMallCountries);
+Artisan::add(new FillTableMallCountriesCommand);
 
 // Fill table mall_cities
-Artisan::add(new FillTableMallCities);
+Artisan::add(new FillTableMallCitiesCommand);
 
 // Fill table db_ip_countries
-Artisan::add(new FillTableDBIPCountries);
+Artisan::add(new FillTableDBIPCountriesCommand);
 
 // Fill table db_ip_cities
-Artisan::add(new FillTableDBIPCities);
+Artisan::add(new FillTableDBIPCitiesCommand);
 
 // Map Country Vendor to GTM
-Artisan::add(new MapVendorCoutries);
+Artisan::add(new MapVendorCoutriesCommand);
 
 // Map Country Vendor to GTM
-Artisan::add(new MapVendorCities);
+Artisan::add(new MapVendorCitiesCommand);
+
+// Create or update page multilanguage
+Artisan::add(new CreatePageCommand);
+
+// Sync to elasticsearch from merchants table (mall) to mall suggestion index
+Artisan::add(new ElasticsearchResyncMallSuggestionCommand);
+
+// Sync to elasticsearch from news table to news suggestion index
+Artisan::add(new ElasticsearchResyncNewsSuggestionCommand);
+
+// Sync to elasticsearch from promotion table to promotion suggestion index
+Artisan::add(new ElasticsearchResyncPromotionSuggestionCommand);
+
+// Sync to elasticsearch from coupon table to coupon suggestion index
+Artisan::add(new ElasticsearchResyncCouponSuggestionCommand);
+
+// Sync to elasticsearch from suggestion table to suggestion suggestion index
+Artisan::add(new ElasticsearchResyncStoreSuggestionCommand);
 
 // Insert or update data on settings table
 // @Todo investigate why its error

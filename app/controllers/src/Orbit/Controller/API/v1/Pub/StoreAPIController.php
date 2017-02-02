@@ -84,6 +84,8 @@ class StoreAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $location = OrbitInput::get('location', null);
+            $cityFilters = OrbitInput::get('cities', null);
+            $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $language = OrbitInput::get('language', 'id');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
@@ -132,7 +134,7 @@ class StoreAPIController extends PubControllerAPI
                 'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
-
+                'country' => $countryFilter, 'cities' => $cityFilters,
             ];
 
             // Run the validation
@@ -164,6 +166,8 @@ class StoreAPIController extends PubControllerAPI
 
             // value will be true if query to nested, *to get right number of stores
             $withInnerHits = false;
+            $innerHitsCountry = false;
+            $innerHitsCity = false;
 
             $jsonQuery = array('from' => $skip, 'size' => $esTake, 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('filtered' => array('filter' => array('and' => array( array('range' => array('tenant_detail_count' => array('gt' => 0))))))));
 
@@ -274,6 +278,32 @@ class StoreAPIController extends PubControllerAPI
                         $locationFilter = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('match' => array('tenant_detail.city.raw' => $location)))), 'inner_hits' => new stdclass()));
                         $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
                     }
+                }
+            });
+
+            $countryCityFilterArr = [];
+
+            // filter by country
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$withInnerHits, &$innerHitsCity, &$countryCityFilterArr) {
+                $withInnerHits = true;
+                $innerHitsCity = true;
+
+                $countryCityFilterArr = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => []], 'inner_hits' => ['name' => 'country_city_hits']]];
+
+                $countryCityFilterArr['nested']['query']['bool']['must'] = ['match' => ['tenant_detail.country.raw' => $countryFilter]];
+
+                $jsonQuery['query']['filtered']['filter']['and'][] = $countryCityFilterArr;
+            });
+
+            // filter by city, only filter when countryFilter is not empty
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter) {
+                if (! empty($countryFilter)) {
+                    $cityFilterArr = [];
+                    foreach ((array) $cityFilters as $cityFilter) {
+                        $cityFilterArr[] = ['match' => ['tenant_detail.city.raw' => $cityFilter]];
+                    }
+
+                    $jsonQuery['query']['filtered']['filter']['and'][1]['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
             });
 
@@ -561,8 +591,14 @@ class StoreAPIController extends PubControllerAPI
                 }
 
                 foreach ($responseCount['hits']['hits'] as $record) {
-                    if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
-                        $innerHitsCount = $innerHitsCount + $record['inner_hits']['tenant_detail']['hits']['total'];
+                    if ($innerHitsCity) {
+                        $hitsName = 'country_city_hits';
+                    } else {
+                        $hitsName = 'tenant_detail';
+                    }
+
+                    if (! empty($record['inner_hits'][$hitsName]['hits']['total'])) {
+                        $innerHitsCount = $innerHitsCount + $record['inner_hits'][$hitsName]['hits']['total'];
                     }
                 }
             }

@@ -51,10 +51,18 @@ class PartnerListAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
+            $countryFilter = OrbitInput::get('country', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
 
-            // search by key word or filter or sort by flag
-            $searchFlag = FALSE;
+            if (empty($countryFilter)) {
+                // return empty result if country filter is not around
+                $this->response->data = null;
+                $this->response->code = 0;
+                $this->response->status = 'success';
+                $this->response->message = 'Request Ok';
+
+                return $this->render($httpCode);
+            }
 
             $partnerHelper = PartnerHelper::create();
             $partnerHelper->registerCustomValidation();
@@ -112,6 +120,12 @@ class PartnerListAPIController extends PubControllerAPI
             {
                 $visible = ($visible === 'yes' ? 'Y' : 'N');
                 $partners->where('partners.is_visible', $visible);
+            });
+
+            // filter by country and city
+            OrbitInput::get('country', function($countryFilter) use ($partners) {
+                $partners->leftJoin('countries', 'partners.country_id', '=', 'countries.country_id')
+                    ->where('countries.name', $countryFilter);
             });
 
             // Map the sortby request to the real column name
