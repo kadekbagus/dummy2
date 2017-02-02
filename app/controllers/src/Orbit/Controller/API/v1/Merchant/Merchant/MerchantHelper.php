@@ -6,6 +6,7 @@
 use OrbitShop\API\v1\OrbitShopAPI;
 use Validator;
 use BaseMerchant;
+use BaseStore;
 use BaseMerchantTranslation;
 use Category;
 use App;
@@ -48,6 +49,18 @@ class MerchantHelper
             $country = $parameters[0];
             $merchant = BaseMerchant::where('name', '=', $value)
                             ->where('country_id', $country)
+                            ->first();
+
+            if (! empty($merchant)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        // Check country in existing store
+        Validator::extend('orbit.store.country', function ($attribute, $value, $parameters) {
+            $merchant = BaseStore::where('base_merchant_id', '=', $value)
                             ->first();
 
             if (! empty($merchant)) {
