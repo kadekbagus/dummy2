@@ -346,6 +346,8 @@ class AdvertAPIController extends ControllerAPI
             $locations = OrbitInput::post('locations');
             $locations = (array) $locations;
             $country_id = OrbitInput::post('country_id');
+            $is_all_city = OrbitInput::post('is_all_city', 'N');
+            $is_all_location = OrbitInput::post('is_all_location', 'N');
 
             $validator = Validator::make(
                 array(
@@ -394,59 +396,74 @@ class AdvertAPIController extends ControllerAPI
                 $updatedadvert->country_id = $country_id;
             });
 
-            OrbitInput::post('is_all_location', function($is_all_location) use ($updatedadvert) {
-                $updatedadvert->is_all_location = $is_all_location;
+            OrbitInput::post('is_all_location', function($all_location) use ($updatedadvert, $is_all_location, $advert_id) {
+                if ($is_all_location == 'Y') {
+                    $updatedadvert->is_all_location = $all_location;
+
+                    // Delete old data
+                    $delete_retailer = AdvertLocation::where('advert_id', '=', $advert_id);
+                    $delete_retailer->delete();
+                }
             });
 
-            OrbitInput::post('is_all_city', function($is_all_city) use ($updatedadvert) {
-                $updatedadvert->is_all_city = $is_all_city;
+            OrbitInput::post('is_all_city', function($all_city) use ($updatedadvert, $is_all_city, $advert_id) {
+                if ($is_all_city == 'Y') {
+                    $updatedadvert->is_all_city = $all_city;
+
+                    // Delete old data
+                    $deleteAdvertCity = AdvertCity::where('advert_id', '=', $advert_id);
+                    $deleteAdvertCity->delete();
+                }
             });
 
             $updatedadvert->touch();
 
-            OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id) {
+            OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id, $is_all_location) {
+                if ($is_all_location == 'N') {
+                    // Delete old data
+                    $delete_retailer = AdvertLocation::where('advert_id', '=', $advert_id);
+                    $delete_retailer->delete();
 
-                // Delete old data
-                $delete_retailer = AdvertLocation::where('advert_id', '=', $advert_id);
-                $delete_retailer->delete();
+                    // Insert new data
+                    $advertLocations = array();
 
-                // Insert new data
-                $advertLocations = array();
-
-                foreach ($locations as $location_id) {
-                    $locationType = 'mall';
-                    if ($location_id == 'gtm' || $location_id == 'GTM') {
-                        $location_id = '0';
-                        $locationType = 'gtm';
+                    foreach ($locations as $location_id) {
+                        $locationType = 'mall';
+                        if ($location_id == 'gtm' || $location_id == 'GTM') {
+                            $location_id = '0';
+                            $locationType = 'gtm';
+                        }
+                        $advertLocation = new AdvertLocation();
+                        $advertLocation->advert_id = $advert_id;
+                        $advertLocation->location_id = $location_id;
+                        $advertLocation->location_type = $locationType;
+                        $advertLocation->save();
+                        $advertLocations[] = $advertLocation;
                     }
-                    $advertLocation = new AdvertLocation();
-                    $advertLocation->advert_id = $advert_id;
-                    $advertLocation->location_id = $location_id;
-                    $advertLocation->location_type = $locationType;
-                    $advertLocation->save();
-                    $advertLocations[] = $advertLocation;
-                }
 
-                $updatedadvert->locations = $advertLocations;
+                    $updatedadvert->locations = $advertLocations;
+                }
             });
 
-            OrbitInput::post('city', function($city) use ($updatedadvert, $advert_id) {
-                $city = (array) $city;
-                // Delete old data
-                $deleteAdvertCity = AdvertCity::where('advert_id', '=', $advert_id);
-                $deleteAdvertCity->delete();
+            OrbitInput::post('city', function($city) use ($updatedadvert, $advert_id, $is_all_city) {
+                if ($is_all_city == 'N') {
+                    $city = (array) $city;
+                    // Delete old data
+                    $deleteAdvertCity = AdvertCity::where('advert_id', '=', $advert_id);
+                    $deleteAdvertCity->delete();
 
-                // Insert new data
-                $advertCities = array();
-                foreach ($city as $city_id) {
-                    $advertCity = new AdvertCity();
-                    $advertCity->advert_id = $advert_id;
-                    $advertCity->mall_city_id = $city_id;
-                    $advertCity->save();
-                    $advertCities[] = $advertCity;
+                    // Insert new data
+                    $advertCities = array();
+                    foreach ($city as $city_id) {
+                        $advertCity = new AdvertCity();
+                        $advertCity->advert_id = $advert_id;
+                        $advertCity->mall_city_id = $city_id;
+                        $advertCity->save();
+                        $advertCities[] = $advertCity;
+                    }
+
+                    $updatedadvert->cities = $advertCities;
                 }
-
-                $updatedadvert->cities = $advertCities;
             });
 
             Event::fire('orbit.advert.postupdateadvert.after.save', array($this, $updatedadvert));
