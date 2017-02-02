@@ -219,6 +219,13 @@ class GenericActivityAPIController extends PubControllerAPI
                             break;
                     }
                 }
+            } elseif ($activityName === 'click_get_coupon') {
+                $notes = '';
+                if ($user->isConsumer()) {
+                    $notes = 'Signed in user';
+                } else {
+                    $notes = 'Guest user';
+                }
             }
 
             $activity->setUser($user)
