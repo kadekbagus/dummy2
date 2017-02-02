@@ -81,7 +81,7 @@ class ESMallUpdateQueue
         $esConfig = Config::get('orbit.elasticsearch');
         $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-        $updateRelated = (empty($data['updated_related']) ? FALSE : $data['updated_related']);
+        $updateRelated = (empty($data['update_related']) ? FALSE : $data['update_related']);
 
         try {
             // check exist elasticsearch index
