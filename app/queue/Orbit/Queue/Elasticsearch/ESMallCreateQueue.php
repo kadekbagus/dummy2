@@ -14,6 +14,7 @@ use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 use Log;
+use Orbit\FakeJob;
 
 class ESMallCreateQueue
 {
@@ -142,6 +143,11 @@ class ESMallCreateQueue
             //
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
+
+            // update suggestion
+            $fakeJob = new FakeJob();
+            $esQueue = new \Orbit\Queue\Elasticsearch\ESMallSuggestionUpdateQueue();
+            $suggestion = $esQueue->fire($fakeJob, ['mall_id' => $mallId]);
 
             // Safely delete the object
             $job->delete();

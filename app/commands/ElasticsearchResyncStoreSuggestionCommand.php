@@ -1,23 +1,24 @@
 <?php
+
 /**
  * Command for resync store data from MySQL to Elasticsearch based on store name
- * @author kadek<kadek@dominopos.com>
+ * @author shelgi<shelgi@dominopos.com>
  */
 
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\FakeJob;
-use Orbit\Queue\ElasticSearch\ESStoreUpdateQueue;
+use Orbit\Queue\ElasticSearch\ESStoreSuggestionUpdateQueue;
 
-class ElasticsearchResyncStoreCommand extends Command {
+class ElasticsearchResyncStoreSuggestionCommand extends Command {
 
     /**
      * The console command name.
      *
      * @var string
      */
-    protected $name = 'elasticsearch:resync-store';
+    protected $name = 'elasticsearch:resync-store-suggestion';
 
     /**
      * The console command description.
@@ -74,7 +75,7 @@ class ElasticsearchResyncStoreCommand extends Command {
                     throw new Exception($response['message'], 1);
                 }
                 // $this->info($data['country']);
-                $this->info(sprintf('%sStore Name: "%s" in "%s" has been successfully synced to Elasticsearch server', $this->stdoutPrefix, $data['name'], $data['country']));
+                $this->info(sprintf('%sStore Name: "%s" in "%s" has been successfully synced to Elasticsearch server (Store Suggestion Index)', $this->stdoutPrefix, $data['name'], $data['country']));
             } catch (Exception $e) {
                 $this->error(sprintf('%sFailed to sync Store Name "%s" in "%s", message: %s', $this->stdoutPrefix, $data['name'], $data['country'], $e->getMessage()));
             }
@@ -124,7 +125,7 @@ class ElasticsearchResyncStoreCommand extends Command {
             ];
         }
 
-        $esQueue = new ESStoreUpdateQueue();
+        $esQueue = new ESStoreSuggestionUpdateQueue();
         $response = $esQueue->fire($job, $data);
 
         return $response;
