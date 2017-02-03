@@ -163,7 +163,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
                 $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $this->response->message);
                 $activity->setUser($user)
                     ->setActivityName('coupon_added_to_wallet')
-                    ->setActivityNameLong('Coupon Added To Wallet')
+                    ->setActivityNameLong('Coupon Added To Wallet Failed')
                     ->setLocation($retailer)
                     ->setObject($issuedCoupon)
                     ->setModuleName('Coupon')
@@ -174,24 +174,12 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             }
 
         } catch (ACLForbiddenException $e) {
-            $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first();
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = NULL;
             $this->rollback();
-            $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName('coupon_added_to_wallet')
-                ->setActivityNameLong('Coupon Added To Wallet')
-                ->setObject($coupon)
-                ->setModuleName('Coupon')
-                ->setCoupon($coupon)
-                ->setLocation($retailer)
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
         } catch (InvalidArgsException $e) {
             $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first();
 
@@ -203,7 +191,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('coupon_added_to_wallet')
-                ->setActivityNameLong('Coupon Added To Wallet')
+                ->setActivityNameLong('Coupon Added To Wallet Failed')
                 ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
@@ -222,7 +210,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('coupon_added_to_wallet')
-                ->setActivityNameLong('Coupon Added To Wallet')
+                ->setActivityNameLong('Coupon Added To Wallet Failed')
                 ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
@@ -242,7 +230,7 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('coupon_added_to_wallet')
-                ->setActivityNameLong('Coupon Added To Wallet')
+                ->setActivityNameLong('Coupon Added To Wallet Failed')
                 ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
