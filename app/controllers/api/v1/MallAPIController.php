@@ -564,6 +564,7 @@ class MallAPIController extends ControllerAPI
             if (empty($checkMallCity)) {
               $new_mall_city = new MallCity();
               $new_mall_city->city = $city;
+              $new_mall_city->country_id = $country;
               $new_mall_city->save();
             }
 
@@ -588,6 +589,7 @@ class MallAPIController extends ControllerAPI
               $new_vendor_gtm_city->vendor_city = $vendorCity;
               $new_vendor_gtm_city->gtm_city = $city;
               $new_vendor_gtm_city->country_id = $country;
+              $new_vendor_gtm_city->vendor_country = $ipcountry;
               $new_vendor_gtm_city->save();
             }
 
@@ -2345,6 +2347,7 @@ class MallAPIController extends ControllerAPI
             if (empty($checkMallCity)) {
               $new_mall_city = new MallCity();
               $new_mall_city->city = $city;
+              $new_mall_city->country_id = $country;
               $new_mall_city->save();
             }
 
@@ -2367,6 +2370,7 @@ class MallAPIController extends ControllerAPI
             foreach ($ipcity as $vendorCity) {
               $new_vendor_gtm_city = new VendorGTMCity();
               $new_vendor_gtm_city->vendor_city = $vendorCity;
+              $new_vendor_gtm_city->vendor_country = $ipcountry;
               $new_vendor_gtm_city->gtm_city = $city;
               $new_vendor_gtm_city->country_id = $country;
               $new_vendor_gtm_city->save();
@@ -3581,7 +3585,6 @@ class MallAPIController extends ControllerAPI
                 $validation['error_message'][$image_name . '_size_' . $idx . '.orbit.file.max_size'] = Lang::get('validation.orbit.file.max_size', array('name' => $image_config['name'], 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
             }
         }
-
         return $validation;
     }
 
