@@ -129,6 +129,89 @@ class AdvertAPIController extends ControllerAPI
 
             Event::fire('orbit.advert.postnewadvert.after.validation', array($this, $validator));
 
+            // automatically update country and city when top_banner/footer_banner
+            // selected and the advert type is store,coupon and promotion
+            $prefix = DB::getTablePrefix();
+            $placement = AdvertPlacement::select('placement_type')
+                            ->where('advert_placement_id', '=', $advert_placement_id)
+                            ->first();
+
+            if (!empty($placement)) {
+                if (in_array(($placement->placement_type), ['top_banner', 'footer_banner'])) {
+                    $link_type = AdvertLinkType::select('advert_type')
+                                                ->where('advert_link_type_id', '=', $advert_link_type_id)
+                                                ->first();
+
+                    if ($link_type->advert_type == 'store') {
+                        $store = Tenant::select('merchants.name', DB::raw('oms.country'), DB::raw('oms.city'))
+                                        ->excludeDeleted('merchants')
+                                        ->join('adverts', 'adverts.link_object_id', '=', 'merchants.merchant_id')
+                                        ->join(DB::raw("(
+                                                        select merchant_id, name, country, city
+                                                        from {$prefix}merchants
+                                                        where status = 'active'
+                                                            and object_type = 'mall'
+                                                        ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                        ->where('merchants.merchant_id', '=', $link_object_id)
+                                        ->first();
+
+                        $_country = MallCountry::select('country_id')->where('country', '=', $store->country)->first();
+                        $_city = MallCity::select('mall_city_id')->where('city', '=', $store->city)->first();
+                        $country_id = $_country->country_id;
+                        $city = array($_city->mall_city_id);
+                    }
+
+                    if ($link_type->advert_type == 'coupon') {
+                        $coupon = Coupon::select('mall_countries.country_id','mall_cities.mall_city_id')
+                                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                        ->leftJoin(DB::raw("{$prefix}merchants as om"), function($join){
+                                             $join->on(DB::raw('om.merchant_id'), '=', 'promotion_retailer.retailer_id');
+                                        })
+                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), function($join){
+                                             $join->on(DB::raw('oms.merchant_id'), '=', DB::raw('om.parent_id'));
+                                        })
+                                        ->leftJoin('mall_countries', 'mall_countries.country', '=', DB::raw('oms.country'))
+                                        ->leftJoin('mall_cities', 'mall_cities.city', '=', DB::raw('oms.city'))
+                                        ->where('promotions.promotion_id', '=', $link_object_id)
+                                        ->get();
+
+                        if (!$coupon->isEmpty()) {
+                            $country_id = $coupon[0]->country_id;
+                            $_city = array();
+                            foreach($coupon as $_coupon){
+                                $_city[] = $_coupon->mall_city_id;
+                            }
+                            $city = $_city;
+                        }
+                    }
+
+                    if ($link_type->advert_type == 'promotion') {
+                        $promotion = News::select('mall_countries.country_id','mall_cities.mall_city_id')
+                                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                        ->leftJoin(DB::raw("{$prefix}merchants as om"), function($join){
+                                             $join->on(DB::raw('om.merchant_id'), '=', 'news_merchant.merchant_id');
+                                        })
+                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), function($join){
+                                             $join->on(DB::raw('oms.merchant_id'), '=', DB::raw('om.parent_id'));
+                                        })
+                                        ->leftJoin('mall_countries', 'mall_countries.country', '=', DB::raw('oms.country'))
+                                        ->leftJoin('mall_cities', 'mall_cities.city', '=', DB::raw('oms.city'))
+                                        ->where('news.news_id', '=', $link_object_id)
+                                        ->where('news.object_type', '=', 'promotion')
+                                        ->get();
+
+                        if (!$promotion->isEmpty()) {
+                            $country_id = $promotion[0]->country_id;
+                            $_city = array();
+                            foreach($promotion as $promo){
+                                $_city[] = $promo->mall_city_id;
+                            }
+                            $city = $_city;
+                        }
+                    }
+                }
+            }
+
             $newadvert = new Advert();
             $newadvert->link_object_id = $link_object_id;
             $newadvert->advert_link_type_id = $advert_link_type_id;
