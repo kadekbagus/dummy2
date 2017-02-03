@@ -3585,7 +3585,6 @@ class MallAPIController extends ControllerAPI
                 $validation['error_message'][$image_name . '_size_' . $idx . '.orbit.file.max_size'] = Lang::get('validation.orbit.file.max_size', array('name' => $image_config['name'], 'size' => $image_units['newsize'], 'unit' => $image_units['unit']));
             }
         }
-
         return $validation;
     }
 
