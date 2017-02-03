@@ -304,7 +304,9 @@ class StoreAPIController extends PubControllerAPI
                 }
             });
 
-            $jsonQuery['query']['filtered']['filter']['and'][] = $countryCityFilterArr;
+            if (! empty($countryCityFilterArr)) {
+                $jsonQuery['query']['filtered']['filter']['and'][] = $countryCityFilterArr;
+            }
 
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
