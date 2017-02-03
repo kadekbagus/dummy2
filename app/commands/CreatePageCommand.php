@@ -77,7 +77,7 @@ class CreatePageCommand extends Command {
                 $data = $this->readJSON($fileName);
             }
 
-            $country_id = trim($data['country_id']);
+            $country = trim($data['country']);
             $object_type = trim($data['object_type']);
             $language = trim($data['language']);
             $content = trim($data['content']);
@@ -87,21 +87,21 @@ class CreatePageCommand extends Command {
 
             $validator = Validator::make(
                 array(
-                    'country_id'  => $country_id,
+                    'country'     => $country,
                     'object_type' => $object_type,
                     'language'    => $language,
                     'content'     => $content,
                     'status'      => $status,
                 ),
                 array(
-                    'country_id'  => 'required|orbit.exist.country_id',
+                    'country'     => 'required|orbit.exist.country',
                     'object_type' => 'required|orbit.exist.object_type',
                     'language'    => 'required|orbit.exist.language',
                     'content'     => 'required',
                     'status'      => 'required|orbit.exist.status',
                 ),
                 array(
-                    'orbit.exist.country_id'  => 'Country id is invalid',
+                    'orbit.exist.country'     => 'Country is invalid',
                     'orbit.exist.object_type' => 'Object type id is invalid',
                     'orbit.exist.language'    => 'language is invalid',
                     'orbit.exist.status'      => 'Status is invalid',
@@ -114,9 +114,12 @@ class CreatePageCommand extends Command {
                 throw new Exception($errorMessage);
             }
 
+            //Get country id
+            $getCountry = Country::where('name', $country)->first();
+
             //Check insert or update when exist
             $existPage = Page::where('object_type', $object_type)
-                        ->where('country_id', $country_id)
+                        ->where('country_id', $getCountry->country_id)
                         ->where('language', $language)
                         ->first();
 
@@ -125,7 +128,7 @@ class CreatePageCommand extends Command {
             if (empty($existPage)) {
                 $mode = 'Create';
                 $newPage = new Page();
-                $newPage->country_id = $country_id;
+                $newPage->country_id = $getCountry->country_id;
                 $newPage->object_type = $object_type;
                 $newPage->language = $language;
                 $newPage->content = $content;
@@ -134,7 +137,7 @@ class CreatePageCommand extends Command {
             } else {
                 $mode = 'Update';
                 $updatePage = Page::find($existPage->pages_id);
-                $updatePage->country_id = $country_id;
+                $updatePage->country_id = $getCountry->country_id;
                 $updatePage->object_type = $object_type;
                 $updatePage->language = $language;
                 $updatePage->content = $content;
@@ -144,7 +147,7 @@ class CreatePageCommand extends Command {
 
             DB::commit();
 
-            $this->info( sprintf('%s page with type %s with country_id = %s, language = %s, and status = %s successfully.', $mode, $object_type, $country_id, $language, $status) );
+            $this->info( sprintf('%s page with type %s with country = %s, language = %s, and status = %s successfully.', $mode, $object_type, $country, $language, $status) );
 
         } catch (Exception $e) {
             DB::rollback();
@@ -155,10 +158,10 @@ class CreatePageCommand extends Command {
     protected function registerCustomValidation()
     {
         // Check the existence of the news object type
-        Validator::extend('orbit.exist.country_id', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.exist.country', function ($attribute, $value, $parameters) {
             $valid = false;
 
-            $existCountryId = Country::where('country_id', $value)->first();
+            $existCountryId = Country::where('name', $value)->first();
             if (! empty($existCountryId)) {
                 $valid = true;
             }

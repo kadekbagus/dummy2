@@ -265,7 +265,7 @@ Event::listen('orbit.mall.postupdatemall.after.commit', function($controller, $m
     // Notify the queueing system to update Elasticsearch document
     Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
         'mall_id' => $mall->merchant_id,
-        'updated_related' => TRUE
+        'update_related' => TRUE
     ]);
 });
 

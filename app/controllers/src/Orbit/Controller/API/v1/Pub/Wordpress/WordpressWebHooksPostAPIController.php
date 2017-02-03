@@ -29,7 +29,7 @@ class WordpressWebHooksPostAPIController extends PubControllerAPI
         $httpCode = 200;
 
         try {
-            $country = strtolower(trim(OrbitInput::post('country')));
+            $country = strtolower(trim(OrbitInput::get('country')));
 
             $mallCountry = MallCountry::where('country', $country)->first();
 

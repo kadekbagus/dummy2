@@ -49,7 +49,7 @@ class ESStoreUpdateQueue
         $prefix = DB::getTablePrefix();
         $esConfig = Config::get('orbit.elasticsearch');
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-        $updateRelated = (empty($data['updated_related']) ? FALSE : $data['updated_related']);
+        $updateRelated = (empty($data['update_related']) ? FALSE : $data['update_related']);
 
         $storeName = $data['name'];
         $countryName = $data['country'];
