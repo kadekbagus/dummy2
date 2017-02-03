@@ -103,9 +103,21 @@ class GenericActivityAPIController extends PubControllerAPI
                     // Model name is provided from frontend, need to double check
                     $objectString = OrbitInput::post($activityObjectTypeParamName, NULL);
                     if ($activityObjectType === '--SET BY object_type_parameter_name--' && ! empty($objectString)) {
+                        // map object type from frontend
+                        $mapObjectType = [
+                            'mall'      => 'Mall',
+                            'store'     => 'Tenant',
+                            'coupon'    => 'Coupon',
+                            'promotion' => 'News',
+                            'news'      => 'News',
+                            'event'     => 'News'
+                        ];
+
+                        $className = array_key_exists(strtolower($objectString), $mapObjectType) ? $mapObjectType[strtolower($objectString)] : null;
+
                         // check if class exists
-                        if (class_exists($objectString) ) {
-                            $activityObjectType = $objectString;
+                        if (class_exists($className) ) {
+                            $activityObjectType = $className;
                             // check if model name is instance of Model
                             if (! (new $activityObjectType instanceof Model)) {
                                 OrbitShopAPI::throwInvalidArgument('Invalid object type parameter name');
@@ -165,7 +177,7 @@ class GenericActivityAPIController extends PubControllerAPI
                 if (! empty($menu)) {
                     switch ($menu) {
                         case 'promotions':
-                            $activity->setObjectDisplayName('Promotions');
+                            $activity->setObjectDisplayName('.');
                             break;
 
                         case 'coupons':
