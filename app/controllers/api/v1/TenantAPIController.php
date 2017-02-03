@@ -2302,6 +2302,7 @@ class TenantAPIController extends ControllerAPI
                                 ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                 ->where('promotion_id', $campaign_id)
                                 ->groupBy('mall_id');
+
                 } elseif ($link_type === 'promotion') {
                     $tenants = NewsMerchant::select(
                                     'merchants.merchant_id',
@@ -2359,10 +2360,17 @@ class TenantAPIController extends ControllerAPI
                                     'merchants.status'
                                 )
                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
+                               ->leftjoin('mall_countries', 'mall_countries.country', '=', DB::raw('pm.country'))
                                ->whereIn('merchants.object_type', ['mall', 'tenant'])
                                ->where('merchants.status', '=', 'active')
                                ->where(DB::raw("pm.status"), '=', 'active')
                                ->groupBy('mall_id');
+
+                    // filter country_id
+                    OrbitInput::get('country_id', function($country_id) use ($tenants)
+                    {
+                        $tenants->where(DB::raw("pm.country_id"), '=', $country_id);
+                    });
                 }
             }
 

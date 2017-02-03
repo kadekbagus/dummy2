@@ -177,7 +177,7 @@ class GenericActivityAPIController extends PubControllerAPI
                 if (! empty($menu)) {
                     switch ($menu) {
                         case 'promotions':
-                            $activity->setObjectDisplayName('.');
+                            $activity->setObjectDisplayName('Promotions');
                             break;
 
                         case 'coupons':
