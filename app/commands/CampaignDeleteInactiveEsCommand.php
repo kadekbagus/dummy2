@@ -54,6 +54,8 @@ class CampaignDeleteInactiveEsCommand extends Command {
         //Get now time, time must be 2017-01-09T15:30:00Z
         $timestamp = date("Y-m-d H:i:s");
         $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+
+        // @todo: Need to think about the timezone
         $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
         $dateTime = explode(' ', $dateTime);
         $nowDateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
@@ -63,6 +65,7 @@ class CampaignDeleteInactiveEsCommand extends Command {
 
         $fakeJob = new FakeJob();
 
+        $totalDeleted = 0;
         foreach ($campaignTypes as $campaignType) {
 
             // Get all coupon inactive
@@ -74,26 +77,30 @@ class CampaignDeleteInactiveEsCommand extends Command {
 
             $response = $client->search($esParam);
 
-            if ($response['hits']['total'] > 0) {
-                foreach ($response['hits']['hits'] as $campaign) {
+            if ($response['hits']['total'] === 0) {
+                continue;
+            }
 
-                        // Delete id there is any news inactive
-                        $params = [
-                            'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.' . $campaignType . '_suggestions.index'),
-                            'type' => Config::get('orbit.elasticsearch.indices.' . $campaignType . '_suggestions.type'),
-                            'id' => $campaign['_id']
-                        ];
+            foreach ($response['hits']['hits'] as $campaign) {
 
-                        $response = $client->delete($params);
+                    // Delete id there is any news inactive
+                    $params = [
+                        'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.' . $campaignType . '_suggestions.index'),
+                        'type' => Config::get('orbit.elasticsearch.indices.' . $campaignType . '_suggestions.type'),
+                        'id' => $campaign['_id']
+                    ];
 
-                        // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
-                        ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
+                    $response = $client->delete($params);
 
-                        $this->info("Delete es document index = " . $campaignType . "_suggestions, type = " . $campaignType . ", campaign_id = " . $campaign['_id'] . " successful at time " . date('l j \of F Y h:i:s A'));
-                }
+                    // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
+                    ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
+                    $this->info("Delete es document index = " . $campaignType . "_suggestions, type = " . $campaignType . ", campaign_id = " . $campaign['_id'] . " successful at time " . date('l j \of F Y h:i:s A'));
+                    $totalDeleted++;
             }
         }
+
+        $this->info(sprintf('Total deleted: %s', $totalDeleted));
     }
 
     /**

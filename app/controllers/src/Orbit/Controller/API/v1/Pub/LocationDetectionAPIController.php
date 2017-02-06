@@ -36,8 +36,10 @@ class LocationDetectionAPIController extends PubControllerAPI
             $userLocation = OrbitInput::get('ul', null);
 
             if (! empty($userLocation)) {
+                $objectDisplayName = 'Geolocation Based Detection';
                 $data = $this->getLocationGPSEnabled($userLocation);
             } else {
+                $objectDisplayName = 'IP Based Detection';
                 $data = $this->getLocationGPSDisabled();
             }
 
@@ -54,6 +56,7 @@ class LocationDetectionAPIController extends PubControllerAPI
                 ->setActivityNameLong('Detect Location')
                 ->setObject(null)
                 ->setObjectName($data->country)
+                ->setObjectDisplayName($objectDisplayName)
                 ->setLocation($mall)
                 ->setModuleName('Location Auto Detection')
                 ->setNotes($activityNotes)
@@ -101,7 +104,7 @@ class LocationDetectionAPIController extends PubControllerAPI
         return $this->render($httpCode);
     }
 
-    public function getLocationGPSEnabled($userLocation)
+    protected function getLocationGPSEnabled($userLocation)
     {
         $country = null;
         $cities = [];
@@ -147,17 +150,11 @@ class LocationDetectionAPIController extends PubControllerAPI
         return $this->dataFormatter($country, $cities);
     }
 
-    public function getLocationGPSDisabled()
+    protected function getLocationGPSDisabled()
     {
+        $response = null;
         $country = null;
         $cities = [];
-        $cacheKey = [];
-        $serializedCacheKey = [];
-
-        // Cache result of all possible calls to backend storage
-        $cacheConfig = Config::get('orbit.cache.context');
-        $cacheContext = 'location-detection';
-        $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
 
         // get the client IP
         $clientIpAddress = $_SERVER['REMOTE_ADDR'];
@@ -167,9 +164,6 @@ class LocationDetectionAPIController extends PubControllerAPI
             $clientIpAddress = isset($_COOKIE['USER_IP_ADDRESS']) ? $_COOKIE['USER_IP_ADDRESS'] : $clientIpAddress;
         }
 
-        // set cache key for this IP Address
-        $cacheKey = ['ip_address' => $clientIpAddress];
-
         // get record from DBIP
         $addr_type = "ipv4";
         if (ip2long($clientIpAddress) !== false) {
@@ -178,21 +172,33 @@ class LocationDetectionAPIController extends PubControllerAPI
             $addr_type = "ipv6";
         }
 
-        // serialize cache key
-        $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+        $dbip = DB::connection(Config::get('orbit.dbip.connection_id'))
+            ->table(Config::get('orbit.dbip.table'))
+            ->where('ip_start', '<=', inet_pton($clientIpAddress))
+            ->where('addr_type', '=', $addr_type)
+            ->orderBy('ip_start', 'desc')
+            ->first();
 
-        // get the response from cache and fallback to query
-        $response = $recordCache->get($serializedCacheKey, function() use ($clientIpAddress, $addr_type) {
-            $country = null;
-            $cities = [];
-            $dbip = DB::connection(Config::get('orbit.dbip.connection_id'))
-                ->table(Config::get('orbit.dbip.table'))
-                ->where('ip_start', '<=', inet_pton($clientIpAddress))
-                ->where('addr_type', '=', $addr_type)
-                ->orderBy('ip_start', 'desc')
-                ->first();
+        if (is_object($dbip)) {
+            // Cache result of all possible calls to backend storage
+            $cacheConfig = Config::get('orbit.cache.context');
+            $cacheContext = 'location-detection';
+            $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
 
-            if (is_object($dbip)) {
+            // set cache key for this IP Address
+            $cacheKey = [
+                'country' => $dbip->country,
+                'city' => $dbip->city,
+            ];
+
+            // serialize cache key
+            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+
+            // get the response from cache and fallback to query
+            $response = $recordCache->get($serializedCacheKey, function() use ($clientIpAddress, $addr_type, $dbip) {
+                $country = null;
+                $cities = [];
+
                 // get GTM country mapping
                 $gtmCountry = VendorGTMCountry::where('vendor_country', $dbip->country)
                     ->first();
@@ -211,19 +217,20 @@ class LocationDetectionAPIController extends PubControllerAPI
                         $cities[] = $gtmCity->gtm_city;
                     }
                 }
+
+                $locationData = new stdClass();
+                $locationData->country = $country;
+                $locationData->cities = $cities;
+
+                return $locationData;
+            });
+
+            $recordCache->put($serializedCacheKey, $response);
+
+            if (is_object($response)) {
+                $country = $response->country;
+                $cities = $response->cities;
             }
-
-            $locationData = new stdClass();
-            $locationData->country = $country;
-            $locationData->cities = $cities;
-
-            return $locationData;
-        });
-        $recordCache->put($serializedCacheKey, $response);
-
-        if (is_object($response)) {
-            $country = $response->country;
-            $cities = $response->cities;
         }
 
         return $this->dataFormatter($country, $cities);
@@ -232,7 +239,7 @@ class LocationDetectionAPIController extends PubControllerAPI
     /**
      * Format the data before adding it to response
      */
-    public function dataFormatter($country = null, $cities = [])
+    protected function dataFormatter($country = null, $cities = [])
     {
         $data = new stdClass();
         $data->country = $country;
