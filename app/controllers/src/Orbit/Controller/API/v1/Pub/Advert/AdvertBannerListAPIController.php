@@ -144,7 +144,10 @@ class AdvertBannerListAPIController extends PubControllerAPI
                 // Join to advert_cities
                 $advert->leftJoin('advert_cities', 'advert_cities.advert_id', '=', 'adverts.advert_id');
                 $advert->leftJoin('mall_cities', 'mall_cities.mall_city_id', '=', 'advert_cities.mall_city_id');
-                $advert->whereIn('mall_cities.city', (array)$cities);
+                $advert->where(function ($query) use ($cities){
+                    $query->whereIn('mall_cities.city', (array)$cities)
+                          ->orWhere('adverts.is_all_city', '=', 'Y');
+                });
             });
 
             $advert->groupBy('adverts.advert_id');

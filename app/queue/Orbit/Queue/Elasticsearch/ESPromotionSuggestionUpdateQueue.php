@@ -65,17 +65,10 @@ class ESPromotionSuggestionUpdateQueue
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where('news.news_id', $newsId)
                     ->where('news.object_type', 'promotion')
+                    ->where('news.status', 'active')
+                    ->having('campaign_status', '=', 'ongoing')
                     ->orderBy('news.news_id', 'asc')
                     ->first();
-
-        if (! is_object($news)) {
-            $job->delete();
-
-            return [
-                'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] News ID %s is not found.', $job->getJobId(), $newsId)
-            ];
-        }
 
         try {
             // check exist elasticsearch index
@@ -85,13 +78,45 @@ class ESPromotionSuggestionUpdateQueue
                 'body' => [
                     'query' => [
                         'match' => [
-                            '_id' => $news->news_id
+                            '_id' => $newsId
                         ]
                     ]
                 ]
             ];
 
             $response_search = $this->poster->search($params_search);
+
+            // delete the promotion suggestion document if the status inactive
+            if ($response_search['hits']['total'] > 0 && count($news) === 0) {
+                $paramsDelete = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_suggestions.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.promotion_suggestions.type'),
+                    'id' => $newsId
+                ];
+                $responseDelete = $this->poster->delete($paramsDelete);
+
+                ElasticsearchErrorChecker::throwExceptionOnDocumentError($responseDelete);
+
+                $job->delete();
+
+                $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Doucment in Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+                                $job->getJobId(),
+                                $esConfig['indices']['promotions']['index'],
+                                $esConfig['indices']['promotions']['type']);
+                Log::info($message);
+
+                return [
+                    'status' => 'ok',
+                    'message' => $message
+                ];
+            } elseif (count($news) === 0) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] News ID %s is not found.', $job->getJobId(), $newsId)
+                ];
+            }
 
             $response = NULL;
             $params = [

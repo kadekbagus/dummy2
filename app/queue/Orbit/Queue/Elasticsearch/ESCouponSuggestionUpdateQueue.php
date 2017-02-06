@@ -74,17 +74,10 @@ class ESCouponSuggestionUpdateQueue
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                     ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
+                    ->whereRaw("{$prefix}promotions.status = 'active'")
+                    ->having('campaign_status', '=', 'ongoing')
                     ->orderBy('promotions.promotion_id', 'asc')
                     ->first();
-
-        if (! is_object($coupon)) {
-            $job->delete();
-
-            return [
-                'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Coupon ID %s is not found.', $job->getJobId(), $couponId)
-            ];
-        }
 
         try {
             // check exist elasticsearch index
@@ -94,13 +87,45 @@ class ESCouponSuggestionUpdateQueue
                 'body' => [
                     'query' => [
                         'match' => [
-                            '_id' => $coupon->promotion_id
+                            '_id' => $couponId
                         ]
                     ]
                 ]
             ];
 
             $response_search = $this->poster->search($params_search);
+
+            // delete the coupon suggestion document if the status inactive
+            if ($response_search['hits']['total'] > 0 && count($coupon) === 0) {
+                $paramsDelete = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupon_suggestions.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.coupon_suggestions.type'),
+                    'id' => $couponId
+                ];
+                $responseDelete = $this->poster->delete($paramsDelete);
+
+                ElasticsearchErrorChecker::throwExceptionOnDocumentError($responseDelete);
+
+                $job->delete();
+
+                $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Doucment in Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+                                $job->getJobId(),
+                                $esConfig['indices']['coupons']['index'],
+                                $esConfig['indices']['coupons']['type']);
+                Log::info($message);
+
+                return [
+                    'status' => 'ok',
+                    'message' => $message
+                ];
+            } elseif (count($coupon) === 0) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] Coupon ID %s is not found.', $job->getJobId(), $couponId)
+                ];
+            }
 
             $response = NULL;
             $params = [
