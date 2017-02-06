@@ -74,13 +74,45 @@ class ESMallSuggestionUpdateQueue
                 'body' => [
                     'query' => [
                         'match' => [
-                            '_id' => $mall->merchant_id
+                            '_id' => $mallId
                         ]
                     ]
                 ]
             ];
 
             $response_search = $this->poster->search($params_search);
+
+            // delete the mall suggestion document if the status inactive
+            if ($response_search['hits']['total'] > 0 && count($mall) === 0) {
+                $paramsDelete = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.mall_suggestions.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.mall_suggestions.type'),
+                    'id' => $mallId
+                ];
+                $responseDelete = $this->poster->delete($paramsDelete);
+
+                ElasticsearchErrorChecker::throwExceptionOnDocumentError($responseDelete);
+
+                $job->delete();
+
+                $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Doucment in Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+                                    $job->getJobId(),
+                                    $esConfig['indices']['malldata']['index'],
+                                    $esConfig['indices']['malldata']['type']);
+                Log::info($message);
+
+                return [
+                    'status' => 'ok',
+                    'message' => $message
+                ];
+            } else if (count($mall) === 0) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] Merchant_id %s is not found.', $job->getJobId(), $mallId)
+                ];
+            }
 
             $response = NULL;
             $params = [
