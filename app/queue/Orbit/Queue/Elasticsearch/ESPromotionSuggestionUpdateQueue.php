@@ -70,15 +70,6 @@ class ESPromotionSuggestionUpdateQueue
                     ->orderBy('news.news_id', 'asc')
                     ->first();
 
-        if (! is_object($news)) {
-            $job->delete();
-
-            return [
-                'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] News ID %s is not found.', $job->getJobId(), $newsId)
-            ];
-        }
-
         try {
             // check exist elasticsearch index
             $params_search = [
@@ -117,6 +108,13 @@ class ESPromotionSuggestionUpdateQueue
                 return [
                     'status' => 'ok',
                     'message' => $message
+                ];
+            } elseif (count($news) === 0) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] News ID %s is not found.', $job->getJobId(), $newsId)
                 ];
             }
 

@@ -79,15 +79,6 @@ class ESCouponSuggestionUpdateQueue
                     ->orderBy('promotions.promotion_id', 'asc')
                     ->first();
 
-        if (! is_object($coupon)) {
-            $job->delete();
-
-            return [
-                'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Coupon ID %s is not found.', $job->getJobId(), $couponId)
-            ];
-        }
-
         try {
             // check exist elasticsearch index
             $params_search = [
@@ -126,6 +117,13 @@ class ESCouponSuggestionUpdateQueue
                 return [
                     'status' => 'ok',
                     'message' => $message
+                ];
+            } elseif (count($coupon) === 0) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] Coupon ID %s is not found.', $job->getJobId(), $couponId)
                 ];
             }
 
