@@ -99,7 +99,8 @@ class AdvertBannerListAPIController extends PubControllerAPI
                             ->join('advert_locations as al', function ($q) use ($location_type, $location_id) {
                                 $q->on(DB::raw('al.advert_id'), '=', 'adverts.advert_id')
                                     ->on(DB::raw('al.location_type'), '=', DB::raw("{$this->quote($location_type)}"))
-                                    ->on(DB::raw('al.location_id'), '=', DB::raw("{$this->quote($location_id)}"));
+                                    ->on(DB::raw('al.location_id'), '=', DB::raw("{$this->quote($location_id)}"))
+                                    ->orWhere('adverts.is_all_location', '=', 'Y');
                             })
                             ->join('advert_placements as ap', function ($q) use ($banner_type) {
                                 $q->on(DB::raw('ap.advert_placement_id'), '=', 'adverts.advert_placement_id')
