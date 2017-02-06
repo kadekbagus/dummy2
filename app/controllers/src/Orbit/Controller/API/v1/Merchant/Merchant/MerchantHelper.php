@@ -44,23 +44,31 @@ class MerchantHelper
             return TRUE;
         });
 
-        // Check existing merchant name
-        Validator::extend('orbit.exist.merchant_name', function ($attribute, $value, $parameters) {
-            $country = $parameters[0];
-            $merchant = BaseMerchant::where('name', '=', $value)
-                            ->where('country_id', $country)
+        // Check country in existing store
+        Validator::extend('orbit.store.country', function ($attribute, $value, $parameters) {
+            $baseMerchantId = $parameters[0];
+            $countryId = $parameters[1];
+
+            //Cannot change country if there is any merchant linked to store
+            $baseMerchants = BaseMerchant::where('base_merchant_id', $baseMerchantId)
                             ->first();
 
-            if (! empty($merchant)) {
+            $merchants = BaseStore::where('base_merchant_id', '=', $value)
+                            ->whereNotIn('base_merchant_id', array($baseMerchantId))
+                            ->first();
+
+            if ($baseMerchants->country_id != $countryId && ! empty($merchants)) {
                 return FALSE;
             }
 
             return TRUE;
         });
 
-        // Check country in existing store
-        Validator::extend('orbit.store.country', function ($attribute, $value, $parameters) {
-            $merchant = BaseStore::where('base_merchant_id', '=', $value)
+        // Check existing merchant name
+        Validator::extend('orbit.exist.merchant_name', function ($attribute, $value, $parameters) {
+            $country = $parameters[0];
+            $merchant = BaseMerchant::where('name', '=', $value)
+                            ->where('country_id', $country)
                             ->first();
 
             if (! empty($merchant)) {

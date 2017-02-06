@@ -77,16 +77,19 @@ class MerchantUpdateAPIController extends ControllerAPI
                 array(
                     'baseMerchantId' => $baseMerchantId,
                     'translations'   => $translations,
-                    'merchantName'   => $merchantName
+                    'merchantName'   => $merchantName,
+                    'country'        => $countryId
                 ),
                 array(
                     'baseMerchantId' => 'required|orbit.exist.base_merchant_id',
                     'translations'   => 'required',
-                    'merchantName'   => 'required|orbit.exist.merchant_name_not_me:' . $baseMerchantId . ',' . $countryId
+                    'merchantName'   => 'required|orbit.exist.merchant_name_not_me:' . $baseMerchantId . ',' . $countryId,
+                    'country'        => 'required|orbit.store.country:' . $baseMerchantId . ',' . $countryId
                 ),
                 array(
                     'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid',
-                    'orbit.exist.merchant_name_not_me' => 'Merchant is already exist',
+                    'orbit.exist.merchant_name_not_me'=> 'Merchant is already exist',
+                    'orbit.store.country' => 'You have stores linked to the previous country'
                )
             );
 
