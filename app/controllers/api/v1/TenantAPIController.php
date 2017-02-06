@@ -2367,9 +2367,9 @@ class TenantAPIController extends ControllerAPI
                                ->groupBy('mall_id');
 
                     // filter country_id
-                    OrbitInput::get('country_id', function($country_id) use ($tenants)
+                    OrbitInput::get('country_id', function($country_id) use ($tenants, $prefix)
                     {
-                        $tenants->where(DB::raw("pm.country_id"), '=', $country_id);
+                        $tenants->where(DB::raw("(IF({$prefix}merchants.object_type = 'tenant', pm.country_id, {$prefix}merchants.country_id))"), '=', $country_id);
                     });
                 }
             }
