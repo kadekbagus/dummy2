@@ -65,6 +65,8 @@ class ESNewsSuggestionUpdateQueue
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where('news.news_id', $newsId)
                     ->where('news.object_type', 'news')
+                    ->where('news.status', 'active')
+                    ->having('campaign_status', '=', 'ongoing')
                     ->orderBy('news.news_id', 'asc')
                     ->first();
 
