@@ -84,11 +84,11 @@ class MerchantUpdateAPIController extends ControllerAPI
                     'baseMerchantId' => 'required|orbit.exist.base_merchant_id',
                     'translations'   => 'required',
                     'merchantName'   => 'required|orbit.exist.merchant_name_not_me:' . $baseMerchantId . ',' . $countryId,
-                    'country'        => 'required|orbit.store.country'
+                    'country'        => 'required|orbit.store.country:' . $baseMerchantId . ',' . $countryId
                 ),
                 array(
                     'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid',
-                    'orbit.exist.merchant_name_not_me'    => 'Merchant is already exist',
+                    'orbit.exist.merchant_name_not_me'=> 'Merchant is already exist',
                     'orbit.store.country' => 'You have stores linked to the previous country'
                )
             );
@@ -286,9 +286,6 @@ class MerchantUpdateAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
-
-
-
         // Check existing merchant name
         Validator::extend('orbit.exist.merchant_name_not_me', function ($attribute, $value, $parameters) {
             $baseMerchantId = $parameters[0];
