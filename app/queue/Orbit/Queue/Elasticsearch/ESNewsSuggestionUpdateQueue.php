@@ -85,13 +85,38 @@ class ESNewsSuggestionUpdateQueue
                 'body' => [
                     'query' => [
                         'match' => [
-                            '_id' => $news->news_id
+                            '_id' => $newsId
                         ]
                     ]
                 ]
             ];
 
             $response_search = $this->poster->search($params_search);
+
+            // delete the news suggestion document if the status inactive
+            if ($response_search['hits']['total'] > 0 && count($news) === 0) {
+                $paramsDelete = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_suggestions.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.news_suggestions.type'),
+                    'id' => $newsId
+                ];
+                $responseDelete = $this->poster->delete($paramsDelete);
+
+                ElasticsearchErrorChecker::throwExceptionOnDocumentError($responseDelete);
+
+                $job->delete();
+
+                $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Doucment in Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+                                $job->getJobId(),
+                                $esConfig['indices']['news']['index'],
+                                $esConfig['indices']['news']['type']);
+                Log::info($message);
+
+                return [
+                    'status' => 'ok',
+                    'message' => $message
+                ];
+            }
 
             $response = NULL;
             $params = [
