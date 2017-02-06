@@ -5062,7 +5062,8 @@ return array(
                 'name_long' => 'Click Auto Complete Search',
                 'module_name' => 'Search',
                 'type' => 'click',
-                'object_type' => 'object_type',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
                 'parameter_name' => 'object_id'
             ),
             // - User clicks search button after entering keyword
@@ -5347,7 +5348,7 @@ return array(
                 'default_image_url' => NULL,
 
                 // Cache file location, the web hooks will write to this file
-                'cache_file' => '../app/storage/wordpress/post-list-indonesia.json',
+                'cache_file' => '../app/storage/wordpress/post-list-singapore.json',
 
                 // When post is made - Wordpress try to call Orbit URLs
                 // For security reason we limit the IPs that able to hit
