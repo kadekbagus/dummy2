@@ -110,6 +110,8 @@ class StoreSynchronization
 
             $pre_stores = clone $stores;
 
+            $_stores = clone $stores;
+
             $pre_stores->chunk($chunk, function($_pre_stores) use ($sync_id, $user)
             {
                 DB::beginTransaction();
@@ -162,15 +164,16 @@ class StoreSynchronization
 
                     //country
                     $countryId = $store->country_id;
-                    $countryName = Country::where('country_id', $countryId)->first();
+                    $countryNames = Country::where('country_id', $countryId)->first();
 
                     $storeName = $store->name;
-                    $countryName = $countryName->name;
+                    $countryName = $countryNames->name;
+
                     $tenant->merchant_id = $base_store_id;
                     $tenant->name = $store->name;
                     $tenant->description = $store->description;
                     $tenant->country_id = $countryId;
-                    $tenant->country = $countryName->name;
+                    $tenant->country = $countryName;
                     $tenant->status = $store->status;
                     $tenant->logo = $store->path;
                     $tenant->object_type = 'tenant';
@@ -372,16 +375,21 @@ class StoreSynchronization
                             'bucket_name'   => $bucketName
                         ], $queueName);
                     }
-
                 }
             });
 
-            if (!empty($storeName)) {
-                // Notify the queueing system to update Elasticsearch document
-                Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
-                    'name' => $storeName,
-                    'country' => $countryName
-                ]);
+            $_stores = $_stores->groupBy('base_merchants.name')->groupBy('base_merchants.country_id')->get();
+            if (count($_stores) > 0) {
+                foreach ($_stores as $storeCountry) {
+                    //country
+                    $countryIds = $storeCountry->country_id;
+                    $countryNameList = Country::where('country_id', $countryIds)->first();
+
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
+                        'name' => $storeCountry->name,
+                        'country' => $countryNameList->name
+                    ]);
+                }
             }
 
             Event::fire('orbit.basestore.sync.complete', $newSync);
