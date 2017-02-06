@@ -115,8 +115,6 @@ class AdvertBannerListAPIController extends PubControllerAPI
                                     ->on(DB::raw('t.status'), '=', DB::raw("'active'"));
                             })
 
-
-
                             // For name of promotion, coupon, and store
                             ->leftJoin('news as n', function ($q) {
                                 $q->on(DB::raw('n.news_id'), '=', 'adverts.link_object_id');
@@ -147,6 +145,8 @@ class AdvertBannerListAPIController extends PubControllerAPI
                 $advert->leftJoin('mall_cities', 'mall_cities.mall_city_id', '=', 'advert_cities.mall_city_id');
                 $advert->whereIn('mall_cities.city', (array)$cities);
             });
+
+            $advert->groupBy('adverts.advert_id');
 
             $slideshow = $advert->get();
 
