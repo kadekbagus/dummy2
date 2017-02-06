@@ -488,7 +488,7 @@ class PromotionListAPIController extends PubControllerAPI
                             if ($dt['language_code'] == $language) {
                                 // name & desc
                                 if (! empty($dt['name'])) {
-                                    $data['coupon_name'] = $dt['name'];
+                                    $data['news_name'] = $dt['name'];
                                     $data['description'] = $dt['description'];
                                 }
 
@@ -498,8 +498,8 @@ class PromotionListAPIController extends PubControllerAPI
                                 }
                             } else {
                                 // name & desc
-                                if (! empty($dt['name']) && empty($data['coupon_name'])) {
-                                    $data['coupon_name'] = $dt['name'];
+                                if (! empty($dt['name']) && empty($data['news_name'])) {
+                                    $data['news_name'] = $dt['name'];
                                     $data['description'] = $dt['description'];
                                 }
 
