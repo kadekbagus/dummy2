@@ -42,6 +42,8 @@ class CampaignShareEmailAPIController extends PubControllerAPI
 
             $email = OrbitInput::post('email');
             $campaign_id = OrbitInput::post('campaign_id');
+            $country = OrbitInput::post('country');
+            $cities = OrbitInput::post('cities');
             $campaign_type = OrbitInput::post('campaign_type');
             $language = OrbitInput::get('language', 'id');
 
@@ -73,6 +75,8 @@ class CampaignShareEmailAPIController extends PubControllerAPI
                 'campaignType'       => $campaign_type,
                 'userId'             => $user->user_id,
                 'languageId'         => $language,
+                'country'            => $country,
+                'cities'             => $cities,
             ]);
 
             $this->response->code = 0;
