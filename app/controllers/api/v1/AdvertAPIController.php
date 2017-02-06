@@ -499,14 +499,14 @@ class AdvertAPIController extends ControllerAPI
                 $updatedadvert->is_all_city = $all_city;
             });
 
-            OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id, $is_all_location) {
+            $advertLocations = array();
+            OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id, $is_all_location, $advertLocations) {
                 if ($is_all_location == 'N') {
                     // Delete old data
                     $delete_retailer = AdvertLocation::where('advert_id', '=', $advert_id);
                     $delete_retailer->delete();
 
                     // Insert new data
-                    $advertLocations = array();
 
                     foreach ($locations as $location_id) {
                         $locationType = 'mall';
@@ -523,11 +523,11 @@ class AdvertAPIController extends ControllerAPI
                     }
 
                     $updatedadvert->is_all_location = 'N';
-                    $updatedadvert->locations = $advertLocations;
                 }
             });
 
-            OrbitInput::post('city', function($city) use ($updatedadvert, $advert_id, $is_all_city) {
+            $advertCities = array();
+            OrbitInput::post('city', function($city) use ($updatedadvert, $advert_id, $is_all_city, $advertCities) {
                 if ($is_all_city == 'N') {
                     $city = (array) $city;
                     // Delete old data
@@ -535,7 +535,6 @@ class AdvertAPIController extends ControllerAPI
                     $deleteAdvertCity->delete();
 
                     // Insert new data
-                    $advertCities = array();
                     foreach ($city as $city_id) {
                         $advertCity = new AdvertCity();
                         $advertCity->advert_id = $advert_id;
@@ -545,11 +544,12 @@ class AdvertAPIController extends ControllerAPI
                     }
 
                     $updatedadvert->is_all_city = 'N';
-                    $updatedadvert->cities = $advertCities;
                 }
             });
 
             $updatedadvert->touch();
+            $updatedadvert->locations = $advertLocations;
+            $updatedadvert->cities = $advertCities;
 
             Event::fire('orbit.advert.postupdateadvert.after.save', array($this, $updatedadvert));
             $this->response->data = $updatedadvert;
