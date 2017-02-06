@@ -84,6 +84,9 @@ class GenerateSitemapCommand extends Command
                 throw new Exception("Cannot find sitemap config.", 1);
             }
 
+            // Do not save all activity for this request
+            Config::set('memory:do_not_save_activity', TRUE);
+
             $this->user = User::with('apikey')
                 ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
                 ->where('role_name', 'Super Admin')
@@ -167,7 +170,7 @@ class GenerateSitemapCommand extends Command
             $_GET['sortby'] = 'updated_date';
             $_GET['sortmode'] = 'desc';
             $_GET['list_type'] = 'preferred';
-            $_GET['from_homepage'] = 'y';
+
             $_GET['take'] = 1;
             $_GET['skip'] = 0;
             if (! empty($mall_id)) {
@@ -276,7 +279,6 @@ class GenerateSitemapCommand extends Command
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
-        $_GET['from_homepage'] = 'y';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
@@ -320,7 +322,7 @@ class GenerateSitemapCommand extends Command
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
-        $_GET['from_homepage'] = 'y';
+
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
@@ -364,7 +366,7 @@ class GenerateSitemapCommand extends Command
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
-        $_GET['from_homepage'] = 'y';
+
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
@@ -405,7 +407,7 @@ class GenerateSitemapCommand extends Command
     protected function generateMallDetailsSitemap()
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-        $_GET['from_homepage'] = 'y';
+
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $mallSkip = 0;
@@ -426,7 +428,7 @@ class GenerateSitemapCommand extends Command
 
                 while ($counter < $response->data->total_records) {
                     unset($_GET);
-                    $_GET['from_homepage'] = 'y';
+
                     $_GET['take'] = 50;
                     $mallSkip = $mallSkip + $_GET['take'];
                     $_GET['skip'] = $mallSkip;
@@ -459,7 +461,7 @@ class GenerateSitemapCommand extends Command
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
-        $_GET['from_homepage'] = 'y';
+
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
@@ -615,7 +617,7 @@ class GenerateSitemapCommand extends Command
      */
     protected function responseCheck($response)
     {
-        $ok = (is_object($response) && $response->code === 0) ? TRUE : FALSE;
+        $ok = (is_object($response) && $response->code === 0 && ! is_null($response->data)) ? TRUE : FALSE;
         return $ok;
     }
 
@@ -629,7 +631,7 @@ class GenerateSitemapCommand extends Command
         $updatedAt = time();
         $_GET['sortby'] = 'updated_date';
         $_GET['sortmode'] = 'desc';
-        $_GET['from_homepage'] = 'y';
+
         $_GET['list_type'] = 'preferred';
         $_GET['take'] = 1;
         $_GET['skip'] = 0;

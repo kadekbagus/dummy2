@@ -807,6 +807,10 @@ class Activity extends Eloquent
      */
     public function save(array $options = array())
     {
+        if (Config::get('memory:do_not_save_activity', FALSE)) {
+            return;
+        }
+
         if (empty($this->module_name)) {
             $this->module_name = $this->object_name;
 
