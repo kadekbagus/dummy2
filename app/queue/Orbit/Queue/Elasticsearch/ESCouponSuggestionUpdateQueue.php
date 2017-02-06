@@ -94,13 +94,38 @@ class ESCouponSuggestionUpdateQueue
                 'body' => [
                     'query' => [
                         'match' => [
-                            '_id' => $coupon->promotion_id
+                            '_id' => $couponId
                         ]
                     ]
                 ]
             ];
 
             $response_search = $this->poster->search($params_search);
+
+            // delete the coupon suggestion document if the status inactive
+            if ($response_search['hits']['total'] > 0 && count($coupon) === 0) {
+                $paramsDelete = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupon_suggestions.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.coupon_suggestions.type'),
+                    'id' => $couponId
+                ];
+                $responseDelete = $this->poster->delete($paramsDelete);
+
+                ElasticsearchErrorChecker::throwExceptionOnDocumentError($responseDelete);
+
+                $job->delete();
+
+                $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Doucment in Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
+                                $job->getJobId(),
+                                $esConfig['indices']['coupons']['index'],
+                                $esConfig['indices']['coupons']['type']);
+                Log::info($message);
+
+                return [
+                    'status' => 'ok',
+                    'message' => $message
+                ];
+            }
 
             $response = NULL;
             $params = [

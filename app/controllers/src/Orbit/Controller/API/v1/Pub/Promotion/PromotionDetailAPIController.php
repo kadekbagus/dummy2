@@ -41,6 +41,8 @@ class PromotionDetailAPIController extends PubControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
             $mallId = OrbitInput::get('mall_id', null);
+            $country = OrbitInput::get('country', null);
+            $cities = OrbitInput::get('cities', null);
 
             $promotionHelper = PromotionHelper::create();
             $promotionHelper->registerCustomValidation();
@@ -173,7 +175,7 @@ class PromotionDetailAPIController extends PubControllerAPI
             }
 
             // add facebook share url dummy page
-            $promotion->facebook_share_url = SocMedAPIController::getSharedUrl('promotion', $promotion->news_id, $promotion->news_name);
+            $promotion->facebook_share_url = SocMedAPIController::getSharedUrl('promotion', $promotion->news_id, $promotion->news_name, $country, $cities);
 
             $this->response->data = $promotion;
             $this->response->code = 0;

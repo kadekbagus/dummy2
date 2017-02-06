@@ -154,6 +154,9 @@ Route::filter('pub-fb-bot', function() {
     $gtmUrl = Config::get('orbit.shop.gtm_url');
     $FBChecker = new FBBotChecker();
     $item = NULL;
+    $country = Input::get('country', null);
+    $cities = Input::get('cities', null);
+
     if (! $FBChecker->isFBCrawler()) {
         switch (Route::currentRouteName()) {
             case 'pub-share-promotion':
@@ -204,7 +207,27 @@ Route::filter('pub-fb-bot', function() {
                 'news'       => Config::get('orbit.campaign_share_email.news_detail_base_url'),
             ];
 
-            $redirect_to = URL::to(sprintf($config[$type], Input::get('id'), Str::slug(Input::get('name', '', $separator = '-'))));
+            $countryCityParams = '';
+            $countryString = '';
+            if (! empty($country)) {
+                $countryString .= '?country=' . $country;
+            }
+
+            $citiesString = '';
+
+            if (empty($cities)) {
+                $citiesString .= '&cities=0';
+            } else {
+                foreach ((array) $cities as $city) {
+                    $citiesString .= '&cities=' . $city;
+                }
+            }
+
+            if (! empty($countryString)) {
+                $countryCityParams = $countryString . $citiesString;
+            }
+
+            $redirect_to = URL::to(sprintf($config[$type], Input::get('id'), Str::slug(Input::get('name', '', $separator = '-')))) . $countryCityParams;
         } else {
             $redirect_to = URL::to($gtmUrl);
         }

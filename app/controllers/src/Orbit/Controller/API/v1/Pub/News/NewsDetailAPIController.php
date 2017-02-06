@@ -48,6 +48,8 @@ class NewsDetailAPIController extends PubControllerAPI
             $newsId = OrbitInput::get('news_id', null);
             $language = OrbitInput::get('language', 'id');
             $mallId = OrbitInput::get('mall_id', null);
+            $country = OrbitInput::get('country', null);
+            $cities = OrbitInput::get('cities', null);
 
             $newsHelper = NewsHelper::create();
             $newsHelper->registerCustomValidation();
@@ -180,7 +182,7 @@ class NewsDetailAPIController extends PubControllerAPI
             }
 
             // add facebook share url dummy page
-            $news->facebook_share_url = SocMedAPIController::getSharedUrl('news', $news->news_id, $news->news_name);
+            $news->facebook_share_url = SocMedAPIController::getSharedUrl('news', $news->news_id, $news->news_name, $country, $cities);
 
             $this->response->data = $news;
             $this->response->code = 0;
