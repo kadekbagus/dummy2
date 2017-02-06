@@ -214,7 +214,7 @@ class ESCouponUpdateQueue
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
             $fakeJob = new FakeJob();
-            $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponUpdateQueue();
+            $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionUpdateQueue();
             $suggestion = $esQueue->fire($fakeJob, ['coupon_id' => $couponId]);
 
             // Safely delete the object

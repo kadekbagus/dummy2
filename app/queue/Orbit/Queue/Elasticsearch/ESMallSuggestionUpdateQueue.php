@@ -59,6 +59,7 @@ class ESMallSuggestionUpdateQueue
         $mallId = $data['mall_id'];
         $prefix = DB::getTablePrefix();
         $mall = Mall::with('country')->where('merchants.status', '=', 'active')
+                    ->where('merchants.is_subscribed', 'Y')
                     ->where('merchants.merchant_id', $mallId)
                     ->first();
 
