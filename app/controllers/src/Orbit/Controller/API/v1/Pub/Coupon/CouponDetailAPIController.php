@@ -35,7 +35,8 @@ class CouponDetailAPIController extends PubControllerAPI
             $user = $this->getUser();
 
             $role = $user->role->role_name;
-
+            $country = OrbitInput::get('country', null);
+            $cities = OrbitInput::get('cities', null);
             $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -195,7 +196,7 @@ class CouponDetailAPIController extends PubControllerAPI
 
 
             // add facebook share url dummy page
-            $coupon->facebook_share_url = SocMedAPIController::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name);
+            $coupon->facebook_share_url = SocMedAPIController::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name, $country, $cities);
             // remove mall_id from result
             unset($coupon->mall_id);
 
