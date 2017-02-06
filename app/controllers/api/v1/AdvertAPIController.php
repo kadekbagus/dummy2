@@ -481,25 +481,23 @@ class AdvertAPIController extends ControllerAPI
 
             OrbitInput::post('is_all_location', function($all_location) use ($updatedadvert, $is_all_location, $advert_id) {
                 if ($is_all_location == 'Y') {
-                    $updatedadvert->is_all_location = $all_location;
-
                     // Delete old data
                     $delete_retailer = AdvertLocation::where('advert_id', '=', $advert_id);
                     $delete_retailer->delete();
                 }
+
+                $updatedadvert->is_all_location = $all_location;
             });
 
             OrbitInput::post('is_all_city', function($all_city) use ($updatedadvert, $is_all_city, $advert_id) {
                 if ($is_all_city == 'Y') {
-                    $updatedadvert->is_all_city = $all_city;
-
                     // Delete old data
                     $deleteAdvertCity = AdvertCity::where('advert_id', '=', $advert_id);
                     $deleteAdvertCity->delete();
                 }
-            });
 
-            $updatedadvert->touch();
+                $updatedadvert->is_all_city = $all_city;
+            });
 
             OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id, $is_all_location) {
                 if ($is_all_location == 'N') {
@@ -524,6 +522,7 @@ class AdvertAPIController extends ControllerAPI
                         $advertLocations[] = $advertLocation;
                     }
 
+                    $updatedadvert->is_all_location = 'N';
                     $updatedadvert->locations = $advertLocations;
                 }
             });
@@ -545,9 +544,12 @@ class AdvertAPIController extends ControllerAPI
                         $advertCities[] = $advertCity;
                     }
 
+                    $updatedadvert->is_all_city = 'N';
                     $updatedadvert->cities = $advertCities;
                 }
             });
+
+            $updatedadvert->touch();
 
             Event::fire('orbit.advert.postupdateadvert.after.save', array($this, $updatedadvert));
             $this->response->data = $updatedadvert;
