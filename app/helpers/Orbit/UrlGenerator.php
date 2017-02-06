@@ -148,19 +148,29 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
         $qmark = strpos($original, '?');
         if ($frag !== false) {
             if ($qmark !== false) {
-                if ($qmark > $frag) {
-                    // ....#...?...
-                    $insert_at = $frag;
-                    $insert_qmark = true;
+                if (strpos($original, '#!') !== false) {
+                    // assumed the url are frontend urls
+                    $insert_qmark = false;
                 } else {
-                    // ....?...#...
-                    $insert_at = $qmark + 1;
-                    $insert_ampersand = true;
+                    if ($qmark > $frag) {
+                        // ....#...?...
+                        $insert_at = $frag;
+                        $insert_qmark = true;
+                    } else {
+                        // ....?...#...
+                        $insert_at = $qmark + 1;
+                        $insert_ampersand = true;
+                    }
                 }
             } else {
-                // ....#...
-                $insert_at = $frag;
-                $insert_qmark = true;
+                if (strpos($original, '#!') !== false) {
+                    // assumed the url are frontend urls
+                    $insert_qmark = false;
+                } else {
+                    // ....#...
+                    $insert_at = $frag;
+                    $insert_qmark = true;
+                }
             }
         } else {
             if ($qmark !== false) {
