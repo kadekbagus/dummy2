@@ -259,6 +259,11 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
                 'coupon_id' => $coupon->promotion_id
             ]);
+
+            // Notify the queueing system to update Elasticsearch suggestion document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
         } else {
             // Notify the queueing system to update Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
@@ -276,4 +281,17 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
     Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
         'coupon_id' => $coupon_id
     ]);
+
+    // Delete coupon suggestion in index es when available coupon is empty
+    $availableCoupons = IssuedCoupon:: select('issued_coupon_id')
+        ->where('status', 'available')
+        ->where('promotion_id', $coupon_id)
+        ->first();
+
+    if (empty($availableCoupons)) {
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
+            'coupon_id' => $coupon_id
+        ]);
+    }
+
 });

@@ -65,17 +65,10 @@ class ESNewsSuggestionUpdateQueue
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where('news.news_id', $newsId)
                     ->where('news.object_type', 'news')
+                    ->where('news.status', 'active')
+                    ->having('campaign_status', '=', 'ongoing')
                     ->orderBy('news.news_id', 'asc')
                     ->first();
-
-        if (! is_object($news)) {
-            $job->delete();
-
-            return [
-                'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] News ID %s is not found.', $job->getJobId(), $newsId)
-            ];
-        }
 
         try {
             // check exist elasticsearch index
@@ -115,6 +108,13 @@ class ESNewsSuggestionUpdateQueue
                 return [
                     'status' => 'ok',
                     'message' => $message
+                ];
+            } elseif (count($news) === 0) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] News ID %s is not found.', $job->getJobId(), $newsId)
                 ];
             }
 
@@ -200,6 +200,9 @@ class ESNewsSuggestionUpdateQueue
 
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
+
+            $indexParams['index']  = $esPrefix . Config::get('orbit.elasticsearch.indices.news_suggestions.index');
+            $this->poster->indices()->refresh($indexParams);
 
             // Safely delete the object
             $job->delete();
