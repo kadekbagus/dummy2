@@ -289,7 +289,7 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
         ->first();
 
     if (empty($availableCoupons)) {
-        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestDeleteQueue', [
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
             'coupon_id' => $coupon_id
         ]);
     }
