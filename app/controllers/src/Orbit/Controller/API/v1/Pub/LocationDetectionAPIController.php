@@ -165,11 +165,11 @@ class LocationDetectionAPIController extends PubControllerAPI
         }
 
         // get record from DBIP
-        $addr_type = "ipv4";
+        $addr_type = 'ipv4';
         if (ip2long($clientIpAddress) !== false) {
-            $addr_type = "ipv4";
+            $addr_type = 'ipv4';
         } else if (preg_match('/^[0-9a-fA-F:]+$/', $clientIpAddress) && @inet_pton($clientIpAddress)) {
-            $addr_type = "ipv6";
+            $addr_type = 'ipv6';
         }
 
         $dbip = DB::connection(Config::get('orbit.dbip.connection_id'))
