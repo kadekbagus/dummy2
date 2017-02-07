@@ -97,6 +97,9 @@ class ESPromotionSuggestionUpdateQueue
 
                 ElasticsearchErrorChecker::throwExceptionOnDocumentError($responseDelete);
 
+                $indexParams['index']  = $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_suggestions.index');
+                $this->poster->indices()->refresh($indexParams);
+
                 $job->delete();
 
                 $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Doucment in Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
