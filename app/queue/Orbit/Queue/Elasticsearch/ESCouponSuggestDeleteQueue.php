@@ -4,10 +4,11 @@
  *
  * @author Firmansyah <firmansyah@dominopos.com>
  */
-use Elasticsearch\ClientBuilder as ESBuilder;
-use Config;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
+use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\JobBurier;
+use Config;
+
 use Exception;
 
 class ESCouponSuggestDeleteQueue
