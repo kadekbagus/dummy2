@@ -261,7 +261,7 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
             ]);
 
             // Notify the queueing system to update Elasticsearch suggestion document
-            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionUpdateQueue', [
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
                 'coupon_id' => $coupon->promotion_id
             ]);
         } else {
