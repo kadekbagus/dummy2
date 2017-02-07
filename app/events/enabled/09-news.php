@@ -273,7 +273,7 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
             ]);
 
             // Notify the queueing system to update Elasticsearch Suggestion document
-            Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionSuggestionUpdateQueue', [
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionSuggestionDeleteQueue', [
                 'news_id' => $news->news_id
             ]);
         } else {
@@ -311,7 +311,7 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
             ]);
 
             // Notify the queueing system to update Elasticsearch Suggestion document
-            Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsSuggestionUpdateQueue', [
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsSuggestionDeleteQueue', [
                 'news_id' => $news->news_id
             ]);
         } else {
