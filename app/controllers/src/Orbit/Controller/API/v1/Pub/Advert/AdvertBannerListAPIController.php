@@ -150,15 +150,18 @@ class AdvertBannerListAPIController extends PubControllerAPI
                                 ->active()
                                 ->first();
 
-                    $mallCity = $mallCity->city;
+                    if (is_object($mallCity)) {
+                        $mallCity = $mallCity->city;
 
-                    // Join to advert_cities
-                    $advert->leftJoin('advert_cities', 'advert_cities.advert_id', '=', 'adverts.advert_id');
-                    $advert->leftJoin('mall_cities', 'mall_cities.mall_city_id', '=', 'advert_cities.mall_city_id');
-                    $advert->where(function ($query) use ($mallCity){
-                        $query->where('mall_cities.city', $mallCity)
-                              ->orWhere('adverts.is_all_city', '=', 'Y');
-                    });
+                        // Join to advert_cities
+                        $advert->leftJoin('advert_cities', 'advert_cities.advert_id', '=', 'adverts.advert_id');
+                        $advert->leftJoin('mall_cities', 'mall_cities.mall_city_id', '=', 'advert_cities.mall_city_id');
+                        $advert->where(function ($query) use ($mallCity){
+                            $query->where('mall_cities.city', $mallCity)
+                                  ->orWhere('adverts.is_all_city', '=', 'Y');
+                        });
+                    }
+
             } else {
                 // Filter city in gtm level
                 OrbitInput::get('cities', function($cities) use ($advert)
