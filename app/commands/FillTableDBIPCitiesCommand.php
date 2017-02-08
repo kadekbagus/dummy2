@@ -39,37 +39,45 @@ class FillTableDBIPCitiesCommand extends Command
     public function fire()
     {
         $dryRun = $this->option('dry-run');
+        $take = 50;
+        $skip = 0;
 
         if ($dryRun) {
             $this->info('[DRY RUN MODE - Not Insert on DB] ');
         }
 
-        // get city from DB IP
-        $db_ip = DB::connection(Config::get('orbit.dbip.connection_id'))
-                            ->table(Config::get('orbit.dbip.table'))
-                            ->select('country', 'city')
-                            ->groupby('city', 'country')
-                            ->get();
+        do {
+            // get city from DB IP
+            $db_ip = DB::connection(Config::get('orbit.dbip.connection_id'))
+                                ->table(Config::get('orbit.dbip.table'))
+                                ->select('country', 'city')
+                                ->groupby('city', 'country')
+                                ->take($take)
+                                ->skip($skip)
+                                ->get();
 
-        foreach ($db_ip as $key => $_db_ip) {
-            $db_ip_city = DBIPCity::where('country', $_db_ip->country)
-                                ->where('city', $_db_ip->city)
-                                ->first();
+            $skip = $take + $skip;
 
-            if (empty($db_ip_city)) {
-                $new_db_ip_city = new DBIPCity();
-                $new_db_ip_city->country = $_db_ip->country;
-                $new_db_ip_city->city = $_db_ip->city;
+            foreach ($db_ip as $key => $_db_ip) {
+                $db_ip_city = DBIPCity::where('country', $_db_ip->country)
+                                    ->where('city', $_db_ip->city)
+                                    ->first();
 
-                if (! $dryRun) {
-                    $new_db_ip_city->save();
+                if (empty($db_ip_city)) {
+                    $new_db_ip_city = new DBIPCity();
+                    $new_db_ip_city->country = $_db_ip->country;
+                    $new_db_ip_city->city = $_db_ip->city;
+
+                    if (! $dryRun) {
+                        $new_db_ip_city->save();
+                    }
+
+                    $this->info(sprintf("Insert city %s on country %s", $_db_ip->city, $_db_ip->country));
+                } else {
+                    $this->info(sprintf("City %s on country %s, already exist", $_db_ip->city, $_db_ip->country));
                 }
-
-                $this->info(sprintf("Insert city %s on country %s", $_db_ip->city, $_db_ip->country));
-            } else {
-                $this->info(sprintf("City %s on country %s, already exist", $_db_ip->city, $_db_ip->country));
             }
-        }
+        } while (! empty($db_ip));
         $this->info("Done");
     }
 
