@@ -141,9 +141,12 @@ class AdvertBannerListAPIController extends PubControllerAPI
                 $advert->where('countries.name', $country);
             });
 
-            // Filter in mall level, use city of mall. For GTM level use city filter
+            // Filter in mall level, use advert location and country.
             if (! empty($location_id)) {
-                $advert->where(DB::raw('al.location_id'), $location_id);
+                $advert->where(function ($query) use ($location_id){
+                    $query->where(DB::raw('al.advert_id'), $location_id)
+                          ->orWhere('adverts.is_all_location', '=', 'Y');
+                });
             } else {
                 // Filter city in gtm level
                 OrbitInput::get('cities', function($cities) use ($advert)
