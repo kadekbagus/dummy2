@@ -40,6 +40,8 @@ class FillTableMallCitiesCommand extends Command
     {
         $status = $this->option('mall-status');
         $dryRun = $this->option('dry-run');
+        $take = 50;
+        $skip = 0;
 
         if (empty($status)) {
             $status = 'active';
@@ -49,49 +51,54 @@ class FillTableMallCitiesCommand extends Command
             $this->info('[DRY RUN MODE - Not Insert on DB] ');
         }
 
-        // get country from mall
-        $malls = Mall::select('merchant_id', 'country_id', 'city', 'city_id')
-                    ->where('object_type', 'mall')
-                    ->where('status', $status)
-                    ->groupby('city', 'country_id')
-                    ->get();
+        do {
+            // get country from mall
+            $malls = Mall::select('merchant_id', 'country_id', 'city', 'city_id')
+                        ->where('object_type', 'mall')
+                        ->where('status', $status)
+                        ->groupby('city', 'country_id')
+                        ->take($take)
+                        ->skip($skip)
+                        ->get();
 
-        foreach ($malls as $key => $mall) {
-            // first check to handle a first data without country_id
-            $mall_city = MallCity::where('city', $mall->city)
-                                ->where('country_id', '')
-                                ->first();
+            $skip = $take + $skip;
 
-            if (! empty($mall_city)) {
-                $mall_city->country_id = $mall->country_id;
-
-                if (! $dryRun) {
-                    $mall_city->save();
-                }
-
-                $this->info(sprintf("Update city %s with country_id %s", $mall->city, $mall->country_id));
-            } else {
-                // second check to handle data with country_id
+            foreach ($malls as $key => $mall) {
+                // first check to handle a first data without country_id
                 $mall_city = MallCity::where('city', $mall->city)
-                                    ->where('country_id', $mall->country_id)
+                                    ->where('country_id', '')
                                     ->first();
 
-                if (empty($mall_city)) {
-                    $new_mall_city = new MallCity();
-                    $new_mall_city->city = $mall->city;
-                    $new_mall_city->country_id = $mall->country_id;
+                if (! empty($mall_city)) {
+                    $mall_city->country_id = $mall->country_id;
 
                     if (! $dryRun) {
-                        $new_mall_city->save();
+                        $mall_city->save();
                     }
 
-                    $this->info(sprintf("Insert city %s with country_id %s", $mall->city, $mall->country_id));
+                    $this->info(sprintf("Update city %s with country_id %s", $mall->city, $mall->country_id));
                 } else {
-                    $this->info(sprintf("City %s with country_id %s, already exist", $mall->city, $mall->country_id));
+                    // second check to handle data with country_id
+                    $mall_city = MallCity::where('city', $mall->city)
+                                        ->where('country_id', $mall->country_id)
+                                        ->first();
+
+                    if (empty($mall_city)) {
+                        $new_mall_city = new MallCity();
+                        $new_mall_city->city = $mall->city;
+                        $new_mall_city->country_id = $mall->country_id;
+
+                        if (! $dryRun) {
+                            $new_mall_city->save();
+                        }
+
+                        $this->info(sprintf("Insert city %s with country_id %s", $mall->city, $mall->country_id));
+                    } else {
+                        $this->info(sprintf("City %s with country_id %s, already exist", $mall->city, $mall->country_id));
+                    }
                 }
             }
-
-        }
+        } while (count($malls) > 0);
         $this->info("Done");
     }
 
