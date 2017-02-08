@@ -19,6 +19,7 @@ use Advert;
 use AdvertLinkType;
 use AdvertLocation;
 use AdvertPlacement;
+use Mall;
 
 class AdvertBannerListAPIController extends PubControllerAPI
 {
@@ -140,16 +141,37 @@ class AdvertBannerListAPIController extends PubControllerAPI
                 $advert->where('countries.name', $country);
             });
 
-            OrbitInput::get('cities', function($cities) use ($advert)
-            {
-                // Join to advert_cities
-                $advert->leftJoin('advert_cities', 'advert_cities.advert_id', '=', 'adverts.advert_id');
-                $advert->leftJoin('mall_cities', 'mall_cities.mall_city_id', '=', 'advert_cities.mall_city_id');
-                $advert->where(function ($query) use ($cities){
-                    $query->whereIn('mall_cities.city', (array)$cities)
-                          ->orWhere('adverts.is_all_city', '=', 'Y');
+            // Filter in mall level, use city of mall. For GTM level use city filter
+            if (! empty($location_id)) {
+                    // Filter city in mall level
+                    // Get city of mall
+                    $mallCity = Mall::select('city')
+                                ->where('merchant_id', $location_id)
+                                ->active()
+                                ->first();
+
+                    $mallCity = $mallCity->city;
+
+                    // Join to advert_cities
+                    $advert->leftJoin('advert_cities', 'advert_cities.advert_id', '=', 'adverts.advert_id');
+                    $advert->leftJoin('mall_cities', 'mall_cities.mall_city_id', '=', 'advert_cities.mall_city_id');
+                    $advert->where(function ($query) use ($mallCity){
+                        $query->where('mall_cities.city', $mallCity)
+                              ->orWhere('adverts.is_all_city', '=', 'Y');
+                    });
+            } else {
+                // Filter city in gtm level
+                OrbitInput::get('cities', function($cities) use ($advert)
+                {
+                    // Join to advert_cities
+                    $advert->leftJoin('advert_cities', 'advert_cities.advert_id', '=', 'adverts.advert_id');
+                    $advert->leftJoin('mall_cities', 'mall_cities.mall_city_id', '=', 'advert_cities.mall_city_id');
+                    $advert->where(function ($query) use ($cities){
+                        $query->whereIn('mall_cities.city', (array)$cities)
+                              ->orWhere('adverts.is_all_city', '=', 'Y');
+                    });
                 });
-            });
+            }
 
             $advert->groupBy('adverts.advert_id');
 
