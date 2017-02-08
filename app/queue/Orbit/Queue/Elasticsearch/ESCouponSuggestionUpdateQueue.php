@@ -76,6 +76,7 @@ class ESCouponSuggestionUpdateQueue
                     ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                     ->whereRaw("{$prefix}promotions.status = 'active'")
                     ->having('campaign_status', '=', 'ongoing')
+                    ->having('available', '>', 0)
                     ->orderBy('promotions.promotion_id', 'asc')
                     ->first();
 
@@ -152,7 +153,7 @@ class ESCouponSuggestionUpdateQueue
                 'begin_date' => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
                 'end_date' => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z'
             ];
-            
+
             foreach ($coupon->translations as $translationCollection) {
                 $suggest = array();
 
@@ -171,7 +172,7 @@ class ESCouponSuggestionUpdateQueue
                         $input[] = substr($textName, 0, -1);
                     }
 
-                    $suggest = [ 
+                    $suggest = [
                         'input'   => $input,
                         'output'  => $translationCollection->promotion_name,
                         'payload' => ['id' => $coupon->promotion_id, 'type' => 'coupon']
@@ -209,6 +210,9 @@ class ESCouponSuggestionUpdateQueue
 
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
+
+            $indexParams['index']  = $esPrefix . Config::get('orbit.elasticsearch.indices.coupon_suggestions.index');
+            $this->poster->indices()->refresh($indexParams);
 
             // Safely delete the object
             $job->delete();

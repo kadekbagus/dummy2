@@ -140,6 +140,12 @@ class ESStoreUpdateQueue
                 ];
 
                 $response = $this->poster->delete($params);
+
+                // update suggestion
+                $fakeJob = new FakeJob();
+                $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreSuggestionUpdateQueue();
+                $suggestion = $esQueue->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
+
                 $job->delete();
                 return [
                     'status' => 'fail',

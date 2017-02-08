@@ -187,6 +187,9 @@ class ESStoreSuggestionUpdateQueue
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
+            $indexParams['index']  = $esPrefix . Config::get('orbit.elasticsearch.indices.store_suggestions.index');
+            $this->poster->indices()->refresh($indexParams);
+
             // Safely delete the object
             $job->delete();
 

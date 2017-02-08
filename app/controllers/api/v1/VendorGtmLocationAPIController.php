@@ -282,9 +282,17 @@ class VendorGtmLocationAPIController extends ControllerAPI
 
             $vendorGtmCity = VendorGTMCity::select('vendor_city');
 
-            // Filter DB IP Country by country_like
+            // Filter vendor gtm
             OrbitInput::get('gtm_city', function ($gtm_city) use ($vendorGtmCity) {
                 $vendorGtmCity->where('gtm_city', $gtm_city);
+            });
+
+            OrbitInput::get('country_id', function ($country_id) use ($vendorGtmCity) {
+                $vendorGtmCity->where('country_id', $country_id);
+            });
+
+            OrbitInput::get('vendor_country', function ($vendor_country) use ($vendorGtmCity) {
+                $vendorGtmCity->where('vendor_country', $vendor_country);
             });
 
             // Clone the query builder which still does not include the take,
