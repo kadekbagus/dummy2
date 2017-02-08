@@ -96,11 +96,12 @@ class AdvertBannerListAPIController extends PubControllerAPI
                                 $q->on(DB::raw('alt.advert_link_type_id'), '=', 'adverts.advert_link_type_id')
                                     ->on(DB::raw('alt.status'), '=', DB::raw("'active'"));
                             })
-                            ->join('advert_locations as al', function ($q) use ($location_type, $location_id) {
+                            ->leftJoin('advert_locations as al', function ($q) use ($location_type, $location_id) {
                                 $q->on(DB::raw('al.advert_id'), '=', 'adverts.advert_id')
                                     ->on(DB::raw('al.location_type'), '=', DB::raw("{$this->quote($location_type)}"))
-                                    ->on(DB::raw('al.location_id'), '=', DB::raw("{$this->quote($location_id)}"))
-                                    ->orWhere('adverts.is_all_location', '=', 'Y');
+                                    ->on(DB::raw("
+                                            (al.location_id = {$this->quote($location_id)} OR `orb_adverts`.`is_all_location` = 'Y')
+                                    "), DB::raw(''), DB::raw(''));
                             })
                             ->join('advert_placements as ap', function ($q) use ($banner_type) {
                                 $q->on(DB::raw('ap.advert_placement_id'), '=', 'adverts.advert_placement_id')
