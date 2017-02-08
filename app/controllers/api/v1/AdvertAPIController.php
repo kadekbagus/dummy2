@@ -136,7 +136,7 @@ class AdvertAPIController extends ControllerAPI
                             ->where('advert_placement_id', '=', $advert_placement_id)
                             ->first();
 
-            if (!empty($placement)) {
+            if (! empty($placement)) {
                 if (in_array(($placement->placement_type), ['top_banner', 'footer_banner'])) {
                     $link_type = AdvertLinkType::select('advert_type')
                                                 ->where('advert_link_type_id', '=', $advert_link_type_id)
@@ -145,7 +145,6 @@ class AdvertAPIController extends ControllerAPI
                     if ($link_type->advert_type == 'store') {
                         $store = Tenant::select('merchants.name', DB::raw('oms.country'), DB::raw('oms.city'))
                                         ->excludeDeleted('merchants')
-                                        ->join('adverts', 'adverts.link_object_id', '=', 'merchants.merchant_id')
                                         ->join(DB::raw("(
                                                         select merchant_id, name, country, city
                                                         from {$prefix}merchants
@@ -155,10 +154,12 @@ class AdvertAPIController extends ControllerAPI
                                         ->where('merchants.merchant_id', '=', $link_object_id)
                                         ->first();
 
-                        $_country = MallCountry::select('country_id')->where('country', '=', $store->country)->first();
-                        $_city = MallCity::select('mall_city_id')->where('city', '=', $store->city)->first();
-                        $country_id = $_country->country_id;
-                        $city = array($_city->mall_city_id);
+                        if (! empty($store)) {
+                            $_country = MallCountry::select('country_id')->where('country', '=', $store->country)->first();
+                            $_city = MallCity::select('mall_city_id')->where('city', '=', $store->city)->first();
+                            $country_id = $_country->country_id;
+                            $city = array($_city->mall_city_id);
+                        }
                     }
 
                     if ($link_type->advert_type == 'coupon') {
