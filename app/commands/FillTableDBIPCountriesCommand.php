@@ -12,7 +12,7 @@ class FillTableDBIPCountriesCommand extends Command
      *
      * @var string
      */
-    protected $name = 'db-ip:fill-countries';
+    protected $name = 'dbip:fill-countries';
 
     /**
      * The console command description.
@@ -39,35 +39,43 @@ class FillTableDBIPCountriesCommand extends Command
     public function fire()
     {
         $dryRun = $this->option('dry-run');
+        $take = 50;
+        $skip = 0;
 
         if ($dryRun) {
             $this->info('[DRY RUN MODE - Not Insert on DB] ');
         }
 
-        // get country from DB IP
-        $db_ip = DB::connection(Config::get('orbit.dbip.connection_id'))
-                            ->table(Config::get('orbit.dbip.table'))
-                            ->select('country')
-                            ->groupby('country')
-                            ->get();
+        do {
+            // get country from DB IP
+            $db_ip = DB::connection(Config::get('orbit.dbip.connection_id'))
+                                ->table(Config::get('orbit.dbip.table'))
+                                ->select('country')
+                                ->groupby('country')
+                                ->take($take)
+                                ->skip($skip)
+                                ->get();
 
-        foreach ($db_ip as $key => $_db_ip) {
-            $db_ip_country = DBIPCountry::where('country', $_db_ip->country)
-                                ->first();
+            $skip = $take + $skip;
 
-            if (empty($db_ip_country)) {
-                $new_db_ip_country = new DBIPCountry();
-                $new_db_ip_country->country = $_db_ip->country;
+            foreach ($db_ip as $key => $_db_ip) {
+                $db_ip_country = DBIPCountry::where('country', $_db_ip->country)
+                                    ->first();
 
-                if (! $dryRun) {
-                    $new_db_ip_country->save();
+                if (empty($db_ip_country)) {
+                    $new_db_ip_country = new DBIPCountry();
+                    $new_db_ip_country->country = $_db_ip->country;
+
+                    if (! $dryRun) {
+                        $new_db_ip_country->save();
+                    }
+
+                    $this->info(sprintf("Insert country %s", $_db_ip->country));
+                } else {
+                    $this->info(sprintf("Country %s, already exist", $_db_ip->country));
                 }
-
-                $this->info(sprintf("Insert country %s", $_db_ip->country));
-            } else {
-                $this->info(sprintf("Country %s, already exist", $_db_ip->country));
             }
-        }
+        } while (! empty($db_ip));
         $this->info("Done");
     }
 
