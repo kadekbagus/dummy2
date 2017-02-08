@@ -96,6 +96,7 @@ class StoreNewAPIController extends ControllerAPI
             ];
 
             $validation_error_message = [
+                'orbit.mall.country' => 'Mall does not exist in your selected country'
             ];
 
             // unit make floor_id is required
