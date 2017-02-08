@@ -142,7 +142,7 @@ class AdvertBannerListAPIController extends PubControllerAPI
             });
 
             // Filter in mall level, use advert location and country.
-            if (! empty($location_id)) {
+            if ($location_type == 'mall') {
                 $advert->where(function ($query) use ($location_id){
                     $query->where(DB::raw('al.advert_id'), $location_id)
                           ->orWhere('adverts.is_all_location', '=', 'Y');
