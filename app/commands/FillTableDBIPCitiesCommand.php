@@ -12,7 +12,7 @@ class FillTableDBIPCitiesCommand extends Command
      *
      * @var string
      */
-    protected $name = 'db-ip:fill-cities';
+    protected $name = 'dbip:fill-cities';
 
     /**
      * The console command description.

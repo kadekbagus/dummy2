@@ -12,7 +12,7 @@ class FillTableDBIPCountriesCommand extends Command
      *
      * @var string
      */
-    protected $name = 'db-ip:fill-countries';
+    protected $name = 'dbip:fill-countries';
 
     /**
      * The console command description.
