@@ -40,6 +40,8 @@ class FillTableMallCountriesCommand extends Command
     {
         $status = $this->option('mall-status');
         $dryRun = $this->option('dry-run');
+        $take = 50;
+        $skip = 0;
 
         if (empty($status)) {
             $status = 'active';
@@ -49,32 +51,38 @@ class FillTableMallCountriesCommand extends Command
             $this->info('[DRY RUN MODE - Not Insert on DB] ');
         }
 
-        // get country from mall
-        $malls = Mall::select('merchant_id', DB::raw('ctr.name as country'), DB::raw('ctr.country_id'))
-                    ->join('countries as ctr', DB::raw('ctr.country_id'), '=', 'merchants.country_id')
-                    ->where('object_type', 'mall')
-                    ->where('status', $status)
-                    ->groupby('country')
-                    ->get();
+        do {
+            // get country from mall
+            $malls = Mall::select('merchant_id', DB::raw('ctr.name as country'), DB::raw('ctr.country_id'))
+                        ->join('countries as ctr', DB::raw('ctr.country_id'), '=', 'merchants.country_id')
+                        ->where('object_type', 'mall')
+                        ->where('status', $status)
+                        ->groupby('country')
+                        ->take($take)
+                        ->skip($skip)
+                        ->get();
 
-        foreach ($malls as $key => $mall) {
-            $mall_country = MallCountry::where('country_id', $mall->country_id)
-                                ->first();
+            $skip = $take + $skip;
 
-            if (empty($mall_country)) {
-                $new_mall_country = new MallCountry();
-                $new_mall_country->country_id = $mall->country_id;
-                $new_mall_country->country = $mall->country;
+            foreach ($malls as $key => $mall) {
+                $mall_country = MallCountry::where('country_id', $mall->country_id)
+                                    ->first();
 
-                if (! $dryRun) {
-                    $new_mall_country->save();
+                if (empty($mall_country)) {
+                    $new_mall_country = new MallCountry();
+                    $new_mall_country->country_id = $mall->country_id;
+                    $new_mall_country->country = $mall->country;
+
+                    if (! $dryRun) {
+                        $new_mall_country->save();
+                    }
+
+                    $this->info(sprintf("Insert country %s with country_id %s", $mall->country, $mall->country_id));
+                } else {
+                    $this->info(sprintf("Country %s with country_id %s, already exist", $mall->country, $mall->country_id));
                 }
-
-                $this->info(sprintf("Insert country %s with country_id %s", $mall->country, $mall->country_id));
-            } else {
-                $this->info(sprintf("Country %s with country_id %s, already exist", $mall->country, $mall->country_id));
             }
-        }
+        } while (count($malls) > 0);
         $this->info("Done");
     }
 
