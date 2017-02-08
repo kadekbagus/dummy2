@@ -143,25 +143,7 @@ class AdvertBannerListAPIController extends PubControllerAPI
 
             // Filter in mall level, use city of mall. For GTM level use city filter
             if (! empty($location_id)) {
-                    // Filter city in mall level
-                    // Get city of mall
-                    $mallCity = Mall::select('city')
-                                ->where('merchant_id', $location_id)
-                                ->active()
-                                ->first();
-
-                    if (is_object($mallCity)) {
-                        $mallCity = $mallCity->city;
-
-                        // Join to advert_cities
-                        $advert->leftJoin('advert_cities', 'advert_cities.advert_id', '=', 'adverts.advert_id');
-                        $advert->leftJoin('mall_cities', 'mall_cities.mall_city_id', '=', 'advert_cities.mall_city_id');
-                        $advert->where(function ($query) use ($mallCity){
-                            $query->where('mall_cities.city', $mallCity)
-                                  ->orWhere('adverts.is_all_city', '=', 'Y');
-                        });
-                    }
-
+                $advert->where(DB::raw('al.location_id'), $location_id);
             } else {
                 // Filter city in gtm level
                 OrbitInput::get('cities', function($cities) use ($advert)
