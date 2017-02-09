@@ -178,19 +178,50 @@ Event::listen('orbit.tenant.postupdatetenant.after.save', function($controller, 
  */
 Event::listen('orbit.tenant.postupdatetenant.after.commit', function($controller, $tenant)
 {
+
+    $_tenant = Tenant::select(DB::raw('oms.country'))
+                    ->excludeDeleted('merchants')
+                    ->join(DB::raw("(
+                            select m.merchant_id, m.name, m.country
+                            from {$prefix}merchants m
+                            where m.status = 'active'
+                                and m.object_type = 'mall'
+                            ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                    ->where('merchants.merchant_id', '=', $tenant->merchant_id)
+                    ->first();
+
     // update the store on elasticsearch
     // Notify the queueing system to update Elasticsearch document
-    Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
-        'name' => $tenant->name,
-        'update_related' => TRUE
-    ]);
+    if (! empty($_tenant)) {
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
+            'name' => $tenant->name,
+            'country' => $_tenant->country,
+            'update_related' => TRUE
+        ]);
+    }
+
 });
 
 Event::listen('orbit.tenant.postnewtenant.after.commit', function($controller, $tenant)
 {
+    $_tenant = Tenant::select(DB::raw('oms.country'))
+                    ->excludeDeleted('merchants')
+                    ->join(DB::raw("(
+                            select m.merchant_id, m.name, m.country
+                            from {$prefix}merchants m
+                            where m.status = 'active'
+                                and m.object_type = 'mall'
+                            ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                    ->where('merchants.merchant_id', '=', $tenant->merchant_id)
+                    ->first();
+
     // update the store on elasticsearch
     // Notify the queueing system to update Elasticsearch document
-    Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
-        'name' => $tenant->name
-    ]);
+    if (! empty($_tenant)) {
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
+            'name' => $tenant->name,
+            'country' => $_tenant->country,
+            'update_related' => TRUE
+        ]);
+    }
 });
