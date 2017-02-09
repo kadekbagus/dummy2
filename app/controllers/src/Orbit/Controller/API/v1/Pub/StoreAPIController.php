@@ -572,6 +572,8 @@ class StoreAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
+            // @todo separate the query of merchant and total stores
+            $withInnerHits = FALSE;
             if ($withInnerHits) {
                 $jsonQueryCount = $jsonQuery;
                 $jsonQueryCount['from'] = 0;
