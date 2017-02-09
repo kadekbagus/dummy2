@@ -86,12 +86,18 @@ class AdvertBannerListAPIController extends PubControllerAPI
                                 'adverts.advert_name as title',
                                 DB::raw('n.news_name as promotion_name'),
                                 DB::raw('c.promotion_name as coupon_name'),
-                                DB::raw('s.name as store_name'),
                                 'adverts.link_url',
                                 'adverts.link_object_id as object_id',
                                 DB::raw('alt.advert_type'),
                                 DB::raw("{$image}"),
-                                DB::raw('t.name as store_name')
+                                DB::raw('t.name as store_name'),
+                                DB::raw("CASE WHEN alt.advert_type = 'store' and t.name is null THEN t.status
+                                            ELSE CASE WHEN alt.advert_type = 'promotion' and  n.news_name is null THEN n.status
+                                                ELSE CASE WHEN alt.advert_type = 'coupon' and c.promotion_name is null THEN c.status
+                                                    ELSE {$prefix}adverts.status
+                                                    END
+                                                END
+                                            END as status")
                             )
                             ->join('advert_link_types as alt', function ($q) {
                                 $q->on(DB::raw('alt.advert_link_type_id'), '=', 'adverts.advert_link_type_id')
@@ -126,12 +132,7 @@ class AdvertBannerListAPIController extends PubControllerAPI
                             ->leftJoin('promotions as c', function ($q) {
                                 $q->on(DB::raw('c.promotion_id'), '=', 'adverts.link_object_id');
                             })
-
-                            ->leftJoin('merchants as s', function ($q) {
-                                $q->on(DB::raw('s.merchant_id'), '=', 'adverts.link_object_id');
-                            })
-
-                            ->where('adverts.status', 'active')
+                            ->having('status', '=', 'active')
                             ->whereRaw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}') between {$prefix}adverts.start_date and {$prefix}adverts.end_date");
 
             OrbitInput::get('country', function($country) use ($advert)
@@ -144,7 +145,7 @@ class AdvertBannerListAPIController extends PubControllerAPI
             // Filter in mall level, use advert location and country.
             if ($location_type == 'mall') {
                 $advert->where(function ($query) use ($location_id){
-                    $query->where(DB::raw('al.advert_id'), $location_id)
+                    $query->where(DB::raw('al.location_id'), $location_id)
                           ->orWhere('adverts.is_all_location', '=', 'Y');
                 });
             } else {
