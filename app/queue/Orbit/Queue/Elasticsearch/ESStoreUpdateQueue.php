@@ -258,8 +258,12 @@ class ESStoreUpdateQueue
 
             // update suggestion
             $fakeJob = new FakeJob();
-            $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreSuggestionUpdateQueue();
-            $suggestion = $esQueue->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
+            $esSuggetion = new \Orbit\Queue\Elasticsearch\ESStoreSuggestionUpdateQueue();
+            $suggestion = $esSuggetion->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
+
+            // update detail
+            $esDetail = new \Orbit\Queue\Elasticsearch\ESStoreDetailUpdateQueue();
+            $detail = $esDetail->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
 
             if ($updateRelated) {
                 // update es coupon, news, and promotion
