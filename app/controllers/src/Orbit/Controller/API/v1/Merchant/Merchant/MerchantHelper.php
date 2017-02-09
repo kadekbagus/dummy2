@@ -53,8 +53,9 @@ class MerchantHelper
             $baseMerchants = BaseMerchant::where('base_merchant_id', $baseMerchantId)
                             ->first();
 
-            $merchants = BaseStore::where('base_merchant_id', '=', $value)
-                            ->whereNotIn('base_merchant_id', array($baseMerchantId))
+            $merchants = BaseStore::join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                            ->where('base_merchants.country_id', '=', $baseMerchants->country_id)
+                            ->where('base_stores.base_merchant_id', '=', $baseMerchantId)
                             ->first();
 
             if ($baseMerchants->country_id != $countryId && ! empty($merchants)) {

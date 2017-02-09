@@ -204,6 +204,26 @@ class StoreHelper
 
             return TRUE;
         });
+
+        // Check mall country
+        Validator::extend('orbit.mall.country', function ($attribute, $value, $parameters) {
+            $baseMerchantId = $parameters[0];
+
+            $baseMerchants = BaseMerchant::where('base_merchant_id', $baseMerchantId)
+                            ->first();
+
+            $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $value)
+                        ->where('country_id', $baseMerchants->country_id)
+                        ->where('object_type', 'mall')
+                        ->first();
+
+            if (empty($mall)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
     }
 
     public function getValidBaseStore()
