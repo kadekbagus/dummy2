@@ -5457,6 +5457,12 @@ return array(
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
+
+            // store counter cache
+            'store-counter' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
         ],
     ],
 
