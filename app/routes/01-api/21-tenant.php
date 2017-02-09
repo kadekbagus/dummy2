@@ -126,6 +126,16 @@ Route::get('/api/v1/pub/store-list', function()
 Route::get('/app/v1/pub/store-list', ['as' => 'pub-store-list', 'uses' => 'IntermediatePubAuthController@Store_getStoreList']);
 
 /**
+ * Get Merchant/Store lists counter for gotomalls landing page
+ */
+Route::get('/api/v1/pub/store-count', function()
+{
+    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreList();
+});
+
+Route::get('/app/v1/pub/store-count', ['as' => 'pub-store-count', 'uses' => 'IntermediatePubAuthController@StoreCounter_getStoreCount']);
+
+/**
  * Get mall list based on store name
  */
 Route::get('/api/v1/pub/mall-store-list', function()
