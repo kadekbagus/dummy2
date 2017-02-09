@@ -572,51 +572,11 @@ class StoreAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
-            if ($withInnerHits) {
-                $jsonQueryCount = $jsonQuery;
-                $jsonQueryCount['from'] = 0;
-                $jsonQueryCount['size'] = $records['total'];
-                $esParamCount = [
-                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
-                    'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
-                    'body' => json_encode($jsonQueryCount)
-                ];
-
-                if ($withCache) {
-                    $responseCount = $countCache->get($serializedCacheKey, function() use ($client, &$esParamCount) {
-                        return $client->search($esParamCount);
-                    });
-                    $countCache->put($serializedCacheKey, $responseCount);
-                } else {
-                    $responseCount = $client->search($esParamCount);
-                }
-
-                foreach ($responseCount['hits']['hits'] as $record) {
-                    if ($innerHitsCity) {
-                        $hitsName = 'country_city_hits';
-                    } else {
-                        $hitsName = 'tenant_detail';
-                    }
-
-                    if (! empty($record['inner_hits'][$hitsName]['hits']['total'])) {
-                        $innerHitsCount = $innerHitsCount + $record['inner_hits'][$hitsName]['hits']['total'];
-                    }
-                }
-            }
-
-            $totalStores = $response['aggregations']['count']['doc_count'];
-            if ($withInnerHits) {
-                $totalStores = $innerHitsCount;
-            }
-
             $data = new \stdclass();
-            $extras = new \stdClass();
-            $extras->total_stores = $totalStores;
-            $extras->total_merchants = $records['total'];
 
             $data->returned_records = count($listOfRec);
             $data->total_records = $records['total'];
-            $data->extras = $extras;
+
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
                 $data->mall_city = $mall->city;
