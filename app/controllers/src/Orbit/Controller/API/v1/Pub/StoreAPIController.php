@@ -1137,16 +1137,13 @@ class StoreAPIController extends PubControllerAPI
                                     DB::raw("{$mallLogo}"),
                                     DB::raw("{$mallMap}")
                                 )
-
                                 // Floor of store
                                 ->leftJoin('objects', function($q){
                                     $q->on('objects.object_id', '=', 'merchants.floor_id')
                                          ->where('objects.object_type', '=', 'floor');
                                 })
-
                                 // Mall of tenant
                                 ->leftJoin(DB::raw("{$prefix}merchants as mall"), DB::Raw("mall.merchant_id"), '=', 'merchants.parent_id')
-
                                 // Map of store
                                 ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
                                     $q->on(DB::raw('map.object_id'), '=',  'merchants.merchant_id')
@@ -1159,7 +1156,6 @@ class StoreAPIController extends PubControllerAPI
                                       ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"))
                                       ;
                                 })
-
                               ->where('merchants.name', $storename)
                               ->where(DB::raw("mall.status"), 'active');
 
