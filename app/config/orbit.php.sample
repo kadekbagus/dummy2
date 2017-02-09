@@ -56,6 +56,11 @@ return array(
                  'type'  => 'basic'
             ],
 
+            'store_details' => [
+                 'index' => 'store_details',
+                 'type'  => 'basic'
+            ],
+
             'coupon_suggestions' => [
                 'index' => 'coupon_suggestions',
                 'type'  => 'basic'
