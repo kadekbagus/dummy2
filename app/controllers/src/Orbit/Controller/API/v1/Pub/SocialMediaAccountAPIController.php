@@ -38,7 +38,7 @@ class SocialMediaAccountAPIController extends PubControllerAPI
             $user = $this->getUser();
             $country = OrbitInput::get('country');
 
-            $socielMediaAccount = Config::get('orbit.social_media_account.country.' . $country);
+            $socielMediaAccount = Config::get('orbit.social_media_account.country.' . strtolower($country));
 
             $count = count($socielMediaAccount);
 
