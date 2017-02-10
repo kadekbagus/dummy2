@@ -89,6 +89,7 @@ class AdvertBannerListAPIController extends PubControllerAPI
                                 'adverts.link_url',
                                 'adverts.link_object_id as object_id',
                                 DB::raw('alt.advert_type'),
+                                'adverts.is_all_location',
                                 DB::raw("{$image}"),
                                 DB::raw('t.name as store_name'),
                                 DB::raw("CASE WHEN alt.advert_type = 'store' and t.name is null THEN t.status
@@ -103,11 +104,11 @@ class AdvertBannerListAPIController extends PubControllerAPI
                                 $q->on(DB::raw('alt.advert_link_type_id'), '=', 'adverts.advert_link_type_id')
                                     ->on(DB::raw('alt.status'), '=', DB::raw("'active'"));
                             })
-                            ->leftJoin('advert_locations as al', function ($q) use ($location_type, $location_id) {
+                            ->leftJoin('advert_locations as al', function ($q) use ($location_type, $location_id, $prefix) {
                                 $q->on(DB::raw('al.advert_id'), '=', 'adverts.advert_id')
                                     ->on(DB::raw('al.location_type'), '=', DB::raw("{$this->quote($location_type)}"))
                                     ->on(DB::raw("
-                                            (al.location_id = {$this->quote($location_id)} OR `orb_adverts`.`is_all_location` = 'Y')
+                                            (al.location_id = {$this->quote($location_id)} OR `{$prefix}adverts`.`is_all_location` = 'Y')
                                     "), DB::raw(''), DB::raw(''));
                             })
                             ->join('advert_placements as ap', function ($q) use ($banner_type) {
@@ -145,10 +146,15 @@ class AdvertBannerListAPIController extends PubControllerAPI
             // Filter in mall level, use advert location and country.
             if ($location_type == 'mall') {
                 $advert->where(function ($query) use ($location_id){
-                    $query->where(DB::raw('al.advert_id'), $location_id)
+                    $query->where(DB::raw('al.location_id'), $location_id)
                           ->orWhere('adverts.is_all_location', '=', 'Y');
                 });
             } else {
+                $advert->where(function ($query) use ($location_type) {
+                    $query->where(DB::raw('al.location_type'), $location_type)
+                        ->orWhere('is_all_location', 'Y');
+                });
+
                 // Filter city in gtm level
                 OrbitInput::get('cities', function($cities) use ($advert)
                 {
