@@ -41,7 +41,7 @@ class CampaignShareMail
         $countryCityParams = '';
         $countryString = '';
         if (! empty($data['country'])) {
-            $countryString .= '?country=' . $data['country'];
+            $countryString .= 'country=' . $data['country'];
         }
 
         $citiesString = '';
@@ -88,7 +88,11 @@ class CampaignShareMail
                                 ->first();
 
                     $baseUrl = Config::get('orbit.campaign_share_email.promotion_detail_base_url');
-                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name)) . $countryCityParams;
+                    $connector = (strpos($baseUrl, '?') !== false) ? '&' : '?' ;
+                    if (empty($countryCityParams)) {
+                        $connector = '';
+                    }
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name)) . $connector . $countryCityParams;
                     $campaignTypeEn = 'promotion';
                     $campaignTypeId = 'promosi';
 
@@ -123,7 +127,11 @@ class CampaignShareMail
                                 ->first();
 
                     $baseUrl = Config::get('orbit.campaign_share_email.news_detail_base_url');
-                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name)) . $countryCityParams;
+                    $connector = (strpos($baseUrl, '?') !== false) ? '&' : '?' ;
+                    if (empty($countryCityParams)) {
+                        $connector = '';
+                    }
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name)) . $connector . $countryCityParams;
                     $campaignTypeEn = 'event';
                     $campaignTypeId = 'event';
 
@@ -157,7 +165,11 @@ class CampaignShareMail
                         ->first();
 
                     $baseUrl = Config::get('orbit.campaign_share_email.coupon_detail_base_url');
-                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name)) . $countryCityParams;
+                    $connector = (strpos($baseUrl, '?') !== false) ? '&' : '?' ;
+                    if (empty($countryCityParams)) {
+                        $connector = '';
+                    }
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name)) . $connector . $countryCityParams;
                     $campaignTypeEn = 'coupon';
                     $campaignTypeId = 'kupon';
 
