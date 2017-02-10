@@ -5206,12 +5206,23 @@ return array(
         // subject of the email
         'subject' => '[%s] %s - Gotomalls.com',
 
+        'utm_params' => [
+            'email' => [
+                'utm_source' => 'gtm-share',
+                'utm_medium' => 'email'
+            ],
+            'facebook' => [
+                'utm_source' => 'gtm-share',
+                'utm_medium' => 'facebook'
+            ]
+        ],
+
         // base url of the campaign detail, needed for showing link on the email
-        'news_detail_base_url' => 'https://v215.gotomalls.cool/#!/events/%s/%s',
+        'news_detail_base_url' => 'https://v30.gotomalls.cool/#!/events/%s/%s',
 
-        'promotion_detail_base_url' => 'https://v215.gotomalls.cool/#!/promotions/%s/%s',
+        'promotion_detail_base_url' => 'https://v30.gotomalls.cool/#!/promotions/%s/%s?%s',
 
-        'coupon_detail_base_url' => 'https://v215.gotomalls.cool/#!/coupons/%s/%s',
+        'coupon_detail_base_url' => 'https://v30.gotomalls.cool/#!/coupons/%s/%s?%s',
 
         'store_detail_base_url' => 'https://v215.gotomalls.cool/#!/stores/%s/%s',
     ),
