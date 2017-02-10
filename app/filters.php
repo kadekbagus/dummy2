@@ -200,6 +200,7 @@ Route::filter('pub-fb-bot', function() {
         }
 
         if (is_object($item)) {
+            $utmParamConfig = Config::get('orbit.campaign_share_email.utm_params');
             $config = [
                 'stores'     => Config::get('orbit.campaign_share_email.store_detail_base_url'),
                 'promotions' => Config::get('orbit.campaign_share_email.promotion_detail_base_url'),
@@ -210,7 +211,7 @@ Route::filter('pub-fb-bot', function() {
             $countryCityParams = '';
             $countryString = '';
             if (! empty($country)) {
-                $countryString .= '?country=' . $country;
+                $countryString .= '&country=' . $country;
             }
 
             $citiesString = '';
@@ -227,7 +228,11 @@ Route::filter('pub-fb-bot', function() {
                 $countryCityParams = $countryString . $citiesString;
             }
 
-            $redirect_to = URL::to(sprintf($config[$type], Input::get('id'), Str::slug(Input::get('name', '', $separator = '-')))) . $countryCityParams;
+            $utmParam = http_build_query($utmParamConfig['facebook']);
+
+            $param = $utmParam . $countryCityParams;
+
+            $redirect_to = sprintf($config[$type], Input::get('id'), Str::slug(Input::get('name', '', $separator = '-')), $param);
         } else {
             $redirect_to = URL::to($gtmUrl);
         }
