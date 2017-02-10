@@ -572,51 +572,11 @@ class StoreAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
-            if ($withInnerHits) {
-                $jsonQueryCount = $jsonQuery;
-                $jsonQueryCount['from'] = 0;
-                $jsonQueryCount['size'] = $records['total'];
-                $esParamCount = [
-                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
-                    'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
-                    'body' => json_encode($jsonQueryCount)
-                ];
-
-                if ($withCache) {
-                    $responseCount = $countCache->get($serializedCacheKey, function() use ($client, &$esParamCount) {
-                        return $client->search($esParamCount);
-                    });
-                    $countCache->put($serializedCacheKey, $responseCount);
-                } else {
-                    $responseCount = $client->search($esParamCount);
-                }
-
-                foreach ($responseCount['hits']['hits'] as $record) {
-                    if ($innerHitsCity) {
-                        $hitsName = 'country_city_hits';
-                    } else {
-                        $hitsName = 'tenant_detail';
-                    }
-
-                    if (! empty($record['inner_hits'][$hitsName]['hits']['total'])) {
-                        $innerHitsCount = $innerHitsCount + $record['inner_hits'][$hitsName]['hits']['total'];
-                    }
-                }
-            }
-
-            $totalStores = $response['aggregations']['count']['doc_count'];
-            if ($withInnerHits) {
-                $totalStores = $innerHitsCount;
-            }
-
             $data = new \stdclass();
-            $extras = new \stdClass();
-            $extras->total_stores = $totalStores;
-            $extras->total_merchants = $records['total'];
 
             $data->returned_records = count($listOfRec);
             $data->total_records = $records['total'];
-            $data->extras = $extras;
+
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
                 $data->mall_city = $mall->city;
@@ -1073,6 +1033,7 @@ class StoreAPIController extends PubControllerAPI
      * GET - get mall detail list after click store name
      *
      * @author Irianto Pratama <irianto@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1107,14 +1068,10 @@ class StoreAPIController extends PubControllerAPI
             $user = $this->getUser();
             $mallId = OrbitInput::get('mall_id', null);
             $merchantId = OrbitInput::get('merchant_id');
-            $location = OrbitInput::get('location');
-            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
-            $distance = Config::get('orbit.geo_location.distance', 10);
+
             $ul = OrbitInput::get('ul', null);
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
-
-            $keyword = OrbitInput::get('keyword');
 
             $validator = Validator::make(
                 array(
@@ -1133,9 +1090,6 @@ class StoreAPIController extends PubControllerAPI
             $cacheKey = [
                 'mall_id' => $mallId,
                 'merchant_id' => $merchantId,
-                'location' => $location,
-                'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
-                'distance' => $distance,
                 'take' => $take,
                 'skip' => $skip,
             ];
@@ -1154,11 +1108,9 @@ class StoreAPIController extends PubControllerAPI
 
             $mallLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as location_logo";
             $mallMap = "CONCAT({$this->quote($urlPrefix)}, map.path) as map_image";
-            $imageMapTenant = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as path";
             if ($usingCdn) {
                 $mallLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as location_logo";
                 $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
-                $imageMapTenant = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as path";
             }
 
             // Get store name base in merchant_id
@@ -1167,122 +1119,50 @@ class StoreAPIController extends PubControllerAPI
                 $storename = $store->name;
             }
 
-            // Query without searching keyword
-            $mall = Mall::select('merchants.merchant_id',
+            $mall = Tenant::select(
+                                    'merchants.merchant_id',
+                                    DB::raw("mall.merchant_id as mall_id"),
+                                    DB::raw("mall.city"),
                                     'merchants.name',
-                                    'merchants.address_line1 as address',
-                                    'merchants.city',
+                                    DB::raw("mall.name as mall_name"),
+                                    DB::raw("mall.address_line1 as address"),
                                     'merchants.floor',
                                     'merchants.unit',
-                                    'merchants.operating_hours',
-                                    'merchants.is_subscribed',
-                                    'merchants.object_type as location_type',
+                                    DB::raw("mall.operating_hours"),
+                                    DB::raw("mall.is_subscribed"),
+                                    DB::raw("mall.object_type as location_type"),
                                     DB::raw("{$mallLogo}"),
-                                    DB::raw("{$mallMap}"),
-                                    'merchants.phone',
-                                    DB::raw("x(position) as latitude"),
-                                    DB::raw("y(position) as longitude")
+                                    DB::raw("{$mallMap}")
                                 )
-                    ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
-                    // Map
-                    ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
-                        $q->on(DB::raw('map.object_id'), '=', "merchants.merchant_id")
-                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig')"))
-                          ;
-                    })
-                    // Logo
-                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
-                        $q->on(DB::raw('img.object_id'), '=', "merchants.merchant_id")
-                          ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"))
-                          ;
-                    })
-                    ->with(['tenants' => function ($q) use ($prefix, $storename, $imageMapTenant) {
-                            $q->select('merchants.merchant_id',
-                                        'merchants.name as title',
-                                        'merchants.phone',
-                                        'merchants.url',
-                                        'merchants.description',
-                                        'merchants.parent_id',
-                                        DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
-                                    )
-                              ->join('objects', 'objects.object_id', '=', 'merchants.floor_id')
-                              ->where('objects.object_type', 'floor')
+                                // Floor of store
+                                ->leftJoin('objects', function($q){
+                                    $q->on('objects.object_id', '=', 'merchants.floor_id')
+                                         ->where('objects.object_type', '=', 'floor');
+                                })
+                                // Mall of tenant
+                                ->leftJoin(DB::raw("{$prefix}merchants as mall"), DB::Raw("mall.merchant_id"), '=', 'merchants.parent_id')
+                                // Map of store
+                                ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
+                                    $q->on(DB::raw('map.object_id'), '=',  'merchants.merchant_id')
+                                      ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig', 'retailer_storemap_orig')"))
+                                      ;
+                                })
+                                // Logo of mall
+                                ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
+                                    $q->on(DB::raw('img.object_id'), '=',  DB::raw("mall.merchant_id"))
+                                      ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"))
+                                      ;
+                                })
                               ->where('merchants.name', $storename)
-                              ->where('merchants.status', 'active')
-                              ->with(['categories' => function ($q) {
-                                    $q->select(
-                                            'category_name'
-                                        );
-                                }, 'mediaMap' => function ($q) use ($imageMapTenant) {
-                                    $q->select(
-                                            'media.object_id',
-                                            DB::raw("{$imageMapTenant}")
-                                        );
-                                }]);
-                        }, 'mediaLogo' => function ($q) {
-                                    $q->select(
-                                            'media.object_id',
-                                            'media.path'
-                                        );
-                        }]);
-
-            // Query list mall based on keyword. Handling description and keyword can be different with other stores
-            if (! empty($keyword)) {
-
-                $cacheKey['keyword'] = $keyword;
-
-                $words = explode(" ", $keyword);
-                $keywordSql = " 1=1 ";
-                foreach ($words as $key => $value) {
-                    if (strlen($value) === 1 && $value === '%') {
-                        $keywordSql .= " or {$prefix}merchants.name like '%|{$value}%' escape '|' or {$prefix}keywords.keyword = '|{$value}' escape '|' ";
-                    } else {
-                        // escaping the query
-                        $real_value = $value;
-                        $word = '%' . $value . '%';
-                        $value = $this->quote($word);
-                        $keywordSql .= " or {$prefix}merchants.name like {$value} or {$prefix}keywords.keyword = {$this->quote($real_value)} ";
-                    }
-                }
-
-                $mall = $mall->join(DB::raw("( select {$prefix}merchants.merchant_id, name, parent_id from {$prefix}merchants
-                                            left join {$prefix}keyword_object on {$prefix}merchants.merchant_id = {$prefix}keyword_object.object_id
-                                            left join {$prefix}keywords on {$prefix}keyword_object.keyword_id = {$prefix}keywords.keyword_id
-                                            where {$prefix}merchants.status = 'active'
-                                            and (" . $keywordSql . ")
-                                        ) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
-                            ->active();
-            } else {
-                $mall = $mall->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
-                            ->active();
-            }
-
-            // Get user location
-            $position = isset($ul)?explode("|", $ul):null;
-            $lon = isset($position[0])?$position[0]:null;
-            $lat = isset($position[1])?$position[1]:null;
-
-            // Filter by location
-            if (! empty($location)) {
-                if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                    $mall->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
-                                        ->havingRaw("distance <= {$distance}");
-                } else {
-                    $mall->where('merchants.city', $location);
-                }
-            };
+                              ->where(DB::raw("mall.status"), 'active');
 
             if (! empty($mallId)) {
-                $mall->where('merchants.merchant_id', '=', $mallId)->first();
+                $mall->where(DB::raw("mall.merchant_id"), '=', $mallId)->first();
             }
 
-            // Order data by nearby or city alphabetical
-            if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                $mall->orderBy('distance', 'asc');
-            } else {
-                $mall->orderBy('city', 'asc');
-                $mall->orderBy('merchants.name', 'asc');
-            }
+            // Order data city alphabetical
+            $mall->orderBy('city', 'asc');
+            $mall->orderBy('merchants.name', 'asc');
 
             $mall = $mall->groupBy('merchants.merchant_id');
 
