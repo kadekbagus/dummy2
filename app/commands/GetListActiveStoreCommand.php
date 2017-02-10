@@ -53,10 +53,11 @@ class GetListActiveStoreCommand extends Command
         do {
             $stores = DB::select("SELECT {$fields}
                 FROM {$prefix}merchants t
-                LEFT JOIN (SELECT merchant_id, city, country FROM {$prefix}merchants WHERE object_type='mall') p
+                LEFT JOIN (SELECT merchant_id, city, country, status FROM {$prefix}merchants WHERE object_type='mall') p
                     ON p.merchant_id = t.parent_id
                 WHERE t.object_type = 'tenant'
                     AND t.status = 'active'
+                    AND p.status = 'active'
                 {$raw}
                 LIMIT $skip, $take");
 
