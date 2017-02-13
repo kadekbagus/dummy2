@@ -31,12 +31,15 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
+use Orbit\Helper\Util\CdnUrlGenerator;
 use Elasticsearch\ClientBuilder;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
 
 class PromotionListAPIController extends PubControllerAPI
 {
+    protected $withoutScore = FALSE;
+
     /**
      * GET - get active promotion in all mall, and also provide for searching
      *
@@ -80,6 +83,8 @@ class PromotionListAPIController extends PubControllerAPI
             $sort_mode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
+            $cityFilters = OrbitInput::get('cities', null);
+            $countryFilter = OrbitInput::get('country', null);
             $ul = OrbitInput::get('ul', null);
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance', 10);
@@ -93,6 +98,7 @@ class PromotionListAPIController extends PubControllerAPI
             $no_total_records = OrbitInput::get('no_total_records', null);
             $take = PaginationNumber::parseTakeFromGet('promotion');
             $skip = PaginationNumber::parseSkipFromGet();
+            $withCache = TRUE;
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -106,7 +112,7 @@ class PromotionListAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,created_date',
+                    'sortby'   => 'in:name,location,created_date,updated_date',
                 )
             );
 
@@ -114,14 +120,14 @@ class PromotionListAPIController extends PubControllerAPI
             // Make sure there is no missing one.
             $cacheKey = [
                 'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
-                'location' => $location, 'ul' => $ul,
+                'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
                 'with_premium' => $withPremium, 'list_type' => $list_type,
                 'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
-
+                'country' => $countryFilter, 'cities' => $cityFilters,
             ];
 
             // Run the validation
@@ -244,11 +250,11 @@ class PromotionListAPIController extends PubControllerAPI
             });
 
             // filter by location (city or user location)
-            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance)
+            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance, &$withCache)
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
-
+                    $withCache = FALSE;
                     if ($location === 'mylocation' && $lat != '' && $lon != '') {
                         $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat)))))));
                         $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
@@ -259,12 +265,33 @@ class PromotionListAPIController extends PubControllerAPI
                 }
             });
 
-            // sort by name or location
+            // filter by country
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery) {
+                $countryFilterArr = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.country.raw' => $countryFilter))))));
+
+                $jsonQuery['query']['filtered']['filter']['and'][] = $countryFilterArr;
+            });
+
+            // filter by city, only filter when countryFilter is not empty
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter) {
+                if (! empty($countryFilter)) {
+                    $cityFilterArr = [];
+                    foreach ((array) $cityFilters as $cityFilter) {
+                        $cityFilterArr[] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $cityFilter))))));
+                    }
+
+                    $jsonQuery['query']['filtered']['filter']['and'][]['or'] = $cityFilterArr;
+                }
+            });
+
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
-                $sort = array('_geo_distance' => array('link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
+                $withCache = FALSE;
+                $sort = array('_geo_distance' => array('nested_path' => 'link_to_tenant', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'created_date') {
                 $sort = array('begin_date' => array('order' => $sort_mode));
+            } elseif ($sort_by === 'updated_date') {
+                $sort = array('updated_at' => array('order' => $sort_mode));
             } else {
                 $sort = array('name.raw' => array('order' => $sort_mode));
             }
@@ -325,11 +352,15 @@ class PromotionListAPIController extends PubControllerAPI
                          ->groupBy(DB::raw("adv.link_object_id"))
                          ->take(100);
 
-            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-            $advertData = $advertCache->get($serializedCacheKey, function() use ($advertList) {
-                return $advertList->get();
-            });
-            $advertCache->put($serializedCacheKey, $advertData);
+            if ($withCache) {
+                $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+                $advertData = $advertCache->get($serializedCacheKey, function() use ($advertList) {
+                    return $advertList->get();
+                });
+                $advertCache->put($serializedCacheKey, $advertData);
+            } else {
+                $advertData = $advertList->get();
+            }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $_jsonQuery = $jsonQuery;
@@ -345,10 +376,14 @@ class PromotionListAPIController extends PubControllerAPI
                     'body' => json_encode($_jsonQuery)
                 ];
 
-                $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
-                    return $client->search($_esParam);
-                });
-                $keywordSearchCache->put($serializedCacheKey, $searchResponse);
+                if ($withCache) {
+                    $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
+                        return $client->search($_esParam);
+                    });
+                    $keywordSearchCache->put($serializedCacheKey, $searchResponse);
+                } else {
+                    $searchResponse = $client->search($_esParam);
+                }
 
                 $searchData = $searchResponse['hits'];
 
@@ -394,6 +429,22 @@ class PromotionListAPIController extends PubControllerAPI
             if ($withScore) {
                 $sortby = array('_score', $sort);
             }
+
+            if ($this->withoutScore) {
+                // remove _score sort
+                $found = FALSE;
+                $sortby = array_filter($sortby, function($val) use(&$found) {
+                        if ($val === '_score') {
+                            $found = $found || TRUE;
+                        }
+                        return $val !== '_score';
+                    });
+
+                if($found) {
+                    // redindex array if _score is eliminated
+                    $sortby = array_values($sortby);
+                }
+            }
             $jsonQuery['sort'] = $sortby;
 
             $esParam = [
@@ -402,14 +453,21 @@ class PromotionListAPIController extends PubControllerAPI
                 'body' => json_encode($jsonQuery)
             ];
 
-            $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
-                return $client->search($esParam);
-            });
-            $recordCache->put($serializedCacheKey, $response);
+            if ($withCache) {
+                $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
+                    return $client->search($esParam);
+                });
+                $recordCache->put($serializedCacheKey, $response);
+            } else {
+                $response = $client->search($esParam);
+            }
 
             $records = $response['hits'];
 
             $listOfRec = array();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
             foreach ($records['hits'] as $record) {
                 $data = array();
                 $isOwned = false;
@@ -421,28 +479,33 @@ class PromotionListAPIController extends PubControllerAPI
 
                     // translation, to get name, desc and image
                     if ($key === "translation") {
+                        $data['image_url'] = '';
+
                         foreach ($record['_source']['translation'] as $dt) {
-                            if ($dt['language_id'] === $valid_language->language_id) {
+                            $localPath = (! empty($dt['image_url'])) ? $dt['image_url'] : '';
+                            $cdnPath = (! empty($dt['image_cdn_url'])) ? $dt['image_cdn_url'] : '';
+
+                            if ($dt['language_code'] == $language) {
                                 // name & desc
                                 if (! empty($dt['name'])) {
-                                    $data['coupon_name'] = $dt['name'];
+                                    $data['news_name'] = $dt['name'];
                                     $data['description'] = $dt['description'];
                                 }
 
                                 // image
                                 if (! empty($dt['image_url'])) {
-                                    $data['image_url'] = $dt['image_url'];
+                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                                 }
                             } else {
                                 // name & desc
-                                if (! empty($dt['name']) && empty($data['coupon_name'])) {
-                                    $data['coupon_name'] = $dt['name'];
+                                if (! empty($dt['name']) && empty($data['news_name'])) {
+                                    $data['news_name'] = $dt['name'];
                                     $data['description'] = $dt['description'];
                                 }
 
                                 // image
-                                if (! empty($dt['image_url']) && empty($data['image_url'])) {
-                                    $data['image_url'] = $dt['image_url'];
+                                if (empty($data['image_url'])) {
+                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                                 }
                             }
                         }
@@ -497,6 +560,7 @@ class PromotionListAPIController extends PubControllerAPI
             $data->total_records = $records['total'];
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
+                $data->mall_city = $mall->city;
             }
             $data->records = $listOfRec;
 
@@ -598,6 +662,17 @@ class PromotionListAPIController extends PubControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    /**
+     * Force $withScore value to FALSE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setWithOutScore()
+    {
+        $this->withoutScore = TRUE;
+
+        return $this;
     }
 
     protected function quote($arg)

@@ -35,6 +35,27 @@ Event::listen('orbit.coupon.postnewcoupon.after.save', function($controller, $co
     $coupon->setRelation('media', $response->data);
     $coupon->media = $response->data;
     $coupon->image = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $coupon->promotion_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => 'coupon',
+            'es_id'         => $coupon->promotion_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
 });
 
 /**
@@ -64,6 +85,27 @@ Event::listen('orbit.coupon.postupdatecoupon.after.save', function($controller, 
 
     $coupon->load('media');
     $coupon->image = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $coupon->promotion_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => 'coupon',
+            'es_id'         => $coupon->promotion_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
 });
 
 /**
@@ -103,6 +145,27 @@ Event::listen('orbit.coupon.after.translation.save', function($controller, $coup
     $coupon_translations->setRelation('media', $response->data);
     $coupon_translations->media = $response->data;
     $coupon_translations->image_translation = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $coupon_translations->coupon_translation_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => 'coupon',
+            'es_id'         => $coupon_translations->promotion_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
 });
 
 
@@ -196,6 +259,11 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
                 'coupon_id' => $coupon->promotion_id
             ]);
+
+            // Notify the queueing system to update Elasticsearch suggestion document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
+                'coupon_id' => $coupon->promotion_id
+            ]);
         } else {
             // Notify the queueing system to update Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
@@ -213,4 +281,17 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
     Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
         'coupon_id' => $coupon_id
     ]);
+
+    // Delete coupon suggestion in index es when available coupon is empty
+    $availableCoupons = IssuedCoupon:: select('issued_coupon_id')
+        ->where('status', 'available')
+        ->where('promotion_id', $coupon_id)
+        ->first();
+
+    if (empty($availableCoupons)) {
+        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
+            'coupon_id' => $coupon_id
+        ]);
+    }
+
 });

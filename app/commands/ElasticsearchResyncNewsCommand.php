@@ -51,7 +51,7 @@ class ElasticsearchResyncNewsCommand extends Command {
     public function fire()
     {
         try {
-            $input = ! empty($this->argument('id')) ? $this->argument('id') : file_get_contents("php://stdin");
+            $input = ! empty($this->option('id')) ? $this->option('id') : file_get_contents("php://stdin");
             $input = trim($input);
 
             if (empty($input)) {
@@ -86,7 +86,6 @@ class ElasticsearchResyncNewsCommand extends Command {
     protected function getArguments()
     {
         return array(
-            array('id', null, InputOption::VALUE_OPTIONAL, null)
         );
     }
 
@@ -98,6 +97,7 @@ class ElasticsearchResyncNewsCommand extends Command {
     protected function getOptions()
     {
         return array(
+             array('id', null, InputOption::VALUE_OPTIONAL, 'News id to sync.', null),
             array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, no data will be sent to Elasticsearch.', null),
         );
     }

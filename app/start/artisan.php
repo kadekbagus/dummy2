@@ -125,6 +125,9 @@ Artisan::add(new ElasticsearchResyncNewsCommand);
 // Initial Promotion data migration
 Artisan::add(new ElasticsearchResyncPromotionCommand);
 
+// Initial Promotion data migration
+Artisan::add(new ElasticsearchResyncStoreCommand);
+
 // Clear Promotion data in ES
 Artisan::add(new ElasticsearchClearPromotionCommand);
 
@@ -133,6 +136,69 @@ Artisan::add(new ElasticsearchClearNewsCommand);
 
 // Clear Coupon data in ES
 Artisan::add(new ElasticsearchClearCouponCommand);
+
+// Generate Sitemap
+Artisan::add(new GenerateSitemapCommand);
+
+// Upload images to S3
+Artisan::add(new CdnS3UploadCommand);
+
+// List all active promotions
+Artisan::add(new GetListActivePromotionCommand);
+
+// List all active news
+Artisan::add(new GetListActiveNewsCommand);
+
+// List all active coupon
+Artisan::add(new GetListActiveCouponCommand);
+
+// List all active stores
+Artisan::add(new GetListActiveStoreCommand);
+
+// List all active malls
+Artisan::add(new GetListActiveMallCommand);
+
+// Fill table mall_countries
+Artisan::add(new FillTableMallCountriesCommand);
+
+// Fill table mall_cities
+Artisan::add(new FillTableMallCitiesCommand);
+
+// Fill table db_ip_countries
+Artisan::add(new FillTableDBIPCountriesCommand);
+
+// Fill table db_ip_cities
+Artisan::add(new FillTableDBIPCitiesCommand);
+
+// Map Country Vendor to GTM
+Artisan::add(new MapVendorCoutriesCommand);
+
+// Map Country Vendor to GTM
+Artisan::add(new MapVendorCitiesCommand);
+
+// Create or update page multilanguage
+Artisan::add(new CreatePageCommand);
+
+// Sync to elasticsearch from merchants table (mall) to mall suggestion index
+Artisan::add(new ElasticsearchResyncMallSuggestionCommand);
+
+// Sync to elasticsearch from news table to news suggestion index
+Artisan::add(new ElasticsearchResyncNewsSuggestionCommand);
+
+// Sync to elasticsearch from promotion table to promotion suggestion index
+Artisan::add(new ElasticsearchResyncPromotionSuggestionCommand);
+
+// Sync to elasticsearch from coupon table to coupon suggestion index
+Artisan::add(new ElasticsearchResyncCouponSuggestionCommand);
+
+// Sync to elasticsearch from merchant(store) table to store suggestion index
+Artisan::add(new ElasticsearchResyncStoreSuggestionCommand);
+
+// Delete not active campaign in suggest index elasticsearch
+Artisan::add(new CampaignDeleteInactiveEsCommand);
+
+// Sync to elasticsearch from merchant(store) table to store detail index
+Artisan::add(new ElasticsearchResyncStoreDetailCommand);
 
 // Insert or update data on settings table
 // @Todo investigate why its error

@@ -15,9 +15,9 @@ use Config;
 use Exception;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use Activity;
 use stdClass;
 use Mall;
+use MallCountry;
 
 
 class WordpressPostListAPIController extends PubControllerAPI
@@ -40,7 +40,6 @@ class WordpressPostListAPIController extends PubControllerAPI
     public function getPostList()
     {
         $httpCode = 200;
-        $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
         $this->setMallObject();
 
@@ -48,14 +47,23 @@ class WordpressPostListAPIController extends PubControllerAPI
             $this->checkAuth();
             $user = $this->api->user;
 
-            $jsonFile = Config::get('orbit.external_calls.wordpress.cache_file');
+            $country = strtolower(trim(OrbitInput::get('country')));
+
+            $mallCountry = MallCountry::where('country', $country)->first();
+
+            if (empty($mallCountry)) {
+                $this->thrownButOK = TRUE;
+                throw new Exception('country not exist, no data returned');
+            }
+
+            $jsonFile = Config::get("orbit.external_calls.wordpress.{$country}.cache_file");
             $totalRec = 0;
             $listOfRec = [];
             $message = 'Request OK';
 
             if (! file_exists($jsonFile)) {
                 $this->thrownButOK = TRUE;
-                throw new Exception('Wordpress JSON file is not found, no data returned');
+                throw new Exception('Wordpress JSON file for country ' . ucfirst($country) . ' is not found, no data returned');
             }
 
             if (is_null($listOfRec = json_decode(file_get_contents($jsonFile)))) {
@@ -72,17 +80,6 @@ class WordpressPostListAPIController extends PubControllerAPI
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = $message;
-
-            $activityNotes = sprintf('Total posts returned %s', $data->total_records);
-            $activity->setUser($user)
-                ->setActivityName('view_blog_list')
-                ->setActivityNameLong('View Blog List')
-                ->setObject(NULL)
-                ->setLocation($this->mall)
-                ->setModuleName('Application')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();

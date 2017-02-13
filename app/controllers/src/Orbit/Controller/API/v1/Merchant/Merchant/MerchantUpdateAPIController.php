@@ -63,8 +63,10 @@ class MerchantUpdateAPIController extends ControllerAPI
             $merchantHelper->merchantCustomValidator();
 
             $baseMerchantId = OrbitInput::post('base_merchant_id');
+            $merchantName = OrbitInput::post('merchant_name');
             $translations = OrbitInput::post('translations');
             $language = OrbitInput::get('language', 'en');
+            $countryId = OrbitInput::post('country_id');
             $keywords = OrbitInput::post('keywords');
             $keywords = (array) $keywords;
 
@@ -75,13 +77,19 @@ class MerchantUpdateAPIController extends ControllerAPI
                 array(
                     'baseMerchantId' => $baseMerchantId,
                     'translations'   => $translations,
+                    'merchantName'   => $merchantName,
+                    'country'        => $countryId
                 ),
                 array(
                     'baseMerchantId' => 'required|orbit.exist.base_merchant_id',
                     'translations'   => 'required',
+                    'merchantName'   => 'required|orbit.exist.merchant_name_not_me:' . $baseMerchantId . ',' . $countryId,
+                    'country'        => 'required|orbit.store.country:' . $baseMerchantId . ',' . $countryId
                 ),
                 array(
-                    'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid'
+                    'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid',
+                    'orbit.exist.merchant_name_not_me'=> 'Merchant is already exist',
+                    'orbit.store.country' => 'You have stores linked to the previous country'
                )
             );
 
@@ -97,6 +105,10 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             OrbitInput::post('website_url', function($website_url) use ($updatedBaseMerchant) {
                 $updatedBaseMerchant->url = $website_url;
+            });
+
+            OrbitInput::post('country_id', function($countryId) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->country_id = $countryId;
             });
 
             OrbitInput::post('facebook_url', function($facebook_url) use ($updatedBaseMerchant) {
@@ -275,8 +287,13 @@ class MerchantUpdateAPIController extends ControllerAPI
     protected function registerCustomValidation()
     {
         // Check existing merchant name
-        Validator::extend('orbit.exist.merchant_name', function ($attribute, $value, $parameters) {
+        Validator::extend('orbit.exist.merchant_name_not_me', function ($attribute, $value, $parameters) {
+            $baseMerchantId = $parameters[0];
+            $country = $parameters[1];
+
             $merchant = BaseMerchant::where('name', '=', $value)
+                            ->where('country_id', $country)
+                            ->whereNotIn('base_merchant_id', array($baseMerchantId))
                             ->first();
 
             if (! empty($merchant)) {

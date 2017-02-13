@@ -423,7 +423,7 @@ class SocMedAPIController extends PubControllerAPI
      * @param string $name - Object Name - (optional)
      * @return string $url | Exception
      */
-    public static function getSharedUrl($type, $id, $name = '')
+    public static function getSharedUrl($type, $id, $name = '', $country = null, $cities = null)
     {
         Config::set('orbit.session.availability.query_string', false);
         $routeName = NULL;
@@ -453,6 +453,16 @@ class SocMedAPIController extends PubControllerAPI
         $params['id'] = $id;
         if (! empty($name)) {
             $params['name'] = rawurlencode($name);
+        }
+
+        if (! is_null($country)) {
+            $params['country'] = rawurlencode($country);
+        }
+
+        if (! is_null($cities)) {
+            foreach((array) $cities as $city) {
+                $params['cities'][] = rawurlencode($city);
+            }
         }
 
         $url = URL::route($routeName, $params);

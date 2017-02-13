@@ -28,12 +28,17 @@ use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
+use Orbit\Helper\Util\CdnUrlGenerator;
+use Elasticsearch\ClientBuilder;
 use Lang;
+use PartnerAffectedGroup;
+use PartnerCompetitor;
 
 class StoreAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
     protected $store = NULL;
+    protected $withoutScore = FALSE;
 
     /**
      * GET - get all store in all mall, group by name
@@ -55,6 +60,7 @@ class StoreAPIController extends PubControllerAPI
         $activity = Activity::mobileci()->setActivityType('view');
         $mall = NULL;
         $mall_name = NULL;
+        $mall_city = NULL;
         $user = NULL;
         $httpCode = 200;
 
@@ -65,18 +71,21 @@ class StoreAPIController extends PubControllerAPI
         $cacheConfig = Config::get('orbit.cache.context');
         $cacheContext = 'store-list';
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
-        $featuredRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
-                                          ->setKeyPrefix($cacheContext . '-featured');
-        $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
-                                       ->setKeyPrefix($cacheContext . '-total-rec');
-        $totalRecordCacheStore = SimpleCache::create($cacheConfig, $cacheContext)
-                                       ->setKeyPrefix($cacheContext . '-total-rec-store');
+        $keywordSearchCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-keyword-search');
+        $advertCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-adverts');
+        $countCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-store-count');
+
         try {
             $user = $this->getUser();
-
+            $host = Config::get('orbit.elasticsearch');
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $location = OrbitInput::get('location', null);
+            $cityFilters = OrbitInput::get('cities', null);
+            $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $language = OrbitInput::get('language', 'id');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
@@ -91,6 +100,7 @@ class StoreAPIController extends PubControllerAPI
             $no_total_records = OrbitInput::get('no_total_records', null);
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
+            $withCache = TRUE;
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -109,7 +119,7 @@ class StoreAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location',
+                    'sortby'   => 'in:name,location,updated_date',
                 )
             );
 
@@ -117,14 +127,14 @@ class StoreAPIController extends PubControllerAPI
             // Make sure there is no missing one.
             $cacheKey = [
                 'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
-                'location' => $location, 'ul' => $ul,
+                'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
                 'list_type' => $list_type,
                 'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
-
+                'country' => $countryFilter, 'cities' => $cityFilters,
             ];
 
             // Run the validation
@@ -137,148 +147,32 @@ class StoreAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $advert_location_type = 'gtm';
-            $advert_location_id = '0';
-            if (! empty($mallId)) {
-                $advert_location_type = 'mall';
-                $advert_location_id = $mallId;
-            }
+            $client = ClientBuilder::create() // Instantiate a new ClientBuilder
+                    ->setHosts($host['hosts']) // Set the hosts
+                    ->build();
 
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+            $dateTime = explode(' ', $dateTime);
+            $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
-            $adverts = Advert::select('adverts.advert_id',
-                                    'adverts.link_object_id',
-                                    'merchants.name',
-                                    'advert_placements.placement_type',
-                                    'advert_placements.placement_order',
-                                    'advert_locations.location_type',
-                                    'advert_link_types.advert_link_name')
-                            ->join('advert_link_types', function ($q) {
-                                $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Store'"));
-                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
-                            })
-                            ->join('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
-                                $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
-                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
-                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
-                            })
-                            ->join('advert_placements', function ($q) use ($list_type) {
-                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
-                                if ($list_type === 'featured') {
-                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('featured_list', 'preferred_list_regular', 'preferred_list_large')"));
-                                } else {
-                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
-                                }
-                            })
-                            ->join('merchants', 'merchants.merchant_id', '=', 'adverts.link_object_id')
-                            ->where('adverts.status', '=', DB::raw("'active'"))
-                            ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
-                            ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"));
+            $withScore = false;
+            $esTake = $take;
+            if ($list_type === 'featured') {
+                $esTake = 50;
+            }
 
-            $advertSql = $adverts->toSql();
+            // value will be true if query to nested, *to get right number of stores
+            $withInnerHits = false;
+            $innerHitsCountry = false;
+            $innerHitsCity = false;
 
-            $store = DB::table("merchants")->select(
-                    DB::raw("{$prefix}merchants.merchant_id"),
-                    DB::raw("{$prefix}merchants.name"),
-                    DB::Raw("CASE WHEN (
-                                    select mt.description
-                                    from {$prefix}merchant_translations mt
-                                    where mt.merchant_id = {$prefix}merchants.merchant_id
-                                        and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
-                                ) = ''
-                                THEN {$prefix}merchants.description
-                                ELSE (
-                                    select mt.description
-                                    from {$prefix}merchant_translations mt
-                                    where mt.merchant_id = {$prefix}merchants.merchant_id
-                                        and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
-                                )
-                            END as description
-                        "),
-                    DB::raw("oms.merchant_id as mall_id"),
-                    DB::raw("oms.name as mall_name"),
-                    DB::raw("CASE WHEN advert_media.path is null THEN {$prefix}media.path
-                            ELSE advert_media.path END
-                            as logo_url"),
-                    DB::raw("advert.placement_type, advert.placement_order"))
-                ->join(DB::raw("(
-                    select merchant_id, name, status, parent_id, city
-                    from {$prefix}merchants
-                    where status = 'active'
-                        and object_type = 'mall'
-                    ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                ->leftJoin('media', function($q) {
-                    $q->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
-                    $q->on('media.object_id', '=', 'merchants.merchant_id');
-                })
-                ->leftJoin(DB::raw("({$advertSql}) as advert"), DB::raw("advert.name"), '=', 'merchants.name')
-                ->leftJoin('media as advert_media', function ($q) {
-                    $q->on(DB::raw("advert_media.media_name_long"), '=', DB::raw("'advert_image_orig'"));
-                    $q->on(DB::raw("advert_media.object_id"), '=', DB::raw("advert.advert_id"));
-                })
-                ->whereRaw("{$prefix}merchants.object_type = 'tenant'")
-                ->whereRaw("{$prefix}merchants.status = 'active'")
-                ->whereRaw("oms.status = 'active'")
-                ->orderBy(DB::raw("advert.placement_order"), 'desc')
-                ->orderBy('merchants.created_at', 'asc');
+            $jsonQuery = array('from' => $skip, 'size' => $esTake, 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('filtered' => array('filter' => array('and' => array( array('range' => array('tenant_detail_count' => array('gt' => 0))))))));
 
-            OrbitInput::get('mall_id', function ($mallId) use ($store, $prefix, &$mall, &$mall_name) {
-                $store->where('merchants.parent_id', '=', DB::raw("{$this->quote($mallId)}"));
-                $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $mallId)
-                        ->first();
-
-                if (! empty($mall)) {
-                    $mall_name = $mall->name;
-                }
-            });
-
-            // filter by category just on first store
-            OrbitInput::get('category_id', function ($category_id) use ($store, $prefix, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                if (! is_array($category_id)) {
-                    $category_id = (array)$category_id;
-                }
-
-                $store->leftJoin(DB::raw("{$prefix}category_merchant cm"), DB::Raw("cm.merchant_id"), '=', 'merchants.merchant_id')
-                    ->whereIn(DB::raw("cm.category_id"), $category_id);
-            });
-
-            OrbitInput::get('partner_id', function($partner_id) use ($store, $prefix, &$searchFlag, &$cacheKey) {
-                $cacheKey['partner_id'] = $partner_id;
-                $searchFlag = $searchFlag || TRUE;
-                $store = ObjectPartnerBuilder::getQueryBuilder($store, $partner_id, 'tenant');
-            });
-
-            OrbitInput::get('keyword', function ($keyword) use ($store, $prefix, &$searchFlag, &$cacheKey) {
-                $cacheKey['keyword'] = $keyword;
-
-                $searchFlag = $searchFlag || TRUE;
-                if (! empty($keyword)) {
-                    $store = $store->leftJoin('keyword_object', 'merchants.merchant_id', '=', 'keyword_object.object_id')
-                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
-                                ->where(function($query) use ($keyword, $prefix)
-                                {
-                                    $word = explode(" ", $keyword);
-                                    foreach ($word as $key => $value) {
-                                        if (strlen($value) === 1 && $value === '%') {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->whereRaw("{$prefix}merchants.name like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}keywords.keyword = '|{$value}' escape '|'");
-                                            });
-                                        } else {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->where(DB::raw("{$prefix}merchants.name"), 'like', '%' . $value . '%')
-                                                  ->orWhere('keywords.keyword', '=', $value);
-                                            });
-                                        }
-                                    }
-                                });
-                }
-            });
-
-            if ($sort_by === 'location' || $location === 'mylocation') {
-                // prepare my location
+            // get user lat and lon
+            if ($sort_by == 'location' || $location == 'mylocation') {
                 if (! empty($ul)) {
                     $position = explode("|", $ul);
                     $lon = $position[0];
@@ -291,77 +185,371 @@ class StoreAPIController extends PubControllerAPI
                         $lat = $userLocationCookieArray[1];
                     }
                 }
-
-                if (! empty($lon) && ! empty($lat)) {
-                    $store = $store->addSelect(
-                                        DB::raw("( 6371 * acos( cos( radians({$lat}) ) * cos( radians( x(tmp_mg.position) ) ) * cos( radians( y(tmp_mg.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x(tmp_mg.position) ) ) ) ) AS distance")
-                                    )
-                                    ->Join(DB::Raw("
-                                        (SELECT
-                                            store.merchant_id as store_id,
-                                            mg.position
-                                        FROM {$prefix}merchants store
-                                        LEFT JOIN {$prefix}merchants mall
-                                            ON mall.merchant_id = store.parent_id
-                                            AND mall.object_type = 'mall'
-                                            AND mall.status = 'active'
-                                        LEFT JOIN {$prefix}merchant_geofences mg
-                                            ON mg.merchant_id = mall.merchant_id
-                                        WHERE store.status = 'active'
-                                            AND store.object_type = 'tenant'
-                                        ) as tmp_mg
-                                    "), DB::Raw("tmp_mg.store_id"), '=', 'merchants.merchant_id');
-                }
             }
 
-            // filter by city before grouping
-            OrbitInput::get('location', function ($location) use ($store, $prefix, $lon, $lat, $distance, &$searchFlag) {
-                $searchFlag = $searchFlag || TRUE;
-                if ($location === 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                    $store->havingRaw("distance <= {$distance}");
-                } else {
-                    $store->where(DB::Raw("oms.city"), $location);
+            $withKeywordSearch = false;
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey)
+            {
+                $cacheKey['keyword'] = $keyword;
+                if ($keyword != '') {
+                    $keyword = strtolower($keyword);
+                    $searchFlag = $searchFlag || TRUE;
+                    $withScore = true;
+                    $withKeywordSearch = true;
+
+                    $priority['name'] = Config::get('orbit.elasticsearch.priority.store.name', '^6');
+                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.store.object_type', '^5');
+                    $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.store.mall_name', '^4');
+                    $priority['city'] = Config::get('orbit.elasticsearch.priority.store.city', '^3');
+                    $priority['province'] = Config::get('orbit.elasticsearch.priority.store.province', '^2');
+                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.store.keywords', '');
+                    $priority['address_line'] = Config::get('orbit.elasticsearch.priority.store.address_line', '');
+                    $priority['country'] = Config::get('orbit.elasticsearch.priority.store.country', '');
+                    $priority['description'] = Config::get('orbit.elasticsearch.priority.store.description', '');
+
+                    $filterTranslation = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.description'.$priority['description'])))));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
+
+                    $filterDetail = array('nested' => array('path' => 'tenant_detail', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('tenant_detail.city'.$priority['city'], 'tenant_detail.province'.$priority['province'], 'tenant_detail.country'.$priority['country'], 'tenant_detail.mall_name'.$priority['mall_name'])))));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterDetail;
+
+                    $filterKeyword = array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'],'object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
                 }
             });
 
-            $realStore = $store->toSql();
-            foreach($store->getBindings() as $binding)
-            {
-              $value = is_numeric($binding) ? $binding : $this->quote($binding);
-              $realStore = preg_replace('/\?/', $value, $realStore, 1);
-            }
-            $_realStore = DB::table(DB::raw("({$realStore}) as realStoreSubQuery"))->groupBy('merchant_id');
+            OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery, &$withInnerHits) {
+                if (! empty($mallId)) {
+                    $withInnerHits = true;
+                    $withMallId = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('match' => array('tenant_detail.mall_id' => $mallId)))), 'inner_hits' => new stdclass()));
+                    $jsonQuery['query']['filtered']['filter']['and'][] = $withMallId;
+                }
+             });
 
-            $store = DB::table(DB::raw("({$realStore}) as subQuery"));
-
-            if ($list_type === "featured") {
-                $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_order',
-                        DB::raw("placement_type AS placement_type_orig"),
-                            DB::raw("CASE WHEN SUM(
-                                        CASE
-                                            WHEN (placement_type = 'preferred_list_regular' OR placement_type = 'preferred_list_large')
-                                            THEN 1
-                                            ELSE 0
-                                        END) > 0
-                                    THEN 'preferred_list_large'
-                                    ELSE placement_type
-                                    END AS placement_type"));
-            } else {
-                $store->select(DB::raw('subQuery.merchant_id'), 'name', 'description','logo_url', 'mall_id', 'mall_name', 'placement_type', 'placement_order');
-            }
-
-            if ($sort_by === 'location' && ! empty($lon) && ! empty($lat)) {
+            // filter by category_id
+            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $sort_by = 'distance';
-                $store = $store->addSelect(DB::raw("min(distance)"))
-                                ->groupBy('name')
-                                ->orderBy('placement_order', 'desc')
-                                ->orderBy($sort_by, $sort_mode)
-                                ->orderBy('name', 'asc');
+                if (! is_array($categoryIds)) {
+                    $categoryIds = (array)$categoryIds;
+                }
+
+                foreach ($categoryIds as $key => $value) {
+                    $categoryFilter['or'][] = array('match' => array('category' => $value));
+                }
+                $jsonQuery['query']['filtered']['filter']['and'][] = $categoryFilter;
+            });
+
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
+                $cacheKey['partner_id'] = $partnerId;
+                $partnerFilter = '';
+                if (! empty($partnerId)) {
+                    $searchFlag = $searchFlag || TRUE;
+                    $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
+                                                                $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+                                                                     ->where('affected_group_names.group_type', '=', 'tenant');
+                                                            })
+                                                            ->where('partner_id', $partnerId)
+                                                            ->first();
+
+                    if (is_object($partnerAffected)) {
+                        $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
+                        $partnerFilter = array('query' => array('match' => array('partner_ids' => $partnerId)));
+
+                        if (in_array($partnerId, $exception)) {
+                            $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
+                            $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
+                        }
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $partnerFilter;
+                    }
+                }
+            });
+
+            // filter by location (city or user location)
+            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance, &$withInnerHits, &$withCache)
+            {
+                if (! empty($location)) {
+                    $searchFlag = $searchFlag || TRUE;
+                    $withInnerHits = true;
+                    if ($location === 'mylocation' && $lat != '' && $lon != '') {
+                        $withCache = FALSE;
+                        $locationFilter = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'tenant_detail.position' => array('lon' => $lon, 'lat' => $lat))))), 'inner_hits' => new stdclass()));
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
+                    } elseif ($location !== 'mylocation') {
+                        $locationFilter = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('match' => array('tenant_detail.city.raw' => $location)))), 'inner_hits' => new stdclass()));
+                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
+                    }
+                }
+            });
+
+            $countryCityFilterArr = [];
+
+            // filter by country
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$withInnerHits, &$innerHitsCity, &$countryCityFilterArr) {
+                $withInnerHits = true;
+                $innerHitsCity = true;
+
+                $countryCityFilterArr = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => []], 'inner_hits' => ['name' => 'country_city_hits']]];
+
+                $countryCityFilterArr['nested']['query']['bool'] = ['must' => ['match' => ['tenant_detail.country.raw' => $countryFilter]]];
+            });
+
+            // filter by city, only filter when countryFilter is not empty
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
+                if (! empty($countryFilter)) {
+                    $cityFilterArr = [];
+                    foreach ((array) $cityFilters as $cityFilter) {
+                        $cityFilterArr[] = ['match' => ['tenant_detail.city.raw' => $cityFilter]];
+                    }
+                    $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
+                }
+            });
+
+            if (! empty($countryCityFilterArr)) {
+                $jsonQuery['query']['filtered']['filter']['and'][] = $countryCityFilterArr;
+            }
+
+            // sort by name or location
+            if ($sort_by === 'location' && $lat != '' && $lon != '') {
+                $searchFlag = $searchFlag || TRUE;
+                $withCache = FALSE;
+                $sort = array('_geo_distance' => array('nested_path' => 'tenant_detail', 'tenant_detail.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
+            } elseif ($sort_by === 'updated_date') {
+                $sort = array('updated_at' => array('order' => $sort_mode));
             } else {
-                $store = $store->groupBy('name')
-                                ->orderBy('placement_order', 'desc')
-                                ->orderBy('name', 'asc');
+                $sort = array('name.raw' => array('order' => $sort_mode));
+            }
+
+            $sortby = $sort;
+            if ($withScore) {
+                $sortby = array('_score', $sort);
+            }
+
+            if ($this->withoutScore) {
+                // remove _score sort
+                $found = FALSE;
+                $sortby = array_filter($sortby, function($val) use(&$found) {
+                        if ($val === '_score') {
+                            $found = $found || TRUE;
+                        }
+                        return $val !== '_score';
+                    });
+
+                if($found) {
+                    // redindex array if _score is eliminated
+                    $sortby = array_values($sortby);
+                }
+            }
+            $jsonQuery['sort'] = $sortby;
+
+            $advert_location_type = 'gtm';
+            $advert_location_id = '0';
+            if (! empty($mallId)) {
+                $advert_location_type = 'mall';
+                $advert_location_id = $mallId;
+            }
+
+            $adverts = Advert::select('adverts.advert_id',
+                                    'adverts.link_object_id',
+                                    'advert_placements.placement_type',
+                                    'advert_placements.placement_order',
+                                    'media.path',
+                                    DB::raw("CASE WHEN placement_type = 'featured_list' THEN 0 ELSE 1 END AS with_preferred"))
+                            ->join('advert_link_types', function ($q) {
+                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
+                                $q->on('advert_link_types.advert_type', '=', DB::raw("'store'"));
+                            })
+                            ->join('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
+                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
+                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
+                                $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
+                            })
+                            ->join('advert_placements', function ($q) use ($list_type) {
+                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
+                                if ($list_type === 'featured') {
+                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('featured_list', 'preferred_list_regular', 'preferred_list_large')"));
+                                } else {
+                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
+                                }
+                            })
+                            ->leftJoin('media', function ($q) {
+                                $q->on("object_id", '=', "adverts.advert_id");
+                                $q->on("media_name_long", '=', DB::raw("'advert_image_orig'"));
+                            })
+                            ->where('adverts.status', '=', DB::raw("'active'"))
+                            ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
+                            ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
+                            ->orderBy('advert_placements.placement_order', 'desc');
+
+            $advertList = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
+                         ->mergeBindings($adverts->getQuery())
+                         ->select(DB::raw("adv.advert_id,
+                                    adv.link_object_id,
+                                    adv.placement_order,
+                                    adv.path,
+                                    adv.placement_type as placement_type_orig,
+                                    CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
+                         ->groupBy(DB::raw("adv.link_object_id"))
+                         ->take(100);
+
+            if ($withCache) {
+                $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+                $advertData = $advertCache->get($serializedCacheKey, function() use ($advertList) {
+                    return $advertList->get();
+                });
+                $advertCache->put($serializedCacheKey, $advertData);
+            } else {
+                $advertData = $advertList->get();
+            }
+
+            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+            $_jsonQuery = $jsonQuery;
+
+            if ($withKeywordSearch) {
+                // if user searching, we call es twice, first for get store data that match with keyword and then get the id,
+                // and second, call es data combine with advert
+                unset($jsonQuery['query']['filtered']['query']);
+
+                $_esParam = [
+                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                    'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
+                    'body' => json_encode($_jsonQuery)
+                ];
+
+                if ($withCache) {
+                    $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
+                        return $client->search($_esParam);
+                    });
+                    $keywordSearchCache->put($serializedCacheKey, $searchResponse);
+                } else {
+                    $searchResponse = $client->search($_esParam);
+                }
+
+                $searchData = $searchResponse['hits'];
+
+                $storeIds = array();
+                foreach ($searchData['hits'] as $content) {
+                    foreach ($content as $key => $val) {
+                        if ($key === "_id") {
+                            $storeIds[] = $val;
+                            $cId = $val;
+                        }
+                        if ($key === "_score") {
+                            $storeScore[$cId] = $val;
+                        }
+                    }
+                }
+                $jsonQuery['query']['filtered']['filter']['and'][] = array('terms' => array('_id' => $storeIds));
+            }
+
+            // call es
+            if (! empty($advertData)) {
+                unset($jsonQuery['sort']);
+                $withScore = true;
+                foreach ($advertData as $dt) {
+                    $advertIds[] = $dt->advert_id;
+                    $boost = $dt->placement_order * 3;
+                    $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $esAdvert;
+                }
+
+                if ($withKeywordSearch) {
+                    $withoutAdv = array_diff($storeIds, $advertIds);
+                    foreach ($withoutAdv as $wa) {
+                        $esWithoutAdvert = array('match' => array('_id' => array('query' => $wa, 'boost' => $storeScore[$wa])));
+                        $jsonQuery['query']['filtered']['query']['bool']['should'][] = $esWithoutAdvert;
+                    }
+                } else {
+                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = array('match_all' => new stdclass());
+                }
+
+            }
+
+            $sortby = $sort;
+            if ($withScore) {
+                $sortby = array("_score", $sort);
+            }
+            $jsonQuery["sort"] = $sortby;
+
+            $esParam = [
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
+                'body' => json_encode($jsonQuery)
+            ];
+
+            if ($withCache) {
+                $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
+                    return $client->search($esParam);
+                });
+                $recordCache->put($serializedCacheKey, $response);
+            } else {
+                $response = $client->search($esParam);
+            }
+
+            $records = $response['hits'];
+
+            $listOfRec = array();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $innerHitsCount = 0;
+
+            foreach ($records['hits'] as $record) {
+                $data = array();
+                $localPath = '';
+                $cdnPath = '';
+                foreach ($record['_source'] as $key => $value) {
+
+                    $localPath = ($key == 'logo') ? $value : $localPath;
+                    $cdnPath = ($key == 'logo_cdn') ? $value : $cdnPath;
+                    $key = ($key == 'logo') ? 'logo_url' : $key;
+
+                    $data[$key] = $value;
+                    $data['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+
+                    // translation, to get name, desc and image
+                    if ($key === "translation") {
+                        foreach ($record['_source']['translation'] as $dt) {
+
+                            if ($dt['language_code'] == $language) {
+                                // name & desc
+                                if (! empty($dt['description'])) {
+                                    $data['description'] = $dt['description'];
+                                }
+                            } else {
+                                // name & desc
+                                if (! empty($dt['description']) && empty($data['description'])) {
+                                    $data['description'] = $dt['description'];
+                                }
+                            }
+                        }
+                    }
+
+                    // advert
+                    if ($key === "merchant_id") {
+                        $data['placement_type'] = null;
+                        $data['placement_type_orig'] = null;
+                        foreach ($advertData as $advData) {
+
+                            if ($advData->link_object_id === $value) {
+                                $data['placement_type'] = $advData->placement_type;
+                                $data['placement_type_orig'] = $advData->placement_type_orig;
+
+                                // image
+                                if (! empty($advData->path)) {
+                                    $data['logo_url'] = $advData->path;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
+                    if (! empty($mallId)) {
+                        $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
+                    }
+                }
+                $data['score'] = $record['_score'];
+                $listOfRec[] = $data;
             }
 
             // record GTM search activity
@@ -378,85 +566,48 @@ class StoreAPIController extends PubControllerAPI
                 GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
-            $_store = clone $store;
-            $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-
-            // Cache the result of database calls
-            OrbitDBCache::create(Config::get('orbit.cache.database', []))->remember($store);
-
-            $totalRecStore = 0;
-            $totalRecMerchant = 0;
-            // Set defaul 0 when get variable no_total_records = yes
-            if ($no_total_records !== 'yes') {
-                $recordCounter = RecordCounter::create($_store);
-                $recordCounterRealStores = RecordCounter::create($_realStore);
-
-                // Try to get the result from cache
-                $totalRecMerchant = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
-                    return $recordCounter->count();
-                });
-
-                $totalRecStore = $totalRecordCacheStore->get($serializedCacheKey, function() use ($recordCounterRealStores) {
-                    return $recordCounterRealStores->count();
-                });
-
-                // Put the result in cache if it is applicable
-                $totalRecordCache->put($serializedCacheKey, $totalRecMerchant);
-                $totalRecordCacheStore->put($serializedCacheKey, $totalRecStore);
-            }
-
-            $store->take($take);
-            $store->skip($skip);
-
-            // Try to get the result from cache
-            $listStore = $recordCache->get($serializedCacheKey, function() use ($store) {
-                return $store->get();
-            });
-            $recordCache->put($serializedCacheKey, $listStore);
-
-            // random featured adv
-            if ($list_type === 'featured') {
-                $featuredStoreBuilder = clone $_store;
-                $featuredStoreBuilder->whereRaw("placement_type = 'featured_list'")->take(100);
-
-                $featuredStore = $featuredRecordCache->get($serializedCacheKey, function() use ($featuredStoreBuilder) {
-                    return $featuredStoreBuilder->get();
-                });
-                $featuredRecordCache->put($serializedCacheKey, $featuredStore);
-
-                $advertedCampaigns = array_filter($featuredStore, function($v) {
-                    return ($v->placement_type_orig === 'featured_list');
-                });
-
-                if (count($advertedCampaigns) > $take) {
-                    $random = array();
-                    $listSlide = array_rand($advertedCampaigns, $take);
-
-                    if (count($listSlide) > 1) {
-                        foreach ($listSlide as $key => $value) {
-                            $random[] = $advertedCampaigns[$value];
-                        }
-                    } else {
-                        $random = $advertedCampaigns[$listSlide];
-                    }
-
-                    $listStore = $random;
-                    if ($no_total_records !== 'yes') {
-                        $totalRecMerchant = count($random);
-                    }
-                }
+            // frontend need the mall name
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
             $data = new \stdclass();
-            $extras = new \stdClass();
-            $extras->total_stores = $totalRecStore;
-            $extras->total_merchants = $totalRecMerchant;
 
-            $data->returned_records = count($listStore);
-            $data->total_records = $totalRecMerchant;
-            $data->extras = $extras;
-            $data->mall_name = $mall_name;
-            $data->records = $listStore;
+            $data->returned_records = count($listOfRec);
+            $data->total_records = $records['total'];
+
+            if (is_object($mall)) {
+                $data->mall_name = $mall->name;
+                $data->mall_city = $mall->city;
+            }
+            $data->records = $listOfRec;
+
+            // // random featured adv
+            // // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
+            if ($list_type === 'featured') {
+                $advertedCampaigns = array_filter($listOfRec, function($v) {
+                    return ($v['placement_type_orig'] === 'featured_list');
+                });
+
+                if (count($advertedCampaigns) > $take) {
+                    $output = array();
+                    $listSlide = array_rand($advertedCampaigns, $take);
+                    if (count($listSlide) > 1) {
+                        foreach ($listSlide as $key => $value) {
+                            $output[] = $advertedCampaigns[$value];
+                        }
+                    } else {
+                        $output = $advertedCampaigns[$listSlide];
+                    }
+                } else {
+                    $output = array_slice($listOfRec, 0, $take);
+                }
+
+                $data->returned_records = count($output);
+                $data->total_records = $records['total'];
+                $data->records = $output;
+            }
 
             // save activity when accessing listing
             // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
@@ -721,6 +872,14 @@ class StoreAPIController extends PubControllerAPI
             $valid_language = $this->valid_language;
 
             $prefix = DB::getTablePrefix();
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as path";
+            if ($usingCdn) {
+                $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as path";
+            }
 
             $store = Tenant::select(
                                 'merchants.merchant_id',
@@ -767,21 +926,23 @@ class StoreAPIController extends PubControllerAPI
                             ->groupBy('categories.category_id')
                             ->orderBy('category_name')
                             ;
-                    }, 'mediaLogo' => function ($q) {
+                    }, 'mediaLogo' => function ($q) use ($image) {
                         $q->select(
-                                'media.path',
+                                DB::raw("{$image}"),
                                 'media.object_id'
                             );
-                    }, 'mediaImageOrig' => function ($q) {
+                    }, 'mediaImageOrig' => function ($q) use ($image) {
                         $q->select(
-                                'media.path',
+                                DB::raw("{$image}"),
                                 'media.object_id'
                             );
-                    }, 'mediaImageCroppedDefault' => function ($q) {
+                    }, 'mediaImageCroppedDefault' => function ($q) use ($image) {
                         $q->select(
-                                'media.path',
+                                DB::raw("{$image}"),
                                 'media.object_id'
                             );
+                    },  'keywords' => function ($q) {
+                        $q->addSelect('keyword', 'object_id');
                     }])
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->where('merchants.status', 'active')
@@ -872,6 +1033,7 @@ class StoreAPIController extends PubControllerAPI
      * GET - get mall detail list after click store name
      *
      * @author Irianto Pratama <irianto@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -906,14 +1068,10 @@ class StoreAPIController extends PubControllerAPI
             $user = $this->getUser();
             $mallId = OrbitInput::get('mall_id', null);
             $merchantId = OrbitInput::get('merchant_id');
-            $location = OrbitInput::get('location');
-            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
-            $distance = Config::get('orbit.geo_location.distance', 10);
+
             $ul = OrbitInput::get('ul', null);
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
-
-            $keyword = OrbitInput::get('keyword');
 
             $validator = Validator::make(
                 array(
@@ -932,10 +1090,6 @@ class StoreAPIController extends PubControllerAPI
             $cacheKey = [
                 'mall_id' => $mallId,
                 'merchant_id' => $merchantId,
-                'location' => $location,
-                'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
-                'distance' => $distance,
-                'ul' => $ul,
                 'take' => $take,
                 'skip' => $skip,
             ];
@@ -948,129 +1102,67 @@ class StoreAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $mallLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as location_logo";
+            $mallMap = "CONCAT({$this->quote($urlPrefix)}, map.path) as map_image";
+            if ($usingCdn) {
+                $mallLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as location_logo";
+                $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
+            }
+
             // Get store name base in merchant_id
             $store = Tenant::select('merchant_id', 'name')->where('merchant_id', $merchantId)->active()->first();
             if (! empty($store)) {
                 $storename = $store->name;
             }
 
-            // Query without searching keyword
-            $mall = Mall::select('merchants.merchant_id',
+            $mall = Tenant::select(
+                                    'merchants.merchant_id',
+                                    DB::raw("mall.merchant_id as mall_id"),
+                                    DB::raw("mall.city"),
                                     'merchants.name',
-                                    'merchants.address_line1 as address',
-                                    'merchants.city',
+                                    DB::raw("mall.name as mall_name"),
+                                    DB::raw("mall.address_line1 as address"),
                                     'merchants.floor',
                                     'merchants.unit',
-                                    'merchants.operating_hours',
-                                    'merchants.is_subscribed',
-                                    'merchants.object_type as location_type',
-                                    DB::raw("img.path as location_logo"),
-                                    DB::raw("map.path as map_image"),
-                                    'merchants.phone',
-                                    DB::raw("x(position) as latitude"),
-                                    DB::raw("y(position) as longitude")
+                                    DB::raw("mall.operating_hours"),
+                                    DB::raw("mall.is_subscribed"),
+                                    DB::raw("mall.object_type as location_type"),
+                                    DB::raw("{$mallLogo}"),
+                                    DB::raw("{$mallMap}")
                                 )
-                    ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
-                    // Map
-                    ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
-                        $q->on(DB::raw('map.object_id'), '=', "merchants.merchant_id")
-                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig')"))
-                          ;
-                    })
-                    // Logo
-                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
-                        $q->on(DB::raw('img.object_id'), '=', "merchants.merchant_id")
-                          ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"))
-                          ;
-                    })
-
-                    ->with(['tenants' => function ($q) use ($prefix, $storename) {
-                            $q->select('merchants.merchant_id',
-                                        'merchants.name as title',
-                                        'merchants.phone',
-                                        'merchants.url',
-                                        'merchants.description',
-                                        'merchants.parent_id',
-                                        DB::raw("(CASE WHEN unit = '' THEN {$prefix}objects.object_name ELSE CONCAT({$prefix}objects.object_name, \" - \", unit) END) AS location")
-                                    )
-                              ->join('objects', 'objects.object_id', '=', 'merchants.floor_id')
-                              ->where('objects.object_type', 'floor')
+                                // Floor of store
+                                ->leftJoin('objects', function($q){
+                                    $q->on('objects.object_id', '=', 'merchants.floor_id')
+                                         ->where('objects.object_type', '=', 'floor');
+                                })
+                                // Mall of tenant
+                                ->leftJoin(DB::raw("{$prefix}merchants as mall"), DB::Raw("mall.merchant_id"), '=', 'merchants.parent_id')
+                                // Map of store
+                                ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
+                                    $q->on(DB::raw('map.object_id'), '=',  'merchants.merchant_id')
+                                      ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig', 'retailer_storemap_orig')"))
+                                      ;
+                                })
+                                // Logo of mall
+                                ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
+                                    $q->on(DB::raw('img.object_id'), '=',  DB::raw("mall.merchant_id"))
+                                      ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"))
+                                      ;
+                                })
                               ->where('merchants.name', $storename)
-                              ->where('merchants.status', 'active')
-                              ->with(['categories' => function ($q) {
-                                    $q->select(
-                                            'category_name'
-                                        );
-                                }, 'mediaMap' => function ($q) {
-                                    $q->select(
-                                            'media.object_id',
-                                            'media.path'
-                                        );
-                                }]);
-                        }, 'mediaLogo' => function ($q) {
-                                    $q->select(
-                                            'media.object_id',
-                                            'media.path'
-                                        );
-                        }]);
-
-            // Query list mall based on keyword. Handling description and keyword can be different with other stores
-            if (! empty($keyword)) {
-
-                $cacheKey['keyword'] = $keyword;
-
-                $words = explode(" ", $keyword);
-                $keywordSql = " 1=1 ";
-                foreach ($words as $key => $value) {
-                    if (strlen($value) === 1 && $value === '%') {
-                        $keywordSql .= " or {$prefix}merchants.name like '%|{$value}%' escape '|' or {$prefix}keywords.keyword = '|{$value}' escape '|' ";
-                    } else {
-                        // escaping the query
-                        $real_value = $value;
-                        $word = '%' . $value . '%';
-                        $value = $this->quote($word);
-                        $keywordSql .= " or {$prefix}merchants.name like {$value} or {$prefix}keywords.keyword = {$this->quote($real_value)} ";
-                    }
-                }
-
-                $mall = $mall->join(DB::raw("( select {$prefix}merchants.merchant_id, name, parent_id from {$prefix}merchants
-                                            left join {$prefix}keyword_object on {$prefix}merchants.merchant_id = {$prefix}keyword_object.object_id
-                                            left join {$prefix}keywords on {$prefix}keyword_object.keyword_id = {$prefix}keywords.keyword_id
-                                            where {$prefix}merchants.status = 'active'
-                                            and (" . $keywordSql . ")
-                                        ) as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
-                            ->active();
-            } else {
-                $mall = $mall->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($storename)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
-                            ->active();
-            }
-
-            // Get user location
-            $position = isset($ul)?explode("|", $ul):null;
-            $lon = isset($position[0])?$position[0]:null;
-            $lat = isset($position[1])?$position[1]:null;
-
-            // Filter by location
-            if (! empty($location)) {
-                if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                    $mall->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
-                                        ->havingRaw("distance <= {$distance}");
-                } else {
-                    $mall->where('merchants.city', $location);
-                }
-            };
+                              ->where(DB::raw("mall.status"), 'active');
 
             if (! empty($mallId)) {
-                $mall->where('merchants.merchant_id', '=', $mallId)->first();
+                $mall->where(DB::raw("mall.merchant_id"), '=', $mallId)->first();
             }
 
-            // Order data by nearby or city alphabetical
-            if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
-                $mall->orderBy('distance', 'asc');
-            } else {
-                $mall->orderBy('city', 'asc');
-                $mall->orderBy('merchants.name', 'asc');
-            }
+            // Order data city alphabetical
+            $mall->orderBy('city', 'asc');
+            $mall->orderBy('merchants.name', 'asc');
 
             $mall = $mall->groupBy('merchants.merchant_id');
 
@@ -1261,15 +1353,8 @@ class StoreAPIController extends PubControllerAPI
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
-                                CASE WHEN {$prefix}media.path is null THEN (
-                                        select m.path
-                                        from {$prefix}news_translations nt
-                                        join {$prefix}media m
-                                            on m.object_id = nt.news_translation_id
-                                            and m.media_name_long = 'news_translation_image_orig'
-                                        where nt.news_id = {$prefix}news.news_id
-                                        group by nt.news_id
-                                    ) ELSE {$prefix}media.path END as original_media_path
+                                CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
                             "))
                         ->leftJoin('news_translations', function ($q) use ($valid_language) {
                             $q->on('news_translations.news_id', '=', 'news.news_id')
@@ -1282,6 +1367,12 @@ class StoreAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
+                        ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, nt.news_id
+                                        FROM {$prefix}news_translations nt
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = nt.news_translation_id
+                                            AND m.media_name_long = 'news_translation_image_orig'
+                                        GROUP BY nt.news_id) AS med"), DB::raw("med.news_id"), '=', 'news.news_id')
                         ->whereIn('merchants.merchant_id', $storeIds)
                         ->where('news.object_type', '=', 'news')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -1358,21 +1449,13 @@ class StoreAPIController extends PubControllerAPI
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
-                                CASE WHEN {$prefix}media.path is null THEN (
-                                        select m.path
-                                        from {$prefix}news_translations nt
-                                        join {$prefix}media m
-                                            on m.object_id = nt.news_translation_id
-                                            and m.media_name_long = 'news_translation_image_orig'
-                                        where nt.news_id = {$prefix}news.news_id
-                                        group by nt.news_id
-                                    ) ELSE {$prefix}media.path END as original_media_path
+                                CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
                             "))
                         ->leftJoin('news_translations', function ($q) use ($valid_language) {
                             $q->on('news_translations.news_id', '=', 'news.news_id')
                               ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                         })
-
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
@@ -1380,6 +1463,12 @@ class StoreAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
+                        ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, nt.news_id
+                                        FROM {$prefix}news_translations nt
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = nt.news_translation_id
+                                            AND m.media_name_long = 'news_translation_image_orig'
+                                        GROUP BY nt.news_id) AS med"), DB::raw("med.news_id"), '=', 'news.news_id')
                         ->whereIn('merchants.merchant_id', $storeIds)
                         ->where('news.object_type', '=', 'promotion')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -1452,15 +1541,8 @@ class StoreAPIController extends PubControllerAPI
                                 THEN 'true'
                                 ELSE 'false'
                                 END AS is_started,
-                                CASE WHEN {$prefix}media.path is null THEN (
-                                        select m.path
-                                        from {$prefix}coupon_translations ct
-                                        join {$prefix}media m
-                                            on m.object_id = ct.coupon_translation_id
-                                            and m.media_name_long = 'coupon_translation_image_orig'
-                                        where ct.promotion_id = {$prefix}promotions.promotion_id
-                                        group by ct.promotion_id
-                                    ) ELSE {$prefix}media.path END as original_media_path
+                                CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
                             "))
                             ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -1476,6 +1558,12 @@ class StoreAPIController extends PubControllerAPI
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
+                            ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
+                                        FROM {$prefix}coupon_translations ct
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = ct.coupon_translation_id
+                                            AND m.media_name_long = 'coupon_translation_image_orig'
+                                        GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
                             ->whereRaw("available.tot > 0")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereIn('merchants.merchant_id', $storeIds)
@@ -1549,7 +1637,27 @@ class StoreAPIController extends PubControllerAPI
 
             $recordCounter = RecordCounter::create($_campaign);
             $totalRec = $recordCounter->count();
+
             $listcampaign = $campaign->get();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $localPath = '';
+            $cdnPath = '';
+            $listId = '';
+
+            if (count($listcampaign) > 0) {
+                foreach ($listcampaign as $list) {
+                    if ($listId != $list->campaign_id) {
+                        $localPath = '';
+                        $cdnPath = '';
+                        $list->image_url = '';
+                    }
+                    $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
+                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
+                    $list->original_media_path = $imgUrl->getImageUrl($localPath, $cdnPath);
+                    $listId = $list->campaign_id;
+                }
+            }
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $totalRec;
@@ -1671,5 +1779,16 @@ class StoreAPIController extends PubControllerAPI
                 }
 
         return $query;
+    }
+
+    /**
+     * Force $withScore value to FALSE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setWithOutScore()
+    {
+        $this->withoutScore = TRUE;
+
+        return $this;
     }
 }

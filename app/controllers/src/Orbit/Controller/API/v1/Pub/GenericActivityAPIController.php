@@ -103,9 +103,21 @@ class GenericActivityAPIController extends PubControllerAPI
                     // Model name is provided from frontend, need to double check
                     $objectString = OrbitInput::post($activityObjectTypeParamName, NULL);
                     if ($activityObjectType === '--SET BY object_type_parameter_name--' && ! empty($objectString)) {
+                        // map object type from frontend
+                        $mapObjectType = [
+                            'mall'      => 'Mall',
+                            'store'     => 'Tenant',
+                            'coupon'    => 'Coupon',
+                            'promotion' => 'News',
+                            'news'      => 'News',
+                            'event'     => 'News'
+                        ];
+
+                        $className = array_key_exists(strtolower($objectString), $mapObjectType) ? $mapObjectType[strtolower($objectString)] : null;
+
                         // check if class exists
-                        if (class_exists($objectString) ) {
-                            $activityObjectType = $objectString;
+                        if (class_exists($className) ) {
+                            $activityObjectType = $className;
                             // check if model name is instance of Model
                             if (! (new $activityObjectType instanceof Model)) {
                                 OrbitShopAPI::throwInvalidArgument('Invalid object type parameter name');
@@ -129,15 +141,6 @@ class GenericActivityAPIController extends PubControllerAPI
                         }
                     }
                 }
-            }
-
-            // Get mall object for set setLocation activity
-            $mallId = OrbitInput::post('mall_id', null);
-
-            if (! empty($mallId)) {
-                $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $mallId)
-                        ->first();
             }
 
             // Get mall object for set setLocation activity
@@ -197,6 +200,45 @@ class GenericActivityAPIController extends PubControllerAPI
                             $activity->setObjectDisplayName('undefined');
                             break;
                     }
+                }
+            } elseif ($activityName === 'click_filter') {
+                $notes = '';
+                $filter = OrbitInput::post('filter', null);
+                $country = OrbitInput::post('country', null);
+                $filter_values = OrbitInput::post('filter_values', null);
+                if (! empty($filter_values)) {
+                    $notes = implode(',', $filter_values);
+                }
+                if (! empty($filter)) {
+                    switch ($filter) {
+                        case 'locations':
+                            $activity->setObjectDisplayName('Location');
+                            $activity->setObjectName($country);
+                            break;
+
+                        case 'categories':
+                            $activity->setObjectDisplayName('Category');
+                            break;
+
+                        case 'partners':
+                            $activity->setObjectDisplayName('Partner');
+                            break;
+
+                        case 'orders':
+                            $activity->setObjectDisplayName('Sort By');
+                            break;
+
+                        default:
+                            $activity->setObjectDisplayName('undefined');
+                            break;
+                    }
+                }
+            } elseif ($activityName === 'click_get_coupon') {
+                $notes = '';
+                if ($user->isConsumer()) {
+                    $notes = 'Signed in user';
+                } else {
+                    $notes = 'Guest user';
                 }
             }
 

@@ -49,7 +49,51 @@ return array(
             'promotions' => [
                  'index' => 'promotions',
                  'type'  => 'basic'
+            ],
+
+            'stores' => [
+                 'index' => 'stores',
+                 'type'  => 'basic'
+            ],
+
+            'store_details' => [
+                 'index' => 'store_details',
+                 'type'  => 'basic'
+            ],
+
+            'coupon_suggestions' => [
+                'index' => 'coupon_suggestions',
+                'type'  => 'basic'
+            ],
+
+            'news_suggestions' => [
+                 'index' => 'news_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'promotion_suggestions' => [
+                 'index' => 'promotion_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'store_suggestions' => [
+                 'index' => 'store_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'mall_suggestions' => [
+                 'index' => 'mall_suggestions',
+                 'type'  => 'basic'
             ]
+        ],
+
+        // index list will be include in suggestion
+        'suggestion_indices' => [
+            'coupon_suggestions',
+            'news_suggestions',
+            'promotion_suggestions',
+            'store_suggestions',
+            'mall_suggestions'
         ],
 
         'nearest' => [
@@ -103,6 +147,18 @@ return array(
                 'province'    => '^2',
                 'country'     => '^2'
             ],
+
+            'store' => [
+                'name'         => '^6',
+                'object_type'  => '^5',
+                'mall_name'    => '^4',
+                'city'         => '^3',
+                'province'     => '^2',
+                'keywords'     => '',
+                'address_line' => '',
+                'country'      => '',
+                'description'  => ''
+            ]
         ]
     ],
 
@@ -175,46 +231,46 @@ return array(
 
     // cdn path
     'cdn' => array(
-        'jquery' => array(
-            '2_1_1' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js'
-        ),
-        'bootstrap' => array(
-            '3_3_1' => 'https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.1/js/bootstrap.min.js'
-        ),
-        'jqueryui' => array(
-            '1_11_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.2/jquery-ui.min.js'
-        ),
-        'lightslider' => array(
-            '1_1_2' => 'https://cdnjs.cloudflare.com/ajax/libs/lightslider/1.1.2/js/lightslider.min.js'
-        ),
-        'panzoom' => array(
-            '2_0_5' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery.panzoom/2.0.5/jquery.panzoom.min.js'
-        ),
-        'featherlight' => array(
-            '1_0_3' => 'https://cdnjs.cloudflare.com/ajax/libs/featherlight/1.0.3/featherlight.min.js'
-        ),
-        'countdown' => array(
-            '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.countdown.min.js'
-        ),
-        // this is for countdown above
-        'jquery_plugin' => array(
-            '2_0_2' => 'https://cdnjs.cloudflare.com/ajax/libs/jquery-countdown/2.0.2/jquery.plugin.min.js'
-        ),
-        'moment' => array(
-            '2_13_0' => 'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.13.0/moment.min.js'
-        ),
-        'moment_timezone_data' => array(
-            '0_5_4' => 'https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.4/moment-timezone-with-data.min.js'
-        ),
-        //font
-        'fonts' => array(
-            'ubuntu' => 'https://fonts.googleapis.com/css?family=Ubuntu:400',
-            'font_awesome' => array(
-                '4_2_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.2.0/fonts/fontawesome-webfont', // this url without font extension
-                '4_5_0' => 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.5.0/fonts/fontawesome-webfont' // this url without font extension
-            ),
-            'glyphicon' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/fonts/glyphicons-halflings-regular' // this url without font extension
-        ),
+        // Whether to use CDN or default URL for the uploaded files
+        'enable_cdn' => FALSE,
+
+        // Do we need to upload to CDN?
+        'upload_to_cdn' => FALSE,
+
+        // provider used
+        'provider' => 'S3',
+
+        // Queue name
+        'queue_name' => 'cdn_upload',
+
+        // CDN Provider
+        'providers' => [
+            // gotomalls as default when not using cdn
+            'default' => [
+                // Just dummy provider
+                'name' => 'Gotomalls',
+
+                // Name of the bucket or directory
+                'bucket_name' => NULL,
+
+                'url_prefix' => 'https://mall-api.gotomalls.cool'
+            ],
+
+            // AWS S3
+            'S3' => [
+                // Name of the provider
+                'name' => 'Amazon S3',
+
+                // Name of the S3 bucket
+                'bucket_name' => 'dev-dotcool',
+
+                // Prefix of the CDN URL, without the bucket name (without trailing slash)
+                // When saving to database this prefix should be concat with bucket name
+                // and the path of the file. So the cdn_url field in table media has aboslute
+                // url like: https://s3-ap-southeast-1.amazonaws.com/dev-dotcool/uploads/retailers/2016/01/some-file.jpg
+                'url_prefix' => 'https://s3-ap-southeast-1.amazonaws.com'
+            ]
+        ]
     ),
 
     'assets' => array(
@@ -650,6 +706,18 @@ return array(
         'you_might_also_like' => array(
             'per_page'      => 4,
             'max_record'    => 4,
+        ),
+
+        // mall country
+        'mall_country' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
+        ),
+
+        // mall city
+        'mall_city' => array(
+            'per_page'      => 50,
+            'max_record'    => 100,
         ),
     ),
 
@@ -4921,6 +4989,124 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // - User clicks on filter (Location, Category, Partner, Sort By)
+            '99' => array(
+                'name' => 'click_filter',
+                'name_long' => 'Click Filter',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on get coupon
+            '100' => array(
+                'name' => 'click_get_coupon',
+                'name_long' => 'Click Get Coupon',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User click cancel on choose location popup after clicking use
+            '101' => array(
+                'name' => 'click_cancel_use',
+                'name_long' => 'Click Cancel Use',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on "Next" on choose location popup after clicking "✁ Use
+            '102' => array(
+                'name' => 'click_next_use',
+                'name_long' => 'Click Next Use',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on "Go Back" on verification popup after clicking "Next"
+            '103' => array(
+                'name' => 'click_go_back_use',
+                'name_long' => 'Click Go Back Use',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on "Use" button
+            '104' => array(
+                'name' => 'click_use',
+                'name_long' => 'Click Use',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'coupon_id'
+            ),
+            // - User clicks on expand category button on Homepage
+            '105' => array(
+                'name' => 'click_expand_category',
+                'name_long' => 'Click Expand Category',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on three dots mobile menu
+            '106' => array(
+                'name' => 'click_mobile_menu',
+                'name_long' => 'Click Mobile Menu',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on auto complete search result
+            '107' => array(
+                'name' => 'click_auto_complete_search',
+                'name_long' => 'Click Auto Complete Search',
+                'module_name' => 'Search',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // - User clicks search button after entering keyword
+            '108' => array(
+                'name' => 'click_search',
+                'name_long' => 'Click Search',
+                'module_name' => 'Search',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on one of the sign in mehod
+            '109' => array(
+                'name' => 'click_sign_in_method',
+                'name_long' => 'Click Sign In Method',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "Edit" profile button
+            '110' => array(
+                'name' => 'click_edit_profile',
+                'name_long' => 'Click Edit Profile',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // - User clicks on "Visit" button on map info popup / Store location
+            '111' => array(
+                'name' => 'click_mall',
+                'name_long' => 'Click Mall',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Mall',
+                'parameter_name' => 'visited_mall_id'
+            ),
         ),
     ),
 
@@ -5025,12 +5211,23 @@ return array(
         // subject of the email
         'subject' => '[%s] %s - Gotomalls.com',
 
+        'utm_params' => [
+            'email' => [
+                'utm_source' => 'gtm-share',
+                'utm_medium' => 'email'
+            ],
+            'facebook' => [
+                'utm_source' => 'gtm-share',
+                'utm_medium' => 'facebook'
+            ]
+        ],
+
         // base url of the campaign detail, needed for showing link on the email
-        'news_detail_base_url' => 'https://v215.gotomalls.cool/#!/events/%s/%s',
+        'news_detail_base_url' => 'https://v30.gotomalls.cool/#!/events/%s/%s',
 
-        'promotion_detail_base_url' => 'https://v215.gotomalls.cool/#!/promotions/%s/%s',
+        'promotion_detail_base_url' => 'https://v30.gotomalls.cool/#!/promotions/%s/%s?%s',
 
-        'coupon_detail_base_url' => 'https://v215.gotomalls.cool/#!/coupons/%s/%s',
+        'coupon_detail_base_url' => 'https://v30.gotomalls.cool/#!/coupons/%s/%s?%s',
 
         'store_detail_base_url' => 'https://v215.gotomalls.cool/#!/stores/%s/%s',
     ),
@@ -5127,28 +5324,55 @@ return array(
      */
     'external_calls' => [
         'wordpress' => [
-            // Driver of the HTTP client
-            // Value: 'curl', 'fake'
-            'driver' => 'curl',
+            'indonesia' => [
+                // Driver of the HTTP client
+                // Value: 'curl', 'fake'
+                'driver' => 'curl',
 
-            // The base URL of the blog, e.g: https://blog.example.com
-            'base_blog_url' => NULL,
+                // The base URL of the blog, e.g: https://blog.example.com
+                'base_blog_url' => NULL,
 
-            // Number of posts to take
-            'take' => 6,
+                // Number of posts to take
+                'take' => 6,
 
-            // Default image used when the post does not have image URL
-            'default_image_url' => NULL,
+                // Default image used when the post does not have image URL
+                'default_image_url' => NULL,
 
-            // Cache file location, the web hooks will write to this file
-            'cache_file' => 'storage/wordpress/post-list.json',
+                // Cache file location, the web hooks will write to this file
+                'cache_file' => '../app/storage/wordpress/post-list-indonesia.json',
 
-            // When post is made - Wordpress try to call Orbit URLs
-            // For security reason we limit the IPs that able to hit
-            // this URL
-            // Value could be '*' (means all) or an array
-            // e.g: ['127.0.0.1', '192.168.0/24']
-            'web_hooks_allowed_ips' => '*'
+                // When post is made - Wordpress try to call Orbit URLs
+                // For security reason we limit the IPs that able to hit
+                // this URL
+                // Value could be '*' (means all) or an array
+                // e.g: ['127.0.0.1', '192.168.0/24']
+                'web_hooks_allowed_ips' => '*'
+            ],
+
+            'singapore' => [
+                // Driver of the HTTP client
+                // Value: 'curl', 'fake'
+                'driver' => 'curl',
+
+                // The base URL of the blog, e.g: https://blog.example.com
+                'base_blog_url' => NULL,
+
+                // Number of posts to take
+                'take' => 6,
+
+                // Default image used when the post does not have image URL
+                'default_image_url' => NULL,
+
+                // Cache file location, the web hooks will write to this file
+                'cache_file' => '../app/storage/wordpress/post-list-singapore.json',
+
+                // When post is made - Wordpress try to call Orbit URLs
+                // For security reason we limit the IPs that able to hit
+                // this URL
+                // Value could be '*' (means all) or an array
+                // e.g: ['127.0.0.1', '192.168.0/24']
+                'web_hooks_allowed_ips' => '*'
+            ]
         ]
     ],
 
@@ -5238,6 +5462,18 @@ return array(
                 'enable' => FALSE,
                 'cache_ttl' => 60
             ],
+
+            // location detection specific cache setting
+            'location-detection' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
+
+            // store counter cache
+            'store-counter' => [
+                'enable' => FALSE,
+                'cache_ttl' => 60
+            ],
         ],
     ],
 
@@ -5274,5 +5510,143 @@ return array(
         'exception_behaviour' => [
             'partner_ids' => ['']
         ]
-    ]
+    ],
+
+    // AWS PHP SDK Configuration. It will act as base configuration
+    // for all client instance.
+    'aws-sdk' => [
+        // Default version
+        'version' => 'latest',
+
+        // Default region (Singapore)
+        'region' => 'ap-southeast-1',
+
+        // S3 specific configuration
+        'S3' => [
+            // Credentials for S3
+            'credentials' => [
+                // Access Key ID
+                'key' => '',
+
+                // Secret Key
+                'secret' => '',
+            ],
+
+            // Region for S3
+            'region' => 'ap-southeast-1',
+
+            // Version for S3
+            'version' => '2006-03-01'
+        ]
+    ],
+
+    /**
+     * Sitemap generator config
+     */
+    'sitemap' => array(
+        'hashbang' => TRUE,
+        'uri_properties' => array(
+            'list' => array(
+                'promotion' => array(
+                    'uri' => 'promotions',
+                    'changefreq' => 'daily',
+                ),
+                'event' => array(
+                    'uri' => 'events',
+                    'changefreq' => 'daily',
+                ),
+                'coupon' => array(
+                    'uri' => 'coupons',
+                    'changefreq' => 'daily',
+                ),
+                'store' => array(
+                    'uri' => 'stores',
+                    'changefreq' => 'daily',
+                ),
+                'mall' => array(
+                    'uri' => 'malls',
+                    'changefreq' => 'daily',
+                ),
+            ),
+            'detail' => array(
+                'promotion' => array(
+                    'uri' => 'promotions/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'event' => array(
+                    'uri' => 'events/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'coupon' => array(
+                    'uri' => 'coupons/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'store' => array(
+                    'uri' => 'stores/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
+                'mall' => array(
+                    'uri' => 'malls/%s/%s',
+                    'changefreq' => 'weekly',
+                ),
+                'partner' => array(
+                    'uri' => 'partner/%s/%s',
+                    'changefreq' => 'weekly',
+                ),
+            ),
+            'misc' => array(
+                'home' => array(
+                    'uri' => '',
+                    'changefreq' => 'daily',
+                ),
+                'about' => array(
+                    'uri' => 'about-us',
+                    'changefreq' => 'monthly',
+                ),
+                'discover' => array(
+                    'uri' => 'discover',
+                    'changefreq' => 'monthly',
+                ),
+                'map' => array(
+                    'uri' => 'map',
+                    'changefreq' => 'weekly',
+                ),
+            ),
+        ),
+    ),
+
+    // Social media account used for Gotomalls with deferent country
+    'social_media_account' => [
+        'country' => [
+            'indonesia' => [
+                [
+                    'social_media_name' => 'Facebook',
+                    'url' => 'https://www.facebook.com/Gotomalls.Indo',
+                ],
+                [
+                    'social_media_name' => 'Twitter',
+                    'url' => 'https://twitter.com/gotomalls',
+                ],
+                [
+                    'social_media_name' => 'Instagram',
+                    'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+            ],
+            'singapore' => [
+                [
+                    'social_media_name' => 'Facebook',
+                    'url' => 'https://www.facebook.com/Gotomalls.Indo',
+                ],
+                [
+                    'social_media_name' => 'Twitter',
+                    'url' => 'https://twitter.com/gotomalls',
+                ],
+                [
+                    'social_media_name' => 'Instagram',
+                    'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+            ],
+        ]
+    ],
+
 );

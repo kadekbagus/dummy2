@@ -19,6 +19,7 @@ use Advert;
 use AdvertLinkType;
 use AdvertLocation;
 use AdvertPlacement;
+use Mall;
 
 class AdvertBannerListAPIController extends PubControllerAPI
 {
@@ -26,13 +27,13 @@ class AdvertBannerListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-
-
             $take = PaginationNumber::parseTakeFromGet('advert');
             $skip = PaginationNumber::parseSkipFromGet();
             $banner_type = OrbitInput::get('banner_type', 'top_banner');
             $location_type = OrbitInput::get('location_type', 'mall');
             $location_id = OrbitInput::get('mall_id', null);
+            $country = OrbitInput::get('country');
+            $cities = OrbitInput::get('cities');
 
             $advertHelper = AdvertHelper::create();
             $advertHelper->advertCustomValidator();
@@ -70,27 +71,45 @@ class AdvertBannerListAPIController extends PubControllerAPI
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, img.path) as img_url";
+            if ($usingCdn) {
+                $image = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as img_url";
+            }
+
             $advert = DB::table('adverts')
                             ->select(
                                 'adverts.advert_id',
                                 'adverts.advert_name as title',
                                 DB::raw('n.news_name as promotion_name'),
                                 DB::raw('c.promotion_name as coupon_name'),
-                                DB::raw('s.name as store_name'),
                                 'adverts.link_url',
                                 'adverts.link_object_id as object_id',
                                 DB::raw('alt.advert_type'),
-                                DB::raw('img.path as img_url'),
-                                DB::raw('t.name as store_name')
+                                'adverts.is_all_location',
+                                DB::raw("{$image}"),
+                                DB::raw('t.name as store_name'),
+                                DB::raw("CASE WHEN alt.advert_type = 'store' and t.name is null THEN t.status
+                                            ELSE CASE WHEN alt.advert_type = 'promotion' and  n.news_name is null THEN n.status
+                                                ELSE CASE WHEN alt.advert_type = 'coupon' and c.promotion_name is null THEN c.status
+                                                    ELSE {$prefix}adverts.status
+                                                    END
+                                                END
+                                            END as status")
                             )
                             ->join('advert_link_types as alt', function ($q) {
                                 $q->on(DB::raw('alt.advert_link_type_id'), '=', 'adverts.advert_link_type_id')
                                     ->on(DB::raw('alt.status'), '=', DB::raw("'active'"));
                             })
-                            ->join('advert_locations as al', function ($q) use ($location_type, $location_id) {
+                            ->leftJoin('advert_locations as al', function ($q) use ($location_type, $location_id, $prefix) {
                                 $q->on(DB::raw('al.advert_id'), '=', 'adverts.advert_id')
                                     ->on(DB::raw('al.location_type'), '=', DB::raw("{$this->quote($location_type)}"))
-                                    ->on(DB::raw('al.location_id'), '=', DB::raw("{$this->quote($location_id)}"));
+                                    ->on(DB::raw("
+                                            (al.location_id = {$this->quote($location_id)} OR `{$prefix}adverts`.`is_all_location` = 'Y')
+                                    "), DB::raw(''), DB::raw(''));
                             })
                             ->join('advert_placements as ap', function ($q) use ($banner_type) {
                                 $q->on(DB::raw('ap.advert_placement_id'), '=', 'adverts.advert_placement_id')
@@ -114,13 +133,42 @@ class AdvertBannerListAPIController extends PubControllerAPI
                             ->leftJoin('promotions as c', function ($q) {
                                 $q->on(DB::raw('c.promotion_id'), '=', 'adverts.link_object_id');
                             })
-
-                            ->leftJoin('merchants as s', function ($q) {
-                                $q->on(DB::raw('s.merchant_id'), '=', 'adverts.link_object_id');
-                            })
-
-                            ->where('adverts.status', 'active')
+                            ->having('status', '=', 'active')
                             ->whereRaw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}') between {$prefix}adverts.start_date and {$prefix}adverts.end_date");
+
+            OrbitInput::get('country', function($country) use ($advert)
+            {
+                // Join to country and cities
+                $advert->leftJoin('countries', 'countries.country_id', '=', 'adverts.country_id');
+                $advert->where('countries.name', $country);
+            });
+
+            // Filter in mall level, use advert location and country.
+            if ($location_type == 'mall') {
+                $advert->where(function ($query) use ($location_id){
+                    $query->where(DB::raw('al.location_id'), $location_id)
+                          ->orWhere('adverts.is_all_location', '=', 'Y');
+                });
+            } else {
+                $advert->where(function ($query) use ($location_type) {
+                    $query->where(DB::raw('al.location_type'), $location_type)
+                        ->orWhere('is_all_location', 'Y');
+                });
+
+                // Filter city in gtm level
+                OrbitInput::get('cities', function($cities) use ($advert)
+                {
+                    // Join to advert_cities
+                    $advert->leftJoin('advert_cities', 'advert_cities.advert_id', '=', 'adverts.advert_id');
+                    $advert->leftJoin('mall_cities', 'mall_cities.mall_city_id', '=', 'advert_cities.mall_city_id');
+                    $advert->where(function ($query) use ($cities){
+                        $query->whereIn('mall_cities.city', (array)$cities)
+                              ->orWhere('adverts.is_all_city', '=', 'Y');
+                    });
+                });
+            }
+
+            $advert->groupBy('adverts.advert_id');
 
             $slideshow = $advert->get();
 

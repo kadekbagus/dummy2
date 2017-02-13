@@ -73,6 +73,7 @@ class NewsLocationAPIController extends PubControllerAPI
             $ul = OrbitInput::get('ul', null);
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
+            $withCache = TRUE;
 
             $validator = Validator::make(
                 array(
@@ -94,7 +95,6 @@ class NewsLocationAPIController extends PubControllerAPI
                 'is_detail' => $is_detail,
                 'location' => $location,
                 'distance' => $distance,
-                'ul' => $ul,
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
@@ -112,6 +112,17 @@ class NewsLocationAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $mallLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as location_logo";
+            $mallMap = "CONCAT({$this->quote($urlPrefix)}, map.path) as map_image";
+            if ($usingCdn) {
+                $mallLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as location_logo";
+                $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
+            }
+
             $newsLocations = NewsMerchant::select(
                                         DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END as mall_id"),
@@ -124,8 +135,8 @@ class NewsLocationAPIController extends PubControllerAPI
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.operating_hours ELSE '' END as operating_hours"),
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.is_subscribed ELSE {$prefix}merchants.is_subscribed END as is_subscribed"),
                                         DB::raw("{$prefix}merchants.object_type as location_type"),
-                                        DB::raw("img.path as location_logo"),
-                                        DB::raw("map.path as map_image"),
+                                        DB::raw("{$mallLogo}"),
+                                        DB::raw("{$mallMap}"),
                                         DB::raw("{$prefix}merchants.phone as phone"),
                                         DB::raw("x(position) as latitude"),
                                         DB::raw("y(position) as longitude")
@@ -175,6 +186,7 @@ class NewsLocationAPIController extends PubControllerAPI
             // Filter by location
             if (! empty($location)) {
                 if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                    $withCache = FALSE;
                     $newsLocations->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                         ->havingRaw("distance <= {$distance}");
                 } else {
@@ -184,6 +196,7 @@ class NewsLocationAPIController extends PubControllerAPI
 
             // Order data by nearby or city alphabetical
             if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
+                $withCache = FALSE;
                 $newsLocations->orderBy('distance', 'asc');
             } else {
                 $newsLocations->orderBy('city', 'asc');
@@ -203,21 +216,27 @@ class NewsLocationAPIController extends PubControllerAPI
             $recordCounter = RecordCounter::create($_newsLocations);
 
             // Try to get the result from cache
-            $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
-                return $recordCounter->count();
-            });
-
-            // Put the result in cache if it is applicable
-            $totalRecordCache->put($serializedCacheKey, $totalRec);
+            if ($withCache) {
+                $totalRec = $totalRecordCache->get($serializedCacheKey, function() use ($recordCounter) {
+                    return $recordCounter->count();
+                });
+                $totalRecordCache->put($serializedCacheKey, $totalRec);
+            } else {
+                $totalRec = $recordCounter->count();
+            }
 
             $newsLocations->take($take);
             $newsLocations->skip($skip);
 
             // Try to get the result from cache
-            $listOfRec = $recordCache->get($serializedCacheKey, function() use ($newsLocations) {
-                return $newsLocations->get();
-            });
-            $recordCache->put($serializedCacheKey, $listOfRec);
+            if ($withCache) {
+                $listOfRec = $recordCache->get($serializedCacheKey, function() use ($newsLocations) {
+                    return $newsLocations->get();
+                });
+                $recordCache->put($serializedCacheKey, $listOfRec);
+            } else {
+                $listOfRec = $newsLocations->get();
+            }
 
             // moved from generic activity number 34
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
@@ -288,4 +307,10 @@ class NewsLocationAPIController extends PubControllerAPI
 
         return $this->render($httpCode);
     }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
+
 }

@@ -26,6 +26,7 @@ use Lang;
 use Mall;
 use Hash;
 use Queue;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class ActivationResendEmailAPIController extends IntermediateBaseController
 {
@@ -78,6 +79,12 @@ class ActivationResendEmailAPIController extends IntermediateBaseController
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // override error message if user is already active
+            if ($this->user->status === 'active') {
+                $errorMessage = 'User already active';
+                throw new OrbitCustomException($errorMessage, User::USER_ALREADY_ACTIVE_ERROR_CODE, NULL);
+            }
+
             // delete old token first
             $token = Token::active()
                     ->where('email', $email)
@@ -118,6 +125,13 @@ class ActivationResendEmailAPIController extends IntermediateBaseController
             $this->response->data = null;
 
             // Rollback the changes
+            $this->rollBack();
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
             $this->rollBack();
         } catch (Exception $e) {
             $this->response->code = Status::UNKNOWN_ERROR;

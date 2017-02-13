@@ -145,10 +145,10 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             if ($issuedCoupon) {
                 $this->response->message = 'Request Ok';
                 $this->response->data = NULL;
-                $activityNotes = sprintf('Added to wallet Coupon Id: %s. Issued Coupon Id: %s', $coupon->promotion_id, $issuedCoupon->issued_coupon_id);
+                $activityNotes = sprintf('Successfully added to wallet Coupon Id: %s. Issued Coupon Id: %s', $coupon->promotion_id, $issuedCoupon->issued_coupon_id);
                 $activity->setUser($user)
-                    ->setActivityName('click_add_to_wallet')
-                    ->setActivityNameLong('Click Landing Page Add To Wallet')
+                    ->setActivityName('coupon_added_to_wallet')
+                    ->setActivityNameLong('Coupon Added To Wallet')
                     ->setLocation($retailer)
                     ->setObject($issuedCoupon)
                     ->setModuleName('Coupon')
@@ -159,9 +159,28 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             } else {
                 $this->response->message = 'Fail to issue coupon';
                 $this->response->data = NULL;
+
+                $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $this->response->message);
+                $activity->setUser($user)
+                    ->setActivityName('coupon_added_to_wallet')
+                    ->setActivityNameLong('Coupon Added To Wallet Failed')
+                    ->setLocation($retailer)
+                    ->setObject($issuedCoupon)
+                    ->setModuleName('Coupon')
+                    ->setCoupon($coupon)
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
             }
 
         } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+            $this->rollback();
+        } catch (InvalidArgsException $e) {
             $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first();
 
             $this->response->code = $e->getCode();
@@ -169,27 +188,10 @@ class CouponAddToWalletAPIController extends PubControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = NULL;
             $this->rollback();
-            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('click_add_to_wallet')
-                ->setActivityNameLong('Click Landing Page Add To Wallet')
-                ->setObject($coupon)
-                ->setModuleName('Coupon')
-                ->setCoupon($coupon)
-                ->setLocation($retailer)
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
-        } catch (InvalidArgsException $e) {
-            $this->response->code = $e->getCode();
-            $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
-            $this->response->data = NULL;
-            $this->rollback();
-            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
-            $activity->setUser($user)
-                ->setActivityName('click_add_to_wallet')
-                ->setActivityNameLong('Click Landing Page Add To Wallet Failed')
+                ->setActivityName('coupon_added_to_wallet')
+                ->setActivityNameLong('Coupon Added To Wallet Failed')
                 ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
@@ -198,15 +200,17 @@ class CouponAddToWalletAPIController extends PubControllerAPI
                 ->responseFailed()
                 ->save();
         } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first();
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = NULL;
             $this->rollback();
-            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('click_add_to_wallet')
-                ->setActivityNameLong('Click Landing Page Add To Wallet Failed')
+                ->setActivityName('coupon_added_to_wallet')
+                ->setActivityNameLong('Coupon Added To Wallet Failed')
                 ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)
@@ -216,15 +220,17 @@ class CouponAddToWalletAPIController extends PubControllerAPI
                 ->save();
 
         } catch (Exception $e) {
+            $coupon = Coupon::where('promotion_id', '=', $coupon_id)->first();
+
             $this->response->code = $e->getCode();
             $this->response->status = $e->getLine();
             $this->response->message = $e->getMessage();
             $this->response->data = $e->getFile();
             $this->rollback();
-            $activityNotes = sprintf('Failed to add to wallet. Error: %s', $e->getMessage());
+            $activityNotes = sprintf('Failed to add to wallet. Coupon Id: %s. Error: %s', $coupon_id, $e->getMessage());
             $activity->setUser($user)
-                ->setActivityName('click_add_to_wallet')
-                ->setActivityNameLong('Click Landing Page Add To Wallet Failed')
+                ->setActivityName('coupon_added_to_wallet')
+                ->setActivityNameLong('Coupon Added To Wallet Failed')
                 ->setObject($coupon)
                 ->setModuleName('Coupon')
                 ->setCoupon($coupon)

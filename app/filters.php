@@ -154,6 +154,9 @@ Route::filter('pub-fb-bot', function() {
     $gtmUrl = Config::get('orbit.shop.gtm_url');
     $FBChecker = new FBBotChecker();
     $item = NULL;
+    $country = Input::get('country', null);
+    $cities = Input::get('cities', null);
+
     if (! $FBChecker->isFBCrawler()) {
         switch (Route::currentRouteName()) {
             case 'pub-share-promotion':
@@ -197,6 +200,7 @@ Route::filter('pub-fb-bot', function() {
         }
 
         if (is_object($item)) {
+            $utmParamConfig = Config::get('orbit.campaign_share_email.utm_params');
             $config = [
                 'stores'     => Config::get('orbit.campaign_share_email.store_detail_base_url'),
                 'promotions' => Config::get('orbit.campaign_share_email.promotion_detail_base_url'),
@@ -204,7 +208,31 @@ Route::filter('pub-fb-bot', function() {
                 'news'       => Config::get('orbit.campaign_share_email.news_detail_base_url'),
             ];
 
-            $redirect_to = URL::to(sprintf($config[$type], Input::get('id'), Str::slug(Input::get('name', '', $separator = '-'))));
+            $countryCityParams = '';
+            $countryString = '';
+            if (! empty($country)) {
+                $countryString .= '&country=' . $country;
+            }
+
+            $citiesString = '';
+
+            if (empty($cities)) {
+                $citiesString .= '&cities=0';
+            } else {
+                foreach ((array) $cities as $city) {
+                    $citiesString .= '&cities=' . $city;
+                }
+            }
+
+            if (! empty($countryString)) {
+                $countryCityParams = $countryString . $citiesString;
+            }
+
+            $utmParam = http_build_query($utmParamConfig['facebook']);
+
+            $param = $utmParam . $countryCityParams;
+
+            $redirect_to = sprintf($config[$type], Input::get('id'), Str::slug(Input::get('name', '', $separator = '-')), $param);
         } else {
             $redirect_to = URL::to($gtmUrl);
         }

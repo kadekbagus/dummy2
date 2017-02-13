@@ -35,7 +35,8 @@ class CouponDetailAPIController extends PubControllerAPI
             $user = $this->getUser();
 
             $role = $user->role->role_name;
-
+            $country = OrbitInput::get('country', null);
+            $cities = OrbitInput::get('cities', null);
             $couponId = OrbitInput::get('coupon_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -77,20 +78,24 @@ class CouponDetailAPIController extends PubControllerAPI
                                         END as get_coupon_status ";
             }
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+            if ($usingCdn) {
+                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+            }
+
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
-                                    CASE WHEN {$prefix}media.path is null THEN (
-                                            select m.path
-                                            from {$prefix}coupon_translations ct
-                                            join {$prefix}media m
-                                                on m.object_id = ct.coupon_translation_id
-                                                and m.media_name_long = 'coupon_translation_image_orig'
-                                            where ct.promotion_id = {$prefix}promotions.promotion_id
-                                            group by ct.promotion_id
-                                        ) ELSE {$prefix}media.path END as original_media_path
+                                    (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) AS original_media_path
                                 "),
                             'promotions.end_date',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
@@ -135,10 +140,6 @@ class CouponDetailAPIController extends PubControllerAPI
                               ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                        ->leftJoin('media', function ($q) {
-                            $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
-                            $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
-                        })
                         ->leftJoin('issued_coupons', function ($q) use ($user) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
@@ -146,6 +147,9 @@ class CouponDetailAPIController extends PubControllerAPI
                             })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                        ->with(['keywords' => function ($q) {
+                                $q->addSelect('keyword', 'object_id');
+                            }])
                         ->where('promotions.promotion_id', $couponId);
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
@@ -192,7 +196,7 @@ class CouponDetailAPIController extends PubControllerAPI
 
 
             // add facebook share url dummy page
-            $coupon->facebook_share_url = SocMedAPIController::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name);
+            $coupon->facebook_share_url = SocMedAPIController::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name, $country, $cities);
             // remove mall_id from result
             unset($coupon->mall_id);
 

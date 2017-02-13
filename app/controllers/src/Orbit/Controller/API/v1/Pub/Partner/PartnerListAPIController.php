@@ -51,10 +51,18 @@ class PartnerListAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
+            $countryFilter = OrbitInput::get('country', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
 
-            // search by key word or filter or sort by flag
-            $searchFlag = FALSE;
+            if (empty($countryFilter)) {
+                // return empty result if country filter is not around
+                $this->response->data = null;
+                $this->response->code = 0;
+                $this->response->status = 'success';
+                $this->response->message = 'Request Ok';
+
+                return $this->render($httpCode);
+            }
 
             $partnerHelper = PartnerHelper::create();
             $partnerHelper->registerCustomValidation();
@@ -78,13 +86,23 @@ class PartnerListAPIController extends PubControllerAPI
             $valid_language = $partnerHelper->getValidLanguage();
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $logo = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as logo_url";
+            if ($usingCdn) {
+                $logo = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as logo_url";
+            }
+
             $partners = Partner::select(
                     'partner_id',
                     'partner_name',
                     'description',
                     'is_shown_in_filter',
                     'is_visible',
-                    'path as logo_url'
+                    'partners.updated_at',
+                    DB::raw("{$logo}")
                 )
                 ->leftJoin('media', function ($q) {
                     $q->on('media.object_id', '=', 'partners.partner_id');
@@ -102,6 +120,12 @@ class PartnerListAPIController extends PubControllerAPI
             {
                 $visible = ($visible === 'yes' ? 'Y' : 'N');
                 $partners->where('partners.is_visible', $visible);
+            });
+
+            // filter by country and city
+            OrbitInput::get('country', function($countryFilter) use ($partners) {
+                $partners->leftJoin('countries', 'partners.country_id', '=', 'countries.country_id')
+                    ->where('countries.name', $countryFilter);
             });
 
             // Map the sortby request to the real column name

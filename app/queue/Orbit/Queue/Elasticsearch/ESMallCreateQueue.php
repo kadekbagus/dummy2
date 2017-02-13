@@ -14,6 +14,7 @@ use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 use Log;
+use Orbit\FakeJob;
 
 class ESMallCreateQueue
 {
@@ -74,6 +75,7 @@ class ESMallCreateQueue
         }
 
         $maps_url = $mall->mediaMapOrig->lists('path');
+        $maps_cdn_url = $mall->mediaMapOrig->lists('cdn_url');
 
         $esConfig = Config::get('orbit.elasticsearch');
         $geofence = MerchantGeofence::getDefaultValueForAreaAndPosition($mallId);
@@ -95,7 +97,9 @@ class ESMallCreateQueue
                     'operating_hours' => $mall->operating_hours,
                     'object_type'     => $mall->object_type,
                     'logo_url'        => $mall->path,
+                    'logo_cdn_url'    => $mall->cdn_url,
                     'maps_url'        => $maps_url,
+                    'maps_cdn_url'    => $maps_cdn_url,
                     'status'          => $mall->status,
                     'ci_domain'       => $mall->ci_domain,
                     'is_subscribed'   => $mall->is_subscribed,
@@ -140,6 +144,11 @@ class ESMallCreateQueue
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
+            // update suggestion
+            $fakeJob = new FakeJob();
+            $esQueue = new \Orbit\Queue\Elasticsearch\ESMallSuggestionUpdateQueue();
+            $suggestion = $esQueue->fire($fakeJob, ['mall_id' => $mallId]);
+
             // Safely delete the object
             $job->delete();
 
@@ -154,12 +163,6 @@ class ESMallCreateQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            // Bury the job for later inspection
-            JobBurier::create($job, function($theJob) {
-                // The queue driver does not support bury.
-                $theJob->delete();
-            })->bury();
-
             $message = sprintf('[Job ID: `%s`] Elasticsearch Create Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
                                 $esConfig['indices']['malldata']['index'],
@@ -167,11 +170,17 @@ class ESMallCreateQueue
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);
-
-            return [
-                'status' => 'fail',
-                'message' => $message
-            ];
         }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 }

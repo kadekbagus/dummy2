@@ -33,11 +33,32 @@ Event::listen('orbit.user.postupdateuser.after.save', function($controller, $use
     {
         throw new \Exception($response->message, $response->code);
     }
-    unset($_POST['merchant_id']);
+    unset($_POST['user_id']);
 
     $user->setRelation('media', $response->data);
     $user->media = $response->data;
     $user->userdetail->photo = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $user->user_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => null,
+            'es_id'         => null,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
 });
 
 /**

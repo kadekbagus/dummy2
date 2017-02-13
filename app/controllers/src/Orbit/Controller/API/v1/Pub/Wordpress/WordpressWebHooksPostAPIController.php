@@ -16,6 +16,7 @@ use Exception;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Activity;
+use MallCountry;
 use stdClass;
 use Orbit\Helper\Net\Wordpress\PostFetcher;
 use Log;
@@ -28,7 +29,21 @@ class WordpressWebHooksPostAPIController extends PubControllerAPI
         $httpCode = 200;
 
         try {
-            $config = Config::get('orbit.external_calls.wordpress');
+            $country = strtolower(trim(OrbitInput::get('country')));
+
+            $mallCountry = MallCountry::where('country', $country)->first();
+
+            if (empty($mallCountry)) {
+                $this->thrownButOK = TRUE;
+                throw new Exception('country not exist, no data returned');
+            }
+
+            $config = Config::get("orbit.external_calls.wordpress.{$country}");
+
+            if (empty($config)) {
+                $this->thrownButOK = TRUE;
+                throw new Exception('Config wordpress for country ' . ucfirst($country) . ' is not found, no data returned');
+            }
             $jsonFile = isset($config['cache_file']) ? $config['cache_file'] : '/dev/shm/gtm-wordpress-post.json';
             $dirname = dirname($jsonFile);
 

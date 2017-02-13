@@ -6,6 +6,7 @@
 use OrbitShop\API\v1\OrbitShopAPI;
 use Validator;
 use BaseMerchant;
+use BaseStore;
 use BaseMerchantTranslation;
 use Category;
 use App;
@@ -43,9 +44,32 @@ class MerchantHelper
             return TRUE;
         });
 
+        // Check country in existing store
+        Validator::extend('orbit.store.country', function ($attribute, $value, $parameters) {
+            $baseMerchantId = $parameters[0];
+            $countryId = $parameters[1];
+
+            //Cannot change country if there is any merchant linked to store
+            $baseMerchants = BaseMerchant::where('base_merchant_id', $baseMerchantId)
+                            ->first();
+
+            $merchants = BaseStore::join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                            ->where('base_merchants.country_id', '=', $baseMerchants->country_id)
+                            ->where('base_stores.base_merchant_id', '=', $baseMerchantId)
+                            ->first();
+
+            if ($baseMerchants->country_id != $countryId && ! empty($merchants)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
         // Check existing merchant name
         Validator::extend('orbit.exist.merchant_name', function ($attribute, $value, $parameters) {
+            $country = $parameters[0];
             $merchant = BaseMerchant::where('name', '=', $value)
+                            ->where('country_id', $country)
                             ->first();
 
             if (! empty($merchant)) {

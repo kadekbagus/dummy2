@@ -37,6 +37,28 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
     $news->setRelation('media', $response->data);
     $news->media = $response->data;
     $news->image = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $news->news_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => $news->object_type,
+            'es_id'         => $news->news_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
 });
 
 /**
@@ -67,8 +89,29 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
 
         $news->load('media');
         $news->image = $response->data[0]->path;
-    }
 
+        // queue for data amazon s3
+        $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+        if ($usingCdn) {
+            $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+            $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+            if ($response->data['extras']->isUpdate) {
+                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+            }
+
+            Queue::push($queueFile, [
+                'object_id'     => $news->news_id,
+                'media_name_id' => $response->data['extras']->mediaNameId,
+                'old_path'      => $response->data['extras']->oldPath,
+                'es_type'       => $news->object_type,
+                'es_id'         => $news->news_id,
+                'bucket_name'   => $bucketName
+            ], $queueName);
+        }
+    }
 });
 
 
@@ -110,6 +153,28 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
     $news_translations->setRelation('media', $response->data);
     $news_translations->media = $response->data;
     $news_translations->image_translation = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $news_translations->news_translation_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => $news_translations->object_type,
+            'es_id'         => $news_translations->news_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
 });
 
 
@@ -206,6 +271,11 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionDeleteQueue', [
                 'news_id' => $promotions->news_id
             ]);
+
+            // Notify the queueing system to update Elasticsearch Suggestion document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionSuggestionDeleteQueue', [
+                'news_id' => $news->news_id
+            ]);
         } else {
             // Notify the queueing system to update Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
@@ -237,6 +307,11 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
         if ($news->campaign_status === 'stopped' || $news->campaign_status === 'expired') {
             // Notify the queueing system to delete Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsDeleteQueue', [
+                'news_id' => $news->news_id
+            ]);
+
+            // Notify the queueing system to update Elasticsearch Suggestion document
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsSuggestionDeleteQueue', [
                 'news_id' => $news->news_id
             ]);
         } else {

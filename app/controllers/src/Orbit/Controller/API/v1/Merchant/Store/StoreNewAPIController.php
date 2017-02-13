@@ -89,13 +89,14 @@ class StoreNewAPIController extends ControllerAPI
 
             $validation_error = [
                 'base_merchant_id'    => 'required|orbit.empty.base_merchant',
-                'mall_id'             => 'required|orbit.empty.mall',
+                'mall_id'             => 'required|orbit.empty.mall|orbit.mall.country:' . $base_merchant_id,
                 'floor_id'            => 'orbit.empty.floor:' . $mall_id,
                 'status'              => 'in:active,inactive',
                 'verification_number' => 'alpha_num|orbit.unique.verification_number:' . $mall_id . ',' . '',
             ];
 
             $validation_error_message = [
+                'orbit.mall.country' => 'Mall does not exist in your selected country'
             ];
 
             // unit make floor_id is required

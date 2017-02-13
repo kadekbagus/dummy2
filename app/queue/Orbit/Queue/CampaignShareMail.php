@@ -38,6 +38,31 @@ class CampaignShareMail
         $user = User::where('user_id','=', $data['userId'])
                     ->first();
 
+        $countryCityParams = '';
+        $countryString = '';
+        if (! empty($data['country'])) {
+            $countryString .= '&country=' . $data['country'];
+        }
+
+        $citiesString = '';
+
+        if (empty($data['cities'])) {
+            $citiesString .= '&cities=0';
+        } else {
+            foreach ((array) $data['cities'] as $city) {
+                $citiesString .= '&cities=' . $city;
+            }
+        }
+
+        if (! empty($countryString)) {
+            $countryCityParams = $countryString . $citiesString;
+        }
+
+        $utmParamConfig = Config::get('orbit.campaign_share_email.utm_params', null);
+        $utmParam = isset($utmParamConfig['email']) ? http_build_query($utmParamConfig['email']) : '';
+
+        $param = $utmParam . $countryCityParams;
+
         switch($data['campaignType']) {
             case 'promotion' :
                    $campaign = News::select(
@@ -68,7 +93,7 @@ class CampaignShareMail
                                 ->first();
 
                     $baseUrl = Config::get('orbit.campaign_share_email.promotion_detail_base_url');
-                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name));
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
                     $campaignTypeEn = 'promotion';
                     $campaignTypeId = 'promosi';
 
@@ -103,7 +128,7 @@ class CampaignShareMail
                                 ->first();
 
                     $baseUrl = Config::get('orbit.campaign_share_email.news_detail_base_url');
-                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name));
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
                     $campaignTypeEn = 'event';
                     $campaignTypeId = 'event';
 
@@ -137,7 +162,7 @@ class CampaignShareMail
                         ->first();
 
                     $baseUrl = Config::get('orbit.campaign_share_email.coupon_detail_base_url');
-                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name));
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
                     $campaignTypeEn = 'coupon';
                     $campaignTypeId = 'kupon';
 

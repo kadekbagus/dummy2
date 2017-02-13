@@ -48,6 +48,8 @@ class NewsDetailAPIController extends PubControllerAPI
             $newsId = OrbitInput::get('news_id', null);
             $language = OrbitInput::get('language', 'id');
             $mallId = OrbitInput::get('mall_id', null);
+            $country = OrbitInput::get('country', null);
+            $cities = OrbitInput::get('cities', null);
 
             $newsHelper = NewsHelper::create();
             $newsHelper->registerCustomValidation();
@@ -75,20 +77,24 @@ class NewsDetailAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+            if ($usingCdn) {
+                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+            }
+
             $news = News::select(
                             'news.news_id as news_id',
                             DB::Raw("
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                                 CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
-                                CASE WHEN {$prefix}media.path is null THEN (
-                                        select m.path
-                                        from {$prefix}news_translations nt
-                                        join {$prefix}media m
-                                            on m.object_id = nt.news_translation_id
-                                            and m.media_name_long = 'news_translation_image_orig'
-                                        where nt.news_id = {$prefix}news.news_id
-                                        group by nt.news_id
-                                    ) ELSE {$prefix}media.path END as original_media_path
+                                (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id) AS original_media_path
                             "),
                             'news.object_type',
                             'news.end_date',
@@ -131,13 +137,12 @@ class NewsDetailAPIController extends PubControllerAPI
                               ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', function ($q) {
-                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
-                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
-                        })
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                        ->with(['keywords' => function ($q) {
+                                $q->addSelect('keyword', 'object_id');
+                            }])
                         ->first();
 
             $message = 'Request Ok';
@@ -177,7 +182,7 @@ class NewsDetailAPIController extends PubControllerAPI
             }
 
             // add facebook share url dummy page
-            $news->facebook_share_url = SocMedAPIController::getSharedUrl('news', $news->news_id, $news->news_name);
+            $news->facebook_share_url = SocMedAPIController::getSharedUrl('news', $news->news_id, $news->news_name, $country, $cities);
 
             $this->response->data = $news;
             $this->response->code = 0;

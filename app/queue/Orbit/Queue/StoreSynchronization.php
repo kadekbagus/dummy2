@@ -17,6 +17,7 @@ use ObjectPartner;
 use BaseObjectPartner;
 use MerchantTranslation;
 use Media;
+use Country;
 use PreSync;
 use Sync;
 use Config;
@@ -26,6 +27,8 @@ use Orbit\Database\ObjectID;
 use User;
 use Event;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Queue;
+use Orbit\FakeJob;
 
 class StoreSynchronization
 {
@@ -107,6 +110,8 @@ class StoreSynchronization
 
             $pre_stores = clone $stores;
 
+            $_stores = clone $stores;
+
             $pre_stores->chunk($chunk, function($_pre_stores) use ($sync_id, $user)
             {
                 DB::beginTransaction();
@@ -139,7 +144,9 @@ class StoreSynchronization
                 DB::commit();
             });
 
-            $stores->chunk($chunk, function($_stores) use ($sync_id, $user)
+            $storeName = '';
+            $countryName = '';
+            $stores->chunk($chunk, function($_stores) use ($sync_id, $user, &$storeName, &$countryName)
             {
                 foreach ($_stores as $store) {
                     $this->debug(sprintf("memory usage: %s\n", memory_get_peak_usage() / 1024));
@@ -155,9 +162,18 @@ class StoreSynchronization
                         $tenant = new Tenant;
                     }
 
+                    //country
+                    $countryId = $store->country_id;
+                    $countryNames = Country::where('country_id', $countryId)->first();
+
+                    $storeName = $store->name;
+                    $countryName = $countryNames->name;
+
                     $tenant->merchant_id = $base_store_id;
                     $tenant->name = $store->name;
                     $tenant->description = $store->description;
+                    $tenant->country_id = $countryId;
+                    $tenant->country = $countryName;
                     $tenant->status = $store->status;
                     $tenant->logo = $store->path;
                     $tenant->object_type = 'tenant';
@@ -253,10 +269,41 @@ class StoreSynchronization
                     // delete media (logo, image, map)
                     $oldMedia = Media::where('object_name', 'retailer')->where('object_id', $base_store_id)->get();
                     $realpath = array();
+                    $oldPath = array();
+                    $isUpdate = false;
+
                     foreach ($oldMedia as $file) {
+                        $isUpdate = true;
                         $realpath[] = $file->realpath;
+
+                        //get old path before delete
+                        $oldPath[$file->media_id]['path'] = $file->path;
+                        $oldPath[$file->media_id]['cdn_url'] = $file->cdn_url;
+                        $oldPath[$file->media_id]['cdn_bucket_name'] = $file->cdn_bucket_name;
+
+                        // No need to check the return status, just delete and forget
+                        @unlink($file->realpath);
                     }
 
+                    // queue for data amazon s3
+                    $fakeJob = new FakeJob();
+                    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+                    $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+                    $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+                    if ($usingCdn) {
+                        $data = [
+                            'object_id'     => $base_store_id,
+                            'media_name_id' => null,
+                            'old_path'      => $oldPath,
+                            'es_type'       => 'store',
+                            'es_id'         => $storeName,
+                            'bucket_name'   => $bucketName
+                        ];
+
+                        $esQueue = new \Orbit\Queue\CdnUpload\CdnUploadDeleteQueue();
+                        $response = $esQueue->fire($fakeJob, $data);
+                    }
                     $delete_media = Media::where('object_name', 'retailer')->where('object_id', $base_store_id)->delete(true);
 
                     // copy logo from base_store directory to retailer directory
@@ -315,8 +362,35 @@ class StoreSynchronization
                             $this->debug("Failed to unlink\n");
                         }
                     }
+
+                    // queue for data amazon s3
+                    if ($usingCdn) {
+                        Queue::push('Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue', [
+                            'object_id'     => $base_store_id,
+                            'media_name_id' => null,
+                            'old_path'      => null,
+                            'es_type'       => 'store',
+                            'es_id'         => $storeName,
+                            'es_country'    => $countryName,
+                            'bucket_name'   => $bucketName
+                        ], $queueName);
+                    }
                 }
             });
+
+            $_stores = $_stores->groupBy('base_merchants.name')->groupBy('base_merchants.country_id')->get();
+            if (count($_stores) > 0) {
+                foreach ($_stores as $storeCountry) {
+                    //country
+                    $countryIds = $storeCountry->country_id;
+                    $countryNameList = Country::where('country_id', $countryIds)->first();
+
+                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
+                        'name' => $storeCountry->name,
+                        'country' => $countryNameList->name
+                    ]);
+                }
+            }
 
             Event::fire('orbit.basestore.sync.complete', $newSync);
         } catch (InvalidArgsException $e) {
@@ -370,6 +444,7 @@ class StoreSynchronization
                 $name_long = str_replace('base_merchant_', 'retailer_', $dt->media_name_long);
             } else {
                 $name_long = str_replace('base_store_', 'retailer_', $dt->media_name_long);
+                $name_long = str_replace('base_', 'retailer_', $name_long);
             }
 
             $newMedia = new Media;

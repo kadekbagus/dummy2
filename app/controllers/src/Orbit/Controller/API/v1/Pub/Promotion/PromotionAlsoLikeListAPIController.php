@@ -27,6 +27,7 @@ use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
+use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
 
@@ -229,20 +230,24 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
             $withMallId = "AND (CASE WHEN om.object_type = 'tenant' THEN oms.merchant_id ELSE om.merchant_id END) = {$this->quote($mallId)}";
         }
 
+        $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+        $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+        $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+        $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+        if ($usingCdn) {
+            $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+        }
+
         $promotions = News::select(
                         'news.news_id as news_id',
                         DB::Raw("
                             CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                             CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
-                            CASE WHEN {$prefix}media.path is null THEN (
-                                select m.path
-                                from {$prefix}news_translations nt
-                                join {$prefix}media m
-                                    on m.object_id = nt.news_translation_id
-                                    and m.media_name_long = 'news_translation_image_orig'
-                                where nt.news_id = {$prefix}news.news_id
-                                group by nt.news_id
-                            ) ELSE {$prefix}media.path END as image_url
+                            (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id) AS image_url
                         "),
                         'news.object_type',
                         // query for get status active based on timezone
@@ -273,10 +278,6 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
                             $q->on('news_translations.news_id', '=', 'news.news_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('media', function ($q) {
-                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
-                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
-                        })
                         ->whereRaw("{$prefix}news.object_type = 'promotion'")
                         ->whereRaw("{$prefix}news.status = 'active'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
