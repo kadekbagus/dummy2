@@ -55,6 +55,20 @@ return array(
 			'ttr'    => 60,
 		),
 
+		'gtm_email' => array(
+			'driver' => 'beanstalkd',
+			'host'   => 'localhost',
+			'queue'  => 'gtm_email',
+			'ttr'    => 60,
+		),
+
+		'gtm_campaign' => array(
+			'driver' => 'beanstalkd',
+			'host'   => 'localhost',
+			'queue'  => 'gtm_campaign',
+			'ttr'    => 60,
+		),
+
 		'sqs' => array(
 			'driver' => 'sqs',
 			'key'    => 'your-public-key',
