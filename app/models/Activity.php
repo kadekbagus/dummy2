@@ -1240,12 +1240,12 @@ class Activity extends Eloquent
         }
 
         // queue for create/update activity document in elasticsearch
-        Queue::push('Orbit\\Queue\\Elasticsearch\\ESActivityUpdateQueue', [
-            'activity_id' => $this->activity_id,
-            'referer' => substr($referer, 0, 2048),
-            'orbit_referer' => substr($orbitReferer, 0, 2048),
-            'current_url' => Request::fullUrl()
-        ]);
+        // Queue::push('Orbit\\Queue\\Elasticsearch\\ESActivityUpdateQueue', [
+        //     'activity_id' => $this->activity_id,
+        //     'referer' => substr($referer, 0, 2048),
+        //     'orbit_referer' => substr($orbitReferer, 0, 2048),
+        //     'current_url' => Request::fullUrl()
+        // ]);
     }
 
 
