@@ -732,10 +732,16 @@ return array(
 
         // Number of days before token in reset link expires
         'reset_expire' => 7,
+
+        // Name of the queue used to send the email
+        'queue_name' => 'gtm_email',
     ),
 
     'registration' => array(
         'mobile'    => array(
+            // Name of the queue used to send the email
+            'queue_name' => 'gtm_email',
+
             // New role assigned to the user
             'role' => 'Consumer',
 
