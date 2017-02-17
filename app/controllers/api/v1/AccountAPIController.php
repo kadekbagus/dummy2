@@ -26,6 +26,7 @@ class AccountAPIController extends ControllerAPI
     protected $valid_role    = NULL;
     protected $valid_country = NULL;
     protected $valid_account_type = NULL;
+    protected $valid_lang = NULL;
     protected $allow_select_all_tenant = ['Dominopos', '3rd Party', 'Master'];
 
     /**
@@ -724,6 +725,10 @@ class AccountAPIController extends ControllerAPI
             $province        = OrbitInput::post('province');
             $postal_code     = OrbitInput::post('postal_code');
             $position        = OrbitInput::post('position');
+
+            $languages = OrbitInput::post('languages', []);
+            $mobile_default_language = OrbitInput::post('mobile_default_language');
+
             // select all link to tenant just for 3rd and dominopos
             $select_all_tenants = OrbitInput::post('select_all_tenants', 'N');
 
@@ -754,37 +759,41 @@ class AccountAPIController extends ControllerAPI
             $account_type = $this->valid_account_type;
 
             $validation_data = [
-                'is_subscribed'      => $is_subscribed,
-                'select_all_tenants' => $select_all_tenants,
-                'user_firstname'     => $user_firstname,
-                'user_lastname'      => $user_lastname,
-                'user_email'         => $user_email,
-                'account_name'       => $account_name,
-                'status'             => $status,
-                'company_name'       => $company_name,
-                'address_line1'      => $address_line1,
-                'city'               => $city,
-                'country_id'         => $country_id,
-                'merchant_ids'       => $merchant_ids,
-                'user_password'      => $user_password,
-                'role_name'          => $role_name,
+                'is_subscribed'           => $is_subscribed,
+                'select_all_tenants'      => $select_all_tenants,
+                'user_firstname'          => $user_firstname,
+                'user_lastname'           => $user_lastname,
+                'user_email'              => $user_email,
+                'account_name'            => $account_name,
+                'status'                  => $status,
+                'company_name'            => $company_name,
+                'address_line1'           => $address_line1,
+                'city'                    => $city,
+                'country_id'              => $country_id,
+                'merchant_ids'            => $merchant_ids,
+                'user_password'           => $user_password,
+                'role_name'               => $role_name,
+                'languages'               => $languages,
+                'mobile_default_language' => $mobile_default_language,
             ];
 
             $validation_error = [
-                'is_subscribed'      => 'in:N,Y',
-                'select_all_tenants' => 'in:N,Y|orbit.access.select_all_tenants:' . $account_type->type_name,
-                'user_firstname'     => 'required',
-                'user_lastname'      => 'required',
-                'user_email'         => 'required|email|orbit.exists.username',
-                'account_name'       => 'required|unique:campaign_account,account_name',
-                'status'             => 'required|in:active,inactive',
-                'company_name'       => 'required',
-                'address_line1'      => 'required',
-                'city'               => 'required',
-                'country_id'         => 'required|orbit.empty.country',
-                'merchant_ids'       => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
-                'user_password'      => 'required|min:6',
-                'role_name'          => 'required|in:Campaign Owner,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
+                'is_subscribed'           => 'in:N,Y',
+                'select_all_tenants'      => 'in:N,Y|orbit.access.select_all_tenants:' . $account_type->type_name,
+                'user_firstname'          => 'required',
+                'user_lastname'           => 'required',
+                'user_email'              => 'required|email|orbit.exists.username',
+                'account_name'            => 'required|unique:campaign_account,account_name',
+                'status'                  => 'required|in:active,inactive',
+                'company_name'            => 'required',
+                'address_line1'           => 'required',
+                'city'                    => 'required',
+                'country_id'              => 'required|orbit.empty.country',
+                'merchant_ids'            => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
+                'user_password'           => 'required|min:6',
+                'role_name'               => 'required|in:Campaign Owner,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
+                'languages'               => 'required|array',
+                'mobile_default_language' => 'required|size:2|orbit.formaterror.language',
             ];
 
             if ($select_all_tenants === 'Y') {
@@ -858,6 +867,13 @@ class AccountAPIController extends ControllerAPI
             $campaignAccount->is_subscribed   = $is_subscribed;
             $campaignAccount->position        = $position;
             $campaignAccount->status          = $status;
+
+            // check mobile default language must in supported language
+            if (in_array($mobile_default_language, $languages)) {
+                $campaignAccount->mobile_default_language = $mobile_default_language;
+            } else {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+            }
             $campaignAccount->save();
 
             // new employee
@@ -876,6 +892,32 @@ class AccountAPIController extends ControllerAPI
                     $userMerchant->merchant_id = $merchantId;
                     $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
                     $userMerchant->save();
+                }
+            }
+
+            // languages
+            if (count($languages) > 0) {
+                foreach ($languages as $language_name) {
+                    $validator = Validator::make(
+                        array(
+                            'language'             => $language_name
+                        ),
+                        array(
+                            'language'             => 'required|size:2|orbit.formaterror.language'
+                        )
+                    );
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $pmp_account_languages = new ObjectSupportedLanguage();
+                    $pmp_account_languages->object_id = $campaignAccount->campaign_account_id;
+                    $pmp_account_languages->object_type = 'pmp_account';
+                    $pmp_account_languages->language_id = Language::where('name', '=', $language_name)->first()->language_id;
+                    $pmp_account_languages->save();
                 }
             }
 
@@ -1661,6 +1703,18 @@ class AccountAPIController extends ControllerAPI
                 return FALSE;
             }
 
+            return TRUE;
+        });
+
+        Validator::extend('orbit.formaterror.language', function($attribute, $value, $parameters)
+        {
+            $lang = Language::where('name', '=', $value)->where('status', '=', 'active')->first();
+
+            if (empty($lang)) {
+                return FALSE;
+            }
+
+            $this->valid_lang = $lang;
             return TRUE;
         });
     }
