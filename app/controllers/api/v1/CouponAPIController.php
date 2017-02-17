@@ -179,6 +179,7 @@ class CouponAPIController extends ControllerAPI
             $couponCodes = OrbitInput::post('coupon_codes');
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
+            $is_exclusive = OrbitInput::post('is_exclusive');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -402,6 +403,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->is_all_gender = $is_all_gender;
             $newcoupon->is_popup = $is_popup;
             $newcoupon->sticky_order = $sticky_order;
+            $newcoupon->is_exclusive = $is_exclusive;
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -1358,6 +1360,10 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('is_all_age', function($is_all_age) use ($updatedcoupon) {
                 $updatedcoupon->is_all_age = $is_all_age;
+            });
+
+            OrbitInput::post('is_exclusive', function($is_exclusive) use ($updatedcoupon) {
+                $updatedcoupon->is_exclusive = $is_exclusive;
             });
 
             OrbitInput::post('coupon_validity_in_date', function($coupon_validity_in_date) use ($updatedcoupon, $end_date) {
