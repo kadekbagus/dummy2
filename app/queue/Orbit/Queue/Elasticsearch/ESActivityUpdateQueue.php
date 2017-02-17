@@ -96,21 +96,35 @@ class ESActivityUpdateQueue
         $browserName = $detect->browser();
         $browserVersion = $detect->version($browserName);
 
-        // get location based on ip address
-        $addr = $activity->ip_address;
-        $addr_type = "ipv4";
-        if (ip2long($addr) !== false) {
-            $addr_type = "ipv4";
-        } else if (preg_match('/^[0-9a-fA-F:]+$/', $addr) && @inet_pton($addr)) {
-            $addr_type = "ipv6";
-        }
+        $country = Config::get('orbit.activity.elasticsearch.lookup_country_city.default_country_value', 'LOOKUP COUNTRY DISABLED');
+        $city = Config::get('orbit.activity.elasticsearch.lookup_country_city.default_city_value', 'LOOKUP CITY DISABLED');
 
-        $findIp = DB::connection(Config::get('orbit.dbip.connection_id'))
-                    ->table(Config::get('orbit.dbip.table'))
-                    ->where('ip_start', '<=', $addr)
-                    ->where('ip_end', '>=', $addr)
-                    ->where('addr_type', '=', $addr_type)
-                    ->first();
+        $lookupCountryCityEnabled = Config::get('orbit.activity.elasticsearch.lookup_country_city.enable', TRUE);
+        if ($lookupCountryCityEnabled) {
+            // get location based on ip address
+            $addr = $activity->ip_address;
+            $addr_type = 'ipv4';
+            if (ip2long($addr) !== false) {
+                $addr_type = 'ipv4';
+            } else if (preg_match('/^[0-9a-fA-F:]+$/', $addr) && @inet_pton($addr)) {
+                $addr_type = 'ipv6';
+            }
+
+            $findIp = DB::connection(Config::get('orbit.dbip.connection_id'))
+                        ->table(Config::get('orbit.dbip.table'))
+                        ->where('ip_start', '<=', $addr)
+                        ->where('ip_end', '>=', $addr)
+                        ->where('addr_type', '=', $addr_type)
+                        ->first();
+
+            $country = '';
+            $city = '';
+            if (is_object($findIp)) {
+                // Override default value
+                $country = $findIp->country;
+                $city = $findIp->city;
+            }
+        }
 
         $esConfig = Config::get('orbit.elasticsearch');
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
@@ -187,8 +201,8 @@ class ESActivityUpdateQueue
                 'device_type' => $deviceType,
                 'device_vendor' => null,
                 'device_model' => $deviceModel,
-                'country' =>  $findIp->country,
-                'city' =>  $findIp->city,
+                'country' =>  $country,
+                'city' =>  $city,
                 'position' => $pos,
                 'page' => explode('?', $activity->request_uri)[0],
                 'referer' => $data['referer'],
