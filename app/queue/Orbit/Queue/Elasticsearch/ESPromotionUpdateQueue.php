@@ -62,6 +62,9 @@ class ESPromotionUpdateQueue
                             }])
                     ->select(DB::raw("
                         {$prefix}news.*,
+                        {$prefix}campaign_account.mobile_default_language,
+                        {$prefix}users.user_id,
+                        {$prefix}users.user_email,
                         CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                         THEN {$prefix}campaign_status.campaign_status_name
                         ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
@@ -73,6 +76,8 @@ class ESPromotionUpdateQueue
                         THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
                     "))
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                    ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                    ->join('users', 'users.user_id', '=', 'news.created_by')
                     ->where('news.news_id', $newsId)
                     ->where('news.object_type', 'promotion')
                     ->orderBy('news.news_id', 'asc')
@@ -122,14 +127,14 @@ class ESPromotionUpdateQueue
             foreach($news->esCampaignLocations as $esCampaignLocation) {
                 $linkToTenant = array(
                     "merchant_id" => $esCampaignLocation->merchant_id,
-                    "parent_id" => $esCampaignLocation->parent_id,
-                    "name" => $esCampaignLocation->name,
-                    "mall_name" => $esCampaignLocation->mall_name,
+                    "parent_id"   => $esCampaignLocation->parent_id,
+                    "name"        => $esCampaignLocation->name,
+                    "mall_name"   => $esCampaignLocation->mall_name,
                     "object_type" => $esCampaignLocation->object_type,
-                    "city" => $esCampaignLocation->city,
-                    "province" => $esCampaignLocation->province,
-                    "country" => $esCampaignLocation->country,
-                    "position" => [
+                    "city"        => $esCampaignLocation->city,
+                    "province"    => $esCampaignLocation->province,
+                    "country"     => $esCampaignLocation->country,
+                    "position"    => [
                         'lon' => $esCampaignLocation->geofence->longitude,
                         'lat' => $esCampaignLocation->geofence->latitude
                     ]
@@ -156,11 +161,11 @@ class ESPromotionUpdateQueue
             $translations = array();
             foreach ($news->translations as $translationCollection) {
                 $translation = array(
-                    'name' => $translationCollection->news_name,
-                    'description' => $translationCollection->description,
-                    'language_id' => $translationCollection->merchant_language_id,
+                    'name'          => $translationCollection->news_name,
+                    'description'   => $translationCollection->description,
+                    'language_id'   => $translationCollection->merchant_language_id,
                     'language_code' => $translationCollection->name,
-                    'image_url' => NULL
+                    'image_url'     => NULL
                 );
 
                 foreach ($translationCollection->media_orig as $media) {
@@ -171,23 +176,26 @@ class ESPromotionUpdateQueue
             }
 
             $body = [
-                'news_id' => $news->news_id,
-                'name' => $news->news_name,
-                'description' => $news->description,
-                'object_type' => $news->object_type,
-                'begin_date' => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
-                'end_date' => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z',
-                'updated_at' => date('Y-m-d', strtotime($news->updated_at)) . 'T' . date('H:i:s', strtotime($news->updated_at)) . 'Z',
-                'status' => $news->status,
+                'news_id'         => $news->news_id,
+                'name'            => $news->news_name,
+                'description'     => $news->description,
+                'object_type'     => $news->object_type,
+                'begin_date'      => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
+                'end_date'        => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z',
+                'updated_at'      => date('Y-m-d', strtotime($news->updated_at)) . 'T' . date('H:i:s', strtotime($news->updated_at)) . 'Z',
+                'status'          => $news->status,
                 'campaign_status' => $news->campaign_status,
-                'is_all_gender' => $news->is_all_gender,
-                'is_all_age' => $news->is_all_age,
-                'category_ids' => $categoryIds,
-                'translation' => $translations,
-                'keywords' => $keywords,
-                'partner_ids' => $partnerIds,
-                'advert_ids' => $advertIds,
-                'link_to_tenant' => $linkToTenants
+                'is_all_gender'   => $news->is_all_gender,
+                'is_all_age'      => $news->is_all_age,
+                'category_ids'    => $categoryIds,
+                'created_by'      => $news->user_id,
+                'creator_email'   => $news->user_email,
+                'default_lang'    => $news->mobile_default_language,
+                'translation'     => $translations,
+                'keywords'        => $keywords,
+                'partner_ids'     => $partnerIds,
+                'advert_ids'      => $advertIds,
+                'link_to_tenant'  => $linkToTenants
             ];
 
             if ($response_search['hits']['total'] > 0) {
