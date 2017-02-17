@@ -55,4 +55,18 @@ class Partner extends Eloquent
     {
         return $this->hasMany('PartnerAffectedGroup', 'partner_id', 'partner_id');
     }
+
+    public function translations()
+    {
+        return $this->hasMany('PartnerTranslation', 'partner_id', 'partner_id')
+                ->where('partner_translations.status', '!=', 'deleted')
+                ->has('language')
+                ->join('languages', 'languages.language_id', '=', 'partner_translations.language_id');
+    }
+
+    public function supportedLanguages()
+    {
+        return $this->hasMany('ObjectSupportedLanguage', 'object_id', 'partner_id')
+            ->where('object_supported_language.object_type', '=', 'partner');
+    }
 }
