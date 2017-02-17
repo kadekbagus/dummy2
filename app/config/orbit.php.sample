@@ -23,6 +23,9 @@ return array(
         // Prefix to access indices
         'indices_prefix' => 'v2x_',
 
+        // The minimum_should_match parameter possible values
+        'minimum_should_match' => '50%',
+
         // List of indices that we have in Elasticsearch
         // All the query to the index name will be appended by prefix automatically
         'indices' => [

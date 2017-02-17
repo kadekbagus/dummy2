@@ -108,6 +108,11 @@ class PartnerAPIController extends ControllerAPI
             $social_media_type = OrbitInput::post('social_media_type', 'facebook');
             $logo = OrbitInput::files('logo');
             $image = OrbitInput::files('image');
+            $is_exclusive = OrbitInput::post('is_exclusive', 'N');
+            $pop_up_content = OrbitInput::post('pop_up_content');
+            $token = OrbitInput::post('token');
+            $translations = OrbitInput::post('translations');
+            $supported_languages = OrbitInput::post('supported_languages');
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
 
@@ -131,6 +136,8 @@ class PartnerAPIController extends ControllerAPI
                 'contact_firstname'      => $contact_firstname,
                 'contact_lastname'       => $contact_lastname,
                 'affected_group_name_id' => $affected_group_name_id,
+                'is_exclusive'           => $is_exclusive,
+                'supported_languages'    => $supported_languages,
             ];
 
             $validation_error = [
@@ -145,6 +152,8 @@ class PartnerAPIController extends ControllerAPI
                 'contact_firstname'      => 'required',
                 'contact_lastname'       => 'required',
                 'affected_group_name_id' => 'array',
+                'is_exclusive'           => 'in:Y,N',
+                'supported_languages'    => 'array|orbit.empty.language',
             ];
 
             $validation_error_message = [];
@@ -167,6 +176,13 @@ class PartnerAPIController extends ControllerAPI
                 $validation_error += $affected_group_name_validation['error'];
             }
 
+            if (strtoupper($is_exclusive) === 'Y') {
+                $validation_data += ['pop_up_content' => $pop_up_content];
+                $validation_data += ['token' => $token];
+                $validation_error += ['pop_up_content' => 'required'];
+                $validation_error += ['token' => 'required'];
+            }
+
             $validator = Validator::make(
                 $validation_data,
                 $validation_error,
@@ -182,6 +198,12 @@ class PartnerAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // Check for english content
+            $dataTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
             }
 
             Event::fire('orbit.partner.postnewpartner.after.validation', array($this, $validator));
@@ -207,12 +229,22 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->status = $status;
             $newPartner->is_shown_in_filter = $is_shown_in_filter;
             $newPartner->is_visible = $is_visible;
+            $newPartner->is_exclusive = $is_exclusive;
+
+            if (strtoupper($is_exclusive) === 'Y') {
+                $newPartner->pop_up_content = $pop_up_content;
+                $newPartner->token = $token;
+            }
 
             Event::fire('orbit.partner.postnewpartner.before.save', array($this, $newPartner));
 
             $newPartner->save();
 
-            if (!empty($deeplink_url) ) {
+            OrbitInput::post('translations', function($translation_json_string) use ($newPartner) {
+                $this->validateAndSaveTranslations($newPartner, $translation_json_string, 'create');
+            });
+
+            if (! empty($deeplink_url)) {
                 $newDeepLink = new DeepLink();
                 $newDeepLink->object_id = $newPartner->partner_id;
                 $newDeepLink->object_type = 'partner';
@@ -223,7 +255,18 @@ class PartnerAPIController extends ControllerAPI
                 $newPartner->deeplink = $newDeepLink;
             }
 
-            if (!empty($social_media_uri)) {
+            if (! empty($supported_languages)) {
+                foreach ($supported_languages as $supported_language) {
+                    $newSupportedLanguage = new ObjectSupportedLanguage();
+                    $newSupportedLanguage->object_id = $newPartner->partner_id;
+                    $newSupportedLanguage->object_type = 'partner';
+                    $newSupportedLanguage->language_id = $supported_language;
+                    $newSupportedLanguage->save();
+                }
+                $newPartner->load('supportedLanguages.language');
+            }
+
+            if (! empty($social_media_uri)) {
                 $sosmed = SocialMedia::where('social_media_code', '=', $social_media_type)->first();
 
                 $newObjectSocialMedia = new ObjectSocialMedia();
@@ -432,6 +475,12 @@ class PartnerAPIController extends ControllerAPI
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
 
+            $is_exclusive = OrbitInput::post('is_exclusive', 'N');
+            $token = OrbitInput::post('token');
+            $pop_up_content = OrbitInput::post('pop_up_content');
+            $translations = OrbitInput::post('translations');
+            $supported_languages = OrbitInput::post('supported_languages');
+
             if (is_array($affected_group_name_id)) {
                 $affected_group_name_validation = $this->generate_validation_affected_group_name($affected_group_name_id);
             }
@@ -453,6 +502,8 @@ class PartnerAPIController extends ControllerAPI
                 'contact_firstname'      => $contact_firstname,
                 'contact_lastname'       => $contact_lastname,
                 'affected_group_name_id' => $affected_group_name_id,
+                'is_exclusive'           => $is_exclusive,
+                'supported_languages'    => $supported_languages,
             ];
 
             $validation_error = [
@@ -468,6 +519,8 @@ class PartnerAPIController extends ControllerAPI
                 'contact_firstname'      => 'required',
                 'contact_lastname'       => 'required',
                 'affected_group_name_id' => 'array',
+                'is_exclusive'           => 'in:Y,N',
+                'supported_languages'    => 'array',
             ];
 
             $validation_error_message = [];
@@ -506,6 +559,13 @@ class PartnerAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            // Check for english content
+            $jsonTranslations = @json_decode($translations);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+            }
+
             Event::fire('orbit.partner.postupdatepartner.after.validation', array($this, $validator));
 
             $prefix = DB::getTablePrefix();
@@ -591,6 +651,64 @@ class PartnerAPIController extends ControllerAPI
 
             OrbitInput::post('is_visible', function($is_visible) use ($updatedpartner) {
                 $updatedpartner->is_visible = $is_visible;
+            });
+
+            OrbitInput::post('is_exclusive', function($is_exclusive) use ($updatedpartner) {
+                $updatedpartner->is_exclusive = $is_exclusive;
+            });
+
+            OrbitInput::post('token', function($token) use ($updatedpartner, $is_exclusive) {
+                $updatedpartner->token = $token;
+            });
+
+            OrbitInput::post('pop_up_content', function($pop_up_content) use ($updatedpartner, $is_exclusive) {
+                $updatedpartner->pop_up_content = $pop_up_content;
+            });
+
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedpartner) {
+                $this->validateAndSaveTranslations($updatedpartner, $translation_json_string, 'update');
+            });
+
+            OrbitInput::post('supported_languages', function($supported_languages) use ($updatedpartner, $partner_id) {
+                // check all supported languages
+                $all_partner_languages = ObjectSupportedLanguage::where('object_id', $partner_id)
+                    ->where('object_type', 'partner')
+                    ->get()
+                    ->lists('language_id');
+
+                $unlinked_language_ids = array_diff($all_partner_languages, $supported_languages);
+                $added_language_ids = array_diff($supported_languages, $all_partner_languages);
+
+                // Insert added languages
+                foreach ($added_language_ids as $added_language) {
+                    $new_supported_language = new ObjectSupportedLanguage();
+                    $new_supported_language->object_id = $partner_id;
+                    $new_supported_language->object_type = 'partner';
+                    $new_supported_language->language_id = $added_language;
+                    $new_supported_language->save();
+                }
+
+                // check for languages that has translation before unlink
+                $partner_translation = PartnerTranslation::whereIn('language_id', $unlinked_language_ids)
+                    ->where('partner_id', $partner_id)
+                    ->where('status', 'active')
+                    ->get();
+
+                if ($partner_translation->count() !== 0) {
+                    $errorMessage = 'Cannot unlink supported language: %s';
+                    OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $partner_translation[0]->language->name_long));
+                }
+
+                // unlink languages
+                $unlinked_languages = ObjectSupportedLanguage::whereIn('language_id', $unlinked_language_ids)
+                    ->where('object_type', 'partner')
+                    ->get();
+
+                foreach($unlinked_languages as $unlinked_language) {
+                    $unlinked_language->delete(true);
+                }
+
+                $updatedpartner->load('supportedLanguages.language');
             });
 
             OrbitInput::post('deeplink_url', function($deeplink_url) use ($updatedpartner, $partner_id) {
@@ -885,7 +1003,19 @@ class PartnerAPIController extends ControllerAPI
                             'partners.contact_phone',
                             'partners.contact_email',
                             'partners.is_visible',
-                            'partners.is_shown_in_filter'
+                            'partners.is_shown_in_filter',
+                            'partners.is_exclusive',
+                            'partners.token',
+                            'partners.pop_up_content',
+                            DB::raw("
+                                CASE WHEN (
+                                    SELECT COUNT(object_partner_id) from {$prefix}object_partner WHERE object_type IN ('promotion', 'news', 'coupon')
+                                        and {$prefix}object_partner.partner_id = {$prefix}partners.partner_id
+                                    ) > 0
+                                    THEN 'Y'
+                                    ELSE 'N'
+                                END AS linked_to_campaign
+                            ")
                         )
                         ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id')
                         ->leftJoin('deeplinks', function($qDeepLink) {
@@ -944,6 +1074,12 @@ class PartnerAPIController extends ControllerAPI
                                     'metadata'
                                 );
                             }]);
+                    } elseif ($relation === 'translations') {
+                        $partners->with('translations');
+                    } elseif ($relation === 'supportedLanguages') {
+                        $partners->with('supportedLanguages');
+                    } elseif ($relation === 'supportedLanguages.language') {
+                        $partners->with('supportedLanguages.language');
                     } else if ($relation === 'mediaImageOrig') {
                         $partners->with([$relation => function ($qImage) {
                             $qImage->select(
@@ -1289,6 +1425,23 @@ class PartnerAPIController extends ControllerAPI
 
             return TRUE;
         });
+
+        // Check the affected group name is exists
+        Validator::extend('orbit.empty.language', function ($attribute, $value, $parameters) {
+            $values = (array) $value;
+
+            foreach ($values as $language_id) {
+                $language = Language::where('language_id', $language_id)
+                    ->where('status', 'active')
+                    ->first();
+
+                if (empty($language)) {
+                    return FALSE;
+                }
+            }
+
+            return TRUE;
+        });
     }
 
     protected function generate_validation_image($image_name, $images, $config, $max_count = 1) {
@@ -1338,5 +1491,108 @@ class PartnerAPIController extends ControllerAPI
         }
 
         return $validation;
+    }
+
+    /**
+     * @param Partner $partner
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveTranslations($partner, $translations_json_string, $scenario = 'create')
+    {
+        /*
+         * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
+         *
+         * Having a value of null means deleting the translation
+         *
+         * where PartnerTranslation object is object with keys:
+         *   description, pop_up_content
+         *
+         * No requirement for including fields. If field not included it means not updated. If field included with
+         * value null it means set to null (use main language content instead).
+         */
+
+        $valid_fields = ['description', 'pop_up_content'];
+        $user = $this->api->user;
+        $operations = [];
+
+        $data = @json_decode($translations_json_string);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+        }
+
+        // translate for mall
+        foreach ($data as $language_id => $translations) {
+            $language = Language::where('language_id', '=', $language_id)
+                ->first();
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.language'));
+            }
+            $existing_translation = PartnerTranslation::excludeDeleted()
+                ->where('partner_id', '=', $partner->partner_id)
+                ->where('language_id', '=', $language_id)
+                ->first();
+            if ($translations === null) {
+                // deleting, verify exists
+                if (empty($existing_translation)) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.language'));
+                }
+                $operations[] = ['delete', $existing_translation];
+            } else {
+                foreach ($translations as $field => $value) {
+                    if (!in_array($field, $valid_fields, true)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                    }
+                    if ($value !== null && !is_string($value)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
+                }
+                if (empty($existing_translation)) {
+                    $operations[] = ['create', $language_id, $translations];
+                } else {
+                    $operations[] = ['update', $existing_translation, $translations];
+                }
+            }
+        }
+
+        foreach ($operations as $operation) {
+            $op = $operation[0];
+
+            if ($op === 'create') {
+
+                // for translation per mall
+                $new_partnertranslation = new PartnerTranslation();
+                $new_partnertranslation->partner_id = $partner->partner_id;
+                $new_partnertranslation->language_id = $operation[1];
+                $new_partnertranslation->status = $partner->status;
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $new_partnertranslation->{$field} = $value;
+                }
+                $new_partnertranslation->save();
+
+                $partner->setRelation('translation_'. $new_partnertranslation->language_id, $new_partnertranslation);
+            }
+            elseif ($op === 'update') {
+
+                /** @var PartnerTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $data = $operation[2];
+                foreach ($data as $field => $value) {
+                    $existing_translation->{$field} = $value;
+                }
+                $existing_translation->save();
+
+                $partner->setRelation('translation_'. $existing_translation->language_id, $existing_translation);
+
+            }
+            elseif ($op === 'delete') {
+                /** @var PartnerTranslation $existing_translation */
+                $existing_translation = $operation[1];
+                $existing_translation->delete();
+            }
+        }
+
     }
 }

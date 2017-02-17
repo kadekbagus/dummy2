@@ -18,6 +18,7 @@
 class NewsTranslation extends Eloquent
 {
     use ModelStatusTrait;
+    use CampaignAccessTrait;
 
     protected $table = 'news_translations';
 
