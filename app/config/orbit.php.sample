@@ -5649,4 +5649,16 @@ return array(
         ]
     ],
 
+    /**
+     * Configuration for 'advertise with us' email GTM
+     */
+    'advertise_with_us_email' => array(
+        // subject of the email
+        'subject' => 'Advertise with us',
+
+        // email where the advertise request will be sent
+        // example : array('marketing@dominopos.com', 'fgiraud@dominopos.com')
+        'email_list' => array('marketing@dominopos.com'),
+    ),
+
 );
