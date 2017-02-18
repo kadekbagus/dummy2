@@ -181,7 +181,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
     {
         $_OLD_GET = $_GET;
         $_GET = [];
-        $_GET['take'] = 6;
+        $_GET['take'] = 5; // @todo take from config
         $_GET['skip'] = 0;
         $_GET['country'] = $params['country'];
         $_GET['cities'] = $params['cities'];
@@ -205,7 +205,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
         $sameCategoryRecords = $this->removeUnusedProperty($sameCategoryRecords);
 
         // Get promotion list excluding the cities and the category
-        if (count($sameCategoryRecords) <= 3) {
+        if (count($sameCategoryRecords) < $_GET['take']) {
             unset($_GET['cities']);
             unset($_GET['category_id']);
 
