@@ -184,7 +184,7 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
         $_GET['skip'] = 0;
         $_GET['country'] = $params['country'];
         $_GET['cities'] = $params['cities'];
-        $_GET['category_id'] = $params['category_id'];
+        $_GET['category_id'] = empty($params['category_id']) ? NULL : $params['category_id'];
         $_GET['mall_id'] = $params['mall_id'];
         $_GET['ul'] = $params['ul'];
         $_GET['from_homepage'] = 'y';   // prevent activity recording
