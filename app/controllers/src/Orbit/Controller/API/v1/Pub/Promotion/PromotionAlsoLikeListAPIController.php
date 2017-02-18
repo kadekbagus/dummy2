@@ -126,7 +126,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
             $data->total_records = $data->returned_records;
             $data->records = $similarItems;
 
-            $this->updateResponseForMall($data, $mallId);
+            $this->updateResponseForMall($elasticClient, $esNameBuilder, $data, $mallId);
 
             $this->response->data = $data;
             $this->response->code = 0;
@@ -284,21 +284,25 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
     /**
      * Update response property to include mall name
      *
+     * @param object $esClient
      * @param object $data
      * @param string $mallId
      * @return void
      */
-    protected function updateResponseForMall($data, $mallId)
+    protected function updateResponseForMall($esClient, $esIndexBuilder, $data, $mallId)
     {
         if (empty($mallId)) {
             return NULL;
         }
 
-        $mall = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
-        if (! is_object($mall)) {
-            return NULL;
-        }
+        $esMallParam = [
+            'index' => $esIndexBuilder->getIndexPrefixAndName('malldata'),
+            'type' => $esIndexBuilder->getTypeName('malldata'),
+            'id' => $mallId
+        ];
+        // $mall = Mall::excludeDeleted()->where('merchant_id', $mallId)->first();
+        $mall = $esClient->get($esMallParam);
 
-        $data->mall_name = $mall->name;
+        $data->mall_name = $mall['_source']['name'];
     }
 }
