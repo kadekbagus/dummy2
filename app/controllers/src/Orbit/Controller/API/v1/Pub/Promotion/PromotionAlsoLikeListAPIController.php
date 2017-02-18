@@ -86,13 +86,13 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
 
             $doLookupForCampaign = empty($country) || empty($categoryId);
 
+            $elasticClient = NULL;
             if ($doLookupForCampaign) {
                 $elasticClient = ClientBuilder::create()
                         ->setHosts($esConfig['hosts'])
                         ->build();
 
                 $campaignDocument = $elasticClient->get($esCurrentCampaignParams);
-                // print_r($campaignDocument);
 
                 if (empty($country)) {
                     $country = $this->getCountryFromDocument($campaignDocument);
