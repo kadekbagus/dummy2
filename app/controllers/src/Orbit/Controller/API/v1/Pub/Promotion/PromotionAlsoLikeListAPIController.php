@@ -69,6 +69,9 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', []);
             $ul = OrbitInput::get('ul', null);
+            $sortBy = OrbitInput::get('sortby', NULL);
+            $sortMode = OrbitInput::get('sortmode', NULL);
+            $language = OrbitInput::get('language', 'id');
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
@@ -109,6 +112,9 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
                 'cities'      => $cities,
                 'country'     => $country,
                 'ul'          => $ul,
+                'sort_by'     => $sortBy,
+                'sort_mode'   => $sortMode,
+                'language'    => $language,
                 'lon'         => $lon,
                 'lat'         => $lat,
                 'mall_id'     => $mallId,
@@ -187,8 +193,20 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
         $_GET['category_id'] = empty($params['category_id']) ? NULL : $params['category_id'];
         $_GET['mall_id'] = $params['mall_id'];
         $_GET['ul'] = $params['ul'];
+        $_GET['sortby'] = $params['sort_by'];
+        $_GET['sortmode'] = $params['sort_mode'];
+        $_GET['language'] = $params['language'];
         $_GET['from_homepage'] = 'y';   // prevent activity recording
         $_GET['excluded_ids'] = (array)$params['except_id'];
+
+        if ($params['sort_by'] === 'location') {
+            unset($_GET['cities']);
+        }
+
+        if (! empty($params['mall_id'])) {
+            $_GET['sortby'] = 'created_date';
+            $_GET['sortmode'] = 'desc';
+        }
 
         Config::set('orbit.cache.context.promotion-list.enable', FALSE);
 
