@@ -66,7 +66,6 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
             $exceptId = OrbitInput::get('except_id');
             $categoryId = OrbitInput::get('category_id');
             $partnerId = OrbitInput::get('partner_id');
-            $location = OrbitInput::get('location', null);
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', []);
             $ul = OrbitInput::get('ul', null);
@@ -107,7 +106,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
                 'except_id'   => $exceptId,
                 'category_id' => $categoryId,
                 'partner_id'  => $partnerId,
-                'cities'      => $location,
+                'cities'      => $cities,
                 'country'     => $country,
                 'ul'          => $ul,
                 'lon'         => $lon,
