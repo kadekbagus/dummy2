@@ -191,7 +191,6 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         $_GET['ul'] = $params['ul'];
         $_GET['sortby'] = $params['sort_by'];
         $_GET['sortmode'] = $params['sort_mode'];
-        $_GET['sortby']
         $_GET['from_homepage'] = 'y';   // prevent activity recording
         $_GET['excluded_ids'] = (array)$params['except_id'];
 
