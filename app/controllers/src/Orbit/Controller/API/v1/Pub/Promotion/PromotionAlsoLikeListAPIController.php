@@ -208,6 +208,12 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
             $_GET['sortmode'] = 'desc';
         }
 
+        foreach ($_GET as $key=>$value) {
+            if (empty($_GET[$key])) {
+                unset($_GET[$key]);
+            }
+        }
+
         Config::set('orbit.cache.context.promotion-list.enable', FALSE);
 
         $responseSameCategory = PromotionListAPIController::create('raw')

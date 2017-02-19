@@ -207,6 +207,12 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
             $_GET['sortmode'] = 'desc';
         }
 
+        foreach ($_GET as $key=>$value) {
+            if (empty($_GET[$key])) {
+                unset($_GET[$key]);
+            }
+        }
+
         Config::set('orbit.cache.context.coupon-list.enable', FALSE);
 
         $responseSameCategory = CouponListAPIController::create('raw')
