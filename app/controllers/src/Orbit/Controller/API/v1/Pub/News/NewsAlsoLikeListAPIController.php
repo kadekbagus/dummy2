@@ -53,23 +53,25 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
     public function getSearchNews()
     {
         $httpCode = 200;
-        $user = null;
-        $mall = null;
+        $user = NULL;
+        $mall = NULL;
 
         try {
             $this->checkAuth();
             $user = $this->api->user;
-            $show_total_record = OrbitInput::get('show_total_record', null);
+            $show_total_record = OrbitInput::get('show_total_record', NULL);
 
             $exceptId = OrbitInput::get('except_id');
             $categoryId = OrbitInput::get('category_id');
             $partnerId = OrbitInput::get('partner_id');
-            $country = OrbitInput::get('country', null);
+            $country = OrbitInput::get('country', NULL);
             $cities = OrbitInput::get('cities', []);
-            $ul = OrbitInput::get('ul', null);
+            $ul = OrbitInput::get('ul', NULL);
+            $sortBy = OrbitInput::get('sortby', NULL);
+            $sortMode = OrbitInput::get('sortmode', NULL);
             $lon = '';
             $lat = '';
-            $mallId = OrbitInput::get('mall_id', null);
+            $mallId = OrbitInput::get('mall_id', NULL);
             $esConfig = Config::get('orbit.elasticsearch');
             $esIndex = 'news';
 
@@ -107,6 +109,8 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                 'cities'      => $cities,
                 'country'     => $country,
                 'ul'          => $ul,
+                'sort_by'     => $sortBy,
+                'sort_mode'   => $sortMode,
                 'lon'         => $lon,
                 'lat'         => $lat,
                 'mall_id'     => $mallId,
@@ -134,7 +138,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = NULL;
             $httpCode = 403;
 
         } catch (InvalidArgsException $e) {
@@ -143,7 +147,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             $this->response->message = $e->getMessage();
             $result['total_records'] = 0;
             $result['returned_records'] = 0;
-            $result['records'] = null;
+            $result['records'] = NULL;
 
             $this->response->data = $result;
             $httpCode = 403;
@@ -157,7 +161,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
-            $this->response->data = null;
+            $this->response->data = NULL;
             $httpCode = 500;
 
         } catch (Exception $e) {
@@ -182,9 +186,11 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         $_GET['skip'] = 0;
         $_GET['country'] = $params['country'];
         $_GET['cities'] = $params['cities'];
-        $_GET['category_id'] = $params['category_id'];
+        $_GET['category_id'] = empty($params['category_id']) ? NULL : $params['category_id'];
         $_GET['mall_id'] = $params['mall_id'];
         $_GET['ul'] = $params['ul'];
+        $_GET['sortby'] = $params['sort_by'];
+        $_GET['sortmode'] = $params['sort_mode'];
         $_GET['from_homepage'] = 'y';   // prevent activity recording
         $_GET['excluded_ids'] = (array)$params['except_id'];
 
