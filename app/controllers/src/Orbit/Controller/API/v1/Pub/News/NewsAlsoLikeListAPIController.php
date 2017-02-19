@@ -69,6 +69,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             $ul = OrbitInput::get('ul', NULL);
             $sortBy = OrbitInput::get('sortby', NULL);
             $sortMode = OrbitInput::get('sortmode', NULL);
+            $language = OrbitInput::get('language', 'id');
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', NULL);
@@ -111,6 +112,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                 'ul'          => $ul,
                 'sort_by'     => $sortBy,
                 'sort_mode'   => $sortMode,
+                'language'    => $language,
                 'lon'         => $lon,
                 'lat'         => $lat,
                 'mall_id'     => $mallId,
@@ -191,8 +193,18 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         $_GET['ul'] = $params['ul'];
         $_GET['sortby'] = $params['sort_by'];
         $_GET['sortmode'] = $params['sort_mode'];
+        $_GET['language'] = $params['language'];
         $_GET['from_homepage'] = 'y';   // prevent activity recording
         $_GET['excluded_ids'] = (array)$params['except_id'];
+
+        if ($params['sort_by'] === 'location') {
+            unset($_GET['cities']);
+        }
+
+        if (! empty($params['mall_id'])) {
+            $_GET['sortby'] = 'created_date';
+            $_GET['sortmode'] = 'desc';
+        }
 
         Config::set('orbit.cache.context.event-list.enable', FALSE);
 
