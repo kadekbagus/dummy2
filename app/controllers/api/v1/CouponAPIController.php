@@ -179,7 +179,7 @@ class CouponAPIController extends ControllerAPI
             $couponCodes = OrbitInput::post('coupon_codes');
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
-            $is_exclusive = OrbitInput::post('is_exclusive');
+            $is_exclusive = OrbitInput::post('is_exclusive', 'N');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
