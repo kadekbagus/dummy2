@@ -606,6 +606,7 @@ class AccountAPIController extends ControllerAPI
                 'postal_code'    => $row->userDetail->postal_code,
                 'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => @$row->userDetail->userCountry->name],
                 'country_name'   => @$row->userDetail->userCountry->name,
+                'pmp_languages'  => $row->campaignAccount->pmpLanguages,
             ];
         }
 
