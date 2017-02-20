@@ -577,6 +577,8 @@ class AccountAPIController extends ControllerAPI
                 $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->user_id);
             }
 
+            $disable_mobile_default_language = (count($row->campaignAccount->pmpLanguages) > 0) ? true : false;
+
             $records[] = [
                 'account_name'       => $row->campaignAccount->account_name,
                 'company_name'       => $row->company_name,
@@ -586,6 +588,8 @@ class AccountAPIController extends ControllerAPI
                 'type_name'          => $row->type_name,
                 'select_all_tenants' => $row->campaignAccount->is_link_to_all,
                 'is_subscribed'      => $row->campaignAccount->is_subscribed,
+                'mobile_default_language' => $row->campaignAccount->mobile_default_language,
+                'disable_mobile_default_language' => $disable_mobile_default_language,
                 'tenant_count'       => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model

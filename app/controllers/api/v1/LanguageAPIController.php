@@ -40,7 +40,6 @@ class LanguageAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $languages = Language::select('languages.language_id', 'languages.name', 'languages.name_native', 'languages.name_long', 'languages.language_order', 'languages.created_at', 'languages.updated_at', 'languages.status')
                                 ->leftJoin('object_supported_language', 'object_supported_language.language_id', '=', 'languages.language_id')
-                                ->where('object_type', 'pmp_account')
                                 ->orderBy('language_order', 'DESC')
                                 ->distinct();
 
@@ -48,7 +47,8 @@ class LanguageAPIController extends ControllerAPI
                 $campaign_account = $user_login->campaignAccount()->first();
 
                 if ($campaign_account->is_link_to_all !== 'Y'){
-                    $languages->whereRaw("
+                    $languages->where('object_type', 'pmp_account')
+                            ->whereRaw("
                                 EXISTS (
                                     SELECT 1
                                     FROM {$prefix}campaign_account ca

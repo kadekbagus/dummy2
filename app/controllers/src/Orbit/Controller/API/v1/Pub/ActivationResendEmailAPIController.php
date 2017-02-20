@@ -100,8 +100,9 @@ class ActivationResendEmailAPIController extends IntermediateBaseController
             // Send email process to the queue
             Queue::push('Orbit\\Queue\\RegistrationMail', [
                 'user_id' => $this->user->user_id,
-                'mode' => 'gotomalls'
-            ]);
+                'mode' => 'gotomalls'],
+                Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
+            );
 
             $activity->setUser($this->user)
                      ->setActivityName('resend_activation_link')
