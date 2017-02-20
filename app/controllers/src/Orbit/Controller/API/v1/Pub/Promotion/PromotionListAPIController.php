@@ -441,7 +441,7 @@ class PromotionListAPIController extends PubControllerAPI
                 foreach ($excludedIds as $excludedId) {
                     $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
                 }
-                $jsonQuery['query']['filtered']['query']['bool']['must_not'] = $jsonExcludedIds;
+                $jsonQuery['query']['bool']['must_not'] = $jsonExcludedIds;
             });
 
             $sortby = $sort;
