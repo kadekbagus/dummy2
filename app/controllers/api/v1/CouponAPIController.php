@@ -211,6 +211,7 @@ class CouponAPIController extends ControllerAPI
                     'sticky_order'            => $sticky_order,
                     'is_popup'                => $is_popup,
                     'coupon_codes'            => $couponCodes,
+                    'partner_exclusive'       => $is_exclusive,
                 ),
                 array(
                     'promotion_name'          => 'required|max:255',
@@ -232,6 +233,7 @@ class CouponAPIController extends ControllerAPI
                     'sticky_order'            => 'in:0,1',
                     'is_popup'                => 'in:Y,N',
                     'coupon_codes'            => 'required',
+                    'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
                 ),
                 array(
                     'rule_value.required'     => 'The amount to obtain is required',
@@ -241,7 +243,8 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.numeric'  => 'The coupon value must be a number',
                     'discount_value.min'      => 'The coupon value must be greater than zero',
                     'sticky_order.in'         => 'The sticky order value must 0 or 1',
-                    'is_popup.in' => 'is popup must Y or N',
+                    'is_popup.in'             => 'is popup must Y or N',
+                    'partner_exclusive'       => 'Partner is not exclusive',
                 )
             );
 
@@ -1030,6 +1033,7 @@ class CouponAPIController extends ControllerAPI
             $linkToTenantIds = (array) $linkToTenantIds;
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
+            $is_exclusive = OrbitInput::post('is_exclusive', 'N');
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -1055,6 +1059,7 @@ class CouponAPIController extends ControllerAPI
                 'rule_end_date'           => $rule_end_date,
                 'is_all_gender'           => $is_all_gender,
                 'is_all_age'              => $is_all_age,
+                'partner_exclusive'       => $is_exclusive,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -1083,6 +1088,7 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
+                    'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
                 ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
@@ -4029,6 +4035,36 @@ class CouponAPIController extends ControllerAPI
             return true;
         });
 
+        // check the partner exclusive or not if the is_exclusive is set to 'Y'
+        Validator::extend('orbit.empty.exclusive_partner', function ($attribute, $value, $parameters) {
+            $flag_exclusive = false;
+            $is_exclusive = OrbitInput::post('is_exclusive');
+            $partner_ids = OrbitInput::post('partner_ids');
+            $partner_ids = (array) $partner_ids;
+
+            $partner_exclusive = Partner::select('is_exclusive')
+                           ->whereIn('partner_id', $partner_ids)
+                           ->get();
+
+            foreach ($partner_exclusive as $exclusive) {
+                if($exclusive->is_exclusive == 'Y'){
+                    $flag_exclusive = true;
+                }
+            }
+
+            $valid = true;
+
+            if ($is_exclusive == 'Y') {
+                if ($flag_exclusive) {
+                    $valid = true;
+                }
+                else {
+                    $valid = false;
+                }
+            }
+
+            return $valid;
+        });
     }
 
     /**
