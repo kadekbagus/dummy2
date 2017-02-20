@@ -65,6 +65,38 @@ class MerchantHelper
             return TRUE;
         });
 
+        // Check supported language
+        Validator::extend('orbit.supported.language', function ($attribute, $value, $parameters) {
+            $lang = Language::where('name', '=', $value)->where('status', '=', 'active')->first();
+
+            if (empty($lang)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        // Check store default language
+        Validator::extend('orbit.store.language', function ($attribute, $value, $parameters) {
+            $baseMerchantId = $parameters[0];
+            $mobileDefaultLanguage = $parameters[1];
+
+            //Cannot change country if there is any merchant linked to store
+            $baseMerchants = BaseMerchant::where('base_merchant_id', $baseMerchantId)
+                            ->first();
+
+            $merchants = BaseStore::join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                            ->where('base_merchants.mobile_default_language', '=', $baseMerchants->mobile_default_language)
+                            ->where('base_stores.base_merchant_id', '=', $baseMerchantId)
+                            ->first();
+
+            if ($baseMerchants->mobile_default_language != $mobileDefaultLanguage && ! empty($merchants)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
         // Check existing merchant name
         Validator::extend('orbit.exist.merchant_name', function ($attribute, $value, $parameters) {
             $country = $parameters[0];
