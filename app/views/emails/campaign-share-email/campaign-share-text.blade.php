@@ -1,6 +1,5 @@
-Hai {{{ $email }}},
-@if (empty($name))Seorang teman anda @else {{{ $name }}} @endif ingin anda untuk melihat {{{ $campaignTypeId }}} berikut ini:
-
+{{{ $greeting }}} {{{ $email }}},
+@if (empty($name)) {{{ $message1 }}} @else {{{ $name }}} @endif {{{ $message2 }}}
 {{{ $campaignName }}}
 
 {{{ $campaignUrl }}}

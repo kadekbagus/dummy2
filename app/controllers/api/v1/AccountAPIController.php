@@ -452,6 +452,7 @@ class AccountAPIController extends ControllerAPI
 
         $prefix = DB::getTablePrefix();
         $pmpAccounts = User::excludeDeleted('users')
+                        // ->join('roles', 'users.user_role_id', '=', 'roles.role_id')->whereIn('role_name', ['Campaign Owner', 'Campaign Employee', 'Campaign Admin']);
                             ->pmpAccounts();
 
         // Filter by mall name
@@ -492,14 +493,10 @@ class AccountAPIController extends ControllerAPI
                         INNER JOIN {$prefix}object_supported_language osl
                             ON osl.object_id = ca.campaign_account_id
                         WHERE nt.status != 'deleted'
-                            AND (ca.user_id = (SELECT cax.parent_user_id
-                                                FROM {$prefix}campaign_account cax
-                                                WHERE cax.user_id = {$prefix}campaign_account.user_id)
-                                OR ca.parent_user_id = (SELECT cax.parent_user_id
-                                                FROM {$prefix}campaign_account cax
-                                                WHERE cax.user_id = {$prefix}campaign_account.user_id)
-                            OR ca.user_id = {$prefix}campaign_account.user_id
-                            OR ca.parent_user_id = {$prefix}campaign_account.user_id)
+                            AND (ca.user_id = {$prefix}campaign_account.parent_user_id
+                                OR ca.parent_user_id = {$prefix}campaign_account.parent_user_id
+                                OR ca.user_id = {$prefix}campaign_account.user_id
+                                OR ca.parent_user_id = {$prefix}campaign_account.user_id)
                             AND osl.language_id = (select lx.language_id from {$prefix}languages lx where lx.name = {$prefix}campaign_account.mobile_default_language)
                             AND osl.status = 'active'
                         GROUP BY n.news_id
@@ -520,19 +517,14 @@ class AccountAPIController extends ControllerAPI
                         INNER JOIN {$prefix}object_supported_language osl
                             ON osl.object_id = ca.campaign_account_id
                         WHERE ct.status != 'deleted'
-                            AND (ca.user_id = (SELECT cax.parent_user_id
-                                    FROM {$prefix}campaign_account cax
-                                    WHERE cax.user_id = {$prefix}campaign_account.user_id)
-                                OR ca.parent_user_id = (SELECT parent_user_id
-                                    FROM {$prefix}campaign_account
-                                    WHERE user_id = {$prefix}campaign_account.user_id)
-                            OR ca.user_id = {$prefix}campaign_account.user_id
-                            OR ca.parent_user_id = {$prefix}campaign_account.user_id)
+                            AND (ca.user_id = {$prefix}campaign_account.parent_user_id
+                                OR ca.parent_user_id = {$prefix}campaign_account.parent_user_id
+                                OR ca.user_id = {$prefix}campaign_account.user_id
+                                OR ca.parent_user_id = {$prefix}campaign_account.user_id)
                             AND osl.language_id = (SELECT lx.language_id FROM {$prefix}languages lx where lx.name = {$prefix}campaign_account.mobile_default_language)
                             AND osl.status = 'active'
                         GROUP BY c.promotion_id
                         LIMIT 1
-
                         ) as total_campaign
                     ")
             );
