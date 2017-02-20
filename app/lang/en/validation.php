@@ -361,6 +361,7 @@ return array(
             'gtm_country' => 'The :attribute is not found',
             'vendor_city' => 'The :attribute is not found',
             'gtm_city' => 'The :attribute is not found',
+            'exclusive_partner' => 'Exclusive partner not found',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(

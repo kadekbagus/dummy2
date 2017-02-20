@@ -211,6 +211,7 @@ class CouponAPIController extends ControllerAPI
                     'sticky_order'            => $sticky_order,
                     'is_popup'                => $is_popup,
                     'coupon_codes'            => $couponCodes,
+                    'partner_exclusive'       => $is_exclusive,
                 ),
                 array(
                     'promotion_name'          => 'required|max:255',
@@ -232,6 +233,7 @@ class CouponAPIController extends ControllerAPI
                     'sticky_order'            => 'in:0,1',
                     'is_popup'                => 'in:Y,N',
                     'coupon_codes'            => 'required',
+                    'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
                 ),
                 array(
                     'rule_value.required'     => 'The amount to obtain is required',
@@ -241,7 +243,8 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.numeric'  => 'The coupon value must be a number',
                     'discount_value.min'      => 'The coupon value must be greater than zero',
                     'sticky_order.in'         => 'The sticky order value must 0 or 1',
-                    'is_popup.in' => 'is popup must Y or N',
+                    'is_popup.in'             => 'is popup must Y or N',
+                    'partner_exclusive'       => 'Partner is not exclusive',
                 )
             );
 
@@ -726,37 +729,29 @@ class CouponAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
             });
 
-            // Validation for mall language
-            // Default language in mall is required
+            // Default language for pmp_account is required
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
             $isAvailable = CouponTranslation::where('promotion_id', '=', $newcoupon->promotion_id)
-                                            ->whereRaw("
-                                                EXISTS (
-                                                    SELECT 1
-                                                    FROM {$prefix}languages
-                                                    WHERE EXISTS (
-                                                        SELECT 1
-                                                        FROM {$prefix}merchants
-                                                        WHERE {$prefix}merchants.object_type = 'mall'
-                                                            AND merchant_id in ('{$malls}')
-                                                            AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
-                                                        )
-                                                    AND {$prefix}coupon_translations.merchant_language_id = {$prefix}languages.language_id
-                                                    )
-                                            ")
-                                            ->where(function($query) {
-                                                $query->where('promotion_name', '=', '')
-                                                      ->orWhere('description', '=', '')
-                                                      ->orWhereNull('promotion_name')
-                                                      ->orWhereNull('description');
-                                              })
-                                            ->get();
+                                        ->whereRaw("
+                                            {$prefix}coupon_translations.merchant_language_id = (
+                                                SELECT language_id
+                                                FROM {$prefix}languages
+                                                WHERE name = (SELECT mobile_default_language FROM {$prefix}campaign_account WHERE user_id = {$this->quote($this->api->user->user_id)})
+                                            )
+                                        ")
+                                        ->where(function($query) {
+                                            $query->where('promotion_name', '=', '')
+                                                  ->orWhere('description', '=', '')
+                                                  ->orWhereNull('promotion_name')
+                                                  ->orWhereNull('description');
+                                          })
+                                        ->first();
 
             $required_name = false;
             $required_desc = false;
 
-            foreach ($isAvailable as $val) {
+            if (is_object($isAvailable)) {
                 if ($val->promotion_name === '' || empty($val->promotion_name)) {
                     $required_name = true;
                 }
@@ -1030,6 +1025,7 @@ class CouponAPIController extends ControllerAPI
             $linkToTenantIds = (array) $linkToTenantIds;
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
+            $is_exclusive = OrbitInput::post('is_exclusive', 'N');
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -1055,6 +1051,7 @@ class CouponAPIController extends ControllerAPI
                 'rule_end_date'           => $rule_end_date,
                 'is_all_gender'           => $is_all_gender,
                 'is_all_age'              => $is_all_age,
+                'partner_exclusive'       => $is_exclusive,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -1083,6 +1080,7 @@ class CouponAPIController extends ControllerAPI
                     'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
+                    'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
                 ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
@@ -1813,37 +1811,29 @@ class CouponAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($updatedcoupon, $translation_json_string, 'create');
             });
 
-            // Validation for mall language
-            // Default language in mall is required
+            // Default language for pmp_account is required
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
-            $isAvailable = CouponTranslation::where('promotion_id', '=', $promotion_id)
-                                            ->whereRaw("
-                                                EXISTS (
-                                                    SELECT 1
-                                                    FROM {$prefix}languages
-                                                    WHERE EXISTS (
-                                                        SELECT 1
-                                                        FROM {$prefix}merchants
-                                                        WHERE {$prefix}merchants.object_type = 'mall'
-                                                            AND merchant_id in ('{$malls}')
-                                                            AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
-                                                    )
-                                                    AND {$prefix}coupon_translations.merchant_language_id = {$prefix}languages.language_id
-                                                )
-                                            ")
-                                            ->where(function($query) {
-                                                $query->where('promotion_name', '=', '')
-                                                      ->orWhere('description', '=', '')
-                                                      ->orWhereNull('promotion_name')
-                                                      ->orWhereNull('description');
-                                              })
-                                            ->get();
+                        $isAvailable = CouponTranslation::where('promotion_id', '=', $promotion_id)
+                                        ->whereRaw("
+                                            {$prefix}coupon_translations.merchant_language_id = (
+                                                SELECT language_id
+                                                FROM {$prefix}languages
+                                                WHERE name = (SELECT mobile_default_language FROM {$prefix}campaign_account WHERE user_id = {$this->quote($this->api->user->user_id)})
+                                            )
+                                        ")
+                                        ->where(function($query) {
+                                            $query->where('promotion_name', '=', '')
+                                                  ->orWhere('description', '=', '')
+                                                  ->orWhereNull('promotion_name')
+                                                  ->orWhereNull('description');
+                                          })
+                                        ->first();
 
             $required_name = false;
             $required_desc = false;
 
-            foreach ($isAvailable as $val) {
+            if (is_object($isAvailable)) {
                 if ($val->promotion_name === '' || empty($val->promotion_name)) {
                     $required_name = true;
                 }
@@ -4029,6 +4019,36 @@ class CouponAPIController extends ControllerAPI
             return true;
         });
 
+        // check the partner exclusive or not if the is_exclusive is set to 'Y'
+        Validator::extend('orbit.empty.exclusive_partner', function ($attribute, $value, $parameters) {
+            $flag_exclusive = false;
+            $is_exclusive = OrbitInput::post('is_exclusive');
+            $partner_ids = OrbitInput::post('partner_ids');
+            $partner_ids = (array) $partner_ids;
+
+            $partner_exclusive = Partner::select('is_exclusive')
+                           ->whereIn('partner_id', $partner_ids)
+                           ->get();
+
+            foreach ($partner_exclusive as $exclusive) {
+                if($exclusive->is_exclusive == 'Y'){
+                    $flag_exclusive = true;
+                }
+            }
+
+            $valid = true;
+
+            if ($is_exclusive == 'Y') {
+                if ($flag_exclusive) {
+                    $valid = true;
+                }
+                else {
+                    $valid = false;
+                }
+            }
+
+            return $valid;
+        });
     }
 
     /**
