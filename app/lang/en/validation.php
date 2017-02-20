@@ -169,7 +169,7 @@ return array(
             'master_link_to_tenant'  => 'Master must link to all tenants',
         ),
         'empty' => array(
-            'check_use_supported_language' => 'Language cannot be inactive, some stuff still link to this language',
+            'check_use_supported_language' => 'Unable to inactivate language that still has links',
             'age'                  => 'The Age Range ID you specified is not found',
             'gender'               => 'The Gender must be M or F or U',
             'is_all_gender'        => 'The All Gender must be Y or N',
