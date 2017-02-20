@@ -56,4 +56,13 @@ class CampaignAccount extends Eloquent
         return $this->hasMany('Setting', 'object_id', 'user_id')->where('object_type', 'user');
     }
 
+    public function language()
+    {
+        return $this->hasMany('ObjectSupportedLanguage', 'object_id', 'campaign_account_id')->excludeDeleted('object_supported_language')->where('object_type', 'pmp_account');
+    }
+
+    public function pmpLanguages()
+    {
+        return $this->language()->join('languages', 'languages.language_id', '=', 'object_supported_language.language_id');
+    }
 }
