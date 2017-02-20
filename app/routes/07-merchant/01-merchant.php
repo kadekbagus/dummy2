@@ -75,3 +75,15 @@ Route::get('/api/v1/merchant/country/{search}', function()
 
 Route::get('/app/v1/merchant/country/{search}', ['as' => 'merchant-api-country-list', 'uses' => 'IntermediateMerchantAuthController@CountryList_getSearchCountry'])
 	->where('search', '(list|search)');
+
+/**
+ * List/Search language
+ */
+Route::get('/api/v1/merchant/language/{search}', function()
+{
+    return Orbit\Controller\API\v1\Merchant\LanguageListAPIController::create()->getSearchLanguageList();
+})
+->where('search', '(list|search)');
+
+Route::get('/app/v1/merchant/language/{search}', ['as' => 'merchant-api-language-list', 'uses' => 'IntermediateMerchantAuthController@LanguageList_getSearchLanguageList'])
+    ->where('search', '(list|search)');

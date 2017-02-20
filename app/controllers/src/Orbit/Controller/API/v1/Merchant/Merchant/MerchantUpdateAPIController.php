@@ -12,6 +12,7 @@ use Lang;
 use BaseMerchant;
 use BaseMerchantCategory;
 use BaseMerchantKeyword;
+use ObjectSupportedLanguage;
 use BaseObjectPartner;
 use Config;
 use Language;
@@ -69,27 +70,35 @@ class MerchantUpdateAPIController extends ControllerAPI
             $countryId = OrbitInput::post('country_id');
             $keywords = OrbitInput::post('keywords');
             $keywords = (array) $keywords;
+            $languages = OrbitInput::post('languages', []);
+            $mobile_default_language = OrbitInput::post('mobile_default_language');
 
             // Begin database transaction
             $this->beginTransaction();
 
             $validator = Validator::make(
                 array(
-                    'baseMerchantId' => $baseMerchantId,
-                    'translations'   => $translations,
-                    'merchantName'   => $merchantName,
-                    'country'        => $countryId
+                    'baseMerchantId'          => $baseMerchantId,
+                    'translations'            => $translations,
+                    'merchantName'            => $merchantName,
+                    'country'                 => $countryId,
+                    'languages'               => $languages,
+                    'mobile_default_language' => $mobile_default_language,
                 ),
                 array(
-                    'baseMerchantId' => 'required|orbit.exist.base_merchant_id',
-                    'translations'   => 'required',
-                    'merchantName'   => 'required|orbit.exist.merchant_name_not_me:' . $baseMerchantId . ',' . $countryId,
-                    'country'        => 'required|orbit.store.country:' . $baseMerchantId . ',' . $countryId
+                    'baseMerchantId'          => 'required|orbit.exist.base_merchant_id',
+                    'translations'            => 'required',
+                    'merchantName'            => 'required|orbit.exist.merchant_name_not_me:' . $baseMerchantId . ',' . $countryId,
+                    'country'                 => 'required|orbit.store.country:' . $baseMerchantId . ',' . $countryId,
+                    'languages'               => 'required|array',
+                    'mobile_default_language' => 'required|size:2|orbit.supported.language|orbit.store.language:' . $baseMerchantId . ',' . $mobile_default_language
                 ),
                 array(
-                    'orbit.exist.base_merchant_id' => 'Base Merchant ID is invalid',
-                    'orbit.exist.merchant_name_not_me'=> 'Merchant is already exist',
-                    'orbit.store.country' => 'You have stores linked to the previous country'
+                    'orbit.exist.base_merchant_id'     => 'Base Merchant ID is invalid',
+                    'orbit.exist.merchant_name_not_me' => 'Merchant is already exist',
+                    'orbit.store.country'              => 'You have stores linked to the previous country',
+                    'orbit.supported.language'         => 'Default language is not supported',
+                    'orbit.store.language'             => 'You have stores linked to the previous default language'
                )
             );
 
@@ -145,7 +154,52 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             Event::fire('orbit.basemerchant.postupdatebasemerchant.before.save', array($this, $updatedBaseMerchant));
 
+            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedBaseMerchant, $languages) {
+                // check mobile default language must in supported language
+                if (in_array($mobile_default_language, $languages)) {
+                    $updatedBaseMerchant->mobile_default_language = $mobile_default_language;
+                } else {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+                }
+            });
+
             $updatedBaseMerchant->save();
+
+            OrbitInput::post('languages', function($languages) use ($updatedBaseMerchant, $baseMerchantId) {
+                if (count($languages) > 0) {
+                    foreach ($languages as $language_name) {
+                        $validator = Validator::make(
+                            array(
+                                'language'  => $language_name
+                            ),
+                            array(
+                                'language'  => 'required|size:2|orbit.supported.language'
+                            ),
+                            array(
+                                'orbit.supported.language'  => 'Language is not supported'
+                            )
+                        );
+
+                        // Run the validation
+                        if ($validator->fails()) {
+                            $errorMessage = $validator->messages()->first();
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // Delete old data
+                        $deletedBaseMechantLanguage = ObjectSupportedLanguage::where('object_type', '=', 'base_merchant')
+                                                        ->where('object_id', '=', $baseMerchantId)
+                                                        ->delete();
+
+                        $baseMerchantLanguage = new ObjectSupportedLanguage();
+                        $baseMerchantLanguage->object_id = $baseMerchantId;
+                        $baseMerchantLanguage->object_type = 'base_merchant';
+                        $baseMerchantLanguage->status = 'active';
+                        $baseMerchantLanguage->language_id = Language::where('name', '=', $language_name)->first()->language_id;
+                        $baseMerchantLanguage->save();
+                    }
+                }
+            });
 
             OrbitInput::post('category_ids', function($categoryIds) use ($updatedBaseMerchant, $baseMerchantId) {
                 // Delete old data

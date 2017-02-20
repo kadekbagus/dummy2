@@ -185,37 +185,32 @@
             <![endif]-->
                                                                             <!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/malls" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Malls</a>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/malls" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">{{{ $labelMalls }}}</a>
                                                                             <!--[if gte mso 9]>
                 </td>
             <![endif]-->
                                                                             <!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/stores" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Stores</a>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/stores" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">{{{ $labelStores }}}</a>
                                                                             <!--[if gte mso 9]>
                 </td>
             <![endif]-->
                                                                             <!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/promotions" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Promotions</a>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/promotions" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">{{{ $labelPromotions }}}</a>
                                                                             <!--[if gte mso 9]>
                 </td>
             <![endif]-->
                                                                             <!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/coupons" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Coupons</a>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/coupons" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">{{{ $labelCoupons }}}</a>
                                                                             <!--[if gte mso 9]>
                 </td>
             <![endif]-->
+
                                                                             <!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/luckydraws" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Lucky Draws</a>
-                                                                            <!--[if gte mso 9]>
-                </td>
-            <![endif]-->
-                                                                            <!--[if gte mso 9]>
-                <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/news" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">News</a>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/news" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">{{{ $labelEvents }}}</a>
                                                                             <!--[if gte mso 9]>
                 </td>
             <![endif]-->
@@ -310,14 +305,14 @@
                                             <td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center">
                                                 <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
                                                     <p align="center" style="margin:0">
-                                                        Hai {{{ $email }}},
+                                                        {{{ $greeting }}} {{{ $email }}},
                                                         <br \>
                                                         @if (empty($name))
-                                                            Seorang teman anda
+                                                            {{{ $message1 }}}
                                                         @else
                                                             {{{ $name }}}
                                                         @endif
-                                                         ingin anda untuk melihat {{{ $campaignTypeId }}} berikut ini:
+                                                         {{{ $message2 }}}
                                                     </p>
                                                 </div>
                                             </td>
@@ -344,7 +339,7 @@
                                                     <tbody>
                                                         <tr>
                                                             <td style="border-radius:3px;color:white;cursor:auto;padding:10px 25px; border-radius: 16px;" align="center" valign="middle" bgcolor="#BA1F00">
-                                                                <a href="{{{ $campaignUrl }}}" style="display:inline-block;text-decoration:none;background:#BA1F00;border-radius:3px;color:white;font-family:Helvetica;font-size:13px;font-weight:normal;margin:0px;">Lihat Sekarang!
+                                                                <a href="{{{ $campaignUrl }}}" style="display:inline-block;text-decoration:none;background:#BA1F00;border-radius:3px;color:white;font-family:Helvetica;font-size:13px;font-weight:normal;margin:0px;">{{{ $buttonSeeNow }}}
                                                                 </a>
                                                             </td>
                                                         </tr>
