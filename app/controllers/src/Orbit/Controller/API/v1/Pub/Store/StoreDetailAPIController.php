@@ -18,6 +18,7 @@ use Validator;
 use Language;
 use Activity;
 use Lang;
+use Tenant;
 
 class StoreDetailAPIController extends PubControllerAPI
 {
@@ -228,6 +229,38 @@ class StoreDetailAPIController extends PubControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    protected function registerCustomValidation() {
+        // Check language is exists
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $lang_name = $value;
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang_name)
+                            ->first();
+
+            if (empty($language)) {
+                return FALSE;
+            }
+
+            $this->valid_language = $language;
+            return TRUE;
+        });
+
+        // Check store is exists
+        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
+            $store = Tenant::where('status', 'active')
+                            ->where('merchant_id', $value)
+                            ->first();
+
+            if (empty($store)) {
+                return FALSE;
+            }
+
+            $this->store = $store;
+            return TRUE;
+        });
     }
 
     protected function quote($arg)
