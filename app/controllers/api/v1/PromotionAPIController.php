@@ -104,6 +104,7 @@ class PromotionAPIController extends ControllerAPI
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
             $id_language_default = OrbitInput::post('id_language_default');
+            $is_exclusive = OrbitInput::post('is_exclusive', 'N');
 
             $validator = Validator::make(
                 array(
@@ -119,6 +120,7 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id4'  => $discount_object_id4,
                     'discount_object_id5'  => $discount_object_id5,
                     'id_language_default'   => $id_language_default,
+                    'partner_exclusive'    => $is_exclusive,
                 ),
                 array(
                     'merchant_id'          => 'required|orbit.empty.merchant',
@@ -133,6 +135,10 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id4'  => 'orbit.empty.discount_object_id4',
                     'discount_object_id5'  => 'orbit.empty.discount_object_id5',
                     'id_language_default'   => 'required|numeric',
+                    'partner_exclusive'    => 'in:Y,N|orbit.empty.exclusive_partner',
+                ),
+                array(
+                    'orbit.empty.exclusive_partner'  => 'Partner is not exclusive',
                 )
             );
 
@@ -183,6 +189,7 @@ class PromotionAPIController extends ControllerAPI
             $newpromotion->is_permanent = $is_permanent;
             $newpromotion->image = $image;
             $newpromotion->created_by = $this->api->user->user_id;
+            $newpromotion->is_exclusive = $is_exclusive;
 
             Event::fire('orbit.promotion.postnewpromotion.before.save', array($this, $newpromotion));
 
@@ -445,6 +452,7 @@ class PromotionAPIController extends ControllerAPI
             $discount_object_id4 = OrbitInput::post('discount_object_id4');
             $discount_object_id5 = OrbitInput::post('discount_object_id5');
             $id_language_default = OrbitInput::post('id_language_default');
+            $is_exclusive = OrbitInput::post('is_exclusive');
 
             $data = array(
                 'promotion_id'         => $promotion_id,
@@ -459,6 +467,7 @@ class PromotionAPIController extends ControllerAPI
                 'discount_object_id4'  => $discount_object_id4,
                 'discount_object_id5'  => $discount_object_id5,
                 'id_language_default' => $id_language_default,
+                'partner_exclusive'    => $is_exclusive,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -482,9 +491,11 @@ class PromotionAPIController extends ControllerAPI
                     'discount_object_id4'  => 'orbit.empty.discount_object_id4',
                     'discount_object_id5'  => 'orbit.empty.discount_object_id5',
                     'id_language_default' => 'required|numeric',
+                    'partner_exclusive'    => 'in:Y,N|orbit.empty.exclusive_partner',
                 ),
                 array(
-                   'promotion_name_exists_but_me' => Lang::get('validation.orbit.exists.promotion_name'),
+                   'promotion_name_exists_but_me'   => Lang::get('validation.orbit.exists.promotion_name'),
+                   'orbit.empty.exclusive_partner'  => 'Partner is not exclusive',
                 )
             );
 
@@ -537,6 +548,10 @@ class PromotionAPIController extends ControllerAPI
 
             OrbitInput::post('image', function($image) use ($updatedpromotion) {
                 $updatedpromotion->image = $image;
+            });
+
+            OrbitInput::post('is_exclusive', function($is_exclusive) use ($updatedpromotion) {
+                $updatedpromotion->is_exclusive = $is_exclusive;
             });
 
             $updatedpromotion->modified_by = $this->api->user->user_id;
@@ -1874,6 +1889,36 @@ class PromotionAPIController extends ControllerAPI
             return TRUE;
         });
 
+        // check the partner exclusive or not if the is_exclusive is set to 'Y'
+        Validator::extend('orbit.empty.exclusive_partner', function ($attribute, $value, $parameters) {
+            $flag_exclusive = false;
+            $is_exclusive = OrbitInput::post('is_exclusive');
+            $partner_ids = OrbitInput::post('partner_ids');
+            $partner_ids = (array) $partner_ids;
+
+            $partner_exclusive = Partner::select('is_exclusive')
+                           ->whereIn('partner_id', $partner_ids)
+                           ->get();
+
+            foreach ($partner_exclusive as $exclusive) {
+                if($exclusive->is_exclusive == 'Y'){
+                    $flag_exclusive = true;
+                }
+            }
+
+            $valid = true;
+
+            if ($is_exclusive == 'Y') {
+                if ($flag_exclusive) {
+                    $valid = true;
+                }
+                else {
+                    $valid = false;
+                }
+            }
+
+            return $valid;
+        });
     }
 
     /**

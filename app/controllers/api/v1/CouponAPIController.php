@@ -244,7 +244,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.min'      => 'The coupon value must be greater than zero',
                     'sticky_order.in'         => 'The sticky order value must 0 or 1',
                     'is_popup.in'             => 'is popup must Y or N',
-                    'partner_exclusive'       => 'Partner is not exclusive',
+                    'orbit.empty.exclusive_partner' => 'Partner is not exclusive',
                 )
             );
 
@@ -729,37 +729,29 @@ class CouponAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
             });
 
-            // Validation for mall language
-            // Default language in mall is required
+            // Default language for pmp_account is required
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
             $isAvailable = CouponTranslation::where('promotion_id', '=', $newcoupon->promotion_id)
-                                            ->whereRaw("
-                                                EXISTS (
-                                                    SELECT 1
-                                                    FROM {$prefix}languages
-                                                    WHERE EXISTS (
-                                                        SELECT 1
-                                                        FROM {$prefix}merchants
-                                                        WHERE {$prefix}merchants.object_type = 'mall'
-                                                            AND merchant_id in ('{$malls}')
-                                                            AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
-                                                        )
-                                                    AND {$prefix}coupon_translations.merchant_language_id = {$prefix}languages.language_id
-                                                    )
-                                            ")
-                                            ->where(function($query) {
-                                                $query->where('promotion_name', '=', '')
-                                                      ->orWhere('description', '=', '')
-                                                      ->orWhereNull('promotion_name')
-                                                      ->orWhereNull('description');
-                                              })
-                                            ->get();
+                                        ->whereRaw("
+                                            {$prefix}coupon_translations.merchant_language_id = (
+                                                SELECT language_id
+                                                FROM {$prefix}languages
+                                                WHERE name = (SELECT mobile_default_language FROM {$prefix}campaign_account WHERE user_id = {$this->quote($this->api->user->user_id)})
+                                            )
+                                        ")
+                                        ->where(function($query) {
+                                            $query->where('promotion_name', '=', '')
+                                                  ->orWhere('description', '=', '')
+                                                  ->orWhereNull('promotion_name')
+                                                  ->orWhereNull('description');
+                                          })
+                                        ->first();
 
             $required_name = false;
             $required_desc = false;
 
-            foreach ($isAvailable as $val) {
+            if (is_object($isAvailable)) {
                 if ($val->promotion_name === '' || empty($val->promotion_name)) {
                     $required_name = true;
                 }
@@ -1098,6 +1090,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.numeric'    => 'The coupon value must be a number',
                     'discount_value.min'        => 'The coupon value must be greater than zero',
                     'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
+                    'orbit.empty.exclusive_partner' => 'Partner is not exclusive',
                 )
             );
 
@@ -1819,37 +1812,29 @@ class CouponAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($updatedcoupon, $translation_json_string, 'create');
             });
 
-            // Validation for mall language
-            // Default language in mall is required
+            // Default language for pmp_account is required
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
-            $isAvailable = CouponTranslation::where('promotion_id', '=', $promotion_id)
-                                            ->whereRaw("
-                                                EXISTS (
-                                                    SELECT 1
-                                                    FROM {$prefix}languages
-                                                    WHERE EXISTS (
-                                                        SELECT 1
-                                                        FROM {$prefix}merchants
-                                                        WHERE {$prefix}merchants.object_type = 'mall'
-                                                            AND merchant_id in ('{$malls}')
-                                                            AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
-                                                    )
-                                                    AND {$prefix}coupon_translations.merchant_language_id = {$prefix}languages.language_id
-                                                )
-                                            ")
-                                            ->where(function($query) {
-                                                $query->where('promotion_name', '=', '')
-                                                      ->orWhere('description', '=', '')
-                                                      ->orWhereNull('promotion_name')
-                                                      ->orWhereNull('description');
-                                              })
-                                            ->get();
+                        $isAvailable = CouponTranslation::where('promotion_id', '=', $promotion_id)
+                                        ->whereRaw("
+                                            {$prefix}coupon_translations.merchant_language_id = (
+                                                SELECT language_id
+                                                FROM {$prefix}languages
+                                                WHERE name = (SELECT mobile_default_language FROM {$prefix}campaign_account WHERE user_id = {$this->quote($this->api->user->user_id)})
+                                            )
+                                        ")
+                                        ->where(function($query) {
+                                            $query->where('promotion_name', '=', '')
+                                                  ->orWhere('description', '=', '')
+                                                  ->orWhereNull('promotion_name')
+                                                  ->orWhereNull('description');
+                                          })
+                                        ->first();
 
             $required_name = false;
             $required_desc = false;
 
-            foreach ($isAvailable as $val) {
+            if (is_object($isAvailable)) {
                 if ($val->promotion_name === '' || empty($val->promotion_name)) {
                     $required_name = true;
                 }
