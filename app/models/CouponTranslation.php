@@ -8,6 +8,7 @@
 class CouponTranslation extends Eloquent
 {
     use ModelStatusTrait;
+    use CampaignAccessTrait;
 
     protected $table = 'coupon_translations';
 
