@@ -224,7 +224,6 @@ class LanguageAPIController extends ControllerAPI
             ->setActivityType('create');
         $user = NULL;
         $merchant = NULL;
-
         $httpCode = 200;
 
         try {
@@ -283,7 +282,7 @@ class LanguageAPIController extends ControllerAPI
                         'status'      => $value->status,
                     ),
                     array(
-                        'language_id' => 'required|orbit.empty.language|orbit.empty.check_use_supported_language',
+                        'language_id' => 'required|orbit.empty.language|orbit.empty.check_use_supported_language:' . $value->status,
                         'status'      => 'required|orbit.empty.supported_language_status',
                     )
                 );
@@ -295,10 +294,8 @@ class LanguageAPIController extends ControllerAPI
                 }
             }
 
-
             // save all language
             foreach ($data as $languageId => $value) {
-
                 $supportedLanguage = Language::find($languageId);
                 $supportedLanguage->status = $value->status;
 
@@ -416,8 +413,13 @@ class LanguageAPIController extends ControllerAPI
     private function registerCustomValidation()
     {
         Validator::extend('orbit.empty.check_use_supported_language', function ($attribute, $value, $parameters) {
-            // Check all related existing content using supportted language in : mall, partner, campaign (pmp_account), and MDM
+            // No checking if any changeing from inactice to active
+            $status = $parameters[0];
+            if ($status ==  "active") {
+                return true;
+            }
 
+            // Check all related existing content using supportted language in : mall, partner, campaign (pmp_account), and MDM
             // 1. Check Mall/Merchant Language
             $mallLanguage = MerchantLanguage::select('merchant_language_id')
                                 ->active()
@@ -449,7 +451,8 @@ class LanguageAPIController extends ControllerAPI
 
             // 4. Check Merchants language in DM
             $mdmLanguage = BaseMerchantTranslation::select('base_merchant_translation_id')
-                                ->where('language_id', $value);
+                                ->where('language_id', $value)
+                                ->first();
 
             if (is_object($mdmLanguage)) {
                 return false;
