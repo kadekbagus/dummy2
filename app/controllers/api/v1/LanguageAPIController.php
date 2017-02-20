@@ -39,7 +39,8 @@ class LanguageAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
             $languages = Language::select('languages.language_id', 'languages.name', 'languages.name_native', 'languages.name_long', 'languages.language_order', 'languages.created_at', 'languages.updated_at', 'languages.status')
-                                ->leftJoin('merchant_languages', 'merchant_languages.language_id', '=', 'languages.language_id')
+                                ->leftJoin('object_supported_language', 'object_supported_language.language_id', '=', 'languages.language_id')
+                                ->where('object_type', 'pmp_account')
                                 ->orderBy('language_order', 'DESC')
                                 ->distinct();
 
@@ -50,33 +51,20 @@ class LanguageAPIController extends ControllerAPI
                     $languages->whereRaw("
                                 EXISTS (
                                     SELECT 1
-                                    FROM {$prefix}user_merchant um
-                                    JOIN {$prefix}campaign_account ca
-                                        ON ca.user_id = um.user_id
-                                    JOIN {$prefix}account_types at
-                                        ON at.account_type_id = ca.account_type_id
-                                        AND at.status = 'active'
-                                    LEFT JOIN {$prefix}merchants pm
-                                        ON pm.merchant_id = um.merchant_id
-                                        AND pm.status = 'active'
-                                        AND pm.object_type = 'tenant'
-                                    WHERE {$prefix}merchant_languages.merchant_id = (CASE WHEN um.object_type = 'tenant' THEN pm.parent_id ELSE um.merchant_id END)
-                                        AND ca.user_id = {$this->quote($user_login->user_id)}
-                                    GROUP BY um.merchant_id
+                                    FROM {$prefix}campaign_account ca
+                                    JOIN {$prefix}campaign_account cap
+                                        ON cap.user_id = ca.parent_user_id
+                                    WHERE (ca.user_id = {$this->quote($user_login->user_id)} or ca.parent_user_id = {$this->quote($user_login->user_id)})
+                                        AND {$prefix}object_supported_language.object_id = cap.campaign_account_id
+                                    GROUP BY cap.campaign_account_id
                                 )
-                                AND {$prefix}merchant_languages.status = 'active'
+                                AND {$prefix}object_supported_language.status = 'active'
                             ");
                 }
             }
 
             OrbitInput::get('status', function($status) use ($languages) {
                 $languages->where('languages.status', '=', $status);
-            });
-
-            OrbitInput::get('mall_id', function($mall_id) use ($languages, $prefix) {
-                $mall_id = (array) $mall_id;
-                $languages->whereIn('merchant_languages.merchant_id', $mall_id)
-                         ->where('merchant_languages.status', '=', 'active');
             });
 
             $_languages = clone $languages;
