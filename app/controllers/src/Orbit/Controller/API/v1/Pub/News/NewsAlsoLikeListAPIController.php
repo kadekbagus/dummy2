@@ -277,7 +277,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                     })
                     ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                     ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
-                    ->join('news_translations as default_translation', function ($q) {
+                    ->leftJoin('news_translations as default_translation', function ($q) {
                         $q->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id')
                           ->where(DB::raw('default_translation.news_id'), '=', 'news.news_id');
                     })
