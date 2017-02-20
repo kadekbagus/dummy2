@@ -24,7 +24,37 @@ return array(
         'indices_prefix' => 'v2x_',
 
         // The minimum_should_match parameter possible values
-        'minimum_should_match' => '50%',
+        'minimum_should_match' => [
+            'mall' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'news' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'promotion' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'coupon' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'store' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ]
+        ],
 
         // List of indices that we have in Elasticsearch
         // All the query to the index name will be appended by prefix automatically
