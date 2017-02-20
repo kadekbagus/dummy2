@@ -244,7 +244,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.min'      => 'The coupon value must be greater than zero',
                     'sticky_order.in'         => 'The sticky order value must 0 or 1',
                     'is_popup.in'             => 'is popup must Y or N',
-                    'partner_exclusive'       => 'Partner is not exclusive',
+                    'orbit.empty.exclusive_partner' => 'Partner is not exclusive',
                 )
             );
 
@@ -1098,6 +1098,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.numeric'    => 'The coupon value must be a number',
                     'discount_value.min'        => 'The coupon value must be greater than zero',
                     'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
+                    'orbit.empty.exclusive_partner' => 'Partner is not exclusive',
                 )
             );
 
