@@ -450,6 +450,7 @@ class AccountAPIController extends ControllerAPI
     {
         $data = new stdClass();
 
+        $prefix = DB::getTablePrefix();
         $pmpAccounts = User::excludeDeleted('users')
                             ->pmpAccounts();
 
@@ -475,6 +476,66 @@ class AccountAPIController extends ControllerAPI
         if (Input::get('location')) {
             $pmpAccounts->leftJoin('countries', 'user_details.country_id', '=', 'countries.country_id');
         }
+
+        $pmpAccounts->select( '*',
+                DB::raw("
+                        (SELECT count(n.news_id) as total
+                        FROM {$prefix}news_translations nt
+                        INNER JOIN {$prefix}news n
+                            ON n.news_id = nt.news_id
+                        LEFT JOIN {$prefix}user_campaign AS uc
+                            ON uc.campaign_id = n.news_id
+                        LEFT JOIN {$prefix}campaign_account AS ca
+                            ON ca.user_id = uc.user_id
+                        LEFT JOIN {$prefix}campaign_account AS cas
+                            ON cas.parent_user_id = ca.parent_user_id
+                        INNER JOIN {$prefix}object_supported_language osl
+                            ON osl.object_id = ca.campaign_account_id
+                        WHERE nt.status != 'deleted'
+                            AND (ca.user_id = (SELECT cax.parent_user_id
+                                                FROM {$prefix}campaign_account cax
+                                                WHERE cax.user_id = {$prefix}campaign_account.user_id)
+                                OR ca.parent_user_id = (SELECT cax.parent_user_id
+                                                FROM {$prefix}campaign_account cax
+                                                WHERE cax.user_id = {$prefix}campaign_account.user_id)
+                            OR ca.user_id = {$prefix}campaign_account.user_id
+                            OR ca.parent_user_id = {$prefix}campaign_account.user_id)
+                            AND osl.language_id = (select lx.language_id from {$prefix}languages lx where lx.name = {$prefix}campaign_account.mobile_default_language)
+                            AND osl.status = 'active'
+                        GROUP BY n.news_id
+                        LIMIT 1
+
+                        union
+
+                        SELECT count(c.promotion_id) as total
+                        FROM {$prefix}coupon_translations ct
+                        INNER JOIN {$prefix}promotions c
+                            ON c.promotion_id = ct.promotion_id
+                        LEFT JOIN {$prefix}user_campaign AS uc
+                            ON uc.campaign_id = c.promotion_id
+                        LEFT JOIN {$prefix}campaign_account AS ca
+                            ON ca.user_id = uc.user_id
+                        LEFT JOIN {$prefix}campaign_account AS cas
+                            ON cas.parent_user_id = ca.parent_user_id
+                        INNER JOIN {$prefix}object_supported_language osl
+                            ON osl.object_id = ca.campaign_account_id
+                        WHERE ct.status != 'deleted'
+                            AND (ca.user_id = (SELECT cax.parent_user_id
+                                    FROM {$prefix}campaign_account cax
+                                    WHERE cax.user_id = {$prefix}campaign_account.user_id)
+                                OR ca.parent_user_id = (SELECT parent_user_id
+                                    FROM {$prefix}campaign_account
+                                    WHERE user_id = {$prefix}campaign_account.user_id)
+                            OR ca.user_id = {$prefix}campaign_account.user_id
+                            OR ca.parent_user_id = {$prefix}campaign_account.user_id)
+                            AND osl.language_id = (SELECT lx.language_id FROM {$prefix}languages lx where lx.name = {$prefix}campaign_account.mobile_default_language)
+                            AND osl.status = 'active'
+                        GROUP BY c.promotion_id
+                        LIMIT 1
+
+                        ) as total_campaign
+                    ")
+            );
 
         // Filter by account type id
         OrbitInput::get('account_type_id', function ($account_type_id) use ($pmpAccounts) {
@@ -577,7 +638,7 @@ class AccountAPIController extends ControllerAPI
                 $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->user_id);
             }
 
-            $disable_mobile_default_language = (count($row->campaignAccount->pmpLanguages) > 0) ? true : false;
+            $disable_mobile_default_language = ($row->total_campaign > 0) ? true : false;
 
             $records[] = [
                 'account_name'       => $row->campaignAccount->account_name,
@@ -1310,28 +1371,15 @@ class AccountAPIController extends ControllerAPI
                                     ->first();
 
                     if (! empty($check_lang)) {
-                        // news translation
-                        $news_translation = NewsTranslation::excludeDeleted('news_translations')
+                        // news and promotion translation
+                        $news_promotion_translation = NewsTranslation::excludeDeleted('news_translations')
                                                 ->join('news', 'news.news_id', '=', 'news_translations.news_id')
-                                                ->allowedForPMPUser($update_user, 'news')
+                                                ->allowedForPMPUser($update_user, 'news_promotion')
                                                 ->join('object_supported_language', 'object_supported_language.object_id', '=', DB::raw('ca.campaign_account_id'))
                                                 ->where('object_supported_language.language_id', $check_lang->language_id)
                                                 ->where('object_supported_language.status', 'active')
                                                 ->first();
-                        if (empty($news_translation)) {
-                            $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
-
-                        // promotion translation
-                        $promotion_translation = NewsTranslation::excludeDeleted('news_translations')
-                                                ->join('news', 'news.news_id', '=', 'news_translations.news_id')
-                                                ->allowedForPMPUser($update_user, 'promotion')
-                                                ->join('object_supported_language', 'object_supported_language.object_id', '=', DB::raw('ca.campaign_account_id'))
-                                                ->where('object_supported_language.language_id', $check_lang->language_id)
-                                                ->where('object_supported_language.status', 'active')
-                                                ->first();
-                        if (empty($promotion_translation)) {
+                        if (empty($news_promotion_translation)) {
                             $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
