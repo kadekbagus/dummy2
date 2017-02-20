@@ -434,6 +434,16 @@ class PromotionListAPIController extends PubControllerAPI
 
             }
 
+            // Exclude specific document Ids, useful for some cases e.g You May Also Like
+            // @todo rewrite deprected 'filtered' query to bool only
+            OrbitInput::get('excluded_ids', function($excludedIds) use (&$jsonQuery) {
+                $jsonExcludedIds = [];
+                foreach ($excludedIds as $excludedId) {
+                    $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
+                }
+                $jsonQuery['query']['filtered']['query']['bool']['must_not'] = $jsonExcludedIds;
+            });
+
             $sortby = $sort;
             if ($withScore) {
                 $sortby = array('_score', $sort);
@@ -455,6 +465,9 @@ class PromotionListAPIController extends PubControllerAPI
                 }
             }
             $jsonQuery['sort'] = $sortby;
+
+            // echo(json_encode($jsonQuery));
+            // exit;
 
             $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
