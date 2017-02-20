@@ -266,7 +266,7 @@ class NewsListAPIController extends PubControllerAPI
             });
 
             // filter by city, only filter when countryFilter is not empty
-            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr, $shouldMatch) {
                 if (! empty($countryFilter)) {
                     $cityFilterArr = [];
                     foreach ((array) $cityFilters as $cityFilter) {
