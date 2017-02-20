@@ -63,6 +63,6 @@ class CampaignAccount extends Eloquent
 
     public function pmpLanguages()
     {
-        return $this->language()->join('languages', 'languages.language_id', '=', 'object_supported_language.language_id');
+        return $this->language()->join('languages', 'languages.language_id', '=', 'object_supported_language.language_id')->select('languages.language_id', 'name', 'name_long', 'name_native');
     }
 }

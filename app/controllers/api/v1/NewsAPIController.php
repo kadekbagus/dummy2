@@ -423,23 +423,15 @@ class NewsAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($newnews, $translation_json_string, 'create');
             });
 
-            // Validation for mall language
-            // Default language in mall is required
+            // Default language for pmp_account is required
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
             $isAvailable = NewsTranslation::where('news_id', '=', $newnews->news_id)
                                         ->whereRaw("
-                                            EXISTS (
-                                                SELECT 1
+                                            {$prefix}news_translations.merchant_language_id = (
+                                                SELECT language_id
                                                 FROM {$prefix}languages
-                                                WHERE EXISTS (
-                                                    SELECT 1
-                                                    FROM {$prefix}merchants
-                                                    WHERE {$prefix}merchants.object_type = 'mall'
-                                                        AND merchant_id in ('{$malls}')
-                                                        AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
-                                                )
-                                                AND {$prefix}news_translations.merchant_language_id = {$prefix}languages.language_id
+                                                WHERE name = (SELECT mobile_default_language FROM {$prefix}campaign_account WHERE user_id = {$this->quote($this->api->user->user_id)})
                                             )
                                         ")
                                         ->where(function($query) {
@@ -448,16 +440,16 @@ class NewsAPIController extends ControllerAPI
                                                   ->orWhereNull('news_name')
                                                   ->orWhereNull('description');
                                           })
-                                        ->get();
+                                        ->first();
 
             $required_name = false;
             $required_desc = false;
 
-            foreach ($isAvailable as $val) {
-                if ($val->news_name === '' || empty($val->news_name)) {
-                    $required_name = true;
+            if (is_object($isAvailable)) {
+                if ($isAvailable->news_name === '' || empty($isAvailable->news_name)) {
+                $required_name = true;
                 }
-                if ($val->description === '' || empty($val->description)) {
+                if ($isAvailable->description === '' || empty($isAvailable->description)) {
                     $required_desc = true;
                 }
             }
@@ -818,23 +810,15 @@ class NewsAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($updatednews, $translation_json_string, 'update');
             });
 
-           // Validation for mall language
-            // Default language in mall is required
+            // Default language for pmp_account is required
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
             $isAvailable = NewsTranslation::where('news_id', '=', $news_id)
                                         ->whereRaw("
-                                            EXISTS (
-                                                SELECT 1
+                                            {$prefix}news_translations.merchant_language_id = (
+                                                SELECT language_id
                                                 FROM {$prefix}languages
-                                                WHERE EXISTS (
-                                                    SELECT 1
-                                                    FROM {$prefix}merchants
-                                                    WHERE {$prefix}merchants.object_type = 'mall'
-                                                        AND merchant_id in ('{$malls}')
-                                                        AND {$prefix}languages.name = {$prefix}merchants.mobile_default_language
-                                                )
-                                                AND {$prefix}news_translations.merchant_language_id = {$prefix}languages.language_id
+                                                WHERE name = (SELECT mobile_default_language FROM {$prefix}campaign_account WHERE user_id = {$this->quote($this->api->user->user_id)})
                                             )
                                         ")
                                         ->where(function($query) {
@@ -843,16 +827,16 @@ class NewsAPIController extends ControllerAPI
                                                   ->orWhereNull('news_name')
                                                   ->orWhereNull('description');
                                           })
-                                        ->get();
+                                        ->first();
 
             $required_name = false;
             $required_desc = false;
 
-            foreach ($isAvailable as $val) {
-                if ($val->news_name === '' || empty($val->news_name)) {
-                    $required_name = true;
+            if (is_object($isAvailable)) {
+                if ($isAvailable->news_name === '' || empty($isAvailable->news_name)) {
+                $required_name = true;
                 }
-                if ($val->description === '' || empty($val->description)) {
+                if ($isAvailable->description === '' || empty($isAvailable->description)) {
                     $required_desc = true;
                 }
             }
