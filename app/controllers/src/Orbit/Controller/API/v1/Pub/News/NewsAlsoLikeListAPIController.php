@@ -240,8 +240,8 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         $news = News::select(
                             'news.news_id as news_id',
                             DB::Raw("
-                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as news_name,
-                                CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN {$prefix}news.description ELSE {$prefix}news_translations.description END as description,
+                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                                CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN default_translation.description ELSE {$prefix}news_translations.description END as description,
                                 (SELECT {$image}
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
@@ -274,6 +274,12 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                     ->leftJoin('news_translations', function ($q) use ($valid_language) {
                         $q->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                         $q->on('news_translations.news_id', '=', 'news.news_id');
+                    })
+                    ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                    ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                    ->join('news_translations as default_translation', function ($q) {
+                        $q->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id')
+                          ->where(DB::raw('default_translation.news_id'), '=', 'news.news_id');
                     })
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->whereRaw("{$prefix}news.object_type = 'news'")
