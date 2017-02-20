@@ -39,7 +39,8 @@ class LanguageAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
             $languages = Language::select('languages.language_id', 'languages.name', 'languages.name_native', 'languages.name_long', 'languages.language_order', 'languages.created_at', 'languages.updated_at', 'languages.status')
-                                ->leftJoin('merchant_languages', 'merchant_languages.language_id', '=', 'languages.language_id')
+                                ->leftJoin('object_supported_language', 'object_supported_language.language_id', '=', 'languages.language_id')
+                                ->where('object_type', 'pmp_account')
                                 ->orderBy('language_order', 'DESC')
                                 ->distinct();
 
@@ -50,33 +51,20 @@ class LanguageAPIController extends ControllerAPI
                     $languages->whereRaw("
                                 EXISTS (
                                     SELECT 1
-                                    FROM {$prefix}user_merchant um
-                                    JOIN {$prefix}campaign_account ca
-                                        ON ca.user_id = um.user_id
-                                    JOIN {$prefix}account_types at
-                                        ON at.account_type_id = ca.account_type_id
-                                        AND at.status = 'active'
-                                    LEFT JOIN {$prefix}merchants pm
-                                        ON pm.merchant_id = um.merchant_id
-                                        AND pm.status = 'active'
-                                        AND pm.object_type = 'tenant'
-                                    WHERE {$prefix}merchant_languages.merchant_id = (CASE WHEN um.object_type = 'tenant' THEN pm.parent_id ELSE um.merchant_id END)
-                                        AND ca.user_id = {$this->quote($user_login->user_id)}
-                                    GROUP BY um.merchant_id
+                                    FROM {$prefix}campaign_account ca
+                                    JOIN {$prefix}campaign_account cap
+                                        ON cap.user_id = ca.parent_user_id
+                                    WHERE (ca.user_id = {$this->quote($user_login->user_id)} or ca.parent_user_id = {$this->quote($user_login->user_id)})
+                                        AND {$prefix}object_supported_language.object_id = cap.campaign_account_id
+                                    GROUP BY cap.campaign_account_id
                                 )
-                                AND {$prefix}merchant_languages.status = 'active'
+                                AND {$prefix}object_supported_language.status = 'active'
                             ");
                 }
             }
 
             OrbitInput::get('status', function($status) use ($languages) {
                 $languages->where('languages.status', '=', $status);
-            });
-
-            OrbitInput::get('mall_id', function($mall_id) use ($languages, $prefix) {
-                $mall_id = (array) $mall_id;
-                $languages->whereIn('merchant_languages.merchant_id', $mall_id)
-                         ->where('merchant_languages.status', '=', 'active');
             });
 
             $_languages = clone $languages;
@@ -285,15 +273,17 @@ class LanguageAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
             }
 
-            // validation 
-            foreach ($data as $key_language_id => $value) {
+            Event::fire('orbit.language.postupdatesupportedlanguage.before.validation', array($this, $validator));
+
+            // validation
+            foreach ($data as $languageId => $value) {
                 $validator = Validator::make(
                     array(
-                        'language_id' => $key_language_id,
+                        'language_id' => $languageId,
                         'status'      => $value->status,
                     ),
                     array(
-                        'language_id' => 'required|orbit.empty.language',
+                        'language_id' => 'required|orbit.empty.language|orbit.empty.check_use_supported_language',
                         'status'      => 'required|orbit.empty.supported_language_status',
                     )
                 );
@@ -306,36 +296,20 @@ class LanguageAPIController extends ControllerAPI
             }
 
 
-            Event::fire('orbit.language.postupdatesupportedlanguage.before.validation', array($this, $validator));
-
-
             // save all language
-            foreach ($data as $key_language_id => $value) {
+            foreach ($data as $languageId => $value) {
 
-                $supported_language = Language::find($key_language_id);
-                $supported_language->status = $value->status;
+                $supportedLanguage = Language::find($languageId);
+                $supportedLanguage->status = $value->status;
 
-                Event::fire('orbit.language.postupdatesupportedlanguage.before.save', array($this, $supported_language));
+                Event::fire('orbit.language.postupdatesupportedlanguage.before.save', array($this, $supportedLanguage));
 
-                $supported_language->save();
+                $supportedLanguage->save();
 
-                // deleted merchant language
-                if ($value->status === 'inactive') {
-                    foreach ($supported_language->merchantLanguage as $merchantLanguage) {
-                        $merchantLanguage->status = "deleted";
-                        $merchantLanguage->save();
-                    }
-                }else if($value->status === 'active'){
-                    foreach ($supported_language->merchantLanguage as $merchantLanguage) {
-                        $merchantLanguage->status = "active";
-                        $merchantLanguage->save();
-                    }
-                }
-
-                Event::fire('orbit.language.postupdatesupportedlanguage.after.save', array($this, $supported_language));
+                Event::fire('orbit.language.postupdatesupportedlanguage.after.save', array($this, $supportedLanguage));
 
                 //for return all updated date
-                $data_update[$key_language_id] = $supported_language;
+                $data_update[$languageId] = $supportedLanguage;
             }
 
             $this->response->data = $data_update;
@@ -347,7 +321,7 @@ class LanguageAPIController extends ControllerAPI
             $activity->setUser($user)
                 ->setActivityName('update_supported_language')
                 ->setActivityNameLong('Modif Supported Languages OK')
-                ->setObject($supported_language)
+                ->setObject($supportedLanguage)
                 ->setNotes($activityNotes)
                 ->responseOK();
 
@@ -441,6 +415,49 @@ class LanguageAPIController extends ControllerAPI
 
     private function registerCustomValidation()
     {
+        Validator::extend('orbit.empty.check_use_supported_language', function ($attribute, $value, $parameters) {
+            // Check all related existing content using supportted language in : mall, partner, campaign (pmp_account), and MDM
+
+            // 1. Check Mall/Merchant Language
+            $mallLanguage = MerchantLanguage::select('merchant_language_id')
+                                ->active()
+                                ->where('language_id', $value)
+                                ->first();
+
+            if (is_object($mallLanguage)) {
+                return false;
+            }
+
+            // 2. Check Partner,
+            $partnerlanguage = PartnerTranslation::select('partner_translation_id')
+                                ->active()
+                                ->where('language_id', $value)
+                                ->first();
+
+            if (is_object($partnerlanguage)) {
+                return false;
+            }
+
+            // 3. Check PMP Account
+            $objectSupportedLanguage = ObjectSupportedLanguage::select('object_supported_language_id')
+                                ->where('language_id', $value)
+                                ->first();
+
+            if (is_object($objectSupportedLanguage)) {
+                return false;
+            }
+
+            // 4. Check Merchants language in DM
+            $mdmLanguage = BaseMerchantTranslation::select('base_merchant_translation_id')
+                                ->where('language_id', $value);
+
+            if (is_object($mdmLanguage)) {
+                return false;
+            }
+
+            return true;
+        });
+
         Validator::extend('orbit.empty.merchant.public', function ($attribute, $value, $parameters) {
             $merchant = Mall::excludeDeleted()
                 ->where('merchant_id', $value)

@@ -144,8 +144,9 @@ class NewsListAPIController extends PubControllerAPI
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
+            $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match', '0%');
 
-            $jsonQuery = array('from' => $skip, 'size' => $take, 'query' => array('filtered' => array('filter' => array('and' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs))))))));
+            $jsonQuery = array('from' => $skip, 'size' => $take, 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -163,7 +164,7 @@ class NewsListAPIController extends PubControllerAPI
                 }
             }
 
-            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey, $shouldMatch)
             {
                 $cacheKey['keyword'] = $keyword;
 
@@ -180,35 +181,37 @@ class NewsListAPIController extends PubControllerAPI
                     $priority['province'] = Config::get('orbit.elasticsearch.priority.news.province', '^2');
                     $priority['country'] = Config::get('orbit.elasticsearch.priority.news.country', '^2');
 
-                    $filterTranslation = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.name'.$priority['name'], 'translation.description'.$priority['description'])))));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
+                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.name'.$priority['name'], 'translation.description'.$priority['description'])))));
 
-                    $filterTenant = array('nested' => array('path' => 'link_to_tenant', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('link_to_tenant.city'.$priority['city'], 'link_to_tenant.province'.$priority['province'], 'link_to_tenant.country'.$priority['country'], 'link_to_tenant.mall_name'.$priority['mall_name'])))));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTenant;
+                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('link_to_tenant.city'.$priority['city'], 'link_to_tenant.province'.$priority['province'], 'link_to_tenant.country'.$priority['country'], 'link_to_tenant.mall_name'.$priority['mall_name'])))));
 
-                    $filterKeyword = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
+                    $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
+
+                    $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    $jsonQuery['query']['bool']['must'][] = $filterKeyword;
                 }
             });
 
             OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery) {
                 if (! empty($mallId)) {
                     $withMallId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.parent_id' => $mallId))))));
-                    $jsonQuery['query']['filtered']['filter']['and'][] = $withMallId;
+                    $jsonQuery['query']['bool']['must'][] = $withMallId;
                 }
              });
 
             // filter by category_id
-            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
+            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag, $shouldMatch) {
                 $searchFlag = $searchFlag || TRUE;
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
 
                 foreach ($categoryIds as $key => $value) {
-                    $categoryFilter['or'][] = array('match' => array('category_ids' => $value));
+                    $categoryFilter['bool']['should'][] = array('match' => array('category_ids' => $value));
                 }
-                $jsonQuery['query']['filtered']['filter']['and'][] = $categoryFilter;
+
+                $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                $jsonQuery['query']['bool']['must'][] = $categoryFilter;
             });
 
             OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
@@ -232,7 +235,7 @@ class NewsListAPIController extends PubControllerAPI
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
                             $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
-                        $jsonQuery['query']['filtered']['filter']['and'][] = $partnerFilter;
+                        $jsonQuery['query']['bool']['must'][] = $partnerFilter;
                     }
                 }
             });
@@ -246,32 +249,37 @@ class NewsListAPIController extends PubControllerAPI
                     if ($location === 'mylocation' && $lat != '' && $lon != '') {
                         $withCache = FALSE;
                         $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat)))))));
-                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
+                        $jsonQuery['query']['bool']['must'][] = $locationFilter;
                     } elseif ($location !== 'mylocation') {
                         $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $location))))));
-                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
+                        $jsonQuery['query']['bool']['must'][] = $locationFilter;
                     }
                 }
             });
 
+            $countryCityFilterArr = [];
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery) {
-                $countryFilterArr = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.country.raw' => $countryFilter))))));
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$countryCityFilterArr) {
+                $countryCityFilterArr = ['nested' => ['path' => 'link_to_tenant', 'query' => ['bool' => []], 'inner_hits' => ['name' => 'country_city_hits']]];
 
-                $jsonQuery['query']['filtered']['filter']['and'][] = $countryFilterArr;
+                $countryCityFilterArr['nested']['query']['bool'] = ['must' => ['match' => ['link_to_tenant.country.raw' => $countryFilter]]];
             });
 
             // filter by city, only filter when countryFilter is not empty
-            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter) {
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
                 if (! empty($countryFilter)) {
                     $cityFilterArr = [];
                     foreach ((array) $cityFilters as $cityFilter) {
-                        $cityFilterArr[] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $cityFilter))))));
+                        $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];
                     }
-
-                    $jsonQuery['query']['filtered']['filter']['and'][]['or'] = $cityFilterArr;
+                    $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
+                    $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
             });
+
+            if (! empty($countryCityFilterArr)) {
+                $jsonQuery['query']['bool']['must'][] = $countryCityFilterArr;
+            }
 
             // Exclude specific document Ids, useful for some cases e.g You May Also Like
             // @todo rewrite deprected 'filtered' query to bool only
@@ -280,7 +288,7 @@ class NewsListAPIController extends PubControllerAPI
                 foreach ($excludedIds as $excludedId) {
                     $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
                 }
-                $jsonQuery['query']['filtered']['query']['bool']['must_not'] = $jsonExcludedIds;
+                $jsonQuery['query']['bool']['must_not'] = $jsonExcludedIds;
             });
 
             // sort by name or location
@@ -343,9 +351,14 @@ class NewsListAPIController extends PubControllerAPI
 
             foreach ($records['hits'] as $record) {
                 $data = array();
+                $default_lang = '';
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
                         $key = "news_name";
+                    }
+
+                    if ($key === 'default_lang') {
+                        $default_lang = $value;
                     }
                     $data[$key] = $value;
 
@@ -357,10 +370,14 @@ class NewsListAPIController extends PubControllerAPI
                             $localPath = (! empty($dt['image_url'])) ? $dt['image_url'] : '';
                             $cdnPath = (! empty($dt['image_cdn_url'])) ? $dt['image_cdn_url'] : '';
 
-                            if ($dt['language_code'] == $language) {
-                                // name & desc
+                            if ($dt['language_code'] === $language) {
+                                // name
                                 if (! empty($dt['name'])) {
                                     $data['news_name'] = $dt['name'];
+                                }
+
+                                // desc
+                                if (! empty($dt['description'])) {
                                     $data['description'] = $dt['description'];
                                 }
 
@@ -368,10 +385,14 @@ class NewsListAPIController extends PubControllerAPI
                                 if (! empty($dt['image_url'])) {
                                     $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                                 }
-                            } else {
-                                // name & desc
+                            } elseif ($dt['language_code'] === $default_lang) {
+                                // name
                                 if (! empty($dt['name']) && empty($data['news_name'])) {
                                     $data['news_name'] = $dt['name'];
+                                }
+
+                                // description
+                                if (! empty($dt['description']) && empty($data['description'])) {
                                     $data['description'] = $dt['description'];
                                 }
 
@@ -384,6 +405,7 @@ class NewsListAPIController extends PubControllerAPI
                     }
                 }
                 $data['score'] = $record['_score'];
+                unset($data['created_by'], $data['creator_email']);
                 $listOfRec[] = $data;
             }
 

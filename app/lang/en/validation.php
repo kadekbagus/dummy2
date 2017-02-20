@@ -169,6 +169,7 @@ return array(
             'master_link_to_tenant'  => 'Master must link to all tenants',
         ),
         'empty' => array(
+            'check_use_supported_language' => 'Unable to inactivate language that still has links',
             'age'                  => 'The Age Range ID you specified is not found',
             'gender'               => 'The Gender must be M or F or U',
             'is_all_gender'        => 'The All Gender must be Y or N',
@@ -360,6 +361,7 @@ return array(
             'gtm_country' => 'The :attribute is not found',
             'vendor_city' => 'The :attribute is not found',
             'gtm_city' => 'The :attribute is not found',
+            'exclusive_partner' => 'Exclusive partner not found',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(

@@ -23,6 +23,9 @@ return array(
         // Prefix to access indices
         'indices_prefix' => 'v2x_',
 
+        // The minimum_should_match parameter possible values
+        'minimum_should_match' => '50%',
+
         // List of indices that we have in Elasticsearch
         // All the query to the index name will be appended by prefix automatically
         'indices' => [
@@ -5193,7 +5196,7 @@ return array(
         'direct_redemption_url' => NULL,
         // URL coupon canvas
         // e.g: https://www.gotomalls.cool/#!/coupon-blasting?cid=%s&pid=%s
-        'sms_direct_redemption_url' => NULL
+        'sms_direct_redemption_url' => NULL,
     ],
 
     'campaign_auto_email' => array(
@@ -5654,6 +5657,18 @@ return array(
             ],
         ]
     ],
+
+    /**
+     * Configuration for 'advertise with us' email GTM
+     */
+    'advertise_with_us_email' => array(
+        // subject of the email
+        'subject' => 'Advertise with us',
+
+        // email where the advertise request will be sent
+        // example : array('marketing@dominopos.com', 'fgiraud@dominopos.com')
+        'email_list' => array('marketing@dominopos.com'),
+    ),
 
     /**
      * Queue name related with campaign and merchant creation or update
