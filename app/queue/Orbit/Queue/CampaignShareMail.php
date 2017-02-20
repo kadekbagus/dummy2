@@ -17,6 +17,8 @@ use Coupon;
 use DB;
 use Language;
 use Str;
+use App;
+use Lang;
 
 class CampaignShareMail
 {
@@ -34,6 +36,10 @@ class CampaignShareMail
         $valid_language = Language::where('status', '=', 'active')
                             ->where('name', $data['languageId'])
                             ->first();
+
+        if (! empty($data['languageId'])) {
+            App::setLocale($data['languageId']);
+        }
 
         $user = User::where('user_id','=', $data['userId'])
                     ->first();
@@ -100,8 +106,8 @@ class CampaignShareMail
 
                     $baseUrl = Config::get('orbit.campaign_share_email.promotion_detail_base_url');
                     $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
-                    $campaignTypeEn = 'promotion';
-                    $campaignTypeId = 'promosi';
+                    $message2 = Lang::get('email.campaign_share.message_part2_promotion');
+                    $campaignType = Lang::get('email.campaign_share.campaign_type_promotion');
 
                     break;
 
@@ -141,8 +147,8 @@ class CampaignShareMail
 
                     $baseUrl = Config::get('orbit.campaign_share_email.news_detail_base_url');
                     $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
-                    $campaignTypeEn = 'event';
-                    $campaignTypeId = 'event';
+                    $message2 = Lang::get('email.campaign_share.message_part2_event');
+                    $campaignType = Lang::get('email.campaign_share.campaign_type_event');
 
                     break;
 
@@ -175,8 +181,8 @@ class CampaignShareMail
 
                     $baseUrl = Config::get('orbit.campaign_share_email.coupon_detail_base_url');
                     $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
-                    $campaignTypeEn = 'coupon';
-                    $campaignTypeId = 'kupon';
+                    $message2 = Lang::get('email.campaign_share.message_part2_coupon');
+                    $campaignType = Lang::get('email.campaign_share.campaign_type_coupon');
 
                     break;
             default :
@@ -190,13 +196,20 @@ class CampaignShareMail
         }
 
         $dataView['campaignName'] = $campaign->campaign_name;
-        $dataView['campaignType'] = $data['campaignType'];
-        $dataView['campaignTypeEn'] = $campaignTypeEn;
-        $dataView['campaignTypeId'] = $campaignTypeId;
+        $dataView['campaignType'] = $campaignType;
         $dataView['campaignImage'] = $campaignImage;
         $dataView['campaignUrl'] = $campaignUrl;
         $dataView['email'] = $data['email'];
         $dataView['name'] = $user->user_firstname;
+        $dataView['labelMalls'] = Lang::get('email.campaign_share.label_malls');
+        $dataView['labelStores'] = Lang::get('email.campaign_share.label_stores');
+        $dataView['labelPromotions'] = Lang::get('email.campaign_share.label_promotions');
+        $dataView['labelCoupons'] = Lang::get('email.campaign_share.label_coupons');
+        $dataView['labelEvents'] = Lang::get('email.campaign_share.label_events');
+        $dataView['greeting'] = Lang::get('email.campaign_share.greeting');
+        $dataView['message1'] = Lang::get('email.campaign_share.message_part1');
+        $dataView['message2'] = $message2;
+        $dataView['buttonSeeNow'] = Lang::get('email.campaign_share.button_see_now');
 
         $mailViews = array(
                     'html' => 'emails.campaign-share-email.campaign-share-html',
@@ -228,7 +241,7 @@ class CampaignShareMail
             $email = $data['email'];
 
             $subjectConfig = Config::get('orbit.campaign_share_email.subject');
-            $subject = sprintf($subjectConfig, ucfirst($data['campaignTypeId']), $data['campaignName']);
+            $subject = sprintf($subjectConfig, ucfirst($data['campaignType']), $data['campaignName']);
 
             $message->from($from, $name);
             $message->subject($subject);
