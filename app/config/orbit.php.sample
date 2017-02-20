@@ -24,7 +24,37 @@ return array(
         'indices_prefix' => 'v2x_',
 
         // The minimum_should_match parameter possible values
-        'minimum_should_match' => '50%',
+        'minimum_should_match' => [
+            'mall' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'news' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'promotion' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'coupon' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'store' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ]
+        ],
 
         // List of indices that we have in Elasticsearch
         // All the query to the index name will be appended by prefix automatically
@@ -735,10 +765,16 @@ return array(
 
         // Number of days before token in reset link expires
         'reset_expire' => 7,
+
+        // Name of the queue used to send the email
+        'queue_name' => 'gtm_email',
     ),
 
     'registration' => array(
         'mobile'    => array(
+            // Name of the queue used to send the email
+            'queue_name' => 'gtm_email',
+
             // New role assigned to the user
             'role' => 'Consumer',
 
@@ -5664,4 +5700,54 @@ return array(
         'email_list' => array('marketing@dominopos.com'),
     ),
 
+    /**
+     * Queue name related with campaign and merchant creation or update
+     */
+    'queue_name' => [
+        // Queue name for news
+        'news' => [
+            'default' => 'gtm_campaign',
+        ],
+
+        // Queue name for promotion
+        'promotion' => [
+            'default' => 'gtm_campaign'
+        ],
+
+        // Queue name for coupon
+        'coupon' => [
+            'default' => 'gtm_campaign',
+        ],
+
+        // Queue name for merchant
+        'merchant' => [
+            'default' => 'gtm_mall_merchant',
+        ],
+
+        // Queue name for mall
+        'mall' => [
+            'default' => 'gtm_mall_merchant'
+        ]
+    ],
+
+    /**
+     * Activity model related configuration
+     */
+    'activity' => [
+        // Configation for activity that saved to ES
+        'elasticsearch' => [
+            // Do we need to fill the country and city field?
+            'lookup_country_city' => [
+                // TRUE = Lookup the country and city using geolocation vendor e.g: DB-IP
+                // FALSE = Lookup the country and city using default value set below
+                'enable' => TRUE,
+
+                // Value for country when lookup disable
+                'default_country_value' => 'LOOKUP COUNTRY DISABLED',
+
+                // Value for city when lookup disable
+                'default_city_value' => 'LOOKUP CITY DISABLED',
+            ]
+        ]
+    ]
 );

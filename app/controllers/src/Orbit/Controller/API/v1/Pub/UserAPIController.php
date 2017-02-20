@@ -98,8 +98,9 @@ class UserAPIController extends PubControllerAPI
                 // Resend email process to the queue
                 Queue::push('Orbit\\Queue\\RegistrationMail', [
                     'user_id' => $updateUser->user_id,
-                    'mode' => 'gotomalls'
-                ]);
+                    'mode' => 'gotomalls'],
+                    Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
+                );
             }
 
             $image = null;

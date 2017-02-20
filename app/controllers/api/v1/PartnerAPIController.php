@@ -156,7 +156,7 @@ class PartnerAPIController extends ControllerAPI
                 'affected_group_name_id'    => 'array',
                 'is_exclusive'              => 'in:Y,N',
                 'supported_languages'       => 'required|array|orbit.empty.language',
-                'mobile_default_language'   => 'required|orbit.empty.mobile_default_lang:' . $supported_languages . '|orbit.empty.language_default',
+                'mobile_default_language'   => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
             ];
 
             $validation_error_message = [];
@@ -527,7 +527,7 @@ class PartnerAPIController extends ControllerAPI
                 'affected_group_name_id'    => 'array',
                 'is_exclusive'              => 'in:Y,N',
                 'supported_languages'       => 'required|array|orbit.empty.language',
-                'mobile_default_language'   => 'required|orbit.empty.mobile_default_lang:' . $supported_languages . '|orbit.empty.language_default',
+                'mobile_default_language'   => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
             ];
 
             $validation_error_message = [];
@@ -1476,7 +1476,7 @@ class PartnerAPIController extends ControllerAPI
         // Check the affected default language name is exists
         Validator::extend('orbit.empty.mobile_default_lang', function ($attribute, $value, $parameters) {
 
-            if (! in_array($value, $parameters[0])) {
+            if (! in_array($value, $parameters)) {
                 return FALSE;
             }
 

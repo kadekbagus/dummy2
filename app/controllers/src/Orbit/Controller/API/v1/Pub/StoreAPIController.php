@@ -1154,7 +1154,8 @@ class StoreAPIController extends PubControllerAPI
                                       ;
                                 })
                               ->where('merchants.name', $storename)
-                              ->where(DB::raw("mall.status"), 'active');
+                              ->where(DB::raw("mall.status"), 'active')
+                              ->where('merchants.status', 'active');
 
             if (! empty($mallId)) {
                 $mall->where(DB::raw("mall.merchant_id"), '=', $mallId)->first();
