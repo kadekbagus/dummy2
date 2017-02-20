@@ -26,6 +26,7 @@ class AccountAPIController extends ControllerAPI
     protected $valid_role    = NULL;
     protected $valid_country = NULL;
     protected $valid_account_type = NULL;
+    protected $valid_lang = NULL;
     protected $allow_select_all_tenant = ['Dominopos', '3rd Party', 'Master'];
 
     /**
@@ -605,6 +606,7 @@ class AccountAPIController extends ControllerAPI
                 'postal_code'    => $row->userDetail->postal_code,
                 'country'        => (object) ['id' => $row->userDetail->country_id, 'name' => @$row->userDetail->userCountry->name],
                 'country_name'   => @$row->userDetail->userCountry->name,
+                'pmp_languages'  => $row->campaignAccount->pmpLanguages,
             ];
         }
 
@@ -724,6 +726,10 @@ class AccountAPIController extends ControllerAPI
             $province        = OrbitInput::post('province');
             $postal_code     = OrbitInput::post('postal_code');
             $position        = OrbitInput::post('position');
+
+            $languages = OrbitInput::post('languages', []);
+            $mobile_default_language = OrbitInput::post('mobile_default_language');
+
             // select all link to tenant just for 3rd and dominopos
             $select_all_tenants = OrbitInput::post('select_all_tenants', 'N');
 
@@ -754,37 +760,41 @@ class AccountAPIController extends ControllerAPI
             $account_type = $this->valid_account_type;
 
             $validation_data = [
-                'is_subscribed'      => $is_subscribed,
-                'select_all_tenants' => $select_all_tenants,
-                'user_firstname'     => $user_firstname,
-                'user_lastname'      => $user_lastname,
-                'user_email'         => $user_email,
-                'account_name'       => $account_name,
-                'status'             => $status,
-                'company_name'       => $company_name,
-                'address_line1'      => $address_line1,
-                'city'               => $city,
-                'country_id'         => $country_id,
-                'merchant_ids'       => $merchant_ids,
-                'user_password'      => $user_password,
-                'role_name'          => $role_name,
+                'is_subscribed'           => $is_subscribed,
+                'select_all_tenants'      => $select_all_tenants,
+                'user_firstname'          => $user_firstname,
+                'user_lastname'           => $user_lastname,
+                'user_email'              => $user_email,
+                'account_name'            => $account_name,
+                'status'                  => $status,
+                'company_name'            => $company_name,
+                'address_line1'           => $address_line1,
+                'city'                    => $city,
+                'country_id'              => $country_id,
+                'merchant_ids'            => $merchant_ids,
+                'user_password'           => $user_password,
+                'role_name'               => $role_name,
+                'languages'               => $languages,
+                'mobile_default_language' => $mobile_default_language,
             ];
 
             $validation_error = [
-                'is_subscribed'      => 'in:N,Y',
-                'select_all_tenants' => 'in:N,Y|orbit.access.select_all_tenants:' . $account_type->type_name,
-                'user_firstname'     => 'required',
-                'user_lastname'      => 'required',
-                'user_email'         => 'required|email|orbit.exists.username',
-                'account_name'       => 'required|unique:campaign_account,account_name',
-                'status'             => 'required|in:active,inactive',
-                'company_name'       => 'required',
-                'address_line1'      => 'required',
-                'city'               => 'required',
-                'country_id'         => 'required|orbit.empty.country',
-                'merchant_ids'       => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
-                'user_password'      => 'required|min:6',
-                'role_name'          => 'required|in:Campaign Owner,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
+                'is_subscribed'           => 'in:N,Y',
+                'select_all_tenants'      => 'in:N,Y|orbit.access.select_all_tenants:' . $account_type->type_name,
+                'user_firstname'          => 'required',
+                'user_lastname'           => 'required',
+                'user_email'              => 'required|email|orbit.exists.username',
+                'account_name'            => 'required|unique:campaign_account,account_name',
+                'status'                  => 'required|in:active,inactive',
+                'company_name'            => 'required',
+                'address_line1'           => 'required',
+                'city'                    => 'required',
+                'country_id'              => 'required|orbit.empty.country',
+                'merchant_ids'            => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
+                'user_password'           => 'required|min:6',
+                'role_name'               => 'required|in:Campaign Owner,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
+                'languages'               => 'required|array',
+                'mobile_default_language' => 'required|size:2|orbit.formaterror.language',
             ];
 
             if ($select_all_tenants === 'Y') {
@@ -858,6 +868,13 @@ class AccountAPIController extends ControllerAPI
             $campaignAccount->is_subscribed   = $is_subscribed;
             $campaignAccount->position        = $position;
             $campaignAccount->status          = $status;
+
+            // check mobile default language must in supported language
+            if (in_array($mobile_default_language, $languages)) {
+                $campaignAccount->mobile_default_language = $mobile_default_language;
+            } else {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+            }
             $campaignAccount->save();
 
             // new employee
@@ -876,6 +893,33 @@ class AccountAPIController extends ControllerAPI
                     $userMerchant->merchant_id = $merchantId;
                     $userMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
                     $userMerchant->save();
+                }
+            }
+
+            // languages
+            if (count($languages) > 0) {
+                foreach ($languages as $language_name) {
+                    $validator = Validator::make(
+                        array(
+                            'language'             => $language_name
+                        ),
+                        array(
+                            'language'             => 'required|size:2|orbit.formaterror.language'
+                        )
+                    );
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $pmp_account_languages = new ObjectSupportedLanguage();
+                    $pmp_account_languages->object_id = $campaignAccount->campaign_account_id;
+                    $pmp_account_languages->object_type = 'pmp_account';
+                    $pmp_account_languages->status = 'active';
+                    $pmp_account_languages->language_id = Language::where('name', '=', $language_name)->first()->language_id;
+                    $pmp_account_languages->save();
                 }
             }
 
@@ -1029,6 +1073,9 @@ class AccountAPIController extends ControllerAPI
             $account_type_id = OrbitInput::post('account_type_id');
             $role_name       = OrbitInput::post('role_name');
             $user_password   = OrbitInput::post('user_password');
+
+            $mobile_default_language = OrbitInput::post('mobile_default_language');
+            $languages = OrbitInput::post('languages');
             // select all link to tenant just for 3rd and dominopos
             $select_all_tenants = OrbitInput::post('select_all_tenants', 'N');
 
@@ -1069,6 +1116,8 @@ class AccountAPIController extends ControllerAPI
                 'merchant_ids'       => $merchant_ids,
                 'role_name'          => $role_name,
                 'user_password'      => $user_password,
+                'languages'               => $languages,
+                'mobile_default_language' => $mobile_default_language,
             ];
 
             $validation_error = [
@@ -1087,6 +1136,8 @@ class AccountAPIController extends ControllerAPI
                 'merchant_ids'       => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
                 'role_name'          => 'required|in:Campaign Owner,Campaign Employee,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
                 'user_password'      => 'min:6',
+                'languages'               => 'array',
+                'mobile_default_language' => 'size:2|orbit.formaterror.language',
             ];
 
             if ($select_all_tenants === 'Y') {
@@ -1247,7 +1298,135 @@ class AccountAPIController extends ControllerAPI
                 $campaignAccount->status = $status;
             });
 
+            OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($campaignAccount, $languages, $update_user) {
+                $old_mobile_default_language = $campaignAccount->mobile_default_language;
+                if ($old_mobile_default_language !== $mobile_default_language) {
+                    $check_lang = Language::excludeDeleted()
+                                    ->where('name', $old_mobile_default_language)
+                                    ->first();
+
+                    if (! empty($check_lang)) {
+                        // news translation
+                        $news_translation = NewsTranslation::excludeDeleted('news_translations')
+                                                ->join('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                ->allowedForPMPUser($update_user, 'news')
+                                                ->join('object_supported_language', 'object_supported_language.object_id', '=', DB::raw('ca.campaign_account_id'))
+                                                ->where('object_supported_language.language_id', $check_lang->language_id)
+                                                ->where('object_supported_language.status', 'active')
+                                                ->first();
+                        if (empty($news_translation)) {
+                            $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // promotion translation
+                        $promotion_translation = NewsTranslation::excludeDeleted('news_translations')
+                                                ->join('news', 'news.news_id', '=', 'news_translations.news_id')
+                                                ->allowedForPMPUser($update_user, 'promotion')
+                                                ->join('object_supported_language', 'object_supported_language.object_id', '=', DB::raw('ca.campaign_account_id'))
+                                                ->where('object_supported_language.language_id', $check_lang->language_id)
+                                                ->where('object_supported_language.status', 'active')
+                                                ->first();
+                        if (empty($promotion_translation)) {
+                            $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        // coupon translation
+                        $coupon_translation = CouponTranslation::excludeDeleted('coupon_translations')
+                                                ->join('promotions', 'promotions.promotion_id', '=', 'coupon_translations.promotion_id')
+                                                ->allowedForPMPUser($update_user, 'coupon')
+                                                ->join('object_supported_language', 'object_supported_language.object_id', '=', DB::raw('ca.campaign_account_id'))
+                                                ->where('object_supported_language.language_id', $check_lang->language_id)
+                                                ->where('object_supported_language.status', 'active')
+                                                ->first();
+                        if (empty($coupon_translation)) {
+                            $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+                    }
+                }
+
+                if (in_array($mobile_default_language, $languages)) {
+                    $campaignAccount->mobile_default_language = $mobile_default_language;
+                } else {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+                }
+            });
+
             $campaignAccount->save();
+
+            OrbitInput::post('languages', function($languages) use ($campaignAccount, $mobile_default_language) {
+                // new languages
+                $pmp_account_languages = [];
+                foreach ($languages as $language_name) {
+                    $validator = Validator::make(
+                        array(
+                            'language'             => $language_name
+                        ),
+                        array(
+                            'language'             => 'required|size:2|orbit.formaterror.language'
+                        )
+                    );
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $language_data = $this->valid_lang;
+
+                    // check lang
+                    $old_pmp_account_languages = ObjectSupportedLanguage::excludeDeleted()
+                                                    ->where('object_id', $campaignAccount->campaign_account_id)
+                                                    ->where('object_type', 'pmp_account')
+                                                    ->where('language_id', $language_data->language_id)
+                                                    ->get();
+
+                    if (count($old_pmp_account_languages) > 0) {
+                        foreach ($old_pmp_account_languages as $old_pmp_account_language) {
+                            $pmp_account_languages[] = $old_pmp_account_language->language_id;
+                        }
+                    } else {
+                        $newpmp_account_language = new ObjectSupportedLanguage();
+                        $newpmp_account_language->object_id = $campaignAccount->campaign_account_id;
+                        $newpmp_account_language->object_type = 'pmp_account';
+                        $newpmp_account_language->status = 'active';
+                        $newpmp_account_language->language_id = Language::where('name', '=', $language_name)->first()->language_id;
+                        $newpmp_account_language->save();
+
+                        $pmp_account_languages[] = $newpmp_account_language->language_id;
+                    }
+                }
+
+                // find lang will be delete
+                $languages_will_be_delete = ObjectSupportedLanguage::excludeDeleted()
+                                                ->where('object_id', $campaignAccount->campaign_account_id)
+                                                ->where('object_type', 'pmp_account')
+                                                ->whereNotIn('language_id', $pmp_account_languages)
+                                                ->get();
+
+                if (count($languages_will_be_delete) > 0) {
+                    $del_lang = [];
+                    foreach ($languages_will_be_delete as $check_lang) {
+                        if ($check_lang->name === $mobile_default_language) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.exists.mobile_default_lang'));
+                        }
+
+                        //colect language will be delete
+                        $del_lang[] = $check_lang->language_id;
+                    }
+                    if (count($del_lang) > 0) {
+                        // delete languages
+                        $delete_languages = ObjectSupportedLanguage::excludeDeleted()
+                                                ->where('object_id', $campaignAccount->campaign_account_id)
+                                                ->where('object_type', 'pmp_account')
+                                                ->whereIn('language_id', $del_lang)
+                                                ->update(['status' => 'deleted']);
+                    }
+                }
+            });
 
             // update employee
             $update_employee = Employee::excludeDeleted()
@@ -1661,6 +1840,18 @@ class AccountAPIController extends ControllerAPI
                 return FALSE;
             }
 
+            return TRUE;
+        });
+
+        Validator::extend('orbit.formaterror.language', function($attribute, $value, $parameters)
+        {
+            $lang = Language::where('name', '=', $value)->where('status', '=', 'active')->first();
+
+            if (empty($lang)) {
+                return FALSE;
+            }
+
+            $this->valid_lang = $lang;
             return TRUE;
         });
     }
