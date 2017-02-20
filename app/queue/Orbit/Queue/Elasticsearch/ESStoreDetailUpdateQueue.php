@@ -65,6 +65,7 @@ class ESStoreDetailUpdateQueue
                             'merchants.object_type',
                             'merchants.created_at',
                             'merchants.updated_at',
+                            'merchants.mobile_default_language',
                             'media.path',
                             'media.cdn_url',
                             DB::raw("x({$prefix}merchant_geofences.position) as latitude"),
@@ -209,6 +210,7 @@ class ESStoreDetailUpdateQueue
                     'logo' => $_store->path,
                     'logo_cdn' => $_store->cdn_url,
                     'url' => $_store->url,
+                    'default_lang' => $_store->mobile_default_language,
                     'created_at' => date('Y-m-d', strtotime($_store->created_at)) . 'T' . date('H:i:s', strtotime($_store->created_at)) . 'Z',
                     'updated_at' => date('Y-m-d', strtotime($_store->updated_at)) . 'T' . date('H:i:s', strtotime($_store->updated_at)) . 'Z',
                     'translation' => $translations
