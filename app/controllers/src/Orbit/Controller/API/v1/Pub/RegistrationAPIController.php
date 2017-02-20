@@ -153,8 +153,9 @@ class RegistrationAPIController extends IntermediateBaseController
             // Send email process to the queue
             Queue::push('Orbit\\Queue\\RegistrationMail', [
                 'user_id' => $user->user_id,
-                'mode' => 'gotomalls'
-            ]);
+                'mode' => 'gotomalls'],
+                Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
+            );
 
             if ($useTransaction) {
                 DB::commit();

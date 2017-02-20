@@ -200,6 +200,9 @@ Artisan::add(new CampaignDeleteInactiveEsCommand);
 // Sync to elasticsearch from merchant(store) table to store detail index
 Artisan::add(new ElasticsearchResyncStoreDetailCommand);
 
+// Resend Registration Email
+Artisan::add(new UserResendRegistrationEmailCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

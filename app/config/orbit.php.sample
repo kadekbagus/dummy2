@@ -732,10 +732,16 @@ return array(
 
         // Number of days before token in reset link expires
         'reset_expire' => 7,
+
+        // Name of the queue used to send the email
+        'queue_name' => 'gtm_email',
     ),
 
     'registration' => array(
         'mobile'    => array(
+            // Name of the queue used to send the email
+            'queue_name' => 'gtm_email',
+
             // New role assigned to the user
             'role' => 'Consumer',
 
@@ -5187,7 +5193,7 @@ return array(
         'direct_redemption_url' => NULL,
         // URL coupon canvas
         // e.g: https://www.gotomalls.cool/#!/coupon-blasting?cid=%s&pid=%s
-        'sms_direct_redemption_url' => NULL,
+        'sms_direct_redemption_url' => NULL
     ],
 
     'campaign_auto_email' => array(
@@ -5649,4 +5655,54 @@ return array(
         ]
     ],
 
+    /**
+     * Queue name related with campaign and merchant creation or update
+     */
+    'queue_name' => [
+        // Queue name for news
+        'news' => [
+            'default' => 'gtm_campaign',
+        ],
+
+        // Queue name for promotion
+        'promotion' => [
+            'default' => 'gtm_campaign'
+        ],
+
+        // Queue name for coupon
+        'coupon' => [
+            'default' => 'gtm_campaign',
+        ],
+
+        // Queue name for merchant
+        'merchant' => [
+            'default' => 'gtm_mall_merchant',
+        ],
+
+        // Queue name for mall
+        'mall' => [
+            'default' => 'gtm_mall_merchant'
+        ]
+    ],
+
+    /**
+     * Activity model related configuration
+     */
+    'activity' => [
+        // Configation for activity that saved to ES
+        'elasticsearch' => [
+            // Do we need to fill the country and city field?
+            'lookup_country_city' => [
+                // TRUE = Lookup the country and city using geolocation vendor e.g: DB-IP
+                // FALSE = Lookup the country and city using default value set below
+                'enable' => TRUE,
+
+                // Value for country when lookup disable
+                'default_country_value' => 'LOOKUP COUNTRY DISABLED',
+
+                // Value for city when lookup disable
+                'default_city_value' => 'LOOKUP CITY DISABLED',
+            ]
+        ]
+    ]
 );

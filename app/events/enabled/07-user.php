@@ -192,8 +192,10 @@ Event::listen('orbit.user.postnewmembership.after.commit', function($controller,
 {
     // Send email after registration to the queue
     Queue::push('Orbit\\Queue\\RegistrationMail', [
-        'user_id' => $customer->user_id
-    ]);
+        'user_id' => $customer->user_id,
+        'mode' => 'gotomalls'],
+        Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
+    );
 
     // This event always executed when there is call to update membership
     // So we need to distinguish the call from an form interface such as CS Portal or
