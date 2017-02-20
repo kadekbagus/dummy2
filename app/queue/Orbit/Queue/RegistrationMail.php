@@ -81,6 +81,7 @@ class RegistrationMail
         $tokenUrl = sprintf($baseUrl, $token->token_value, $user->user_email);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
 
+        $dataCopy = $data;
         $data = array(
             'token'             => $token->token_value,
             'email'             => $user->user_email,
@@ -92,11 +93,12 @@ class RegistrationMail
             'cs_email'          => $contactInfo['email'],
             'cs_office_hour'    => $contactInfo['office_hour']
         );
+
         $mailviews = array(
             'html' => 'emails.registration.activation-html',
             'text' => 'emails.registration.activation-text'
         );
-        Mail::send($mailviews, $data, function($message) use ($user)
+        Mail::send($mailviews, $data, function($message) use ($user, $dataCopy)
         {
             $emailconf = Config::get('orbit.registration.mobile.sender');
             $from = $emailconf['email'];
@@ -104,6 +106,10 @@ class RegistrationMail
 
             $message->from($from, $name)->subject('Selamat Datang di Gotomalls!');
             $message->to($user->user_email);
+
+            if (isset($dataCopy['cc_email']) && !empty($dataCopy['cc_email'])) {
+                $message->cc($dataCopy['cc_email']);
+            }
         });
     }
 }

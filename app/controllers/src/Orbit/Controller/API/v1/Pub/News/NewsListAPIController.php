@@ -266,7 +266,7 @@ class NewsListAPIController extends PubControllerAPI
             });
 
             // filter by city, only filter when countryFilter is not empty
-            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr, $shouldMatch) {
                 if (! empty($countryFilter)) {
                     $cityFilterArr = [];
                     foreach ((array) $cityFilters as $cityFilter) {
@@ -280,6 +280,16 @@ class NewsListAPIController extends PubControllerAPI
             if (! empty($countryCityFilterArr)) {
                 $jsonQuery['query']['bool']['must'][] = $countryCityFilterArr;
             }
+
+            // Exclude specific document Ids, useful for some cases e.g You May Also Like
+            // @todo rewrite deprected 'filtered' query to bool only
+            OrbitInput::get('excluded_ids', function($excludedIds) use (&$jsonQuery) {
+                $jsonExcludedIds = [];
+                foreach ($excludedIds as $excludedId) {
+                    $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
+                }
+                $jsonQuery['query']['bool']['must_not'] = $jsonExcludedIds;
+            });
 
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
