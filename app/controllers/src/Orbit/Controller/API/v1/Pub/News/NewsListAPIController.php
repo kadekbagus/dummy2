@@ -93,6 +93,7 @@ class NewsListAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
+            $partnerToken = OrbitInput::get('token', null);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -405,9 +406,15 @@ class NewsListAPIController extends PubControllerAPI
                             }
                         }
                     }
+
+                    $data['is_exclusive'] = ! empty($data['is_exclusive']) ? $data['is_exclusive'] : 'N';
+                    // disable is_exclusive if token is sent and in the partner_tokens
+                    if ($data['is_exclusive'] === 'Y' && in_array($partnerToken, $data['partner_tokens'])) {
+                        $data['is_exclusive'] = 'N';
+                    }
                 }
                 $data['score'] = $record['_score'];
-                unset($data['created_by'], $data['creator_email']);
+                unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
             }
 

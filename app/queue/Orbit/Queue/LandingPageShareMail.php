@@ -14,6 +14,8 @@ use News;
 use Coupon;
 use DB;
 use Language;
+use Lang;
+use App;
 
 class LandingPageShareMail
 {
@@ -31,11 +33,24 @@ class LandingPageShareMail
         $user = User::where('user_id','=', $data['userId'])
                     ->first();
 
+        if (! empty($data['language'])) {
+            App::setLocale($data['language']);
+        }
+
         $dataView['email'] = $data['email'];
         $dataView['name'] = $user->user_firstname;
         $dataView['shareUrl'] = Config::get('orbit.landingpage_share_email.share_url');
         $dataView['videoUrl'] = Config::get('orbit.landingpage_share_email.video_url');
-        $dataView['subject']  = Config::get('orbit.landingpage_share_email.subject');
+        $dataView['labelMalls'] = Lang::get('email.gotomalls_share.label_malls');
+        $dataView['labelStores'] = Lang::get('email.gotomalls_share.label_stores');
+        $dataView['labelPromotions'] = Lang::get('email.gotomalls_share.label_promotions');
+        $dataView['labelCoupons'] = Lang::get('email.gotomalls_share.label_coupons');
+        $dataView['labelEvents'] = Lang::get('email.gotomalls_share.label_events');
+        $dataView['subject'] = Lang::get('email.gotomalls_share.subject');
+        $dataView['greeting'] = Lang::get('email.gotomalls_share.greeting');
+        $dataView['message1'] = Lang::get('email.gotomalls_share.message_part1');
+        $dataView['message2'] = Lang::get('email.gotomalls_share.message_part2');
+        $dataView['button_try_now']  = Lang::get('email.gotomalls_share.button_try_now');
 
         $mailViews = array(
                     'html' => 'emails.landingpage-share-email.landingpage-share-html',
@@ -63,10 +78,8 @@ class LandingPageShareMail
             $emailconf = Config::get('orbit.landingpage_share_email.sender');
             $from = $emailconf['email'];
             $name = $emailconf['name'];
-
             $email = $data['email'];
-
-            $subject = Config::get('orbit.landingpage_share_email.subject');
+            $subject = $data['subject'];
 
             $message->from($from, $name);
             $message->subject($subject);
