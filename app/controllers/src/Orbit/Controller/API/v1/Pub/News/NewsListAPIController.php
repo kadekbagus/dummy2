@@ -170,7 +170,7 @@ class NewsListAPIController extends PubControllerAPI
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.keyword', '0%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.keyword', '50%');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.news.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.news.object_type', '^5');
@@ -202,7 +202,7 @@ class NewsListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.category', '0%');
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.category', '50%');
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
@@ -269,7 +269,7 @@ class NewsListAPIController extends PubControllerAPI
             // filter by city, only filter when countryFilter is not empty
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
                 if (! empty($countryFilter)) {
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.city', '0%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.city', '50%');
                     $cityFilterArr = [];
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];

@@ -93,7 +93,12 @@ class StoreDetailAPIController extends PubControllerAPI
                                                 where mt.merchant_id = {$prefix}merchants.merchant_id
                                                     and mt.merchant_language_id = {$this->quote($valid_language->language_id)}
                                             ) = ''
-                                            THEN {$prefix}merchants.description
+                                            THEN (
+                                                select mt.description
+                                                from {$prefix}merchant_translations mt
+                                                where mt.merchant_id = {$prefix}merchants.merchant_id
+                                                    and mt.merchant_language_id = {$prefix}languages.language_id
+                                            )
                                             ELSE (
                                                 select mt.description
                                                 from {$prefix}merchant_translations mt
@@ -147,6 +152,7 @@ class StoreDetailAPIController extends PubControllerAPI
                         $q->addSelect('keyword', 'object_id');
                     }])
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->join('languages', 'languages.name', '=', 'merchants.mobile_default_language')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'")
                 ->where('merchants.merchant_id', $merchantid);
