@@ -133,6 +133,11 @@ class LanguageAPIController extends ControllerAPI
 
             $campaign_account = $user_login->campaignAccount()->first();
 
+            $check_user = $campaign_account->parent_user_id;
+            if (empty($campaign_account->parent_user_id)) {
+                $check_user = $campaign_account->user_id;
+            }
+
             if ($campaign_account->is_link_to_all !== 'Y'){
                 $languages->leftJoin('object_supported_language', 'object_supported_language.language_id', '=', 'languages.language_id')
                         ->where('object_type', 'pmp_account')
@@ -140,11 +145,8 @@ class LanguageAPIController extends ControllerAPI
                             EXISTS (
                                 SELECT 1
                                 FROM {$prefix}campaign_account ca
-                                JOIN {$prefix}campaign_account cap
-                                    ON cap.user_id = ca.parent_user_id
-                                WHERE (ca.user_id = {$this->quote($user_login->user_id)} or ca.parent_user_id = {$this->quote($user_login->user_id)})
-                                    AND {$prefix}object_supported_language.object_id = cap.campaign_account_id
-                                GROUP BY cap.campaign_account_id
+                                WHERE ca.user_id = {$this->quote($check_user)}
+                                    AND ca.campaign_account_id = {$prefix}object_supported_language.object_id
                             )
                             AND {$prefix}object_supported_language.status = 'active'
                         ");
