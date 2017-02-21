@@ -5146,6 +5146,33 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'visited_mall_id'
             ),
+            // User clicks on "More->Language" and change the langauge
+            '112' => array(
+                'name' => 'click_language',
+                'name_long' => 'Click Language',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Language',
+                'parameter_name' => null
+            ),
+            // User clicks submit button on advertise form
+            '113' => array(
+                'name' => 'click_submit_advertise',
+                'name_long' => 'Click Submit Advertise',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User clicks submit button on feedback form
+            '114' => array(
+                'name' => 'click_submit_feedback',
+                'name_long' => 'Click Submit Feedback',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 

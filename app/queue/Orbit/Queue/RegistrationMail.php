@@ -14,6 +14,7 @@ use Mall;
 use Language;
 use App;
 use Lang;
+use Orbit\Helper\Util\JobBurier;
 
 class RegistrationMail
 {
@@ -27,7 +28,7 @@ class RegistrationMail
      */
     public function fire($job, $data)
     {
-        $language = $data['languageId'];
+        $language = (empty($data['languageId']))? 'id' : $data['languageId'];
         $valid_language = Language::where('status', '=', 'active')
                             ->where('name', $language)
                             ->first();
@@ -42,6 +43,21 @@ class RegistrationMail
         // Get data information from the queue
         $userId = $data['user_id'];
         $user = User::excludeDeleted()->find($userId);
+
+        if (! is_object($user)) {
+            // Bury the job for later inspection
+            JobBurier::create($job, function($theJob) {
+                // The queue driver does not support bury.
+                $theJob->delete();
+            })->bury();
+            return [
+                'status' => 'fail',
+                'message' => sprintf('[Job ID: `%s`] *** RegistrationMail Queue: User `%s` not found. ***',
+                                    $job->getJobId(),
+                                    $userId)
+            ];
+        }
+
         $email = $user->user_email;
 
         // Token expiration, fallback to 30 days

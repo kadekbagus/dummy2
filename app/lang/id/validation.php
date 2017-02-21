@@ -87,11 +87,11 @@ return array(
     'orbit' => array(
         // This will moved soon to the 'exists' key
         'email' => array(
-            'exists' => 'Alamat email sudah ada.',
+            'exists' => 'Email telah digunakan',
         ),
         'exists' => array(
             'username'              => 'Username sudah ada.',
-            'email'                 => 'Alamat email sudah ada.',
+            'email'                 => 'Email telah digunakan',
             'omid'                  => 'OMID telah diambil oleh Merchant lain.',
             'orid'                  => 'ORID telah diambil oleh Retailer lain.',
             'category_name'         => 'Nama kategori sudah terpakai.',
