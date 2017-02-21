@@ -106,7 +106,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         'news.news_id as campaign_id',
                         'news.begin_date as begin_date',
                         DB::Raw("
-                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
+                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
                             "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
@@ -152,12 +152,16 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
-                        ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, nt.news_id
-                                        FROM {$prefix}news_translations nt
-                                        JOIN {$prefix}media m
-                                            ON m.object_id = nt.news_translation_id
-                                            AND m.media_name_long = 'news_translation_image_orig'
-                                        GROUP BY nt.news_id) AS med"), DB::raw("med.news_id"), '=', 'news.news_id')
+                        ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                        ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                        ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
+                            $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
+                              ->where(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
+                        })
+                        ->leftJoin('media as med', function ($q) {
+                            $q->on(DB::raw('med.object_id'), '=', DB::raw('default_translation.news_translation_id'));
+                            $q->on(DB::raw('med.media_name_long'), '=', DB::raw("'news_translation_image_orig'"));
+                        })
                         ->whereIn('merchants.merchant_id', $storeIds)
                         ->where('news.object_type', '=', 'news')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -202,7 +206,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         'news.news_id as campaign_id',
                         'news.begin_date as begin_date',
                         DB::Raw("
-                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
+                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
                         "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
@@ -248,12 +252,16 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
                         })
-                        ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, nt.news_id
-                                        FROM {$prefix}news_translations nt
-                                        JOIN {$prefix}media m
-                                            ON m.object_id = nt.news_translation_id
-                                            AND m.media_name_long = 'news_translation_image_orig'
-                                        GROUP BY nt.news_id) AS med"), DB::raw("med.news_id"), '=', 'news.news_id')
+                        ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                        ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                        ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
+                            $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
+                              ->where(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
+                        })
+                        ->leftJoin('media as med', function ($q) {
+                            $q->on(DB::raw('med.object_id'), '=', DB::raw('default_translation.news_translation_id'));
+                            $q->on(DB::raw('med.media_name_long'), '=', DB::raw("'news_translation_image_orig'"));
+                        })
                         ->whereIn('merchants.merchant_id', $storeIds)
                         ->where('news.object_type', '=', 'promotion')
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
@@ -298,7 +306,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
             $coupons = DB::table('promotions')->select(DB::raw("
                                 {$prefix}promotions.promotion_id as campaign_id,
                                 {$prefix}promotions.begin_date as begin_date,
-                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
+                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
                                 'coupon' as campaign_type,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                 THEN {$prefix}campaign_status.campaign_status_name
@@ -337,18 +345,21 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             })
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                            ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                            ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                            ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                            ->leftJoin('coupon_translations as default_translation', function ($q) {
+                                $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
+                                  ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
+                            })
+                            ->leftJoin('media as med', function ($q) {
+                                $q->on(DB::raw('med.object_id'), '=', DB::raw('default_translation.coupon_translation_id'));
+                                $q->on(DB::raw('med.media_name_long'), '=', DB::raw("'coupon_translation_image_orig'"));
+                            })
                             ->leftJoin('media', function($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
-                            ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
-                                        FROM {$prefix}coupon_translations ct
-                                        JOIN {$prefix}media m
-                                            ON m.object_id = ct.coupon_translation_id
-                                            AND m.media_name_long = 'coupon_translation_image_orig'
-                                        GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
                             ->whereRaw("available.tot > 0")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereIn('merchants.merchant_id', $storeIds)
