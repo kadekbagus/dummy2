@@ -1,14 +1,13 @@
-Hi {{ $first_name }},
+{{ $greeting }} {{ $first_name }},
 
-We received a request to reset your password for your GotoMalls account:
+{{ $message_part1 }}
 {{ $email }}
 
-We're here to help you. Click link below to reset your password:
+{{ $message_part2 }} {{ $message_part3 }}
 
 {{ $token_url }}
 
-If you didn't ask to change your password, don't worry! Your password
-is still safe and just ignore this email.
+{{ $message_part4 }} {{ $message_part5 }}
 
-Cheers,
-Orbit Team
+{{ $message_part6 }},
+{{ $team_name }}
