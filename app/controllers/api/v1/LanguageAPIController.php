@@ -529,6 +529,7 @@ class LanguageAPIController extends ControllerAPI
 
             // 3. Check PMP Account
             $objectSupportedLanguage = ObjectSupportedLanguage::select('object_supported_language_id')
+                                ->active()
                                 ->where('language_id', $value)
                                 ->first();
 
