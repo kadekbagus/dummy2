@@ -185,7 +185,7 @@ class PromotionListAPIController extends PubControllerAPI
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
                     $withKeywordSearch = true;
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.keyword', '0%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.keyword', '50%');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.promotions.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.promotions.object_type', '^5');
@@ -215,7 +215,7 @@ class PromotionListAPIController extends PubControllerAPI
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.category', '0%');
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.category', '50%');
                 $searchFlag = $searchFlag || TRUE;
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
@@ -282,7 +282,7 @@ class PromotionListAPIController extends PubControllerAPI
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
                 if (! empty($countryFilter)) {
                     $cityFilterArr = [];
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.city', '0%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.city', '50%');
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];
                     }
