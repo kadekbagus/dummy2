@@ -19,6 +19,7 @@ class PartnerAPIController extends ControllerAPI
     protected $viewPartnerRoles = ['super admin', 'mall admin', 'mall owner'];
     protected $modifyPartnerRoles = ['super admin', 'mall admin', 'mall owner'];
     protected $returnBuilder = FALSE;
+    protected $defaultLanguage = 'en';
 
     /**
      * POST - Create New Partner
@@ -233,7 +234,7 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->is_shown_in_filter = $is_shown_in_filter;
             $newPartner->is_visible = $is_visible;
             $newPartner->is_exclusive = $is_exclusive;
-            $newPartner->mobile_default_language = $mobile_default_language;
+            $newPartner->mobile_default_language = $this->defaultLanguage;
 
             if (strtoupper($is_exclusive) === 'Y') {
                 $newPartner->pop_up_content = $pop_up_content;
@@ -677,7 +678,7 @@ class PartnerAPIController extends ControllerAPI
             });
 
             OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedpartner) {
-                $updatedpartner->mobile_default_language = $mobile_default_language;
+                $updatedpartner->mobile_default_language = $this->defaultLanguage;
             });
 
             OrbitInput::post('supported_languages', function($supported_languages) use ($updatedpartner, $partner_id) {
@@ -1469,6 +1470,8 @@ class PartnerAPIController extends ControllerAPI
             if (empty($language)) {
                 return FALSE;
             }
+
+            $this->defaultLanguage = $language->name;
 
             return TRUE;
         });

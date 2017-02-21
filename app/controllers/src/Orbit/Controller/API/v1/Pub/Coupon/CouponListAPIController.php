@@ -94,6 +94,7 @@ class CouponListAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('coupon');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
+            $partnerToken = OrbitInput::get('token', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -544,9 +545,16 @@ class CouponListAPIController extends PubControllerAPI
                             }
                         }
                     }
+
+                    $data['is_exclusive'] = ! empty($data['is_exclusive']) ? $data['is_exclusive'] : 'N';
+                    // disable is_exclusive if token is sent and in the partner_tokens
+                    if ($data['is_exclusive'] === 'Y' && in_array($partnerToken, $data['partner_tokens'])) {
+                        $data['is_exclusive'] = 'N';
+                    }
                 }
                 $data['owned'] = $isOwned;
                 $data['score'] = $record['_score'];
+                unset($data['partner_tokens']);
                 $listOfRec[] = $data;
             }
 
