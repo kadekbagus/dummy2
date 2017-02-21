@@ -9,6 +9,9 @@ Route::get('/api/v1/language/update', 'LanguageAPIController@postUpdateSupported
 // Get merchant languages
 Route::get('/api/v1/language/list-merchant', 'LanguageAPIController@getSearchMerchantLanguage');
 
+// Get pmp languages
+Route::get('/api/v1/language/list-pmp', 'LanguageAPIController@getSearchPMPLanguage');
+
 /**
  * Get Category list
  */
