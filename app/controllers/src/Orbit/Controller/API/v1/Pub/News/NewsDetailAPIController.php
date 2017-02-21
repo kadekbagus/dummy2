@@ -94,7 +94,9 @@ class NewsDetailAPIController extends PubControllerAPI
                                 (SELECT {$image}
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
-                                    AND m.object_id = {$prefix}news_translations.news_translation_id) AS original_media_path
+                                    AND ({$image}) IS NOT NULL
+                                    AND m.object_id in ({$prefix}news_translations.news_translation_id, default_translation.news_translation_id)
+                                    ORDER BY m.object_id = {$prefix}news_translations.news_translation_id desc) AS original_media_path
                             "),
                             'news.object_type',
                             'news.end_date',
