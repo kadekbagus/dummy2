@@ -92,9 +92,9 @@ class LanguageListAPIController extends ControllerAPI
             $languages->skip($skip);
 
             // Default sort by
-            $sortBy = 'language_order';
+            $sortBy = 'name';
             // Default sort mode
-            $sortMode = 'desc';
+            $sortMode = 'asc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
