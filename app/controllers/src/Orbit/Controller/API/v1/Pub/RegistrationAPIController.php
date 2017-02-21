@@ -29,6 +29,7 @@ use URL;
 use Queue;
 use Orbit\Helper\Net\SignInRecorder;
 use \Exception;
+use App;
 
 class RegistrationAPIController extends IntermediateBaseController
 {
@@ -64,6 +65,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $user = $user->first();
 
             if (is_object($user)) {
+                App::setLocale($language);
                 $message = Lang::get('validation.orbit.exists.email');
                 OrbitShopAPI::throwInvalidArgument($message);
             }
