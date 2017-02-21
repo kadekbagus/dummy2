@@ -171,7 +171,7 @@ class StoreListAPIController extends PubControllerAPI
             $innerHitsCountry = false;
             $innerHitsCity = false;
 
-            $jsonQuery = array('from' => $skip, 'size' => $esTake, 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('filtered' => array('filter' => array('and' => array( array('range' => array('tenant_detail_count' => array('gt' => 0))))))));
+            $jsonQuery = array('from' => $skip, 'size' => $take, 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('bool' => array('must' => array( array('range' => array('tenant_detail_count' => array('gt' => 0)))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -190,7 +190,7 @@ class StoreListAPIController extends PubControllerAPI
             }
 
             $withKeywordSearch = false;
-            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey, &$filterKeyword)
             {
                 $cacheKey['keyword'] = $keyword;
                 if ($keyword != '') {
@@ -198,6 +198,7 @@ class StoreListAPIController extends PubControllerAPI
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
                     $withKeywordSearch = true;
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.keyword', '50%');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.store.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.store.object_type', '^5');
@@ -209,14 +210,13 @@ class StoreListAPIController extends PubControllerAPI
                     $priority['country'] = Config::get('orbit.elasticsearch.priority.store.country', '');
                     $priority['description'] = Config::get('orbit.elasticsearch.priority.store.description', '');
 
-                    $filterTranslation = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.description'.$priority['description'])))));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
+                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.description'.$priority['description'])))));
 
-                    $filterDetail = array('nested' => array('path' => 'tenant_detail', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('tenant_detail.city'.$priority['city'], 'tenant_detail.province'.$priority['province'], 'tenant_detail.country'.$priority['country'], 'tenant_detail.mall_name'.$priority['mall_name'])))));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterDetail;
+                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'tenant_detail', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('tenant_detail.city'.$priority['city'], 'tenant_detail.province'.$priority['province'], 'tenant_detail.country'.$priority['country'], 'tenant_detail.mall_name'.$priority['mall_name'])))));
 
-                    $filterKeyword = array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'],'object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
+                    $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'],'object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
+
+                    $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
                 }
             });
 
@@ -224,21 +224,23 @@ class StoreListAPIController extends PubControllerAPI
                 if (! empty($mallId)) {
                     $withInnerHits = true;
                     $withMallId = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('match' => array('tenant_detail.mall_id' => $mallId)))), 'inner_hits' => new stdclass()));
-                    $jsonQuery['query']['filtered']['filter']['and'][] = $withMallId;
+                    $jsonQuery['query']['bool']['must'][] = $withMallId;
                 }
              });
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.category', '50%');
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
 
                 foreach ($categoryIds as $key => $value) {
-                    $categoryFilter['or'][] = array('match' => array('category' => $value));
+                    $categoryFilter['bool']['should'][] = array('match' => array('category' => $value));
                 }
-                $jsonQuery['query']['filtered']['filter']['and'][] = $categoryFilter;
+                $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                $jsonQuery['query']['bool']['must'][] = $categoryFilter;
             });
 
             OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
@@ -261,7 +263,7 @@ class StoreListAPIController extends PubControllerAPI
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
                             $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
-                        $jsonQuery['query']['filtered']['filter']['and'][] = $partnerFilter;
+                        $jsonQuery['query']['bool']['must'][]= $partnerFilter;
                     }
                 }
             });
@@ -275,10 +277,10 @@ class StoreListAPIController extends PubControllerAPI
                     if ($location === 'mylocation' && $lat != '' && $lon != '') {
                         $withCache = FALSE;
                         $locationFilter = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'tenant_detail.position' => array('lon' => $lon, 'lat' => $lat))))), 'inner_hits' => new stdclass()));
-                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
+                        $jsonQuery['query']['bool']['must'][] = $locationFilter;
                     } elseif ($location !== 'mylocation') {
                         $locationFilter = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('match' => array('tenant_detail.city.raw' => $location)))), 'inner_hits' => new stdclass()));
-                        $jsonQuery['query']['filtered']['filter']['and'][] = $locationFilter;
+                        $jsonQuery['query']['bool']['must'][] = $locationFilter;
                     }
                 }
             });
@@ -298,16 +300,19 @@ class StoreListAPIController extends PubControllerAPI
             // filter by city, only filter when countryFilter is not empty
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
                 if (! empty($countryFilter)) {
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.city', '50%');
                     $cityFilterArr = [];
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['tenant_detail.city.raw' => $cityFilter]];
                     }
+
+                    $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
                     $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
             });
 
             if (! empty($countryCityFilterArr)) {
-                $jsonQuery['query']['filtered']['filter']['and'][] = $countryCityFilterArr;
+                $jsonQuery['query']['bool']['must'][] = $countryCityFilterArr;
             }
 
             // sort by name or location
@@ -409,7 +414,7 @@ class StoreListAPIController extends PubControllerAPI
             if ($withKeywordSearch) {
                 // if user searching, we call es twice, first for get store data that match with keyword and then get the id,
                 // and second, call es data combine with advert
-                unset($jsonQuery['query']['filtered']['query']);
+                $_jsonQuery['query']['bool']['must'][] = $filterKeyword;
 
                 $_esParam = [
                     'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
@@ -440,7 +445,7 @@ class StoreListAPIController extends PubControllerAPI
                         }
                     }
                 }
-                $jsonQuery['query']['filtered']['filter']['and'][] = array('terms' => array('_id' => $storeIds));
+                $jsonQuery['query']['bool']['must'][] = array('terms' => array('_id' => $storeIds));
             }
 
             // call es
@@ -451,17 +456,17 @@ class StoreListAPIController extends PubControllerAPI
                     $advertIds[] = $dt->advert_id;
                     $boost = $dt->placement_order * 3;
                     $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $esAdvert;
+                    $jsonQuery['query']['bool']['should'][] = $esAdvert;
                 }
 
                 if ($withKeywordSearch) {
                     $withoutAdv = array_diff($storeIds, $advertIds);
                     foreach ($withoutAdv as $wa) {
                         $esWithoutAdvert = array('match' => array('_id' => array('query' => $wa, 'boost' => $storeScore[$wa])));
-                        $jsonQuery['query']['filtered']['query']['bool']['should'][] = $esWithoutAdvert;
+                        $jsonQuery['query']['bool']['should'][] = $esWithoutAdvert;
                     }
                 } else {
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = array('match_all' => new stdclass());
+                    $jsonQuery['query']['bool']['should'][] = array('match_all' => new stdclass());
                 }
 
             }
@@ -498,6 +503,7 @@ class StoreListAPIController extends PubControllerAPI
                 $data = array();
                 $localPath = '';
                 $cdnPath = '';
+                $default_lang = '';
                 foreach ($record['_source'] as $key => $value) {
 
                     $localPath = ($key == 'logo') ? $value : $localPath;
@@ -507,17 +513,21 @@ class StoreListAPIController extends PubControllerAPI
                     $data[$key] = $value;
                     $data['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
 
+                    if ($key === 'default_lang') {
+                        $default_lang = $value;
+                    }
+
                     // translation, to get name, desc and image
                     if ($key === "translation") {
                         foreach ($record['_source']['translation'] as $dt) {
 
-                            if ($dt['language_code'] == $language) {
-                                // name & desc
+                            if ($dt['language_code'] === $language) {
+                                // desc
                                 if (! empty($dt['description'])) {
                                     $data['description'] = $dt['description'];
                                 }
-                            } else {
-                                // name & desc
+                            } elseif ($dt['language_code'] === $default_lang) {
+                                // desc
                                 if (! empty($dt['description']) && empty($data['description'])) {
                                     $data['description'] = $dt['description'];
                                 }
