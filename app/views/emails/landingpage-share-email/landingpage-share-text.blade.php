@@ -1,8 +1,8 @@
 {{{ $subject }}}
 
-Hai {{{ $email }}},
-@if (empty($name))Seorang teman anda @else {{{ $name }}} @endif ingin anda untuk mencoba Gotomalls.com.
+{{{ $greeting }}} {{{ $email }}},
+@if (empty($name)){{{ $message1 }}} @else {{{ $name }}} @endif {{{ $message2 }}}
 
-Video {{{ $videoUrl }}}
+{{{ $videoUrl }}}
 
-Coba Sekarang! {{{ $shareUrl }}}
+{{{ $button_try_now }}} {{{ $shareUrl }}}
