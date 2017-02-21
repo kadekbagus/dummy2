@@ -91,7 +91,7 @@ return array(
         ),
         'exists' => array(
             'username'              => 'Username sudah ada.',
-            'email'                 => 'Alamat email sudah ada.',
+            'email'                 => 'Email telah digunakan',
             'omid'                  => 'OMID telah diambil oleh Merchant lain.',
             'orid'                  => 'ORID telah diambil oleh Retailer lain.',
             'category_name'         => 'Nama kategori sudah terpakai.',
