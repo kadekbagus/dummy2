@@ -30,5 +30,25 @@ return array(
         'message_part1'             => 'Your friend',
         'message_part2'             => 'want you to try Gotomalls.com.',
         'button_try_now'            => 'Try Now!'
-    )
+    ),
+
+    'activation' => array(
+        'label_malls'       => 'Malls',
+        'label_stores'      => 'Stores',
+        'label_promotions'  => 'Promotions',
+        'label_coupons'     => 'Coupons',
+        'label_lucky_draws' => 'Lucky Draws',
+        'label_events'      => 'News',
+        'subject'           => 'Welcome to Gotomalls!',
+        'greeting'          => 'Hi',
+        'message_part1'     => 'Thank you for join with Gotomalls!',
+        'message_part2'     => 'For activation your account, please click below.',
+        'button_activation' => 'Activate Account',
+        'message_part3'     => 'Afterwards, you can access Gotomalls with the same account on different devices by:',
+        'list_1'            => "Press the \"Sign In\" button",
+        'list_2'            => 'Input your email address',
+        'list_3'            => 'Input your password',
+        'message_part4'     => 'Have fun with Gotomalls!',
+        'team_name'         => 'Gotomalls Team',
+    ),
 );
