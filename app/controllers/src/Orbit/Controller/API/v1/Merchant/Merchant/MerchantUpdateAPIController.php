@@ -167,6 +167,11 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             OrbitInput::post('languages', function($languages) use ($updatedBaseMerchant, $baseMerchantId) {
                 if (count($languages) > 0) {
+                    // Delete old data
+                    $deletedBaseMechantLanguage = ObjectSupportedLanguage::where('object_type', '=', 'base_merchant')
+                                                    ->where('object_id', '=', $baseMerchantId)
+                                                    ->delete();
+
                     foreach ($languages as $language_name) {
                         $validator = Validator::make(
                             array(
@@ -185,11 +190,6 @@ class MerchantUpdateAPIController extends ControllerAPI
                             $errorMessage = $validator->messages()->first();
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
-
-                        // Delete old data
-                        $deletedBaseMechantLanguage = ObjectSupportedLanguage::where('object_type', '=', 'base_merchant')
-                                                        ->where('object_id', '=', $baseMerchantId)
-                                                        ->delete();
 
                         $baseMerchantLanguage = new ObjectSupportedLanguage();
                         $baseMerchantLanguage->object_id = $baseMerchantId;

@@ -107,8 +107,8 @@ class CouponCanvasAPIController extends PubControllerAPI
                 $coupon = Coupon::select(
                                 'promotions.promotion_id as promotion_id',
                                 DB::Raw("
-                                        CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
-                                        CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
+                                        CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
+                                        CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
                                         CASE WHEN {$prefix}media.path is null THEN (
                                                 select m.path
                                                 from {$prefix}coupon_translations ct
@@ -143,9 +143,15 @@ class CouponCanvasAPIController extends PubControllerAPI
                                         THEN 'true' ELSE 'false' END AS is_started
                                 ")
                             )
+                            ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                            ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
                                 $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                                   ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
+                            ->leftJoin('coupon_translations as default_translation', function ($q) {
+                                $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
+                                  ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                             })
                             ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                             ->leftJoin('media', function ($q) {
