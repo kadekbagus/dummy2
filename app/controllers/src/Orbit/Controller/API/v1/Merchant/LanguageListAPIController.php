@@ -92,15 +92,16 @@ class LanguageListAPIController extends ControllerAPI
             $languages->skip($skip);
 
             // Default sort by
-            $sortBy = 'name';
+            $sortBy = 'language_order';
             // Default sort mode
-            $sortMode = 'asc';
+            $sortMode = 'desc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name' => 'name_long'
+                    'name' => 'name_long',
+                    'language_order' => 'language_order'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
