@@ -795,6 +795,7 @@ class EmployeeAPIController extends ControllerAPI
             $newCampaignAccount->user_id = $newUser->user_id;
             $newCampaignAccount->account_type_id = $parentCampaignAcc->account_type_id;
             $newCampaignAccount->account_name = $parentCampaignAcc->account_name;
+            $newCampaignAccount->mobile_default_language = $parentCampaignAcc->mobile_default_language;
             $newCampaignAccount->is_link_to_all = $parentCampaignAcc->is_link_to_all;
             $newCampaignAccount->is_subscribed = $parentCampaignAcc->is_subscribed;
             $newCampaignAccount->parent_user_id = $user->user_id;
