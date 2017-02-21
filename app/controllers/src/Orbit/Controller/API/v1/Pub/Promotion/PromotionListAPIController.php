@@ -99,6 +99,7 @@ class PromotionListAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('promotion');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
+            $partnerToken = OrbitInput::get('token', null);
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -185,7 +186,7 @@ class PromotionListAPIController extends PubControllerAPI
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
                     $withKeywordSearch = true;
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.keyword', '0%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.keyword', '50%');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.promotions.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.promotions.object_type', '^5');
@@ -215,7 +216,7 @@ class PromotionListAPIController extends PubControllerAPI
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.category', '0%');
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.category', '50%');
                 $searchFlag = $searchFlag || TRUE;
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
@@ -282,7 +283,7 @@ class PromotionListAPIController extends PubControllerAPI
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
                 if (! empty($countryFilter)) {
                     $cityFilterArr = [];
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.city', '0%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.city', '50%');
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];
                     }
@@ -566,10 +567,16 @@ class PromotionListAPIController extends PubControllerAPI
                             }
                         }
                     }
+
+                    $data['is_exclusive'] = ! empty($data['is_exclusive']) ? $data['is_exclusive'] : 'N';
+                    // disable is_exclusive if token is sent and in the partner_tokens
+                    if ($data['is_exclusive'] === 'Y' && in_array($partnerToken, $data['partner_tokens'])) {
+                        $data['is_exclusive'] = 'N';
+                    }
                 }
 
                 $data['score'] = $record['_score'];
-                unset($data['created_by'], $data['creator_email']);
+                unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
             }
 

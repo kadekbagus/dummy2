@@ -149,8 +149,12 @@ class ESPromotionUpdateQueue
             }
 
             $partnerIds = array();
+            $partnerTokens = array();
             foreach ($news->campaignObjectPartners as $campaignObjectPartner) {
                 $partnerIds[] = $campaignObjectPartner->partner_id;
+                if (! empty($campaignObjectPartner->token)) {
+                    $partnerTokens[] = $campaignObjectPartner->token;
+                }
             }
 
             $advertIds = array();
@@ -194,6 +198,7 @@ class ESPromotionUpdateQueue
                 'translation'     => $translations,
                 'keywords'        => $keywords,
                 'partner_ids'     => $partnerIds,
+                'partner_tokens'  => $partnerTokens,
                 'advert_ids'      => $advertIds,
                 'link_to_tenant'  => $linkToTenants,
                 'is_exclusive'    => ! empty($news->is_exclusive) ? $news->is_exclusive : 'N',
