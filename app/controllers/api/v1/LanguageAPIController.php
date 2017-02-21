@@ -34,37 +34,20 @@ class LanguageAPIController extends ControllerAPI
             // @Todo: Use ACL authentication instead
             $user_role = $user_login->role;
 
-            $role_name = ['Campaign Admin', 'Campaign Employee', 'Campaign Owner'];
-
-
             $prefix = DB::getTablePrefix();
             $languages = Language::select('languages.language_id', 'languages.name', 'languages.name_native', 'languages.name_long', 'languages.language_order', 'languages.created_at', 'languages.updated_at', 'languages.status')
-                                ->leftJoin('object_supported_language', 'object_supported_language.language_id', '=', 'languages.language_id')
-                                ->orderBy('language_order', 'DESC')
+                                ->orderBy('languages.name_long', 'ASC')
                                 ->distinct();
-
-            if (in_array($user_role->role_name, $role_name)) {
-                $campaign_account = $user_login->campaignAccount()->first();
-
-                if ($campaign_account->is_link_to_all !== 'Y'){
-                    $languages->where('object_type', 'pmp_account')
-                            ->whereRaw("
-                                EXISTS (
-                                    SELECT 1
-                                    FROM {$prefix}campaign_account ca
-                                    JOIN {$prefix}campaign_account cap
-                                        ON cap.user_id = ca.parent_user_id
-                                    WHERE (ca.user_id = {$this->quote($user_login->user_id)} or ca.parent_user_id = {$this->quote($user_login->user_id)})
-                                        AND {$prefix}object_supported_language.object_id = cap.campaign_account_id
-                                    GROUP BY cap.campaign_account_id
-                                )
-                                AND {$prefix}object_supported_language.status = 'active'
-                            ");
-                }
-            }
 
             OrbitInput::get('status', function($status) use ($languages) {
                 $languages->where('languages.status', '=', $status);
+            });
+
+            OrbitInput::get('mall_id', function($mall_id) use ($languages, $prefix) {
+                $mall_id = (array) $mall_id;
+                $languages->leftJoin('merchant_languages', 'merchant_languages.language_id', '=', 'languages.language_id')
+                        ->whereIn('merchant_languages.merchant_id', $mall_id)
+                        ->where('merchant_languages.status', '=', 'active');
             });
 
             $_languages = clone $languages;
