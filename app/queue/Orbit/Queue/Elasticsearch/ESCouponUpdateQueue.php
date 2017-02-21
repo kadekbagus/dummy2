@@ -153,8 +153,12 @@ class ESCouponUpdateQueue
             }
 
             $partnerIds = array();
+            $partnerTokens = array();
             foreach ($coupon->campaignObjectPartners as $campaignObjectPartner) {
                 $partnerIds[] = $campaignObjectPartner->partner_id;
+                if (! empty($campaignObjectPartner->token)) {
+                    $partnerTokens[] = $campaignObjectPartner->token;
+                }
             }
 
             $advertIds = array();
@@ -196,6 +200,7 @@ class ESCouponUpdateQueue
                 'translation' => $translations,
                 'keywords' => $keywords,
                 'partner_ids' => $partnerIds,
+                'partner_tokens'  => $partnerTokens,
                 'advert_ids' => $advertIds,
                 'link_to_tenant' => $linkToTenants,
                 'is_exclusive'    => ! empty($coupon->is_exclusive) ? $coupon->is_exclusive : 'N',

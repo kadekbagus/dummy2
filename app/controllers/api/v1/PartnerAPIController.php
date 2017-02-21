@@ -19,6 +19,7 @@ class PartnerAPIController extends ControllerAPI
     protected $viewPartnerRoles = ['super admin', 'mall admin', 'mall owner'];
     protected $modifyPartnerRoles = ['super admin', 'mall admin', 'mall owner'];
     protected $returnBuilder = FALSE;
+    protected $defaultLanguage = 'en';
 
     /**
      * POST - Create New Partner
@@ -233,7 +234,7 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->is_shown_in_filter = $is_shown_in_filter;
             $newPartner->is_visible = $is_visible;
             $newPartner->is_exclusive = $is_exclusive;
-            $newPartner->mobile_default_language = $mobile_default_language;
+            $newPartner->mobile_default_language = $this->defaultLanguage;
 
             if (strtoupper($is_exclusive) === 'Y') {
                 $newPartner->pop_up_content = $pop_up_content;
@@ -677,7 +678,7 @@ class PartnerAPIController extends ControllerAPI
             });
 
             OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedpartner) {
-                $updatedpartner->mobile_default_language = $mobile_default_language;
+                $updatedpartner->mobile_default_language = $this->defaultLanguage;
             });
 
             OrbitInput::post('supported_languages', function($supported_languages) use ($updatedpartner, $partner_id) {
@@ -700,25 +701,27 @@ class PartnerAPIController extends ControllerAPI
                     $new_supported_language->save();
                 }
 
-                // check for languages that has translation before unlink
-                $partner_translation = PartnerTranslation::whereIn('language_id', $unlinked_language_ids)
-                    ->where('partner_id', $partner_id)
-                    ->where('status', 'active')
-                    ->get();
+                if (! empty($unlinked_language_ids)) {
+                    // check for languages that has translation before unlink
+                    $partner_translation = PartnerTranslation::whereIn('language_id', $unlinked_language_ids)
+                        ->where('partner_id', $partner_id)
+                        ->where('status', 'active')
+                        ->get();
 
-                if ($partner_translation->count() !== 0) {
-                    $errorMessage = 'Cannot unlink supported language: %s';
-                    OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $partner_translation[0]->language->name_long));
-                }
+                    if ($partner_translation->count() !== 0) {
+                        $errorMessage = 'Cannot unlink supported language: %s';
+                        OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $partner_translation[0]->language->name_long));
+                    }
 
-                // unlink languages
-                $unlinked_languages = ObjectSupportedLanguage::whereIn('language_id', $unlinked_language_ids)
-                    ->where('object_type', 'partner')
-                    ->where('status', 'active')
-                    ->get();
+                    // unlink languages
+                    $unlinked_languages = ObjectSupportedLanguage::whereIn('language_id', $unlinked_language_ids)
+                        ->where('object_type', 'partner')
+                        ->where('status', 'active')
+                        ->get();
 
-                foreach($unlinked_languages as $unlinked_language) {
-                    $unlinked_language->delete();
+                    foreach($unlinked_languages as $unlinked_language) {
+                        $unlinked_language->delete();
+                    }
                 }
 
                 $updatedpartner->load('supportedLanguages.language');
@@ -1469,6 +1472,8 @@ class PartnerAPIController extends ControllerAPI
             if (empty($language)) {
                 return FALSE;
             }
+
+            $this->defaultLanguage = $language->name;
 
             return TRUE;
         });
