@@ -195,7 +195,8 @@ class ESNewsUpdateQueue
                 'keywords'        => $keywords,
                 'partner_ids'     => $partnerIds,
                 'advert_ids'      => $advertIds,
-                'link_to_tenant'  => $linkToTenants
+                'link_to_tenant'  => $linkToTenants,
+                'is_exclusive'    => ! empty($news->is_exclusive) ? $news->is_exclusive : 'N',
             ];
 
             if ($response_search['hits']['total'] > 0) {
