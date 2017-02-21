@@ -38,6 +38,7 @@ class LandingPageShareEmailAPIController extends PubControllerAPI
             $user = $this->getUser();
 
             $email = OrbitInput::post('email');
+            $language = OrbitInput::get('language', 'id');
 
             $this->registerCustomValidation();
 
@@ -58,8 +59,9 @@ class LandingPageShareEmailAPIController extends PubControllerAPI
 
             // send the email via queue
             Queue::push('Orbit\\Queue\\LandingPageShareMail', [
-                'email'              => $email,
-                'userId'             => $user->user_id,
+                'email'     => $email,
+                'userId'    => $user->user_id,
+                'language'  => $language,
             ]);
 
             $this->response->code = 0;
