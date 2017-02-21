@@ -113,7 +113,7 @@ class PartnerAPIController extends ControllerAPI
             $pop_up_content = OrbitInput::post('pop_up_content');
             $token = OrbitInput::post('token');
             $translations = OrbitInput::post('translations');
-            $supported_languages = OrbitInput::post('supported_languages');
+            $supported_languages = OrbitInput::post('supported_languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
@@ -484,7 +484,7 @@ class PartnerAPIController extends ControllerAPI
             $token = OrbitInput::post('token');
             $pop_up_content = OrbitInput::post('pop_up_content');
             $translations = OrbitInput::post('translations');
-            $supported_languages = OrbitInput::post('supported_languages');
+            $supported_languages = OrbitInput::post('supported_languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
 
             if (is_array($affected_group_name_id)) {
@@ -526,12 +526,14 @@ class PartnerAPIController extends ControllerAPI
                 'contact_firstname'         => 'required',
                 'contact_lastname'          => 'required',
                 'affected_group_name_id'    => 'array',
-                'is_exclusive'              => 'in:Y,N',
+                'is_exclusive'              => 'in:Y,N|orbit.empty.exclusive_campaign_link:' . $partner_id,
                 'supported_languages'       => 'required|array|orbit.empty.language',
                 'mobile_default_language'   => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
             ];
 
             $validation_error_message = [];
+
+            $validation_error_message['orbit.empty.exclusive_campaign_link'] = 'Cannot uncheck Is Exclusive. There are exclusive campaigns linked to this partner.';
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -1483,6 +1485,55 @@ class PartnerAPIController extends ControllerAPI
 
             if (! in_array($value, $parameters)) {
                 return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        // Check if the partner is already linked to an exclusive campaign
+        Validator::extend('orbit.empty.exclusive_campaign_link', function ($attribute, $value, $parameters) {
+            $campaignExclusiveFlag = false;
+
+            $partner = Partner::find($parameters[0]);
+
+            if ($value === 'N' && $partner->is_exclusive === 'Y') {
+                $prefix = DB::getTablePrefix();
+                $linkedCampaigns = ObjectPartner::select(
+                        DB::raw("
+                            CASE WHEN {$prefix}object_partner.object_type = 'news' OR {$prefix}object_partner.object_type = 'promotion'
+                                THEN {$prefix}news.news_id
+                                ELSE {$prefix}promotions.promotion_id
+                            END AS campaign_id
+                            "),
+                        DB::raw("
+                            CASE WHEN {$prefix}object_partner.object_type = 'news' OR {$prefix}object_partner.object_type = 'promotion'
+                                THEN {$prefix}news.is_exclusive
+                                ELSE {$prefix}promotions.is_exclusive
+                            END AS is_exclusive
+                            ")
+                    )
+                    ->leftJoin('news', function($q) use($prefix) {
+                        $q->on('object_partner.object_id', '=', 'news.news_id')
+                            ->on(DB::raw("{$prefix}object_partner.object_type"), DB::raw('IN'), DB::raw("('news', 'promotion')"));
+                    })
+                    ->leftJoin('promotions', function($q) {
+                        $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
+                            ->on('object_partner.object_type', '=', DB::raw("'coupon'"));
+                    })
+                    ->where('partner_id', $parameters[0])
+                    ->groupBy('object_partner.object_id', 'object_partner.object_type')
+                    ->get();
+
+                foreach ($linkedCampaigns as $linkedCampaign) {
+                    if ($linkedCampaign->is_exclusive) {
+                        $campaignExclusiveFlag = true;
+                        break;
+                    }
+                }
+
+                if ($campaignExclusiveFlag) {
+                    return FALSE;
+                }
             }
 
             return TRUE;
