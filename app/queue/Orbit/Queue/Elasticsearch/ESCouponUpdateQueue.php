@@ -197,7 +197,8 @@ class ESCouponUpdateQueue
                 'keywords' => $keywords,
                 'partner_ids' => $partnerIds,
                 'advert_ids' => $advertIds,
-                'link_to_tenant' => $linkToTenants
+                'link_to_tenant' => $linkToTenants,
+                'is_exclusive'    => ! empty($coupon->is_exclusive) ? $coupon->is_exclusive : 'N',
             ];
 
             if ($response_search['hits']['total'] > 0) {
