@@ -46,7 +46,7 @@ class ResetPasswordLinkAPIController extends PubControllerAPI
             $this->beginTransaction();
 
             $email = trim(OrbitInput::post('email'));
-            $language = trim(OrbitInput::post('language', 'id'));
+            $language = trim(OrbitInput::get('language', 'id'));
 
             if (trim($email) === '') {
                 $errorMessage = \Lang::get('validation.required', array('attribute' => 'email'));
