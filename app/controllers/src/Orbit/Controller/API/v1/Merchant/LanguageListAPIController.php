@@ -100,7 +100,8 @@ class LanguageListAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name' => 'name_long'
+                    'name' => 'name_long',
+                    'language_order' => 'language_order'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
