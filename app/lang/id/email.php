@@ -51,4 +51,18 @@ return array(
         'message_part4'     => 'Selamat bersenang-senang dengan Gotomalls!',
         'team_name'         => 'Tim Gotomalls',
     ),
+
+    'reset_password' => array(
+        'subject'       => 'Permintaan Atur Ulang Kata Sandi',
+        'title'         => 'Atur Ulang Kata Sandi - Gotomalls',
+        'greeting'      => 'Hello',
+        'message_part1' => 'Kami menerima permohonan atur ulang kata sandi akun Gotomalls Anda:',
+        'message_part2' => "Kami di sini untuk membantu Anda",
+        'message_part3' => "Klik tombol ini untuk mengatur ulang kata sandi Anda",
+        'button_reset'  => 'Atur Ulang Kata Sandi Anda',
+        'message_part4' => "Jika Anda tidak mengajukan permohonan untuk mengatur ulang kata sandi anda, abaikan email ini.",
+        'message_part5' => "Kata Sandi Anda masih aman, dan abaikan email ini.",
+        'message_part6' => 'Cheers',
+        'team_name'     => 'Tim Gotomalls',
+    ),
 );
