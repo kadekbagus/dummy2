@@ -1,17 +1,17 @@
-Selamat Datang di Gotomalls!
+{{ $subject }}
 
-Hello {{ $first_name or $email }},
-Terima kasih sudah bergabung dengan Gotomalls! Untuk mulai menggunakan Gotomalls, Untuk mengaktifkan akun Anda, silakan klik di bawah ini.
+{{ $greeting }} {{ $first_name or $email }},
+{{ $message_part1 }} {{ $message_part2 }}
 
 {{ $token_url }}
 
-Setelah itu, Anda dapat mengakses Gotomalls dengan akun yang sama di perangkat yang lain dengan cara:
-1. Menekan tombol "Sign In"
-2. Masukan alamat email
-3. Input password
+{{ $message_part3 }}
+1. {{ $list_1 }}
+2. {{ $list_2 }}
+3. {{ $list_3 }}
 
 
-Have fun with Gotomalls!
+{{ $message_part4 }}
 
 
-Gotomalls Team
+{{ $team_name }}

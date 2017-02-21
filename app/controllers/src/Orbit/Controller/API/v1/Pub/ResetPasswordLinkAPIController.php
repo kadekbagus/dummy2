@@ -21,6 +21,7 @@ use stdClass;
 use Activity;
 use Orbit\Helper\Util\PaginationNumber;
 use Queue;
+use App;
 
 class ResetPasswordLinkAPIController extends PubControllerAPI
 {
@@ -45,6 +46,7 @@ class ResetPasswordLinkAPIController extends PubControllerAPI
             $this->beginTransaction();
 
             $email = trim(OrbitInput::post('email'));
+            $language = trim(OrbitInput::get('language', 'id'));
 
             if (trim($email) === '') {
                 $errorMessage = \Lang::get('validation.required', array('attribute' => 'email'));
@@ -61,6 +63,7 @@ class ResetPasswordLinkAPIController extends PubControllerAPI
                 ->first();
 
             if (! is_object($user)) {
+                App::setLocale($language);
                 $errorMessage = \Lang::get('validation.orbit.empty.forgot_email', ['email_addr' => $email]);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }

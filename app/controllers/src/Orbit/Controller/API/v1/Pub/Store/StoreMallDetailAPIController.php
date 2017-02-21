@@ -132,7 +132,9 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                     DB::raw("mall.is_subscribed"),
                                     DB::raw("mall.object_type as location_type"),
                                     DB::raw("{$mallLogo}"),
-                                    DB::raw("{$mallMap}")
+                                    DB::raw("{$mallMap}"),
+                                    DB::raw("x(position) as latitude"),
+                                    DB::raw("y(position) as longitude")
                                 )
                                 // Floor of store
                                 ->leftJoin('objects', function($q){
@@ -141,6 +143,8 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                 })
                                 // Mall of tenant
                                 ->leftJoin(DB::raw("{$prefix}merchants as mall"), DB::Raw("mall.merchant_id"), '=', 'merchants.parent_id')
+                                // Merchant Geofences
+                                ->leftJoin('merchant_geofences', DB::Raw("mall.merchant_id"), '=', 'merchant_geofences.merchant_id')
                                 // Map of store
                                 ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
                                     $q->on(DB::raw('map.object_id'), '=',  'merchants.merchant_id')
