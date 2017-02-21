@@ -1,0 +1,570 @@
+<?php namespace Orbit\Controller\API\v1\Pub\Store;
+/**
+ * An API controller for managing mall geo location.
+ */
+use OrbitShop\API\v1\PubControllerAPI;
+use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
+use DominoPOS\OrbitACL\ACL;
+use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
+use Illuminate\Database\QueryException;
+use Helper\EloquentRecordCounter as RecordCounter;
+use Orbit\Helper\Util\PaginationNumber;
+use Orbit\Helper\Util\ObjectPartnerBuilder;
+use Orbit\Helper\Util\CdnUrlGenerator;
+use Config;
+use Mall;
+use News;
+use Tenant;
+use Advert;
+use stdClass;
+use DB;
+use Validator;
+use Language;
+use Coupon;
+use Activity;
+use Lang;
+
+
+class StoreCampaignListAPIController extends PubControllerAPI
+{
+    protected $valid_language = NULL;
+    protected $store = NULL;
+    protected $withoutScore = FALSE;
+
+    /**
+     * GET - get campaign store list after click store name
+     *
+     * @author Irianto Pratama <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string sortby
+     * @param string sortmode
+     * @param string take
+     * @param string skip
+     * @param string filter_name
+     * @param string store_name
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getCampaignStoreList()
+    {
+        $httpCode = 200;
+        try {
+            $sort_by = OrbitInput::get('sortby', 'campaign_name');
+            $sort_mode = OrbitInput::get('sortmode','asc');
+            $merchant_id = OrbitInput::get('merchant_id');
+            $store_name = OrbitInput::get('store_name');
+            $keyword = OrbitInput::get('keyword');
+            $language = OrbitInput::get('language', 'id');
+            $location = OrbitInput::get('location', null);
+            $category_id = OrbitInput::get('category_id');
+            $ul = OrbitInput::get('ul', null);
+            $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+            $distance = Config::get('orbit.geo_location.distance', 10);
+            $lon = '';
+            $lat = '';
+
+            // Call validation from store helper
+            $this->registerCustomValidation();
+            // $storeHelper = StoreHelper::create();
+            // $storeHelper->registerCustomValidation();
+
+            $validator = Validator::make(
+                array(
+                    'merchant_id' => $merchant_id,
+                    'language' => $language,
+                    'sortby'   => $sort_by,
+                ),
+                array(
+                    'merchant_id' => 'required|orbit.empty.tenant',
+                    'language'    => 'required|orbit.empty.language_default',
+                    'sortby'      => 'in:campaign_name,name,location,created_date',
+                ),
+                array(
+                    'required'           => 'Merchant id is required',
+                    'orbit.empty.tenant' => Lang::get('validation.orbit.empty.tenant'),
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $valid_language = $this->valid_language;
+
+            $prefix = DB::getTablePrefix();
+
+            $storeIds = Tenant::where('name', $this->store->name)->lists('merchant_id');
+
+            // get news list
+            $news = DB::table('news')->select(
+                        'news.news_id as campaign_id',
+                        'news.begin_date as begin_date',
+                        DB::Raw("
+                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
+                            "),
+                        'news.object_type as campaign_type',
+                        // query for get status active based on timezone
+                        DB::raw("
+                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                THEN {$prefix}campaign_status.campaign_status_name
+                                ELSE (
+                                    CASE WHEN {$prefix}news.end_date < (
+                                        SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                        FROM {$prefix}news_merchant onm
+                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                        WHERE onm.news_id = {$prefix}news.news_id
+                                    )
+                                    THEN 'expired'
+                                    ELSE {$prefix}campaign_status.campaign_status_name
+                                    END
+                                )
+                                END AS campaign_status,
+                                CASE WHEN (
+                                    SELECT count(onm.merchant_id)
+                                    FROM {$prefix}news_merchant onm
+                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                    WHERE onm.news_id = {$prefix}news.news_id
+                                    AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
+                                THEN 'true'
+                                ELSE 'false'
+                                END AS is_started,
+                                CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
+                            "))
+                        ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                            $q->on('news_translations.news_id', '=', 'news.news_id')
+                              ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin('media', function ($q) {
+                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
+                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                        })
+                        ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, nt.news_id
+                                        FROM {$prefix}news_translations nt
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = nt.news_translation_id
+                                            AND m.media_name_long = 'news_translation_image_orig'
+                                        GROUP BY nt.news_id) AS med"), DB::raw("med.news_id"), '=', 'news.news_id')
+                        ->whereIn('merchants.merchant_id', $storeIds)
+                        ->where('news.object_type', '=', 'news')
+                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                        ->groupBy('campaign_id')
+                        ->orderBy('news.created_at', 'desc');
+
+            // filter by mall id
+            OrbitInput::get('mall_id', function($mallid) use ($news) {
+                $news->where(function($q) use($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+            });
+
+            // filter by city
+            OrbitInput::get('location', function($location) use ($news, $prefix, $ul, $userLocationCookieName, $distance) {
+                $news = $this->getLocation($prefix, $location, $news, $ul, $distance, $userLocationCookieName);
+            });
+
+            // filter by category_id
+            OrbitInput::get('category_id', function($category_id) use ($news, $prefix) {
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
+                if (in_array("mall", $category_id)) {
+                    $news = $news->whereIn('merchants', $category_id);
+                } else {
+                    $news = $news->leftJoin('category_merchant', function($q) {
+                                    $q->on('category_merchant.merchant_id', '=', 'merchants.merchant_id');
+                                    $q->on('merchants.object_type', '=', DB::raw("'tenant'"));
+                                })
+                        ->whereIn('category_merchant.category_id', $category_id);
+                }
+            });
+
+            OrbitInput::get('partner_id', function($partner_id) use ($news) {
+                $news = ObjectPartnerBuilder::getQueryBuilder($news, $partner_id, 'news');
+            });
+
+            $promotions = DB::table('news')->select(
+                        'news.news_id as campaign_id',
+                        'news.begin_date as begin_date',
+                        DB::Raw("
+                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN {$prefix}news.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
+                        "),
+                        'news.object_type as campaign_type',
+                        // query for get status active based on timezone
+                        DB::raw("
+                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                THEN {$prefix}campaign_status.campaign_status_name
+                                ELSE (
+                                    CASE WHEN {$prefix}news.end_date < (
+                                        SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                        FROM {$prefix}news_merchant onm
+                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                        WHERE onm.news_id = {$prefix}news.news_id
+                                    )
+                                    THEN 'expired'
+                                    ELSE {$prefix}campaign_status.campaign_status_name
+                                    END
+                                )
+                                END AS campaign_status,
+                                CASE WHEN (
+                                    SELECT count(onm.merchant_id)
+                                    FROM {$prefix}news_merchant onm
+                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                    WHERE onm.news_id = {$prefix}news.news_id
+                                    AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
+                                THEN 'true'
+                                ELSE 'false'
+                                END AS is_started,
+                                CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
+                            "))
+                        ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                            $q->on('news_translations.news_id', '=', 'news.news_id')
+                              ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin('media', function ($q) {
+                            $q->on('media.object_id', '=', 'news_translations.news_translation_id');
+                            $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                        })
+                        ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, nt.news_id
+                                        FROM {$prefix}news_translations nt
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = nt.news_translation_id
+                                            AND m.media_name_long = 'news_translation_image_orig'
+                                        GROUP BY nt.news_id) AS med"), DB::raw("med.news_id"), '=', 'news.news_id')
+                        ->whereIn('merchants.merchant_id', $storeIds)
+                        ->where('news.object_type', '=', 'promotion')
+                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                        ->groupBy('campaign_id')
+                        ->orderBy('news.created_at', 'desc');
+
+            // filter by mall id
+            OrbitInput::get('mall_id', function($mallid) use ($promotions) {
+                $promotions->where(function($q) use($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+            });
+
+            // filter by city
+            OrbitInput::get('location', function($location) use ($promotions, $prefix, $ul, $userLocationCookieName, $distance) {
+                $promotions = $this->getLocation($prefix, $location, $promotions, $ul, $distance, $userLocationCookieName);
+            });
+
+            // filter by category_id
+            OrbitInput::get('category_id', function($category_id) use ($promotions, $prefix) {
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
+                if (in_array("mall", $category_id)) {
+                    $promotions = $promotions->whereIn('merchants', $category_id);
+                } else {
+                    $promotions = $promotions->leftJoin('category_merchant', function($q) {
+                                    $q->on('category_merchant.merchant_id', '=', 'merchants.merchant_id');
+                                    $q->on('merchants.object_type', '=', DB::raw("'tenant'"));
+                                })
+                        ->whereIn('category_merchant.category_id', $category_id);
+                }
+            });
+
+            OrbitInput::get('partner_id', function($partner_id) use ($promotions) {
+                $promotions = ObjectPartnerBuilder::getQueryBuilder($promotions, $partner_id, 'promotion');
+            });
+
+            // get coupon list
+            $coupons = DB::table('promotions')->select(DB::raw("
+                                {$prefix}promotions.promotion_id as campaign_id,
+                                {$prefix}promotions.begin_date as begin_date,
+                                CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
+                                'coupon' as campaign_type,
+                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                THEN {$prefix}campaign_status.campaign_status_name
+                                ELSE (
+                                    CASE WHEN {$prefix}promotions.end_date < (
+                                        SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                        FROM {$prefix}promotion_retailer opt
+                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                        WHERE opt.promotion_id = {$prefix}promotions.promotion_id)
+                                    THEN 'expired'
+                                    ELSE {$prefix}campaign_status.campaign_status_name
+                                    END
+                                )
+                                END AS campaign_status,
+                                CASE WHEN (
+                                    SELECT count(opt.promotion_retailer_id)
+                                    FROM {$prefix}promotion_retailer opt
+                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                    WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                        AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.end_date) > 0
+                                THEN 'true'
+                                ELSE 'false'
+                                END AS is_started,
+                                CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+                                CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
+                            "))
+                            ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
+                            ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                            ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                            ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                            ->leftJoin('media', function($q) {
+                                $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
+                                $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
+                            })
+                            ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
+                            ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
+                                        FROM {$prefix}coupon_translations ct
+                                        JOIN {$prefix}media m
+                                            ON m.object_id = ct.coupon_translation_id
+                                            AND m.media_name_long = 'coupon_translation_image_orig'
+                                        GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
+                            ->whereRaw("available.tot > 0")
+                            ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
+                            ->whereIn('merchants.merchant_id', $storeIds)
+                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                            ->groupBy('campaign_id')
+                            ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');
+
+            // filter by mall id
+            OrbitInput::get('mall_id', function($mallid) use ($coupons) {
+                $coupons->where(function($q) use($mallid) {
+                            $q->where('merchants.parent_id', '=', $mallid)
+                                ->orWhere('merchants.merchant_id', '=', $mallid);
+                        });
+            });
+
+            // filter by city
+            OrbitInput::get('location', function($location) use ($coupons, $prefix, $ul, $userLocationCookieName, $distance) {
+                $coupons = $this->getLocation($prefix, $location, $coupons, $ul, $distance, $userLocationCookieName);
+            });
+
+            // filter by category_id
+            OrbitInput::get('category_id', function($category_id) use ($coupons, $prefix) {
+                if (! is_array($category_id)) {
+                    $category_id = (array)$category_id;
+                }
+
+                if (in_array("mall", $category_id)) {
+                    $coupons = $coupons->whereIn('merchants', $category_id);
+                } else {
+                    $coupons = $coupons->leftJoin('category_merchant', function($q) {
+                                    $q->on('category_merchant.merchant_id', '=', 'merchants.merchant_id');
+                                    $q->on('merchants.object_type', '=', DB::raw("'tenant'"));
+                                })
+                        ->whereIn('category_merchant.category_id', $category_id);
+                }
+            });
+
+            OrbitInput::get('partner_id', function($partner_id) use ($coupons) {
+                $coupons = ObjectPartnerBuilder::getQueryBuilder($coupons, $partner_id, 'coupon');
+            });
+
+            $result = $news->unionAll($promotions)->unionAll($coupons);
+
+            $querySql = $result->toSql();
+
+            $campaign = DB::table(DB::Raw("({$querySql}) as campaign"))->mergeBindings($result);
+
+            $_campaign = clone $campaign;
+
+            if ($sort_by !== 'location') {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'campaign_name'   => 'campaign_name',
+                    'name'            => 'campaign_name',
+                    'created_date'    => 'begin_date',
+                );
+
+                $sort_by = $sortByMapping[$sort_by];
+            }
+
+            $take = PaginationNumber::parseTakeFromGet('campaign');
+
+            $campaign->take($take);
+
+            $skip = PaginationNumber::parseSkipFromGet();
+            $campaign->skip($skip);
+
+            if ($sort_by !== 'location') {
+                $campaign->orderBy($sort_by, $sort_mode);
+            }
+
+            $recordCounter = RecordCounter::create($_campaign);
+            $totalRec = $recordCounter->count();
+
+            $listcampaign = $campaign->get();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $localPath = '';
+            $cdnPath = '';
+            $listId = '';
+
+            if (count($listcampaign) > 0) {
+                foreach ($listcampaign as $list) {
+                    if ($listId != $list->campaign_id) {
+                        $localPath = '';
+                        $cdnPath = '';
+                        $list->image_url = '';
+                    }
+                    $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
+                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
+                    $list->original_media_path = $imgUrl->getImageUrl($localPath, $cdnPath);
+                    $listId = $list->campaign_id;
+                }
+            }
+
+            $this->response->data = new stdClass();
+            $this->response->data->total_records = $totalRec;
+            $this->response->data->returned_records = count($listcampaign);
+            $this->response->data->records = $listcampaign;
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+    protected function registerCustomValidation() {
+        // Check language is exists
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $lang_name = $value;
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang_name)
+                            ->first();
+
+            if (empty($language)) {
+                return FALSE;
+            }
+
+            $this->valid_language = $language;
+            return TRUE;
+        });
+
+        // Check store is exists
+        Validator::extend('orbit.empty.tenant', function ($attribute, $value, $parameters) {
+            $store = Tenant::where('status', 'active')
+                            ->where('merchant_id', $value)
+                            ->first();
+
+            if (empty($store)) {
+                return FALSE;
+            }
+
+            $this->store = $store;
+            return TRUE;
+        });
+    }
+
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
+
+    protected function getLocation($prefix, $location, $query, $ul, $distance, $userLocationCookieName)
+    {
+        $query = $query->join('merchants as mp', function($q) use ($prefix) {
+                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("{$prefix}merchants.parent_id"));
+                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
+                                $q->on(DB::raw("{$prefix}merchants.status"), '=', DB::raw("'active'"));
+                            });
+
+                if ($location === 'mylocation') {
+                    if (! empty($ul)) {
+                        $position = explode("|", $ul);
+                        $lon = $position[0];
+                        $lat = $position[1];
+                    } else {
+                        // get lon lat from cookie
+                        $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
+                        if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
+                            $lon = $userLocationCookieArray[0];
+                            $lat = $userLocationCookieArray[1];
+                        }
+                    }
+
+                    if (!empty($lon) && !empty($lat)) {
+                        $query = $query->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
+                                        ->join('merchant_geofences', function ($q) use($prefix) {
+                                                $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END"));
+                                        });
+                    }
+                    $query = $query->havingRaw("distance <= {$distance}");
+                } else {
+                    $query = $query->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN mp.city ELSE {$prefix}merchants.city END)"), $location);
+                }
+
+        return $query;
+    }
+
+}
