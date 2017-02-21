@@ -210,13 +210,14 @@ class StoreCounterAPIController extends PubControllerAPI
             $jsonQuery = array('from' => $this->skip, 'size' => $esTake);
 
             $withKeywordSearch = false;
-            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$withScore, &$withKeywordSearch)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$withScore, &$withKeywordSearch, &$filterKeyword)
             {
                 $this->cacheKey['keyword'] = $keyword;
                 if ($keyword != '') {
                     $keyword = strtolower($keyword);
                     $withScore = true;
                     $withKeywordSearch = true;
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.keyword', '50%');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.store.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.store.object_type', '^5');
@@ -228,14 +229,14 @@ class StoreCounterAPIController extends PubControllerAPI
                     $priority['country'] = Config::get('orbit.elasticsearch.priority.store.country', '');
                     $priority['description'] = Config::get('orbit.elasticsearch.priority.store.description', '');
 
-                    $filterTranslation = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.description'.$priority['description'])))));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterTranslation;
+                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.description'.$priority['description'])))));
 
-                    $filterDetail = array('nested' => array('path' => 'tenant_detail', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('tenant_detail.city'.$priority['city'], 'tenant_detail.province'.$priority['province'], 'tenant_detail.country'.$priority['country'], 'tenant_detail.mall_name'.$priority['mall_name'])))));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterDetail;
+                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'tenant_detail', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('tenant_detail.city'.$priority['city'], 'tenant_detail.province'.$priority['province'], 'tenant_detail.country'.$priority['country'], 'tenant_detail.mall_name'.$priority['mall_name'])))));
 
-                    $filterKeyword = array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'],'object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
+                    $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'],'object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
+
+                    $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    $jsonQuery['query']['bool']['must'][] = $filterKeyword;
                 }
             });
 
@@ -243,20 +244,22 @@ class StoreCounterAPIController extends PubControllerAPI
                 if (! empty($mallId)) {
                     $withInnerHits = true;
                     $withMallId = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('match' => array('tenant_detail.mall_id' => $mallId)))), 'inner_hits' => new stdclass()));
-                    $jsonQuery['query']['filtered']['filter']['and'][] = $withMallId;
+                    $jsonQuery['query']['bool']['must'][]  = $withMallId;
                 }
              });
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery) {
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.category', '50%');
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
 
                 foreach ($categoryIds as $key => $value) {
-                    $categoryFilter['or'][] = array('match' => array('category' => $value));
+                    $categoryFilter['bool']['should'][] = array('match' => array('category' => $value));
                 }
-                $jsonQuery['query']['filtered']['filter']['and'][] = $categoryFilter;
+                $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                $jsonQuery['query']['bool']['must'][] = $categoryFilter;
             });
 
             OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery) {
@@ -278,7 +281,7 @@ class StoreCounterAPIController extends PubControllerAPI
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
                             $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
-                        $jsonQuery['query']['filtered']['filter']['and'][] = $partnerFilter;
+                        $jsonQuery['query']['bool']['must'][]= $partnerFilter;
                     }
                 }
             });
@@ -298,16 +301,18 @@ class StoreCounterAPIController extends PubControllerAPI
             // filter by city, only filter when countryFilter is not empty
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, &$countryCityFilterArr) {
                 if (! empty($this->countryFilter)) {
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.city', '50%');
                     $cityFilterArr = [];
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['tenant_detail.city.raw' => $cityFilter]];
                     }
+                    $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
                     $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
             });
 
             if (! empty($countryCityFilterArr)) {
-                $jsonQuery['query']['filtered']['filter']['and'][] = $countryCityFilterArr;
+                $jsonQuery['query']['bool']['must'][] = $countryCityFilterArr;
             }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
@@ -417,27 +422,29 @@ class StoreCounterAPIController extends PubControllerAPI
                     $priority['description'] = Config::get('orbit.elasticsearch.priority.store.description', '');
 
                     $filterKeyword = array('multi_match' => array('query' => $keyword, 'fields' => array('name' . $priority['name'],'object_type' . $priority['object_type'], 'keywords' . $priority['keywords'], 'description' . $priority['description'], 'city' . $priority['city'], 'province' . $priority['province'], 'country' . $priority['country'], 'mall_name' . $priority['mall_name'])));
-                    $jsonQuery['query']['filtered']['query']['bool']['should'][] = $filterKeyword;
+                    $jsonQuery['query']['bool']['must'][] = $filterKeyword;
                 }
             });
 
             OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery) {
                 if (! empty($mallId)) {
                     $withMallId = array('match' => array('mall_id' => $mallId));
-                    $jsonQuery['query']['filtered']['filter']['and'][] = $withMallId;
+                    $jsonQuery['query']['bool']['must'][] = $withMallId;
                 }
              });
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery) {
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.category', '50%');
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
 
                 foreach ($categoryIds as $key => $value) {
-                    $categoryFilter['or'][] = array('match' => array('category' => $value));
+                    $categoryFilter['bool']['should'][] = array('match' => array('category' => $value));
                 }
-                $jsonQuery['query']['filtered']['filter']['and'][] = $categoryFilter;
+                $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                $jsonQuery['query']['bool']['must'][] = $categoryFilter;
             });
 
             OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery) {
@@ -459,7 +466,7 @@ class StoreCounterAPIController extends PubControllerAPI
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
                             $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
-                        $jsonQuery['query']['filtered']['filter']['and'][] = $partnerFilter;
+                        $jsonQuery['query']['bool']['must'][]= $partnerFilter;
                     }
                 }
             });
@@ -478,15 +485,17 @@ class StoreCounterAPIController extends PubControllerAPI
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, &$countryCityFilterArr) {
                 if (! empty($this->countryFilter)) {
                     $cityFilterArr = [];
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.city', '50%');
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['city.raw' => $cityFilter]];
                     }
+                    $countryCityFilterArr['bool']['minimum_should_match'] = $shouldMatch;
                     $countryCityFilterArr['bool']['should'] = $cityFilterArr;
                 }
             });
 
             if (! empty($countryCityFilterArr)) {
-                $jsonQuery['query']['filtered']['filter']['and'][] = $countryCityFilterArr;
+                $jsonQuery['query']['bool']['must'][] = $countryCityFilterArr;
             }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
@@ -496,7 +505,7 @@ class StoreCounterAPIController extends PubControllerAPI
                 'type'   => Config::get('orbit.elasticsearch.indices.store_details.type', 'basic'),
                 'body' => json_encode($jsonQuery)
             ];
-// dd(json_encode($jsonQuery));
+
             $response = $client->search($esParam);
 
             if (isset($response['hits'])) {
