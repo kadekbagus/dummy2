@@ -95,7 +95,9 @@ class CouponDetailAPIController extends PubControllerAPI
                                     (SELECT {$image}
                                         FROM orb_media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) AS original_media_path
+                                        AND ({$image}) IS NOT NULL
+                                        AND m.object_id in ({$prefix}coupon_translations.coupon_translation_id, default_translation.coupon_translation_id)
+                                        ORDER BY m.object_id = {$prefix}coupon_translations.coupon_translation_id desc) AS original_media_path
                                 "),
                             'promotions.end_date',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
