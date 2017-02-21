@@ -701,25 +701,27 @@ class PartnerAPIController extends ControllerAPI
                     $new_supported_language->save();
                 }
 
-                // check for languages that has translation before unlink
-                $partner_translation = PartnerTranslation::whereIn('language_id', $unlinked_language_ids)
-                    ->where('partner_id', $partner_id)
-                    ->where('status', 'active')
-                    ->get();
+                if (! empty($unlinked_language_ids)) {
+                    // check for languages that has translation before unlink
+                    $partner_translation = PartnerTranslation::whereIn('language_id', $unlinked_language_ids)
+                        ->where('partner_id', $partner_id)
+                        ->where('status', 'active')
+                        ->get();
 
-                if ($partner_translation->count() !== 0) {
-                    $errorMessage = 'Cannot unlink supported language: %s';
-                    OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $partner_translation[0]->language->name_long));
-                }
+                    if ($partner_translation->count() !== 0) {
+                        $errorMessage = 'Cannot unlink supported language: %s';
+                        OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $partner_translation[0]->language->name_long));
+                    }
 
-                // unlink languages
-                $unlinked_languages = ObjectSupportedLanguage::whereIn('language_id', $unlinked_language_ids)
-                    ->where('object_type', 'partner')
-                    ->where('status', 'active')
-                    ->get();
+                    // unlink languages
+                    $unlinked_languages = ObjectSupportedLanguage::whereIn('language_id', $unlinked_language_ids)
+                        ->where('object_type', 'partner')
+                        ->where('status', 'active')
+                        ->get();
 
-                foreach($unlinked_languages as $unlinked_language) {
-                    $unlinked_language->delete();
+                    foreach($unlinked_languages as $unlinked_language) {
+                        $unlinked_language->delete();
+                    }
                 }
 
                 $updatedpartner->load('supportedLanguages.language');

@@ -31,4 +31,24 @@ return array(
         'message_part2'             => 'ingin anda untuk mencoba Gotomalls.com.',
         'button_try_now'            => 'Coba Sekarang!'
     ),
+
+    'activation' => array(
+        'label_malls'       => 'Mall',
+        'label_stores'      => 'Gerai',
+        'label_promotions'  => 'Promosi',
+        'label_coupons'     => 'Kupon',
+        'label_lucky_draws' => 'Undian',
+        'label_events'      => 'Berita',
+        'subject'           => 'Selamat Datang di Gotomalls!',
+        'greeting'          => 'Hello',
+        'message_part1'     => 'Terima kasih sudah bergabung dengan Gotomalls!',
+        'message_part2'     => 'Untuk mengaktifkan akun Anda, silakan klik di bawah ini.',
+        'button_activation' => 'Aktifkan Akun',
+        'message_part3'     => 'Setelah itu, Anda dapat mengakses Gotomalls dengan akun yang sama di perangkat yang lain dengan cara:',
+        'list_1'            => "Menekan tombol \"Sign In\"",
+        'list_2'            => 'Masukan alamat email',
+        'list_3'            => 'Masukan password',
+        'message_part4'     => 'Selamat bersenang-senang dengan Gotomalls!',
+        'team_name'         => 'Tim Gotomalls',
+    ),
 );
