@@ -51,4 +51,18 @@ return array(
         'message_part4'     => 'Have fun with Gotomalls!',
         'team_name'         => 'Gotomalls Team',
     ),
+
+    'reset_password' => array(
+        'subject'       => 'Password Reset Request',
+        'title'         => 'Reset Password - GotoMalls',
+        'greeting'      => 'Hi',
+        'message_part1' => 'We received a request to reset your password for your gotomalls account:',
+        'message_part2' => "We're here to help you",
+        'message_part3' => "Click this button to reset your password:",
+        'button_reset'  => 'Reset My Password',
+        'message_part4' => "If you didn't ask to change your password, don't worry!",
+        'message_part5' => "Your password is still safe and just ignore this email.",
+        'message_part6' => 'Cheers',
+        'team_name'     => 'Gotomalls Team',
+    ),
 );
