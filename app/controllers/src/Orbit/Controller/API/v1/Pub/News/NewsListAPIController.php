@@ -275,6 +275,12 @@ class NewsListAPIController extends PubControllerAPI
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];
                     }
+
+                    if (count((array) $cityFilters) === 1) {
+                        // if user just filter with one city, value of should match must be 100%
+                        $shouldMatch = '100%';
+                    }
+
                     $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
                     $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
