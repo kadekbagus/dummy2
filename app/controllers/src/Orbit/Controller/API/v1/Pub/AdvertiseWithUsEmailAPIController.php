@@ -39,23 +39,26 @@ class AdvertiseWithUsEmailAPIController extends PubControllerAPI
 
         try {
             $advertise_as = OrbitInput::post('advertise_as');
-            $name = OrbitInput::post('name');
+            $first_name = OrbitInput::post('first_name');
+            $last_name = OrbitInput::post('last_name');
             $email = OrbitInput::post('email');
             $phone_number = OrbitInput::post('phone_number');
             $message = OrbitInput::post('message');
-            $country = OrbitInput::post('country');
-            $language = OrbitInput::get('language', 'id');
 
             $this->registerCustomValidation();
 
             $validator = Validator::make(
                 array(
-                    'name'    => $name,
-                    'email'   => $email,
+                    'advertise_as'  => $advertise_as,
+                    'first_name'    => $first_name,
+                    'email'         => $email,
+                    'phone_number'  => $phone_number,
                 ),
                 array(
-                    'name'    => 'required',
-                    'email'   => 'required|email',
+                    'advertise_as'  => 'required',
+                    'first_name'    => 'required',
+                    'email'         => 'required|email',
+                    'phone_number'  => 'required'
                 )
             );
 
@@ -68,12 +71,11 @@ class AdvertiseWithUsEmailAPIController extends PubControllerAPI
             // send the email via queue
             Queue::push('Orbit\\Queue\\AdvertiseWithUsMail', [
                 'advertise_as'      => $advertise_as,
-                'name'              => $name,
+                'first_name'        => $first_name,
+                'last_name'         => $last_name,
                 'email'             => $email,
                 'phone_number'      => $phone_number,
                 'advertise_message' => $message,
-                'country'           => $country,
-                'language'          => $language,
             ]);
 
             $this->response->code = 0;
