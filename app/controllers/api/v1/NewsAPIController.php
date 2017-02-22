@@ -121,37 +121,44 @@ class NewsAPIController extends ControllerAPI
                 $status = 'active';
             }
 
+            $validator_value = [
+                'news_name'           => $news_name,
+                'object_type'         => $object_type,
+                'status'              => $status,
+                'begin_date'          => $begin_date,
+                'end_date'            => $end_date,
+                'link_object_type'    => $link_object_type,
+                'id_language_default' => $id_language_default,
+                'is_all_gender'       => $is_all_gender,
+                'is_all_age'          => $is_all_age,
+                'sticky_order'        => $sticky_order,
+            ];
+            $validator_validation = [
+                'news_name'           => 'required|max:255',
+                'object_type'         => 'required|orbit.empty.news_object_type',
+                'status'              => 'required|orbit.empty.news_status',
+                'link_object_type'    => 'orbit.empty.link_object_type',
+                'begin_date'          => 'required|date|orbit.empty.hour_format',
+                'end_date'            => 'required|date|orbit.empty.hour_format',
+                'id_language_default' => 'required|orbit.empty.language_default',
+                'is_all_gender'       => 'required|orbit.empty.is_all_gender',
+                'is_all_age'          => 'required|orbit.empty.is_all_age',
+                'sticky_order'        => 'in:0,1',
+            ];
+            $validator_message = [
+                'sticky_order.in' => 'The sticky order value must 0 or 1',
+            ];
+
+            if (! empty($is_exclusive) && ! empty($partner_ids)) {
+                $validator_value['partner_exclusive']               = $is_exclusive;
+                $validator_validation['partner_exclusive']          = 'in:Y,N|orbit.empty.exclusive_partner';
+                $validator_message['orbit.empty.exclusive_partner'] = 'Partner is not exclusive';
+            }
+
             $validator = Validator::make(
-                array(
-                    'news_name'           => $news_name,
-                    'object_type'         => $object_type,
-                    'status'              => $status,
-                    'begin_date'          => $begin_date,
-                    'end_date'            => $end_date,
-                    'link_object_type'    => $link_object_type,
-                    'id_language_default' => $id_language_default,
-                    'is_all_gender'       => $is_all_gender,
-                    'is_all_age'          => $is_all_age,
-                    'sticky_order'        => $sticky_order,
-                    'partner_exclusive'   => $is_exclusive,
-                ),
-                array(
-                    'news_name'           => 'required|max:255',
-                    'object_type'         => 'required|orbit.empty.news_object_type',
-                    'status'              => 'required|orbit.empty.news_status',
-                    'link_object_type'    => 'orbit.empty.link_object_type',
-                    'begin_date'          => 'required|date|orbit.empty.hour_format',
-                    'end_date'            => 'required|date|orbit.empty.hour_format',
-                    'id_language_default' => 'required|orbit.empty.language_default',
-                    'is_all_gender'       => 'required|orbit.empty.is_all_gender',
-                    'is_all_age'          => 'required|orbit.empty.is_all_age',
-                    'sticky_order'        => 'in:0,1',
-                    'partner_exclusive'   => 'in:Y,N|orbit.empty.exclusive_partner',
-                ),
-                array(
-                    'sticky_order.in' => 'The sticky order value must 0 or 1',
-                    'orbit.empty.exclusive_partner'  => 'Partner is not exclusive',
-                )
+                $validator_value,
+                $validator_validation,
+                $validator_message
             );
 
             Event::fire('orbit.news.postnewnews.before.validation', array($this, $validator));
