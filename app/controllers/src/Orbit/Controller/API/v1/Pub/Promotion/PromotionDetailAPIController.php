@@ -135,7 +135,7 @@ class PromotionDetailAPIController extends PubControllerAPI
                         })
                         ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
                             $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
-                              ->where(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
+                              ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->where('news.news_id', $promotionId)
