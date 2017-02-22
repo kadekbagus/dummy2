@@ -34,6 +34,7 @@ class ResetPasswordMail
         }
 
         App::setLocale($language);
+        $data['languageId'] = $language;
 
         $token = Token::leftJoin('users', 'users.user_id', '=', 'tokens.user_id')
                       ->where('token_id','=', $data['tokenId'])
