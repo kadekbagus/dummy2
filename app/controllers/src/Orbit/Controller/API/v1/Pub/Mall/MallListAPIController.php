@@ -79,13 +79,13 @@ class MallListAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
 
-            $jsonArea = array('from' => $skip, 'size' => $take, 'query' => array('filtered' => array('filter' => array('and' => array( array('query' => array('match' => array('is_subscribed' => 'Y'))))))));
+            $jsonArea = array('from' => $skip, 'size' => $take, 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('is_subscribed' => 'Y')))))));
 
             $filterStatus = array('query' => array('match' => array('status' => 'active')));
             if ($usingDemo) {
                 $filterStatus = array('query' => array('not' => array('term' => array('status' => 'deleted'))));
             }
-            $jsonArea['query']['filtered']['filter']['and'][] = $filterStatus;
+            $jsonArea['query']['bool']['must'][] = $filterStatus;
 
             // get user location, latitude and longitude. If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
             if (empty($ul)) {
@@ -107,6 +107,7 @@ class MallListAPIController extends PubControllerAPI
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.mall.keyword', '50%');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.mall.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.mall.object_type', '^5');
@@ -118,8 +119,10 @@ class MallListAPIController extends PubControllerAPI
                     $priority['description'] = Config::get('orbit.elasticsearch.priority.mall.description', '');
 
 
-                    $filterKeyword = array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'], 'object_type'.$priority['object_type'], 'city'.$priority['city'], 'province'.$priority['province'], 'keywords'.$priority['keywords'], 'address_line'.$priority['address_line'], 'country'.$priority['country'], 'description'.$priority['description'])));
-                    $jsonArea['query']['filtered']['query'] = $filterKeyword;
+                    $filterKeyword['bool']['should'][]= array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'], 'object_type'.$priority['object_type'], 'city'.$priority['city'], 'province'.$priority['province'], 'keywords'.$priority['keywords'], 'address_line'.$priority['address_line'], 'country'.$priority['country'], 'description'.$priority['description'])));
+
+                    $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    $jsonArea['query']['bool']['must'][] = $filterKeyword;
                 }
             });
 
@@ -138,30 +141,39 @@ class MallListAPIController extends PubControllerAPI
                     if ($location === 'mylocation' && $latitude != '' && $longitude != '') {
                         $withCache = FALSE;
                         $locationFilter = array('geo_distance' => array('distance' => $radius.'km', 'position' => array('lon' => $longitude, 'lat' => $latitude)));
-                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
+                        $jsonArea['query']['bool']['must'][] = $locationFilter;
                     } elseif ($location !== 'mylocation') {
                         $locationFilter = array('match' => array('city' => array('query' => $location, 'operator' => 'and')));
-                        $jsonArea['query']['filtered']['filter']['and'][] = $locationFilter;
+                        $jsonArea['query']['bool']['must'][] = $locationFilter;
                     }
                 }
             });
 
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$jsonArea) {
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonArea, &$searchFlag) {
+                $searchFlag = $searchFlag || TRUE;
                 $countryFilterArr = array('match' => array('country.raw' => array('query' => $countryFilter)));;
 
-                $jsonArea['query']['filtered']['filter']['and'][] = $countryFilterArr;
+                $jsonArea['query']['bool']['must'][] = $countryFilterArr;
             });
 
             // filter by city, only filter when countryFilter is not empty
-            OrbitInput::get('cities', function ($cityFilters) use (&$jsonArea, $countryFilter) {
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonArea, $countryFilter, &$searchFlag) {
                 if (! empty($countryFilter)) {
+                    $searchFlag = $searchFlag || TRUE;
                     $cityFilterArr = [];
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.mall.city', '50%');
                     foreach ((array) $cityFilters as $cityFilter) {
-                        $cityFilterArr[] = array('match' => array('city.raw' => array('query' => $cityFilter)));;
+                        $cityFilterArr['bool']['should'][] = array('match' => array('city.raw' => array('query' => $cityFilter)));;
                     }
 
-                    $jsonArea['query']['filtered']['filter']['and'][]['or'] = $cityFilterArr;
+                    if (count((array) $cityFilters) === 1) {
+                        // if user just filter with one city, value of should match must be 100%
+                        $shouldMatch = '100%';
+                    }
+
+                    $cityFilterArr['bool']['minimum_should_match'] = $shouldMatch;
+                    $jsonArea['query']['bool']['must'][] = $cityFilterArr;
                 }
             });
 
@@ -186,7 +198,7 @@ class MallListAPIController extends PubControllerAPI
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
                             $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
-                        $jsonArea['query']['filtered']['filter']['and'][] = $partnerFilter;
+                        $jsonArea['query']['bool']['must'][] = $partnerFilter;
                     }
                 }
             });
@@ -206,7 +218,7 @@ class MallListAPIController extends PubControllerAPI
                 if (! empty($mallConfig)) {
                     $withScore = true;
                     $filterKeyword = array('bool' => array('should' => array(array('terms' => array('_id' => $mallConfig)), array('match_all' => new stdClass()))));
-                    $jsonArea['query']['filtered']['query'] = $filterKeyword;
+                    $jsonArea['query'] = $filterKeyword;
                 }
             }
 

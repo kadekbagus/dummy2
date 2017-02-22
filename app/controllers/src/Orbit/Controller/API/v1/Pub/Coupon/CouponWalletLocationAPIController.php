@@ -12,6 +12,7 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
+use App;
 use Lang;
 use \Exception;
 use PromotionRetailer;
@@ -49,6 +50,12 @@ class CouponWalletLocationAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $couponId = OrbitInput::get('coupon_id');
+            $language = OrbitInput::get('language', 'id');
+
+            // set language
+            App::setLocale($language);
+
+            $at = Lang::get('label.conjunction.at');
 
             $prefix = DB::getTablePrefix();
 
@@ -74,7 +81,7 @@ class CouponWalletLocationAPIController extends PubControllerAPI
                     DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END as mall_id"),
                     DB::raw("{$prefix}merchants.object_type as location_type"),
-                    DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE CONCAT('Customer Service at ', {$prefix}merchants.name) END as name"),
+                    DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' {$at} ', oms.name) ELSE CONCAT('Customer Service {$at} ', {$prefix}merchants.name) END as name"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.ci_domain ELSE {$prefix}merchants.ci_domain END as ci_domain"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
                     DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.description ELSE {$prefix}merchants.description END as description"),
