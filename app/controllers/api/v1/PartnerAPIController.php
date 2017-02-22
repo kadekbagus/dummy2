@@ -127,40 +127,44 @@ class PartnerAPIController extends ControllerAPI
             $image_validation = $this->generate_validation_image('info_image_page', $image, 'orbit.upload.partner.image');
 
             $validation_data = [
-                'partner_name'              => $partner_name,
-                'start_date'                => $start_date,
-                'end_date'                  => $end_date,
-                'status'                    => $status,
-                'address'                   => $address,
-                'city'                      => $city,
-                'country_id'                => $country_id,
-                'phone'                     => $phone,
-                'contact_firstname'         => $contact_firstname,
-                'contact_lastname'          => $contact_lastname,
-                'affected_group_name_id'    => $affected_group_name_id,
-                'is_exclusive'              => $is_exclusive,
-                'supported_languages'       => $supported_languages,
-                'mobile_default_language'   => $mobile_default_language,
+                'partner_name'            => $partner_name,
+                'start_date'              => $start_date,
+                'end_date'                => $end_date,
+                'status'                  => $status,
+                'address'                 => $address,
+                'city'                    => $city,
+                'country_id'              => $country_id,
+                'phone'                   => $phone,
+                'contact_firstname'       => $contact_firstname,
+                'contact_lastname'        => $contact_lastname,
+                'affected_group_name_id'  => $affected_group_name_id,
+                'is_exclusive'            => $is_exclusive,
+                'supported_languages'     => $supported_languages,
+                'mobile_default_language' => $mobile_default_language,
+                'token'                   => $token,
             ];
 
             $validation_error = [
-                'partner_name'              => 'required',
-                'start_date'                => 'date|orbit.empty.hour_format',
-                'end_date'                  => 'date|orbit.empty.hour_format',
-                'status'                    => 'required|in:active,inactive',
-                'address'                   => 'required',
-                'city'                      => 'required',
-                'country_id'                => 'required',
-                'phone'                     => 'required',
-                'contact_firstname'         => 'required',
-                'contact_lastname'          => 'required',
-                'affected_group_name_id'    => 'array',
-                'is_exclusive'              => 'in:Y,N',
-                'supported_languages'       => 'required|array|orbit.empty.language',
-                'mobile_default_language'   => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
+                'partner_name'            => 'required',
+                'start_date'              => 'date|orbit.empty.hour_format',
+                'end_date'                => 'date|orbit.empty.hour_format',
+                'status'                  => 'required|in:active,inactive',
+                'address'                 => 'required',
+                'city'                    => 'required',
+                'country_id'              => 'required',
+                'phone'                   => 'required',
+                'contact_firstname'       => 'required',
+                'contact_lastname'        => 'required',
+                'affected_group_name_id'  => 'array',
+                'is_exclusive'            => 'in:Y,N',
+                'supported_languages'     => 'required|array|orbit.empty.language',
+                'mobile_default_language' => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
+                'token'                   => 'orbit.duplicate.token',
             ];
 
-            $validation_error_message = [];
+            $validation_error_message = [
+                'orbit.duplicate.token' => 'Token is already used by another partner'
+            ];
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -496,44 +500,47 @@ class PartnerAPIController extends ControllerAPI
             $image_validation = $this->generate_validation_image('info_image_page', $image, 'orbit.upload.partner.image');
 
             $validation_data = [
-                'partner_name'              => $partner_name,
-                'partner_id'                => $partner_id,
-                'start_date'                => $start_date,
-                'end_date'                  => $end_date,
-                'status'                    => $status,
-                'address'                   => $address,
-                'city'                      => $city,
-                'country_id'                => $country_id,
-                'phone'                     => $phone,
-                'contact_firstname'         => $contact_firstname,
-                'contact_lastname'          => $contact_lastname,
-                'affected_group_name_id'    => $affected_group_name_id,
-                'is_exclusive'              => $is_exclusive,
-                'supported_languages'       => $supported_languages,
-                'mobile_default_language'   => $mobile_default_language,
+                'partner_name'            => $partner_name,
+                'partner_id'              => $partner_id,
+                'start_date'              => $start_date,
+                'end_date'                => $end_date,
+                'status'                  => $status,
+                'address'                 => $address,
+                'city'                    => $city,
+                'country_id'              => $country_id,
+                'phone'                   => $phone,
+                'contact_firstname'       => $contact_firstname,
+                'contact_lastname'        => $contact_lastname,
+                'affected_group_name_id'  => $affected_group_name_id,
+                'is_exclusive'            => $is_exclusive,
+                'supported_languages'     => $supported_languages,
+                'mobile_default_language' => $mobile_default_language,
+                'token'                   => $token,
             ];
 
             $validation_error = [
-                'partner_name'              => 'required',
-                'partner_id'                => 'required',
-                'start_date'                => 'date|orbit.empty.hour_format',
-                'end_date'                  => 'date|orbit.empty.hour_format',
-                'status'                    => 'required|in:active,inactive',
-                'address'                   => 'required',
-                'city'                      => 'required',
-                'country_id'                => 'required',
-                'phone'                     => 'required',
-                'contact_firstname'         => 'required',
-                'contact_lastname'          => 'required',
-                'affected_group_name_id'    => 'array',
-                'is_exclusive'              => 'in:Y,N|orbit.empty.exclusive_campaign_link:' . $partner_id,
-                'supported_languages'       => 'required|array|orbit.empty.language',
-                'mobile_default_language'   => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
+                'partner_name'            => 'required',
+                'partner_id'              => 'required',
+                'start_date'              => 'date|orbit.empty.hour_format',
+                'end_date'                => 'date|orbit.empty.hour_format',
+                'status'                  => 'required|in:active,inactive',
+                'address'                 => 'required',
+                'city'                    => 'required',
+                'country_id'              => 'required',
+                'phone'                   => 'required',
+                'contact_firstname'       => 'required',
+                'contact_lastname'        => 'required',
+                'affected_group_name_id'  => 'array',
+                'is_exclusive'            => 'in:Y,N|orbit.empty.exclusive_campaign_link:' . $partner_id,
+                'supported_languages'     => 'required|array|orbit.empty.language',
+                'mobile_default_language' => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
+                'token'                   => 'orbit.duplicate.token',
             ];
 
-            $validation_error_message = [];
-
-            $validation_error_message['orbit.empty.exclusive_campaign_link'] = 'Cannot uncheck Is Exclusive. There are exclusive campaigns linked to this partner.';
+            $validation_error_message = [
+                'orbit.empty.exclusive_campaign_link' => 'Cannot uncheck Is Exclusive. There are exclusive campaigns linked to this partner.',
+                'orbit.duplicate.token' => 'Token is already used by another partner'
+            ] ;
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -1484,6 +1491,20 @@ class PartnerAPIController extends ControllerAPI
         Validator::extend('orbit.empty.mobile_default_lang', function ($attribute, $value, $parameters) {
 
             if (! in_array($value, $parameters)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        // Check token is already taken or not
+        Validator::extend('orbit.duplicate.token', function ($attribute, $value, $parameters) {
+
+            $token = Partner::where('token', $value)
+                ->where('status', '!=', 'deleted')
+                ->first();
+
+            if (! empty($token)) {
                 return FALSE;
             }
 

@@ -96,7 +96,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                         FROM orb_media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
                                         AND ({$image}) IS NOT NULL
-                                        AND m.object_id in ({$prefix}coupon_translations.coupon_translation_id, default_translation.coupon_translation_id)
+                                        AND m.object_id in ({$prefix}coupon_translations.coupon_translation_id)
                                         ORDER BY m.object_id = {$prefix}coupon_translations.coupon_translation_id desc) AS original_media_path
                                 "),
                             'promotions.end_date',
