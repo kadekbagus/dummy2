@@ -37,8 +37,10 @@ class CampaignShareMail
                             ->where('name', $data['languageId'])
                             ->first();
 
+        $langParam = '';
         if (! empty($data['languageId'])) {
             App::setLocale($data['languageId']);
+            $langParam = '&lang=' . $data['languageId'];
         }
 
         $user = User::where('user_id','=', $data['userId'])
@@ -67,7 +69,7 @@ class CampaignShareMail
         $utmParamConfig = Config::get('orbit.campaign_share_email.utm_params', null);
         $utmParam = isset($utmParamConfig['email']) ? http_build_query($utmParamConfig['email']) : '';
 
-        $param = $utmParam . $countryCityParams;
+        $param = $utmParam . $countryCityParams . $langParam;
 
         switch($data['campaignType']) {
             case 'promotion' :
