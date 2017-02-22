@@ -166,7 +166,7 @@ class Coupon extends Eloquent
     {
         $prefix = DB::getTablePrefix();
         return $this->hasMany('ObjectPartner', 'object_id', 'promotion_id')
-                      ->select('object_partner.object_id', DB::raw("{$prefix}partners.partner_id"), DB::raw("{$prefix}partners.partner_name"), DB::raw("{$prefix}partners.token"))
+                      ->select('object_partner.object_id', DB::raw("{$prefix}partners.partner_id"), DB::raw("{$prefix}partners.partner_name"), DB::raw("{$prefix}partners.token"), DB::raw("{$prefix}partners.is_exclusive"))
                       ->leftjoin('partners', 'partners.partner_id', '=', 'object_partner.partner_id');
     }
 
