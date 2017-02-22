@@ -39,6 +39,7 @@ class RegistrationMail
         }
 
         App::setLocale($language);
+        $data['languageId'] = $language;
 
         // Get data information from the queue
         $userId = $data['user_id'];
