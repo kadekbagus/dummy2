@@ -98,8 +98,10 @@ class ResetPasswordLinkAPIController extends PubControllerAPI
             }
 
             // Send email process to the queue
-            Queue::push('Orbit\\Queue\\ResetPasswordMail',
-                ['tokenId' => $token->token_id],
+            Queue::push('Orbit\\Queue\\ResetPasswordMail', [
+                    'tokenId'  => $token->token_id,
+                    'languageId' => $language
+                ],
                 Config::get('orbit.reset_password.queue_name', 'gtm_email')
             );
 

@@ -287,6 +287,12 @@ class PromotionListAPIController extends PubControllerAPI
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];
                     }
+
+                    if (count((array) $cityFilters) === 1) {
+                        // if user just filter with one city, value of should match must be 100%
+                        $shouldMatch = '100%';
+                    }
+
                     $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
                     $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
@@ -469,9 +475,6 @@ class PromotionListAPIController extends PubControllerAPI
             }
             $jsonQuery['sort'] = $sortby;
 
-            // echo(json_encode($jsonQuery));
-            // exit;
-
             $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.promotions.type'),
@@ -497,6 +500,7 @@ class PromotionListAPIController extends PubControllerAPI
                 $data = array();
                 $isOwned = false;
                 $default_lang = '';
+                $partnerTokens = isset($record['_source']['partner_tokens']) ? $record['_source']['partner_tokens'] : [];
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
                         $key = "news_name";
@@ -568,10 +572,12 @@ class PromotionListAPIController extends PubControllerAPI
                         }
                     }
 
-                    $data['is_exclusive'] = ! empty($data['is_exclusive']) ? $data['is_exclusive'] : 'N';
-                    // disable is_exclusive if token is sent and in the partner_tokens
-                    if ($data['is_exclusive'] === 'Y' && in_array($partnerToken, $data['partner_tokens'])) {
-                        $data['is_exclusive'] = 'N';
+                    if ($key === "is_exclusive") {
+                        $data[$key] = ! empty($data[$key]) ? $data[$key] : 'N';
+                        // disable is_exclusive if token is sent and in the partner_tokens
+                        if ($data[$key] === 'Y' && in_array($partnerToken, $partnerTokens)) {
+                            $data[$key] = 'N';
+                        }
                     }
                 }
 
