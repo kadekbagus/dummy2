@@ -1504,7 +1504,7 @@ class PartnerAPIController extends ControllerAPI
                 ->where('status', '!=', 'deleted')
                 ->first();
 
-            if (empty($token)) {
+            if (! empty($token)) {
                 return FALSE;
             }
 
