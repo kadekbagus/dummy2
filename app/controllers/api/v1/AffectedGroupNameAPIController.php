@@ -368,7 +368,7 @@ class AffectedGroupNameAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $partners = Partner::excludeDeleted('partners')
-                                ->select('partners.partner_id', 'partners.partner_name')
+                                ->select('partners.partner_id', 'partners.partner_name', 'partners.is_exclusive')
                                 ->join('partner_affected_group', 'partner_affected_group.partner_id', '=', 'partners.partner_id');
 
             // filter group_name
