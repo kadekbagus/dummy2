@@ -159,7 +159,7 @@ class PartnerAPIController extends ControllerAPI
                 'is_exclusive'            => 'in:Y,N',
                 'supported_languages'     => 'required|array|orbit.empty.language',
                 'mobile_default_language' => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
-                'token'                   => 'orbit.duplicate.token',
+                'token'                   => 'orbit.duplicate.token:' . $is_exclusive,
             ];
 
             $validation_error_message = [
@@ -534,7 +534,7 @@ class PartnerAPIController extends ControllerAPI
                 'is_exclusive'            => 'in:Y,N|orbit.empty.exclusive_campaign_link:' . $partner_id,
                 'supported_languages'     => 'required|array|orbit.empty.language',
                 'mobile_default_language' => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
-                'token'                   => 'orbit.duplicate.token',
+                'token'                   => 'orbit.duplicate.token:' . $is_exclusive,
             ];
 
             $validation_error_message = [
@@ -1499,15 +1499,16 @@ class PartnerAPIController extends ControllerAPI
 
         // Check token is already taken or not
         Validator::extend('orbit.duplicate.token', function ($attribute, $value, $parameters) {
+            $isExclusive = $parameters[0];
+            if ($isExclusive === 'Y') {
+                $token = Partner::where('token', $value)
+                    ->where('status', '!=', 'deleted')
+                    ->first();
 
-            $token = Partner::where('token', $value)
-                ->where('status', '!=', 'deleted')
-                ->first();
-
-            if (! empty($token)) {
-                return FALSE;
+                if (! empty($token)) {
+                    return FALSE;
+                }
             }
-
             return TRUE;
         });
 
