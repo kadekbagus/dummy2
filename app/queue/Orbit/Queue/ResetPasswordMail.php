@@ -41,7 +41,7 @@ class ResetPasswordMail
                       ->first();
 
         $baseUrl = Config::get('orbit.reset_password.reset_base_url');
-        $tokenUrl = sprintf($baseUrl, $token->token_value, $token->email);
+        $tokenUrl = sprintf($baseUrl, $token->token_value, $token->email, $data['languageId']);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
 
         $dataView['token'] = $token->token_value;
