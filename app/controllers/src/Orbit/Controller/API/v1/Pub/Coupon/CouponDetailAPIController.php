@@ -95,23 +95,17 @@ class CouponDetailAPIController extends PubControllerAPI
                                     CASE WHEN (SELECT {$image}
                                         FROM orb_media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND ({$image}) IS NOT NULL
-                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
-                                        ORDER BY m.object_id = {$prefix}coupon_translations.coupon_translation_id desc) is null
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
                                     THEN
                                         (SELECT {$image}
                                         FROM orb_media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND ({$image}) IS NOT NULL
-                                        AND m.object_id = default_translation.coupon_translation_id
-                                        ORDER BY m.object_id = {$prefix}coupon_translations.coupon_translation_id desc)
+                                        AND m.object_id = default_translation.coupon_translation_id)
                                     ELSE
                                         (SELECT {$image}
                                         FROM orb_media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND ({$image}) IS NOT NULL
-                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
-                                        ORDER BY m.object_id = {$prefix}coupon_translations.coupon_translation_id desc)
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
                                     END AS original_media_path
                                 "),
                             'promotions.end_date',
