@@ -92,12 +92,27 @@ class CouponDetailAPIController extends PubControllerAPI
                             DB::Raw("
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
-                                    (SELECT {$image}
+                                    CASE WHEN (SELECT {$image}
                                         FROM orb_media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
                                         AND ({$image}) IS NOT NULL
-                                        AND m.object_id in ({$prefix}coupon_translations.coupon_translation_id)
-                                        ORDER BY m.object_id = {$prefix}coupon_translations.coupon_translation_id desc) AS original_media_path
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
+                                        ORDER BY m.object_id = {$prefix}coupon_translations.coupon_translation_id desc) is null
+                                    THEN
+                                        (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND ({$image}) IS NOT NULL
+                                        AND m.object_id = default_translation.coupon_translation_id
+                                        ORDER BY m.object_id = {$prefix}coupon_translations.coupon_translation_id desc)
+                                    ELSE
+                                        (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND ({$image}) IS NOT NULL
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id
+                                        ORDER BY m.object_id = {$prefix}coupon_translations.coupon_translation_id desc)
+                                    END AS original_media_path
                                 "),
                             'promotions.end_date',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
