@@ -484,6 +484,7 @@ class CouponListAPIController extends PubControllerAPI
             foreach ($records['hits'] as $record) {
                 $data = array();
                 $isOwned = false;
+                $default_lang = '';
                 $partnerTokens = isset($record['_source']['partner_tokens']) ? $record['_source']['partner_tokens'] : [];
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
@@ -492,6 +493,11 @@ class CouponListAPIController extends PubControllerAPI
                         $key = "coupon_id";
                         $promotionIds[] = $value;
                     }
+
+                    if ($key === 'default_lang') {
+                        $default_lang = $value;
+                    }
+
                     $data[$key] = $value;
 
                     // translation, to get name, desc and image
@@ -502,10 +508,14 @@ class CouponListAPIController extends PubControllerAPI
                             $localPath = (! empty($dt['image_url'])) ? $dt['image_url'] : '';
                             $cdnPath = (! empty($dt['image_cdn_url'])) ? $dt['image_cdn_url'] : '';
 
-                            if ($dt['language_code'] == $language) {
-                                // name & desc
+                            if ($dt['language_code'] === $language) {
+                                // name
                                 if (! empty($dt['name'])) {
                                     $data['coupon_name'] = $dt['name'];
+                                }
+
+                                // desc
+                                if (! empty($dt['description'])) {
                                     $data['description'] = $dt['description'];
                                 }
 
@@ -513,10 +523,14 @@ class CouponListAPIController extends PubControllerAPI
                                 if (! empty($dt['image_url'])) {
                                     $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                                 }
-                            } else {
-                                // name & desc
+                            } elseif ($dt['language_code'] === $default_lang) {
+                                // name
                                 if (! empty($dt['name']) && empty($data['coupon_name'])) {
                                     $data['coupon_name'] = $dt['name'];
+                                }
+
+                                // description
+                                if (! empty($dt['description']) && empty($data['description'])) {
                                     $data['description'] = $dt['description'];
                                 }
 
