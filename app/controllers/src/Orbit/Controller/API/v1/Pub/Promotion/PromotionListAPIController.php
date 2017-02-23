@@ -506,7 +506,7 @@ class PromotionListAPIController extends PubControllerAPI
                         $key = "news_name";
                     }
 
-                    $default_lang = $record['_source']['default_lang'];
+                    $default_lang = (empty($record['_source']['default_lang']))? '' : $record['_source']['default_lang'];
                     $data[$key] = $value;
 
                     // translation, to get name, desc and image
