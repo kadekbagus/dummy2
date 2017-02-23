@@ -518,9 +518,7 @@ class StoreListAPIController extends PubControllerAPI
                     $data[$key] = $value;
                     $data['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
 
-                    if ($key === 'default_lang') {
-                        $default_lang = $value;
-                    }
+                    $default_lang = (empty($record['_source']['default_lang']))? '' : $record['_source']['default_lang'];
 
                     // translation, to get name, desc and image
                     if ($key === "translation") {

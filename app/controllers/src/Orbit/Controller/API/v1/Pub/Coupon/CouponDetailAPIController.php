@@ -41,6 +41,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
+            $partnerToken = OrbitInput::get('token', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -109,6 +110,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                     END AS original_media_path
                                 "),
                             'promotions.end_date',
+                            'promotions.is_exclusive',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -182,6 +184,19 @@ class CouponDetailAPIController extends PubControllerAPI
             $message = 'Request Ok';
             if (! is_object($coupon)) {
                 OrbitShopAPI::throwInvalidArgument('Coupon that you specify is not found');
+            }
+
+            if ($coupon->is_exclusive === 'Y') {
+                // check token
+                $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
+                                    ->where('object_partner.object_type', 'coupon')
+                                    ->where('object_partner.object_id', $coupon->promotion_id)
+                                    ->where('partners.token', $partnerToken)
+                                    ->first();
+
+                if (! is_object($partnerTokens)) {
+                    OrbitShopAPI::throwInvalidArgument('Coupon is exclusive, please specify partner token');
+                }
             }
 
             if (is_object($mall)) {

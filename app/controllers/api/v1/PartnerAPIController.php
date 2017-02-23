@@ -538,7 +538,7 @@ class PartnerAPIController extends ControllerAPI
             ];
 
             $validation_error_message = [
-                'orbit.empty.exclusive_campaign_link' => 'Cannot uncheck Is Exclusive. There are exclusive campaigns linked to this partner.',
+                'orbit.empty.exclusive_campaign_link' => 'Unable to uncheck Exclusive Partner. There are exclusive campaigns linked to this partner.',
                 'orbit.duplicate.token' => 'Token is already used by another partner'
             ] ;
 
