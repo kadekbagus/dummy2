@@ -28,6 +28,7 @@ class Coupon extends Eloquent
      */
     const OBJECT_TYPE = 'is_coupon';
     const NO_AVAILABLE_COUPON_ERROR_CODE = 1211;
+    const IS_EXCLUSIVE_ERROR_CODE = 9001;
 
     protected $table = 'promotions';
 
