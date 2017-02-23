@@ -2959,6 +2959,10 @@ class CouponAPIController extends ControllerAPI
 
             $mall_id = OrbitInput::post('current_mall');
             $storeId = OrbitInput::post('store_id');
+            $language = OrbitInput::get('language', 'id');
+
+            // set language
+            App::setLocale($language);
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');

@@ -84,12 +84,21 @@ class PromotionDetailAPIController extends PubControllerAPI
                             DB::Raw("
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                                 CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN default_translation.description ELSE {$prefix}news_translations.description END as description,
-                                (SELECT {$image}
+                                CASE WHEN (SELECT {$image}
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
-                                    AND ({$image}) IS NOT NULL
-                                    AND m.object_id in ({$prefix}news_translations.news_translation_id, default_translation.news_translation_id)
-                                    ORDER BY m.object_id = {$prefix}news_translations.news_translation_id desc) AS original_media_path
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id) is null
+                                THEN
+                                    (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = default_translation.news_translation_id)
+                                ELSE
+                                    (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id)
+                                END AS original_media_path
                             "),
                             'news.object_type',
                             'news.end_date',
@@ -135,7 +144,7 @@ class PromotionDetailAPIController extends PubControllerAPI
                         })
                         ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
                             $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
-                              ->where(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
+                              ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->where('news.news_id', $promotionId)

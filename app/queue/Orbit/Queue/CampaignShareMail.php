@@ -37,8 +37,10 @@ class CampaignShareMail
                             ->where('name', $data['languageId'])
                             ->first();
 
+        $langParam = '';
         if (! empty($data['languageId'])) {
             App::setLocale($data['languageId']);
+            $langParam = '&lang=' . $data['languageId'];
         }
 
         $user = User::where('user_id','=', $data['userId'])
@@ -67,7 +69,7 @@ class CampaignShareMail
         $utmParamConfig = Config::get('orbit.campaign_share_email.utm_params', null);
         $utmParam = isset($utmParamConfig['email']) ? http_build_query($utmParamConfig['email']) : '';
 
-        $param = $utmParam . $countryCityParams;
+        $param = $utmParam . $countryCityParams . $langParam;
 
         switch($data['campaignType']) {
             case 'promotion' :
@@ -77,12 +79,9 @@ class CampaignShareMail
                                         CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name,
                                         CASE WHEN {$prefix}media.path is null THEN (
                                                 select m.path
-                                                from {$prefix}news_translations nt
-                                                join {$prefix}media m
-                                                    on m.object_id = nt.news_translation_id
+                                                from {$prefix}media m
+                                                where m.object_id = default_translation.news_translation_id
                                                     and m.media_name_long = 'news_translation_image_orig'
-                                                where nt.news_id = {$prefix}news.news_id
-                                                group by nt.news_id
                                             ) ELSE {$prefix}media.path END as original_media_path
                                     ")
                                 )
@@ -98,7 +97,7 @@ class CampaignShareMail
                                 ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                                 ->leftJoin('news_translations as default_translation', function ($q) {
                                     $q->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id')
-                                      ->where(DB::raw('default_translation.news_id'), '=', 'news.news_id');
+                                      ->on(DB::raw('default_translation.news_id'), '=', 'news.news_id');
                                 })
                                 ->where('news.news_id', $data['campaignId'])
                                 ->where('news.object_type', '=', 'promotion')
@@ -118,12 +117,9 @@ class CampaignShareMail
                                         CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name,
                                         CASE WHEN {$prefix}media.path is null THEN (
                                                 select m.path
-                                                from {$prefix}news_translations nt
-                                                join {$prefix}media m
-                                                    on m.object_id = nt.news_translation_id
+                                                from {$prefix}media m
+                                                where m.object_id = default_translation.news_translation_id
                                                     and m.media_name_long = 'news_translation_image_orig'
-                                                where nt.news_id = {$prefix}news.news_id
-                                                group by nt.news_id
                                             ) ELSE {$prefix}media.path END as original_media_path
                                     ")
                                 )
@@ -139,7 +135,7 @@ class CampaignShareMail
                                 ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                                 ->leftJoin('news_translations as default_translation', function ($q) {
                                     $q->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id')
-                                      ->where(DB::raw('default_translation.news_id'), '=', 'news.news_id');
+                                      ->on(DB::raw('default_translation.news_id'), '=', 'news.news_id');
                                 })
                                 ->where('news.news_id', $data['campaignId'])
                                 ->where('news.object_type', '=', 'news')
@@ -156,15 +152,12 @@ class CampaignShareMail
                     $campaign = Coupon::select(
                             'promotions.promotion_id as campaign_id',
                             DB::Raw("
-                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
+                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
                                     CASE WHEN {$prefix}media.path is null THEN (
                                             select m.path
-                                            from {$prefix}coupon_translations ct
-                                            join {$prefix}media m
-                                                on m.object_id = ct.coupon_translation_id
+                                            from {$prefix}media m
+                                            where m.object_id = default_translation.coupon_translation_id
                                                 and m.media_name_long = 'coupon_translation_image_orig'
-                                            where ct.promotion_id = {$prefix}promotions.promotion_id
-                                            group by ct.promotion_id
                                         ) ELSE {$prefix}media.path END as original_media_path
                                 ")
                         )
@@ -175,6 +168,12 @@ class CampaignShareMail
                         ->leftJoin('media', function ($q) {
                             $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
+                        })
+                        ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                        ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                        ->leftJoin('coupon_translations as default_translation', function ($q) {
+                            $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
+                              ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                         })
                         ->where('promotions.promotion_id', $data['campaignId'])
                         ->first();
