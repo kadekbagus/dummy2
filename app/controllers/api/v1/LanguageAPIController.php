@@ -138,19 +138,17 @@ class LanguageAPIController extends ControllerAPI
                 $check_user = $campaign_account->user_id;
             }
 
-            if ($campaign_account->is_link_to_all !== 'Y'){
-                $languages->leftJoin('object_supported_language', 'object_supported_language.language_id', '=', 'languages.language_id')
-                        ->where('object_type', 'pmp_account')
-                        ->whereRaw("
-                            EXISTS (
-                                SELECT 1
-                                FROM {$prefix}campaign_account ca
-                                WHERE ca.user_id = {$this->quote($check_user)}
-                                    AND ca.campaign_account_id = {$prefix}object_supported_language.object_id
-                            )
-                            AND {$prefix}object_supported_language.status = 'active'
-                        ");
-            }
+            $languages->leftJoin('object_supported_language', 'object_supported_language.language_id', '=', 'languages.language_id')
+                    ->where('object_type', 'pmp_account')
+                    ->whereRaw("
+                        EXISTS (
+                            SELECT 1
+                            FROM {$prefix}campaign_account ca
+                            WHERE ca.user_id = {$this->quote($check_user)}
+                                AND ca.campaign_account_id = {$prefix}object_supported_language.object_id
+                        )
+                        AND {$prefix}object_supported_language.status = 'active'
+                    ");
 
             OrbitInput::get('status', function($status) use ($languages) {
                 $languages->where('languages.status', '=', $status);

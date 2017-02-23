@@ -39,6 +39,7 @@ class RegistrationMail
         }
 
         App::setLocale($language);
+        $data['languageId'] = $language;
 
         // Get data information from the queue
         $userId = $data['user_id'];
@@ -110,7 +111,7 @@ class RegistrationMail
     protected function sendActivationEmail($user, $token, $data, $mallName, $baseUrl)
     {
         // URL Activation link
-        $tokenUrl = sprintf($baseUrl, $token->token_value, $user->user_email);
+        $tokenUrl = sprintf($baseUrl, $token->token_value, $user->user_email, $data['languageId']);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
 
         $dataCopy = $data;

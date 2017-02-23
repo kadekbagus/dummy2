@@ -32,7 +32,7 @@ class SupportedLanguageAPIController extends PubControllerAPI
             $sortMode = OrbitInput::get('sortmode','asc');
             $sortBy = 'name_native';
 
-            $language = Language::select('name', 'name_native')
+            $language = Language::select('language_id', 'name', 'name_native')
                             ->active();
 
             $_language = clone $language;

@@ -95,6 +95,7 @@ class PartnerDetailAPIController extends PubControllerAPI
             }
 
             $partner = Partner::select(
+                    'partners.partner_name',
                     'partners.partner_id',
                     'deeplinks.deeplink_url',
                     DB::raw("{$logo}"),
@@ -117,9 +118,10 @@ class PartnerDetailAPIController extends PubControllerAPI
                     $q->on('partner_translations.partner_id', '=', 'partners.partner_id')
                       ->on('partner_translations.language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                 })
+                ->leftJoin('languages', 'languages.name' , '=', 'partners.mobile_default_language')
                 ->leftJoin('partner_translations as default_translation', function ($q) use ($prefix){
                     $q->on(DB::raw("default_translation.partner_id"), '=', 'partners.partner_id')
-                      ->where(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
+                      ->on(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
                 })
                 // currently there is only one deeplink for partner,
                 // should use lazy load maybe if multiple deeplink is applied
