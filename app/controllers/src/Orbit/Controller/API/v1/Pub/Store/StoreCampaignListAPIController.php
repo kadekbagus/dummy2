@@ -61,6 +61,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
             $category_id = OrbitInput::get('category_id');
+            $token = OrbitInput::get('token');
             $ul = OrbitInput::get('ul', null);
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance', 10);
@@ -105,9 +106,8 @@ class StoreCampaignListAPIController extends PubControllerAPI
             $news = DB::table('news')->select(
                         'news.news_id as campaign_id',
                         'news.begin_date as begin_date',
-                        DB::Raw("
-                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
-                            "),
+                        DB::Raw(" CASE WHEN {$prefix}partners.partner_id is null THEN {$prefix}news.is_exclusive ELSE 'N' END as is_exclusive "),
+                        DB::Raw(" CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
                         DB::raw("
@@ -161,6 +161,15 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         ->leftJoin('media as med', function ($q) {
                             $q->on(DB::raw('med.object_id'), '=', DB::raw('default_translation.news_translation_id'));
                             $q->on(DB::raw('med.media_name_long'), '=', DB::raw("'news_translation_image_orig'"));
+                        })
+                        // Exclusive partner
+                        ->leftJoin('object_partner', function ($q) {
+                            $q->on('object_partner.object_id', '=', 'news.news_id');
+                            $q->on('object_partner.object_type', '=',  DB::raw("'news'"));
+                        })
+                        ->leftJoin('partners', function ($q) use($token) {
+                            $q->on('partners.partner_id', '=', 'object_partner.partner_id');
+                            $q->on('partners.token', '=', DB::raw("{$this->quote($token)}"));
                         })
                         ->whereIn('merchants.merchant_id', $storeIds)
                         ->where('news.object_type', '=', 'news')
@@ -205,9 +214,8 @@ class StoreCampaignListAPIController extends PubControllerAPI
             $promotions = DB::table('news')->select(
                         'news.news_id as campaign_id',
                         'news.begin_date as begin_date',
-                        DB::Raw("
-                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name
-                        "),
+                        DB::Raw(" CASE WHEN {$prefix}partners.partner_id is null THEN {$prefix}news.is_exclusive ELSE 'N' END as is_exclusive "),
+                        DB::Raw(" CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name "),
                         'news.object_type as campaign_type',
                         // query for get status active based on timezone
                         DB::raw("
@@ -261,6 +269,15 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         ->leftJoin('media as med', function ($q) {
                             $q->on(DB::raw('med.object_id'), '=', DB::raw('default_translation.news_translation_id'));
                             $q->on(DB::raw('med.media_name_long'), '=', DB::raw("'news_translation_image_orig'"));
+                        })
+                        // Exclusive partner
+                        ->leftJoin('object_partner', function ($q) {
+                            $q->on('object_partner.object_id', '=', 'news.news_id');
+                            $q->on('object_partner.object_type', '=',  DB::raw("'promotion'"));
+                        })
+                        ->leftJoin('partners', function ($q) use($token) {
+                            $q->on('partners.partner_id', '=', 'object_partner.partner_id');
+                            $q->on('partners.token', '=', DB::raw("{$this->quote($token)}"));
                         })
                         ->whereIn('merchants.merchant_id', $storeIds)
                         ->where('news.object_type', '=', 'promotion')
@@ -306,6 +323,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
             $coupons = DB::table('promotions')->select(DB::raw("
                                 {$prefix}promotions.promotion_id as campaign_id,
                                 {$prefix}promotions.begin_date as begin_date,
+                                CASE WHEN {$prefix}partners.partner_id is null THEN {$prefix}promotions.is_exclusive ELSE 'N' END as is_exclusive,
                                 CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
                                 'coupon' as campaign_type,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -359,6 +377,16 @@ class StoreCampaignListAPIController extends PubControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
+                            // Exclusive partner
+                            ->leftJoin('object_partner', function ($q) {
+                                $q->on('object_partner.object_id', '=', 'promotions.promotion_id');
+                                $q->on('object_partner.object_type', '=', DB::raw("'coupon'"));
+                            })
+                            ->leftJoin('partners', function ($q) use($token) {
+                                $q->on('partners.partner_id', '=', 'object_partner.partner_id');
+                                $q->on('partners.token', '=', DB::raw("{$this->quote($token)}"));
+                            })
+                            // Available coupon
                             ->leftJoin(DB::raw("(SELECT promotion_id, COUNT(*) as tot FROM {$prefix}issued_coupons WHERE status = 'available' GROUP BY promotion_id) as available"), DB::raw("available.promotion_id"), '=', 'promotions.promotion_id')
                             ->whereRaw("available.tot > 0")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
