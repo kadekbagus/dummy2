@@ -24,6 +24,7 @@ use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
+use Partner;
 
 class PromotionDetailAPIController extends PubControllerAPI
 {
@@ -43,6 +44,7 @@ class PromotionDetailAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
+            $partnerToken = OrbitInput::get('token', null);
 
             $promotionHelper = PromotionHelper::create();
             $promotionHelper->registerCustomValidation();
@@ -102,6 +104,7 @@ class PromotionDetailAPIController extends PubControllerAPI
                             "),
                             'news.object_type',
                             'news.end_date',
+                            'news.is_exclusive',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -158,6 +161,19 @@ class PromotionDetailAPIController extends PubControllerAPI
             $message = 'Request Ok';
             if (! is_object($promotion)) {
                 OrbitShopAPI::throwInvalidArgument('Promotion that you specify is not found');
+            }
+
+            if ($promotion->is_exclusive === 'Y') {
+                // check token
+                $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
+                                    ->where('object_partner.object_type', 'promotion')
+                                    ->where('object_partner.object_id', $promotion->news_id)
+                                    ->where('partners.token', $partnerToken)
+                                    ->first();
+
+                if (! is_object($partnerTokens)) {
+                    OrbitShopAPI::throwInvalidArgument('Promotion is exclusive, please specify partner token');
+                }
             }
 
             $mall = null;
