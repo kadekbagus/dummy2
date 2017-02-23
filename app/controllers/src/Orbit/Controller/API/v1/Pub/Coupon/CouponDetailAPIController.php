@@ -198,6 +198,8 @@ class CouponDetailAPIController extends PubControllerAPI
                 if (! is_object($partnerTokens)) {
                     OrbitShopAPI::throwInvalidArgument('Coupon is exclusive, please specify partner token');
                 }
+
+                $coupon->is_exclusive = 'N';
             }
 
             if (is_object($mall)) {

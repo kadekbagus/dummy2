@@ -181,6 +181,8 @@ class NewsDetailAPIController extends PubControllerAPI
                 if (! is_object($partnerTokens)) {
                     OrbitShopAPI::throwInvalidArgument('News is exclusive, please specify partner token');
                 }
+
+                $news->is_exclusive = 'N';
             }
 
             $mall = null;

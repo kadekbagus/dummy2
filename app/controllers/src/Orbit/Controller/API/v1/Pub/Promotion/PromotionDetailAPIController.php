@@ -174,6 +174,8 @@ class PromotionDetailAPIController extends PubControllerAPI
                 if (! is_object($partnerTokens)) {
                     OrbitShopAPI::throwInvalidArgument('Promotion is exclusive, please specify partner token');
                 }
+
+                $promotion->is_exclusive = 'N';
             }
 
             $mall = null;
