@@ -25,6 +25,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 use Partner;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class PromotionDetailAPIController extends PubControllerAPI
 {
@@ -172,7 +173,7 @@ class PromotionDetailAPIController extends PubControllerAPI
                                     ->first();
 
                 if (! is_object($partnerTokens)) {
-                    OrbitShopAPI::throwInvalidArgument('Promotion is exclusive, please specify partner token');
+                    throw new OrbitCustomException('Promotion is exclusive, please specify partner token', News::IS_EXCLUSIVE_ERROR_CODE, NULL);
                 }
             }
 
@@ -242,6 +243,13 @@ class PromotionDetailAPIController extends PubControllerAPI
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
+            $this->response->data = null;
+            $httpCode = 500;
+
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
 
