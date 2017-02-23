@@ -118,6 +118,7 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
                 'lon'         => $lon,
                 'lat'         => $lat,
                 'mall_id'     => $mallId,
+                'token'       => $token,
                 'filter'      => 'Y',
                 'primary_key' => 'coupon_id'
             ];

@@ -119,6 +119,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
                 'lon'         => $lon,
                 'lat'         => $lat,
                 'mall_id'     => $mallId,
+                'token'       => $token,
                 'filter'      => 'Y',
                 'primary_key' => 'news_id'
             ];
