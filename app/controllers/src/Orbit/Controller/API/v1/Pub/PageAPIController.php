@@ -55,7 +55,7 @@ class PageAPIController extends PubControllerAPI
                 ),
                 array(
                     'country' => 'required',
-                    'object_type' => 'required',
+                    'object_type' => 'required|in:advertise_with_us,about_us',
                     'language' => 'required',
                 )
             );
@@ -73,12 +73,26 @@ class PageAPIController extends PubControllerAPI
                         ->where('pages.language' , $language)
                         ->get();
 
+            switch ($object_type) {
+                case 'advertise_with_us' :
+                        $notes = 'Page viewed: View Advertise With Us';
+                        $actName = 'view_advertise';
+                        $actNameLong = 'View Advertise';
+                        break;
+
+                default :
+                        $notes = 'Page viewed: View About Us';
+                        $actName = 'view_about_us';
+                        $actNameLong = 'View About Us';
+            }
+
             if (empty($skip)) {
-                $activityNotes = sprintf('Page viewed: View About Us');
+                $activityNotes = sprintf($notes);
                 $activity->setUser($user)
-                    ->setActivityName('view_about_us')
-                    ->setActivityNameLong('View About Us')
+                    ->setActivityName($actName)
+                    ->setActivityNameLong($actNameLong)
                     ->setObject(null)
+                    ->setLocation('GTM')
                     ->setModuleName('Application')
                     ->setNotes($activityNotes)
                     ->responseOK()

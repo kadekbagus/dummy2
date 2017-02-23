@@ -50,6 +50,7 @@ class NewsDetailAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
+            $partnerToken = OrbitInput::get('token', null);
 
             $newsHelper = NewsHelper::create();
             $newsHelper->registerCustomValidation();
@@ -109,6 +110,7 @@ class NewsDetailAPIController extends PubControllerAPI
                             "),
                             'news.object_type',
                             'news.end_date',
+                            'news.is_exclusive',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -165,6 +167,19 @@ class NewsDetailAPIController extends PubControllerAPI
             $message = 'Request Ok';
             if (! is_object($news)) {
                 OrbitShopAPI::throwInvalidArgument('News that you specify is not found');
+            }
+
+            if ($news->is_exclusive === 'Y') {
+                // check token
+                $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
+                                    ->where('object_partner.object_type', 'news')
+                                    ->where('object_partner.object_id', $news->news_id)
+                                    ->where('partners.token', $partnerToken)
+                                    ->first();
+
+                if (! is_object($partnerTokens)) {
+                    OrbitShopAPI::throwInvalidArgument('News is exclusive, please specify partner token');
+                }
             }
 
             $mall = null;

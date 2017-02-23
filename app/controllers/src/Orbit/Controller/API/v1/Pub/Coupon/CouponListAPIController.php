@@ -510,10 +510,7 @@ class CouponListAPIController extends PubControllerAPI
                         $promotionIds[] = $value;
                     }
 
-                    if ($key === 'default_lang') {
-                        $default_lang = $value;
-                    }
-
+                    $default_lang = (empty($record['_source']['default_lang']))? '' : $record['_source']['default_lang'];
                     $data[$key] = $value;
 
                     // translation, to get name, desc and image
@@ -587,7 +584,7 @@ class CouponListAPIController extends PubControllerAPI
                 }
                 $data['owned'] = $isOwned;
                 $data['score'] = $record['_score'];
-                unset($data['partner_tokens']);
+                unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
             }
 
