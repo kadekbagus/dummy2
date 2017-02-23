@@ -37,6 +37,13 @@ class LandingPageShareMail
             App::setLocale($data['language']);
         }
 
+        $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['languageId'];
+
+        $dataView['linkMalls']      = sprintf($baseLinkUrl, 'malls');
+        $dataView['linkStores']     = sprintf($baseLinkUrl, 'stores');
+        $dataView['linkPromotions'] = sprintf($baseLinkUrl, 'promotions');
+        $dataView['linkCoupons']    = sprintf($baseLinkUrl, 'coupons');
+        $dataView['linkEvents']     = sprintf($baseLinkUrl, 'events');
         $dataView['email'] = $data['email'];
         $dataView['name'] = $user->user_firstname;
         $dataView['shareUrl'] = Config::get('orbit.landingpage_share_email.share_url');
