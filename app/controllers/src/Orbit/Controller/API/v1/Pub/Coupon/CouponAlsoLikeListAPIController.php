@@ -71,6 +71,7 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
             $sortBy = OrbitInput::get('sortby', NULL);
             $sortMode = OrbitInput::get('sortmode', NULL);
             $language = OrbitInput::get('language', 'id');
+            $token = OrbitInput::get('token', NULL);
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
@@ -194,6 +195,7 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
         $_GET['sortby'] = $params['sort_by'];
         $_GET['sortmode'] = $params['sort_mode'];
         $_GET['language'] = $params['language'];
+        $_GET['token'] = $params['token'];
         $_GET['ul'] = $params['ul'];
         $_GET['from_homepage'] = 'y';   // prevent activity recording
         $_GET['excluded_ids'] = (array)$params['except_id'];
@@ -273,7 +275,8 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
                 'object_type',
                 'image_url',
                 'campaign_status',
-                'begin_date'
+                'begin_date',
+                'is_exclusive'
             ];
 
             $object = new \stdClass();

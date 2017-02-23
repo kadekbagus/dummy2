@@ -584,7 +584,7 @@ class CouponListAPIController extends PubControllerAPI
                 }
                 $data['owned'] = $isOwned;
                 $data['score'] = $record['_score'];
-                unset($data['partner_tokens']);
+                unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
             }
 
