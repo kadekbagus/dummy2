@@ -533,7 +533,7 @@ class PartnerAPIController extends ControllerAPI
 
             $validation_error_message = [];
 
-            $validation_error_message['orbit.empty.exclusive_campaign_link'] = 'Cannot uncheck Is Exclusive. There are exclusive campaigns linked to this partner.';
+            $validation_error_message['orbit.empty.exclusive_campaign_link'] = 'Unable to uncheck Exclusive Partner. There are exclusive campaigns linked to this partner.';
 
             // add validation image
             if (! empty($logo_validation)) {
