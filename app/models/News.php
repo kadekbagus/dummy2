@@ -15,6 +15,8 @@ class News extends Eloquent
     use CampaignStatusTrait;
     use CampaignAccessTrait;
 
+    const IS_EXCLUSIVE_ERROR_CODE = 9001;
+
     protected $table = 'news';
 
     protected $primaryKey = 'news_id';
