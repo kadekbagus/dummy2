@@ -24,6 +24,7 @@ use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
+use Partner;
 
 class PromotionDetailAPIController extends PubControllerAPI
 {
@@ -173,6 +174,8 @@ class PromotionDetailAPIController extends PubControllerAPI
                 if (! is_object($partnerTokens)) {
                     OrbitShopAPI::throwInvalidArgument('Promotion is exclusive, please specify partner token');
                 }
+
+                $promotion->is_exclusive = 'N';
             }
 
             $mall = null;

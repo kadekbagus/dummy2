@@ -21,6 +21,7 @@ use \Exception;
 use Mall;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
+use Partner;
 
 class CouponDetailAPIController extends PubControllerAPI
 {
@@ -197,6 +198,8 @@ class CouponDetailAPIController extends PubControllerAPI
                 if (! is_object($partnerTokens)) {
                     OrbitShopAPI::throwInvalidArgument('Coupon is exclusive, please specify partner token');
                 }
+
+                $coupon->is_exclusive = 'N';
             }
 
             if (is_object($mall)) {
