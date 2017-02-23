@@ -1033,13 +1033,19 @@ class PartnerAPIController extends ControllerAPI
                             'partners.pop_up_content',
                             'partners.mobile_default_language',
                             DB::raw("
-                                CASE WHEN (
-                                    SELECT COUNT(object_partner_id) from {$prefix}object_partner WHERE object_type IN ('promotion', 'news', 'coupon')
-                                        and {$prefix}object_partner.partner_id = {$prefix}partners.partner_id
+                            CASE WHEN (
+                                    SELECT COUNT(object_partner_id)
+                                    FROM {$prefix}object_partner op
+                                    LEFT JOIN {$prefix}promotions p ON p.promotion_id = op.object_id AND op.object_type = 'coupon'
+                                    LEFT JOIN {$prefix}news n ON n.news_id = op.object_id AND op.object_type IN ('news', 'promotion')
+                                    WHERE op.object_type IN ('promotion', 'news', 'coupon')
+                                        AND op.partner_id = {$prefix}partners.partner_id
+                                        AND (p.is_exclusive = 'Y' OR n.is_exclusive = 'Y')
+                                    GROUP BY {$prefix}partners.partner_id
                                     ) > 0
-                                    THEN 'Y'
-                                    ELSE 'N'
-                                END AS linked_to_campaign
+                                THEN 'Y'
+                                ELSE 'N'
+                            END AS linked_to_campaign
                             ")
                         )
                         ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id')
