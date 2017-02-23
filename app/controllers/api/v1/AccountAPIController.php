@@ -1489,9 +1489,7 @@ class AccountAPIController extends ControllerAPI
 
             // Save to user_merchant (1 to M)
             if ($merchant_ids) {
-                $merchants = UserMerchant::select('merchant_id')
-                                ->where('user_id', $update_user->user_id)->get()
-                                ->toArray();
+                $merchants = UserMerchant::where('user_id', $update_user->user_id)->get()->lists('merchant_id');
 
                 // handle from select all tenants when tenant has link to active campaign
                 if (empty($merchants)) {
@@ -1505,15 +1503,11 @@ class AccountAPIController extends ControllerAPI
                         $link_to_tenants->where('object_type', 'mall');
                     }
 
-                    $merchants = $link_to_tenants->get()->toArray();
+                    $merchants = $link_to_tenants->get()->lists('merchant_id');
                 }
 
-                $merchantdb = array();
-                foreach($merchants as $merchantdbid) {
-                    $merchantdb[] = $merchantdbid['merchant_id'];
-                }
-                $removetenant = array_diff($merchantdb, $merchant_ids);
-                $addtenant = array_diff($merchant_ids, $merchantdb);
+                $removetenant = array_diff($merchants, $merchant_ids);
+                $addtenant = array_diff($merchant_ids, $merchants);
                 $newsPromotionActive = 0;
                 $couponStatusActive = 0;
 
@@ -1539,11 +1533,11 @@ class AccountAPIController extends ControllerAPI
 
                 if ($removetenant) {
                     foreach ($removetenant as $tenant_id) {
-                        $activeCampaign = 0;
                         $newsPromotionActive = 0;
                         $couponStatusActive = 0;
 
                         $mall = CampaignLocation::select('merchant_id',
+                                                    'name',
                                                     'parent_id',
                                                     'object_type')
                                                 ->where('merchant_id', '=', $tenant_id)
@@ -1569,12 +1563,16 @@ class AccountAPIController extends ControllerAPI
 
                             //get data in news and promotion
                             $newsPromotionActive = News::allowedForPMPUser($update_user, 'news_promotion')
-                                                        ->select('news.news_id')
+                                                        ->select('news.news_id', 'news.object_type')
                                                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                                                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                                         ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
                                                         ->where('news_merchant.merchant_id', $tenant_id)
-                                                        ->count();
+                                                        ->first();
+                            if (! empty($newsPromotionActive)) {
+                                $errorMessage = "Cannot unlink the tenant with an active {$newsPromotionActive->object_type} on {$mall->object_type} {$mall->name}";
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
 
                             //get data in coupon
                             $couponStatusActive = Coupon::allowedForPMPUser($update_user, 'coupon')
@@ -1583,26 +1581,10 @@ class AccountAPIController extends ControllerAPI
                                                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                                         ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
                                                         ->where('promotion_retailer.retailer_id', $tenant_id)
-                                                        ->count();
-
-
-
-                            $activeCampaign = (int) $newsPromotionActive + (int) $couponStatusActive;
-
-                            $validator = Validator::make(
-                                array(
-                                    'active_campaign'  => $activeCampaign,
-                                ),
-                                array(
-                                    'active_campaign'    => 'in: 0',
-                                ),
-                                array(
-                                    'active_campaign.in' => 'Cannot unlink the tenant with an active campaign',
-                                )
-                            );
-
-                            if ($validator->fails()) {
-                                OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
+                                                        ->first();
+                            if (! empty($couponStatusActive)) {
+                                $errorMessage = "Cannot unlink the tenant with an active coupon on {$mall->object_type} {$mall->name}";
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
                         }
                     }

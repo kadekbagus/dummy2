@@ -534,7 +534,7 @@ class PartnerAPIController extends ControllerAPI
                 'is_exclusive'            => 'in:Y,N|orbit.empty.exclusive_campaign_link:' . $partner_id,
                 'supported_languages'     => 'required|array|orbit.empty.language',
                 'mobile_default_language' => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
-                'token'                   => 'orbit.duplicate.token:' . $is_exclusive,
+                'token'                   => 'orbit.duplicate.token:' . $is_exclusive . ',' . $partner_id,
             ];
 
             $validation_error_message = [
@@ -1502,8 +1502,13 @@ class PartnerAPIController extends ControllerAPI
             $isExclusive = $parameters[0];
             if ($isExclusive === 'Y') {
                 $token = Partner::where('token', $value)
-                    ->where('status', '!=', 'deleted')
-                    ->first();
+                    ->where('status', '!=', 'deleted');
+
+                if (! empty($parameters[1])){
+                    $token = $token->where('partner_id', '!=', $parameters[1]);
+                }
+
+                $token = $token->first();
 
                 if (! empty($token)) {
                     return FALSE;
