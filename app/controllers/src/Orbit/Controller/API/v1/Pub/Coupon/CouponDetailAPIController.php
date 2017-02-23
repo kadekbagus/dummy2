@@ -21,6 +21,7 @@ use \Exception;
 use Mall;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
+use Partner;
 
 class CouponDetailAPIController extends PubControllerAPI
 {

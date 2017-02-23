@@ -24,6 +24,7 @@ use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
+use Partner;
 
 class PromotionDetailAPIController extends PubControllerAPI
 {
