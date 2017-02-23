@@ -1552,7 +1552,7 @@ class PartnerAPIController extends ControllerAPI
                     ->get();
 
                 foreach ($linkedCampaigns as $linkedCampaign) {
-                    if ($linkedCampaign->is_exclusive) {
+                    if ($linkedCampaign->is_exclusive === 'Y') {
                         $campaignExclusiveFlag = true;
                         break;
                     }
