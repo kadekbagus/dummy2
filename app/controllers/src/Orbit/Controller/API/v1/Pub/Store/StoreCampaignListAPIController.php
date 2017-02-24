@@ -160,7 +160,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                         ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
                             $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
-                              ->where(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
+                              ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('media as med', function ($q) {
                             $q->on(DB::raw('med.object_id'), '=', DB::raw('default_translation.news_translation_id'));
@@ -269,7 +269,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                         ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
                             $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
-                              ->where(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
+                              ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('media as med', function ($q) {
                             $q->on(DB::raw('med.object_id'), '=', DB::raw('default_translation.news_translation_id'));
