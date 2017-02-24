@@ -100,7 +100,11 @@ class StoreCampaignListAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $storeIds = Tenant::where('name', $this->store->name)->lists('merchant_id');
+            $store = Tenant::select('merchant_id', 'name', 'country_id')->where('merchant_id', $merchant_id)->active()->first();
+            if (! empty($store)) {
+                $storename = $store->name;
+                $countryId = $store->country_id;
+            }
 
             // get news list
             $news = DB::table('news')->select(
@@ -172,6 +176,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             $q->on('partners.token', '=', DB::raw("{$this->quote($token)}"));
                         })
                         ->whereRaw("{$prefix}merchants.merchant_id in (select merchant_id from {$prefix}merchants where name = {$this->quote($this->store->name)})")
+                        ->whereRaw("{$prefix}merchants.country_id = {$this->quote($countryId)}")
                         ->whereRaw("{$prefix}news.object_type = 'news'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
@@ -280,6 +285,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             $q->on('partners.token', '=', DB::raw("{$this->quote($token)}"));
                         })
                         ->whereRaw("{$prefix}merchants.merchant_id in (select merchant_id from {$prefix}merchants where name = {$this->quote($this->store->name)})")
+                        ->whereRaw("{$prefix}merchants.country_id = {$this->quote($countryId)}")
                         ->whereRaw("{$prefix}news.object_type = 'promotion'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
@@ -391,6 +397,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             ->whereRaw("available.tot > 0")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereRaw("{$prefix}merchants.merchant_id in (select merchant_id from {$prefix}merchants where name = {$this->quote($this->store->name)})")
+                            ->whereRaw("{$prefix}merchants.country_id = {$this->quote($countryId)}")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
                             ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');
