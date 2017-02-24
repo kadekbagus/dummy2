@@ -523,7 +523,7 @@ class PartnerAPIController extends ControllerAPI
                 'partner_id'              => 'required',
                 'start_date'              => 'date|orbit.empty.hour_format',
                 'end_date'                => 'date|orbit.empty.hour_format',
-                'status'                  => 'required|in:active,inactive',
+                'status'                  => 'required|in:active,inactive|orbit.exists.partner_linked_to_active_campaign:' . $partner_id,
                 'address'                 => 'required',
                 'city'                    => 'required',
                 'country_id'              => 'required',
@@ -539,7 +539,8 @@ class PartnerAPIController extends ControllerAPI
 
             $validation_error_message = [
                 'orbit.empty.exclusive_campaign_link' => 'Unable to uncheck Exclusive Partner. There are exclusive campaigns linked to this partner.',
-                'orbit.duplicate.token' => 'Token is already used by another partner'
+                'orbit.duplicate.token' => 'Token is already used by another partner.',
+                'orbit.exists.partner_linked_to_active_campaign' => 'Partner status cannot be set to inactive, because it is linked to one or more active campaigns.'
             ] ;
 
             // add validation image
@@ -1033,13 +1034,19 @@ class PartnerAPIController extends ControllerAPI
                             'partners.pop_up_content',
                             'partners.mobile_default_language',
                             DB::raw("
-                                CASE WHEN (
-                                    SELECT COUNT(object_partner_id) from {$prefix}object_partner WHERE object_type IN ('promotion', 'news', 'coupon')
-                                        and {$prefix}object_partner.partner_id = {$prefix}partners.partner_id
+                            CASE WHEN (
+                                    SELECT COUNT(object_partner_id)
+                                    FROM {$prefix}object_partner op
+                                    LEFT JOIN {$prefix}promotions p ON p.promotion_id = op.object_id AND op.object_type = 'coupon'
+                                    LEFT JOIN {$prefix}news n ON n.news_id = op.object_id AND op.object_type IN ('news', 'promotion')
+                                    WHERE op.object_type IN ('promotion', 'news', 'coupon')
+                                        AND op.partner_id = {$prefix}partners.partner_id
+                                        AND (p.is_exclusive = 'Y' OR n.is_exclusive = 'Y')
+                                    GROUP BY {$prefix}partners.partner_id
                                     ) > 0
-                                    THEN 'Y'
-                                    ELSE 'N'
-                                END AS linked_to_campaign
+                                THEN 'Y'
+                                ELSE 'N'
+                            END AS linked_to_campaign
                             ")
                         )
                         ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id')
@@ -1517,6 +1524,45 @@ class PartnerAPIController extends ControllerAPI
             return TRUE;
         });
 
+        Validator::extend('orbit.exists.partner_linked_to_active_campaign', function ($attribute, $value, $parameters) {
+            $activeCampaignFlag = false;
+
+            if ($value === 'inactive') {
+                $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
+
+                $prefix = DB::getTablePrefix();
+                $linkedNews = ObjectPartner::leftJoin('news', function($q) use($prefix) {
+                        $q->on('object_partner.object_id', '=', 'news.news_id')
+                            ->on(DB::raw("{$prefix}object_partner.object_type"), DB::raw('IN'), DB::raw("('news', 'promotion')"));
+                    })
+                    ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                    ->where('partner_id', $parameters[0])
+                    ->whereRaw("(CASE WHEN {$prefix}news.end_date < '{$now}' THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                    ->groupBy('object_partner.object_id')
+                    ->first();
+
+                if (! is_object($linkedNews)) {
+                    return FALSE;
+                }
+
+                $linkedCoupon = ObjectPartner::leftJoin('promotions', function($q) use($prefix) {
+                        $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
+                            ->on(DB::raw("{$prefix}object_partner.object_type"), '=', DB::raw("'coupon'"));
+                    })
+                    ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                    ->where('partner_id', $parameters[0])
+                    ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < '{$now}' THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                    ->groupBy('object_partner.object_id')
+                    ->first();
+
+                if (! is_object($linkedCoupon)) {
+                    return FALSE;
+                }
+            }
+
+            return TRUE;
+        });
+
         // Check if the partner is already linked to an exclusive campaign
         Validator::extend('orbit.empty.exclusive_campaign_link', function ($attribute, $value, $parameters) {
             $campaignExclusiveFlag = false;
@@ -1552,7 +1598,7 @@ class PartnerAPIController extends ControllerAPI
                     ->get();
 
                 foreach ($linkedCampaigns as $linkedCampaign) {
-                    if ($linkedCampaign->is_exclusive) {
+                    if ($linkedCampaign->is_exclusive === 'Y') {
                         $campaignExclusiveFlag = true;
                         break;
                     }
