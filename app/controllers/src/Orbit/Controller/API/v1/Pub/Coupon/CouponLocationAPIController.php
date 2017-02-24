@@ -85,9 +85,11 @@ class CouponLocationAPIController extends PubControllerAPI
             $validator = Validator::make(
                 array(
                     'coupon_id' => $coupon_id,
+                    'language' => $language,
                 ),
                 array(
                     'coupon_id' => 'required',
+                    'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
