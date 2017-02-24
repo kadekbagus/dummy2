@@ -18,6 +18,7 @@ use Lang;
 use \Exception;
 use PromotionRetailer;
 use Helper\EloquentRecordCounter as RecordCounter;
+use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Activity;
 use Coupon;
 use Mall;
@@ -74,10 +75,13 @@ class CouponLocationAPIController extends PubControllerAPI
             $location = OrbitInput::get('location');
             $distance = Config::get('orbit.geo_location.distance', 10);
             $ul = OrbitInput::get('ul', null);
+            $language = OrbitInput::get('language', 'id');
             $take = PaginationNumber::parseTakeFromGet('promotions');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
 
+            $couponHelper = CouponHelper::create();
+            $couponHelper->couponCustomValidator();
             $validator = Validator::make(
                 array(
                     'coupon_id' => $coupon_id,
@@ -108,6 +112,8 @@ class CouponLocationAPIController extends PubControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            $valid_language = $couponHelper->getValidLanguage();
 
             if (! empty($mall_id)) {
                 $mall = Mall::where('merchant_id', '=', $mall_id)->first();
@@ -239,6 +245,22 @@ class CouponLocationAPIController extends PubControllerAPI
                 $listOfRec = $couponLocations->get();
             }
 
+            $couponName = Coupon::select(DB::Raw("
+                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name
+                                "))
+                            ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                            ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
+                            ->leftJoin('coupon_translations as default_translation', function ($q) {
+                                $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
+                                  ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
+                            })
+                            ->where('promotions.promotion_id', $coupon_id)
+                            ->first();
+
             // moved from generic activity number 38
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
                 $coupon = Coupon::excludeDeleted()
@@ -260,6 +282,9 @@ class CouponLocationAPIController extends PubControllerAPI
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
             $data->total_records = $totalRec;
+            if (is_object($couponName)) {
+                $data->coupon_name = $couponName->coupon_name;
+            }
             $data->records = $listOfRec;
 
             $this->response->data = $data;
