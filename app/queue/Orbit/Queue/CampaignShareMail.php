@@ -50,6 +50,8 @@ class CampaignShareMail
         $countryString = '';
         if (! empty($data['country'])) {
             $countryString .= '&country=' . $data['country'];
+        } else {
+            $countryString .= '&country=0';
         }
 
         $citiesString = '';
