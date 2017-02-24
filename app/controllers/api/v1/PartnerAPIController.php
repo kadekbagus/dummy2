@@ -1537,7 +1537,7 @@ class PartnerAPIController extends ControllerAPI
                     })
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where('partner_id', $parameters[0])
-                    ->whereRaw("(CASE WHEN {$prefix}news.end_date < '{$now}' THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                    ->whereRaw("(CASE WHEN {$prefix}news.end_date < '{$now}' THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('not started', 'stopped', 'expired')")
                     ->first();
 
                 if (is_object($linkedNews)) {
@@ -1550,7 +1550,7 @@ class PartnerAPIController extends ControllerAPI
                     })
                     ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                     ->where('partner_id', $parameters[0])
-                    ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < '{$now}' THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                    ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < '{$now}' THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('not started', 'stopped', 'expired')")
                     ->first();
 
                 if (is_object($linkedCoupon)) {

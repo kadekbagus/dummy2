@@ -193,6 +193,7 @@ class CouponDetailAPIController extends PubControllerAPI
                 $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
                                     ->where('object_partner.object_type', 'coupon')
                                     ->where('object_partner.object_id', $coupon->promotion_id)
+                                    ->where('partners.is_exclusive', 'Y')
                                     ->where('partners.token', $partnerToken)
                                     ->first();
 
