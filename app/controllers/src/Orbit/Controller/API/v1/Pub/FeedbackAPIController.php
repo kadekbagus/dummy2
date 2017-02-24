@@ -36,6 +36,8 @@ class FeedbackAPIController extends PubControllerAPI
 
             $feedback = OrbitInput::post('feedback');
             $cs_email = Config::get('orbit.contact_information.customer_service.email');
+            $name = OrbitInput::post('name');
+            $email = OrbitInput::post('email');
 
             $validator = Validator::make(
                 array(
@@ -61,6 +63,8 @@ class FeedbackAPIController extends PubControllerAPI
                 'user_email' => $user->user_email,
                 'cs_email'   => $cs_email,
                 'feedback'   => $feedback,
+                'name'       => $name,
+                'email'      => $email,
             ]);
 
             $activity->setUser($user)

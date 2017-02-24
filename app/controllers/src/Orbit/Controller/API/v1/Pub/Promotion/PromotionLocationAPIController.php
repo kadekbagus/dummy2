@@ -71,16 +71,21 @@ class PromotionLocationAPIController extends PubControllerAPI
             $location = OrbitInput::get('location');
             $distance = Config::get('orbit.geo_location.distance', 10);
             $ul = OrbitInput::get('ul', null);
+            $language = OrbitInput::get('language', 'id');
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
 
+            $promotionHelper = PromotionHelper::create();
+            $promotionHelper->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'promotion_id' => $promotion_id,
+                    'language' => $language,
                 ),
                 array(
                     'promotion_id' => 'required',
+                    'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
                     'required' => 'Promotion ID is required',
@@ -106,6 +111,8 @@ class PromotionLocationAPIController extends PubControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            $valid_language = $promotionHelper->getValidLanguage();
 
             if (! empty($mall_id)) {
                 $mall = Mall::where('merchant_id', '=', $mall_id)->first();
@@ -238,6 +245,23 @@ class PromotionLocationAPIController extends PubControllerAPI
                 $listOfRec = $promotionLocation->get();
             }
 
+            $promotionName = News::select(DB::Raw("
+                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as promotion_name
+                            "))
+                        ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                        ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                        ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                            $q->on('news_translations.news_id', '=', 'news.news_id')
+                              ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
+                        ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
+                            $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
+                              ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
+                        })
+                        ->where('news.news_id', $promotion_id)
+                        ->where('news.object_type', '=', 'promotion')
+                        ->first();
+
             // moved from generic activity number 36
             if (empty($skip) && OrbitInput::get('is_detail', 'n') === 'y'  ) {
                 $promotion = News::excludeDeleted()
@@ -259,6 +283,9 @@ class PromotionLocationAPIController extends PubControllerAPI
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
             $data->total_records = $totalRec;
+            if (is_object($promotionName)) {
+                $data->promotion_name = $promotionName->promotion_name;
+            }
             $data->records = $listOfRec;
 
             $this->response->data = $data;
