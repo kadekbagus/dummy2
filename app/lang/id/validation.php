@@ -362,6 +362,7 @@ return array(
             'vendor_city' => 'The :attribute is not found',
             'gtm_city' => 'The :attribute is not found',
             'exclusive_partner' => 'Exclusive partner not found',
+            'merchant_verification_number' => 'Kolom kode verifikasi merchant harus diisi',
         ),
         'queryerror' => 'Error pada database query, nyalakan mode debug untuk melihat seluruh query.',
         'jsonerror'  => array(
