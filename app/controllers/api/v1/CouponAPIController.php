@@ -246,7 +246,7 @@ class CouponAPIController extends ControllerAPI
             if (! empty($is_exclusive) && ! empty($partner_ids)) {
                 $validator_value['partner_exclusive']               = $is_exclusive;
                 $validator_validation['partner_exclusive']          = 'in:Y,N|orbit.empty.exclusive_partner';
-                $validator_message['orbit.empty.exclusive_partner'] = 'Partner is not exclusive';
+                $validator_message['orbit.empty.exclusive_partner'] = 'Partner is not exclusive / inactive';
             }
 
             $validator = Validator::make(
@@ -1097,7 +1097,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.numeric'    => 'The coupon value must be a number',
                     'discount_value.min'        => 'The coupon value must be greater than zero',
                     'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
-                    'orbit.empty.exclusive_partner' => 'Partner is not exclusive',
+                    'orbit.empty.exclusive_partner' => 'Partner is not exclusive / inactive',
                 )
             );
 
@@ -4038,12 +4038,12 @@ class CouponAPIController extends ControllerAPI
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
 
-            $partner_exclusive = Partner::select('is_exclusive')
+            $partner_exclusive = Partner::select('is_exclusive', 'status')
                            ->whereIn('partner_id', $partner_ids)
                            ->get();
 
             foreach ($partner_exclusive as $exclusive) {
-                if($exclusive->is_exclusive == 'Y'){
+                if ($exclusive->is_exclusive == 'Y' && $exclusive->status == 'active') {
                     $flag_exclusive = true;
                 }
             }
@@ -4053,8 +4053,7 @@ class CouponAPIController extends ControllerAPI
             if ($is_exclusive == 'Y') {
                 if ($flag_exclusive) {
                     $valid = true;
-                }
-                else {
+                } else {
                     $valid = false;
                 }
             }

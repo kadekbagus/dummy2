@@ -113,9 +113,15 @@ class RegistrationMail
         // URL Activation link
         $tokenUrl = sprintf($baseUrl, $token->token_value, $user->user_email, $data['languageId']);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
+        $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['languageId'];
 
         $dataCopy = $data;
         $data = array(
+            'link_malls'      => sprintf($baseLinkUrl, 'malls'),
+            'link_stores'     => sprintf($baseLinkUrl, 'stores'),
+            'link_promotions' => sprintf($baseLinkUrl, 'promotions'),
+            'link_coupons'    => sprintf($baseLinkUrl, 'coupons'),
+            'link_events'     => sprintf($baseLinkUrl, 'events'),
             'token'             => $token->token_value,
             'email'             => $user->user_email,
             'first_name'        => $user->user_firstname,

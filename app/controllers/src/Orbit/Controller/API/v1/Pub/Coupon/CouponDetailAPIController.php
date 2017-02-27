@@ -22,6 +22,7 @@ use Mall;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Partner;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class CouponDetailAPIController extends PubControllerAPI
 {
@@ -192,12 +193,15 @@ class CouponDetailAPIController extends PubControllerAPI
                 $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
                                     ->where('object_partner.object_type', 'coupon')
                                     ->where('object_partner.object_id', $coupon->promotion_id)
+                                    ->where('partners.is_exclusive', 'Y')
                                     ->where('partners.token', $partnerToken)
                                     ->first();
 
                 if (! is_object($partnerTokens)) {
-                    OrbitShopAPI::throwInvalidArgument('Coupon is exclusive, please specify partner token');
+                    throw new OrbitCustomException('Coupon is exclusive, please specify partner token', Coupon::IS_EXCLUSIVE_ERROR_CODE, NULL);
                 }
+
+                $coupon->is_exclusive = 'N';
             }
 
             if (is_object($mall)) {
@@ -265,6 +269,13 @@ class CouponDetailAPIController extends PubControllerAPI
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
+            $this->response->data = null;
+            $httpCode = 500;
+
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
 

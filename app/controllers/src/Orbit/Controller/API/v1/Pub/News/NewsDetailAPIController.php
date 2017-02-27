@@ -21,6 +21,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use OrbitShop\API\v1\ResponseProvider;
 use Partner;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class NewsDetailAPIController extends PubControllerAPI
 {
@@ -175,12 +176,15 @@ class NewsDetailAPIController extends PubControllerAPI
                 $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
                                     ->where('object_partner.object_type', 'news')
                                     ->where('object_partner.object_id', $news->news_id)
+                                    ->where('partners.is_exclusive', 'Y')
                                     ->where('partners.token', $partnerToken)
                                     ->first();
 
                 if (! is_object($partnerTokens)) {
-                    OrbitShopAPI::throwInvalidArgument('News is exclusive, please specify partner token');
+                    throw new OrbitCustomException('News is exclusive, please specify partner token', News::IS_EXCLUSIVE_ERROR_CODE, NULL);
                 }
+
+                $news->is_exclusive = 'N';
             }
 
             $mall = null;
@@ -252,11 +256,18 @@ class NewsDetailAPIController extends PubControllerAPI
             $this->response->data = null;
             $httpCode = 500;
 
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = [$e->getMessage(), $e->getFile(), $e->getLine()];
+            $this->response->data = null;
             $httpCode = 500;
 
         }

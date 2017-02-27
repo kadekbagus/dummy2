@@ -50,6 +50,8 @@ class CampaignShareMail
         $countryString = '';
         if (! empty($data['country'])) {
             $countryString .= '&country=' . $data['country'];
+        } else {
+            $countryString .= '&country=0';
         }
 
         $citiesString = '';
@@ -194,6 +196,13 @@ class CampaignShareMail
             $campaignImage = $campaign->original_media_path;
         }
 
+        $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['languageId'];
+
+        $dataView['linkMalls']      = sprintf($baseLinkUrl, 'malls');
+        $dataView['linkStores']     = sprintf($baseLinkUrl, 'stores');
+        $dataView['linkPromotions'] = sprintf($baseLinkUrl, 'promotions');
+        $dataView['linkCoupons']    = sprintf($baseLinkUrl, 'coupons');
+        $dataView['linkEvents']     = sprintf($baseLinkUrl, 'events');
         $dataView['campaignName'] = $campaign->campaign_name;
         $dataView['campaignType'] = $campaignType;
         $dataView['campaignImage'] = $campaignImage;
