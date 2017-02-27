@@ -37,7 +37,7 @@ class LandingPageShareMail
             App::setLocale($data['language']);
         }
 
-        $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['languageId'];
+        $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['language'];
 
         $dataView['linkMalls']      = sprintf($baseLinkUrl, 'malls');
         $dataView['linkStores']     = sprintf($baseLinkUrl, 'stores');
