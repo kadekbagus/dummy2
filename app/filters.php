@@ -210,13 +210,14 @@ Route::filter('pub-fb-bot', function() {
 
             $countryCityParams = '';
             $countryString = '';
-            if (! empty($country)) {
+
+            if ($country != null) {
                 $countryString .= '&country=' . $country;
             }
 
             $citiesString = '';
 
-            if (empty($cities)) {
+            if ($cities == null) {
                 $citiesString .= '&cities=0';
             } else {
                 foreach ((array) $cities as $city) {
