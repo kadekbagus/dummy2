@@ -169,6 +169,7 @@ class PromotionDetailAPIController extends PubControllerAPI
                 $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
                                     ->where('object_partner.object_type', 'promotion')
                                     ->where('object_partner.object_id', $promotion->news_id)
+                                    ->where('partners.is_exclusive', 'Y')
                                     ->where('partners.token', $partnerToken)
                                     ->first();
 

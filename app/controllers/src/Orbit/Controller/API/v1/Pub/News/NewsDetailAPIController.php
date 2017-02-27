@@ -176,6 +176,7 @@ class NewsDetailAPIController extends PubControllerAPI
                 $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
                                     ->where('object_partner.object_type', 'news')
                                     ->where('object_partner.object_id', $news->news_id)
+                                    ->where('partners.is_exclusive', 'Y')
                                     ->where('partners.token', $partnerToken)
                                     ->first();
 

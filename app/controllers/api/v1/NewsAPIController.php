@@ -2523,7 +2523,7 @@ class NewsAPIController extends ControllerAPI
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
 
-            $partner_exclusive = Partner::select('is_exclusive')
+            $partner_exclusive = Partner::select('is_exclusive', 'status')
                            ->whereIn('partner_id', $partner_ids)
                            ->get();
 

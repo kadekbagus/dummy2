@@ -4389,7 +4389,7 @@ return array(
                 'name_long' => 'Click Promotion List',
                 'module_name' => 'Application',
                 'type' => 'click',
-                'object_type' => 'Promotion',
+                'object_type' => 'News',
                 'parameter_name' => 'promotion_id'
             ),
             // - Coupon Click
