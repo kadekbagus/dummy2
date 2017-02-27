@@ -67,9 +67,9 @@
         <th>Before</th>
         <th>After</th>
       </tr>
-      @foreach($campaign_before->translations as $key1 => $translation)
-      <tr><td colspan="3"><h5>{{$translation->language->name_long}}</h5></td></tr>
-        @foreach($translation->getAttributes() as $key2 => $value)
+      @foreach($campaign_after->translations as $key1 => $translation_after)
+      <tr><td colspan="3"><h5>{{$translation_after->language->name_long}}</h5></td></tr>
+        @foreach($translation_after->getAttributes() as $key2 => $value)
           @if(in_array($key2, ['news_name', 'description', 'promotion_name']))
             <tr>
               @if($key2 == 'promotion_name')
@@ -83,64 +83,63 @@
               @else
                 <td>{{ $key2 }}</td>
               @endif
+              <td>
+              @foreach($campaign_before->translations as $key4 => $translation_before)
+                @if($translation_after->language->name == $translation_before->language->name)
+                  {{ $campaign_before->translations[$key4]->{$key2} }}
+                @endif
+              @endforeach
+              </td>
               <td>{{ $value }}</td>
-              <td>{{ $campaign_after->translations[$key1]->{$key2} }}</td>
             </tr>
           @endif
         @endforeach
 
-        @if(count($translation->media) > 0)
-          @foreach($translation->media as $key3 => $media)
-
-              @if($campaignType === 'News' || $campaignType === 'Promotion')
-                @if($media->media_name_long === 'news_translation_image_orig')
-                  <tr>
-                    <td>{{ 'image' }}</td>
-                    <td>{{ $media->path }}</td>
-                    <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
-                  </tr>
+        @if($campaignType === 'News' || $campaignType === 'Promotion')
+          <tr>
+            <td>{{ 'image' }}</td>
+            <td>
+              @foreach($campaign_before->translations as $key4 => $translation_before)
+                @if($translation_after->language->name == $translation_before->language->name)
+                  @foreach($campaign_before->translations[$key4]->media as $key3 => $media)
+                    @if($media->media_name_long === 'news_translation_image_orig')
+                      {{ $media->path }}
+                    @endif
+                  @endforeach
                 @endif
-              @else
-                @if($media->media_name_long === 'coupon_translation_image_orig')
-                  <tr>
-                    <td>{{ 'image' }}</td>
-                    <td>{{ $media->path }}</td>
-                    <td>{{ $campaign_after->translations[$key1]->media[$key3]->path }}</td>
-                  </tr>
-                @endif
+              @endforeach
+            </td>
+            <td>
+            @foreach($campaign_after->translations[$key1]->media as $key3 => $media)
+              @if($media->media_name_long === 'news_translation_image_orig')
+                {{ $media->path }}
               @endif
-
-          @endforeach
-        @elseif(count($campaign_after->translations[$key1]->media) > 0)
-          @foreach($campaign_after->translations[$key1]->media as $key3 => $media)
-
-              @if($campaignType === 'News' || $campaignType === 'Promotion')
-                @if($media->media_name_long === 'news_translation_image_orig')
-                  <tr>
-                    <td>{{ 'image' }}</td>
-                    <td>{{ '' }}</td>
-                    <td>{{ $media->path }}</td>
-                  </tr>
-                @endif
-              @else
-                @if($media->media_name_long === 'coupon_translation_image_orig')
-                  <tr>
-                    <td>{{ 'image' }}</td>
-                    <td>{{ '' }}</td>
-                    <td>{{ $media->path }}</td>
-                  </tr>
-                @endif
-              @endif
-
-          @endforeach
+            @endforeach
+            </td>
+          </tr>
         @else
-                  <tr>
-                    <td>{{ 'image' }}</td>
-                    <td>{{ '' }}</td>
-                    <td>{{ '' }}</td>
-                  </tr>
+          <tr>
+            <td>{{ 'image' }}</td>
+            <td>
+              @foreach($campaign_before->translations as $key4 => $translation_before)
+                @if($translation_after->language->name == $translation_before->language->name)
+                  @foreach($campaign_before->translations[$key4]->media as $key3 => $media)
+                    @if($media->media_name_long === 'coupon_translation_image_orig')
+                      {{ $media->path }}
+                    @endif
+                  @endforeach
+                @endif
+              @endforeach
+            </td>
+            <td>
+            @foreach($campaign_after->translations[$key1]->media as $key3 => $media)
+              @if($media->media_name_long === 'coupon_translation_image_orig')
+                {{ $media->path }}
+              @endif
+            @endforeach
+            </td>
+          </tr>
         @endif
-
       @endforeach
     </table>
 
