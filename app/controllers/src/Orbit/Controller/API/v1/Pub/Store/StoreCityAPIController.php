@@ -53,6 +53,7 @@ class StoreCityAPIController extends PubControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
             $merchant_id = OrbitInput::get('merchant_id');
             $store_name = null;
+            $countryId = null;
 
             $validator = Validator::make(
                 array(
@@ -75,14 +76,16 @@ class StoreCityAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             // Get store name base in merchant_id
-            $store = Tenant::select('merchant_id', 'name')->where('merchant_id', $merchant_id)->active()->first();
+            $store = Tenant::select('merchant_id', 'name', 'country_id')->where('merchant_id', $merchant_id)->active()->first();
             if (! empty($store)) {
                 $store_name = $store->name;
+                $countryId = $store->country_id;
             }
 
             // Query without searching keyword
             $mall = Mall::select('merchants.city')
                         ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($store_name)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
+                        ->where('merchants.country_id', $countryId)
                         ->active();
 
             $mall = $mall->groupBy('merchants.city')->orderBy($sort_by, $sort_mode);

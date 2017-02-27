@@ -417,6 +417,9 @@ return array(
             'geo_area'      => 'The Geofence area is not valid',
             'min' => 'Konfirmasi kata sandi minimal :min karakter.',
             'confirmed_password' => "Kata kunci konfirmasi tidak sesuai.",
+            'sign_up' => array(
+                'email' => 'Anda harus memasukkan email yang benar',
+            ),
         ),
         'actionlist' => array(
             'change_password'           => 'update password',
