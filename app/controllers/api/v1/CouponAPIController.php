@@ -2977,6 +2977,9 @@ class CouponAPIController extends ControllerAPI
                     'store_id'                      => 'required',
                     'current_mall'                  => 'required|orbit.empty.merchant',
                     'merchant_verification_number'  => 'required'
+                ),
+                array(
+                    'merchant_verification_number.required' => Lang::get('validation.orbit.empty.merchant_verification_number')
                 )
             );
             $validator2 = Validator::make(
