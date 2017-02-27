@@ -64,8 +64,8 @@ class RegistrationAPIController extends IntermediateBaseController
 
             $user = $user->first();
 
+            App::setLocale($language);
             if (is_object($user)) {
-                App::setLocale($language);
                 $message = Lang::get('validation.orbit.exists.email');
                 OrbitShopAPI::throwInvalidArgument($message);
             }
@@ -356,6 +356,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 'date_of_birth.before' => Lang::get('validation.orbit.formaterror.date.cannot_future_date'),
                 'password_confirmation.min' => Lang::get('validation.orbit.formaterror.min'),
                 'password.confirmed' => Lang::get('validation.orbit.formaterror.confirmed_password'),
+                'email' => Lang::get('validation.orbit.formaterror.sign_up.email'),
             )
         );
 
