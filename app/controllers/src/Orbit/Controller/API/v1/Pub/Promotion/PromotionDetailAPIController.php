@@ -24,6 +24,8 @@ use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
+use Partner;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class PromotionDetailAPIController extends PubControllerAPI
 {
@@ -43,6 +45,7 @@ class PromotionDetailAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
+            $partnerToken = OrbitInput::get('token', null);
 
             $promotionHelper = PromotionHelper::create();
             $promotionHelper->registerCustomValidation();
@@ -84,13 +87,25 @@ class PromotionDetailAPIController extends PubControllerAPI
                             DB::Raw("
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                                 CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN default_translation.description ELSE {$prefix}news_translations.description END as description,
-                                (SELECT {$image}
+                                CASE WHEN (SELECT {$image}
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'news_translation_image_orig'
-                                    AND m.object_id = {$prefix}news_translations.news_translation_id) AS original_media_path
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id) is null
+                                THEN
+                                    (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = default_translation.news_translation_id)
+                                ELSE
+                                    (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id)
+                                END AS original_media_path
                             "),
                             'news.object_type',
                             'news.end_date',
+                            'news.is_exclusive',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -133,7 +148,7 @@ class PromotionDetailAPIController extends PubControllerAPI
                         })
                         ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
                             $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
-                              ->where(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
+                              ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->where('news.news_id', $promotionId)
@@ -147,6 +162,22 @@ class PromotionDetailAPIController extends PubControllerAPI
             $message = 'Request Ok';
             if (! is_object($promotion)) {
                 OrbitShopAPI::throwInvalidArgument('Promotion that you specify is not found');
+            }
+
+            if ($promotion->is_exclusive === 'Y') {
+                // check token
+                $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
+                                    ->where('object_partner.object_type', 'promotion')
+                                    ->where('object_partner.object_id', $promotion->news_id)
+                                    ->where('partners.is_exclusive', 'Y')
+                                    ->where('partners.token', $partnerToken)
+                                    ->first();
+
+                if (! is_object($partnerTokens)) {
+                    throw new OrbitCustomException('Promotion is exclusive, please specify partner token', News::IS_EXCLUSIVE_ERROR_CODE, NULL);
+                }
+
+                $promotion->is_exclusive = 'N';
             }
 
             $mall = null;
@@ -215,6 +246,13 @@ class PromotionDetailAPIController extends PubControllerAPI
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
+            $this->response->data = null;
+            $httpCode = 500;
+
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
 

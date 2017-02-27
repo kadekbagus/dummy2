@@ -95,12 +95,14 @@ class PartnerDetailAPIController extends PubControllerAPI
             }
 
             $partner = Partner::select(
-                    'partner_id',
-                    'partner_name',
-                    'description',
+                    'partners.partner_name',
+                    'partners.partner_id',
                     'deeplinks.deeplink_url',
                     DB::raw("{$logo}"),
-                    DB::raw("{$image}")
+                    DB::raw("{$image}"),
+                    DB::Raw("
+                        CASE WHEN ({$prefix}partner_translations.description = '' or {$prefix}partner_translations.description is null) THEN default_translation.description ELSE {$prefix}partner_translations.description END as description
+                    ")
                 )
                 ->leftJoin('media', function ($q) {
                     $q->on('media.object_id', '=', 'partners.partner_id');
@@ -112,6 +114,15 @@ class PartnerDetailAPIController extends PubControllerAPI
                     $q->on(DB::raw("image_media.object_name"), '=', DB::raw("'partner'"));
                     $q->on(DB::raw("image_media.media_name_long"), '=', DB::raw("'partner_image_orig'"));
                 })
+                ->leftJoin('partner_translations', function ($q) use ($valid_language) {
+                    $q->on('partner_translations.partner_id', '=', 'partners.partner_id')
+                      ->on('partner_translations.language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                })
+                ->leftJoin('languages', 'languages.name' , '=', 'partners.mobile_default_language')
+                ->leftJoin('partner_translations as default_translation', function ($q) use ($prefix){
+                    $q->on(DB::raw("default_translation.partner_id"), '=', 'partners.partner_id')
+                      ->on(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
+                })
                 // currently there is only one deeplink for partner,
                 // should use lazy load maybe if multiple deeplink is applied
                 ->leftJoin('deeplinks', function ($q) {
@@ -120,7 +131,7 @@ class PartnerDetailAPIController extends PubControllerAPI
                     $q->on('deeplinks.status', '=', DB::raw("'active'"));
                 })
                 ->where('partners.status', 'active')
-                ->where('partner_id', $partnerId)
+                ->where('partners.partner_id', $partnerId)
                 ->groupBy('partners.partner_id')
                 ->first();
 

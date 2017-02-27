@@ -17,6 +17,8 @@ use Coupon;
 use DB;
 use Language;
 use Str;
+use App;
+use Lang;
 
 class CampaignShareMail
 {
@@ -35,6 +37,12 @@ class CampaignShareMail
                             ->where('name', $data['languageId'])
                             ->first();
 
+        $langParam = '';
+        if (! empty($data['languageId'])) {
+            App::setLocale($data['languageId']);
+            $langParam = '&lang=' . $data['languageId'];
+        }
+
         $user = User::where('user_id','=', $data['userId'])
                     ->first();
 
@@ -42,6 +50,8 @@ class CampaignShareMail
         $countryString = '';
         if (! empty($data['country'])) {
             $countryString .= '&country=' . $data['country'];
+        } else {
+            $countryString .= '&country=0';
         }
 
         $citiesString = '';
@@ -61,7 +71,7 @@ class CampaignShareMail
         $utmParamConfig = Config::get('orbit.campaign_share_email.utm_params', null);
         $utmParam = isset($utmParamConfig['email']) ? http_build_query($utmParamConfig['email']) : '';
 
-        $param = $utmParam . $countryCityParams;
+        $param = $utmParam . $countryCityParams . $langParam;
 
         switch($data['campaignType']) {
             case 'promotion' :
@@ -71,12 +81,9 @@ class CampaignShareMail
                                         CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name,
                                         CASE WHEN {$prefix}media.path is null THEN (
                                                 select m.path
-                                                from {$prefix}news_translations nt
-                                                join {$prefix}media m
-                                                    on m.object_id = nt.news_translation_id
+                                                from {$prefix}media m
+                                                where m.object_id = default_translation.news_translation_id
                                                     and m.media_name_long = 'news_translation_image_orig'
-                                                where nt.news_id = {$prefix}news.news_id
-                                                group by nt.news_id
                                             ) ELSE {$prefix}media.path END as original_media_path
                                     ")
                                 )
@@ -92,7 +99,7 @@ class CampaignShareMail
                                 ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                                 ->leftJoin('news_translations as default_translation', function ($q) {
                                     $q->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id')
-                                      ->where(DB::raw('default_translation.news_id'), '=', 'news.news_id');
+                                      ->on(DB::raw('default_translation.news_id'), '=', 'news.news_id');
                                 })
                                 ->where('news.news_id', $data['campaignId'])
                                 ->where('news.object_type', '=', 'promotion')
@@ -100,8 +107,8 @@ class CampaignShareMail
 
                     $baseUrl = Config::get('orbit.campaign_share_email.promotion_detail_base_url');
                     $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
-                    $campaignTypeEn = 'promotion';
-                    $campaignTypeId = 'promosi';
+                    $message2 = Lang::get('email.campaign_share.message_part2_promotion');
+                    $campaignType = Lang::get('email.campaign_share.campaign_type_promotion');
 
                     break;
 
@@ -112,12 +119,9 @@ class CampaignShareMail
                                         CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name,
                                         CASE WHEN {$prefix}media.path is null THEN (
                                                 select m.path
-                                                from {$prefix}news_translations nt
-                                                join {$prefix}media m
-                                                    on m.object_id = nt.news_translation_id
+                                                from {$prefix}media m
+                                                where m.object_id = default_translation.news_translation_id
                                                     and m.media_name_long = 'news_translation_image_orig'
-                                                where nt.news_id = {$prefix}news.news_id
-                                                group by nt.news_id
                                             ) ELSE {$prefix}media.path END as original_media_path
                                     ")
                                 )
@@ -133,7 +137,7 @@ class CampaignShareMail
                                 ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                                 ->leftJoin('news_translations as default_translation', function ($q) {
                                     $q->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id')
-                                      ->where(DB::raw('default_translation.news_id'), '=', 'news.news_id');
+                                      ->on(DB::raw('default_translation.news_id'), '=', 'news.news_id');
                                 })
                                 ->where('news.news_id', $data['campaignId'])
                                 ->where('news.object_type', '=', 'news')
@@ -141,8 +145,8 @@ class CampaignShareMail
 
                     $baseUrl = Config::get('orbit.campaign_share_email.news_detail_base_url');
                     $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
-                    $campaignTypeEn = 'event';
-                    $campaignTypeId = 'event';
+                    $message2 = Lang::get('email.campaign_share.message_part2_event');
+                    $campaignType = Lang::get('email.campaign_share.campaign_type_event');
 
                     break;
 
@@ -150,15 +154,12 @@ class CampaignShareMail
                     $campaign = Coupon::select(
                             'promotions.promotion_id as campaign_id',
                             DB::Raw("
-                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
+                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
                                     CASE WHEN {$prefix}media.path is null THEN (
                                             select m.path
-                                            from {$prefix}coupon_translations ct
-                                            join {$prefix}media m
-                                                on m.object_id = ct.coupon_translation_id
+                                            from {$prefix}media m
+                                            where m.object_id = default_translation.coupon_translation_id
                                                 and m.media_name_long = 'coupon_translation_image_orig'
-                                            where ct.promotion_id = {$prefix}promotions.promotion_id
-                                            group by ct.promotion_id
                                         ) ELSE {$prefix}media.path END as original_media_path
                                 ")
                         )
@@ -170,13 +171,19 @@ class CampaignShareMail
                             $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                             $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                         })
+                        ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                        ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                        ->leftJoin('coupon_translations as default_translation', function ($q) {
+                            $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
+                              ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
+                        })
                         ->where('promotions.promotion_id', $data['campaignId'])
                         ->first();
 
                     $baseUrl = Config::get('orbit.campaign_share_email.coupon_detail_base_url');
                     $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
-                    $campaignTypeEn = 'coupon';
-                    $campaignTypeId = 'kupon';
+                    $message2 = Lang::get('email.campaign_share.message_part2_coupon');
+                    $campaignType = Lang::get('email.campaign_share.campaign_type_coupon');
 
                     break;
             default :
@@ -189,14 +196,28 @@ class CampaignShareMail
             $campaignImage = $campaign->original_media_path;
         }
 
+        $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['languageId'];
+
+        $dataView['linkMalls']      = sprintf($baseLinkUrl, 'malls');
+        $dataView['linkStores']     = sprintf($baseLinkUrl, 'stores');
+        $dataView['linkPromotions'] = sprintf($baseLinkUrl, 'promotions');
+        $dataView['linkCoupons']    = sprintf($baseLinkUrl, 'coupons');
+        $dataView['linkEvents']     = sprintf($baseLinkUrl, 'events');
         $dataView['campaignName'] = $campaign->campaign_name;
-        $dataView['campaignType'] = $data['campaignType'];
-        $dataView['campaignTypeEn'] = $campaignTypeEn;
-        $dataView['campaignTypeId'] = $campaignTypeId;
+        $dataView['campaignType'] = $campaignType;
         $dataView['campaignImage'] = $campaignImage;
         $dataView['campaignUrl'] = $campaignUrl;
         $dataView['email'] = $data['email'];
         $dataView['name'] = $user->user_firstname;
+        $dataView['labelMalls'] = Lang::get('email.campaign_share.label_malls');
+        $dataView['labelStores'] = Lang::get('email.campaign_share.label_stores');
+        $dataView['labelPromotions'] = Lang::get('email.campaign_share.label_promotions');
+        $dataView['labelCoupons'] = Lang::get('email.campaign_share.label_coupons');
+        $dataView['labelEvents'] = Lang::get('email.campaign_share.label_events');
+        $dataView['greeting'] = Lang::get('email.campaign_share.greeting');
+        $dataView['message1'] = Lang::get('email.campaign_share.message_part1');
+        $dataView['message2'] = $message2;
+        $dataView['buttonSeeNow'] = Lang::get('email.campaign_share.button_see_now');
 
         $mailViews = array(
                     'html' => 'emails.campaign-share-email.campaign-share-html',
@@ -228,7 +249,7 @@ class CampaignShareMail
             $email = $data['email'];
 
             $subjectConfig = Config::get('orbit.campaign_share_email.subject');
-            $subject = sprintf($subjectConfig, ucfirst($data['campaignTypeId']), $data['campaignName']);
+            $subject = sprintf($subjectConfig, ucfirst($data['campaignType']), $data['campaignName']);
 
             $message->from($from, $name);
             $message->subject($subject);

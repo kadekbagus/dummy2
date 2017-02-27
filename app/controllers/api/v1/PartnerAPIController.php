@@ -19,6 +19,7 @@ class PartnerAPIController extends ControllerAPI
     protected $viewPartnerRoles = ['super admin', 'mall admin', 'mall owner'];
     protected $modifyPartnerRoles = ['super admin', 'mall admin', 'mall owner'];
     protected $returnBuilder = FALSE;
+    protected $defaultLanguage = 'en';
 
     /**
      * POST - Create New Partner
@@ -112,7 +113,7 @@ class PartnerAPIController extends ControllerAPI
             $pop_up_content = OrbitInput::post('pop_up_content');
             $token = OrbitInput::post('token');
             $translations = OrbitInput::post('translations');
-            $supported_languages = OrbitInput::post('supported_languages');
+            $supported_languages = OrbitInput::post('supported_languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
 
             $affected_group_name_id = OrbitInput::post('affected_group_name_id');
@@ -126,40 +127,44 @@ class PartnerAPIController extends ControllerAPI
             $image_validation = $this->generate_validation_image('info_image_page', $image, 'orbit.upload.partner.image');
 
             $validation_data = [
-                'partner_name'              => $partner_name,
-                'start_date'                => $start_date,
-                'end_date'                  => $end_date,
-                'status'                    => $status,
-                'address'                   => $address,
-                'city'                      => $city,
-                'country_id'                => $country_id,
-                'phone'                     => $phone,
-                'contact_firstname'         => $contact_firstname,
-                'contact_lastname'          => $contact_lastname,
-                'affected_group_name_id'    => $affected_group_name_id,
-                'is_exclusive'              => $is_exclusive,
-                'supported_languages'       => $supported_languages,
-                'mobile_default_language'   => $mobile_default_language,
+                'partner_name'            => $partner_name,
+                'start_date'              => $start_date,
+                'end_date'                => $end_date,
+                'status'                  => $status,
+                'address'                 => $address,
+                'city'                    => $city,
+                'country_id'              => $country_id,
+                'phone'                   => $phone,
+                'contact_firstname'       => $contact_firstname,
+                'contact_lastname'        => $contact_lastname,
+                'affected_group_name_id'  => $affected_group_name_id,
+                'is_exclusive'            => $is_exclusive,
+                'supported_languages'     => $supported_languages,
+                'mobile_default_language' => $mobile_default_language,
+                'token'                   => $token,
             ];
 
             $validation_error = [
-                'partner_name'              => 'required',
-                'start_date'                => 'date|orbit.empty.hour_format',
-                'end_date'                  => 'date|orbit.empty.hour_format',
-                'status'                    => 'required|in:active,inactive',
-                'address'                   => 'required',
-                'city'                      => 'required',
-                'country_id'                => 'required',
-                'phone'                     => 'required',
-                'contact_firstname'         => 'required',
-                'contact_lastname'          => 'required',
-                'affected_group_name_id'    => 'array',
-                'is_exclusive'              => 'in:Y,N',
-                'supported_languages'       => 'required|array|orbit.empty.language',
-                'mobile_default_language'   => 'required|orbit.empty.mobile_default_lang:' . $supported_languages . '|orbit.empty.language_default',
+                'partner_name'            => 'required',
+                'start_date'              => 'date|orbit.empty.hour_format',
+                'end_date'                => 'date|orbit.empty.hour_format',
+                'status'                  => 'required|in:active,inactive',
+                'address'                 => 'required',
+                'city'                    => 'required',
+                'country_id'              => 'required',
+                'phone'                   => 'required',
+                'contact_firstname'       => 'required',
+                'contact_lastname'        => 'required',
+                'affected_group_name_id'  => 'array',
+                'is_exclusive'            => 'in:Y,N',
+                'supported_languages'     => 'required|array|orbit.empty.language',
+                'mobile_default_language' => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
+                'token'                   => 'orbit.duplicate.token:' . $is_exclusive,
             ];
 
-            $validation_error_message = [];
+            $validation_error_message = [
+                'orbit.duplicate.token' => 'Token is already used by another partner'
+            ];
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -233,7 +238,7 @@ class PartnerAPIController extends ControllerAPI
             $newPartner->is_shown_in_filter = $is_shown_in_filter;
             $newPartner->is_visible = $is_visible;
             $newPartner->is_exclusive = $is_exclusive;
-            $newPartner->mobile_default_language = $mobile_default_language;
+            $newPartner->mobile_default_language = $this->defaultLanguage;
 
             if (strtoupper($is_exclusive) === 'Y') {
                 $newPartner->pop_up_content = $pop_up_content;
@@ -483,7 +488,7 @@ class PartnerAPIController extends ControllerAPI
             $token = OrbitInput::post('token');
             $pop_up_content = OrbitInput::post('pop_up_content');
             $translations = OrbitInput::post('translations');
-            $supported_languages = OrbitInput::post('supported_languages');
+            $supported_languages = OrbitInput::post('supported_languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
 
             if (is_array($affected_group_name_id)) {
@@ -495,42 +500,48 @@ class PartnerAPIController extends ControllerAPI
             $image_validation = $this->generate_validation_image('info_image_page', $image, 'orbit.upload.partner.image');
 
             $validation_data = [
-                'partner_name'              => $partner_name,
-                'partner_id'                => $partner_id,
-                'start_date'                => $start_date,
-                'end_date'                  => $end_date,
-                'status'                    => $status,
-                'address'                   => $address,
-                'city'                      => $city,
-                'country_id'                => $country_id,
-                'phone'                     => $phone,
-                'contact_firstname'         => $contact_firstname,
-                'contact_lastname'          => $contact_lastname,
-                'affected_group_name_id'    => $affected_group_name_id,
-                'is_exclusive'              => $is_exclusive,
-                'supported_languages'       => $supported_languages,
-                'mobile_default_language'   => $mobile_default_language,
+                'partner_name'            => $partner_name,
+                'partner_id'              => $partner_id,
+                'start_date'              => $start_date,
+                'end_date'                => $end_date,
+                'status'                  => $status,
+                'address'                 => $address,
+                'city'                    => $city,
+                'country_id'              => $country_id,
+                'phone'                   => $phone,
+                'contact_firstname'       => $contact_firstname,
+                'contact_lastname'        => $contact_lastname,
+                'affected_group_name_id'  => $affected_group_name_id,
+                'is_exclusive'            => $is_exclusive,
+                'supported_languages'     => $supported_languages,
+                'mobile_default_language' => $mobile_default_language,
+                'token'                   => $token,
             ];
 
             $validation_error = [
-                'partner_name'              => 'required',
-                'partner_id'                => 'required',
-                'start_date'                => 'date|orbit.empty.hour_format',
-                'end_date'                  => 'date|orbit.empty.hour_format',
-                'status'                    => 'required|in:active,inactive',
-                'address'                   => 'required',
-                'city'                      => 'required',
-                'country_id'                => 'required',
-                'phone'                     => 'required',
-                'contact_firstname'         => 'required',
-                'contact_lastname'          => 'required',
-                'affected_group_name_id'    => 'array',
-                'is_exclusive'              => 'in:Y,N',
-                'supported_languages'       => 'required|array|orbit.empty.language',
-                'mobile_default_language'   => 'required|orbit.empty.mobile_default_lang:' . $supported_languages . '|orbit.empty.language_default',
+                'partner_name'            => 'required',
+                'partner_id'              => 'required',
+                'start_date'              => 'date|orbit.empty.hour_format',
+                'end_date'                => 'date|orbit.empty.hour_format',
+                'status'                  => 'required|in:active,inactive|orbit.exists.partner_linked_to_active_campaign:' . $partner_id,
+                'address'                 => 'required',
+                'city'                    => 'required',
+                'country_id'              => 'required',
+                'phone'                   => 'required',
+                'contact_firstname'       => 'required',
+                'contact_lastname'        => 'required',
+                'affected_group_name_id'  => 'array',
+                'is_exclusive'            => 'in:Y,N|orbit.empty.exclusive_campaign_link:' . $partner_id,
+                'supported_languages'     => 'required|array|orbit.empty.language',
+                'mobile_default_language' => 'required|orbit.empty.mobile_default_lang:' . implode(',', $supported_languages) . '|orbit.empty.language_default',
+                'token'                   => 'orbit.duplicate.token:' . $is_exclusive . ',' . $partner_id,
             ];
 
-            $validation_error_message = [];
+            $validation_error_message = [
+                'orbit.empty.exclusive_campaign_link' => 'Unable to uncheck Exclusive Partner. There are exclusive campaigns linked to this partner.',
+                'orbit.duplicate.token' => 'Token is already used by another partner.',
+                'orbit.exists.partner_linked_to_active_campaign' => 'Partner status cannot be set to inactive, because it is linked to one or more active campaigns.'
+            ] ;
 
             // add validation image
             if (! empty($logo_validation)) {
@@ -677,7 +688,7 @@ class PartnerAPIController extends ControllerAPI
             });
 
             OrbitInput::post('mobile_default_language', function($mobile_default_language) use ($updatedpartner) {
-                $updatedpartner->mobile_default_language = $mobile_default_language;
+                $updatedpartner->mobile_default_language = $this->defaultLanguage;
             });
 
             OrbitInput::post('supported_languages', function($supported_languages) use ($updatedpartner, $partner_id) {
@@ -700,25 +711,27 @@ class PartnerAPIController extends ControllerAPI
                     $new_supported_language->save();
                 }
 
-                // check for languages that has translation before unlink
-                $partner_translation = PartnerTranslation::whereIn('language_id', $unlinked_language_ids)
-                    ->where('partner_id', $partner_id)
-                    ->where('status', 'active')
-                    ->get();
+                if (! empty($unlinked_language_ids)) {
+                    // check for languages that has translation before unlink
+                    $partner_translation = PartnerTranslation::whereIn('language_id', $unlinked_language_ids)
+                        ->where('partner_id', $partner_id)
+                        ->where('status', 'active')
+                        ->get();
 
-                if ($partner_translation->count() !== 0) {
-                    $errorMessage = 'Cannot unlink supported language: %s';
-                    OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $partner_translation[0]->language->name_long));
-                }
+                    if ($partner_translation->count() !== 0) {
+                        $errorMessage = 'Cannot unlink supported language: %s';
+                        OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $partner_translation[0]->language->name_long));
+                    }
 
-                // unlink languages
-                $unlinked_languages = ObjectSupportedLanguage::whereIn('language_id', $unlinked_language_ids)
-                    ->where('object_type', 'partner')
-                    ->where('status', 'active')
-                    ->get();
+                    // unlink languages
+                    $unlinked_languages = ObjectSupportedLanguage::whereIn('language_id', $unlinked_language_ids)
+                        ->where('object_type', 'partner')
+                        ->where('status', 'active')
+                        ->get();
 
-                foreach($unlinked_languages as $unlinked_language) {
-                    $unlinked_language->delete();
+                    foreach($unlinked_languages as $unlinked_language) {
+                        $unlinked_language->delete();
+                    }
                 }
 
                 $updatedpartner->load('supportedLanguages.language');
@@ -1021,13 +1034,19 @@ class PartnerAPIController extends ControllerAPI
                             'partners.pop_up_content',
                             'partners.mobile_default_language',
                             DB::raw("
-                                CASE WHEN (
-                                    SELECT COUNT(object_partner_id) from {$prefix}object_partner WHERE object_type IN ('promotion', 'news', 'coupon')
-                                        and {$prefix}object_partner.partner_id = {$prefix}partners.partner_id
+                            CASE WHEN (
+                                    SELECT COUNT(object_partner_id)
+                                    FROM {$prefix}object_partner op
+                                    LEFT JOIN {$prefix}promotions p ON p.promotion_id = op.object_id AND op.object_type = 'coupon'
+                                    LEFT JOIN {$prefix}news n ON n.news_id = op.object_id AND op.object_type IN ('news', 'promotion')
+                                    WHERE op.object_type IN ('promotion', 'news', 'coupon')
+                                        AND op.partner_id = {$prefix}partners.partner_id
+                                        AND (p.is_exclusive = 'Y' OR n.is_exclusive = 'Y')
+                                    GROUP BY {$prefix}partners.partner_id
                                     ) > 0
-                                    THEN 'Y'
-                                    ELSE 'N'
-                                END AS linked_to_campaign
+                                THEN 'Y'
+                                ELSE 'N'
+                            END AS linked_to_campaign
                             ")
                         )
                         ->leftJoin('countries', 'countries.country_id', '=', 'partners.country_id')
@@ -1470,14 +1489,122 @@ class PartnerAPIController extends ControllerAPI
                 return FALSE;
             }
 
+            $this->defaultLanguage = $language->name;
+
             return TRUE;
         });
 
         // Check the affected default language name is exists
         Validator::extend('orbit.empty.mobile_default_lang', function ($attribute, $value, $parameters) {
 
-            if (! in_array($value, $parameters[0])) {
+            if (! in_array($value, $parameters)) {
                 return FALSE;
+            }
+
+            return TRUE;
+        });
+
+        // Check token is already taken or not
+        Validator::extend('orbit.duplicate.token', function ($attribute, $value, $parameters) {
+            $isExclusive = $parameters[0];
+            if ($isExclusive === 'Y') {
+                $token = Partner::where('token', $value)
+                    ->where('status', '!=', 'deleted');
+
+                if (! empty($parameters[1])){
+                    $token = $token->where('partner_id', '!=', $parameters[1]);
+                }
+
+                $token = $token->first();
+
+                if (! empty($token)) {
+                    return FALSE;
+                }
+            }
+            return TRUE;
+        });
+
+        Validator::extend('orbit.exists.partner_linked_to_active_campaign', function ($attribute, $value, $parameters) {
+            $activeCampaignFlag = false;
+
+            if ($value === 'inactive') {
+                $now = Carbon::now('Asia/Jakarta'); // now with jakarta timezone
+
+                $prefix = DB::getTablePrefix();
+                $linkedNews = ObjectPartner::leftJoin('news', function($q) use($prefix) {
+                        $q->on('object_partner.object_id', '=', 'news.news_id')
+                            ->on(DB::raw("{$prefix}object_partner.object_type"), DB::raw('IN'), DB::raw("('news', 'promotion')"));
+                    })
+                    ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                    ->where('partner_id', $parameters[0])
+                    ->whereRaw("(CASE WHEN {$prefix}news.end_date < '{$now}' THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('not started', 'stopped', 'expired')")
+                    ->first();
+
+                if (is_object($linkedNews)) {
+                    return FALSE;
+                }
+
+                $linkedCoupon = ObjectPartner::leftJoin('promotions', function($q) use($prefix) {
+                        $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
+                            ->on(DB::raw("{$prefix}object_partner.object_type"), '=', DB::raw("'coupon'"));
+                    })
+                    ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                    ->where('partner_id', $parameters[0])
+                    ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < '{$now}' THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('not started', 'stopped', 'expired')")
+                    ->first();
+
+                if (is_object($linkedCoupon)) {
+                    return FALSE;
+                }
+            }
+
+            return TRUE;
+        });
+
+        // Check if the partner is already linked to an exclusive campaign
+        Validator::extend('orbit.empty.exclusive_campaign_link', function ($attribute, $value, $parameters) {
+            $campaignExclusiveFlag = false;
+
+            $partner = Partner::find($parameters[0]);
+
+            if ($value === 'N' && $partner->is_exclusive === 'Y') {
+                $prefix = DB::getTablePrefix();
+                $linkedCampaigns = ObjectPartner::select(
+                        DB::raw("
+                            CASE WHEN {$prefix}object_partner.object_type = 'news' OR {$prefix}object_partner.object_type = 'promotion'
+                                THEN {$prefix}news.news_id
+                                ELSE {$prefix}promotions.promotion_id
+                            END AS campaign_id
+                            "),
+                        DB::raw("
+                            CASE WHEN {$prefix}object_partner.object_type = 'news' OR {$prefix}object_partner.object_type = 'promotion'
+                                THEN {$prefix}news.is_exclusive
+                                ELSE {$prefix}promotions.is_exclusive
+                            END AS is_exclusive
+                            ")
+                    )
+                    ->leftJoin('news', function($q) use($prefix) {
+                        $q->on('object_partner.object_id', '=', 'news.news_id')
+                            ->on(DB::raw("{$prefix}object_partner.object_type"), DB::raw('IN'), DB::raw("('news', 'promotion')"));
+                    })
+                    ->leftJoin('promotions', function($q) {
+                        $q->on('object_partner.object_id', '=', 'promotions.promotion_id')
+                            ->on('object_partner.object_type', '=', DB::raw("'coupon'"));
+                    })
+                    ->where('partner_id', $parameters[0])
+                    ->groupBy('object_partner.object_id', 'object_partner.object_type')
+                    ->get();
+
+                foreach ($linkedCampaigns as $linkedCampaign) {
+                    if ($linkedCampaign->is_exclusive === 'Y') {
+                        $campaignExclusiveFlag = true;
+                        break;
+                    }
+                }
+
+                if ($campaignExclusiveFlag) {
+                    return FALSE;
+                }
             }
 
             return TRUE;

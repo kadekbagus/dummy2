@@ -24,7 +24,37 @@ return array(
         'indices_prefix' => 'v2x_',
 
         // The minimum_should_match parameter possible values
-        'minimum_should_match' => '50%',
+        'minimum_should_match' => [
+            'mall' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'news' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'promotion' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'coupon' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ],
+
+            'store' => [
+                'keyword'  => '50%',
+                'category' => '50%',
+                'city'     => '50%'
+            ]
+        ],
 
         // List of indices that we have in Elasticsearch
         // All the query to the index name will be appended by prefix automatically
@@ -731,7 +761,7 @@ return array(
         ),
 
         // URL for password reset (frontend URL)
-        'reset_base_url' => 'http://gotomalls.com/#/password/reset/%s?email=%s',
+        'reset_base_url' => 'http://gotomalls.com/#/password/reset/%s?email=%s&lang=%s',
 
         // Number of days before token in reset link expires
         'reset_expire' => 7,
@@ -762,7 +792,7 @@ return array(
             'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
 
             // GotoMalls URL (The New Mobile)
-            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate/%s?email=%s',
+            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate/%s?email=%s&lang=%s',
 
             // Setup Password URL
             // This should be frontend URL not backend
@@ -4359,7 +4389,7 @@ return array(
                 'name_long' => 'Click Promotion List',
                 'module_name' => 'Application',
                 'type' => 'click',
-                'object_type' => 'Promotion',
+                'object_type' => 'News',
                 'parameter_name' => 'promotion_id'
             ),
             // - Coupon Click
@@ -5115,6 +5145,33 @@ return array(
                 'type' => 'click',
                 'object_type' => 'Mall',
                 'parameter_name' => 'visited_mall_id'
+            ),
+            // User clicks on "More->Language" and change the langauge
+            '112' => array(
+                'name' => 'click_language',
+                'name_long' => 'Click Language',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => 'Language',
+                'parameter_name' => null
+            ),
+            // User clicks submit button on advertise form
+            '113' => array(
+                'name' => 'click_submit_advertise',
+                'name_long' => 'Click Submit Advertise',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User clicks submit button on feedback form
+            '114' => array(
+                'name' => 'click_submit_feedback',
+                'name_long' => 'Click Submit Feedback',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
             ),
         ),
     ),

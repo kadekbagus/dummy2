@@ -1,43 +1,46 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Coupon;
-
+<?php namespace Orbit\Controller\API\v1\Pub\Store;
+/**
+ * An API controller for get all store in all mall, group by name
+ */
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
-use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
+use Text\Util\LineChecker;
+use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
-use Coupon;
+use Mall;
+use Tenant;
+use Advert;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
+use Language;
 use Activity;
-use Mall;
-use Advert;
-use Lang;
-use Role;
-use IssuedCoupon;
-use \Exception;
-use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
-use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Elasticsearch\ClientBuilder;
+use Lang;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
+use Orbit\Controller\API\v1\Pub\Store\StoreHelper;
 
-class CouponListAPIController extends PubControllerAPI
+class StoreListAPIController extends PubControllerAPI
 {
+    protected $valid_language = NULL;
+    protected $store = NULL;
     protected $withoutScore = FALSE;
 
     /**
-     * GET - get all coupon in all mall
+     * GET - get all store in all mall, group by name
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
      *
@@ -51,68 +54,74 @@ class CouponListAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getCouponList()
+    public function getStoreList()
     {
         $activity = Activity::mobileci()->setActivityType('view');
         $mall = NULL;
+        $mall_name = NULL;
+        $mall_city = NULL;
         $user = NULL;
         $httpCode = 200;
+
         $cacheKey = [];
         $serializedCacheKey = [];
 
         // Cache result of all possible calls to backend storage
         $cacheConfig = Config::get('orbit.cache.context');
-        $cacheContext = 'coupon-list';
+        $cacheContext = 'store-list';
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
         $keywordSearchCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-keyword-search');
         $advertCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-adverts');
+        $countCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-store-count');
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', 'created_date');
-            $sort_mode = OrbitInput::get('sortmode','desc');
-            $usingDemo = Config::get('orbit.is_demo', FALSE);
+            $sort_by = OrbitInput::get('sortby', 'name');
+            $sort_mode = OrbitInput::get('sortmode','asc');
             $location = OrbitInput::get('location', null);
             $cityFilters = OrbitInput::get('cities', null);
             $countryFilter = OrbitInput::get('country', null);
-            $ul = OrbitInput::get('ul', null);
+            $usingDemo = Config::get('orbit.is_demo', FALSE);
             $language = OrbitInput::get('language', 'id');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance', 10);
-            $lon = '';
-            $lat = '';
-            $mallId = OrbitInput::get('mall_id', null);
-            $withPremium = OrbitInput::get('is_premium', null);
-            $list_type = OrbitInput::get('list_type', 'featured');
+            $ul = OrbitInput::get('ul');
+            $lon = 0;
+            $lat = 0;
+            $list_type = OrbitInput::get('list_type', 'preferred');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $category_id = OrbitInput::get('category_id');
+            $mallId = OrbitInput::get('mall_id', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
-            $take = PaginationNumber::parseTakeFromGet('coupon');
+            $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
-            $partnerToken = OrbitInput::get('token', null);
 
-            $couponHelper = CouponHelper::create();
-            $couponHelper->couponCustomValidator();
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
+
+            // store can not sorted by date, so it must be changes to default sorting (name - ascending)
+            if ($sort_by === "created_date") {
+                $sort_by = "name";
+                $sort_mode = "asc";
+            }
+
+            // Call validation from store helper
+            $storeHelper = StoreHelper::create();
+            $storeHelper->registerCustomValidation();
 
             $validator = Validator::make(
                 array(
                     'language' => $language,
                     'sortby'   => $sort_by,
-                    'list_type'   => $list_type,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,created_date,updated_date',
-                    'list_type'   => 'in:featured,preferred',
-                ),
-                array(
+                    'sortby'   => 'in:name,location,updated_date',
                 )
             );
 
@@ -123,7 +132,7 @@ class CouponListAPIController extends PubControllerAPI
                 'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
-                'with_premium' => $withPremium, 'list_type' => $list_type,
+                'list_type' => $list_type,
                 'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
@@ -136,7 +145,7 @@ class CouponListAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $valid_language = $couponHelper->getValidLanguage();
+            $valid_language = $this->valid_language;
 
             $prefix = DB::getTablePrefix();
 
@@ -144,7 +153,6 @@ class CouponListAPIController extends PubControllerAPI
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
 
-            //Get now time, time must be 2017-01-09T15:30:00Z
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
@@ -158,7 +166,12 @@ class CouponListAPIController extends PubControllerAPI
                 $esTake = 50;
             }
 
-            $jsonQuery = array('from' => $skip, 'size' => $esTake, 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('available' => array('gt' => 0))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
+            // value will be true if query to nested, *to get right number of stores
+            $withInnerHits = false;
+            $innerHitsCountry = false;
+            $innerHitsCity = false;
+
+            $jsonQuery = array('from' => $skip, 'size' => $take, 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('bool' => array('must' => array( array('range' => array('tenant_detail_count' => array('gt' => 0)))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -181,49 +194,51 @@ class CouponListAPIController extends PubControllerAPI
             {
                 $cacheKey['keyword'] = $keyword;
                 if ($keyword != '') {
+                    $keyword = strtolower($keyword);
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
                     $withKeywordSearch = true;
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.keyword', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.keyword', '50%');
 
-                    $priority['name'] = Config::get('orbit.elasticsearch.priority.coupons.name', '^6');
-                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.coupons.object_type', '^5');
-                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.coupons.keywords', '^4');
-                    $priority['description'] = Config::get('orbit.elasticsearch.priority.coupons.description', '^3');
-                    $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.coupons.mall_name', '^3');
-                    $priority['city'] = Config::get('orbit.elasticsearch.priority.coupons.city', '^2');
-                    $priority['province'] = Config::get('orbit.elasticsearch.priority.coupons.province', '^2');
-                    $priority['country'] = Config::get('orbit.elasticsearch.priority.coupons.country', '^2');
+                    $priority['name'] = Config::get('orbit.elasticsearch.priority.store.name', '^6');
+                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.store.object_type', '^5');
+                    $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.store.mall_name', '^4');
+                    $priority['city'] = Config::get('orbit.elasticsearch.priority.store.city', '^3');
+                    $priority['province'] = Config::get('orbit.elasticsearch.priority.store.province', '^2');
+                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.store.keywords', '');
+                    $priority['address_line'] = Config::get('orbit.elasticsearch.priority.store.address_line', '');
+                    $priority['country'] = Config::get('orbit.elasticsearch.priority.store.country', '');
+                    $priority['description'] = Config::get('orbit.elasticsearch.priority.store.description', '');
 
-                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.name'.$priority['name'], 'translation.description'.$priority['description'])))));
+                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.description'.$priority['description'])))));
 
-                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('link_to_tenant.city'.$priority['city'], 'link_to_tenant.province'.$priority['province'], 'link_to_tenant.country'.$priority['country'], 'link_to_tenant.mall_name'.$priority['mall_name'])))));
+                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'tenant_detail', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('tenant_detail.city'.$priority['city'], 'tenant_detail.province'.$priority['province'], 'tenant_detail.country'.$priority['country'], 'tenant_detail.mall_name'.$priority['mall_name'])))));
 
-                    $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
+                    $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'],'object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
 
                     $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
                 }
             });
 
-            OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery) {
+            OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery, &$withInnerHits) {
                 if (! empty($mallId)) {
-                    $withMallId = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.parent_id' => $mallId))))));
+                    $withInnerHits = true;
+                    $withMallId = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('match' => array('tenant_detail.mall_id' => $mallId)))), 'inner_hits' => new stdclass()));
                     $jsonQuery['query']['bool']['must'][] = $withMallId;
                 }
              });
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.category', '50%');
                 $searchFlag = $searchFlag || TRUE;
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.category', '50%');
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
 
                 foreach ($categoryIds as $key => $value) {
-                    $categoryFilter['bool']['should'][] = array('match' => array('category_ids' => $value));
+                    $categoryFilter['bool']['should'][] = array('match' => array('category' => $value));
                 }
-
                 $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
                 $jsonQuery['query']['bool']['must'][] = $categoryFilter;
             });
@@ -235,7 +250,7 @@ class CouponListAPIController extends PubControllerAPI
                     $searchFlag = $searchFlag || TRUE;
                     $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
                                                                 $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                                                                     ->where('affected_group_names.group_type', '=', 'coupon');
+                                                                     ->where('affected_group_names.group_type', '=', 'tenant');
                                                             })
                                                             ->where('partner_id', $partnerId)
                                                             ->first();
@@ -248,43 +263,47 @@ class CouponListAPIController extends PubControllerAPI
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
                             $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
-                        $jsonQuery['query']['bool']['must'][] = $partnerFilter;
+                        $jsonQuery['query']['bool']['must'][]= $partnerFilter;
                     }
                 }
             });
 
             // filter by location (city or user location)
-            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance, &$withCache)
+            OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance, &$withInnerHits, &$withCache)
             {
                 if (! empty($location)) {
                     $searchFlag = $searchFlag || TRUE;
-
+                    $withInnerHits = true;
                     if ($location === 'mylocation' && $lat != '' && $lon != '') {
                         $withCache = FALSE;
-                        $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat)))))));
+                        $locationFilter = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'tenant_detail.position' => array('lon' => $lon, 'lat' => $lat))))), 'inner_hits' => new stdclass()));
                         $jsonQuery['query']['bool']['must'][] = $locationFilter;
                     } elseif ($location !== 'mylocation') {
-                        $locationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $location))))));
+                        $locationFilter = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('match' => array('tenant_detail.city.raw' => $location)))), 'inner_hits' => new stdclass()));
                         $jsonQuery['query']['bool']['must'][] = $locationFilter;
                     }
                 }
             });
 
             $countryCityFilterArr = [];
-            // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$countryCityFilterArr) {
-                $countryCityFilterArr = ['nested' => ['path' => 'link_to_tenant', 'query' => ['bool' => []], 'inner_hits' => ['name' => 'country_city_hits']]];
 
-                $countryCityFilterArr['nested']['query']['bool'] = ['must' => ['match' => ['link_to_tenant.country.raw' => $countryFilter]]];
+            // filter by country
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$withInnerHits, &$innerHitsCity, &$countryCityFilterArr) {
+                $withInnerHits = true;
+                $innerHitsCity = true;
+
+                $countryCityFilterArr = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => []], 'inner_hits' => ['name' => 'country_city_hits']]];
+
+                $countryCityFilterArr['nested']['query']['bool'] = ['must' => ['match' => ['tenant_detail.country.raw' => $countryFilter]]];
             });
 
             // filter by city, only filter when countryFilter is not empty
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
                 if (! empty($countryFilter)) {
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.city', '50%');
                     $cityFilterArr = [];
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.city', '50%');
                     foreach ((array) $cityFilters as $cityFilter) {
-                        $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];
+                        $cityFilterArr[] = ['match' => ['tenant_detail.city.raw' => $cityFilter]];
                     }
 
                     if (count((array) $cityFilters) === 1) {
@@ -305,9 +324,7 @@ class CouponListAPIController extends PubControllerAPI
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withCache = FALSE;
-                $sort = array('_geo_distance' => array('nested_path' => 'link_to_tenant', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
-            } elseif ($sort_by === 'created_date') {
-                $sort = array('begin_date' => array('order' => $sort_mode));
+                $sort = array('_geo_distance' => array('nested_path' => 'tenant_detail', 'tenant_detail.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'updated_date') {
                 $sort = array('updated_at' => array('order' => $sort_mode));
             } else {
@@ -351,7 +368,7 @@ class CouponListAPIController extends PubControllerAPI
                                     DB::raw("CASE WHEN placement_type = 'featured_list' THEN 0 ELSE 1 END AS with_preferred"))
                             ->join('advert_link_types', function ($q) {
                                 $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
-                                $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Coupon'"));
+                                $q->on('advert_link_types.advert_type', '=', DB::raw("'store'"));
                             })
                             ->join('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
                                 $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
@@ -400,13 +417,13 @@ class CouponListAPIController extends PubControllerAPI
             $_jsonQuery = $jsonQuery;
 
             if ($withKeywordSearch) {
-                // if user searching, we call es twice, first for get coupon data that match with keyword and then get the id,
+                // if user searching, we call es twice, first for get store data that match with keyword and then get the id,
                 // and second, call es data combine with advert
                 $_jsonQuery['query']['bool']['must'][] = $filterKeyword;
 
                 $_esParam = [
-                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
-                    'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),
+                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                    'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
                     'body' => json_encode($_jsonQuery)
                 ];
 
@@ -421,19 +438,19 @@ class CouponListAPIController extends PubControllerAPI
 
                 $searchData = $searchResponse['hits'];
 
-                $couponIds = array();
+                $storeIds = array();
                 foreach ($searchData['hits'] as $content) {
                     foreach ($content as $key => $val) {
                         if ($key === "_id") {
-                            $couponIds[] = $val;
+                            $storeIds[] = $val;
                             $cId = $val;
                         }
                         if ($key === "_score") {
-                            $couponScore[$cId] = $val;
+                            $storeScore[$cId] = $val;
                         }
                     }
                 }
-                $jsonQuery['query']['bool']['must'][] = array('terms' => array('_id' => $couponIds));
+                $jsonQuery['query']['bool']['must'][] = array('terms' => array('_id' => $storeIds));
             }
 
             // call es
@@ -448,9 +465,9 @@ class CouponListAPIController extends PubControllerAPI
                 }
 
                 if ($withKeywordSearch) {
-                    $withoutAdv = array_diff($couponIds, $advertIds);
+                    $withoutAdv = array_diff($storeIds, $advertIds);
                     foreach ($withoutAdv as $wa) {
-                        $esWithoutAdvert = array('match' => array('_id' => array('query' => $wa, 'boost' => $couponScore[$wa])));
+                        $esWithoutAdvert = array('match' => array('_id' => array('query' => $wa, 'boost' => $storeScore[$wa])));
                         $jsonQuery['query']['bool']['should'][] = $esWithoutAdvert;
                     }
                 } else {
@@ -459,16 +476,6 @@ class CouponListAPIController extends PubControllerAPI
 
             }
 
-            // Exclude specific document Ids, useful for some cases e.g You May Also Like
-            // @todo rewrite deprected 'filtered' query to bool only
-            OrbitInput::get('excluded_ids', function($excludedIds) use (&$jsonQuery) {
-                $jsonExcludedIds = [];
-                foreach ($excludedIds as $excludedId) {
-                    $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
-                }
-                $jsonQuery['query']['bool']['must_not'] = $jsonExcludedIds;
-            });
-
             $sortby = $sort;
             if ($withScore) {
                 $sortby = array("_score", $sort);
@@ -476,8 +483,8 @@ class CouponListAPIController extends PubControllerAPI
             $jsonQuery["sort"] = $sortby;
 
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
-                'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
                 'body' => json_encode($jsonQuery)
             ];
 
@@ -492,71 +499,47 @@ class CouponListAPIController extends PubControllerAPI
 
             $records = $response['hits'];
 
-            $promotionIds = array();
             $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+            $innerHitsCount = 0;
 
             foreach ($records['hits'] as $record) {
                 $data = array();
-                $isOwned = false;
+                $localPath = '';
+                $cdnPath = '';
                 $default_lang = '';
-                $partnerTokens = isset($record['_source']['partner_tokens']) ? $record['_source']['partner_tokens'] : [];
                 foreach ($record['_source'] as $key => $value) {
-                    if ($key === "name") {
-                        $key = "coupon_name";
-                    } elseif ($key === "promotion_id") {
-                        $key = "coupon_id";
-                        $promotionIds[] = $value;
-                    }
+
+                    $localPath = ($key == 'logo') ? $value : $localPath;
+                    $cdnPath = ($key == 'logo_cdn') ? $value : $cdnPath;
+                    $key = ($key == 'logo') ? 'logo_url' : $key;
+
+                    $data[$key] = $value;
+                    $data['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
 
                     $default_lang = (empty($record['_source']['default_lang']))? '' : $record['_source']['default_lang'];
-                    $data[$key] = $value;
 
                     // translation, to get name, desc and image
                     if ($key === "translation") {
-                        $data['image_url'] = '';
-
                         foreach ($record['_source']['translation'] as $dt) {
-                            $localPath = (! empty($dt['image_url'])) ? $dt['image_url'] : '';
-                            $cdnPath = (! empty($dt['image_cdn_url'])) ? $dt['image_cdn_url'] : '';
 
                             if ($dt['language_code'] === $language) {
-                                // name
-                                if (! empty($dt['name'])) {
-                                    $data['coupon_name'] = $dt['name'];
-                                }
-
                                 // desc
                                 if (! empty($dt['description'])) {
                                     $data['description'] = $dt['description'];
                                 }
-
-                                // image
-                                if (! empty($dt['image_url'])) {
-                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
-                                }
                             } elseif ($dt['language_code'] === $default_lang) {
-                                // name
-                                if (! empty($dt['name']) && empty($data['coupon_name'])) {
-                                    $data['coupon_name'] = $dt['name'];
-                                }
-
-                                // description
+                                // desc
                                 if (! empty($dt['description']) && empty($data['description'])) {
                                     $data['description'] = $dt['description'];
-                                }
-
-                                // image
-                                if (empty($data['image_url'])) {
-                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                                 }
                             }
                         }
                     }
 
                     // advert
-                    if ($key === "coupon_id") {
+                    if ($key === "merchant_id") {
                         $data['placement_type'] = null;
                         $data['placement_type_orig'] = null;
                         foreach ($advertData as $advData) {
@@ -567,52 +550,31 @@ class CouponListAPIController extends PubControllerAPI
 
                                 // image
                                 if (! empty($advData->path)) {
-                                    $data['image_url'] = $advData->path;
+                                    $data['logo_url'] = $advData->path;
                                 }
                                 break;
                             }
                         }
                     }
+                }
 
-                    if ($key === "is_exclusive") {
-                        $data[$key] = ! empty($data[$key]) ? $data[$key] : 'N';
-                        // disable is_exclusive if token is sent and in the partner_tokens
-                        if ($data[$key] === 'Y' && in_array($partnerToken, $partnerTokens)) {
-                            $data[$key] = 'N';
-                        }
+                if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
+                    if (! empty($mallId)) {
+                        $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
                     }
                 }
-                $data['owned'] = $isOwned;
                 $data['score'] = $record['_score'];
-                unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
-            }
-
-            if ($user->isConsumer() && ! empty($promotionIds)) {
-                $myCoupons = IssuedCoupon::select('promotion_id')
-                                ->where('issued_coupons.user_id', '=', $user->user_id)
-                                ->where('issued_coupons.status', '=', 'issued')
-                                ->whereIn('promotion_id', $promotionIds)
-                                ->orderBy('created_at', 'desc')
-                                ->groupBy('promotion_id')
-                                ->get()
-                                ->lists('promotion_id');
-
-                foreach ($listOfRec as &$couponData) {
-                    if (in_array($couponData['coupon_id'], $myCoupons)) {
-                        $couponData['owned'] = true;
-                    }
-                }
             }
 
             // record GTM search activity
             if ($searchFlag) {
                 $parameters = [
-                    'displayName' => 'Coupon',
+                    'displayName' => 'Store',
                     'keywords' => OrbitInput::get('keyword', NULL),
                     'categories' => OrbitInput::get('category_id', NULL),
                     'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name'),
+                    'sortBy' => $sort_by,
                     'partner' => OrbitInput::get('partner_id', NULL)
                 ];
 
@@ -626,8 +588,10 @@ class CouponListAPIController extends PubControllerAPI
             }
 
             $data = new \stdclass();
+
             $data->returned_records = count($listOfRec);
             $data->total_records = $records['total'];
+
             if (is_object($mall)) {
                 $data->mall_name = $mall->name;
                 $data->mall_city = $mall->city;
@@ -666,29 +630,28 @@ class CouponListAPIController extends PubControllerAPI
             if (OrbitInput::get('from_homepage', '') !== 'y') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
                     if (is_object($mall)) {
-                        $activityNotes = sprintf('Page viewed: View mall coupon list');
+                        $activityNotes = sprintf('Page viewed: View mall store list page');
                         $activity->setUser($user)
-                            ->setActivityName('view_mall_coupon_list')
-                            ->setActivityNameLong('View mall coupon list')
+                            ->setActivityName('view_mall_store_list')
+                            ->setActivityNameLong('View mall store list')
                             ->setObject(null)
                             ->setLocation($mall)
-                            ->setModuleName('Coupon')
+                            ->setModuleName('Store')
                             ->setNotes($activityNotes)
                             ->responseOK()
                             ->save();
                     } else {
-                        $activityNotes = sprintf('Page viewed: Coupon list');
+                        $activityNotes = sprintf('Page viewed: Store list');
                         $activity->setUser($user)
-                            ->setActivityName('view_coupons_main_page')
-                            ->setActivityNameLong('View Coupons Main Page')
+                            ->setActivityName('view_stores_main_page')
+                            ->setActivityNameLong('View Stores Main Page')
                             ->setObject(null)
                             ->setLocation($mall)
-                            ->setModuleName('Coupon')
+                            ->setModuleName('Store')
                             ->setNotes($activityNotes)
                             ->responseOK()
                             ->save();
                     }
-
                 }
             }
 
@@ -741,19 +704,4 @@ class CouponListAPIController extends PubControllerAPI
         return $output;
     }
 
-    /**
-     * Force $withScore value to FALSE, ignoring previously set value
-     * @param $bool boolean
-     */
-    public function setWithOutScore()
-    {
-        $this->withoutScore = TRUE;
-
-        return $this;
-    }
-
-    protected function quote($arg)
-    {
-        return DB::connection()->getPdo()->quote($arg);
-    }
 }

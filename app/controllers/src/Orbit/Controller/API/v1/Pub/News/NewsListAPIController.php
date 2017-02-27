@@ -93,6 +93,7 @@ class NewsListAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
+            $partnerToken = OrbitInput::get('token', null);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -144,7 +145,6 @@ class NewsListAPIController extends PubControllerAPI
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
-            $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match', '0%');
 
             $jsonQuery = array('from' => $skip, 'size' => $take, 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
@@ -164,13 +164,14 @@ class NewsListAPIController extends PubControllerAPI
                 }
             }
 
-            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey, $shouldMatch)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey)
             {
                 $cacheKey['keyword'] = $keyword;
 
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.keyword', '50%');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.news.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.news.object_type', '^5');
@@ -200,8 +201,9 @@ class NewsListAPIController extends PubControllerAPI
              });
 
             // filter by category_id
-            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag, $shouldMatch) {
+            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.category', '50%');
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
@@ -268,10 +270,17 @@ class NewsListAPIController extends PubControllerAPI
             // filter by city, only filter when countryFilter is not empty
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
                 if (! empty($countryFilter)) {
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.city', '50%');
                     $cityFilterArr = [];
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];
                     }
+
+                    if (count((array) $cityFilters) === 1) {
+                        // if user just filter with one city, value of should match must be 100%
+                        $shouldMatch = '100%';
+                    }
+
                     $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
                     $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
@@ -352,14 +361,13 @@ class NewsListAPIController extends PubControllerAPI
             foreach ($records['hits'] as $record) {
                 $data = array();
                 $default_lang = '';
+                $partnerTokens = isset($record['_source']['partner_tokens']) ? $record['_source']['partner_tokens'] : [];
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
                         $key = "news_name";
                     }
 
-                    if ($key === 'default_lang') {
-                        $default_lang = $value;
-                    }
+                    $default_lang = (empty($record['_source']['default_lang']))? '' : $record['_source']['default_lang'];
                     $data[$key] = $value;
 
                     // translation, to get name, desc and image
@@ -403,9 +411,17 @@ class NewsListAPIController extends PubControllerAPI
                             }
                         }
                     }
+
+                    if ($key === "is_exclusive") {
+                        $data[$key] = ! empty($data[$key]) ? $data[$key] : 'N';
+                        // disable is_exclusive if token is sent and in the partner_tokens
+                        if ($data[$key] === 'Y' && in_array($partnerToken, $partnerTokens)) {
+                            $data[$key] = 'N';
+                        }
+                    }
                 }
                 $data['score'] = $record['_score'];
-                unset($data['created_by'], $data['creator_email']);
+                unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
             }
 

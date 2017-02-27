@@ -21,6 +21,8 @@ use \Exception;
 use Mall;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
+use Partner;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class CouponDetailAPIController extends PubControllerAPI
 {
@@ -41,6 +43,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
+            $partnerToken = OrbitInput::get('token', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -90,14 +93,26 @@ class CouponDetailAPIController extends PubControllerAPI
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
-                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN {$prefix}promotions.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
-                                    CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN {$prefix}promotions.description ELSE {$prefix}coupon_translations.description END as description,
-                                    (SELECT {$image}
+                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
+                                    CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
+                                    CASE WHEN (SELECT {$image}
                                         FROM orb_media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
-                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) AS original_media_path
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
+                                    THEN
+                                        (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = default_translation.coupon_translation_id)
+                                    ELSE
+                                        (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
+                                    END AS original_media_path
                                 "),
                             'promotions.end_date',
+                            'promotions.is_exclusive',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -135,9 +150,15 @@ class CouponDetailAPIController extends PubControllerAPI
                                 ) as timezone
                             ")
                         )
+                        ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                        ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                         ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
                             $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                               ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
+                        ->leftJoin('coupon_translations as default_translation', function ($q) {
+                            $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
+                              ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                         ->leftJoin('issued_coupons', function ($q) use ($user) {
@@ -165,6 +186,22 @@ class CouponDetailAPIController extends PubControllerAPI
             $message = 'Request Ok';
             if (! is_object($coupon)) {
                 OrbitShopAPI::throwInvalidArgument('Coupon that you specify is not found');
+            }
+
+            if ($coupon->is_exclusive === 'Y') {
+                // check token
+                $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
+                                    ->where('object_partner.object_type', 'coupon')
+                                    ->where('object_partner.object_id', $coupon->promotion_id)
+                                    ->where('partners.is_exclusive', 'Y')
+                                    ->where('partners.token', $partnerToken)
+                                    ->first();
+
+                if (! is_object($partnerTokens)) {
+                    throw new OrbitCustomException('Coupon is exclusive, please specify partner token', Coupon::IS_EXCLUSIVE_ERROR_CODE, NULL);
+                }
+
+                $coupon->is_exclusive = 'N';
             }
 
             if (is_object($mall)) {
@@ -232,6 +269,13 @@ class CouponDetailAPIController extends PubControllerAPI
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
+            $this->response->data = null;
+            $httpCode = 500;
+
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
 

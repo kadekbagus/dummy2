@@ -190,62 +190,69 @@ class CouponAPIController extends ControllerAPI
                 $status = 'active';
             }
 
+            $validator_value = [
+                'promotion_name'          => $promotion_name,
+                'promotion_type'          => $promotion_type,
+                'begin_date'              => $begin_date,
+                'end_date'                => $end_date,
+                'rule_type'               => $rule_type,
+                'status'                  => $status,
+                'coupon_validity_in_date' => $coupon_validity_in_date,
+                'rule_value'              => $rule_value,
+                'discount_value'          => $discount_value,
+                'is_all_retailer'         => $is_all_retailer,
+                'is_all_employee'         => $is_all_employee,
+                'id_language_default'     => $id_language_default,
+                'rule_begin_date'         => $rule_begin_date,
+                'rule_end_date'           => $rule_end_date,
+                'is_all_gender'           => $is_all_gender,
+                'is_all_age'              => $is_all_age,
+                'sticky_order'            => $sticky_order,
+                'is_popup'                => $is_popup,
+                'coupon_codes'            => $couponCodes,
+            ];
+            $validator_validation = [
+                'promotion_name'          => 'required|max:255',
+                'promotion_type'          => 'required|orbit.empty.coupon_type',
+                'begin_date'              => 'required|date_format:Y-m-d H:i:s',
+                'end_date'                => 'required|date_format:Y-m-d H:i:s',
+                'rule_type'               => 'required|orbit.empty.coupon_rule_type',
+                'status'                  => 'required|orbit.empty.coupon_status',
+                'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
+                'rule_value'              => 'required|numeric|min:0',
+                'discount_value'          => 'required|numeric|min:0',
+                'is_all_retailer'         => 'orbit.empty.status_link_to',
+                'is_all_employee'         => 'orbit.empty.status_link_to',
+                'id_language_default'     => 'required|orbit.empty.language_default',
+                'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
+                'rule_end_date'           => 'date_format:Y-m-d H:i:s',
+                'is_all_gender'           => 'required|orbit.empty.is_all_gender',
+                'is_all_age'              => 'required|orbit.empty.is_all_age',
+                'sticky_order'            => 'in:0,1',
+                'is_popup'                => 'in:Y,N',
+                'coupon_codes'            => 'required',
+            ];
+            $validator_message = [
+                'rule_value.required'     => 'The amount to obtain is required',
+                'rule_value.numeric'      => 'The amount to obtain must be a number',
+                'rule_value.min'          => 'The amount to obtain must be greater than zero',
+                'discount_value.required' => 'The coupon value is required',
+                'discount_value.numeric'  => 'The coupon value must be a number',
+                'discount_value.min'      => 'The coupon value must be greater than zero',
+                'sticky_order.in'         => 'The sticky order value must 0 or 1',
+                'is_popup.in'             => 'is popup must Y or N',
+            ];
+
+            if (! empty($is_exclusive) && ! empty($partner_ids)) {
+                $validator_value['partner_exclusive']               = $is_exclusive;
+                $validator_validation['partner_exclusive']          = 'in:Y,N|orbit.empty.exclusive_partner';
+                $validator_message['orbit.empty.exclusive_partner'] = 'Partner is not exclusive / inactive';
+            }
+
             $validator = Validator::make(
-                array(
-                    'promotion_name'          => $promotion_name,
-                    'promotion_type'          => $promotion_type,
-                    'begin_date'              => $begin_date,
-                    'end_date'                => $end_date,
-                    'rule_type'               => $rule_type,
-                    'status'                  => $status,
-                    'coupon_validity_in_date' => $coupon_validity_in_date,
-                    'rule_value'              => $rule_value,
-                    'discount_value'          => $discount_value,
-                    'is_all_retailer'         => $is_all_retailer,
-                    'is_all_employee'         => $is_all_employee,
-                    'id_language_default'     => $id_language_default,
-                    'rule_begin_date'         => $rule_begin_date,
-                    'rule_end_date'           => $rule_end_date,
-                    'is_all_gender'           => $is_all_gender,
-                    'is_all_age'              => $is_all_age,
-                    'sticky_order'            => $sticky_order,
-                    'is_popup'                => $is_popup,
-                    'coupon_codes'            => $couponCodes,
-                    'partner_exclusive'       => $is_exclusive,
-                ),
-                array(
-                    'promotion_name'          => 'required|max:255',
-                    'promotion_type'          => 'required|orbit.empty.coupon_type',
-                    'begin_date'              => 'required|date_format:Y-m-d H:i:s',
-                    'end_date'                => 'required|date_format:Y-m-d H:i:s',
-                    'rule_type'               => 'required|orbit.empty.coupon_rule_type',
-                    'status'                  => 'required|orbit.empty.coupon_status',
-                    'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
-                    'rule_value'              => 'required|numeric|min:0',
-                    'discount_value'          => 'required|numeric|min:0',
-                    'is_all_retailer'         => 'orbit.empty.status_link_to',
-                    'is_all_employee'         => 'orbit.empty.status_link_to',
-                    'id_language_default'     => 'required|orbit.empty.language_default',
-                    'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
-                    'rule_end_date'           => 'date_format:Y-m-d H:i:s',
-                    'is_all_gender'           => 'required|orbit.empty.is_all_gender',
-                    'is_all_age'              => 'required|orbit.empty.is_all_age',
-                    'sticky_order'            => 'in:0,1',
-                    'is_popup'                => 'in:Y,N',
-                    'coupon_codes'            => 'required',
-                    'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
-                ),
-                array(
-                    'rule_value.required'     => 'The amount to obtain is required',
-                    'rule_value.numeric'      => 'The amount to obtain must be a number',
-                    'rule_value.min'          => 'The amount to obtain must be greater than zero',
-                    'discount_value.required' => 'The coupon value is required',
-                    'discount_value.numeric'  => 'The coupon value must be a number',
-                    'discount_value.min'      => 'The coupon value must be greater than zero',
-                    'sticky_order.in'         => 'The sticky order value must 0 or 1',
-                    'is_popup.in'             => 'is popup must Y or N',
-                    'orbit.empty.exclusive_partner' => 'Partner is not exclusive',
-                )
+                $validator_value,
+                $validator_validation,
+                $validator_message
             );
 
             Event::fire('orbit.coupon.postnewcoupon.before.validation', array($this, $validator));
@@ -1090,7 +1097,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.numeric'    => 'The coupon value must be a number',
                     'discount_value.min'        => 'The coupon value must be greater than zero',
                     'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
-                    'orbit.empty.exclusive_partner' => 'Partner is not exclusive',
+                    'orbit.empty.exclusive_partner' => 'Partner is not exclusive / inactive',
                 )
             );
 
@@ -2952,6 +2959,10 @@ class CouponAPIController extends ControllerAPI
 
             $mall_id = OrbitInput::post('current_mall');
             $storeId = OrbitInput::post('store_id');
+            $language = OrbitInput::get('language', 'id');
+
+            // set language
+            App::setLocale($language);
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
             $verificationNumber = OrbitInput::post('merchant_verification_number');
@@ -4027,12 +4038,12 @@ class CouponAPIController extends ControllerAPI
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
 
-            $partner_exclusive = Partner::select('is_exclusive')
+            $partner_exclusive = Partner::select('is_exclusive', 'status')
                            ->whereIn('partner_id', $partner_ids)
                            ->get();
 
             foreach ($partner_exclusive as $exclusive) {
-                if($exclusive->is_exclusive == 'Y'){
+                if ($exclusive->is_exclusive == 'Y' && $exclusive->status == 'active') {
                     $flag_exclusive = true;
                 }
             }
@@ -4042,8 +4053,7 @@ class CouponAPIController extends ControllerAPI
             if ($is_exclusive == 'Y') {
                 if ($flag_exclusive) {
                     $valid = true;
-                }
-                else {
+                } else {
                     $valid = false;
                 }
             }

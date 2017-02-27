@@ -99,6 +99,7 @@ class PromotionListAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('promotion');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
+            $partnerToken = OrbitInput::get('token', null);
 
              // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -151,7 +152,6 @@ class PromotionListAPIController extends PubControllerAPI
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
-            $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match', '0%');
 
             $withScore = false;
             $esTake = $take;
@@ -179,13 +179,14 @@ class PromotionListAPIController extends PubControllerAPI
 
             $withKeywordSearch = false;
             $filterKeyword = [];
-            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey, $shouldMatch, &$filterKeyword)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey, &$filterKeyword)
             {
                 $cacheKey['keyword'] = $keyword;
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
                     $withKeywordSearch = true;
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.keyword', '50%');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.promotions.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.promotions.object_type', '^5');
@@ -214,7 +215,8 @@ class PromotionListAPIController extends PubControllerAPI
              });
 
             // filter by category_id
-            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag, $shouldMatch) {
+            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.category', '50%');
                 $searchFlag = $searchFlag || TRUE;
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
@@ -278,12 +280,19 @@ class PromotionListAPIController extends PubControllerAPI
             });
 
             // filter by city, only filter when countryFilter is not empty
-            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr, $shouldMatch) {
+            OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
                 if (! empty($countryFilter)) {
                     $cityFilterArr = [];
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.city', '50%');
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];
                     }
+
+                    if (count((array) $cityFilters) === 1) {
+                        // if user just filter with one city, value of should match must be 100%
+                        $shouldMatch = '100%';
+                    }
+
                     $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
                     $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
@@ -441,7 +450,7 @@ class PromotionListAPIController extends PubControllerAPI
                 foreach ($excludedIds as $excludedId) {
                     $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
                 }
-                $jsonQuery['query']['filtered']['query']['bool']['must_not'] = $jsonExcludedIds;
+                $jsonQuery['query']['bool']['must_not'] = $jsonExcludedIds;
             });
 
             $sortby = $sort;
@@ -465,9 +474,6 @@ class PromotionListAPIController extends PubControllerAPI
                 }
             }
             $jsonQuery['sort'] = $sortby;
-
-            // echo(json_encode($jsonQuery));
-            // exit;
 
             $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
@@ -494,14 +500,13 @@ class PromotionListAPIController extends PubControllerAPI
                 $data = array();
                 $isOwned = false;
                 $default_lang = '';
+                $partnerTokens = isset($record['_source']['partner_tokens']) ? $record['_source']['partner_tokens'] : [];
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
                         $key = "news_name";
                     }
 
-                    if ($key === 'default_lang') {
-                        $default_lang = $value;
-                    }
+                    $default_lang = (empty($record['_source']['default_lang']))? '' : $record['_source']['default_lang'];
                     $data[$key] = $value;
 
                     // translation, to get name, desc and image
@@ -564,10 +569,18 @@ class PromotionListAPIController extends PubControllerAPI
                             }
                         }
                     }
+
+                    if ($key === "is_exclusive") {
+                        $data[$key] = ! empty($data[$key]) ? $data[$key] : 'N';
+                        // disable is_exclusive if token is sent and in the partner_tokens
+                        if ($data[$key] === 'Y' && in_array($partnerToken, $partnerTokens)) {
+                            $data[$key] = 'N';
+                        }
+                    }
                 }
 
                 $data['score'] = $record['_score'];
-                unset($data['created_by'], $data['creator_email']);
+                unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
             }
 

@@ -62,6 +62,7 @@ class ESCouponUpdateQueue
                             }])
                     ->select(DB::raw("
                         {$prefix}promotions.*,
+                        {$prefix}campaign_account.mobile_default_language,
                         CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                             THEN {$prefix}campaign_status.campaign_status_name
                             ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
@@ -81,6 +82,7 @@ class ESCouponUpdateQueue
                         $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id')
                             ->where('issued_coupons.status', '=', "available");
                     })
+                    ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                     ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
@@ -153,8 +155,12 @@ class ESCouponUpdateQueue
             }
 
             $partnerIds = array();
+            $partnerTokens = array();
             foreach ($coupon->campaignObjectPartners as $campaignObjectPartner) {
                 $partnerIds[] = $campaignObjectPartner->partner_id;
+                if (! empty($campaignObjectPartner->token)) {
+                    $partnerTokens[] = $campaignObjectPartner->token;
+                }
             }
 
             $advertIds = array();
@@ -180,24 +186,27 @@ class ESCouponUpdateQueue
             }
 
             $body = [
-                'promotion_id' => $coupon->promotion_id,
-                'name' => $coupon->promotion_name,
-                'description' => $coupon->description,
-                'object_type' => 'coupon',
-                'begin_date' => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
-                'end_date' => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
-                'updated_at' => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
-                'status' => $coupon->status,
-                'available' => $coupon->available,
+                'promotion_id'    => $coupon->promotion_id,
+                'name'            => $coupon->promotion_name,
+                'description'     => $coupon->description,
+                'object_type'     => 'coupon',
+                'begin_date'      => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
+                'end_date'        => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
+                'updated_at'      => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
+                'status'          => $coupon->status,
+                'available'       => $coupon->available,
                 'campaign_status' => $coupon->campaign_status,
-                'is_all_gender' => $coupon->is_all_gender,
-                'is_all_age' => $coupon->is_all_age,
-                'category_ids' => $categoryIds,
-                'translation' => $translations,
-                'keywords' => $keywords,
-                'partner_ids' => $partnerIds,
-                'advert_ids' => $advertIds,
-                'link_to_tenant' => $linkToTenants
+                'is_all_gender'   => $coupon->is_all_gender,
+                'is_all_age'      => $coupon->is_all_age,
+                'default_lang'    => $coupon->mobile_default_language,
+                'category_ids'    => $categoryIds,
+                'translation'     => $translations,
+                'keywords'        => $keywords,
+                'partner_ids'     => $partnerIds,
+                'partner_tokens'  => $partnerTokens,
+                'advert_ids'      => $advertIds,
+                'link_to_tenant'  => $linkToTenants,
+                'is_exclusive'    => ! empty($coupon->is_exclusive) ? $coupon->is_exclusive : 'N',
             ];
 
             if ($response_search['hits']['total'] > 0) {

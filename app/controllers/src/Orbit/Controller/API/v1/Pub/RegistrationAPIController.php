@@ -29,6 +29,7 @@ use URL;
 use Queue;
 use Orbit\Helper\Net\SignInRecorder;
 use \Exception;
+use App;
 
 class RegistrationAPIController extends IntermediateBaseController
 {
@@ -52,6 +53,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $birthdate = OrbitInput::post('birthdate');
             $password_confirmation = OrbitInput::post('password_confirmation');
             $useTransaction = OrbitInput::post('use_transaction', TRUE);
+            $language = OrbitInput::get('language', 'id');
 
             $user = User::with('role')
                         ->whereHas('role', function($q) {
@@ -63,6 +65,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $user = $user->first();
 
             if (is_object($user)) {
+                App::setLocale($language);
                 $message = Lang::get('validation.orbit.exists.email');
                 OrbitShopAPI::throwInvalidArgument($message);
             }
@@ -150,16 +153,17 @@ class RegistrationAPIController extends IntermediateBaseController
             $this->response->status = 'success';
             $this->response->message = 'Sign Up Success';
 
-            // Send email process to the queue
-            Queue::push('Orbit\\Queue\\RegistrationMail', [
-                'user_id' => $user->user_id,
-                'mode' => 'gotomalls'],
-                Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
-            );
-
             if ($useTransaction) {
                 DB::commit();
             }
+
+            // Send email process to the queue
+            Queue::push('Orbit\\Queue\\RegistrationMail', [
+                'user_id' => $user->user_id,
+                'languageId' => $language,
+                'mode' => 'gotomalls'],
+                Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
+            );
         } catch (ACLForbiddenException $e) {
             if ($useTransaction) {
                 DB::rollback();

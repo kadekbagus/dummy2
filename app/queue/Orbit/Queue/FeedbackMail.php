@@ -27,8 +27,10 @@ class FeedbackMail
         $cs_email   = $data['cs_email'];
         $user_email = $data['user_email'];
         $feedback   = $data['feedback'];
+        $name       = $data['name'];
+        $email      = $data['email'];
 
-        $this->sendFeedbackEmail($cs_email, $user_email, $feedback);
+        $this->sendFeedbackEmail($cs_email, $user_email, $feedback, $name, $email);
 
         $job->delete();
     }
@@ -41,11 +43,13 @@ class FeedbackMail
      * @param string $feedback feedback from customer.
      * @return void
      */
-    protected function sendFeedbackEmail($cs_email, $user_email, $feedback)
+    protected function sendFeedbackEmail($cs_email, $user_email, $feedback, $name, $email)
     {
         $data = array(
             'user_email' => $user_email,
             'feedback'   => $feedback,
+            'name'       => $name,
+            'email'      => $email,
         );
 
         $mailviews = array(

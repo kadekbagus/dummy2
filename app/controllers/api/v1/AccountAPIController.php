@@ -450,7 +450,9 @@ class AccountAPIController extends ControllerAPI
     {
         $data = new stdClass();
 
+        $prefix = DB::getTablePrefix();
         $pmpAccounts = User::excludeDeleted('users')
+                        // ->join('roles', 'users.user_role_id', '=', 'roles.role_id')->whereIn('role_name', ['Campaign Owner', 'Campaign Employee', 'Campaign Admin']);
                             ->pmpAccounts();
 
         // Filter by mall name
@@ -475,6 +477,57 @@ class AccountAPIController extends ControllerAPI
         if (Input::get('location')) {
             $pmpAccounts->leftJoin('countries', 'user_details.country_id', '=', 'countries.country_id');
         }
+
+        $pmpAccounts->select( '*',
+                DB::raw("
+                        (SELECT count(n.news_id) as total
+                        FROM {$prefix}news_translations nt
+                        INNER JOIN {$prefix}news n
+                            ON n.news_id = nt.news_id
+                        LEFT JOIN {$prefix}user_campaign AS uc
+                            ON uc.campaign_id = n.news_id
+                        LEFT JOIN {$prefix}campaign_account AS ca
+                            ON ca.user_id = uc.user_id
+                        LEFT JOIN {$prefix}campaign_account AS cas
+                            ON cas.parent_user_id = ca.parent_user_id
+                        INNER JOIN {$prefix}object_supported_language osl
+                            ON osl.object_id = ca.campaign_account_id
+                        WHERE nt.status != 'deleted'
+                            AND (ca.user_id = {$prefix}campaign_account.parent_user_id
+                                OR ca.parent_user_id = {$prefix}campaign_account.parent_user_id
+                                OR ca.user_id = {$prefix}campaign_account.user_id
+                                OR ca.parent_user_id = {$prefix}campaign_account.user_id)
+                            AND osl.language_id = (select lx.language_id from {$prefix}languages lx where lx.name = {$prefix}campaign_account.mobile_default_language)
+                            AND osl.status = 'active'
+                        GROUP BY n.news_id
+                        LIMIT 1
+
+                        union
+
+                        SELECT count(c.promotion_id) as total
+                        FROM {$prefix}coupon_translations ct
+                        INNER JOIN {$prefix}promotions c
+                            ON c.promotion_id = ct.promotion_id
+                        LEFT JOIN {$prefix}user_campaign AS uc
+                            ON uc.campaign_id = c.promotion_id
+                        LEFT JOIN {$prefix}campaign_account AS ca
+                            ON ca.user_id = uc.user_id
+                        LEFT JOIN {$prefix}campaign_account AS cas
+                            ON cas.parent_user_id = ca.parent_user_id
+                        INNER JOIN {$prefix}object_supported_language osl
+                            ON osl.object_id = ca.campaign_account_id
+                        WHERE ct.status != 'deleted'
+                            AND (ca.user_id = {$prefix}campaign_account.parent_user_id
+                                OR ca.parent_user_id = {$prefix}campaign_account.parent_user_id
+                                OR ca.user_id = {$prefix}campaign_account.user_id
+                                OR ca.parent_user_id = {$prefix}campaign_account.user_id)
+                            AND osl.language_id = (SELECT lx.language_id FROM {$prefix}languages lx where lx.name = {$prefix}campaign_account.mobile_default_language)
+                            AND osl.status = 'active'
+                        GROUP BY c.promotion_id
+                        LIMIT 1
+                        ) as total_campaign
+                    ")
+            );
 
         // Filter by account type id
         OrbitInput::get('account_type_id', function ($account_type_id) use ($pmpAccounts) {
@@ -577,7 +630,7 @@ class AccountAPIController extends ControllerAPI
                 $tenantAtMallArray = $this->getTenantAtMallArray($row->type_name, $row->user_id);
             }
 
-            $disable_mobile_default_language = (count($row->campaignAccount->pmpLanguages) > 0) ? true : false;
+            $disable_mobile_default_language = ($row->total_campaign > 0) ? true : false;
 
             $records[] = [
                 'account_name'       => $row->campaignAccount->account_name,
@@ -1310,28 +1363,15 @@ class AccountAPIController extends ControllerAPI
                                     ->first();
 
                     if (! empty($check_lang)) {
-                        // news translation
-                        $news_translation = NewsTranslation::excludeDeleted('news_translations')
+                        // news and promotion translation
+                        $news_promotion_translation = NewsTranslation::excludeDeleted('news_translations')
                                                 ->join('news', 'news.news_id', '=', 'news_translations.news_id')
-                                                ->allowedForPMPUser($update_user, 'news')
+                                                ->allowedForPMPUser($update_user, 'news_promotion')
                                                 ->join('object_supported_language', 'object_supported_language.object_id', '=', DB::raw('ca.campaign_account_id'))
                                                 ->where('object_supported_language.language_id', $check_lang->language_id)
                                                 ->where('object_supported_language.status', 'active')
                                                 ->first();
-                        if (empty($news_translation)) {
-                            $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
-
-                        // promotion translation
-                        $promotion_translation = NewsTranslation::excludeDeleted('news_translations')
-                                                ->join('news', 'news.news_id', '=', 'news_translations.news_id')
-                                                ->allowedForPMPUser($update_user, 'promotion')
-                                                ->join('object_supported_language', 'object_supported_language.object_id', '=', DB::raw('ca.campaign_account_id'))
-                                                ->where('object_supported_language.language_id', $check_lang->language_id)
-                                                ->where('object_supported_language.status', 'active')
-                                                ->first();
-                        if (empty($promotion_translation)) {
+                        if (empty($news_promotion_translation)) {
                             $errorMessage = Lang::get('validation.orbit.exists.link_mobile_default_lang');
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -1449,9 +1489,7 @@ class AccountAPIController extends ControllerAPI
 
             // Save to user_merchant (1 to M)
             if ($merchant_ids) {
-                $merchants = UserMerchant::select('merchant_id')
-                                ->where('user_id', $update_user->user_id)->get()
-                                ->toArray();
+                $merchants = UserMerchant::where('user_id', $update_user->user_id)->get()->lists('merchant_id');
 
                 // handle from select all tenants when tenant has link to active campaign
                 if (empty($merchants)) {
@@ -1465,15 +1503,11 @@ class AccountAPIController extends ControllerAPI
                         $link_to_tenants->where('object_type', 'mall');
                     }
 
-                    $merchants = $link_to_tenants->get()->toArray();
+                    $merchants = $link_to_tenants->get()->lists('merchant_id');
                 }
 
-                $merchantdb = array();
-                foreach($merchants as $merchantdbid) {
-                    $merchantdb[] = $merchantdbid['merchant_id'];
-                }
-                $removetenant = array_diff($merchantdb, $merchant_ids);
-                $addtenant = array_diff($merchant_ids, $merchantdb);
+                $removetenant = array_diff($merchants, $merchant_ids);
+                $addtenant = array_diff($merchant_ids, $merchants);
                 $newsPromotionActive = 0;
                 $couponStatusActive = 0;
 
@@ -1499,11 +1533,11 @@ class AccountAPIController extends ControllerAPI
 
                 if ($removetenant) {
                     foreach ($removetenant as $tenant_id) {
-                        $activeCampaign = 0;
                         $newsPromotionActive = 0;
                         $couponStatusActive = 0;
 
                         $mall = CampaignLocation::select('merchant_id',
+                                                    'name',
                                                     'parent_id',
                                                     'object_type')
                                                 ->where('merchant_id', '=', $tenant_id)
@@ -1529,12 +1563,16 @@ class AccountAPIController extends ControllerAPI
 
                             //get data in news and promotion
                             $newsPromotionActive = News::allowedForPMPUser($update_user, 'news_promotion')
-                                                        ->select('news.news_id')
+                                                        ->select('news.news_id', 'news.object_type')
                                                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                                                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                                         ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
                                                         ->where('news_merchant.merchant_id', $tenant_id)
-                                                        ->count();
+                                                        ->first();
+                            if (! empty($newsPromotionActive)) {
+                                $errorMessage = "Cannot unlink the tenant with an active {$newsPromotionActive->object_type} on {$mall->object_type} {$mall->name}";
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
 
                             //get data in coupon
                             $couponStatusActive = Coupon::allowedForPMPUser($update_user, 'coupon')
@@ -1543,26 +1581,10 @@ class AccountAPIController extends ControllerAPI
                                                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                                         ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
                                                         ->where('promotion_retailer.retailer_id', $tenant_id)
-                                                        ->count();
-
-
-
-                            $activeCampaign = (int) $newsPromotionActive + (int) $couponStatusActive;
-
-                            $validator = Validator::make(
-                                array(
-                                    'active_campaign'  => $activeCampaign,
-                                ),
-                                array(
-                                    'active_campaign'    => 'in: 0',
-                                ),
-                                array(
-                                    'active_campaign.in' => 'Cannot unlink the tenant with an active campaign',
-                                )
-                            );
-
-                            if ($validator->fails()) {
-                                OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
+                                                        ->first();
+                            if (! empty($couponStatusActive)) {
+                                $errorMessage = "Cannot unlink the tenant with an active coupon on {$mall->object_type} {$mall->name}";
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
                         }
                     }

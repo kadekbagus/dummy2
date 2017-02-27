@@ -29,30 +29,22 @@ class SupportedLanguageAPIController extends PubControllerAPI
     {
       $httpCode = 200;
         try {
-            $sort_by = OrbitInput::get('sortby', 'name_long');
-            $sort_mode = OrbitInput::get('sortmode','asc');
+            $sortMode = OrbitInput::get('sortmode','asc');
+            $sortBy = 'name_native';
 
-            $language = Language::select('name', 'name_long')
+            $language = Language::select('language_id', 'name', 'name_native')
                             ->active();
 
             $_language = clone $language;
 
-            OrbitInput::get('sortby', function($_sortBy) use (&$sort_by)
-            {
-                // Map the sortby request to the real column name
-                $sortByMapping = array(
-                    'name_long' => 'name_long',
-                );
-
-                $sort_by = $sortByMapping[$_sortBy];
-            });
-
-            OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
-                    $sort_mode = 'desc';
+                    $sortMode = 'desc';
                 }
             });
+
+            $language->orderBy($sortBy, $sortMode);
 
             $take = PaginationNumber::parseTakeFromGet('language');
             $language->take($take);

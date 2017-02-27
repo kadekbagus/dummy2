@@ -12,6 +12,7 @@ use Lang;
 use BaseMerchant;
 use BaseMerchantCategory;
 use BaseMerchantKeyword;
+use ObjectSupportedLanguage;
 use BaseObjectPartner;
 use Config;
 use Language;
@@ -70,21 +71,28 @@ class MerchantNewAPIController extends ControllerAPI
             $keywords = OrbitInput::post('keywords');
             $countryId = OrbitInput::post('country_id');
             $keywords = (array) $keywords;
+            $languages = OrbitInput::post('languages', []);
+            $mobile_default_language = OrbitInput::post('mobile_default_language');
 
             // Begin database transaction
             $this->beginTransaction();
 
             $validator = Validator::make(
                 array(
-                    'merchantName' => $merchantName,
-                    'country'      => $countryId
+                    'merchantName'            => $merchantName,
+                    'country'                 => $countryId,
+                    'languages'               => $languages,
+                    'mobile_default_language' => $mobile_default_language
                 ),
                 array(
-                    'merchantName' => 'required|orbit.exist.merchant_name:' . $countryId,
-                    'country'      => 'required'
+                    'merchantName'            => 'required|orbit.exist.merchant_name:' . $countryId,
+                    'country'                 => 'required',
+                    'languages'               => 'required|array',
+                    'mobile_default_language' => 'required|size:2|orbit.supported.language'
                 ),
                 array(
-                    'orbit.exist.merchant_name' => 'Merchant is already exist'
+                    'orbit.exist.merchant_name' => 'Merchant is already exist',
+                    'orbit.supported.language'  => 'Default language is not supported'
                )
             );
 
@@ -156,7 +164,44 @@ class MerchantNewAPIController extends ControllerAPI
 
             Event::fire('orbit.basemerchant.postnewbasemerchant.before.save', array($this, $newBaseMerchant));
 
+            // check mobile default language must in supported language
+            if (in_array($mobile_default_language, $languages)) {
+                $newBaseMerchant->mobile_default_language = $mobile_default_language;
+            } else {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+            }
+
             $newBaseMerchant->save();
+
+            // languages
+            if (count($languages) > 0) {
+                foreach ($languages as $language_name) {
+                    $validator = Validator::make(
+                        array(
+                            'language'  => $language_name
+                        ),
+                        array(
+                            'language'  => 'required|size:2|orbit.supported.language'
+                        ),
+                        array(
+                            'orbit.supported.language'  => 'Default language is not supported'
+                        )
+                    );
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $baseMerchantLanguage = new ObjectSupportedLanguage();
+                    $baseMerchantLanguage->object_id = $newBaseMerchant->base_merchant_id;
+                    $baseMerchantLanguage->object_type = 'base_merchant';
+                    $baseMerchantLanguage->status = 'active';
+                    $baseMerchantLanguage->language_id = Language::where('name', '=', $language_name)->first()->language_id;
+                    $baseMerchantLanguage->save();
+                }
+            }
 
             // save translations
             OrbitInput::post('translations', function($translation_json_string) use ($newBaseMerchant, $merchantHelper) {

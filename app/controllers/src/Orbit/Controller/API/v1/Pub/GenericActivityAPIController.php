@@ -85,6 +85,7 @@ class GenericActivityAPIController extends PubControllerAPI
         $activityType = $genericActivityConfig['activity_list'][$activityNumber]['type'];
         $activityObjectType = $genericActivityConfig['activity_list'][$activityNumber]['object_type'];
         $activityObjectIDParamName = $genericActivityConfig['activity_list'][$activityNumber]['parameter_name'];
+
         // object type is supplied by frontend
         $activityObjectTypeParamName = NULL;
         if (isset($genericActivityConfig['activity_list'][$activityNumber]['object_type_parameter_name'])) {

@@ -110,6 +110,7 @@ class NewsAPIController extends ControllerAPI
             $sticky_order = OrbitInput::post('sticky_order');
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
+            $is_exclusive = OrbitInput::post('is_exclusive', 'N');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -120,34 +121,44 @@ class NewsAPIController extends ControllerAPI
                 $status = 'active';
             }
 
+            $validator_value = [
+                'news_name'           => $news_name,
+                'object_type'         => $object_type,
+                'status'              => $status,
+                'begin_date'          => $begin_date,
+                'end_date'            => $end_date,
+                'link_object_type'    => $link_object_type,
+                'id_language_default' => $id_language_default,
+                'is_all_gender'       => $is_all_gender,
+                'is_all_age'          => $is_all_age,
+                'sticky_order'        => $sticky_order,
+            ];
+            $validator_validation = [
+                'news_name'           => 'required|max:255',
+                'object_type'         => 'required|orbit.empty.news_object_type',
+                'status'              => 'required|orbit.empty.news_status',
+                'link_object_type'    => 'orbit.empty.link_object_type',
+                'begin_date'          => 'required|date|orbit.empty.hour_format',
+                'end_date'            => 'required|date|orbit.empty.hour_format',
+                'id_language_default' => 'required|orbit.empty.language_default',
+                'is_all_gender'       => 'required|orbit.empty.is_all_gender',
+                'is_all_age'          => 'required|orbit.empty.is_all_age',
+                'sticky_order'        => 'in:0,1',
+            ];
+            $validator_message = [
+                'sticky_order.in' => 'The sticky order value must 0 or 1',
+            ];
+
+            if (! empty($is_exclusive) && ! empty($partner_ids)) {
+                $validator_value['partner_exclusive']               = $is_exclusive;
+                $validator_validation['partner_exclusive']          = 'in:Y,N|orbit.empty.exclusive_partner';
+                $validator_message['orbit.empty.exclusive_partner'] = 'Partner is not exclusive / inactive';
+            }
+
             $validator = Validator::make(
-                array(
-                    'news_name'           => $news_name,
-                    'object_type'         => $object_type,
-                    'status'              => $status,
-                    'begin_date'          => $begin_date,
-                    'end_date'            => $end_date,
-                    'link_object_type'    => $link_object_type,
-                    'id_language_default' => $id_language_default,
-                    'is_all_gender'       => $is_all_gender,
-                    'is_all_age'          => $is_all_age,
-                    'sticky_order'        => $sticky_order,
-                ),
-                array(
-                    'news_name'           => 'required|max:255',
-                    'object_type'         => 'required|orbit.empty.news_object_type',
-                    'status'              => 'required|orbit.empty.news_status',
-                    'link_object_type'    => 'orbit.empty.link_object_type',
-                    'begin_date'          => 'required|date|orbit.empty.hour_format',
-                    'end_date'            => 'required|date|orbit.empty.hour_format',
-                    'id_language_default' => 'required|orbit.empty.language_default',
-                    'is_all_gender'       => 'required|orbit.empty.is_all_gender',
-                    'is_all_age'          => 'required|orbit.empty.is_all_age',
-                    'sticky_order'        => 'in:0,1',
-                ),
-                array(
-                    'sticky_order.in' => 'The sticky order value must 0 or 1',
-                )
+                $validator_value,
+                $validator_validation,
+                $validator_message
             );
 
             Event::fire('orbit.news.postnewnews.before.validation', array($this, $validator));
@@ -224,6 +235,7 @@ class NewsAPIController extends ControllerAPI
             $newnews->is_all_gender = $is_all_gender;
             $newnews->created_by = $this->api->user->user_id;
             $newnews->sticky_order = $sticky_order;
+            $newnews->is_exclusive = $is_exclusive;
 
             // Check for english content
             $dataTranslations = @json_decode($translations);
@@ -657,6 +669,7 @@ class NewsAPIController extends ControllerAPI
             $retailer_ids = (array) $retailer_ids;
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
+            $is_exclusive = OrbitInput::post('is_exclusive');
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -674,6 +687,7 @@ class NewsAPIController extends ControllerAPI
                 'id_language_default' => $id_language_default,
                 'is_all_gender'       => $is_all_gender,
                 'is_all_age'          => $is_all_age,
+                'partner_exclusive'    => $is_exclusive,
             );
 
             // Validate news_name only if exists in POST.
@@ -693,10 +707,12 @@ class NewsAPIController extends ControllerAPI
                     'id_language_default' => 'required|orbit.empty.language_default',
                     'is_all_gender'       => 'required|orbit.empty.is_all_gender',
                     'is_all_age'          => 'required|orbit.empty.is_all_age',
+                    'partner_exclusive'   => 'in:Y,N|orbit.empty.exclusive_partner',
                 ),
                 array(
                    'news_name_exists_but_me' => Lang::get('validation.orbit.exists.news_name'),
                    'orbit.update.news' => 'Cannot update campaign with status ' . $campaignStatus,
+                   'orbit.empty.exclusive_partner'  => 'Partner is not exclusive / inactive',
                 )
             );
 
@@ -804,6 +820,10 @@ class NewsAPIController extends ControllerAPI
                     $link_object_type = NULL;
                 }
                 $updatednews->link_object_type = $link_object_type;
+            });
+
+            OrbitInput::post('is_exclusive', function($is_exclusive) use ($updatednews) {
+                $updatednews->is_exclusive = $is_exclusive;
             });
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatednews) {
@@ -2496,6 +2516,35 @@ class NewsAPIController extends ControllerAPI
             return true;
         });
 
+        // check the partner exclusive or not if the is_exclusive is set to 'Y'
+        Validator::extend('orbit.empty.exclusive_partner', function ($attribute, $value, $parameters) {
+            $flag_exclusive = false;
+            $is_exclusive = OrbitInput::post('is_exclusive');
+            $partner_ids = OrbitInput::post('partner_ids');
+            $partner_ids = (array) $partner_ids;
+
+            $partner_exclusive = Partner::select('is_exclusive', 'status')
+                           ->whereIn('partner_id', $partner_ids)
+                           ->get();
+
+            foreach ($partner_exclusive as $exclusive) {
+                if ($exclusive->is_exclusive == 'Y' && $exclusive->status == 'active') {
+                    $flag_exclusive = true;
+                }
+            }
+
+            $valid = true;
+
+            if ($is_exclusive == 'Y') {
+                if ($flag_exclusive) {
+                    $valid = true;
+                } else {
+                    $valid = false;
+                }
+            }
+
+            return $valid;
+        });
 /*
         // News deletion master password
         Validator::extend('orbit.masterpassword.delete', function ($attribute, $value, $parameters) {

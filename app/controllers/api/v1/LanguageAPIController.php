@@ -34,34 +34,121 @@ class LanguageAPIController extends ControllerAPI
             // @Todo: Use ACL authentication instead
             $user_role = $user_login->role;
 
-            $role_name = ['Campaign Admin', 'Campaign Employee', 'Campaign Owner'];
+            $prefix = DB::getTablePrefix();
+            $languages = Language::select('languages.language_id', 'languages.name', 'languages.name_native', 'languages.name_long', 'languages.language_order', 'languages.created_at', 'languages.updated_at', 'languages.status')
+                                ->orderBy('languages.name_long', 'ASC')
+                                ->distinct();
 
+            OrbitInput::get('status', function($status) use ($languages) {
+                $languages->where('languages.status', '=', $status);
+            });
+
+            OrbitInput::get('mall_id', function($mall_id) use ($languages, $prefix) {
+                $mall_id = (array) $mall_id;
+                $languages->leftJoin('merchant_languages', 'merchant_languages.language_id', '=', 'languages.language_id')
+                        ->whereIn('merchant_languages.merchant_id', $mall_id)
+                        ->where('merchant_languages.status', '=', 'active');
+            });
+
+            $_languages = clone $languages;
+
+            $listlanguages = $languages->get();
+            $count = RecordCounter::create($_languages)->count();
+
+            $this->response->data = new stdClass();
+            $this->response->data->total_records = $count;
+            $this->response->data->returned_records = count($listlanguages);
+            $this->response->data->records = $listlanguages;
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        return $this->render($httpCode);
+    }
+
+    /**
+     * Returns global languages.
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getSearchPMPLanguage()
+    {
+        $httpCode = 200;
+        try {
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user_login = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $user_role = $user_login->role;
+
+            $validRoles = ['campaign admin', 'campaign employee', 'campaign owner'];
+            if (! in_array( strtolower($user_role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
 
             $prefix = DB::getTablePrefix();
             $languages = Language::select('languages.language_id', 'languages.name', 'languages.name_native', 'languages.name_long', 'languages.language_order', 'languages.created_at', 'languages.updated_at', 'languages.status')
-                                ->leftJoin('object_supported_language', 'object_supported_language.language_id', '=', 'languages.language_id')
-                                ->where('object_type', 'pmp_account')
-                                ->orderBy('language_order', 'DESC')
+                                ->orderBy('languages.name_long', 'ASC')
                                 ->distinct();
 
-            if (in_array($user_role->role_name, $role_name)) {
-                $campaign_account = $user_login->campaignAccount()->first();
+            $campaign_account = $user_login->campaignAccount()->first();
 
-                if ($campaign_account->is_link_to_all !== 'Y'){
-                    $languages->whereRaw("
-                                EXISTS (
-                                    SELECT 1
-                                    FROM {$prefix}campaign_account ca
-                                    JOIN {$prefix}campaign_account cap
-                                        ON cap.user_id = ca.parent_user_id
-                                    WHERE (ca.user_id = {$this->quote($user_login->user_id)} or ca.parent_user_id = {$this->quote($user_login->user_id)})
-                                        AND {$prefix}object_supported_language.object_id = cap.campaign_account_id
-                                    GROUP BY cap.campaign_account_id
-                                )
-                                AND {$prefix}object_supported_language.status = 'active'
-                            ");
-                }
+            $check_user = $campaign_account->parent_user_id;
+            if (empty($campaign_account->parent_user_id)) {
+                $check_user = $campaign_account->user_id;
             }
+
+            $languages->leftJoin('object_supported_language', 'object_supported_language.language_id', '=', 'languages.language_id')
+                    ->where('object_type', 'pmp_account')
+                    ->whereRaw("
+                        EXISTS (
+                            SELECT 1
+                            FROM {$prefix}campaign_account ca
+                            WHERE ca.user_id = {$this->quote($check_user)}
+                                AND ca.campaign_account_id = {$prefix}object_supported_language.object_id
+                        )
+                        AND {$prefix}object_supported_language.status = 'active'
+                    ");
 
             OrbitInput::get('status', function($status) use ($languages) {
                 $languages->where('languages.status', '=', $status);
@@ -224,7 +311,6 @@ class LanguageAPIController extends ControllerAPI
             ->setActivityType('create');
         $user = NULL;
         $merchant = NULL;
-
         $httpCode = 200;
 
         try {
@@ -283,7 +369,7 @@ class LanguageAPIController extends ControllerAPI
                         'status'      => $value->status,
                     ),
                     array(
-                        'language_id' => 'required|orbit.empty.language|orbit.empty.check_use_supported_language',
+                        'language_id' => 'required|orbit.empty.language|orbit.empty.check_use_supported_language:' . $value->status,
                         'status'      => 'required|orbit.empty.supported_language_status',
                     )
                 );
@@ -295,10 +381,8 @@ class LanguageAPIController extends ControllerAPI
                 }
             }
 
-
             // save all language
             foreach ($data as $languageId => $value) {
-
                 $supportedLanguage = Language::find($languageId);
                 $supportedLanguage->status = $value->status;
 
@@ -416,8 +500,13 @@ class LanguageAPIController extends ControllerAPI
     private function registerCustomValidation()
     {
         Validator::extend('orbit.empty.check_use_supported_language', function ($attribute, $value, $parameters) {
-            // Check all related existing content using supportted language in : mall, partner, campaign (pmp_account), and MDM
+            // No checking if any changeing from inactice to active
+            $status = $parameters[0];
+            if ($status ==  "active") {
+                return true;
+            }
 
+            // Check all related existing content using supportted language in : mall, partner, campaign (pmp_account), and MDM
             // 1. Check Mall/Merchant Language
             $mallLanguage = MerchantLanguage::select('merchant_language_id')
                                 ->active()
@@ -440,6 +529,7 @@ class LanguageAPIController extends ControllerAPI
 
             // 3. Check PMP Account
             $objectSupportedLanguage = ObjectSupportedLanguage::select('object_supported_language_id')
+                                ->active()
                                 ->where('language_id', $value)
                                 ->first();
 
@@ -449,7 +539,8 @@ class LanguageAPIController extends ControllerAPI
 
             // 4. Check Merchants language in DM
             $mdmLanguage = BaseMerchantTranslation::select('base_merchant_translation_id')
-                                ->where('language_id', $value);
+                                ->where('language_id', $value)
+                                ->first();
 
             if (is_object($mdmLanguage)) {
                 return false;

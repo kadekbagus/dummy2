@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 
 <head>
-    <title>Selamat Datang di Gotomalls!</title>
+    <title>{{ $subject }}</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
     <style type="text/css">
@@ -185,37 +185,31 @@
             <![endif]-->
                                                                             <!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/malls" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Malls</a>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href={{ $link_malls }} style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">{{ $label_malls }}</a>
                                                                             <!--[if gte mso 9]>
                 </td>
             <![endif]-->
                                                                             <!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/stores" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Stores</a>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href={{ $link_stores }} style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">{{ $label_stores }}</a>
                                                                             <!--[if gte mso 9]>
                 </td>
             <![endif]-->
                                                                             <!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/promotions" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Promotions</a>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href={{ $link_promotions }} style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">{{ $label_promotions }}</a>
                                                                             <!--[if gte mso 9]>
                 </td>
             <![endif]-->
                                                                             <!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/coupons" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Coupons</a>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href={{ $link_coupons }} style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">{{ $label_coupons }}</a>
                                                                             <!--[if gte mso 9]>
                 </td>
             <![endif]-->
                                                                             <!--[if gte mso 9]>
                 <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/luckydraws" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">Lucky Draws</a>
-                                                                            <!--[if gte mso 9]>
-                </td>
-            <![endif]-->
-                                                                            <!--[if gte mso 9]>
-                <td style="padding: 15px 10px">
-            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href="https://www.gotomalls.com/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/news" style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">News</a>
+            <![endif]--><a aria-labelledby="menu-column-per-33" class="menu-column-per-33" href={{ $link_events }} style="display:inline-block;text-decoration:none;color:#ffffff;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:11px;font-weight:normal;line-height:22px;background: #BA1F00;padding: 5px 0px !important;width: 88px;margin: 0px 4px;border-radius: 16px;">{{ $label_events }}</a>
                                                                             <!--[if gte mso 9]>
                 </td>
             <![endif]-->
@@ -271,7 +265,7 @@
                                             <td style="word-break:break-word;font-size:0px;padding:0 25px;" align="center">
                                                 <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
                                                     <h1 style="font-size: 1.6em;">
-                        Selamat Datang di Gotomalls!
+                        {{ $subject }}
                     </h1>
                                                 </div>
                                             </td>
@@ -312,8 +306,8 @@
                                             <td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center">
                                                 <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
                                                     <p align="justify" style="margin:0">
-                                                        Hello {{{ $first_name or $email }}},
-                                                        <br \> Terima kasih sudah bergabung dengan Gotomalls! Untuk mengaktifkan akun Anda, silakan klik di bawah ini.
+                                                        {{ $greeting }} {{{ $first_name or $email }}},
+                                                        <br \> {{ $message_part1 }} {{ $message_part2 }}
                                                     </p>
                                                 </div>
                                             </td>
@@ -324,7 +318,7 @@
                                                     <tbody>
                                                         <tr>
                                                             <td style="border-radius:3px;color:white;cursor:auto;padding:10px 25px; border-radius: 16px;" align="center" valign="middle" bgcolor="#BA1F00"><a href="{{ $token_url }}" style="display:inline-block;text-decoration:none;background:#BA1F00;border-radius:3px;color:white;font-family:Helvetica;font-size:13px;font-weight:normal;margin:0px;">
-                    Aktifkan Akun
+                    {{ $button_activation }}
                 </a>
                                                             </td>
                                                         </tr>
@@ -337,15 +331,15 @@
                                             <td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center">
                                                 <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
                                                     <p align="justify" style="margin:0">
-                                                    Setelah itu, Anda dapat mengakses Gotomalls dengan akun yang sama di perangkat yang lain dengan cara:
+                                                    {{ $message_part3 }}
                                                     </p>
                                                       <ol>
-                                                        <li style="text-align:left;">Menekan tombol "Sign In"</li>
-                                                        <li style="text-align:left;">Masukan alamat email</li>
-                                                        <li style="text-align:left;">Input password </li>
+                                                        <li style="text-align:left;">{{ $list_1 }}</li>
+                                                        <li style="text-align:left;">{{ $list_2 }}</li>
+                                                        <li style="text-align:left;">{{ $list_3 }}</li>
                                                       </ol>
-                                                    <p align="justify" style="margin:0">Have fun with Gotomalls!</p><br/>
-                                                    <p align="justify" style="margin:0"><b>Gotomalls Team</b></p>
+                                                    <p align="justify" style="margin:0">{{ $message_part4 }}</p><br/>
+                                                    <p align="justify" style="margin:0"><b>{{ $team_name }}</b></p>
                                                 </div>
                                             </td>
                                         </tr>

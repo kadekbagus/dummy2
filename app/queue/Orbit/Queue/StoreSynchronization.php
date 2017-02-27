@@ -186,6 +186,7 @@ class StoreSynchronization
                     $tenant->unit = $store->unit;
                     $tenant->phone = $store->phone;
                     $tenant->masterbox_number = $store->verification_number;
+                    $tenant->mobile_default_language = $store->mobile_default_language;
                     $tenant->save();
 
                     // save to table merchant_translation

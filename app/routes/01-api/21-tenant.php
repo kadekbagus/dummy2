@@ -120,67 +120,67 @@ Route::post('/api/v1/mall-background/delete', function()
  */
 Route::get('/api/v1/pub/store-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreList();
+    return Orbit\Controller\API\v1\Pub\Store\StoreListAPIController::create()->getStoreList();
 });
 
-Route::get('/app/v1/pub/store-list', ['as' => 'pub-store-list', 'uses' => 'IntermediatePubAuthController@Store_getStoreList']);
+Route::get('/app/v1/pub/store-list', ['as' => 'pub-store-list', 'uses' => 'IntermediatePubAuthController@Store\StoreList_getStoreList']);
 
 /**
  * Get Merchant/Store lists counter for gotomalls landing page
  */
 Route::get('/api/v1/pub/store-count', function()
 {
-    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreList();
+    return Orbit\Controller\API\v1\Pub\Store\StoreCounterAPIController::create()->getStoreList();
 });
 
-Route::get('/app/v1/pub/store-count', ['as' => 'pub-store-count', 'uses' => 'IntermediatePubAuthController@StoreCounter_getStoreCount']);
+Route::get('/app/v1/pub/store-count', ['as' => 'pub-store-count', 'uses' => 'IntermediatePubAuthController@Store\StoreCounter_getStoreCount']);
 
 /**
  * Get mall list based on store name
  */
 Route::get('/api/v1/pub/mall-store-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getMallStoreList();
+    return Orbit\Controller\API\v1\Pub\Store\StoreMallListAPIController::create()->getMallStoreList();
 });
 
-Route::get('/app/v1/pub/mall-store-list', ['as' => 'pub-mall-store-list', 'uses' => 'IntermediatePubAuthController@Store_getMallStoreList']);
+Route::get('/app/v1/pub/mall-store-list', ['as' => 'pub-mall-store-list', 'uses' => 'IntermediatePubAuthController@Store\StoreMallList_getMallStoreList']);
 
 /**
  * Get Store Detail
  */
 Route::get('/api/v1/pub/store-detail', function()
 {
-    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getStoreDetail();
+    return Orbit\Controller\API\v1\Pub\Store\StoreDetailAPIController::create()->getStoreDetail();
 });
 
-Route::get('/app/v1/pub/store-detail', ['as' => 'pub-store-detail', 'uses' => 'IntermediatePubAuthController@Store_getStoreDetail']);
+Route::get('/app/v1/pub/store-detail', ['as' => 'pub-store-detail', 'uses' => 'IntermediatePubAuthController@Store\StoreDetail_getStoreDetail']);
 
 /**
  * Get mall detail based on store name
  */
 Route::get('/api/v1/pub/mall-detail-store', function()
 {
-    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getMallDetailStore();
+    return Orbit\Controller\API\v1\Pub\Store\StoreMallDetailAPIController::create()->getMallDetailStore();
 });
 
-Route::get('/app/v1/pub/mall-detail-store', ['as' => 'pub-mall-detail-store', 'uses' => 'IntermediatePubAuthController@Store_getMallDetailStore']);
+Route::get('/app/v1/pub/mall-detail-store', ['as' => 'pub-mall-detail-store', 'uses' => 'IntermediatePubAuthController@Store\StoreMallDetail_getMallDetailStore']);
 
 /**
  * Get campaign list based on store name
  */
 Route::get('/api/v1/pub/campaign-store-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\StoreAPIController::create()->getCampaignStoreList();
+    return Orbit\Controller\API\v1\Pub\Store\StoreCampaignListAPIController::create()->getCampaignStoreList();
 });
 
-Route::get('/app/v1/pub/campaign-store-list', ['as' => 'pub-campaign-store-list', 'uses' => 'IntermediatePubAuthController@Store_getCampaignStoreList']);
+Route::get('/app/v1/pub/campaign-store-list', ['as' => 'pub-campaign-store-list', 'uses' => 'IntermediatePubAuthController@Store\StoreCampaignList_getCampaignStoreList']);
 
 /**
  * List city for store
  */
 Route::get('/api/v1/pub/store-city/list', function()
 {
-    return Orbit\Controller\API\v1\Pub\StoreCityAPIController::create()->getStoreCity();
+    return Orbit\Controller\API\v1\Pub\Store\StoreCityAPIController::create()->getStoreCity();
 });
 
-Route::get('/app/v1/pub/store-city/list', ['as' => 'pub-store-city', 'uses' => 'IntermediatePubAuthController@StoreCity_getStoreCity']);
+Route::get('/app/v1/pub/store-city/list', ['as' => 'pub-store-city', 'uses' => 'IntermediatePubAuthController@Store\StoreCity_getStoreCity']);
