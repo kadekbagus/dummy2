@@ -381,7 +381,6 @@ class PromotionListAPIController extends PubControllerAPI
                                     adv.link_object_id,
                                     adv.placement_order,
                                     adv.path,
-                                    adv.is_all_location,
                                     adv.placement_type as placement_type_orig,
                                     CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
                          ->groupBy(DB::raw("adv.link_object_id"))
