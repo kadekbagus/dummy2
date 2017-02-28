@@ -58,8 +58,9 @@ class SocMedAPIController extends PubControllerAPI
             $languageEnId = $language->language_id;
         }
 
-
         $id = OrbitInput::get('id');
+        $country = OrbitInput::get('country', null);
+        $cities = OrbitInput::get('cities', null);
 
         $prefix = DB::getTablePrefix();
 
@@ -119,7 +120,7 @@ class SocMedAPIController extends PubControllerAPI
         }
 
         $data = new stdclass();
-        $data->url = static::getSharedUrl('promotion', $promotion->news_id, $promotion->news_name);
+        $data->url = static::getSharedUrl('promotion', $promotion->news_id, $promotion->news_name, $country, $cities);
         $data->title = $promotion->news_name;
         $data->description = $promotion->description;
         $data->mall = new stdclass();
@@ -156,6 +157,8 @@ class SocMedAPIController extends PubControllerAPI
 
 
         $id = OrbitInput::get('id');
+        $country = OrbitInput::get('country', null);
+        $cities = OrbitInput::get('cities', null);
 
         $prefix = DB::getTablePrefix();
 
@@ -215,7 +218,7 @@ class SocMedAPIController extends PubControllerAPI
         }
 
         $data = new stdclass();
-        $data->url = static::getSharedUrl('news', $news->news_id, $news->news_name);
+        $data->url = static::getSharedUrl('news', $news->news_id, $news->news_name, $country, $cities);
         $data->title = $news->news_name;
         $data->description = $news->description;
         $data->mall = new stdclass();
@@ -251,6 +254,8 @@ class SocMedAPIController extends PubControllerAPI
         }
 
         $storeId = OrbitInput::get('id');
+        $country = OrbitInput::get('country', null);
+        $cities = OrbitInput::get('cities', null);
 
         $prefix = DB::getTablePrefix();
 
@@ -305,7 +310,7 @@ class SocMedAPIController extends PubControllerAPI
         }
 
         $data = new stdclass();
-        $data->url = static::getSharedUrl('store', $store->merchant_id, $store->name);
+        $data->url = static::getSharedUrl('store', $store->merchant_id, $store->name, $country, $cities);
         $data->title = $store->name;
         $data->description = $store->description;
         $data->mall = new stdclass();
@@ -341,6 +346,8 @@ class SocMedAPIController extends PubControllerAPI
         }
 
         $id = OrbitInput::get('id');
+        $country = OrbitInput::get('country', null);
+        $cities = OrbitInput::get('cities', null);
 
         $prefix = DB::getTablePrefix();
 
@@ -398,7 +405,7 @@ class SocMedAPIController extends PubControllerAPI
         }
 
         $data = new stdclass();
-        $data->url = static::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name);
+        $data->url = static::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name, $country, $cities);
         $data->title = $coupon->promotion_name;
         $data->description = $coupon->description;
         $data->mall = new stdclass();

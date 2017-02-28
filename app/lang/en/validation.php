@@ -362,6 +362,7 @@ return array(
             'vendor_city' => 'The :attribute is not found',
             'gtm_city' => 'The :attribute is not found',
             'exclusive_partner' => 'Exclusive partner not found',
+            'merchant_verification_number' => 'The merchant verification number field is required',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(
