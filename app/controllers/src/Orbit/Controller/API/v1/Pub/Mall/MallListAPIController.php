@@ -170,6 +170,10 @@ class MallListAPIController extends PubControllerAPI
                     }
 
                     if ($shouldMatch != '') {
+                        if (count((array) $cityFilters) === 1) {
+                            // if user just filter with one city, value of should match must be 100%
+                            $shouldMatch = '100%';
+                        }
                         $cityFilterArr['bool']['minimum_should_match'] = $shouldMatch;
                     }
                     $jsonArea['query']['bool']['must'][] = $cityFilterArr;
