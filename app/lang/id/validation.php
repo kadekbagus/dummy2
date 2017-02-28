@@ -362,6 +362,7 @@ return array(
             'vendor_city' => 'The :attribute is not found',
             'gtm_city' => 'The :attribute is not found',
             'exclusive_partner' => 'Exclusive partner not found',
+            'merchant_verification_number' => 'Kolom kode verifikasi merchant harus diisi',
         ),
         'queryerror' => 'Error pada database query, nyalakan mode debug untuk melihat seluruh query.',
         'jsonerror'  => array(
@@ -417,6 +418,9 @@ return array(
             'geo_area'      => 'The Geofence area is not valid',
             'min' => 'Konfirmasi kata sandi minimal :min karakter.',
             'confirmed_password' => "Kata kunci konfirmasi tidak sesuai.",
+            'sign_up' => array(
+                'email' => 'Anda harus memasukkan email yang benar',
+            ),
         ),
         'actionlist' => array(
             'change_password'           => 'update password',

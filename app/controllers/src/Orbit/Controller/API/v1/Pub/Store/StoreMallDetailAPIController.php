@@ -68,6 +68,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $user = $this->getUser();
             $mallId = OrbitInput::get('mall_id', null);
             $merchantId = OrbitInput::get('merchant_id');
+            $location = OrbitInput::get('location');
 
             $ul = OrbitInput::get('ul', null);
             $take = PaginationNumber::parseTakeFromGet('retailer');
@@ -90,6 +91,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $cacheKey = [
                 'mall_id' => $mallId,
                 'merchant_id' => $merchantId,
+                'location' => $location,
                 'take' => $take,
                 'skip' => $skip,
             ];
@@ -161,6 +163,10 @@ class StoreMallDetailAPIController extends PubControllerAPI
                               ->where('merchants.name', $storename)
                               ->where('merchants.country_id', $countryId)
                               ->where(DB::raw("mall.status"), 'active');
+
+            if (! empty($location)) {
+                $mall->where(DB::raw('mall.city'), $location);
+            };
 
             if (! empty($mallId)) {
                 $mall->where(DB::raw("mall.merchant_id"), '=', $mallId)->first();

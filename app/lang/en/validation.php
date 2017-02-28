@@ -362,6 +362,7 @@ return array(
             'vendor_city' => 'The :attribute is not found',
             'gtm_city' => 'The :attribute is not found',
             'exclusive_partner' => 'Exclusive partner not found',
+            'merchant_verification_number' => 'The merchant verification number field is required',
         ),
         'queryerror' => 'Database query error, turn on debug mode to see the full query',
         'jsonerror'  => array(
@@ -417,6 +418,9 @@ return array(
             'geo_area'      => 'The Geofence area is not valid',
             'min' => 'Minimum password confirmation minimal :min characters.',
             'confirmed_password' => 'Password confirmation is not appropriate.',
+            'sign_up' => array(
+                'email' => 'The email must be a valid email address',
+            ),
         ),
         'actionlist' => array(
             'change_password'           => 'change password',
