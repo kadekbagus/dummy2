@@ -171,7 +171,7 @@ class NewsListAPIController extends PubControllerAPI
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.keyword', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.keyword', '');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.news.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.news.object_type', '^5');
@@ -188,7 +188,9 @@ class NewsListAPIController extends PubControllerAPI
 
                     $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
 
-                    $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    if ($shouldMatch != '') {
+                        $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    }
                     $jsonQuery['query']['bool']['must'][] = $filterKeyword;
                 }
             });
@@ -203,7 +205,7 @@ class NewsListAPIController extends PubControllerAPI
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
                 $searchFlag = $searchFlag || TRUE;
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.category', '50%');
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.category', '');
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
@@ -212,7 +214,9 @@ class NewsListAPIController extends PubControllerAPI
                     $categoryFilter['bool']['should'][] = array('match' => array('category_ids' => $value));
                 }
 
-                $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                if ($shouldMatch != '') {
+                    $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                }
                 $jsonQuery['query']['bool']['must'][] = $categoryFilter;
             });
 
@@ -270,18 +274,15 @@ class NewsListAPIController extends PubControllerAPI
             // filter by city, only filter when countryFilter is not empty
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
                 if (! empty($countryFilter)) {
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.city', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.city', '');
                     $cityFilterArr = [];
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];
                     }
 
-                    if (count((array) $cityFilters) === 1) {
-                        // if user just filter with one city, value of should match must be 100%
-                        $shouldMatch = '100%';
+                    if ($shouldMatch != '') {
+                        $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
                     }
-
-                    $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
                     $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
             });

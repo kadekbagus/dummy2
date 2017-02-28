@@ -184,7 +184,7 @@ class CouponListAPIController extends PubControllerAPI
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
                     $withKeywordSearch = true;
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.keyword', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.keyword', '');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.coupons.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.coupons.object_type', '^5');
@@ -201,7 +201,9 @@ class CouponListAPIController extends PubControllerAPI
 
                     $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
 
-                    $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    if ($shouldMatch != '') {
+                        $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    }
                 }
             });
 
@@ -214,7 +216,7 @@ class CouponListAPIController extends PubControllerAPI
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.category', '50%');
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.category', '');
                 $searchFlag = $searchFlag || TRUE;
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
@@ -224,7 +226,9 @@ class CouponListAPIController extends PubControllerAPI
                     $categoryFilter['bool']['should'][] = array('match' => array('category_ids' => $value));
                 }
 
-                $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                if ($shouldMatch != '') {
+                    $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                }
                 $jsonQuery['query']['bool']['must'][] = $categoryFilter;
             });
 
@@ -282,17 +286,14 @@ class CouponListAPIController extends PubControllerAPI
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, $countryFilter, &$countryCityFilterArr) {
                 if (! empty($countryFilter)) {
                     $cityFilterArr = [];
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.city', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.city', '');
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['link_to_tenant.city.raw' => $cityFilter]];
                     }
 
-                    if (count((array) $cityFilters) === 1) {
-                        // if user just filter with one city, value of should match must be 100%
-                        $shouldMatch = '100%';
+                    if ($shouldMatch != '') {
+                        $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
                     }
-
-                    $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
                     $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
             });

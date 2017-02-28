@@ -26,33 +26,33 @@ return array(
         // The minimum_should_match parameter possible values
         'minimum_should_match' => [
             'mall' => [
-                'keyword'  => '50%',
-                'category' => '50%',
-                'city'     => '50%'
+                'keyword'  => '',
+                'category' => '',
+                'city'     => ''
             ],
 
             'news' => [
-                'keyword'  => '50%',
-                'category' => '50%',
-                'city'     => '50%'
+                'keyword'  => '',
+                'category' => '',
+                'city'     => ''
             ],
 
             'promotion' => [
-                'keyword'  => '50%',
-                'category' => '50%',
-                'city'     => '50%'
+                'keyword'  => '',
+                'category' => '',
+                'city'     => ''
             ],
 
             'coupon' => [
-                'keyword'  => '50%',
-                'category' => '50%',
-                'city'     => '50%'
+                'keyword'  => '',
+                'category' => '',
+                'city'     => ''
             ],
 
             'store' => [
-                'keyword'  => '50%',
-                'category' => '50%',
-                'city'     => '50%'
+                'keyword'  => '',
+                'category' => '',
+                'city'     => ''
             ]
         ],
 

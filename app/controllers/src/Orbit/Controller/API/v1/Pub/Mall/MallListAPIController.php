@@ -107,7 +107,7 @@ class MallListAPIController extends PubControllerAPI
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.mall.keyword', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.mall.keyword', '');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.mall.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.mall.object_type', '^5');
@@ -121,7 +121,9 @@ class MallListAPIController extends PubControllerAPI
 
                     $filterKeyword['bool']['should'][]= array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'], 'object_type'.$priority['object_type'], 'city'.$priority['city'], 'province'.$priority['province'], 'keywords'.$priority['keywords'], 'address_line'.$priority['address_line'], 'country'.$priority['country'], 'description'.$priority['description'])));
 
-                    $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    if ($shouldMatch != '') {
+                        $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    }
                     $jsonArea['query']['bool']['must'][] = $filterKeyword;
                 }
             });
@@ -162,17 +164,14 @@ class MallListAPIController extends PubControllerAPI
                 if (! empty($countryFilter)) {
                     $searchFlag = $searchFlag || TRUE;
                     $cityFilterArr = [];
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.mall.city', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.mall.city', '');
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr['bool']['should'][] = array('match' => array('city.raw' => array('query' => $cityFilter)));;
                     }
 
-                    if (count((array) $cityFilters) === 1) {
-                        // if user just filter with one city, value of should match must be 100%
-                        $shouldMatch = '100%';
+                    if ($shouldMatch != '') {
+                        $cityFilterArr['bool']['minimum_should_match'] = $shouldMatch;
                     }
-
-                    $cityFilterArr['bool']['minimum_should_match'] = $shouldMatch;
                     $jsonArea['query']['bool']['must'][] = $cityFilterArr;
                 }
             });
