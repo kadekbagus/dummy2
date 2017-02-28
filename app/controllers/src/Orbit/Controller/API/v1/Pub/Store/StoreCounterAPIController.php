@@ -443,7 +443,7 @@ class StoreCounterAPIController extends PubControllerAPI
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery) {
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.category', '50%');
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.category', '');
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
@@ -451,7 +451,9 @@ class StoreCounterAPIController extends PubControllerAPI
                 foreach ($categoryIds as $key => $value) {
                     $categoryFilter['bool']['should'][] = array('match' => array('category' => $value));
                 }
-                $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                if ($shouldMatch != '') {
+                    $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                }
                 $jsonQuery['query']['bool']['must'][] = $categoryFilter;
             });
 
@@ -493,11 +495,14 @@ class StoreCounterAPIController extends PubControllerAPI
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, &$countryCityFilterArr) {
                 if (! empty($this->countryFilter)) {
                     $cityFilterArr = [];
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.city', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.city', '');
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['city.raw' => $cityFilter]];
                     }
-                    $countryCityFilterArr['bool']['minimum_should_match'] = $shouldMatch;
+
+                    if ($shouldMatch != '') {
+                        $countryCityFilterArr['bool']['minimum_should_match'] = $shouldMatch;
+                    }
                     $countryCityFilterArr['bool']['should'] = $cityFilterArr;
                 }
             });
