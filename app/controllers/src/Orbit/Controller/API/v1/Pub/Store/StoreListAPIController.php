@@ -377,8 +377,6 @@ class StoreListAPIController extends PubControllerAPI
                             })
                             ->leftJoin('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
                                 $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
-                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
-                                $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
                             })
                             ->join('advert_placements', function ($q) use ($list_type) {
                                 $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
@@ -395,6 +393,8 @@ class StoreListAPIController extends PubControllerAPI
                             ->where('adverts.status', '=', DB::raw("'active'"))
                             ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
                             ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
+                            ->where('advert_locations.location_id', $advert_location_id)
+                            ->where('advert_locations.location_type', $advert_location_type)
                             ->orderBy('advert_placements.placement_order', 'desc');
 
             $advertList = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
