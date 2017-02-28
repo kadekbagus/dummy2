@@ -25,10 +25,10 @@ return array(
         'label_promotions'          => 'Promosi',
         'label_coupons'             => 'Kupon',
         'label_events'              => 'Event',
-        'subject'                   => 'Sudahkah Anda mencoba Gotomalls.com?',
+        'subject'                   => 'Sudahkah Anda mengunjungi Gotomalls.com?',
         'greeting'                  => 'Hai',
         'message_part1'             => 'Seorang teman Anda',
-        'message_part2'             => 'ingin Anda untuk mencoba Gotomalls.com.',
+        'message_part2'             => 'ingin Anda untuk mengunjungi Gotomalls.com.',
         'button_try_now'            => 'Coba Sekarang!'
     ),
 
