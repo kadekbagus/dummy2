@@ -393,8 +393,14 @@ class StoreListAPIController extends PubControllerAPI
                             ->where('adverts.status', '=', DB::raw("'active'"))
                             ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
                             ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
-                            ->where('advert_locations.location_id', $advert_location_id)
-                            ->where('advert_locations.location_type', $advert_location_type)
+                            ->where(function($q) use($advert_location_id) {
+                                $q->where('advert_locations.location_id', $advert_location_id)
+                                  ->orWhere('adverts.is_all_location', 'Y');
+                            })
+                            ->where(function($q) use($advert_location_type){
+                                $q->where('advert_locations.location_type', $advert_location_type)
+                                  ->orWhere('adverts.is_all_location', 'Y');
+                            })
                             ->orderBy('advert_placements.placement_order', 'desc');
 
             $advertList = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
