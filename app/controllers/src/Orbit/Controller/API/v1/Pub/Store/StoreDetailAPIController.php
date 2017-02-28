@@ -49,6 +49,7 @@ class StoreDetailAPIController extends PubControllerAPI
 
             $merchantid = OrbitInput::get('merchant_id');
             $language = OrbitInput::get('language', 'id');
+            $mallId = OrbitInput::get('mall_id', null);
 
             $this->registerCustomValidation();
             $validator = Validator::make(
@@ -154,15 +155,24 @@ class StoreDetailAPIController extends PubControllerAPI
                 ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->join('languages', 'languages.name', '=', 'merchants.mobile_default_language')
                 ->where('merchants.status', 'active')
-                ->whereRaw("oms.status = 'active'")
-                ->where('merchants.merchant_id', $merchantid);
+                ->whereRaw("oms.status = 'active'");
 
-            OrbitInput::get('mall_id', function($mallId) use ($store, &$mall, $prefix) {
-                $store->where('merchants.parent_id', $mallId);
+            if (! is_null($mallId)) {
+                $store2 = Tenant::where('merchant_id', $merchantid)->first();
+
+                if (! is_object($store2)) {
+                    OrbitShopAPI::throwInvalidArgument('Unable to find store.');
+                }
+
+                $store->where('merchants.name', $store2->name)
+                      ->where('merchants.parent_id', $mallId);
+
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
-            });
+            } else {
+                $store->where('merchants.merchant_id', $merchantid);
+            }
 
             $store = $store->orderBy('merchants.created_at', 'asc')
                 ->first();
