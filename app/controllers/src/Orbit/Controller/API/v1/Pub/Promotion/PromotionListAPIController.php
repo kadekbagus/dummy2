@@ -343,8 +343,6 @@ class PromotionListAPIController extends PubControllerAPI
                                 $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                             })
                             ->leftJoin('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
-                                $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
-                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
                                 $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
                             })
                             ->join('advert_placements', function ($q) use ($list_type) {
@@ -361,6 +359,8 @@ class PromotionListAPIController extends PubControllerAPI
                             })
                             ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
                             ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
+                            ->where('advert_locations.location_id', $advert_location_id)
+                            ->where('advert_locations.location_type', $advert_location_type)
                             ->where('adverts.status', '=', DB::raw("'active'"))
                             ->orderBy('advert_placements.placement_order', 'desc');
 
