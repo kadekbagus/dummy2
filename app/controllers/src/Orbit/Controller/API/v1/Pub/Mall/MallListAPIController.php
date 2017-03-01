@@ -220,8 +220,8 @@ class MallListAPIController extends PubControllerAPI
                 $mallConfig =  Config::get('orbit.featured.mall_ids', null);
                 if (! empty($mallConfig)) {
                     $withScore = true;
-                    $filterKeyword = array('bool' => array('should' => array(array('terms' => array('_id' => $mallConfig)), array('match_all' => new stdClass()))));
-                    $jsonArea['query'] = $filterKeyword;
+                    $filterKeyword = array(array('terms' => array('_id' => $mallConfig)), array('match_all' => new stdClass()));
+                    $jsonArea['query']['bool']['should'] = $filterKeyword;
                 }
             }
 
