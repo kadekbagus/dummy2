@@ -10,9 +10,9 @@ return array(
         'label_events'              => 'Events',
         'greeting'                  => 'Hi',
         'message_part1'             => 'Your friend',
-        'message_part2_coupon'      => 'want you to see this coupon:',
-        'message_part2_promotion'   => 'want you to see this promotion:',
-        'message_part2_event'       => 'want you to see this event:',
+        'message_part2_coupon'      => 'wants you to see this coupon:',
+        'message_part2_promotion'   => 'wants you to see this promotion:',
+        'message_part2_event'       => 'wants you to see this event:',
         'button_see_now'            => 'See Now!',
         'campaign_type_coupon'      => 'Coupon',
         'campaign_type_promotion'   => 'Promotion',
@@ -25,11 +25,11 @@ return array(
         'label_promotions'          => 'Promotions',
         'label_coupons'             => 'Coupons',
         'label_events'              => 'Events',
-        'subject'                   => 'Have you try Gotomalls.com?',
+        'subject'                   => 'Have you visited Gotomalls.com?',
         'greeting'                  => 'Hi',
         'message_part1'             => 'Your friend',
-        'message_part2'             => 'want you to try Gotomalls.com.',
-        'button_try_now'            => 'Try Now!'
+        'message_part2'             => 'wants you to visit Gotomalls.com.',
+        'button_try_now'            => 'Visit Now!'
     ),
 
     'activation' => array(

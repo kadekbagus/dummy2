@@ -217,7 +217,7 @@ class StoreCounterAPIController extends PubControllerAPI
                     $keyword = strtolower($keyword);
                     $withScore = true;
                     $withKeywordSearch = true;
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.keyword', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.keyword', '');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.store.name', '^6');
                     $priority['object_type'] = Config::get('orbit.elasticsearch.priority.store.object_type', '^5');
@@ -235,7 +235,9 @@ class StoreCounterAPIController extends PubControllerAPI
 
                     $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('name'.$priority['name'],'object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
 
-                    $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    if ($shouldMatch != '') {
+                        $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+                    }
                     $jsonQuery['query']['bool']['must'][] = $filterKeyword;
                 }
             });
@@ -250,7 +252,7 @@ class StoreCounterAPIController extends PubControllerAPI
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery) {
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.category', '50%');
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.category', '');
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
@@ -258,7 +260,10 @@ class StoreCounterAPIController extends PubControllerAPI
                 foreach ($categoryIds as $key => $value) {
                     $categoryFilter['bool']['should'][] = array('match' => array('category' => $value));
                 }
-                $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+
+                if ($shouldMatch != '') {
+                    $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                }
                 $jsonQuery['query']['bool']['must'][] = $categoryFilter;
             });
 
@@ -301,12 +306,19 @@ class StoreCounterAPIController extends PubControllerAPI
             // filter by city, only filter when countryFilter is not empty
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, &$countryCityFilterArr) {
                 if (! empty($this->countryFilter)) {
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.city', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.city', '');
                     $cityFilterArr = [];
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['tenant_detail.city.raw' => $cityFilter]];
                     }
-                    $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
+
+                    if ($shouldMatch != '') {
+                        if (count((array) $cityFilters) === 1) {
+                            // if user just filter with one city, value of should match must be 100%
+                            $shouldMatch = '100%';
+                        }
+                        $countryCityFilterArr['nested']['query']['bool']['minimum_should_match'] = $shouldMatch;
+                    }
                     $countryCityFilterArr['nested']['query']['bool']['should'] = $cityFilterArr;
                 }
             });
@@ -435,7 +447,7 @@ class StoreCounterAPIController extends PubControllerAPI
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery) {
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.category', '50%');
+                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.category', '');
                 if (! is_array($categoryIds)) {
                     $categoryIds = (array)$categoryIds;
                 }
@@ -443,7 +455,9 @@ class StoreCounterAPIController extends PubControllerAPI
                 foreach ($categoryIds as $key => $value) {
                     $categoryFilter['bool']['should'][] = array('match' => array('category' => $value));
                 }
-                $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                if ($shouldMatch != '') {
+                    $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+                }
                 $jsonQuery['query']['bool']['must'][] = $categoryFilter;
             });
 
@@ -485,11 +499,18 @@ class StoreCounterAPIController extends PubControllerAPI
             OrbitInput::get('cities', function ($cityFilters) use (&$jsonQuery, &$countryCityFilterArr) {
                 if (! empty($this->countryFilter)) {
                     $cityFilterArr = [];
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.city', '50%');
+                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.store.city', '');
                     foreach ((array) $cityFilters as $cityFilter) {
                         $cityFilterArr[] = ['match' => ['city.raw' => $cityFilter]];
                     }
-                    $countryCityFilterArr['bool']['minimum_should_match'] = $shouldMatch;
+
+                    if ($shouldMatch != '') {
+                        if (count((array) $cityFilters) === 1) {
+                            // if user just filter with one city, value of should match must be 100%
+                            $shouldMatch = '100%';
+                        }
+                        $countryCityFilterArr['bool']['minimum_should_match'] = $shouldMatch;
+                    }
                     $countryCityFilterArr['bool']['should'] = $cityFilterArr;
                 }
             });
