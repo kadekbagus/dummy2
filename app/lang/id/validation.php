@@ -421,6 +421,7 @@ return array(
             'sign_up' => array(
                 'email' => 'Anda harus memasukkan email yang benar',
             ),
+            'email' => 'Anda harus memasukkan email yang benar',
         ),
         'actionlist' => array(
             'change_password'           => 'update password',
