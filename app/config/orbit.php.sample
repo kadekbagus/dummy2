@@ -28,31 +28,31 @@ return array(
             'mall' => [
                 'keyword'  => '',
                 'category' => '',
-                'city'     => ''
+                'city'     => '50%'
             ],
 
             'news' => [
                 'keyword'  => '',
                 'category' => '',
-                'city'     => ''
+                'city'     => '50%'
             ],
 
             'promotion' => [
                 'keyword'  => '',
                 'category' => '',
-                'city'     => ''
+                'city'     => '50%'
             ],
 
             'coupon' => [
                 'keyword'  => '',
                 'category' => '',
-                'city'     => ''
+                'city'     => '50%'
             ],
 
             'store' => [
                 'keyword'  => '',
                 'category' => '',
-                'city'     => ''
+                'city'     => '50%'
             ]
         ],
 
