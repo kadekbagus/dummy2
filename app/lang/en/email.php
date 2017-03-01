@@ -25,11 +25,11 @@ return array(
         'label_promotions'          => 'Promotions',
         'label_coupons'             => 'Coupons',
         'label_events'              => 'Events',
-        'subject'                   => 'Have you try Gotomalls.com?',
+        'subject'                   => 'Have you visit Gotomalls.com?',
         'greeting'                  => 'Hi',
         'message_part1'             => 'Your friend',
-        'message_part2'             => 'want you to try Gotomalls.com.',
-        'button_try_now'            => 'Try Now!'
+        'message_part2'             => 'want you to visit Gotomalls.com.',
+        'button_try_now'            => 'Visit Now!'
     ),
 
     'activation' => array(

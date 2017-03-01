@@ -29,7 +29,7 @@ return array(
         'greeting'                  => 'Hai',
         'message_part1'             => 'Seorang teman Anda',
         'message_part2'             => 'ingin Anda untuk mengunjungi Gotomalls.com.',
-        'button_try_now'            => 'Coba Sekarang!'
+        'button_try_now'            => 'Kunjungi Sekarang!'
     ),
 
     'activation' => array(

@@ -348,20 +348,23 @@ class CouponListAPIController extends PubControllerAPI
                 $advert_location_id = $mallId;
             }
 
+            $withPreferred = "0 AS with_preferred";
+            if ($list_type === "featured") {
+                $withPreferred = "CASE WHEN placement_type = 'featured_list' THEN 0 ELSE 1 END AS with_preferred";
+            }
+
             $adverts = Advert::select('adverts.advert_id',
                                     'adverts.link_object_id',
                                     'advert_placements.placement_type',
                                     'advert_placements.placement_order',
                                     'media.path',
-                                    DB::raw("CASE WHEN placement_type = 'featured_list' THEN 0 ELSE 1 END AS with_preferred"))
+                                    DB::raw("{$withPreferred}"))
                             ->join('advert_link_types', function ($q) {
                                 $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                                 $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Coupon'"));
                             })
-                            ->join('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
+                            ->leftJoin('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
                                 $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
-                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
-                                $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
                             })
                             ->join('advert_placements', function ($q) use ($list_type) {
                                 $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
@@ -378,6 +381,14 @@ class CouponListAPIController extends PubControllerAPI
                             ->where('adverts.status', '=', DB::raw("'active'"))
                             ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
                             ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
+                            ->where(function($q) use($advert_location_id) {
+                                $q->where('advert_locations.location_id', $advert_location_id)
+                                  ->orWhere('adverts.is_all_location', 'Y');
+                            })
+                            ->where(function($q) use($advert_location_type){
+                                $q->where('advert_locations.location_type', $advert_location_type)
+                                  ->orWhere('adverts.is_all_location', 'Y');
+                            })
                             ->orderBy('advert_placements.placement_order', 'desc');
 
             $advertList = DB::table(DB::raw("({$adverts->toSql()}) as adv"))

@@ -332,19 +332,22 @@ class PromotionListAPIController extends PubControllerAPI
                 $advert_location_id = $mallId;
             }
 
+            $withPreferred = "0 AS with_preferred";
+            if ($list_type === "featured") {
+                $withPreferred = "CASE WHEN placement_type = 'featured_list' THEN 0 ELSE 1 END AS with_preferred";
+            }
+
             $adverts = Advert::select('adverts.advert_id',
                                     'adverts.link_object_id',
                                     'advert_placements.placement_type',
                                     'advert_placements.placement_order',
                                     'media.path',
-                                    DB::raw("CASE WHEN placement_type = 'featured_list' THEN 0 ELSE 1 END AS with_preferred"))
+                                    DB::raw("{$withPreferred}"))
                             ->join('advert_link_types', function ($q) {
                                 $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Promotion'"));
                                 $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
                             })
-                            ->join('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
-                                $q->on('advert_locations.location_type', '=', DB::raw("'" . $advert_location_type . "'"));
-                                $q->on('advert_locations.location_id', '=', DB::raw("'" . $advert_location_id . "'"));
+                            ->leftJoin('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
                                 $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
                             })
                             ->join('advert_placements', function ($q) use ($list_type) {
@@ -361,6 +364,14 @@ class PromotionListAPIController extends PubControllerAPI
                             })
                             ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
                             ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
+                            ->where(function($q) use($advert_location_id) {
+                                $q->where('advert_locations.location_id', $advert_location_id)
+                                  ->orWhere('adverts.is_all_location', 'Y');
+                            })
+                            ->where(function($q) use($advert_location_type){
+                                $q->where('advert_locations.location_type', $advert_location_type)
+                                  ->orWhere('adverts.is_all_location', 'Y');
+                            })
                             ->where('adverts.status', '=', DB::raw("'active'"))
                             ->orderBy('advert_placements.placement_order', 'desc');
 
@@ -370,6 +381,7 @@ class PromotionListAPIController extends PubControllerAPI
                                     adv.link_object_id,
                                     adv.placement_order,
                                     adv.path,
+                                    adv.is_all_location,
                                     adv.placement_type as placement_type_orig,
                                     CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
                          ->groupBy(DB::raw("adv.link_object_id"))
