@@ -5560,6 +5560,13 @@ return array(
     'featured' => [
         // List of malls that need to be featured (put ontop of the others)
         'mall_ids' => [
+            'all' => [],
+
+            'indonesia' => [
+                'all' => [],
+                'bali' => [],
+                'tangerang' => []
+            ]
         ]
     ],
 
