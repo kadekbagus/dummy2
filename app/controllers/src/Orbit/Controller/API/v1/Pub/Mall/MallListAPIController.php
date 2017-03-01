@@ -224,9 +224,8 @@ class MallListAPIController extends PubControllerAPI
                 $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
 
                 if (! empty($cityFilters)) {
-
                     $mallFeaturedIds = [];
-                    foreach ($cityFilters as $cityName => $mallIds) {
+                    foreach ($cityFilters as $key => $cityName) {
                         $cityName = str_replace(' ', '_', strtolower($cityName));
                         $cityValue = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.' . $cityName, []);
 
@@ -239,7 +238,7 @@ class MallListAPIController extends PubControllerAPI
 
             $mallFeaturedIds = array_unique($mallFeaturedIds);
 
-            $mallOrder = array(array('terms' => array('_id' => $mallFeaturedIds)), array('match_all' => new stdClass()));
+            $mallOrder = array(array('terms' => array('_id' => $mallFeaturedIds, 'boost' => 5)), array('match_all' => new stdClass()));
             $jsonArea['query']['bool']['should'] = $mallOrder;
 
             $sortby = $sort;
