@@ -238,7 +238,8 @@ class MallListAPIController extends PubControllerAPI
 
             $mallFeaturedIds = array_unique($mallFeaturedIds);
 
-            $mallOrder = array(array('terms' => array('_id' => $mallFeaturedIds, 'boost' => 5)), array('match_all' => new stdClass()));
+            $esFeaturedBoost = Config::get('orbit.featured.es_boost', 10);
+            $mallOrder = array(array('terms' => array('_id' => $mallFeaturedIds, 'boost' => $esFeaturedBoost)), array('match_all' => new stdClass()));
             $jsonArea['query']['bool']['should'] = $mallOrder;
 
             $sortby = $sort;
