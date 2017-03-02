@@ -184,7 +184,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             $q->on('partners.token', '=', DB::raw("{$this->quote($token)}"));
                         })
                         ->whereRaw("{$prefix}merchants.merchant_id in (select merchant_id from {$prefix}merchants where name = {$this->quote($this->store->name)})")
-                        ->where(function($q) use($country_id) {
+                        ->where(function($q) use($country_id, $prefix) {
                             $q->whereRaw("{$prefix}merchants.country_id = {$this->quote($country_id)}")
                                 ->orWhereRaw("oms.country_id = {$this->quote($country_id)}");
                         })
@@ -297,7 +297,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             $q->on('partners.token', '=', DB::raw("{$this->quote($token)}"));
                         })
                         ->whereRaw("{$prefix}merchants.merchant_id in (select merchant_id from {$prefix}merchants where name = {$this->quote($this->store->name)})")
-                        ->where(function($q) use($country_id) {
+                        ->where(function($q) use($country_id, $prefix) {
                             $q->whereRaw("{$prefix}merchants.country_id = {$this->quote($country_id)}")
                                 ->orWhereRaw("oms.country_id = {$this->quote($country_id)}");
                         })
@@ -413,7 +413,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             ->whereRaw("available.tot > 0")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereRaw("{$prefix}merchants.merchant_id in (select merchant_id from {$prefix}merchants where name = {$this->quote($this->store->name)})")
-                            ->where(function($q) use($country_id) {
+                            ->where(function($q) use($country_id, $prefix) {
                                 $q->whereRaw("{$prefix}merchants.country_id = {$this->quote($country_id)}")
                                     ->orWhereRaw("oms.country_id = {$this->quote($country_id)}");
                             })
