@@ -116,7 +116,14 @@ class StoreMallDetailAPIController extends PubControllerAPI
             }
 
             // Get store name base in merchant_id
-            $store = Tenant::select('merchant_id', 'name', 'country_id')->where('merchant_id', $merchantId)->active()->first();
+            $store = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('oms.country_id'))
+                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                        ->where('merchants.merchant_id', $merchantId)
+                        ->where('merchants.status', '=', 'active')
+                        ->where(DB::raw('oms.status'), '=', 'active')
+                        ->first();
+
+            $countryId = '';
             if (! empty($store)) {
                 $storename = $store->name;
                 $countryId = $store->country_id;
@@ -161,7 +168,8 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                       ;
                                 })
                               ->where('merchants.name', $storename)
-                              ->where('merchants.country_id', $countryId)
+                              ->where(DB::raw("mall.is_subscribed"), '=', 'Y')
+                              ->where(DB::raw("mall.country_id"), '=', $countryId)
                               ->where(DB::raw("mall.status"), 'active');
 
             if (! empty($location)) {

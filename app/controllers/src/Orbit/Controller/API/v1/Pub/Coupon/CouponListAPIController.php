@@ -457,10 +457,19 @@ class CouponListAPIController extends PubControllerAPI
                 unset($jsonQuery['sort']);
                 $withScore = true;
                 foreach ($advertData as $dt) {
-                    $advertIds[] = $dt->advert_id;
-                    $boost = $dt->placement_order * 3;
-                    $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
-                    $jsonQuery['query']['bool']['should'][] = $esAdvert;
+                    if ($list_type === 'featured') {
+                        if ($dt->placement_type_orig === 'featured_list') {
+                            $advertIds[] = $dt->advert_id;
+                            $boost = $dt->placement_order * 3;
+                            $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
+                            $jsonQuery['query']['bool']['should'][] = $esAdvert;
+                        }
+                    } else {
+                        $advertIds[] = $dt->advert_id;
+                        $boost = $dt->placement_order * 3;
+                        $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
+                        $jsonQuery['query']['bool']['should'][] = $esAdvert;
+                    }
                 }
 
                 if ($withKeywordSearch) {
