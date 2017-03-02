@@ -69,6 +69,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $merchantId = OrbitInput::get('merchant_id');
             $location = OrbitInput::get('location');
+            $noActivity = OrbitInput::get('no_activity', null);
 
             $ul = OrbitInput::get('ul', null);
             $take = PaginationNumber::parseTakeFromGet('retailer');
@@ -208,17 +209,19 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $recordCache->put($serializedCacheKey, $listOfRec);
 
             // moved from generic activity number 40
-            if (empty($skip)) {
-                $activityNotes = sprintf('Page viewed: Store location list');
-                $activity->setUser($user)
-                    ->setActivityName('view_store_location')
-                    ->setActivityNameLong('View Store Location Page')
-                    ->setObject(null)
-                    ->setObjectDisplayName($storename)
-                    ->setModuleName('Store')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
+            if ($noActivity != 'Y') {
+                if (empty($skip)) {
+                    $activityNotes = sprintf('Page viewed: Store location list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_store_location')
+                        ->setActivityNameLong('View Store Location Page')
+                        ->setObject(null)
+                        ->setObjectDisplayName($storename)
+                        ->setModuleName('Store')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
+                }
             }
 
             $this->response->data = new stdClass();
