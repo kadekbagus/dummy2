@@ -118,7 +118,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             // Get store name base in merchant_id
             $store = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('oms.country_id'))
                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                        ->where('merchants.merchant_id', $merchant_id)
+                        ->where('merchants.merchant_id', $merchantId)
                         ->where('merchants.status', '=', 'active')
                         ->where(DB::raw('oms.status'), '=', 'active')
                         ->first();
