@@ -184,7 +184,7 @@ class CreatePageCommand extends Command {
         // Check the existence of the news object type
         Validator::extend('orbit.exist.object_type', function ($attribute, $value, $parameters) {
             $valid = false;
-            $objectTypes = array('about_us', 'privacy_policy', 'terms_and_conditions', 'advertise_with_us');
+            $objectTypes = array('about_us', 'privacy_policy', 'terms_and_conditions', 'advertise_with_us','feedback');
             foreach ($objectTypes as $objectType) {
                 if($value === $objectType) $valid = $valid || true;
             }
