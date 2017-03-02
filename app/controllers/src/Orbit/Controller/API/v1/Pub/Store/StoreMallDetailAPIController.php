@@ -169,8 +169,8 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                 })
                               ->where('merchants.name', $storename)
                               ->where(function($q) use($countryId) {
-                                    $q->where(DB::raw("mall.country_id"), '=',$countryId)
-                                        ->orWhere('merchants.country_id', '=',$countryId);
+                                    $q->where(DB::raw("mall.country_id"), '=', $countryId)
+                                        ->orWhere('merchants.country_id', '=', $countryId);
                                 })
                               ->where(DB::raw("mall.status"), 'active');
 
