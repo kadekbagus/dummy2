@@ -56,7 +56,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'campaign_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $merchant_id = OrbitInput::get('merchant_id');
-            $store_name = OrbitInput::get('store_name');
+            $store_name = OrbitInput::get('store_name', '');
             $keyword = OrbitInput::get('keyword');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
@@ -100,10 +100,17 @@ class StoreCampaignListAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $store = Tenant::select('merchant_id', 'name', 'country_id')->where('merchant_id', $merchant_id)->active()->first();
+            $store = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('oms.country_id'))
+                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                        ->where('merchants.merchant_id', $merchant_id)
+                        ->where('merchants.status', '=', 'active')
+                        ->where(DB::raw('oms.status'), '=', 'active')
+                        ->first();
+
+            $country_id = '';
             if (! empty($store)) {
-                $storename = $store->name;
-                $countryId = $store->country_id;
+                $store_name = $store->name;
+                $country_id = $store->country_id;
             }
 
             // get news list
@@ -151,6 +158,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         })
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('media', function ($q) {
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
@@ -176,7 +184,10 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             $q->on('partners.token', '=', DB::raw("{$this->quote($token)}"));
                         })
                         ->whereRaw("{$prefix}merchants.merchant_id in (select merchant_id from {$prefix}merchants where name = {$this->quote($this->store->name)})")
-                        ->whereRaw("{$prefix}merchants.country_id = {$this->quote($countryId)}")
+                        ->where(function($q) use($country_id, $prefix) {
+                            $q->whereRaw("{$prefix}merchants.country_id = {$this->quote($country_id)}")
+                                ->orWhereRaw("oms.country_id = {$this->quote($country_id)}");
+                        })
                         ->whereRaw("{$prefix}news.object_type = 'news'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
@@ -260,6 +271,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         })
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('media', function ($q) {
                             $q->on('media.object_id', '=', 'news_translations.news_translation_id');
@@ -285,7 +297,10 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             $q->on('partners.token', '=', DB::raw("{$this->quote($token)}"));
                         })
                         ->whereRaw("{$prefix}merchants.merchant_id in (select merchant_id from {$prefix}merchants where name = {$this->quote($this->store->name)})")
-                        ->whereRaw("{$prefix}merchants.country_id = {$this->quote($countryId)}")
+                        ->where(function($q) use($country_id, $prefix) {
+                            $q->whereRaw("{$prefix}merchants.country_id = {$this->quote($country_id)}")
+                                ->orWhereRaw("oms.country_id = {$this->quote($country_id)}");
+                        })
                         ->whereRaw("{$prefix}news.object_type = 'promotion'")
                         ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->groupBy('campaign_id')
@@ -369,6 +384,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             })
                             ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                             ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                            ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                             ->leftJoin('coupon_translations as default_translation', function ($q) {
@@ -397,7 +413,10 @@ class StoreCampaignListAPIController extends PubControllerAPI
                             ->whereRaw("available.tot > 0")
                             ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                             ->whereRaw("{$prefix}merchants.merchant_id in (select merchant_id from {$prefix}merchants where name = {$this->quote($this->store->name)})")
-                            ->whereRaw("{$prefix}merchants.country_id = {$this->quote($countryId)}")
+                            ->where(function($q) use($country_id, $prefix) {
+                                $q->whereRaw("{$prefix}merchants.country_id = {$this->quote($country_id)}")
+                                    ->orWhereRaw("oms.country_id = {$this->quote($country_id)}");
+                            })
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
                             ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');

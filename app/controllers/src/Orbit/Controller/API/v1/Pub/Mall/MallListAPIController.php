@@ -54,7 +54,7 @@ class MallListAPIController extends PubControllerAPI
 
             $keyword = OrbitInput::get('keyword');
             $location = OrbitInput::get('location', null);
-            $cityFilters = OrbitInput::get('cities', null);
+            $cityFilters = OrbitInput::get('cities', []);
             $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
@@ -216,14 +216,30 @@ class MallListAPIController extends PubControllerAPI
                 $sort = array('updated_at' => array('order' => 'desc'));
             }
 
-            if (! $searchFlag) {
-                $mallConfig =  Config::get('orbit.featured.mall_ids', null);
-                if (! empty($mallConfig)) {
-                    $withScore = true;
-                    $filterKeyword = array('bool' => array('should' => array(array('terms' => array('_id' => $mallConfig)), array('match_all' => new stdClass()))));
-                    $jsonArea['query'] = $filterKeyword;
+            // put featured mall id in highest priority
+            $mallFeaturedIds =  Config::get('orbit.featured.mall_ids.all', []);
+            $withScore = true;
+            if (! empty($countryFilter)) {
+                $countryFilter = strtolower($countryFilter);
+                $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
+
+                if (! empty($cityFilters)) {
+                    $mallFeaturedIds = [];
+                    foreach ($cityFilters as $key => $cityName) {
+                        $cityName = str_replace(' ', '_', strtolower($cityName));
+                        $cityValue = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.' . $cityName, []);
+
+                        if (! empty($cityValue)) {
+                            $mallFeaturedIds = array_merge($cityValue, $mallFeaturedIds);
+                        }
+                    }
                 }
             }
+
+            $mallFeaturedIds = array_unique($mallFeaturedIds);
+
+            $mallOrder = array(array('terms' => array('_id' => $mallFeaturedIds, 'boost' => 5)), array('match_all' => new stdClass()));
+            $jsonArea['query']['bool']['should'] = $mallOrder;
 
             $sortby = $sort;
             if ($withScore) {
