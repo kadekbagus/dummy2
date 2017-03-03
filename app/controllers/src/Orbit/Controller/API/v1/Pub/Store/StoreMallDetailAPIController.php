@@ -209,7 +209,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $recordCache->put($serializedCacheKey, $listOfRec);
 
             // moved from generic activity number 40
-            if ($noActivity != 'Y') {
+            if (strtoupper($noActivity) != 'Y') {
                 if (empty($skip)) {
                     $activityNotes = sprintf('Page viewed: Store location list');
                     $activity->setUser($user)
