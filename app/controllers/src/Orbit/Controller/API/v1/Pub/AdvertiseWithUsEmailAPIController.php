@@ -15,6 +15,8 @@ use Config;
 use stdClass;
 use Validator;
 use \Queue;
+use App;
+use Lang;
 
 class AdvertiseWithUsEmailAPIController extends PubControllerAPI
 {
@@ -44,8 +46,9 @@ class AdvertiseWithUsEmailAPIController extends PubControllerAPI
             $email = OrbitInput::post('email');
             $phone_number = OrbitInput::post('phone_number');
             $message = OrbitInput::post('message');
+            $language = OrbitInput::get('language', 'id');
 
-            $this->registerCustomValidation();
+            App::setLocale($language);
 
             $validator = Validator::make(
                 array(
@@ -59,6 +62,9 @@ class AdvertiseWithUsEmailAPIController extends PubControllerAPI
                     'first_name'    => 'required',
                     'email'         => 'required|email',
                     'phone_number'  => 'required'
+                ),
+                array(
+                    'email.email'   => Lang::get('validation.orbit.formaterror.email')
                 )
             );
 

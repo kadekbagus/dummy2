@@ -26,32 +26,32 @@ return array(
         // The minimum_should_match parameter possible values
         'minimum_should_match' => [
             'mall' => [
-                'keyword'  => '50%',
-                'category' => '50%',
+                'keyword'  => '',
+                'category' => '',
                 'city'     => '50%'
             ],
 
             'news' => [
-                'keyword'  => '50%',
-                'category' => '50%',
+                'keyword'  => '',
+                'category' => '',
                 'city'     => '50%'
             ],
 
             'promotion' => [
-                'keyword'  => '50%',
-                'category' => '50%',
+                'keyword'  => '',
+                'category' => '',
                 'city'     => '50%'
             ],
 
             'coupon' => [
-                'keyword'  => '50%',
-                'category' => '50%',
+                'keyword'  => '',
+                'category' => '',
                 'city'     => '50%'
             ],
 
             'store' => [
-                'keyword'  => '50%',
-                'category' => '50%',
+                'keyword'  => '',
+                'category' => '',
                 'city'     => '50%'
             ]
         ],
@@ -5558,8 +5558,18 @@ return array(
 
     // Hardcoded featured items
     'featured' => [
+        // boost featured mall_id(s) score so that mall can be on the top of listing
+        'es_boost' => 10,
+
         // List of malls that need to be featured (put ontop of the others)
         'mall_ids' => [
+            'all' => [],
+
+            'indonesia' => [
+                'all' => [],
+                'bali' => [],
+                'tangerang' => []
+            ]
         ]
     ],
 
