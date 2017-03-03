@@ -570,7 +570,7 @@ class StoreListAPIController extends PubControllerAPI
                         $data['placement_type_orig'] = null;
                         foreach ($advertData as $advData) {
                             foreach ($record['_source']['tenant_detail'] as $dt) {
-                                if ($advData->link_object_id === $dt['mechant_id']) {
+                                if ($advData->link_object_id === $dt['merchant_id']) {
                                     $data['placement_type'] = $advData->placement_type;
                                     $data['placement_type_orig'] = $advData->placement_type_orig;
 
