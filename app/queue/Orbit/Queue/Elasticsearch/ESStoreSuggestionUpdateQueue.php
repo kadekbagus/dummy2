@@ -171,15 +171,8 @@ class ESStoreSuggestionUpdateQueue
                 'suggest_ms' => $suggest
             ];
 
-            if ($response_search['hits']['total'] > 0) {
-                $params['body'] = [
-                    'doc' => $body
-                ];
-                $response = $this->poster->update($params);
-            } else {
-                $params['body'] = $body;
-                $response = $this->poster->index($params);
-            }
+            $params['body'] = $body;
+            $response = $this->poster->index($params);
 
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
