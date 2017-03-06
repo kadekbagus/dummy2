@@ -169,6 +169,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                       ;
                                 })
                               ->where('merchants.name', $storename)
+                              ->where('merchants.status', 'active')
                               ->where(DB::raw("mall.is_subscribed"), '=', 'Y')
                               ->where(DB::raw("mall.country_id"), '=', $countryId)
                               ->where(DB::raw("mall.status"), 'active');
@@ -209,7 +210,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $recordCache->put($serializedCacheKey, $listOfRec);
 
             // moved from generic activity number 40
-            if ($noActivity != 'Y') {
+            if (strtoupper($noActivity) != 'Y') {
                 if (empty($skip)) {
                     $activityNotes = sprintf('Page viewed: Store location list');
                     $activity->setUser($user)
