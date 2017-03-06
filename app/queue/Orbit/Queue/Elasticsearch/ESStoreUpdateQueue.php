@@ -132,8 +132,8 @@ class ESStoreUpdateQueue
 
             $response_search = $this->poster->search($params_search);
 
-            // delete the store document if the status inactive
-            if (($response_search['hits']['total'] > 0) && $store->isEmpty()) {
+            // delete the store document if exist
+            if ($response_search['hits']['total'] > 0) {
                 $params = [
                     'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index'),
                     'type' => Config::get('orbit.elasticsearch.indices.stores.type'),
@@ -150,14 +150,9 @@ class ESStoreUpdateQueue
                 // update detail
                 $esDetail = new \Orbit\Queue\Elasticsearch\ESStoreDetailUpdateQueue();
                 $detail = $esDetail->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
+            }
 
-                $job->delete();
-
-                return [
-                    'status' => 'fail',
-                    'message' => sprintf('[Job ID: `%s`] There is no store %s active.', $job->getJobId(), $storeName)
-                ];
-            } else if ($store->isEmpty()) {
+            if ($store->isEmpty()) {
                 $job->delete();
 
                 return [

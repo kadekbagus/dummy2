@@ -102,7 +102,7 @@ class ESStoreSuggestionUpdateQueue
             $response_search = $this->poster->search($params_search);
 
             // delete the store document if the status inactive
-            if (($response_search['hits']['total'] > 0) && $store->isEmpty()) {
+            if ($response_search['hits']['total'] > 0) {
                 $params = [
                     'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.store_suggestions.index'),
                     'type' => Config::get('orbit.elasticsearch.indices.store_suggestions.type'),
@@ -110,12 +110,9 @@ class ESStoreSuggestionUpdateQueue
                 ];
 
                 $response = $this->poster->delete($params);
-                $job->delete();
-                return [
-                    'status' => 'fail',
-                    'message' => sprintf('[Job ID: `%s`] There is no store %s active.', $job->getJobId(), $storeName)
-                ];
-            } else if ($store->isEmpty()) {
+            }
+
+            if ($store->isEmpty()) {
                 $job->delete();
 
                 return [
