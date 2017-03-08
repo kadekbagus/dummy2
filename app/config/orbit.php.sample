@@ -5793,7 +5793,7 @@ return array(
      */
     'ip_detection' => [
         // Enable / Disable ip detection
-        'enable' => FALSE,
+        'enable' => TRUE,
         // Default return value should be provided when ip detection  is disabled
         'default_value' => [
             'country' => '',
