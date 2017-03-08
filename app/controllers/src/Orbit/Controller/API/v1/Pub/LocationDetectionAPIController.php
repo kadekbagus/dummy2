@@ -156,6 +156,14 @@ class LocationDetectionAPIController extends PubControllerAPI
         $country = null;
         $cities = [];
 
+        // Return ip detection default_value from config if ip detection disabled
+        if (! Config::get('orbit.ip_detection.enable', TRUE)) {
+            $country = Config::get('orbit.ip_detection.default_value.country');
+            $cities = Config::get('orbit.ip_detection.default_value.cities');
+
+            return $this->dataFormatter($country, $cities);
+        }
+
         // get the client IP
         $clientIpAddress = $_SERVER['REMOTE_ADDR'];
 

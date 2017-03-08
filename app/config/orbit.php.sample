@@ -5793,5 +5793,18 @@ return array(
                 'default_city_value' => 'LOOKUP CITY DISABLED',
             ]
         ]
-    ]
+    ],
+
+    /**
+     * IP Based Location Detection configuration
+     */
+    'ip_detection' => [
+        // Enable / Disable ip detection
+        'enable' => TRUE,
+        // Default return value should be provided when ip detection  is disabled
+        'default_value' => [
+            'country' => '',
+            'cities' => [],
+        ],
+    ],
 );

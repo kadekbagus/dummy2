@@ -40,8 +40,6 @@ class MallInfoAPIController extends PubControllerAPI
 
             $user = $this->getUser();
 
-            $from_mall_ci = OrbitInput::get('from_mall_ci', 'y');
-
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
             $mallId = OrbitInput::get('mall_id', null);
@@ -160,29 +158,17 @@ class MallInfoAPIController extends PubControllerAPI
                 $listmall[] = $areadata;
             }
 
-            if ($from_mall_ci === 'y') {
-                $activityNotes = sprintf('Page viewed: View mall page');
-                $activity->setUser($user)
-                    ->setActivityName('view_mall')
-                    ->setActivityNameLong('View mall page')
-                    ->setObject(null)
-                    ->setLocation($mall)
-                    ->setModuleName('Mall')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
-            } else {
-                $activityNotes = sprintf('Page viewed: View sidebar mall info');
-                $activity->setUser($user)
-                    ->setActivityName('view_sidebar_mall_info')
-                    ->setActivityNameLong('View sidebar mall info')
-                    ->setObject(null)
-                    ->setLocation($mall)
-                    ->setModuleName('Mall')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
-            }
+
+            $activityNotes = sprintf('Mall Detail Page');
+            $activity->setUser($user)
+                ->setActivityName('view_mall_info')
+                ->setActivityNameLong('View Mall Info')
+                ->setObject(null)
+                ->setLocation($mall)
+                ->setModuleName('Application')
+                ->setNotes($activityNotes)
+                ->responseOK()
+                ->save();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $total;
