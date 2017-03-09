@@ -139,6 +139,7 @@ class LocationDetectionAPIController extends PubControllerAPI
         $_GET['sortby'] = 'location';
         $_GET['sortmode'] = 'asc';
         $_GET['take'] = '1';
+        $_GET['by_pass_mall_order'] = 'y';
         $response = MallListAPIController::create('raw')->getMallList();
         if (is_object($response) && $response->code === 0) {
             if (! empty($response->data->returned_records)) {
