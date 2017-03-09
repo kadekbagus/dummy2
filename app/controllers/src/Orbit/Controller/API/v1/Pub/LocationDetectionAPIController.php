@@ -180,8 +180,8 @@ class LocationDetectionAPIController extends PubControllerAPI
             $addr_type = 'ipv6';
         }
 
-        $dbip = DB::connection(Config::get('orbit.dbip.connection_id'))
-            ->table(Config::get('orbit.dbip.table'))
+        $dbip = DB::connection(Config::get('orbit.ip_database.dbip.connection_id'))
+            ->table(Config::get('orbit.ip_database.dbip.table'))
             ->where('ip_start', '<=', inet_pton($clientIpAddress))
             ->where('addr_type', '=', $addr_type)
             ->orderBy('ip_start', 'desc')
