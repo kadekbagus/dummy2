@@ -196,7 +196,9 @@ return array(
     ],
 
     // db ip configuration
-    'ip_database' => [
+    'vendor_ip_database' => [
+        'default' => 'ip2location',
+
         'dbip' => [
             'connection_id' => 'dbip',
             'table' => 'july_2016'
