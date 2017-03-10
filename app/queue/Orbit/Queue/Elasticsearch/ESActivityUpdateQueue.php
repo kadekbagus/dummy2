@@ -103,26 +103,46 @@ class ESActivityUpdateQueue
         if ($lookupCountryCityEnabled) {
             // get location based on ip address
             $addr = $activity->ip_address;
-            $addr_type = 'ipv4';
-            if (ip2long($addr) !== false) {
-                $addr_type = 'ipv4';
-            } else if (preg_match('/^[0-9a-fA-F:]+$/', $addr) && @inet_pton($addr)) {
-                $addr_type = 'ipv6';
-            }
 
-            $findIp = DB::connection(Config::get('orbit.dbip.connection_id'))
-                        ->table(Config::get('orbit.dbip.table'))
-                        ->where('ip_start', '<=', $addr)
-                        ->where('ip_end', '>=', $addr)
+            //get default vendor from config
+            $vendor = Config::get('orbit.vendor_ip_database.default', 'dbip');
+
+            switch ($vendor) {
+                case 'dbip':
+                    $addr_type = 'ipv4';
+                    if (ip2long($addr) !== false) {
+                        $addr_type = 'ipv4';
+                    } else if (preg_match('/^[0-9a-fA-F:]+$/', $addr) && @inet_pton($addr)) {
+                        $addr_type = 'ipv6';
+                    }
+
+                    $ipData = DB::connection(Config::get('orbit.vendor_ip_database.dbip.connection_id'))
+                        ->table(Config::get('orbit.vendor_ip_database.dbip.table'))
+                        ->where('ip_start', '<=', inet_pton($addr))
                         ->where('addr_type', '=', $addr_type)
+                        ->orderBy('ip_start', 'desc')
                         ->first();
+                    break;
+
+                case 'ip2location':
+                    $findIp = explode(".", $addr);
+                    $ipNumber = ((int)$findIp[0] * ( 256 * 256 * 256 )) + ((int)$findIp[1] * ( 256 * 256 )) + ((int)$findIp[2] * 256) + $findIp[3];
+
+                    $ipData = DB::connection(Config::get('orbit.vendor_ip_database.ip2location.connection_id'))
+                        ->table(Config::get('orbit.vendor_ip_database.ip2location.table'))
+                        ->select('country_name as country', 'city_name as city')
+                        ->where('ip_from', '<=', $ipNumber)
+                        ->where('ip_to', '>=', $ipNumber)
+                        ->first();
+                    break;
+            }
 
             $country = '';
             $city = '';
-            if (is_object($findIp)) {
+            if (is_object($ipData)) {
                 // Override default value
-                $country = $findIp->country;
-                $city = $findIp->city;
+                $country = $ipData->country;
+                $city = $ipData->city;
             }
         }
 
