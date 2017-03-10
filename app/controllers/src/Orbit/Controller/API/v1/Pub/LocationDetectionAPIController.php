@@ -222,7 +222,7 @@ class LocationDetectionAPIController extends PubControllerAPI
             $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
 
             // get the response from cache and fallback to query
-            $response = $recordCache->get($serializedCacheKey, function() use ($clientIpAddress, $addr_type, $ipData) {
+            $response = $recordCache->get($serializedCacheKey, function() use ($clientIpAddress, $addr_type, $ipData, $vendor) {
                 $country = null;
                 $cities = [];
 
@@ -231,9 +231,13 @@ class LocationDetectionAPIController extends PubControllerAPI
                     ->first();
 
                 $gtmCities = VendorGTMCity::leftJoin('vendor_gtm_countries', 'vendor_gtm_countries.vendor_country', '=', 'vendor_gtm_cities.vendor_country')
+                    ->leftJoin('merchants', 'merchants.city', '=', 'vendor_gtm_cities.gtm_city')
                     ->where('vendor_gtm_cities.vendor_country', $ipData->country)
-                    ->where('object_type', $vendor)
+                    ->where('vendor_type', $vendor)
                     ->where('vendor_city', $ipData->city)
+                    ->where('merchants.status', 'active')
+                    ->where('merchants.object_type', 'mall')
+                    ->groupBy('vendor_gtm_cities.gtm_city')
                     ->get();
 
                 if (is_object($gtmCountry)) {
