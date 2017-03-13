@@ -3,7 +3,7 @@
 use Lang;
 use Config;
 
-class ShareData
+class LinkPreviewData
 {
     public $lang = 'en';
     public $title = '';
@@ -13,7 +13,7 @@ class ShareData
     public $imageDimension = [1468, 768];
 
     /**
-     * ShareData constructor.
+     * LinkPreviewData constructor.
      */
     public function __construct($title = '', $description = '', $url = '', $imageUrl = '', array $imageDimension = [], $lang = '')
     {
