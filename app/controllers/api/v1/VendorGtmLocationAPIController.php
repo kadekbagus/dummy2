@@ -280,7 +280,8 @@ class VendorGtmLocationAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $vendorGtmCity = VendorGTMCity::select('vendor_city');
+            $vendor_ip_database = Config::get('orbit.vendor_ip_database.default', 'dbip');
+            $vendorGtmCity = VendorGTMCity::select('vendor_city')->where('vendor_type', $vendor_ip_database);
 
             // Filter vendor gtm
             OrbitInput::get('gtm_city', function ($gtm_city) use ($vendorGtmCity) {

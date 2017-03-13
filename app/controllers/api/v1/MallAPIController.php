@@ -578,14 +578,16 @@ class MallAPIController extends ControllerAPI
             }
 
             // Insert vendor_gtm_city
-            $checkVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->first();
+            $vendor_ip_database = Config::get('orbit.vendor_ip_database.default', 'dbip');
+            $checkVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->where('vendor_type', $vendor_ip_database)->first();
             if (! empty($checkVendorGtmCity)) {
               // Delete first if exist gtm_city
-              $deleteVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->delete();
+              $deleteVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->where('vendor_type', $vendor_ip_database)->delete();
             }
 
             foreach ($ipcity as $vendorCity) {
               $new_vendor_gtm_city = new VendorGTMCity();
+              $new_vendor_gtm_city->vendor_type = $vendor_ip_database;
               $new_vendor_gtm_city->vendor_city = $vendorCity;
               $new_vendor_gtm_city->gtm_city = $city;
               $new_vendor_gtm_city->country_id = $country;
@@ -2361,14 +2363,16 @@ class MallAPIController extends ControllerAPI
             }
 
             // Insert vendor_gtm_city
-            $checkVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->first();
+            $vendor_ip_database = Config::get('orbit.vendor_ip_database.default', 'dbip');
+            $checkVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->where('vendor_type', $vendor_ip_database)->first();
             if (! empty($checkVendorGtmCity)) {
               // Delete first if exist gtm_city
-              $deleteVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->delete();
+              $deleteVendorGtmCity = VendorGTMCity::where('gtm_city', $city)->where('vendor_type', $vendor_ip_database)->delete();
             }
 
             foreach ($ipcity as $vendorCity) {
               $new_vendor_gtm_city = new VendorGTMCity();
+              $new_vendor_gtm_city->vendor_type = $vendor_ip_database;
               $new_vendor_gtm_city->vendor_city = $vendorCity;
               $new_vendor_gtm_city->vendor_country = $ipcountry;
               $new_vendor_gtm_city->gtm_city = $city;
