@@ -6,6 +6,7 @@
 use Config;
 use Language;
 use Orbit\Helper\Util\OrbitUrlSegmentParser;
+use Mall;
 
 class LinkPreviewHelper
 {
@@ -48,22 +49,71 @@ class LinkPreviewHelper
             ->where('name', $this->lang)
             ->first();
 
+        $input['lang'] = $langObject;
+        $input['url'] = $url->getUrl();
+
         switch (count($url->getSegments())) {
+            case 0:
+                // home page
+                $input['objectType'] = 'home';
+                $input['linkType'] = null;
+                $input['objectId'] = null;
+                break;
+            case 1:
+                // list and other page
+                switch ($url->getSegmentAt(0)) {
+                    case 'stores':
+                        $input['objectType'] = 'store';
+                        $input['linkType'] = 'list';
+                        $input['objectId'] = null;
+                        break;
+
+                    default:
+                        # code...
+                        break;
+                }
+                break;
             case 3:
                 // detail page
                 switch ($url->getSegmentAt(0)) {
                     case 'stores':
                         // store detail page
                         $input['objectType'] = 'store';
-                                $input['linkType'] = 'detail';
-                                $input['objectId'] = $url->getSegmentAt(1);
-                                $input['lang'] = $langObject;
-                                $input['url'] = $url->getUrl();
+                        $input['linkType'] = 'detail';
+                        $input['objectId'] = $url->getSegmentAt(1);
                         break;
 
                     default:
                         # code...
                         break;
+                }
+                break;
+            case 4:
+                // mall list page
+                switch ($url->getSegmentAt(3)) {
+                    case 'stores':
+                        // store detail page
+                        $input['objectType'] = 'store';
+                        $input['linkType'] = 'list';
+                        $input['mallName'] = $this->getMallName($url->getSegmentAt(1));
+                        $input['objectId'] = null;
+                        break;
+
+                    default:
+                        # code...
+                        break;
+                }
+                break;
+            case 6:
+                // mall level detail page
+                switch ($url->getSegmentAt(3)) {
+                    case 'stores':
+                        // store detail page
+                        $input['objectType'] = 'store';
+                        $input['linkType'] = 'detail';
+                        $input['objectId'] = $url->getSegmentAt(4);
+                    break;
+
                 }
                 break;
 
@@ -75,5 +125,15 @@ class LinkPreviewHelper
         $data = ObjectLinkPreviewFactory::create($input, $input['linkType'])->getData();
 
         return $data;
+    }
+
+    protected function getMallName($mallId)
+    {
+        $mall = Mall::where('merchant_id', $mallId)
+            ->first();
+
+        $mallName = is_object($mall) ? $mall->name : '';
+
+        return $mallName;
     }
 }
