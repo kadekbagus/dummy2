@@ -119,6 +119,7 @@ class CouponWalletLocationAPIController extends PubControllerAPI
                 })
                 ->where('issued_coupons.user_id', $user->user_id)
                 ->where('promotion_retailer.promotion_id', '=', $couponId)
+                ->where('merchants.status', 'active')
                 ->groupBy('merchant_id')
                 ->havingRaw('tz <= coupon_validity_in_date AND tz >= begin_date');
 

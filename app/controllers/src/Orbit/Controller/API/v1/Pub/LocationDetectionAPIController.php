@@ -139,6 +139,7 @@ class LocationDetectionAPIController extends PubControllerAPI
         $_GET['sortby'] = 'location';
         $_GET['sortmode'] = 'asc';
         $_GET['take'] = '1';
+        $_GET['by_pass_mall_order'] = 'y';
         $response = MallListAPIController::create('raw')->getMallList();
         if (is_object($response) && $response->code === 0) {
             if (! empty($response->data->returned_records)) {
@@ -156,6 +157,14 @@ class LocationDetectionAPIController extends PubControllerAPI
         $country = null;
         $cities = [];
 
+        // Return ip detection default_value from config if ip detection disabled
+        if (! Config::get('orbit.ip_detection.enable', TRUE)) {
+            $country = Config::get('orbit.ip_detection.default_value.country');
+            $cities = Config::get('orbit.ip_detection.default_value.cities');
+
+            return $this->dataFormatter($country, $cities);
+        }
+
         // get the client IP
         $clientIpAddress = $_SERVER['REMOTE_ADDR'];
 
@@ -164,22 +173,40 @@ class LocationDetectionAPIController extends PubControllerAPI
             $clientIpAddress = isset($_COOKIE['USER_IP_ADDRESS']) ? $_COOKIE['USER_IP_ADDRESS'] : $clientIpAddress;
         }
 
-        // get record from DBIP
-        $addr_type = 'ipv4';
-        if (ip2long($clientIpAddress) !== false) {
-            $addr_type = 'ipv4';
-        } else if (preg_match('/^[0-9a-fA-F:]+$/', $clientIpAddress) && @inet_pton($clientIpAddress)) {
-            $addr_type = 'ipv6';
+        //get default vendor from config
+        $vendor = Config::get('orbit.vendor_ip_database.default', 'dbip');
+
+        switch ($vendor) {
+            case 'dbip':
+                $addr_type = 'ipv4';
+                if (ip2long($clientIpAddress) !== false) {
+                    $addr_type = 'ipv4';
+                } else if (preg_match('/^[0-9a-fA-F:]+$/', $clientIpAddress) && @inet_pton($clientIpAddress)) {
+                    $addr_type = 'ipv6';
+                }
+
+                $ipData = DB::connection(Config::get('orbit.vendor_ip_database.dbip.connection_id'))
+                    ->table(Config::get('orbit.vendor_ip_database.dbip.table'))
+                    ->where('ip_start', '<=', inet_pton($clientIpAddress))
+                    ->where('addr_type', '=', $addr_type)
+                    ->orderBy('ip_start', 'desc')
+                    ->first();
+                break;
+
+            case 'ip2location':
+                $findIp = explode(".", $clientIpAddress);
+                $ipNumber = ((int)$findIp[0] * ( 256 * 256 * 256 )) + ((int)$findIp[1] * ( 256 * 256 )) + ((int)$findIp[2] * 256) + $findIp[3];
+
+                $ipData = DB::connection(Config::get('orbit.vendor_ip_database.ip2location.connection_id'))
+                    ->table(Config::get('orbit.vendor_ip_database.ip2location.table'))
+                    ->select('country_name as country', 'city_name as city')
+                    ->where('ip_from', '<=', $ipNumber)
+                    ->where('ip_to', '>=', $ipNumber)
+                    ->first();
+                break;
         }
 
-        $dbip = DB::connection(Config::get('orbit.dbip.connection_id'))
-            ->table(Config::get('orbit.dbip.table'))
-            ->where('ip_start', '<=', inet_pton($clientIpAddress))
-            ->where('addr_type', '=', $addr_type)
-            ->orderBy('ip_start', 'desc')
-            ->first();
-
-        if (is_object($dbip)) {
+        if (is_object($ipData)) {
             // Cache result of all possible calls to backend storage
             $cacheConfig = Config::get('orbit.cache.context');
             $cacheContext = 'location-detection';
@@ -187,25 +214,30 @@ class LocationDetectionAPIController extends PubControllerAPI
 
             // set cache key for this IP Address
             $cacheKey = [
-                'country' => $dbip->country,
-                'city' => $dbip->city,
+                'country' => $ipData->country,
+                'city' => $ipData->city,
             ];
 
             // serialize cache key
             $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
 
             // get the response from cache and fallback to query
-            $response = $recordCache->get($serializedCacheKey, function() use ($clientIpAddress, $addr_type, $dbip) {
+            $response = $recordCache->get($serializedCacheKey, function() use ($clientIpAddress, $addr_type, $ipData, $vendor) {
                 $country = null;
                 $cities = [];
 
                 // get GTM country mapping
-                $gtmCountry = VendorGTMCountry::where('vendor_country', $dbip->country)
+                $gtmCountry = VendorGTMCountry::where('vendor_country', $ipData->country)
                     ->first();
 
                 $gtmCities = VendorGTMCity::leftJoin('vendor_gtm_countries', 'vendor_gtm_countries.vendor_country', '=', 'vendor_gtm_cities.vendor_country')
-                    ->where('vendor_gtm_cities.vendor_country', $dbip->country)
-                    ->where('vendor_city', $dbip->city)
+                    ->leftJoin('merchants', 'merchants.city', '=', 'vendor_gtm_cities.gtm_city')
+                    ->where('vendor_gtm_cities.vendor_country', $ipData->country)
+                    ->where('vendor_type', $vendor)
+                    ->where('vendor_city', $ipData->city)
+                    ->where('merchants.status', 'active')
+                    ->where('merchants.object_type', 'mall')
+                    ->groupBy('vendor_gtm_cities.gtm_city')
                     ->get();
 
                 if (is_object($gtmCountry)) {

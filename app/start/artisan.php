@@ -203,6 +203,9 @@ Artisan::add(new ElasticsearchResyncStoreDetailCommand);
 // Resend Registration Email
 Artisan::add(new UserResendRegistrationEmailCommand);
 
+// Import IP2Location data to mysql database
+Artisan::add(new ImportIP2Location);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);

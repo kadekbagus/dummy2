@@ -51,6 +51,11 @@ class FillTableMallCitiesCommand extends Command
             $this->info('[DRY RUN MODE - Not Insert on DB] ');
         }
 
+        if (! $dryRun) {
+            $this->info(sprintf('Deleting all cities...'));
+            $mall_city = DB::table('mall_cities')->delete();
+        }
+
         do {
             // get country from mall
             $malls = Mall::select('merchant_id', 'country_id', 'city', 'city_id')

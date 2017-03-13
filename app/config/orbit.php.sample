@@ -196,9 +196,18 @@ return array(
     ],
 
     // db ip configuration
-    'dbip' => [
-        'connection_id' => 'dbip',
-        'table' => 'july_2016'
+    'vendor_ip_database' => [
+        'default' => 'ip2location',
+
+        'dbip' => [
+            'connection_id' => 'dbip',
+            'table' => 'july_2016'
+        ],
+
+        'ip2location' => [
+            'connection_id' => 'dbip',
+            'table' => 'ip2location_201703'
+        ],
     ],
 
     // Demo environtment
@@ -5558,8 +5567,18 @@ return array(
 
     // Hardcoded featured items
     'featured' => [
+        // boost featured mall_id(s) score so that mall can be on the top of listing
+        'es_boost' => 10,
+
         // List of malls that need to be featured (put ontop of the others)
         'mall_ids' => [
+            'all' => [],
+
+            'indonesia' => [
+                'all' => [],
+                'bali' => [],
+                'tangerang' => []
+            ]
         ]
     ],
 
@@ -5776,5 +5795,18 @@ return array(
                 'default_city_value' => 'LOOKUP CITY DISABLED',
             ]
         ]
-    ]
+    ],
+
+    /**
+     * IP Based Location Detection configuration
+     */
+    'ip_detection' => [
+        // Enable / Disable ip detection
+        'enable' => TRUE,
+        // Default return value should be provided when ip detection  is disabled
+        'default_value' => [
+            'country' => '',
+            'cities' => [],
+        ],
+    ],
 );

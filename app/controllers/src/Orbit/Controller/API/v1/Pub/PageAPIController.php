@@ -55,7 +55,7 @@ class PageAPIController extends PubControllerAPI
                 ),
                 array(
                     'country' => 'required',
-                    'object_type' => 'required|in:advertise_with_us,about_us',
+                    'object_type' => 'required|in:advertise_with_us,about_us,feedback',
                     'language' => 'required',
                 )
             );
@@ -78,6 +78,12 @@ class PageAPIController extends PubControllerAPI
                         $notes = 'Page viewed: View Advertise With Us';
                         $actName = 'view_advertise';
                         $actNameLong = 'View Advertise';
+                        break;
+
+                case 'feedback' :
+                        $notes = 'Page viewed: View Feedback';
+                        $actName = 'view_feedback';
+                        $actNameLong = 'View Feedback';
                         break;
 
                 default :
