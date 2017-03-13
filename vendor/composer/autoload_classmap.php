@@ -589,6 +589,7 @@ return array(
     'CreateTableDeeplinks' => $baseDir . '/app/database/migrations/2016_12_02_031901_create_table_deeplinks.php',
     'CreateTableExtendedActivity' => $baseDir . '/app/database/migrations/2017_02_02_080842_create_table_extended_activity.php',
     'CreateTableIndoormapElements' => $baseDir . '/app/database/migrations/2016_06_02_070940_create_table_indoormap_elements.php',
+    'CreateTableIp2locationCities' => $baseDir . '/app/database/migrations/2017_03_10_093557_create_table_ip2location_cities.php',
     'CreateTableKeywordObject' => $baseDir . '/app/database/migrations/2016_01_12_034757_create_table_keyword_object.php',
     'CreateTableKeywords' => $baseDir . '/app/database/migrations/2016_01_12_034756_create_table_keywords.php',
     'CreateTableListConnectedUser' => $baseDir . '/app/database/migrations/2016_01_26_095304_create_table_list_connected_user.php',
