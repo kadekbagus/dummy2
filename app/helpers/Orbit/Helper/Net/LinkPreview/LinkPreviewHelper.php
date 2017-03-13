@@ -1,7 +1,11 @@
 <?php namespace Orbit\Helper\Net\LinkPreview;
-
+/**
+ * Helper Class to get preview data that will be passed to dedicated view for crawler bot
+ * @author Ahmad <ahmad@dominopos.com>
+ */
 use Config;
 use Language;
+use Orbit\Helper\Util\OrbitUrlSegmentParser;
 
 class LinkPreviewHelper
 {
@@ -9,75 +13,52 @@ class LinkPreviewHelper
 
     protected $lang = 'en';
 
+    /**
+     * @param string $queryString
+     * @return void
+     */
     public function __construct($queryString)
     {
         $this->queryString = $queryString;
     }
 
+    /**
+     * @param string $queryString
+     * @return LinkPreviewHelper
+     */
     public static function create($queryString)
     {
         return new static($queryString);
     }
 
+    /**
+     * @return Orbit\Helper\Net\LinkPreview\LinkPreviewData
+     */
     public function getData()
     {
-        $input = $this->analyzeQueryString();
-        $data = null;
+        $url = OrbitUrlSegmentParser::create($this->queryString);
 
-        switch ($input['objectType']) {
-            case 'store':
-                // $data = StoreLinkPreview::create()->setInput($input)->getShareData();
-            $data = ObjectLinkPreviewFactory::create($input, $input['linkType'])->getInstance();
-                break;
-
-            case 'store':
-                $data = StoreLinkPreview::create()->setInput($input)->getShareData();
-                break;
-
-            default:
-                # code...
-                break;
-        }
-        return $data;
-    }
-/*
-    # store detail
-    ## with hashbang
-    /pub/sharer?_escaped_fragment_=/stores/KsQZo8XoxR45pEEY/bale-nyonya?country=Indonesia&cities=Depok&sortby=created_date&sortmode=desc&order=latest
-    ## without hashbang
-    /stores/KsQZo8XoxR45pEEY/bale-nyonya?country=Indonesia&cities=Depok&sortby=created_date&sortmode=desc&order=latest
-
-    # store list
-    /pub/sharer?_escaped_fragment_=%2Fstores%3Fcountry%3DIndonesia%26cities%3DDepok%26cities%3DSurabaya%26sortby%3Dcreated_date%26sortmode%3Ddesc%26order%3Dlatest
-
-    #home
-    /pub/sharer?_escaped_fragment_=%2
-    /
-*/
-
-    private function analyzeQueryString()
-    {
-        $segments = explode('/', $this->queryString);
-        $url = rtrim(Config::get('app.url'), '/') . $this->queryString;
         $input = [];
-        $langPos = strpos($this->queryString, 'lang=');
-        if ($langPos !== false) {
-            $this->lang = substr($this->queryString, ($langPos + 5), 2);
-        }
+
+        $langFromQueryString = $url->getQueryStringValueFor('lang');
+
+        $this->lang = ! is_null($langFromQueryString) ? $langFromQueryString : $this->lang;
 
         $langObject = Language::where('status', '=', 'active')
             ->where('name', $this->lang)
             ->first();
 
-        switch (count($segments)) {
-            case 4:
-                switch ($segments[1]) {
+        switch (count($url->getSegments())) {
+            case 3:
+                // detail page
+                switch ($url->getSegmentAt(0)) {
                     case 'stores':
+                        // store detail page
                         $input['objectType'] = 'store';
-                        $input['linkType'] = 'detail';
-                        $input['objectId'] = $segments[2];
-                        $input['lang'] = $langObject;
-                        $input['url'] = $url;
+                                $input['linkType'] = 'detail';
+                                $input['objectId'] = $url->getSegmentAt(1);
+                                $input['lang'] = $langObject;
+                                $input['url'] = $url->getUrl();
                         break;
 
                     default:
@@ -91,8 +72,8 @@ class LinkPreviewHelper
                 break;
         }
 
-        return $input;
+        $data = ObjectLinkPreviewFactory::create($input, $input['linkType'])->getData();
+
+        return $data;
     }
-
-
 }
