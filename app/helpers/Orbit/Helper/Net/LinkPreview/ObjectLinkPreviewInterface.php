@@ -4,5 +4,5 @@ interface ObjectLinkPreviewInterface
 {
     public function setInput(array $input);
     public function getInput();
-    public function getShareData();
+    public function getPreviewData();
 }
