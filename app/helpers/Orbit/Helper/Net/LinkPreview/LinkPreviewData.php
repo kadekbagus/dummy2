@@ -1,5 +1,6 @@
 <?php namespace Orbit\Helper\Net\LinkPreview;
 
+use App;
 use Lang;
 use Config;
 
@@ -17,9 +18,9 @@ class LinkPreviewData
      */
     public function __construct($title = '', $description = '', $url = '', $imageUrl = '', array $imageDimension = [], $lang = '')
     {
-        Config::set('app.locale', $lang);
-        $this->title = empty($title) ? Lang::get('metatags.title') : $title . ' - ' . Lang::get('metatags.title');
-        $this->description = empty($description) ? Lang::get('metatags.description') : $description;
+        App::setLocale($lang);
+        $this->title = empty($title) ? Lang::get('metatags.default.title') : $title;
+        $this->description = empty($description) ? Lang::get('metatags.default.description') : $description;
         $this->url = ! empty($url) ? $url : $this->url;
         $this->imageUrl = ! empty($imageUrl) ? $imageUrl : $this->imageUrl;
         $this->imageDimension = ! empty($imageDimension) ? $imageDimension : $this->imageDimension;
