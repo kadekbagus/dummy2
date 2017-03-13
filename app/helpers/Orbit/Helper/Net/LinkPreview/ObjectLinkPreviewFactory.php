@@ -81,7 +81,7 @@ class ObjectLinkPreviewFactory
                         break;
 
                     case 'list':
-                        # code...
+                        $shareData = StoreLinkPreview::create()->setInput($this->input)->getPreviewData();
                         break;
 
                     default:
@@ -91,6 +91,10 @@ class ObjectLinkPreviewFactory
 
             case 'promotion':
                 # code...
+                break;
+
+            case 'home':
+                $shareData = HomeLinkPreview::create()->setInput($this->input)->getPreviewData();
                 break;
 
             default:
