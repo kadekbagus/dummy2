@@ -201,6 +201,11 @@ class NewsLocationAPIController extends PubControllerAPI
                 }
             }
 
+            // filter by cities
+            OrbitInput::get('cities', function($cities) use ($newsLocations, $prefix) {
+                $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $cities);
+            });
+
             // Order data by nearby or city alphabetical
             if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
                 $withCache = FALSE;
