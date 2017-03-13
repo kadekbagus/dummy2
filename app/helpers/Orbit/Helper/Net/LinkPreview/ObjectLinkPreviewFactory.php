@@ -1,5 +1,8 @@
 <?php namespace Orbit\Helper\Net\LinkPreview;
-
+/**
+ * Factory class to get LinkPreviewData based on link object type
+ * @author Ahmad <ahmad@dominopos.com>
+ */
 class ObjectLinkPreviewFactory
 {
     protected $input = [];
@@ -62,11 +65,11 @@ class ObjectLinkPreviewFactory
     }
 
     /**
-     * Get instance of the ObjectLinkPreview based on link type
+     * Get LinkPreviewData based on link type
      *
      * @return ObjectLinkPreviewInterface
      */
-    public function getInstance()
+    public function getData()
     {
         $shareData = NULL;
 
@@ -74,7 +77,7 @@ class ObjectLinkPreviewFactory
             case 'store':
                 switch ($this->linkType) {
                     case 'detail':
-                        $shareData = StoreLinkPreview::create()->setInput($this->input)->getShareData();
+                        $shareData = StoreLinkPreview::create()->setInput($this->input)->getPreviewData();
                         break;
 
                     case 'list':
