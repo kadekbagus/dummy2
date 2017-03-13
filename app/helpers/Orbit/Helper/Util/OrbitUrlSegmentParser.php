@@ -21,6 +21,7 @@
 class OrbitUrlSegmentParser
 {
     protected $segment = [];
+    protected $segments = [];
     protected $queryString = [];
     protected $url = null;
 
@@ -62,7 +63,7 @@ class OrbitUrlSegmentParser
                 return $value !== '';
             });
 
-            $this->segments = array_values($this->segments);
+            $this->segments = array_values($this->segment);
         }
 
         if (isset($parsedUrl['query'])) {
