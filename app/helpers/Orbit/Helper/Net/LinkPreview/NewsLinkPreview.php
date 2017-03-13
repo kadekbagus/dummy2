@@ -81,12 +81,12 @@ class NewsLinkPreview implements ObjectLinkPreviewInterface
             $imageDimension = [$width, $height];
             $lang = $this->input['lang'];
             $url = $this->input['url'];
-            $shareData = new ShareData($title, $description, $url, $imageUrl, $imageDimension, $lang->name);
+            $previewData = new LinkPreviewData($title, $description, $url, $imageUrl, $imageDimension, $lang->name);
         } else {
-            $shareData = new ShareData();
+            $previewData = new LinkPreviewData();
         }
 
-        return $shareData;
+        return $previewData;
     }
 
     private function quote($arg)
