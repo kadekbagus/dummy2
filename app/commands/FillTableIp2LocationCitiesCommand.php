@@ -65,8 +65,8 @@ class FillTableIp2LocationCitiesCommand extends Command
 
                 if (empty($ip2location_city)) {
                     $new_ip2location_city = new Ip2Location();
-                    $new_ip2location_city->country_name = $_ip2location->country_name;
-                    $new_ip2location_city->city_name = $_ip2location->city_name;
+                    $new_ip2location_city->country = $_ip2location->country_name;
+                    $new_ip2location_city->city = $_ip2location->city_name;
 
                     if (! $dryRun) {
                         $new_ip2location_city->save();
