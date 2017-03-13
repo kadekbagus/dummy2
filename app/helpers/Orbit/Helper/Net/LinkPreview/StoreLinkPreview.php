@@ -1,5 +1,9 @@
 <?php namespace Orbit\Helper\Net\LinkPreview;
-
+/**
+ * Class to get Store Detail type LinkPreviewData
+ *
+ * @author Ahmad <ahmad@dominopos.com>
+ */
 use Tenant;
 use DB;
 use Config;
@@ -24,7 +28,7 @@ class StoreLinkPreview implements ObjectLinkPreviewInterface
         return $this->input;
     }
 
-    public function getShareData()
+    public function getPreviewData()
     {
         $prefix = DB::getTablePrefix();
         $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
@@ -82,12 +86,12 @@ class StoreLinkPreview implements ObjectLinkPreviewInterface
             $imageDimension = [$width, $height];
             $lang = $this->input['lang'];
             $url = $this->input['url'];
-            $shareData = new ShareData($title, $description, $url, $imageUrl, $imageDimension, $lang->name);
+            $previewData = new LinkPreviewData($title, $description, $url, $imageUrl, $imageDimension, $lang->name);
         } else {
-            $shareData = new ShareData();
+            $previewData = new LinkPreviewData();
         }
 
-        return $shareData;
+        return $previewData;
     }
 
     private function quote($arg)
