@@ -100,7 +100,7 @@ class FillTableIp2LocationCitiesCommand extends Command
     protected function getOptions()
     {
         return array(
-            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to db_ip_cities.', null),
+            array('dry-run', null, InputOption::VALUE_NONE, 'Dry run, do not Insert to ip2location_cities.', null),
         );
     }
 
