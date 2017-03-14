@@ -62,7 +62,7 @@ class OrbitUrlSegmentParser
                 return $value !== '';
             });
 
-            $this->segments = array_values($this->segments);
+            $this->segment = array_values($this->segment);
         }
 
         if (isset($parsedUrl['query'])) {
@@ -102,8 +102,8 @@ class OrbitUrlSegmentParser
      */
     public function getSegmentAt($segment)
     {
-        if (isset($this->segments[$segment])) {
-            return $this->segments[$segment];
+        if (isset($this->segment[$segment])) {
+            return $this->segment[$segment];
         }
 
         return NULL;
