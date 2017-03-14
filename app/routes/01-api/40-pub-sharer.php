@@ -12,7 +12,6 @@ Route::group(
                 }
             )
         );
-
         Route::get('/pub/sharer/facebook/news-detail',
             array(
                 'as' => 'pub-share-news',
@@ -22,7 +21,6 @@ Route::group(
                 }
             )
         );
-
         Route::get('/pub/sharer/facebook/coupon-detail',
             array(
                 'as' => 'pub-share-coupon',
@@ -32,7 +30,6 @@ Route::group(
                 }
             )
         );
-
         Route::get('/pub/sharer/facebook/store-detail',
             array(
                 'as' => 'pub-share-store',
@@ -43,6 +40,16 @@ Route::group(
             )
         );
     }
+);
+
+Route::get('/pub/sharer',
+    array(
+        'as' => 'pub-sharer',
+        function()
+        {
+            return Orbit\Controller\API\v1\Pub\LinkPreviewAPIController::create()->getDataPreview();
+        }
+    )
 );
 
 

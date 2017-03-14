@@ -1,7 +1,6 @@
 <?php
 namespace Orbit;
 
-
 use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
 use Config;
@@ -229,7 +228,7 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
         }
         else
         {
-            throw new InvalidArgumentException("Route [{$name}] not defined.");
+            throw new \InvalidArgumentException("Route [{$name}] not defined.");
         }
     }
 

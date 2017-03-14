@@ -217,30 +217,32 @@ class MallListAPIController extends PubControllerAPI
             }
 
             // put featured mall id in highest priority
-            $mallFeaturedIds =  Config::get('orbit.featured.mall_ids.all', []);
-            $withScore = true;
-            if (! empty($countryFilter)) {
-                $countryFilter = strtolower($countryFilter);
-                $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
+            if (OrbitInput::get('by_pass_mall_order', 'n') === 'n') {
+                $mallFeaturedIds =  Config::get('orbit.featured.mall_ids.all', []);
+                $withScore = true;
+                if (! empty($countryFilter)) {
+                    $countryFilter = strtolower($countryFilter);
+                    $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
 
-                if (! empty($cityFilters)) {
-                    $mallFeaturedIds = [];
-                    foreach ($cityFilters as $key => $cityName) {
-                        $cityName = str_replace(' ', '_', strtolower($cityName));
-                        $cityValue = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.' . $cityName, []);
+                    if (! empty($cityFilters)) {
+                        $mallFeaturedIds = [];
+                        foreach ($cityFilters as $key => $cityName) {
+                            $cityName = str_replace(' ', '_', strtolower($cityName));
+                            $cityValue = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.' . $cityName, []);
 
-                        if (! empty($cityValue)) {
-                            $mallFeaturedIds = array_merge($cityValue, $mallFeaturedIds);
+                            if (! empty($cityValue)) {
+                                $mallFeaturedIds = array_merge($cityValue, $mallFeaturedIds);
+                            }
                         }
                     }
                 }
+
+                $mallFeaturedIds = array_unique($mallFeaturedIds);
+
+                $esFeaturedBoost = Config::get('orbit.featured.es_boost', 10);
+                $mallOrder = array(array('terms' => array('_id' => $mallFeaturedIds, 'boost' => $esFeaturedBoost)), array('match_all' => new stdClass()));
+                $jsonArea['query']['bool']['should'] = $mallOrder;
             }
-
-            $mallFeaturedIds = array_unique($mallFeaturedIds);
-
-            $esFeaturedBoost = Config::get('orbit.featured.es_boost', 10);
-            $mallOrder = array(array('terms' => array('_id' => $mallFeaturedIds, 'boost' => $esFeaturedBoost)), array('match_all' => new stdClass()));
-            $jsonArea['query']['bool']['should'] = $mallOrder;
 
             $sortby = $sort;
             if ($withScore) {

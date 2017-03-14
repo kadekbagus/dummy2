@@ -283,22 +283,27 @@ class DBIPAPIController extends ControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
+            $vendor = Config::get('orbit.vendor_ip_database.default', 'dbip');
 
-            $dbIpCity = DBIPCity::select('db_ip_city_id', 'country', 'city');
+            if ($vendor === 'ip2location') {
+                $ipCity = Ip2LocationCity::select('ip2location_city_id as ip_city_id', 'country', 'city');
+            } else {
+                $ipCity = DBIPCity::select('db_ip_city_id as ip_city_id', 'country', 'city');
+            }
 
             // Filter DB IP Country by country_like
-            OrbitInput::get('country', function ($country_like) use ($dbIpCity) {
-                $dbIpCity->where('country', $country_like);
+            OrbitInput::get('country', function ($country_like) use ($ipCity) {
+                $ipCity->where('country', $country_like);
             });
 
             // Filter DB IP Country by city_like
-            OrbitInput::get('city_like', function ($city_like) use ($dbIpCity) {
-                $dbIpCity->where('city', 'like', "%$city_like%");
+            OrbitInput::get('city_like', function ($city_like) use ($ipCity) {
+                $ipCity->where('city', 'like', "%$city_like%");
             });
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_dbIpCity = clone $dbIpCity;
+            $_ipCity = clone $ipCity;
 
             // Get the take args
             $take = $perPage;
@@ -312,7 +317,7 @@ class DBIPAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $dbIpCity->take($take);
+            $ipCity->take($take);
 
             $skip = 0;
             OrbitInput::get('skip', function ($_skip) use (&$skip) {
@@ -322,7 +327,7 @@ class DBIPAPIController extends ControllerAPI
 
                 $skip = $_skip;
             });
-            $dbIpCity->skip($skip);
+            $ipCity->skip($skip);
 
             // Default sort by
             $sortBy = 'country';
@@ -342,10 +347,10 @@ class DBIPAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $dbIpCity->orderBy($sortBy, $sortMode);
+            $ipCity->orderBy($sortBy, $sortMode);
 
-            $totalCountry = RecordCounter::create($_dbIpCity)->count();
-            $listCountry = $dbIpCity->get();
+            $totalCountry = RecordCounter::create($_ipCity)->count();
+            $listCountry = $ipCity->get();
 
             $data = new stdclass();
             $data->total_records = $totalCountry;
