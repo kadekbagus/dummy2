@@ -5809,4 +5809,13 @@ return array(
             'cities' => [],
         ],
     ],
+
+    /**
+     * Link preview config
+     */
+    'link_preview' => [
+        // uri to test on local when app.debug is true
+        // eg: /malls/Kv4LROXoxLpH8XBI/grand-indonesia/stores/Kv4b_8XoxMON93FY/ace-home-center?country=Indonesia&cities=Jakarta%20Pusat&sortby=created_date&sortmode=desc&order=latest&lang=en
+        'uri' => ''
+    ],
 );
