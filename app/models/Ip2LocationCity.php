@@ -1,6 +1,6 @@
 <?php
 
-class Ip2Location extends Eloquent
+class Ip2LocationCity extends Eloquent
 {
     protected $primaryKey = 'ip2location_city_id';
 

@@ -50,8 +50,8 @@ class FillTableIp2LocationCitiesCommand extends Command
             // get city from DB IP
             $ip2location = DB::connection(Config::get('orbit.vendor_ip_database.ip2location.connection_id'))
                                 ->table(Config::get('orbit.vendor_ip_database.ip2location.table'))
-                                ->select('country_name', 'city_name')
-                                ->groupby('country_name', 'city_name')
+                                ->select('country_code', 'city_name')
+                                ->groupby('country_code', 'city_name')
                                 ->take($take)
                                 ->skip($skip)
                                 ->get();
@@ -59,22 +59,22 @@ class FillTableIp2LocationCitiesCommand extends Command
             $skip = $take + $skip;
 
             foreach ($ip2location as $key => $_ip2location) {
-                $ip2location_city = Ip2Location::where('country', $_ip2location->country_name)
+                $ip2location_city = Ip2LocationCity::where('country', $_ip2location->country_code)
                                     ->where('city', $_ip2location->city_name)
                                     ->first();
 
                 if (empty($ip2location_city)) {
-                    $new_ip2location_city = new Ip2Location();
-                    $new_ip2location_city->country = $_ip2location->country_name;
+                    $new_ip2location_city = new Ip2LocationCity();
+                    $new_ip2location_city->country = $_ip2location->country_code;
                     $new_ip2location_city->city = $_ip2location->city_name;
 
                     if (! $dryRun) {
                         $new_ip2location_city->save();
                     }
 
-                    $this->info(sprintf("Insert city %s on country %s", $_ip2location->city_name, $_ip2location->country_name));
+                    $this->info(sprintf("Insert city %s on country %s", $_ip2location->city_name, $_ip2location->country_code));
                 } else {
-                    $this->info(sprintf("City %s on country %s, already exist", $_ip2location->city_name, $_ip2location->country_name));
+                    $this->info(sprintf("City %s on country %s, already exist", $_ip2location->city_name, $_ip2location->country_code));
                 }
             }
         } while (! empty($ip2location));
