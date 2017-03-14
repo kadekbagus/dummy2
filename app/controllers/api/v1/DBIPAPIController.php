@@ -286,9 +286,9 @@ class DBIPAPIController extends ControllerAPI
             $vendor = Config::get('orbit.vendor_ip_database.default', 'dbip');
 
             if ($vendor === 'ip2location') {
-                $ipCity = Ip2LocationCity::select('ip2location_city_id as db_ip_city_id', 'country', 'city');
+                $ipCity = Ip2LocationCity::select('ip2location_city_id as ip_city_id', 'country', 'city');
             } else {
-                $ipCity = DBIPCity::select('db_ip_city_id', 'country', 'city');
+                $ipCity = DBIPCity::select('db_ip_city_id as ip_city_id', 'country', 'city');
             }
 
             // Filter DB IP Country by country_like
