@@ -75,22 +75,27 @@ class ObjectLinkPreviewFactory
 
         switch ($this->input['objectType']) {
             case 'store':
-                switch ($this->linkType) {
-                    case 'detail':
-                        $shareData = StoreLinkPreview::create()->setInput($this->input)->getPreviewData();
-                        break;
-
-                    case 'list':
-                        $shareData = StoreLinkPreview::create()->setInput($this->input)->getPreviewData();
-                        break;
-
-                    default:
-                        # code...
-                        break;
-                }
+                $shareData = StoreLinkPreview::create()->setInput($this->input)->getPreviewData();
+                break;
 
             case 'promotion':
-                # code...
+                $shareData = PromotionLinkPreview::create()->setInput($this->input)->getPreviewData();
+                break;
+
+            case 'coupon':
+                $shareData = CouponLinkPreview::create()->setInput($this->input)->getPreviewData();
+                break;
+
+            case 'event':
+                $shareData = NewsLinkPreview::create()->setInput($this->input)->getPreviewData();
+                break;
+
+            case 'mall':
+                $shareData = MallLinkPreview::create()->setInput($this->input)->getPreviewData();
+                break;
+
+            case 'partner':
+                $shareData = PartnerLinkPreview::create()->setInput($this->input)->getPreviewData();
                 break;
 
             case 'home':
