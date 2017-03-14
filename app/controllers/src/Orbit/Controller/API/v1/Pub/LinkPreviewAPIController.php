@@ -16,7 +16,9 @@ class LinkPreviewAPIController extends PubControllerAPI
 
         $rawQueryString = OrbitInput::get('_escaped_fragment_');
         if (Config::get('app.debug')) {
-            $rawQueryString = Config::get('orbit.link_preview.uri', '/');
+            if (! empty(Config::get('orbit.link_preview.uri', ''))) {
+                $rawQueryString = Config::get('orbit.link_preview.uri');
+            }
         }
         $queryString = urldecode(urldecode($rawQueryString));
 
