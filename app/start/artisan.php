@@ -206,6 +206,9 @@ Artisan::add(new UserResendRegistrationEmailCommand);
 // Import IP2Location data to mysql database
 Artisan::add(new ImportIP2Location);
 
+// Import IP2Location city data to mysql database
+Artisan::add(new FillTableIp2LocationCitiesCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
