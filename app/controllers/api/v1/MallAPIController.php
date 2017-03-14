@@ -2380,9 +2380,6 @@ class MallAPIController extends ControllerAPI
               $new_vendor_gtm_city->save();
             }
 
-
-
-
             // update user status
             OrbitInput::post('status', function($status) use ($updatedmall) {
                 $updateuser = User::with(array('role'))->excludeDeleted()->find($updatedmall->user_id);
