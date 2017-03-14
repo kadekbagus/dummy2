@@ -1,7 +1,6 @@
 <?php
 namespace Orbit;
 
-
 use DominoPOS\OrbitSession\Session;
 use DominoPOS\OrbitSession\SessionConfig;
 use Config;
