@@ -229,7 +229,7 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
         }
         else
         {
-            throw new InvalidArgumentException("Route [{$name}] not defined.");
+            throw new \InvalidArgumentException("Route [{$name}] not defined.");
         }
     }
 
