@@ -16,13 +16,7 @@ class LinkPreviewAPIController extends PubControllerAPI
 
         $rawQueryString = OrbitInput::get('_escaped_fragment_');
         if (Config::get('app.debug')) {
-            // --- debugging url sample ---
-            // store detail inside mall
-            // $rawQueryString = '/malls/KsQZo8XoxR45pEEx/stores/KsQZo8XoxR45pEEY?country=Indonesia&cities=Depok&sortby=created_date&sortmode=desc&order=latest&lang=en';
-            // store detail
-            $rawQueryString = '/stores/KsQZo8XoxR45pEEY/bale-nyonya?country=Indonesia&cities=Depok&sortby=created_date&sortmode=desc&order=latest&lang=en';
-            // store list
-            // $rawQueryString = '/stores?country=Indonesia&cities=Depok&sortby=created_date&sortmode=desc&order=latest&lang=en';
+            $rawQueryString = Config::get('orbit.link_preview.uri', '/');
         }
         $queryString = urldecode(urldecode($rawQueryString));
 
