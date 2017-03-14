@@ -222,7 +222,7 @@ class LocationDetectionAPIController extends PubControllerAPI
             $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
 
             // get the response from cache and fallback to query
-            $response = $recordCache->get($serializedCacheKey, function() use ($clientIpAddress, $addr_type, $ipData, $vendor) {
+            $response = $recordCache->get($serializedCacheKey, function() use ($clientIpAddress, $ipData, $vendor) {
                 $country = null;
                 $cities = [];
 
