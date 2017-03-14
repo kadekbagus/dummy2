@@ -50,10 +50,12 @@ class LinkPreviewHelper
             ->first();
 
         $input['lang'] = $langObject;
-        $input['url'] = $url->getUrl();
+        $hashbang = Config::get('orbit.sitemap.hashbang', TRUE) ? '/#!/' : '/';
+        $input['url'] = rtrim(Config::get('app.url'), '/') . $hashbang . ltrim($url->getUrl(), '/');
 
         switch (count($url->getSegments())) {
             case 0:
+            default:
                 // home page
                 $input['objectType'] = 'home';
                 $input['linkType'] = null;
@@ -61,64 +63,28 @@ class LinkPreviewHelper
                 break;
             case 1:
                 // list and other page
-                switch ($url->getSegmentAt(0)) {
-                    case 'stores':
-                        $input['objectType'] = 'store';
-                        $input['linkType'] = 'list';
-                        $input['objectId'] = null;
-                        break;
-
-                    default:
-                        # code...
-                        break;
-                }
+                $input['linkType'] = 'list';
+                $input['objectId'] = null;
+                $input['objectType'] = $this->setInputObjectType($url->getSegmentAt(0));
                 break;
             case 3:
                 // detail page
-                switch ($url->getSegmentAt(0)) {
-                    case 'stores':
-                        // store detail page
-                        $input['objectType'] = 'store';
-                        $input['linkType'] = 'detail';
-                        $input['objectId'] = $url->getSegmentAt(1);
-                        break;
-
-                    default:
-                        # code...
-                        break;
-                }
+                $input['linkType'] = 'detail';
+                $input['objectId'] = $url->getSegmentAt(1);
+                $input['objectType'] = $this->setInputObjectType($url->getSegmentAt(0));
                 break;
             case 4:
                 // mall list page
-                switch ($url->getSegmentAt(3)) {
-                    case 'stores':
-                        // store detail page
-                        $input['objectType'] = 'store';
-                        $input['linkType'] = 'list';
-                        $input['mallName'] = $this->getMallName($url->getSegmentAt(1));
-                        $input['objectId'] = null;
-                        break;
-
-                    default:
-                        # code...
-                        break;
-                }
+                $input['linkType'] = 'list';
+                $input['mallName'] = $this->getMallName($url->getSegmentAt(1));
+                $input['objectId'] = null;
+                $input['objectType'] = $this->setInputObjectType($url->getSegmentAt(3));
                 break;
             case 6:
                 // mall level detail page
-                switch ($url->getSegmentAt(3)) {
-                    case 'stores':
-                        // store detail page
-                        $input['objectType'] = 'store';
-                        $input['linkType'] = 'detail';
-                        $input['objectId'] = $url->getSegmentAt(4);
-                    break;
-
-                }
-                break;
-
-            default:
-                # code...
+                $input['linkType'] = 'detail';
+                $input['objectId'] = $url->getSegmentAt(4);
+                $input['objectType'] = $this->setInputObjectType($url->getSegmentAt(3));
                 break;
         }
 
@@ -135,5 +101,37 @@ class LinkPreviewHelper
         $mallName = is_object($mall) ? $mall->name : '';
 
         return $mallName;
+    }
+
+    protected function setInputObjectType($identifier)
+    {
+        $objectType = null;
+        switch ($identifier) {
+            case 'stores':
+                $objectType = 'store';
+                break;
+
+            case 'promotions':
+                $objectType = 'promotion';
+                break;
+
+            case 'coupons':
+                $objectType = 'coupon';
+                break;
+
+            case 'events':
+                $objectType = 'event';
+                break;
+
+            case 'malls':
+                $objectType = 'mall';
+                break;
+
+            case 'partner':
+                $objectType = 'partner';
+                break;
+        }
+
+        return $objectType;
     }
 }
