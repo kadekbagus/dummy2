@@ -85,7 +85,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             ];
 
 
-            $doLookupForCampaign = empty($country) || empty($categoryId);
+            $doLookupForCampaign = empty($country) || empty($cities) || empty($categoryId);
 
             $elasticClient = NULL;
             if ($doLookupForCampaign) {
@@ -97,6 +97,10 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
 
                 if (empty($country)) {
                     $country = $this->getCountryFromDocument($campaignDocument);
+                }
+
+                if (empty($cities)) {
+                    $cities = $this->getCitiesFromDocument($campaignDocument);
                 }
 
                 if (empty($category)) {
@@ -228,15 +232,43 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
         $sameCategoryRecords = $responseSameCategory->data->records;
         $sameCategoryRecords = $this->removeUnusedProperty($sameCategoryRecords);
 
+        // Get promotion list excluding the category
+        if (count($sameCategoryRecords) < $_GET['take']) {
+            unset($_GET['category_id']);
+
+            // set excluded ids
+            foreach ($sameCategoryRecords as $sameCategoryRecord) {
+                $_GET['excluded_ids'][] = $sameCategoryRecord->{$params['primary_key']};
+            }
+
+            // get news
+            $responseSameType = NewsListAPIController::create('raw')
+                    ->setUser($this->api->user)
+                    ->getSearchNews();
+
+            if ($responseSameType->code !== 0) {
+                throw new Exception($responseSameType->message, $responseSameCategory->code);
+            }
+
+            $sameCampaignTypeRecords = $responseSameType->data->records;
+            $sameCampaignTypeRecords = $this->removeUnusedProperty($sameCampaignTypeRecords);
+
+            foreach ($sameCampaignTypeRecords as $sameCampaignTypeRecord) {
+                $sameCategoryRecords[] = $sameCampaignTypeRecord;
+            }
+        }
+
         // Get promotion list excluding the cities and the category
         if (count($sameCategoryRecords) < $_GET['take']) {
             unset($_GET['cities']);
             unset($_GET['category_id']);
 
+            // set excluded ids
             foreach ($sameCategoryRecords as $sameCategoryRecord) {
                 $_GET['excluded_ids'][] = $sameCategoryRecord->{$params['primary_key']};
             }
 
+            // get news
             $responseSameType = NewsListAPIController::create('raw')
                     ->setUser($this->api->user)
                     ->getSearchNews();
@@ -304,6 +336,21 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
     protected function getCountryFromDocument($document)
     {
         return $document['_source']['link_to_tenant'][0]['country'];
+    }
+
+    /**
+     * @return string
+     */
+    protected function getCitiesFromDocument($document)
+    {
+        $link_to_tenants = $document['_source']['link_to_tenant'];
+        $cities = [];
+
+        foreach ( $link_to_tenants as $link_to_tenant) {
+            $cities[] = $link_to_tenant['city'];
+        }
+
+        return $cities;
     }
 
     /**
