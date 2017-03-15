@@ -15,6 +15,15 @@
         <meta property="og:image:height"  content="{{$data->imageDimension[1]}}" />
         @endif
         @endif
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:description" content="{{{$data->description}}}">
+        <meta name="twitter:title" content="{{{$data->title}}}">
+        <meta name="twitter:site" content="@gotomalls">
+        <meta name="twitter:domain" content="Gotomalls">
+        @if(! empty($data->imageUrl))
+        <meta name="twitter:image:src" content="{{asset($data->imageUrl)}}">
+        @endif
+        <meta name="twitter:creator" content="@gotomalls">
     </head>
     <body>
         <h1>{{{$data->title}}}</h1>
