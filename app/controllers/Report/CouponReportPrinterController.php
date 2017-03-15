@@ -449,7 +449,7 @@ class CouponReportPrinterController extends DataPrinterController
                         $userEmail = $row->user_email;
                     }
 
-                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->issued_coupon_code,
                             $userAge,
