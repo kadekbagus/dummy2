@@ -287,7 +287,7 @@ class PromotionAlsoLikeListAPIController extends PubControllerAPI
             }
         }
 
-        $sameCategoryRecords = array_slice($sameCategoryRecords, 0, 5, true);
+        $sameCategoryRecords = array_slice($sameCategoryRecords, 0, $_GET['take'], true);
 
         $_GET = $_OLD_GET;
 

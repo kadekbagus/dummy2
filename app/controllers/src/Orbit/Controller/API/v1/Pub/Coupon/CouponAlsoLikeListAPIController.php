@@ -284,6 +284,8 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
             }
         }
 
+        $sameCategoryRecords = array_slice($sameCategoryRecords, 0, $_GET['take'], true);
+
         $_GET = $_OLD_GET;
 
         return $sameCategoryRecords;
