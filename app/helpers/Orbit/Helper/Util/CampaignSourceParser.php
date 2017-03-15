@@ -110,10 +110,64 @@ class CampaignSourceParser
                         ? $params['utm_content'] : $this->result['campaign_content'];
                     $this->result['campaign_name'] = isset($params['utm_campaign']) && !empty($params['utm_campaign'])
                         ? $params['utm_campaign'] : $this->result['campaign_name'];
+
+                    // exclusion for social sign in
+                    $isSocialSignIn = strpos($url, 'social-login-callback');
+                    if ($isSocialSignIn !== false) {
+                        $frontendUrl = str_replace('#!/', '', urldecode($params['redirect_to_url']));
+                        $parsedUrl = parse_url($frontendUrl);
+                        $frontendParams = [];
+                        if (isset($parsedUrl['query'])) {
+                            $frontendParams = $this->parseQueryString($parsedUrl['query']);
+                        }
+                        $frontendParams['campaign_source'] = isset($params['utm_source']) && !empty($params['utm_source'])
+                        ? $params['utm_source'] : $frontendParams['campaign_source'];
+                        $frontendParams['campaign_medium'] = isset($params['utm_medium']) && !empty($params['utm_medium'])
+                            ? $params['utm_medium'] : $frontendParams['campaign_medium'];
+                        $frontendParams['campaign_term'] = isset($params['utm_term']) && !empty($params['utm_term'])
+                            ? $params['utm_term'] : $frontendParams['campaign_term'];
+                        $frontendParams['campaign_content'] = isset($params['utm_content']) && !empty($params['utm_content'])
+                            ? $params['utm_content'] : $frontendParams['campaign_content'];
+                        $frontendParams['campaign_name'] = isset($params['utm_campaign']) && !empty($params['utm_campaign'])
+                            ? $params['utm_campaign'] : $frontendParams['campaign_name'];
+                    }
                 }
                 break;
         }
 
         return $this->result;
+    }
+
+    protected function parseQueryString($qs)
+    {
+        // result array
+        $arr = array();
+
+        #//split on outer delimiter
+        $pairs = explode('&', $qs);
+
+        // loop through each pair
+        foreach ($pairs as $i) {
+                // split into name and value
+                list($name,$value) = explode('=', $i, 2);
+
+                // if name already exists
+                if( isset($arr[$name]) ) {
+                        // stick multiple values into an array
+                        if( is_array($arr[$name]) ) {
+                                $arr[$name][] = $value;
+                        }
+                        else {
+                                $arr[$name] = array($arr[$name], $value);
+                        }
+                }
+                // otherwise, simply stick it in a scalar
+                else {
+                        $arr[$name] = $value;
+                }
+        }
+
+        // return result array
+        return $arr;
     }
 }
