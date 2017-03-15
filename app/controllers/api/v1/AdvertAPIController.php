@@ -476,7 +476,9 @@ class AdvertAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $updatedadvert = Advert::excludeDeleted('adverts')
+            $updatedadvert = Advert::excludeDeleted()->where('advert_id', $advert_id)->first();
+
+            $updateAdv = Advert::select('placement_type', 'advert_type', 'link_object_id')->excludeDeleted('adverts')
                                     ->leftJoin('advert_link_types', 'advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id')
                                     ->leftJoin('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
                                     ->where('advert_id', $advert_id)->first();
@@ -487,10 +489,10 @@ class AdvertAPIController extends ControllerAPI
             $flag_update = false;
             $country_id_update = '';
             $city_update = '';
-            if (! empty($updatedadvert)) {
-                $placement = $updatedadvert->placement_type;
-                $link_type = $updatedadvert->advert_type;
-                $object_id = $updatedadvert->link_object_id;
+            if (! empty($updateAdv)) {
+                $placement = $updateAdv->placement_type;
+                $link_type = $updateAdv->advert_type;
+                $object_id = $updateAdv->link_object_id;
             }
 
             if (in_array(($placement), ['top_banner', 'footer_banner'])) {
