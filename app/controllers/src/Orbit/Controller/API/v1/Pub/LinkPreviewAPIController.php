@@ -26,8 +26,7 @@ class LinkPreviewAPIController extends PubControllerAPI
                 $uri = Config::get('orbit.link_preview.uri');
             }
         }
-        $queryString = urldecode($uri);
-
+        $queryString = urldecode(urldecode($uri));
         $data = LinkPreviewHelper::create($queryString)->getData();
 
         return View::make('mobile-ci.templates.sharer', compact('data'));
