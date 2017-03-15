@@ -199,7 +199,7 @@ class LocationDetectionAPIController extends PubControllerAPI
 
                 $ipData = DB::connection(Config::get('orbit.vendor_ip_database.ip2location.connection_id'))
                     ->table(Config::get('orbit.vendor_ip_database.ip2location.table'))
-                    ->select('country_name as country', 'city_name as city')
+                    ->select('country_code as country', 'city_name as city')
                     ->where('ip_from', '<=', $ipNumber)
                     ->where('ip_to', '>=', $ipNumber)
                     ->first();
