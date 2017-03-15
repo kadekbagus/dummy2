@@ -87,18 +87,21 @@ class MapVendorCitiesCommand extends Command
             }
 
             $gtm_country = trim($data['country']);
+            $vendor_type = trim($data['vendor_type']);
             $vendor_city = trim($data['vendor_city']);
             $gtm_cities = $data['gtm_cities'];
 
             $validation_data = [
                 'gtm_country' => $gtm_country,
+                'vendor_type' => $vendor_type,
                 'vendor_city' => $vendor_city,
                 'gtm_cities'  => $gtm_cities,
             ];
 
             $validation_error = [
                 'gtm_country' => 'required|orbit.empty.gtm_country',
-                'vendor_city' => 'required|orbit.empty.vendor_city',
+                'vendor_type' => 'required|in:ip2location,dbip',
+                'vendor_city' => 'required|orbit.empty.vendor_city:' . $vendor_type,
                 'gtm_cities'  => 'required|array',
             ];
 
@@ -124,6 +127,7 @@ class MapVendorCitiesCommand extends Command
 
             foreach ($gtm_cities as $key => $gtm_city) {
                 $check_vendor_city = VendorGTMCity::where('vendor_city', $vendor_city)
+                                            ->where('vendor_type', $vendor_type)
                                             ->where('gtm_city', $gtm_city)
                                             ->where('country_id', $valid_gtm_country->country_id)
                                             ->where('vendor_country', '')
@@ -139,6 +143,7 @@ class MapVendorCitiesCommand extends Command
                     $this->info( sprintf('Update Country %s, Vendor City %s to GTM City %s with Vendor Country %s.', $gtm_country, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
                 } else {
                     $check_vendor_city = VendorGTMCity::where('vendor_city', $vendor_city)
+                                                ->where('vendor_type', $vendor_type)
                                                 ->where('gtm_city', $gtm_city)
                                                 ->where('country_id', $valid_gtm_country->country_id)
                                                 ->where('vendor_country', $valid_gtm_country->vendor_country)
@@ -146,6 +151,7 @@ class MapVendorCitiesCommand extends Command
 
                     if (empty($check_vendor_city)) {
                         $newvendorcity = new VendorGTMCity();
+                        $newvendorcity->vendor_type = $vendor_type;
                         $newvendorcity->vendor_city = $vendor_city;
                         $newvendorcity->gtm_city = $gtm_city;
                         $newvendorcity->country_id = $valid_gtm_country->country_id;
@@ -154,9 +160,9 @@ class MapVendorCitiesCommand extends Command
                         if (! $dryRun) {
                             $newvendorcity->save();
                         }
-                        $this->info( sprintf('Mapping Country %s, Vendor City %s to GTM City %s with Vendor Country %s.', $gtm_country, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
+                        $this->info( sprintf('Mapping Country %s, Vendor %s, Vendor City %s to GTM City %s with Vendor Country %s.', $gtm_country, $vendor_type, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
                     } else {
-                        $this->info( sprintf('Country %s, Vendor City %s to GTM City %s with Vendor Country %s, already exist.', $gtm_country, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
+                        $this->info( sprintf('Country %s, Vendor %s, Vendor City %s to GTM City %s with Vendor Country %s, already exist.', $gtm_country, $vendor_type, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
                     }
                 }
 
@@ -186,7 +192,13 @@ class MapVendorCitiesCommand extends Command
 
         // Check the existance of db_ip city
         Validator::extend('orbit.empty.vendor_city', function ($attribute, $value, $parameters) {
-            $check_city = DBIPCity::where('city', $value)->first();
+            $vendor = $parameters[0];
+
+            if ($vendor === 'ip2location') {
+                $check_city = Ip2LocationCity::where('city', $value)->first();
+            } else {
+                $check_city = DBIPCity::where('city', $value)->first();
+            }
 
             if (empty($check_city)) {
                 return FALSE;
