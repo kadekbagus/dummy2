@@ -344,11 +344,11 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
      */
     protected function getCitiesFromDocument($document)
     {
-        $link_to_tenants = $document['_source']['link_to_tenant'];
+        $linkToTenants = $document['_source']['link_to_tenant'];
         $cities = [];
 
-        foreach ( $link_to_tenants as $link_to_tenant) {
-            $cities[] = $link_to_tenant['city'];
+        foreach ( $linkToTenants as $linkToTenant) {
+            $cities[] = $linkToTenant['city'];
         }
 
         return $cities;
