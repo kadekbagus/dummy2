@@ -68,7 +68,10 @@ class NewsLocationAPIController extends PubControllerAPI
             $news_id = OrbitInput::get('news_id', null);
             $mall_id = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
-            $location = OrbitInput::get('location');
+            $is_mall = OrbitInput::get('is_mall', 'n');
+            $location = (array) OrbitInput::get('location', []);
+            $country = OrbitInput::get('country');
+            $cities = OrbitInput::get('cities', []);
             $distance = Config::get('orbit.geo_location.distance', 10);
             $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');
@@ -98,7 +101,10 @@ class NewsLocationAPIController extends PubControllerAPI
                 'news_id' => $news_id,
                 'mall_id' => $mall_id,
                 'is_detail' => $is_detail,
+                'is_mall' => $is_mall,
                 'location' => $location,
+                'country' => $country,
+                'cities' => $cities,
                 'distance' => $distance,
                 'mall' => $mall,
                 'take' => $take,
@@ -197,7 +203,14 @@ class NewsLocationAPIController extends PubControllerAPI
                     $newsLocations->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                         ->havingRaw("distance <= {$distance}");
                 } else {
-                    $newsLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
+                    $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
+                }
+            } else {
+                if ($is_mall !== 'y') { // handle all location from mall level
+                    // filter by cities
+                    if (! in_array('0', $cities)) {
+                        $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $cities);
+                    }
                 }
             }
 
