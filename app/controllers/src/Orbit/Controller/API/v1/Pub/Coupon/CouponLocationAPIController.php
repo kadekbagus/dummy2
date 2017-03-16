@@ -210,7 +210,7 @@ class CouponLocationAPIController extends PubControllerAPI
                     $couponLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
                 }
             } else {
-                if ($is_mall !== 'y') { // handle all location from mall level
+                if ($is_mall !== 'y' && ! empty($cities)) { // handle all location from mall level
                     // filter by cities
                     if (! in_array('0', $cities)) {
                         $couponLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $cities);
