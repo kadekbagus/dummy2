@@ -98,11 +98,9 @@ class ObjectLinkPreviewFactory
                 $shareData = PartnerLinkPreview::create()->setInput($this->input)->getPreviewData();
                 break;
 
+            default:
             case 'home':
                 $shareData = HomeLinkPreview::create()->setInput($this->input)->getPreviewData();
-                break;
-
-            default:
                 break;
         }
 
