@@ -115,37 +115,24 @@ class CampaignSourceParser
                     $isFbSignIn = strpos($url, 'social-login-callback');
                     $isGoogleSignIn = strpos($url, 'social-google-callback');
                     if ($isFbSignIn !== false || $isGoogleSignIn !== false) {
-                        $frontendUrl = '';
-                        // Google sign in / up conditional
-                        if ($isGoogleSignIn !== false) {
-                            $state = isset($params['state']) && !empty($params['state']) ? json_decode($this->base64UrlDecode($params['state'])) : null;
+                        $redirectToUrl = isset($params['redirect_to_url']) ? $params['redirect_to_url'] : '';
 
-                            if (! is_null($state)) {
-                                $frontendUrl = str_replace('#!/', '', urldecode($state));
-                            }
-                        // Facebook sign in / up conditional
-                        } elseif ($isFbSignIn !== false) {
-                            $redirectToUrl = isset($params['redirect_to_url']) ? $params['redirect_to_url'] : '' ;
-                            $frontendUrl = str_replace('#!/', '', urldecode($redirectToUrl);
+                        $frontendUrl = str_replace('#!/', '', urldecode($redirectToUrl));
+                        $parsedUrl = parse_url($frontendUrl);
+                        $frontendParams = [];
+                        if (isset($parsedUrl['query'])) {
+                            $frontendParams = $this->parseQueryString($parsedUrl['query']);
                         }
-
-                        if (! empty($frontendUrl)) {
-                            $parsedUrl = parse_url($frontendUrl);
-                            $frontendParams = [];
-                            if (isset($parsedUrl['query'])) {
-                                $frontendParams = $this->parseQueryString($parsedUrl['query']);
-                            }
-                            $this->result['campaign_source'] = isset($frontendParams['utm_source']) && !empty($frontendParams['utm_source'])
-                            ? $frontendParams['utm_source'] : $this->result['campaign_source'];
-                            $this->result['campaign_medium'] = isset($frontendParams['utm_medium']) && !empty($frontendParams['utm_medium'])
-                                ? $frontendParams['utm_medium'] : $this->result['campaign_medium'];
-                            $this->result['campaign_term'] = isset($frontendParams['utm_term']) && !empty($frontendParams['utm_term'])
-                                ? $frontendParams['utm_term'] : $this->result['campaign_term'];
-                            $this->result['campaign_content'] = isset($frontendParams['utm_content']) && !empty($frontendParams['utm_content'])
-                                ? $frontendParams['utm_content'] : $this->result['campaign_content'];
-                            $this->result['campaign_name'] = isset($frontendParams['utm_campaign']) && !empty($frontendParams['utm_campaign'])
-                                ? $frontendParams['utm_campaign'] : $this->result['campaign_name'];
-                        }
+                        $frontendParams['campaign_source'] = isset($params['utm_source']) && !empty($params['utm_source'])
+                        ? $params['utm_source'] : $frontendParams['campaign_source'];
+                        $frontendParams['campaign_medium'] = isset($params['utm_medium']) && !empty($params['utm_medium'])
+                            ? $params['utm_medium'] : $frontendParams['campaign_medium'];
+                        $frontendParams['campaign_term'] = isset($params['utm_term']) && !empty($params['utm_term'])
+                            ? $params['utm_term'] : $frontendParams['campaign_term'];
+                        $frontendParams['campaign_content'] = isset($params['utm_content']) && !empty($params['utm_content'])
+                            ? $params['utm_content'] : $frontendParams['campaign_content'];
+                        $frontendParams['campaign_name'] = isset($params['utm_campaign']) && !empty($params['utm_campaign'])
+                            ? $params['utm_campaign'] : $frontendParams['campaign_name'];
                     }
                 }
                 break;
