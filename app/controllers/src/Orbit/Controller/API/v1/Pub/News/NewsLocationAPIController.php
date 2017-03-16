@@ -68,7 +68,7 @@ class NewsLocationAPIController extends PubControllerAPI
             $news_id = OrbitInput::get('news_id', null);
             $mall_id = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
-            $location = OrbitInput::get('location');
+            $location = (array) OrbitInput::get('location', []);
             $country = OrbitInput::get('country');
             $cities = OrbitInput::get('cities', []);
             $distance = Config::get('orbit.geo_location.distance', 10);
@@ -201,16 +201,16 @@ class NewsLocationAPIController extends PubControllerAPI
                     $newsLocations->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                         ->havingRaw("distance <= {$distance}");
                 } else {
-                    $newsLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
+                    $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
                 }
+            } else {
+                // filter by cities
+                OrbitInput::get('cities', function($cities) use ($newsLocations, $prefix) {
+                    if (! in_array('0', $cities)) {
+                        $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $cities);
+                    }
+                });
             }
-
-            // filter by cities
-            OrbitInput::get('cities', function($cities) use ($newsLocations, $prefix) {
-                if (! in_array('0', $cities)) {
-                    $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $cities);
-                }
-            });
 
             // Order data by nearby or city alphabetical
             if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
