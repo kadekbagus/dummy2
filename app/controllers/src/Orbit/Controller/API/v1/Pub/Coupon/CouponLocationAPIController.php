@@ -75,7 +75,7 @@ class CouponLocationAPIController extends PubControllerAPI
             $is_mall = OrbitInput::get('is_mall', 'n');
             $location = (array) OrbitInput::get('location', []);
             $country = OrbitInput::get('country');
-            $cities = OrbitInput::get('cities', []);
+            $cities = (array) OrbitInput::get('cities', []);
             $distance = Config::get('orbit.geo_location.distance', 10);
             $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');
