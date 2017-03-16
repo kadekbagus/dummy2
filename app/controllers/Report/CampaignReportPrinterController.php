@@ -77,8 +77,13 @@ class CampaignReportPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of Campaigns', $totalRecord, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Page Views', $totalPageViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost (IDR)',  number_format($totalEstimatedCost, 0, '', ''), '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)',  number_format($totalSpending, 0, '', ''), '', '', '','');
+
+                // handle N/A value
+                $_totalEstimatedCost = $totalEstimatedCost == 'N/A'? $totalEstimatedCost: number_format($totalEstimatedCost, 0, '', '');
+                $_totalSpending = $totalSpending == 'N/A'? $totalSpending: number_format($totalSpending, 0, '', '');
+
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost (IDR)',  $_totalEstimatedCost, '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)',  $_totalSpending, '', '', '','');
 
                 // Filtering
                 if ($startDate != '' && $endDate != ''){
@@ -129,6 +134,12 @@ class CampaignReportPrinterController extends DataPrinterController
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
+
+                        // handle N/A value
+                        $daily = $row->daily == 'N/A'? $row->daily: number_format($row->daily, 0, '', '');
+                        $estimated_total = $row->estimated_total == 'N/A'? $row->estimated_total: number_format($row->estimated_total, 0, '', '');
+                        $spending = $row->spending == 'N/A'? $row->estimated_total: number_format($row->spending, 0, '', '');
+
                         printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->campaign_name,
@@ -138,9 +149,9 @@ class CampaignReportPrinterController extends DataPrinterController
                             date('d M Y', strtotime($row->end_date)),
                             $row->page_views,
                             $row->popup_clicks,
-                            number_format($row->daily, 0, '', ''),
-                            number_format($row->estimated_total, 0, '', ''),
-                            number_format($row->spending, 0, '', ''),
+                            $daily,
+                            $estimated_total,
+                            $spending,
                             $row->campaign_status
                     );
                     $count++;
