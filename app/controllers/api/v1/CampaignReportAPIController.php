@@ -529,13 +529,13 @@ class CampaignReportAPIController extends ControllerAPI
             $totalRecords = (int) isset($total[0]->total_records)?$total[0]->total_records:0;
 
             // Get total page views
-            $totalPageViews = isset($total[0]->page_views)?$total[0]->page_views:0;
+            $totalPageViews = (int) isset($total[0]->page_views)?$total[0]->page_views:0;
 
             // Get total estimate
-            $totalEstimated = isset($total[0]->estimated_total)?$total[0]->estimated_total:0;
+            $totalEstimated = (int) isset($total[0]->estimated_total)?$total[0]->estimated_total:0;
 
             // Get total spending
-            $totalSpending = isset($total[0]->spending)?$total[0]->spending:0;
+            $totalSpending = (int) isset($total[0]->spending)?$total[0]->spending:0;
 
             $_campaign->select('campaign_id');
 
