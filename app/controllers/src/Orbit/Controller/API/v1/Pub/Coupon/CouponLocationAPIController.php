@@ -207,7 +207,9 @@ class CouponLocationAPIController extends PubControllerAPI
                     $couponLocations->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
                                         ->havingRaw("distance <= {$distance}");
                 } else {
-                    $couponLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
+                    if (! in_array('0', $location)) {
+                        $couponLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
+                    }
                 }
             } else {
                 if ($is_mall !== 'y' && ! empty($cities)) { // handle all location from mall level

@@ -175,7 +175,9 @@ class StoreMallDetailAPIController extends PubControllerAPI
                               ->where(DB::raw("mall.status"), 'active');
 
             if (! empty($location)) {
-                $mall->whereIn(DB::raw('mall.city'), $location);
+                if (! in_array('0', $location)) {
+                    $mall->whereIn(DB::raw('mall.city'), $location);
+                }
             };
 
             if (! empty($mallId)) {
