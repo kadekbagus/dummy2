@@ -68,6 +68,7 @@ class NewsLocationAPIController extends PubControllerAPI
             $news_id = OrbitInput::get('news_id', null);
             $mall_id = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
+            $is_mall = OrbitInput::get('is_mall', 'n');
             $location = (array) OrbitInput::get('location', []);
             $country = OrbitInput::get('country');
             $cities = OrbitInput::get('cities', []);
@@ -100,6 +101,7 @@ class NewsLocationAPIController extends PubControllerAPI
                 'news_id' => $news_id,
                 'mall_id' => $mall_id,
                 'is_detail' => $is_detail,
+                'is_mall' => $is_mall,
                 'location' => $location,
                 'country' => $country,
                 'cities' => $cities,
@@ -204,12 +206,12 @@ class NewsLocationAPIController extends PubControllerAPI
                     $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
                 }
             } else {
-                // filter by cities
-                OrbitInput::get('cities', function($cities) use ($newsLocations, $prefix) {
+                if ($is_mall !== 'y') { // handle all location from mall level
+                    // filter by cities
                     if (! in_array('0', $cities)) {
                         $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $cities);
                     }
-                });
+                }
             }
 
             // Order data by nearby or city alphabetical

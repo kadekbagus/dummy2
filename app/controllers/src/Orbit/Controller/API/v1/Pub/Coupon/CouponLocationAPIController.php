@@ -72,6 +72,7 @@ class CouponLocationAPIController extends PubControllerAPI
             $coupon_id = OrbitInput::get('coupon_id', null);
             $mall_id = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
+            $is_mall = OrbitInput::get('is_mall', 'n');
             $location = (array) OrbitInput::get('location', []);
             $country = OrbitInput::get('country');
             $cities = OrbitInput::get('cities', []);
@@ -104,6 +105,7 @@ class CouponLocationAPIController extends PubControllerAPI
                 'coupon_id' => $coupon_id,
                 'mall_id' => $mall_id,
                 'is_detail' => $is_detail,
+                'is_mall' => $is_mall,
                 'location' => $location,
                 'country' => $country,
                 'cities' => $cities,
@@ -198,6 +200,7 @@ class CouponLocationAPIController extends PubControllerAPI
             $lon = isset($position[0])?$position[0]:null;
             $lat = isset($position[1])?$position[1]:null;
 
+            // Filter by location
             if (! empty($location)) {
                 if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
                     $withCache = FALSE;
@@ -207,12 +210,12 @@ class CouponLocationAPIController extends PubControllerAPI
                     $couponLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $location);
                 }
             } else {
-                // filter by cities
-                OrbitInput::get('cities', function($cities) use ($couponLocations, $prefix) {
+                if ($is_mall !== 'y') { // handle all location from mall level
+                    // filter by cities
                     if (! in_array('0', $cities)) {
                         $couponLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END)"), $cities);
                     }
-                });
+                }
             }
 
             // Order data by nearby or city alphabetical
