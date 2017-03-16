@@ -68,7 +68,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $user = $this->getUser();
             $mallId = OrbitInput::get('mall_id', null);
             $merchantId = OrbitInput::get('merchant_id');
-            $location = OrbitInput::get('location');
+            $location = (array) OrbitInput::get('location', []);
             $noActivity = OrbitInput::get('no_activity', null);
 
             $ul = OrbitInput::get('ul', null);
@@ -175,7 +175,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                               ->where(DB::raw("mall.status"), 'active');
 
             if (! empty($location)) {
-                $mall->where(DB::raw('mall.city'), $location);
+                $mall->whereIn(DB::raw('mall.city'), $location);
             };
 
             if (! empty($mallId)) {
