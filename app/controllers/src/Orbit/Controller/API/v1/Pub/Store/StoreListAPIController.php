@@ -399,13 +399,13 @@ class StoreListAPIController extends PubControllerAPI
                             ->where('adverts.status', '=', DB::raw("'active'"))
                             ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
                             ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
-                            ->where(function($q) use($advert_location_id) {
-                                $q->where('advert_locations.location_id', $advert_location_id)
-                                  ->orWhere('adverts.is_all_location', 'Y');
+                            ->where(function($q) use ($advert_location_id, $prefix) {
+                                $q->whereRaw(DB::raw("{$prefix}advert_locations.location_id = '{$advert_location_id}'"))
+                                  ->orWhereRaw(DB::raw("{$prefix}adverts.is_all_location = 'Y'"));
                             })
-                            ->where(function($q) use($advert_location_type){
-                                $q->where('advert_locations.location_type', $advert_location_type)
-                                  ->orWhere('adverts.is_all_location', 'Y');
+                            ->where(function($q) use ($advert_location_type, $prefix){
+                                $q->whereRaw(DB::raw("{$prefix}advert_locations.location_type = '{$advert_location_type}'"))
+                                  ->orWhereRaw(DB::raw("{$prefix}adverts.is_all_location = 'Y'"));
                             })
                             ->orderBy('advert_placements.placement_order', 'desc');
 
@@ -479,13 +479,13 @@ class StoreListAPIController extends PubControllerAPI
                         if ($dt->placement_type_orig === 'featured_list') {
                             $advertIds[] = $dt->advert_id;
                             $boost = $dt->placement_order * 3;
-                            $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
+                            $esAdvert = array('nested' => array('path' => 'tenant_detail', 'query' => array('match' => array('tenant_detail.merchant_id' => $dt->link_object_id)), 'boost' => $boost));
                             $jsonQuery['query']['bool']['should'][] = $esAdvert;
                         }
                     } else {
                         $advertIds[] = $dt->advert_id;
                         $boost = $dt->placement_order * 3;
-                        $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
+                        $esAdvert = array('nested' => array('path' => 'tenant_detail', 'query' => array('match' => array('tenant_detail.merchant_id' => $dt->link_object_id)), 'boost' => $boost));
                         $jsonQuery['query']['bool']['should'][] = $esAdvert;
                     }
                 }
@@ -569,16 +569,17 @@ class StoreListAPIController extends PubControllerAPI
                         $data['placement_type'] = null;
                         $data['placement_type_orig'] = null;
                         foreach ($advertData as $advData) {
+                            foreach ($record['_source']['tenant_detail'] as $dt) {
+                                if ($advData->link_object_id === $dt['merchant_id']) {
+                                    $data['placement_type'] = $advData->placement_type;
+                                    $data['placement_type_orig'] = $advData->placement_type_orig;
 
-                            if ($advData->link_object_id === $value) {
-                                $data['placement_type'] = $advData->placement_type;
-                                $data['placement_type_orig'] = $advData->placement_type_orig;
-
-                                // image
-                                if (! empty($advData->path)) {
-                                    $data['logo_url'] = $advData->path;
+                                    // image
+                                    if (! empty($advData->path)) {
+                                        $data['logo_url'] = $advData->path;
+                                    }
+                                    break;
                                 }
-                                break;
                             }
                         }
                     }

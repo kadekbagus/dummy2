@@ -110,10 +110,85 @@ class CampaignSourceParser
                         ? $params['utm_content'] : $this->result['campaign_content'];
                     $this->result['campaign_name'] = isset($params['utm_campaign']) && !empty($params['utm_campaign'])
                         ? $params['utm_campaign'] : $this->result['campaign_name'];
+
+                    // exclusion for social sign in
+                    $isFbSignIn = strpos($url, 'social-login-callback');
+                    $isGoogleSignIn = strpos($url, 'social-google-callback');
+                    if ($isFbSignIn !== false || $isGoogleSignIn !== false) {
+                        $frontendUrl = '';
+                        // Google sign in / up conditional
+                        if ($isGoogleSignIn !== false) {
+                            $state = isset($params['state']) && !empty($params['state']) ? json_decode($this->base64UrlDecode($params['state'])) : null;
+
+                            if (! is_null($state)) {
+                                $frontendUrl = str_replace('#!/', '', urldecode($state));
+                            }
+                        // Facebook sign in / up conditional
+                        } elseif ($isFbSignIn !== false) {
+                            $redirectToUrl = isset($params['redirect_to_url']) ? $params['redirect_to_url'] : '' ;
+                            $frontendUrl = str_replace('#!/', '', urldecode($redirectToUrl);
+                        }
+
+                        if (! empty($frontendUrl)) {
+                            $parsedUrl = parse_url($frontendUrl);
+                            $frontendParams = [];
+                            if (isset($parsedUrl['query'])) {
+                                $frontendParams = $this->parseQueryString($parsedUrl['query']);
+                            }
+                            $this->result['campaign_source'] = isset($frontendParams['utm_source']) && !empty($frontendParams['utm_source'])
+                            ? $frontendParams['utm_source'] : $this->result['campaign_source'];
+                            $this->result['campaign_medium'] = isset($frontendParams['utm_medium']) && !empty($frontendParams['utm_medium'])
+                                ? $frontendParams['utm_medium'] : $this->result['campaign_medium'];
+                            $this->result['campaign_term'] = isset($frontendParams['utm_term']) && !empty($frontendParams['utm_term'])
+                                ? $frontendParams['utm_term'] : $this->result['campaign_term'];
+                            $this->result['campaign_content'] = isset($frontendParams['utm_content']) && !empty($frontendParams['utm_content'])
+                                ? $frontendParams['utm_content'] : $this->result['campaign_content'];
+                            $this->result['campaign_name'] = isset($frontendParams['utm_campaign']) && !empty($frontendParams['utm_campaign'])
+                                ? $frontendParams['utm_campaign'] : $this->result['campaign_name'];
+                        }
+                    }
                 }
                 break;
         }
 
         return $this->result;
+    }
+
+    protected function parseQueryString($qs)
+    {
+        // result array
+        $arr = array();
+
+        #//split on outer delimiter
+        $pairs = explode('&', $qs);
+
+        // loop through each pair
+        foreach ($pairs as $i) {
+                // split into name and value
+                list($name,$value) = explode('=', $i, 2);
+
+                // if name already exists
+                if( isset($arr[$name]) ) {
+                        // stick multiple values into an array
+                        if( is_array($arr[$name]) ) {
+                                $arr[$name][] = $value;
+                        }
+                        else {
+                                $arr[$name] = array($arr[$name], $value);
+                        }
+                }
+                // otherwise, simply stick it in a scalar
+                else {
+                        $arr[$name] = $value;
+                }
+        }
+
+        // return result array
+        return $arr;
+    }
+
+    public function base64UrlDecode($inputStr)
+    {
+        return base64_decode(strtr($inputStr, '-_,', '+/='));
     }
 }
