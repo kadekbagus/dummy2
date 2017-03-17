@@ -5182,7 +5182,7 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
-            // User clicks submit button on feedback form
+            // User view sign in page
             '115' => array(
                 'name' => 'view_sign_in_page',
                 'name_long' => 'View Sign In Page',
