@@ -69,6 +69,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $merchantId = OrbitInput::get('merchant_id');
             $location = (array) OrbitInput::get('location', []);
+            $cities = (array) OrbitInput::get('cities', []);
             $noActivity = OrbitInput::get('no_activity', null);
 
             $ul = OrbitInput::get('ul', null);
@@ -93,6 +94,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 'mall_id' => $mallId,
                 'merchant_id' => $merchantId,
                 'location' => $location,
+                'cities' => $cities,
                 'take' => $take,
                 'skip' => $skip,
             ];
@@ -177,7 +179,14 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 if (! in_array('0', $location)) {
                     $mall->whereIn(DB::raw('mall.city'), $location);
                 }
-            };
+            } else {
+                if (! empty($cities)) {
+                    // filter by cities
+                    if (! in_array('0', $cities)) {
+                        $mall->whereIn(DB::raw('mall.city'), $cities);
+                    }
+                }
+            }
 
             if (! empty($mallId)) {
                 $mall->where(DB::raw("mall.merchant_id"), '=', $mallId)->first();
