@@ -209,6 +209,9 @@ Artisan::add(new ImportIP2Location);
 // Import IP2Location city data to mysql database
 Artisan::add(new FillTableIp2LocationCitiesCommand);
 
+// Update coupon link to tenant
+Artisan::add(new CouponUpdateLinkToTenant);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
