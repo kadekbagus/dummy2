@@ -5,6 +5,8 @@
  *
  * @author Rio Astamal <rio@dominopos.com>
  */
+use Config;
+
 class CampaignSourceParser
 {
     /**
@@ -133,6 +135,43 @@ class CampaignSourceParser
                         $this->result['campaign_name'] = isset($frontendParams['utm_campaign']) && !empty($frontendParams['utm_campaign'])
                             ? $frontendParams['utm_campaign'] : $this->result['campaign_name'];
                     }
+
+                    $isGoogleSignIn = strpos($url, 'social-google-callback');
+                    if ($isGoogleSignIn !== false) {
+                        $parsedUrl = parse_url($url);
+                        if (! isset($parsedUrl['query'])) {
+                            break;
+                        }
+                        $queryString = $this->parseQueryString(urldecode($parsedUrl['query']));
+                        if (! isset($queryString['state'])) {
+                            break;
+                        }
+                        $state = $queryString['state'];
+                        $decodedState = json_decode($this->base64UrlDecode($state));
+                        if (! isset($decodedState->redirect_to_url) && ! isset($decodedState->redirect_uri)) {
+                            break;
+                        }
+
+                        $frontendUrl = isset($decodedState->redirect_to_url) ? $decodedState->redirect_to_url : $decodedState->redirect_uri;
+                        $frontendUrl = str_replace('#!/', '', $frontendUrl);
+
+                        $parsedFrontendUrl = parse_url($frontendUrl);
+                        $frontendParams = [];
+                        if (isset($parsedFrontendUrl['query'])) {
+                            $frontendParams = $this->parseQueryString($parsedFrontendUrl['query']);
+                        }
+
+                        $this->result['campaign_source'] = isset($frontendParams['utm_source']) && !empty($frontendParams['utm_source'])
+                        ? $frontendParams['utm_source'] : $this->result['campaign_source'];
+                        $this->result['campaign_medium'] = isset($frontendParams['utm_medium']) && !empty($frontendParams['utm_medium'])
+                            ? $frontendParams['utm_medium'] : $this->result['campaign_medium'];
+                        $this->result['campaign_term'] = isset($frontendParams['utm_term']) && !empty($frontendParams['utm_term'])
+                            ? $frontendParams['utm_term'] : $this->result['campaign_term'];
+                        $this->result['campaign_content'] = isset($frontendParams['utm_content']) && !empty($frontendParams['utm_content'])
+                            ? $frontendParams['utm_content'] : $this->result['campaign_content'];
+                        $this->result['campaign_name'] = isset($frontendParams['utm_campaign']) && !empty($frontendParams['utm_campaign'])
+                            ? $frontendParams['utm_campaign'] : $this->result['campaign_name'];
+                    }
                 }
                 break;
         }
@@ -146,7 +185,7 @@ class CampaignSourceParser
         $arr = array();
 
         #//split on outer delimiter
-        $pairs = explode('&', $qs);
+        $pairs = explode('&', ltrim($qs, '&'));
 
         // loop through each pair
         foreach ($pairs as $i) {
@@ -171,5 +210,10 @@ class CampaignSourceParser
 
         // return result array
         return $arr;
+    }
+
+    protected function base64UrlDecode($inputStr)
+    {
+        return base64_decode(strtr($inputStr, '-_,', '+/='));
     }
 }
