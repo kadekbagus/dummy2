@@ -111,17 +111,14 @@ class CdnS3UploadCommand extends Command
                 break;
 
             case 'category':
-                $categories = Category::with('media')->where('category_id', $objectId)->first();
+                $object = Category::with('media')->where('category_id', $objectId)->first();
                 $options = [
                     'primary_key' => 'category_id',
                     'translation_primary_key' => '',
                     'using_translation' => FALSE,
                     'bucket_name' => $bucketName
                 ];
-
-                foreach ($categories as $object) {
-                    $this->genericObjectUpload($object, $objectType, $options);
-                }
+                $this->genericObjectUpload($object, $objectType, $options);
                 break;
 
             default:
