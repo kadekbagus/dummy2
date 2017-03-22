@@ -107,4 +107,10 @@ class Category extends Eloquent
     {
         return $this->belongsToMany('TenantStoreAndService', 'category_merchant', 'category_id', 'merchant_id');
     }
+
+    public function media()
+    {
+        return $this->hasMany('Media', 'object_id', 'category_id')
+                    ->where('object_name', 'category');
+    }
 }
