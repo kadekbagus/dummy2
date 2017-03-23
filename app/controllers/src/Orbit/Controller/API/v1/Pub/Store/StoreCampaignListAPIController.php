@@ -60,6 +60,8 @@ class StoreCampaignListAPIController extends PubControllerAPI
             $keyword = OrbitInput::get('keyword');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
+            $countryFilter = OrbitInput::get('country', null);
+            $citiesFilter = OrbitInput::get('cities', null);
             $category_id = OrbitInput::get('category_id');
             $token = OrbitInput::get('token');
             $ul = OrbitInput::get('ul', null);
@@ -201,9 +203,26 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         });
             });
 
-            // filter by city
-            OrbitInput::get('location', function($location) use ($news, $prefix, $ul, $userLocationCookieName, $distance) {
-                $news = $this->getLocation($prefix, $location, $news, $ul, $distance, $userLocationCookieName);
+            if (! empty($countryFilter) || ! empty($citiesFilter)) {
+                $news->join('merchants as mp', function($q) use ($prefix) {
+                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("{$prefix}merchants.parent_id"));
+                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
+                                $q->on(DB::raw("{$prefix}merchants.status"), '=', DB::raw("'active'"));
+                            });
+            }
+
+            // filter by country
+            OrbitInput::get('country', function($country) use ($news, $prefix) {
+                $news = $news->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN mp.country ELSE {$prefix}merchants.country END)"), $country);
+            });
+
+            // filter by country
+            OrbitInput::get('cities', function($cities) use ($news, $prefix) {
+                if (! is_array($cities)) {
+                    $cities = (array) $cities;
+                }
+
+                $news = $news->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN mp.city ELSE {$prefix}merchants.city END)"), $cities);
             });
 
             // filter by category_id
@@ -314,9 +333,26 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         });
             });
 
-            // filter by city
-            OrbitInput::get('location', function($location) use ($promotions, $prefix, $ul, $userLocationCookieName, $distance) {
-                $promotions = $this->getLocation($prefix, $location, $promotions, $ul, $distance, $userLocationCookieName);
+            if (! empty($countryFilter) || ! empty($citiesFilter)) {
+                $promotions->join('merchants as mp', function($q) use ($prefix) {
+                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("{$prefix}merchants.parent_id"));
+                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
+                                $q->on(DB::raw("{$prefix}merchants.status"), '=', DB::raw("'active'"));
+                            });
+            }
+
+            // filter by country
+            OrbitInput::get('country', function($country) use ($promotions, $prefix) {
+                $promotions = $promotions->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN mp.country ELSE {$prefix}merchants.country END)"), $country);
+            });
+
+            // filter by country
+            OrbitInput::get('cities', function($cities) use ($promotions, $prefix) {
+                if (! is_array($cities)) {
+                    $cities = (array) $cities;
+                }
+
+                $promotions = $promotions->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN mp.city ELSE {$prefix}merchants.city END)"), $cities);
             });
 
             // filter by category_id
@@ -429,9 +465,26 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         });
             });
 
-            // filter by city
-            OrbitInput::get('location', function($location) use ($coupons, $prefix, $ul, $userLocationCookieName, $distance) {
-                $coupons = $this->getLocation($prefix, $location, $coupons, $ul, $distance, $userLocationCookieName);
+            if (! empty($countryFilter) || ! empty($citiesFilter)) {
+                $coupons->join('merchants as mp', function($q) use ($prefix) {
+                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("{$prefix}merchants.parent_id"));
+                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
+                                $q->on(DB::raw("{$prefix}merchants.status"), '=', DB::raw("'active'"));
+                            });
+            }
+
+            // filter by country
+            OrbitInput::get('country', function($country) use ($coupons, $prefix) {
+                $coupons = $coupons->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN mp.country ELSE {$prefix}merchants.country END)"), $country);
+            });
+
+            // filter by country
+            OrbitInput::get('cities', function($cities) use ($coupons, $prefix) {
+                if (! is_array($cities)) {
+                    $cities = (array) $cities;
+                }
+
+                $coupons = $coupons->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN mp.city ELSE {$prefix}merchants.city END)"), $cities);
             });
 
             // filter by category_id
@@ -594,42 +647,6 @@ class StoreCampaignListAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
-    }
-
-    protected function getLocation($prefix, $location, $query, $ul, $distance, $userLocationCookieName)
-    {
-        $query = $query->join('merchants as mp', function($q) use ($prefix) {
-                                $q->on(DB::raw("mp.merchant_id"), '=', DB::raw("{$prefix}merchants.parent_id"));
-                                $q->on(DB::raw("mp.object_type"), '=', DB::raw("'mall'"));
-                                $q->on(DB::raw("{$prefix}merchants.status"), '=', DB::raw("'active'"));
-                            });
-
-                if ($location === 'mylocation') {
-                    if (! empty($ul)) {
-                        $position = explode("|", $ul);
-                        $lon = $position[0];
-                        $lat = $position[1];
-                    } else {
-                        // get lon lat from cookie
-                        $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                        if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                            $lon = $userLocationCookieArray[0];
-                            $lat = $userLocationCookieArray[1];
-                        }
-                    }
-
-                    if (!empty($lon) && !empty($lat)) {
-                        $query = $query->addSelect(DB::raw("6371 * acos( cos( radians({$lat}) ) * cos( radians( x({$prefix}merchant_geofences.position) ) ) * cos( radians( y({$prefix}merchant_geofences.position) ) - radians({$lon}) ) + sin( radians({$lat}) ) * sin( radians( x({$prefix}merchant_geofences.position) ) ) ) AS distance"))
-                                        ->join('merchant_geofences', function ($q) use($prefix) {
-                                                $q->on('merchant_geofences.merchant_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END"));
-                                        });
-                    }
-                    $query = $query->havingRaw("distance <= {$distance}");
-                } else {
-                    $query = $query->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN mp.city ELSE {$prefix}merchants.city END)"), $location);
-                }
-
-        return $query;
     }
 
 }
