@@ -259,31 +259,6 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
             }
         }
 
-        // Get promotion list excluding the cities and the category
-        if (count($sameCategoryRecords) < $_GET['take']) {
-            unset($_GET['cities']);
-            unset($_GET['category_id']);
-
-            foreach ($sameCategoryRecords as $sameCategoryRecord) {
-                $_GET['excluded_ids'][] = $sameCategoryRecord->{$params['primary_key']};
-            }
-
-            $responseSameType = CouponListAPIController::create('raw')
-                    ->setUser($this->api->user)
-                    ->getCouponList();
-
-            if ($responseSameType->code !== 0) {
-                throw new Exception($responseSameType->message, $responseSameCategory->code);
-            }
-
-            $sameCampaignTypeRecords = $responseSameType->data->records;
-            $sameCampaignTypeRecords = $this->removeUnusedProperty($sameCampaignTypeRecords);
-
-            foreach ($sameCampaignTypeRecords as $sameCampaignTypeRecord) {
-                $sameCategoryRecords[] = $sameCampaignTypeRecord;
-            }
-        }
-
         $sameCategoryRecords = array_slice($sameCategoryRecords, 0, $_GET['take'], true);
 
         $_GET = $_OLD_GET;
