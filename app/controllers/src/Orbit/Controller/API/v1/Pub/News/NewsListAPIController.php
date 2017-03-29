@@ -152,6 +152,7 @@ class NewsListAPIController extends PubControllerAPI
             }
 
             //Get now time, time must be 2017-01-09T15:30:00Z
+            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
