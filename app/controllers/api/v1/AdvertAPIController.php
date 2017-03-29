@@ -130,7 +130,7 @@ class AdvertAPIController extends ControllerAPI
             Event::fire('orbit.advert.postnewadvert.after.validation', array($this, $validator));
 
             // automatically update country and city when top_banner/footer_banner
-            // selected and the advert type is store,coupon or promotion
+            // selected and the advert type is store,coupon or promotion/news
             $prefix = DB::getTablePrefix();
             $placement = AdvertPlacement::select('placement_type')
                             ->where('advert_placement_id', '=', $advert_placement_id)
@@ -217,6 +217,36 @@ class AdvertAPIController extends ControllerAPI
                             $country_id = $promotion[0]->country_id;
                             $_city = array();
                             foreach($promotion as $promo) {
+                                if (! empty($promo->mall_city_id)) {
+                                    $_city[] = $promo->mall_city_id;
+                                }
+                            }
+                            $city = $_city;
+                        }
+                    }
+
+                    if ($link_type->advert_type == 'news') {
+                        $news = News::select('mall_countries.country_id','mall_cities.mall_city_id')
+                                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                        ->leftJoin(DB::raw("{$prefix}merchants as om"), function($join){
+                                             $join->on(DB::raw('om.merchant_id'), '=', 'news_merchant.merchant_id');
+                                        })
+                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), function($join){
+                                             $join->on(DB::raw('oms.merchant_id'), '=', DB::raw('om.parent_id'));
+                                        })
+                                        ->leftJoin('mall_countries', 'mall_countries.country', '=', DB::raw('oms.country'))
+                                        ->leftJoin('mall_cities', function($join) {
+                                            $join->on('mall_cities.city', '=', DB::raw("CASE WHEN om.object_type = 'tenant' THEN oms.city ELSE om.city END"));
+                                        })
+                                        ->where('news.news_id', '=', $link_object_id)
+                                        ->where('news.object_type', '=', 'news')
+                                        ->groupBy('mall_cities.mall_city_id')
+                                        ->get();
+
+                        if (!$news->isEmpty()) {
+                            $country_id = $news[0]->country_id;
+                            $_city = array();
+                            foreach($news as $promo) {
                                 if (! empty($promo->mall_city_id)) {
                                     $_city[] = $promo->mall_city_id;
                                 }
@@ -574,6 +604,37 @@ class AdvertAPIController extends ControllerAPI
                             $country_id_update = $promotion[0]->country_id;
                             $_city = array();
                             foreach($promotion as $promo){
+                                if (! empty($promo->mall_city_id)) {
+                                    $_city[] = $promo->mall_city_id;
+                                }
+                            }
+                            $city_update = $_city;
+                            $flag_update = true;
+                        }
+                }
+
+                if ($link_type == 'news' && ! empty($object_id)) {
+                        $news = News::select('mall_countries.country_id','mall_cities.mall_city_id')
+                                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                        ->leftJoin(DB::raw("{$prefix}merchants as om"), function($join){
+                                             $join->on(DB::raw('om.merchant_id'), '=', 'news_merchant.merchant_id');
+                                        })
+                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), function($join){
+                                             $join->on(DB::raw('oms.merchant_id'), '=', DB::raw('om.parent_id'));
+                                        })
+                                        ->leftJoin('mall_countries', 'mall_countries.country', '=', DB::raw('oms.country'))
+                                        ->leftJoin('mall_cities', function($join) {
+                                            $join->on('mall_cities.city', '=', DB::raw("CASE WHEN om.object_type = 'tenant' THEN oms.city ELSE om.city END"));
+                                        })
+                                        ->where('news.news_id', '=', $object_id)
+                                        ->where('news.object_type', '=', 'news')
+                                        ->groupBy('mall_cities.mall_city_id')
+                                        ->get();
+
+                        if (!$news->isEmpty()) {
+                            $country_id_update = $news[0]->country_id;
+                            $_city = array();
+                            foreach($news as $promo){
                                 if (! empty($promo->mall_city_id)) {
                                     $_city[] = $promo->mall_city_id;
                                 }
@@ -951,6 +1012,8 @@ class AdvertAPIController extends ControllerAPI
                                                 WHEN advert_link_name = 'Store' THEN store.name
                                                 WHEN advert_link_name = 'Coupon' THEN {$prefix}promotions.promotion_name
                                                 WHEN advert_link_name = 'Promotion' THEN {$prefix}news.news_name
+                                                WHEN advert_link_name = 'Event' THEN {$prefix}news.news_name
+                                                WHEN advert_link_name = 'Promotional Event' THEN {$prefix}news.news_name
                                                 ELSE link_url
                                              END AS 'link_to'"),
                                      DB::raw("media.path as image_path"))
@@ -1193,7 +1256,7 @@ class AdvertAPIController extends ControllerAPI
 
                 $advert = Advert::where('advert_id', $parameters[0])
                             ->join('advert_link_types', 'advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id')
-                            ->whereIn('advert_link_types.advert_type',['store', 'promotion', 'coupon'])
+                            ->whereIn('advert_link_types.advert_type',['store', 'promotion', 'coupon', 'news'])
                             ->first();
 
                 if (is_object($advert)) {
@@ -1204,6 +1267,14 @@ class AdvertAPIController extends ControllerAPI
                         if (empty($advertCheck)) {
                             $errorMessage = 'Promotion is stopped or paused';
                             throw new OrbitCustomException($errorMessage, Advert::ADVERT_PROMOTION_ERROR_CODE, NULL);
+                        }
+                    } elseif ($advert->advert_type === 'news') {
+                        $advertCheck = News::where('status', 'active')
+                                        ->where('news_id', $advert->link_object_id)
+                                        ->first();
+                        if (empty($advertCheck)) {
+                            $errorMessage = 'Event / Promotional Event is stopped or paused';
+                            throw new OrbitCustomException($errorMessage, Advert::ADVERT_NEWS_ERROR_CODE, NULL);
                         }
                     } elseif ($advert->advert_type === 'coupon') {
                         $advertCheck = Coupon::where('status', 'active')
