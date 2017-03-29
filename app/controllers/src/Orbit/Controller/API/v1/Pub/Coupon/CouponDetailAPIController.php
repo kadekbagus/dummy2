@@ -180,8 +180,7 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->first();
             });
 
-            $coupon = $coupon->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                        ->first();
+            $coupon = $coupon->first();
 
             $message = 'Request Ok';
             if (! is_object($coupon)) {

@@ -160,7 +160,6 @@ class NewsDetailAPIController extends PubControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
-                        ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
                             }])
