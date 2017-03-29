@@ -119,8 +119,8 @@ class ESNewsSuggestionDeleteQueue
                 'status' => 'ok',
                 'message' => sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['news']['index'],
-                                $esConfig['indices']['news']['type'])
+                                $esConfig['indices']['news_suggestions']['index'],
+                                $esConfig['indices']['news_suggestions']['type'])
             ];
         } catch (Exception $e) {
             // Bury the job for later inspection
@@ -133,8 +133,8 @@ class ESNewsSuggestionDeleteQueue
                 'status' => 'fail',
                 'message' => sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['news']['index'],
-                                $esConfig['indices']['news']['type'],
+                                $esConfig['indices']['news_suggestions']['index'],
+                                $esConfig['indices']['news_suggestions']['type'],
                                 $e->getCode(),
                                 $e->getMessage())
             ];
