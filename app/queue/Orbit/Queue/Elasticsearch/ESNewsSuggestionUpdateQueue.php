@@ -101,8 +101,8 @@ class ESNewsSuggestionUpdateQueue
 
                 $message = sprintf('[Job ID: `%s`] Elasticsearch Delete Doucment in Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['news']['index'],
-                                $esConfig['indices']['news']['type']);
+                                $esConfig['indices']['news_suggestions']['index'],
+                                $esConfig['indices']['news_suggestions']['type']);
                 Log::info($message);
 
                 return [
@@ -143,7 +143,7 @@ class ESNewsSuggestionUpdateQueue
                 'begin_date' => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
                 'end_date' => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z'
             ];
-            
+
             foreach ($news->translations as $translationCollection) {
                 $suggest = array();
 
@@ -162,10 +162,15 @@ class ESNewsSuggestionUpdateQueue
                         $input[] = substr($textName, 0, -1);
                     }
 
-                    $suggest = [ 
+                    $payloadType = 'news';
+                    if ($news->is_having_reward === 'Y') {
+                        $payloadType = 'promotional_event';
+                    }
+
+                    $suggest = [
                         'input'   => $input,
                         'output'  => $translationCollection->news_name,
-                        'payload' => ['id' => $news->news_id, 'type' => 'news']
+                        'payload' => ['id' => $news->news_id, 'type' => $payloadType]
                     ];
 
                     switch ($translationCollection->name) {
@@ -209,8 +214,8 @@ class ESNewsSuggestionUpdateQueue
 
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; News ID: %s; News Name: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['news']['index'],
-                                $esConfig['indices']['news']['type'],
+                                $esConfig['indices']['news_suggestions']['index'],
+                                $esConfig['indices']['news_suggestions']['type'],
                                 $news->news_id,
                                 $news->news_name);
             Log::info($message);
@@ -222,8 +227,8 @@ class ESNewsSuggestionUpdateQueue
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['news']['index'],
-                                $esConfig['indices']['news']['type'],
+                                $esConfig['indices']['news_suggestions']['index'],
+                                $esConfig['indices']['news_suggestions']['type'],
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);
