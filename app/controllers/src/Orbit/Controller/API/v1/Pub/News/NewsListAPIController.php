@@ -33,6 +33,7 @@ use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Elasticsearch\ClientBuilder;
 use Carbon\Carbon as Carbon;
+use stdClass;
 
 class NewsListAPIController extends PubControllerAPI
 {
@@ -641,6 +642,32 @@ class NewsListAPIController extends PubControllerAPI
                 $data->mall_city = $mall->city;
             }
             $data->records = $listOfRec;
+
+            // random featured adv
+            // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
+            if ($list_type === 'featured') {
+                $advertedCampaigns = array_filter($listOfRec, function($v) {
+                    return ($v['placement_type_orig'] === 'featured_list');
+                });
+
+                if (count($advertedCampaigns) > $take) {
+                    $output = array();
+                    $listSlide = array_rand($advertedCampaigns, $take);
+                    if (count($listSlide) > 1) {
+                        foreach ($listSlide as $key => $value) {
+                            $output[] = $advertedCampaigns[$value];
+                        }
+                    } else {
+                        $output = $advertedCampaigns[$listSlide];
+                    }
+                } else {
+                    $output = array_slice($listOfRec, 0, $take);
+                }
+
+                $data->returned_records = count($output);
+                $data->total_records = $records['total'];
+                $data->records = $output;
+            }
 
 
             if (OrbitInput::get('from_homepage', '') !== 'y') {

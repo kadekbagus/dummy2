@@ -2303,7 +2303,7 @@ class TenantAPIController extends ControllerAPI
                                 ->where('promotion_id', $campaign_id)
                                 ->groupBy('mall_id');
 
-                } elseif ($link_type === 'promotion') {
+                } elseif ($link_type === 'promotion' || $link_type === 'news') {
                     $tenants = NewsMerchant::select(
                                     'merchants.merchant_id',
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
