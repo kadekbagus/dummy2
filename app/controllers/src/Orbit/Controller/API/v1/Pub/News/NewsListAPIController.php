@@ -15,6 +15,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
 use News;
+use Advert;
 use NewsMerchant;
 use Language;
 use Validator;
@@ -32,6 +33,7 @@ use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Elasticsearch\ClientBuilder;
 use Carbon\Carbon as Carbon;
+use stdClass;
 
 class NewsListAPIController extends PubControllerAPI
 {
@@ -71,6 +73,10 @@ class NewsListAPIController extends PubControllerAPI
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
         $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-total-rec');
+        $keywordSearchCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-keyword-search');
+        $advertCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-adverts');
 
         try {
             $user = $this->getUser();
@@ -88,6 +94,8 @@ class NewsListAPIController extends PubControllerAPI
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
             $category_id = OrbitInput::get('category_id');
+            $withPremium = OrbitInput::get('is_premium', null);
+            $list_type = OrbitInput::get('list_type', 'featured');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $no_total_records = OrbitInput::get('no_total_records', null);
             $take = PaginationNumber::parseTakeFromGet('news');
@@ -118,6 +126,7 @@ class NewsListAPIController extends PubControllerAPI
                 'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
+                'with_premium' => $withPremium, 'list_type' => $list_type,
                 'from_mall_ci' => $from_mall_ci, 'category_id' => $category_id,
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
@@ -138,15 +147,20 @@ class NewsListAPIController extends PubControllerAPI
                     ->build();
 
             $withScore = false;
+            $esTake = $take;
+            if ($list_type === 'featured') {
+                $esTake = 50;
+            }
 
             //Get now time, time must be 2017-01-09T15:30:00Z
+            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
-            $jsonQuery = array('from' => $skip, 'size' => $take, 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
+            $jsonQuery = array('from' => $skip, 'size' => $esTake, 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -164,13 +178,16 @@ class NewsListAPIController extends PubControllerAPI
                 }
             }
 
-            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey)
+            $withKeywordSearch = false;
+            $filterKeyword = [];
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey, &$filterKeyword)
             {
                 $cacheKey['keyword'] = $keyword;
 
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
                     $withScore = true;
+                    $withKeywordSearch = true;
                     $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.keyword', '');
 
                     $priority['name'] = Config::get('orbit.elasticsearch.priority.news.name', '^6');
@@ -191,7 +208,6 @@ class NewsListAPIController extends PubControllerAPI
                     if ($shouldMatch != '') {
                         $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
                     }
-                    $jsonQuery['query']['bool']['must'][] = $filterKeyword;
                 }
             });
 
@@ -295,16 +311,6 @@ class NewsListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must'][] = $countryCityFilterArr;
             }
 
-            // Exclude specific document Ids, useful for some cases e.g You May Also Like
-            // @todo rewrite deprected 'filtered' query to bool only
-            OrbitInput::get('excluded_ids', function($excludedIds) use (&$jsonQuery) {
-                $jsonExcludedIds = [];
-                foreach ($excludedIds as $excludedId) {
-                    $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
-                }
-                $jsonQuery['query']['bool']['must_not'] = $jsonExcludedIds;
-            });
-
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
@@ -317,6 +323,165 @@ class NewsListAPIController extends PubControllerAPI
             } else {
                 $sort = array('name.raw' => array('order' => $sort_mode));
             }
+
+            $sortby = $sort;
+            if ($withScore) {
+                $sortby = array("_score", $sort);
+            }
+            $jsonQuery["sort"] = $sortby;
+
+            $advert_location_type = 'gtm';
+            $advert_location_id = '0';
+            if (! empty($mallId)) {
+                $advert_location_type = 'mall';
+                $advert_location_id = $mallId;
+            }
+
+            $withPreferred = "0 AS with_preferred";
+            if ($list_type === "featured") {
+                $withPreferred = "CASE WHEN placement_type = 'featured_list' THEN 0 ELSE 1 END AS with_preferred";
+            }
+
+            $adverts = Advert::select('adverts.advert_id',
+                                    'adverts.link_object_id',
+                                    'advert_placements.placement_type',
+                                    'advert_placements.placement_order',
+                                    'media.path',
+                                    DB::raw("{$withPreferred}"))
+                            ->join('advert_link_types', function ($q) {
+                                $q->on('advert_link_types.advert_type', '=', DB::raw("'news'"));
+                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
+                            })
+                            ->leftJoin('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
+                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
+                            })
+                            ->join('advert_placements', function ($q) use ($list_type) {
+                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
+                                if ($list_type === 'featured') {
+                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('featured_list', 'preferred_list_regular', 'preferred_list_large')"));
+                                } else {
+                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
+                                }
+                            })
+                            ->leftJoin('media', function ($q) {
+                                $q->on("object_id", '=', "adverts.advert_id");
+                                $q->on("media_name_long", '=', DB::raw("'advert_image_orig'"));
+                            })
+                            ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
+                            ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
+                            ->where(function($q) use ($advert_location_id, $prefix) {
+                                $q->whereRaw(DB::raw("{$prefix}advert_locations.location_id = '{$advert_location_id}'"))
+                                  ->orWhereRaw(DB::raw("{$prefix}adverts.is_all_location = 'Y'"));
+                            })
+                            ->where(function($q) use ($advert_location_type, $prefix){
+                                $q->whereRaw(DB::raw("{$prefix}advert_locations.location_type = '{$advert_location_type}'"))
+                                  ->orWhereRaw(DB::raw("{$prefix}adverts.is_all_location = 'Y'"));
+                            })
+                            ->where('adverts.status', '=', DB::raw("'active'"))
+                            ->orderBy('advert_placements.placement_order', 'desc');
+
+            $advertList = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
+                         ->mergeBindings($adverts->getQuery())
+                         ->select(DB::raw("adv.advert_id,
+                                    adv.link_object_id,
+                                    adv.placement_order,
+                                    adv.path,
+                                    adv.placement_type as placement_type_orig,
+                                    CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
+                         ->groupBy(DB::raw("adv.link_object_id"))
+                         ->take(100);
+
+            if ($withCache) {
+                $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
+                $advertData = $advertCache->get($serializedCacheKey, function() use ($advertList) {
+                    return $advertList->get();
+                });
+                $advertCache->put($serializedCacheKey, $advertData);
+            } else {
+                $advertData = $advertList->get();
+            }
+
+            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+            $_jsonQuery = $jsonQuery;
+
+            if ($withKeywordSearch) {
+                // if user searching, we call es twice, first for get coupon data that match with keyword and then get the id,
+                // and second, call es data combine with advert
+                $_jsonQuery['query']['bool']['must'][] = $filterKeyword;
+
+                $_esParam = [
+                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index'),
+                    'type'   => Config::get('orbit.elasticsearch.indices.news.type'),
+                    'body' => json_encode($_jsonQuery)
+                ];
+
+                if ($withCache) {
+                    $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
+                        return $client->search($_esParam);
+                    });
+                    $keywordSearchCache->put($serializedCacheKey, $searchResponse);
+                } else {
+                    $searchResponse = $client->search($_esParam);
+                }
+
+                $searchData = $searchResponse['hits'];
+
+                $newsIds = array();
+                foreach ($searchData['hits'] as $content) {
+                    foreach ($content as $key => $val) {
+                        if ($key === "_id") {
+                            $newsIds[] = $val;
+                            $promId = $val;
+                        }
+                        if ($key === "_score") {
+                            $newsScore[$promId] = $val;
+                        }
+                    }
+                }
+                $jsonQuery['query']['bool']['must'][] = array('terms' => array('_id' => $newsIds));
+            }
+
+            // call es
+            if (! empty($advertData)) {
+                unset($jsonQuery['sort']);
+                $withScore = true;
+                foreach ($advertData as $dt) {
+                    if ($list_type === 'featured') {
+                        if ($dt->placement_type_orig === 'featured_list') {
+                            $advertIds[] = $dt->advert_id;
+                            $boost = $dt->placement_order * 3;
+                            $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
+                            $jsonQuery['query']['bool']['should'][] = $esAdvert;
+                        }
+                    } else {
+                        $advertIds[] = $dt->advert_id;
+                        $boost = $dt->placement_order * 3;
+                        $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
+                        $jsonQuery['query']['bool']['should'][] = $esAdvert;
+                    }
+                }
+
+                if ($withKeywordSearch) {
+                    $withoutAdv = array_diff($couponIds, $advertIds);
+                    foreach ($withoutAdv as $wa) {
+                        $esWithoutAdvert = array('match' => array('_id' => array('query' => $wa, 'boost' => $newsScore[$wa])));
+                        $jsonQuery['query']['bool']['should'][] = $esWithoutAdvert;
+                    }
+                } else {
+                    $jsonQuery['query']['bool']['should'][] = array('match_all' => new stdclass());
+                }
+
+            }
+
+            // Exclude specific document Ids, useful for some cases e.g You May Also Like
+            // @todo rewrite deprected 'filtered' query to bool only
+            OrbitInput::get('excluded_ids', function($excludedIds) use (&$jsonQuery) {
+                $jsonExcludedIds = [];
+                foreach ($excludedIds as $excludedId) {
+                    $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
+                }
+                $jsonQuery['query']['bool']['must_not'] = $jsonExcludedIds;
+            });
 
             $sortby = $sort;
             if ($withScore) {
@@ -413,6 +578,25 @@ class NewsListAPIController extends PubControllerAPI
                                 if (empty($data['image_url'])) {
                                     $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                                 }
+                            }
+                        }
+                    }
+
+                    // advert
+                    if ($key === "news_id") {
+                        $data['placement_type'] = null;
+                        $data['placement_type_orig'] = null;
+                        foreach ($advertData as $advData) {
+
+                            if ($advData->link_object_id === $value) {
+                                $data['placement_type'] = $advData->placement_type;
+                                $data['placement_type_orig'] = $advData->placement_type_orig;
+
+                                // image
+                                if (! empty($advData->path)) {
+                                    $data['image_url'] = $advData->path;
+                                }
+                                break;
                             }
                         }
                     }
