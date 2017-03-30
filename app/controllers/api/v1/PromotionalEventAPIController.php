@@ -276,9 +276,9 @@ class PromotionalEventAPIController extends ControllerAPI
             // Return campaign status name
             $newpromotional_event->campaign_status = $idStatus->campaign_status_name;
 
-            // save link to mall.
+            // save link to tenant.
             $promotional_event_retailers = array();
-            $isMall = '';
+            $isMall = 'retailer';
             $mallid = array();
             foreach ($retailer_ids as $retailer_id) {
                 $data = @json_decode($retailer_id);
@@ -291,20 +291,17 @@ class PromotionalEventAPIController extends ControllerAPI
 
                 if ($tenant_id === $mall_id) {
                     $isMall = 'mall';
-
-                    $promotional_event_retailer = new NewsMerchant();
-                    $promotional_event_retailer->merchant_id = $tenant_id;
-                    $promotional_event_retailer->news_id = $newpromotional_event->news_id;
-                    $promotional_event_retailer->object_type = $isMall;
-                    $promotional_event_retailer->save();
-
-                    $promotional_event_retailers[] = $promotional_event_retailer;
-                } else {
-                    $errorMessage = sprintf('Just Supported link to mall');
-                    throw new Exception($errorMessage);
                 }
+
+                $promotional_event_retailer = new NewsMerchant();
+                $promotional_event_retailer->merchant_id = $tenant_id;
+                $promotional_event_retailer->news_id = $newpromotional_event->news_id;
+                $promotional_event_retailer->object_type = $isMall;
+                $promotional_event_retailer->save();
+
+                $promotional_event_retailers[] = $promotional_event_retailer;
             }
-            $newpromotional_event->malls = $promotional_event_retailers;
+            $newpromotional_event->tenants = $promotional_event_retailers;
 
             // save ObjectPartner
             $object_partners = array();
