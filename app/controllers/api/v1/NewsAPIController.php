@@ -1748,6 +1748,12 @@ class NewsAPIController extends ControllerAPI
                 $news->whereIn('news.object_type', $objectTypes);
             });
 
+            // Filter news by is_having_reward
+            OrbitInput::get('is_having_reward', function($havingReward) use ($news)
+            {
+                $news->where('news.is_having_reward', $havingReward);
+            });
+
             // Filter news by description
             OrbitInput::get('description', function($description) use ($news)
             {
