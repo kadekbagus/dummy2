@@ -33,6 +33,7 @@ use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Elasticsearch\ClientBuilder;
 use Carbon\Carbon as Carbon;
+use stdClass;
 
 class NewsListAPIController extends PubControllerAPI
 {
