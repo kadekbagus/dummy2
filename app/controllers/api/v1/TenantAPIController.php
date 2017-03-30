@@ -2236,6 +2236,7 @@ class TenantAPIController extends ControllerAPI
             $link_type = OrbitInput::get('link_type');
             $merchant_name = OrbitInput::get('merchant_name');
             $merchant_id = OrbitInput::get('merchant_id');
+            $object_type = (array) OrbitInput::get('object_type', ['mall', 'tenant']);
 
             $validator = Validator::make(
                 array(
@@ -2270,7 +2271,7 @@ class TenantAPIController extends ControllerAPI
                                         )
                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
                                        ->where('merchants.status', '!=', 'deleted')
-                                       ->whereIn('merchants.object_type', ['mall', 'tenant']);
+                                       ->whereIn('merchants.object_type', $object_type);
 
             if ($from === 'detail') {
                 if ($link_type === 'promotion' || $link_type === 'news') {
