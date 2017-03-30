@@ -299,6 +299,9 @@ class PromotionalEventAPIController extends ControllerAPI
                     $promotional_event_retailer->save();
 
                     $promotional_event_retailers[] = $promotional_event_retailer;
+                } else {
+                    $errorMessage = sprintf('Just Supported link to mall');
+                    throw new Exception($errorMessage);
                 }
             }
             $newpromotional_event->malls = $promotional_event_retailers;
@@ -481,8 +484,8 @@ class PromotionalEventAPIController extends ControllerAPI
             });
 
             // translation for reward detail
-            OrbitInput::post('reward_translations', function($reward_translations) use ($newpromotional_event, $new_reward_detail) {
-                $this->validateAndSaveRewardTranslations($newpromotional_event, $new_reward_detail, $reward_translations, 'create');
+            OrbitInput::post('reward_translations', function($reward_translations) use ($newpromotional_event, $new_reward_detail, $id_language_default) {
+                $this->validateAndSaveRewardTranslations($newpromotional_event, $new_reward_detail, $reward_translations, $id_language_default, 'create');
             });
 
             // Default language for pmp_account is required
@@ -2726,7 +2729,7 @@ class PromotionalEventAPIController extends ControllerAPI
      * @param string $scenario 'create' / 'update'
      * @throws InvalidArgsException
      */
-    private function validateAndSaveRewardTranslations($promotional_event, $reward_detail, $translations_json_string, $scenario = 'create')
+    private function validateAndSaveRewardTranslations($promotional_event, $reward_detail, $translations_json_string, $id_language_default, $scenario = 'create')
     {
         /*
          * JSON structure: object with keys = language_id and values = ProductTranslation object or null
@@ -2775,6 +2778,28 @@ class PromotionalEventAPIController extends ControllerAPI
                     }
                     if ($value !== null && !is_string($value)) {
                         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
+
+                    // additional validation
+                    $validator_value[$field] = $value;
+                    // required for default language
+                    if ($language->language_id === $id_language_default) {
+                        $validation_label = 'required|max:10';
+                    } else {
+                        $validation_label = 'max:10';
+                    }
+                    // validation for label
+                    if (in_array($field, ['guest_button_label', 'logged_in_button_label'])) {
+                        $validator_validation[$field] = $validation_label;
+                    }
+                    $validator = Validator::make(
+                        $validator_value,
+                        $validator_validation
+                    );
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
                 }
                 if (empty($existing_translation)) {

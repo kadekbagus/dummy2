@@ -104,3 +104,8 @@ Route::post('/app/v1/pmp-employee/update', 'IntermediateAuthController@Employee_
  * Search PMP Employees
  */
 Route::get('/app/v1/pmp-employee/list', 'IntermediateAuthController@Employee_getSearchPMPEmployee');
+
+/**
+ * Get list of user reward
+ */
+Route::get('/app/v1/pub/user-reward', ['as' => 'pub-user-reward', 'uses' => 'IntermediatePubAuthController@UserReward_getUserReward']);
