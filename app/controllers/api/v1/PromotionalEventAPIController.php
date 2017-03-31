@@ -276,9 +276,29 @@ class PromotionalEventAPIController extends ControllerAPI
             // Return campaign status name
             $newpromotional_event->campaign_status = $idStatus->campaign_status_name;
 
-            // save link to mall.
+            // save reward details
+            $new_reward_detail = new RewardDetail();
+            $new_reward_detail->object_id = $newpromotional_event->news_id;
+            $new_reward_detail->object_type = $newpromotional_event->object_type;
+            $new_reward_detail->reward_type = $reward_type;
+            $new_reward_detail->is_new_user_only = $is_new_user_only;
+            $new_reward_detail->save();
+
+            // save reward detail codes
+            if (! empty($reward_codes)) {
+                foreach ($reward_codes as $reward_code) {
+                    $new_reward_detail_code = new RewardDetailCode();
+                    $new_reward_detail_code->reward_detail_id = $new_reward_detail->reward_detail_id;
+                    $new_reward_detail_code->reward_code = $reward_code;
+                    $new_reward_detail_code->expired_date = $end_date;
+                    $new_reward_detail_code->status = 'available';
+                    $new_reward_detail_code->save();
+                }
+            }
+
+            // save link to tenant.
             $promotional_event_retailers = array();
-            $isMall = '';
+            $isMall = 'retailer';
             $mallid = array();
             foreach ($retailer_ids as $retailer_id) {
                 $data = @json_decode($retailer_id);
@@ -291,20 +311,17 @@ class PromotionalEventAPIController extends ControllerAPI
 
                 if ($tenant_id === $mall_id) {
                     $isMall = 'mall';
-
-                    $promotional_event_retailer = new NewsMerchant();
-                    $promotional_event_retailer->merchant_id = $tenant_id;
-                    $promotional_event_retailer->news_id = $newpromotional_event->news_id;
-                    $promotional_event_retailer->object_type = $isMall;
-                    $promotional_event_retailer->save();
-
-                    $promotional_event_retailers[] = $promotional_event_retailer;
-                } else {
-                    $errorMessage = sprintf('Just Supported link to mall');
-                    throw new Exception($errorMessage);
                 }
+
+                $promotional_event_retailer = new NewsMerchant();
+                $promotional_event_retailer->merchant_id = $tenant_id;
+                $promotional_event_retailer->news_id = $newpromotional_event->news_id;
+                $promotional_event_retailer->object_type = $isMall;
+                $promotional_event_retailer->save();
+
+                $promotional_event_retailers[] = $promotional_event_retailer;
             }
-            $newpromotional_event->malls = $promotional_event_retailers;
+            $newpromotional_event->tenants = $promotional_event_retailers;
 
             // save ObjectPartner
             $object_partners = array();
@@ -455,26 +472,6 @@ class PromotionalEventAPIController extends ControllerAPI
                     $addtenant->modified_by = $this->api->user->user_id;
                     $addtenant->campaign_cost = 0;
                     $addtenant->save();
-                }
-            }
-
-            // save reward details
-            $new_reward_detail = new RewardDetail();
-            $new_reward_detail->object_id = $newpromotional_event->news_id;
-            $new_reward_detail->object_type = $newpromotional_event->object_type;
-            $new_reward_detail->reward_type = $reward_type;
-            $new_reward_detail->is_new_user_only = $is_new_user_only;
-            $new_reward_detail->save();
-
-            // save reward detail codes
-            if (! empty($reward_codes)) {
-                foreach ($reward_codes as $reward_code) {
-                    $new_reward_detail_code = new RewardDetailCode();
-                    $new_reward_detail_code->reward_detail_id = $new_reward_detail->reward_detail_id;
-                    $new_reward_detail_code->reward_code = $reward_code;
-                    $new_reward_detail_code->expired_date = $end_date;
-                    $new_reward_detail_code->status = 'available';
-                    $new_reward_detail_code->save();
                 }
             }
 

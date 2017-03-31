@@ -1212,20 +1212,18 @@ class NewsAPIController extends ControllerAPI
             $tempContent->contents = serialize($beforeUpdatedNews);
             $tempContent->save();
 
-            // update promotion advert
-            if ($updatednews->object_type === 'promotion') {
-                if (! empty($campaignStatus) || $campaignStatus !== '') {
-                    $promotionAdverts = Advert::excludeDeleted()
-                                        ->where('link_object_id', $updatednews->news_id)
-                                        ->update(['status'     => $updatednews->status]);
-                }
 
-                if (! empty($end_date) || $end_date !== '') {
-                    $promotionAdverts = Advert::excludeDeleted()
-                                        ->where('link_object_id', $updatednews->news_id)
-                                        ->where('end_date', '>', $updatednews->end_date)
-                                        ->update(['end_date'   => $updatednews->end_date]);
-                }
+            if (! empty($campaignStatus) || $campaignStatus !== '') {
+                $promotionAdverts = Advert::excludeDeleted()
+                                    ->where('link_object_id', $updatednews->news_id)
+                                    ->update(['status'     => $updatednews->status]);
+            }
+
+            if (! empty($end_date) || $end_date !== '') {
+                $promotionAdverts = Advert::excludeDeleted()
+                                    ->where('link_object_id', $updatednews->news_id)
+                                    ->where('end_date', '>', $updatednews->end_date)
+                                    ->update(['end_date'   => $updatednews->end_date]);
             }
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
