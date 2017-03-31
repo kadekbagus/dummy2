@@ -131,6 +131,9 @@ Route::filter('fb-bot', function() {
             case 'share-home':
                 $redirect_to = URL::route('ci-customer-home', array('id' => Input::get('id'), 'name' => Str::slug(Input::get('name', ''))));
                 break;
+            case 'share-promotional-event':
+                $redirect_to = URL::route('ci-promotional-event-detail', array('id' => Input::get('id'), 'name' => Str::slug(Input::get('name', ''))));
+                break;
             default:
                 $redirect_to = NULL;
                 break;
@@ -174,6 +177,7 @@ Route::filter('pub-fb-bot', function() {
                 $item = News::excludeDeleted()
                     ->where('object_type', 'news')
                     ->where('news_id', Input::get('id', NULL))
+                    ->where('is_having_reward', 'N')
                     ->first();
 
                 break;
@@ -193,6 +197,16 @@ Route::filter('pub-fb-bot', function() {
                     ->first();
 
                 break;
+            case 'pub-share-promotional-event':
+                $type = 'promotional-event';
+
+                $item = News::excludeDeleted()
+                    ->where('object_type', 'news')
+                    ->where('news_id', Input::get('id', NULL))
+                    ->where('is_having_reward', 'Y')
+                    ->first();
+
+                break;
             default:
                 $type = '';
 
@@ -206,6 +220,7 @@ Route::filter('pub-fb-bot', function() {
                 'promotions' => Config::get('orbit.campaign_share_email.promotion_detail_base_url'),
                 'coupons'    => Config::get('orbit.campaign_share_email.coupon_detail_base_url'),
                 'news'       => Config::get('orbit.campaign_share_email.news_detail_base_url'),
+                'promotional-event' => Config::get('orbit.campaign_share_email.promotional_event_detail_base_url'),
             ];
 
             $countryCityParams = '';

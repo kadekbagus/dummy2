@@ -26,7 +26,6 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 
-
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
      public function getPromotionalEventItem()
@@ -37,6 +36,8 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
 
         try{
             $user = $this->getUser();
+            $role = $user->role->role_name;
+
             $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -57,7 +58,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                     'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
-                    'required' => 'Promotion ID is required',
+                    'required' => 'News ID is required',
                 )
             );
 
@@ -83,6 +84,9 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
 
             $promotionalEvent = News::select(
                             'news.news_id as news_id',
+                            'reward_detail_translations.guest_button_label',
+                            'reward_detail_translations.logged_in_button_label',
+                            'reward_details.is_new_user_only',
                             DB::Raw("
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                                 CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN default_translation.description ELSE {$prefix}news_translations.description END as description,
@@ -150,6 +154,12 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                               ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        // For get button label
+                        ->join('reward_details', 'reward_details.object_id', '=', 'news.news_id')
+                        ->leftJoin('reward_detail_translations', function ($q) use ($valid_language) {
+                            $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
+                              ->on('reward_detail_translations.language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news.is_having_reward', '=', 'Y')
@@ -183,19 +193,24 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
 
             // check promotional event access and get lucky_draw/promotion code
             $promotionalEvent->code = null;
-            $promotionalEvent->information_message = null;
+            $promotionalEvent->message_title = null;
+            $promotionalEvent->message_content = null;
             $promotionalEvent->code_message = null;
+            $promotionalEvent->with_button = true;
 
-            if (! empty($user->user_id)) {
+            if ($role != 'Guest') {
                 $promotionalEvent = PromotionalEventProcessor::format($user->user_id, $newsId, 'news', $language);
+                $promotionalEvent->code = $promotionalEvent['code'];
+                $promotionalEvent->message_title = $promotionalEvent['message_title'];
+                $promotionalEvent->message_content = $promotionalEvent['message_content'];
+                $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
+                $promotionalEvent->with_button = false;
 
-                if ($promotionalEvent['status'] === 'reward_ok') {
+                if ($promotionalEvent['status'] === 'play_button') {
+                    $promotionalEvent->with_button = true;
+                } elseif ($promotionalEvent['status'] === 'reward_ok') {
                     $updateReward = PromotionalEventProcessor::insertRewardCode($user->user_id, $newsId, 'news', $language);
                 }
-
-                $promotionalEvent->code = $promotionalEvent['code'];
-                $promotionalEvent->information_message = $promotionalEvent['message'];
-                $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
             }
 
             if (is_object($mall)) {

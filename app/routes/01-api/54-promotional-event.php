@@ -140,3 +140,24 @@ Route::get('/api/v1/pub/promotional-event/detail', function()
 });
 
 Route::get('/app/v1/pub/promotional-event/detail', ['as' => 'pub-promotional-event', 'uses' => 'IntermediatePubAuthController@PromotionalEvent\PromotionalEventDetail_getPromotionalEventItem']);
+
+/**
+ * Get signin / signup background for promotional event
+ */
+Route::get('/api/v1/pub/promotional-event/background', function()
+{
+    return Orbit\Controller\API\v1\Pub\PromotionalEvent\PromotionalEventBackgroundAPIController::create()->getPromotionalEventBackground();
+});
+
+Route::get('/app/v1/pub/promotional-event/background', ['as' => 'pub-promotional-event-background', 'uses' => 'IntermediatePubAuthController@PromotionalEvent\PromotionalEventBackground_getPromotionalEventBackground']);
+
+/**
+ * Post user get issued code of promotional event
+ */
+Route::post('/api/v1/pub/promotional-event/issued', function()
+{
+    return Orbit\Controller\API\v1\Pub\PromotionalEvent\PromotionalEventIssuedAPIController::create()->postIssuedPromotionalEvent();
+});
+
+Route::post('/app/v1/pub/promotional-event/issued', ['as' => 'pub-promotional-event-issued', 'uses' => 'IntermediatePubAuthController@PromotionalEvent\PromotionalEventIssued_postIssuedPromotionalEvent']);
+
