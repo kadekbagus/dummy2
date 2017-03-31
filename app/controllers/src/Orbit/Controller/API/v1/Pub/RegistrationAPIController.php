@@ -155,7 +155,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $this->response->status = 'success';
             $this->response->message = 'Sign Up Success';
 
-            Event::fire('orbit.registration.after.createuser', array($userId, $rewardId, $rewardType, $language))
+            Event::fire('orbit.registration.after.createuser', array($userId, $rewardId, $rewardType, $language));
 
             if ($useTransaction) {
                 DB::commit();
