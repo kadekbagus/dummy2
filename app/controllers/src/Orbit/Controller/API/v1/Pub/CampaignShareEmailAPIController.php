@@ -137,6 +137,13 @@ class CampaignShareEmailAPIController extends PubControllerAPI
                 case 'news' :
                         $campaign = News::where('news_id', '=', $value)
                                           ->where('object_type', '=', 'news')
+                                          ->where('is_having_reward', '=', 'N')
+                                          ->first();
+                        break;
+                case 'promotional_event' :
+                        $campaign = News::where('news_id', '=', $value)
+                                          ->where('object_type', '=', 'news')
+                                          ->where('is_having_reward', '=', 'Y')
                                           ->first();
                         break;
                 case 'coupon' :

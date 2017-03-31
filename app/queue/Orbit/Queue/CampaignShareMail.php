@@ -150,6 +150,45 @@ class CampaignShareMail
 
                     break;
 
+            case 'promotional_event' :
+                   $campaign = News::select(
+                                    'news.news_id as campaign_id',
+                                    DB::Raw("
+                                        CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name,
+                                        CASE WHEN {$prefix}media.path is null THEN (
+                                                select m.path
+                                                from {$prefix}media m
+                                                where m.object_id = default_translation.news_translation_id
+                                                    and m.media_name_long = 'news_translation_image_orig'
+                                            ) ELSE {$prefix}media.path END as original_media_path
+                                    ")
+                                )
+                                ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                                    $q->on('news_translations.news_id', '=', 'news.news_id')
+                                      ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                                })
+                                ->leftJoin('media', function ($q) {
+                                    $q->on('media.object_id', '=', 'news_translations.news_translation_id');
+                                    $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                                })
+                                ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                                ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                                ->leftJoin('news_translations as default_translation', function ($q) {
+                                    $q->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id')
+                                      ->on(DB::raw('default_translation.news_id'), '=', 'news.news_id');
+                                })
+                                ->where('news.news_id', $data['campaignId'])
+                                ->where('news.object_type', '=', 'news')
+                                ->where('news.is_having_reward', '=', 'Y')
+                                ->first();
+
+                    $baseUrl = Config::get('orbit.campaign_share_email.promotional_event_detail_base_url');
+                    $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
+                    $message2 = Lang::get('email.campaign_share.message_part2_event');
+                    $campaignType = Lang::get('email.campaign_share.campaign_type_event');
+
+                    break;
+
             case 'coupon' :
                     $campaign = Coupon::select(
                             'promotions.promotion_id as campaign_id',
