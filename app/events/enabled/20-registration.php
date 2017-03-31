@@ -7,7 +7,6 @@ use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 
 /**
  * Listen on:       `orbit.registration.after.createuser`
- *   Purpose:       Handle file upload on User update
  *
  * @author Ahmad <ahmad@dominopos.com>
  * @param $userId - newly registered user ID
@@ -15,7 +14,7 @@ use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
  * @param $rewardType - ('coupon', 'promotion', 'news')
  * @param $language - ('en', 'id', etc)
  */
-Event::listen('orbit.user.postupdateuser.after.save', function($userId, $rewardId, $rewardType, $language)
+Event::listen('orbit.registration.after.createuser', function($userId, $rewardId, $rewardType, $language)
 {
     if (! is_null($rewardId) && ! is_null($rewardType)) {
         $updateReward = PromotionalEventProcessor::insertRewardCode($userId, $rewardId, $rewardType, $language);
