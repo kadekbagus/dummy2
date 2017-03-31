@@ -15,18 +15,17 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
-// use News;
-// use NewsMerchant;
 use Language;
 use Validator;
-use Orbit\Helper\Util\PaginationNumber;
 use Activity;
-use Orbit\Controller\API\v1\Pub\SocMedAPIController;
-// use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
-// use Partner;
+use Partner;
 use News;
+use App;
+use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
+
 
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
@@ -71,6 +70,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $valid_language = $this->getValidLanguage();
 
             $prefix = DB::getTablePrefix();
+            App::setLocale($language);
 
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
@@ -181,6 +181,23 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
+            // check promotional event access and get lucky_draw/promotion code
+            $promotionalEvent->code = null;
+            $promotionalEvent->information_message = null;
+            $promotionalEvent->code_message = null;
+
+            if (! empty($user->user_id)) {
+                $promotionalEvent = PromotionalEventProcessor::format($user->user_id, $newsId, 'news', $language);
+
+                if ($promotionalEvent['status'] === 'reward_ok') {
+                    $updateReward = PromotionalEventProcessor::insertRewardCode($user->user_id, $newsId, 'news', $language);
+                }
+
+                $promotionalEvent->code = $promotionalEvent['code'];
+                $promotionalEvent->information_message = $promotionalEvent['message'];
+                $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
+            }
+
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View mall promotion detail');
                 $activity->setUser($user)
@@ -208,7 +225,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             }
 
             // add facebook share url dummy page
-            // $promotionalEvent->facebook_share_url = SocMedAPIController::getSharedUrl('promotional-event', $promotionalEvent->news_id, $promotionalEvent->news_name, $country, $cities);
+            $promotionalEvent->facebook_share_url = SocMedAPIController::getSharedUrl('promotional-event', $promotionalEvent->news_id, $promotionalEvent->news_name, $country, $cities);
 
             $this->response->data = $promotionalEvent;
             $this->response->code = 0;
