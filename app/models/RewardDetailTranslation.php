@@ -14,4 +14,20 @@ class RewardDetailTranslation extends Eloquent
      * with `status` field.
      */
     use ModelStatusTrait;
+
+    public function media()
+    {
+        return $this->hasMany('Media', 'object_id', 'reward_detail_translation_id')
+                    ->where('object_name', 'reward_detail');
+    }
+
+    public function rewardSignUpDesktopBackground()
+    {
+        return $this->media()->where('media_name_id', '=', 'reward_signup_bg_desktop');
+    }
+
+    public function rewardSignUpMobileBackground()
+    {
+        return $this->media()->where('media_name_id', '=', 'reward_signup_bg_mobile');
+    }
 }

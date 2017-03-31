@@ -1950,6 +1950,9 @@ class PromotionalEventAPIController extends ControllerAPI
                         }]);
                     } elseif ($relation === 'rewardTranslations') {
                         $promotionalevent->with('rewardDetail.rewardTranslations');
+                    } elseif ($relation === 'rewardTranslationMedia') {
+                        $promotionalevent->with(['rewardDetail.rewardTranslations.rewardSignUpDesktopBackground',
+                            'rewardDetail.rewardTranslations.rewardSignUpMobileBackground']);
                     }
                 }
             });
