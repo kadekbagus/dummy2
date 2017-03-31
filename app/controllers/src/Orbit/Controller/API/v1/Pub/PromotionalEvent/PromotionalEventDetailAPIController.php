@@ -199,26 +199,26 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             }
 
             if (is_object($mall)) {
-                $activityNotes = sprintf('Page viewed: View mall promotion detail');
+                $activityNotes = sprintf('Page viewed: View Promotional Event Page');
                 $activity->setUser($user)
-                    ->setActivityName('view_mall_promotion_detail')
-                    ->setActivityNameLong('View mall promotion detail')
+                    ->setActivityName('view_promotional_event_detail')
+                    ->setActivityNameLong('View Promotional Event Page')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)
                     ->setLocation($mall)
-                    ->setModuleName('Promotion')
+                    ->setModuleName('Application')
                     ->setNotes($activityNotes)
                     ->responseOK()
                     ->save();
             } else {
-                $activityNotes = sprintf('Page viewed: Landing Page Promotion Detail Page');
+                $activityNotes = sprintf('Page viewed: View Promotional Event Page');
                 $activity->setUser($user)
-                    ->setActivityName('view_landing_page_promotion_detail')
-                    ->setActivityNameLong('View GoToMalls Promotion Detail')
+                    ->setActivityName('view_promotional_event_detail')
+                    ->setActivityNameLong('View Promotional Event Page')
                     ->setObject($promotionalEvent)
-                    ->setLocation($mall)
                     ->setNews($promotionalEvent)
-                    ->setModuleName('Promotion')
+                    ->setLocation($mall)
+                    ->setModuleName('Application')
                     ->setNotes($activityNotes)
                     ->responseOK()
                     ->save();
