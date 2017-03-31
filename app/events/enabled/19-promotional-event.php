@@ -252,11 +252,6 @@ Event::listen('orbit.promotionalevent.after.rewardtranslation.save', function($c
  */
 Event::listen('orbit.promotionalevent.postnewpromotionalevent.after.commit', function($controller, $promotional_event)
 {
-    // Notify the queueing system to update Elasticsearch document
-    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
-        'news_id' => $promotional_event->news_id
-    ]);
-
     $timestamp = new DateTime($promotional_event->created_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
 
