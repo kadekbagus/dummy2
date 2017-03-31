@@ -97,13 +97,13 @@ class PromotionalEventProcessor
         if (is_object($code)) {
             return [
                 'status' => 'reward_ok',
-                'codes' => $code->reward_code
+                'code' => $code->reward_code
             ];
         }
 
         return [
             'status' => 'empty_code',
-            'codes' => ''
+            'code' => ''
         ];
     }
 
@@ -115,6 +115,13 @@ class PromotionalEventProcessor
         $rewardDetail = $this->getRewardDetail($this->peId, $this->peType);
         App::setLocale($language);
 
+        $codeMessage = Lang::get('label.promotional_event.code_message.promotion');
+        $rewardType = 'promotion code';
+        if ($rewardDetail->reward_type === 'lucky_draw') {
+            $codeMessage = Lang::get('label.promotional_event.code_message.lucky_draw');
+            $rewardType = 'lucky number';
+        }
+
         // check user reward
         $userReward = $this->checkUserReward($userId, $peId, $peType);
         if (is_object($userReward)) {
@@ -122,8 +129,10 @@ class PromotionalEventProcessor
                 case 'redeemed':
                     return [
                         'status' => 'already_got',
-                        'message' => Lang::get('label.promotional_event.information_message.already_got'),
-                        'codes' => $userReward->reward_code
+                        'message_title' => Lang::get('label.promotional_event.information_message.already_got.title'),
+                        'message_content' => Lang::get('label.promotional_event.information_message.already_got.content'),
+                        'code_message' => $codeMessage,
+                        'code' => $userReward->reward_code
                     ];
                     break;
 
@@ -131,14 +140,18 @@ class PromotionalEventProcessor
                     if ($user->status != 'active') {
                         return [
                             'status' => 'inactive_user',
-                            'message' => Lang::get('label.promotional_event.information_message.inactive_user'),
-                            'codes' => $userReward->reward_code
+                            'message_title' => Lang::get('label.promotional_event.information_message.inactive_user.title'),
+                            'message_content' => Lang::get('label.promotional_event.information_message.inactive_user.content', array('type' => $rewardType)),
+                            'code_message' => '',
+                            'code' => ''
                         ];
                     } else {
                         return [
                             'status' => 'reward_ok',
-                            'message' => Lang::get('label.promotional_event.information_message.reward_ok'),
-                            'codes' => $reward['codes']
+                            'message_title' => Lang::get('label.promotional_event.information_message.reward_ok.title'),
+                            'message_content' => Lang::get('label.promotional_event.information_message.reward_ok.content'),
+                            'code_message' => $codeMessage,
+                            'code' => $userReward->reward_code
                         ];
                     }
                     break;
@@ -148,8 +161,10 @@ class PromotionalEventProcessor
         if ($rewardDetail->is_new_user_only === 'Y') {
             return [
                 'status' => 'new_user_only',
-                'message' => Lang::get('label.promotional_event.information_message.new_user_only'),
-                'codes' => ''
+                'message_title' => Lang::get('label.promotional_event.information_message.new_user_only.title'),
+                'message_content' => Lang::get('label.promotional_event.information_message.new_user_only.content'),
+                'code_message' => '',
+                'code' => ''
             ];
         }
 
@@ -159,16 +174,20 @@ class PromotionalEventProcessor
             case 'empty_code':
                 return [
                     'status' => 'empty_code',
-                    'message' => Lang::get('label.promotional_event.information_message.empty_code'),
-                    'codes' => $reward['codes']
+                    'message_title' => Lang::get('label.promotional_event.information_message.empty_code.title'),
+                    'message_content' => Lang::get('label.promotional_event.information_message.empty_code.content'),
+                    'code_message' => '',
+                    'code' => ''
                 ];
                 break;
 
             case 'reward_ok':
                 return [
                     'status' => 'reward_ok',
-                    'message' => Lang::get('label.promotional_event.information_message.reward_ok'),
-                    'codes' => $reward['codes']
+                    'message_title' => Lang::get('label.promotional_event.information_message.reward_ok.title'),
+                    'message_content' => Lang::get('label.promotional_event.information_message.reward_ok.content'),
+                    'code_message' => $codeMessage,
+                    'code' => $reward['code']
                 ];
                 break;
         }
@@ -189,7 +208,7 @@ class PromotionalEventProcessor
             if ($reward['status'] === 'empty_code') {
                 return;
             }
-            $code = $reward['codes'];
+            $code = $reward['code'];
         } else {
             $code = $userReward->reward_code;
         }
