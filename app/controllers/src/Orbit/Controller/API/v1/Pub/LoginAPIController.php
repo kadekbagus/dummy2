@@ -67,6 +67,9 @@ class LoginAPIController extends IntermediateBaseController
             $email = trim(OrbitInput::post('email'));
             $password = trim(OrbitInput::post('password'));
             $mall_id = OrbitInput::post('mall_id', null);
+            $rewardId = OrbitInput::get('reward_id', null);
+            $rewardType = OrbitInput::get('reward_type', null);
+            $language = OrbitInput::get('language', 'id');
             // $mode = OrbitInput::post('mode', 'login');
 
             if (trim($email) === '') {
@@ -181,6 +184,8 @@ class LoginAPIController extends IntermediateBaseController
             setcookie('orbit_email', $user->user_email, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
+
+            Event::fire('orbit.login.after.success', array($user->user_id, $rewardId, $rewardType, $language));
 
             if ($this->appOrigin !== 'mobile_ci') {
                 $activity->setUser($user)
@@ -300,6 +305,9 @@ class LoginAPIController extends IntermediateBaseController
         $mall_id_from_desktop = OrbitInput::get('mall_id', NULL);
         $user_location = OrbitInput::get(Config::get('orbit.user_location.query_string.name', 'ul'), NULL);
         $angular_ci = OrbitInput::get('aci', NULL);
+        $rewardId = OrbitInput::get('reward_id', NULL);
+        $rewardType = OrbitInput::get('reward_type', NULL);
+        $language = OrbitInput::get('language', 'id');
 
         $googleService = OAuth::consumer( 'Google' );
         if ( !empty( $code ) ) {
@@ -320,6 +328,11 @@ class LoginAPIController extends IntermediateBaseController
                 $angular_ci_from_state = json_decode($this->base64UrlDecode($state))->aci;
                 $redirect_to_url_from_state = empty(json_decode($this->base64UrlDecode($state))->redirect_to_url) ? Config::get('orbit.shop.after_social_sign_in') : json_decode($this->base64UrlDecode($state))->redirect_to_url;
                 $_GET[Config::get('orbit.user_location.query_string.name', 'ul')] = json_decode($this->base64UrlDecode($state))->user_location;
+
+                $reward_id_from_state = json_decode($this->base64UrlDecode($state))->reward_id;
+                $reward_type_from_state = json_decode($this->base64UrlDecode($state))->reward_type;
+                $language_from_state = json_decode($this->base64UrlDecode($state))->language;
+
                 $this->session = SessionPreparer::prepareSession();
 
                 $data = [
@@ -362,6 +375,9 @@ class LoginAPIController extends IntermediateBaseController
                         throw new Exception($response->message, $response->code);
                     }
 
+                    // promotional event reward event
+                    Event::fire('orbit.registration.after.createuser', array($response->user_id, $reward_id_from_state, $reward_type_from_state, $language_from_state));
+
                     SignInRecorder::setSignUpActivity($response, 'google', NULL);
                     // create activation_ok activity without using token
                     $activation_ok = ActivationAPIController::create('raw')
@@ -372,6 +388,9 @@ class LoginAPIController extends IntermediateBaseController
                 }
 
                 SignInRecorder::setSignInActivity($loggedInUser, 'google', NULL, NULL, TRUE);
+
+                // promotional event reward event
+                Event::fire('orbit.login.after.success', array($response->user_id, $reward_id_from_state, $reward_type_from_state, $language_from_state));
 
                 $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
@@ -436,7 +455,10 @@ class LoginAPIController extends IntermediateBaseController
                     'mid' => $mall_id,
                     'mall_id' => $mall_id_from_desktop,
                     'aci' => $angular_ci,
-                    'user_location' => $user_location
+                    'user_location' => $user_location,
+                    'reward_id' => $rewardId,
+                    'reward_type' => $rewardType,
+                    'language' => $language
                 );
                 $state = json_encode($state_array);
                 $stateString = $this->base64UrlEncode($state);
@@ -500,6 +522,9 @@ class LoginAPIController extends IntermediateBaseController
         $encoded_redirect_to_url = \Input::get('redirect_to_url', Config::get('orbit.shop.after_social_sign_in'));
         $angular_ci = \Input::get('aci', FALSE);
         $mall_id = \Input::get('mall_id', NULL);
+        $rewardId = \Input::get('reward_id', NULL);
+        $rewardType = \Input::get('reward_type', NULL);
+        $language = \Input::get('language', 'id');
 
         // error=access_denied&
         // error_code=200&
@@ -619,6 +644,10 @@ class LoginAPIController extends IntermediateBaseController
             if (get_class($response) !== 'User') {
                 throw new Exception($response->message, $response->code);
             }
+
+            // promotional event reward event
+            Event::fire('orbit.registration.after.createuser', array($response->user_id, $rewardId, $rewardType, $language));
+
             // create registration_ok activity
             SignInRecorder::setSignUpActivity($response, 'facebook', NULL);
             // create activation_ok activity without using token
@@ -627,6 +656,9 @@ class LoginAPIController extends IntermediateBaseController
                 ->postActivateAccount();
             $loggedInUser = $this->doAutoLogin($response->user_email);
         }
+
+        // promotional event reward event
+        Event::fire('orbit.login.after.success', array($response->user_id, $rewardId, $rewardType, $language));
 
         SignInRecorder::setSignInActivity($loggedInUser, 'facebook', NULL, NULL, TRUE);
 
@@ -687,6 +719,9 @@ class LoginAPIController extends IntermediateBaseController
         $encoded_caller_url_full = OrbitInput::get('from_url_full', NULL);
         $encoded_redirect_to_url = OrbitInput::get('to_url', NULL);
         $angular_ci = OrbitInput::get('aci', FALSE);
+        $rewardId = OrbitInput::get('reward_id', NULL);
+        $rewardType = OrbitInput::get('reward_type', NULL);
+        $language = OrbitInput::get('language', 'id');
 
         // Return mall_portal, cs_portal, pmp_portal etc
         $appOrigin = AppOriginProcessor::create(Config::get('orbit.session.app_list'))
@@ -726,7 +761,10 @@ class LoginAPIController extends IntermediateBaseController
             'redirect_to_url' => $encoded_redirect_to_url,
             'aci' => $angular_ci,
             'mall_id' => $mall_id,
-            Config::get('orbit.user_location.query_string.name', 'ul') => $user_location
+            Config::get('orbit.user_location.query_string.name', 'ul') => $user_location,
+            'reward_id' => $rewardId,
+            'reward_type' => $rewardType,
+            'language' => $language,
         ]);
 
         // This is to re-popup the permission on login in case some of the permissions revoked by user

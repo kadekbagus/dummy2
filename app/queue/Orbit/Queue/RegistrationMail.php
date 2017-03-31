@@ -64,6 +64,16 @@ class RegistrationMail
         // Token expiration, fallback to 30 days
         $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
 
+        $metadata = NULL;
+        // fill metadata if any
+        if (isset($data['redirect_to_url']) && ! is_null($data['redirect_to_url'])) {
+            $metadata['redirect_to_url'] = $data['redirect_to_url'];
+        }
+        // json encode metadata if any
+        if (! empty($metadata)) {
+            $metadata = json_encode($metadata);
+        }
+
         // Token Settings
         $token = new Token();
         $token->token_name = 'user_registration_mobile';
@@ -73,6 +83,7 @@ class RegistrationMail
         $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
         $token->ip_address = $user->user_ip;
         $token->user_id = $userId;
+        $token->metadata = $metadata;
         $token->save();
 
         switch ($data['mode']) {
