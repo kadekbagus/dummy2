@@ -189,6 +189,10 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
  */
 Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news)
 {
+    // Notify the queueing system to update Elasticsearch document
+    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
+        'news_id' => $news->news_id
+    ]);
 
     $timestamp = new DateTime($news->created_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
