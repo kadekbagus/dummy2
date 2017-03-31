@@ -47,6 +47,11 @@ class News extends Eloquent
                 ->join('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id');
     }
 
+    public function rewardDetail()
+    {
+        return $this->hasOne('RewardDetail', 'object_id', 'news_id');
+    }
+
     public function tenants()
     {
         return $this->belongsToMany('Tenant', 'news_merchant', 'news_id', 'merchant_id')

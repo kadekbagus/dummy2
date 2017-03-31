@@ -1916,7 +1916,7 @@ class PromotionalEventAPIController extends ControllerAPI
             });
 
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($promotionalevent) {
+            OrbitInput::get('with', function ($with) use ($promotionalevent, $object_type) {
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
@@ -1940,6 +1940,14 @@ class PromotionalEventAPIController extends ControllerAPI
                         $promotionalevent->with('keywords');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $promotionalevent->with('campaignObjectPartners');
+                    } elseif ($relation === 'rewardDetail') {
+                        $promotionalevent->with(['rewardDetail' => function ($q) use ($object_type) {
+                            $q->where('reward_details.object_type', '=', $object_type);
+                        }]);
+                    } elseif ($relation === 'rewardTranslations') {
+                        $promotionalevent->with('rewardDetail.rewardTranslations');
+                    } elseif ($relation === 'rewardCodes') {
+                        $promotionalevent->with('rewardDetail.rewardCodes');
                     }
                 }
             });
@@ -2829,7 +2837,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 // Fire an promotional_event which listen on orbit.promotionalevent.after.rewardtranslation.save
                 // @param ControllerAPI $this
                 // @param RewardDetailTranslation $new_reward_detail_translation
-                Event::fire('orbit.promotionalevent.after.rewardtranslation.save', array($this, $new_reward_detail_translation));
+                // Event::fire('orbit.promotionalevent.after.rewardtranslation.save', array($this, $new_reward_detail_translation));
 
                 $promotional_event->setRelation('reward_detail_translation_'. $new_reward_detail_translation->language_id, $new_reward_detail_translation);
             }
