@@ -5316,7 +5316,7 @@ return array(
 
         'store_detail_base_url' => 'https://v215.gotomalls.cool/#!/stores/%s/%s',
 
-        'promotional_event_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotional-event/%s/%s',
+        'promotional_event_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotional-event/%s/%s?%s',
     ),
 
     /**
