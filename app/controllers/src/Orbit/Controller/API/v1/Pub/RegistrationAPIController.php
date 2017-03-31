@@ -56,6 +56,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $language = OrbitInput::get('language', 'id');
             $rewardId = OrbitInput::post('reward_id', NULL);
             $rewardType = OrbitInput::post('reward_type', NULL);
+            $redirectToUrl = OrbitInput::post('to_url', NULL);
 
             $user = User::with('role')
                         ->whereHas('role', function($q) {
@@ -165,7 +166,9 @@ class RegistrationAPIController extends IntermediateBaseController
             Queue::push('Orbit\\Queue\\RegistrationMail', [
                 'user_id' => $user->user_id,
                 'languageId' => $language,
-                'mode' => 'gotomalls'],
+                'mode' => 'gotomalls',
+                'redirect_to_url' => $redirectToUrl
+                ],
                 Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
             );
         } catch (ACLForbiddenException $e) {
