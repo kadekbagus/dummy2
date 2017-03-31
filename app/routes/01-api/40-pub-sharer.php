@@ -39,6 +39,15 @@ Route::group(
                 }
             )
         );
+        Route::get('/pub/sharer/facebook/promotional-event-detail',
+            array(
+                'as' => 'pub-share-promotional-event',
+                function()
+                {
+                    return Orbit\Controller\API\v1\Pub\SocMedAPIController::create()->getPromotionalEventDetailView();
+                }
+            )
+        );
     }
 );
 

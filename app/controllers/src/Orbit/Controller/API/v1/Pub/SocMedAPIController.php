@@ -422,6 +422,106 @@ class SocMedAPIController extends PubControllerAPI
         return View::make('mobile-ci.templates.fb-sharer', compact('data'));
     }
 
+
+    /**
+     * GET - FB Promotional Event Share dummy page
+     *
+     * @param string    `id`          (required)
+     *
+     * @return Illuminate\View\View
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     */
+    public function getPromotionalEventDetailView()
+    {
+        $languageEnId = null;
+        $language = Language::where('name', 'en')->first();
+
+        if (! empty($language)) {
+            $languageEnId = $language->language_id;
+        }
+
+
+        $id = OrbitInput::get('id');
+        $country = OrbitInput::get('country', null);
+        $cities = OrbitInput::get('cities', null);
+
+        $prefix = DB::getTablePrefix();
+
+        $news = News::with(['translations' => function($q) use ($languageEnId) {
+                        $q->addSelect(['news_translation_id', 'news_id']);
+                        $q->with(['media' => function($q2) {
+                            $q2->addSelect(['object_id', 'media_name_long', 'path']);
+                        }]);
+                        $q->where('merchant_language_id', $languageEnId);
+                    }])
+                    ->select(
+                        'news.news_id as news_id',
+                        'news_translations.news_name as news_name',
+                        'news.object_type',
+                        'news_translations.description as description',
+                        'news.end_date',
+                        'media.path as original_media_path',
+                        // query for get status active based on timezone
+                        DB::raw("
+                                CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                        THEN {$prefix}campaign_status.campaign_status_name
+                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                    FROM {$prefix}news_merchant onm
+                                                                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                    WHERE onm.news_id = {$prefix}news.news_id)
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
+                                CASE WHEN (SELECT count(onm.merchant_id)
+                                            FROM {$prefix}news_merchant onm
+                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                            WHERE onm.news_id = {$prefix}news.news_id
+                                            AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}news.begin_date and {$prefix}news.end_date) > 0
+                                THEN 'true' ELSE 'false' END AS is_started
+                        ")
+                    )
+                    ->join('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                    ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                    ->leftJoin('media', function($q) {
+                        $q->on('media.object_id', '=', 'news_translations.news_translation_id');
+                        $q->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                    })
+                    ->where('news.news_id', $id)
+                    ->where('news_translations.merchant_language_id', '=', $languageEnId)
+                    ->where('news.object_type', '=', 'news')
+                    ->where('news.is_having_reward', '=', 'Y')
+                    ->where('news_translations.news_name', '!=', '')
+                    ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
+                    ->first();
+
+        if (! is_object($news)) {
+            // item not found
+            $data = $this->createEmptyViewData();
+
+            return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+        }
+
+        $data = new stdclass();
+        $data->url = static::getSharedUrl('promotional-event', $news->news_id, $news->news_name, $country, $cities);
+        $data->title = $news->news_name;
+        $data->description = $news->description;
+        $data->mall = new stdclass();
+        $data->mall->name = 'Gotomalls.com';
+
+        if (empty($news->original_media_path)) {
+            $data->image_url = NULL;
+        } else {
+            $data->image_url = $news->original_media_path;
+        }
+
+        $data->image_dimension = $this->getImageDimension($news->original_media_path);
+
+        return View::make('mobile-ci.templates.fb-sharer', compact('data'));
+    }
+
     /**
      * Static method to get shared url
      *
@@ -447,6 +547,10 @@ class SocMedAPIController extends PubControllerAPI
                 break;
             case 'store':
                 $routeName = 'pub-share-store';
+                break;
+
+            case 'promotional-event':
+                $routeName = 'pub-share-promotional-event';
                 break;
 
             default:
