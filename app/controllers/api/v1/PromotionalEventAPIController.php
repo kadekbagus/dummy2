@@ -1618,8 +1618,7 @@ class PromotionalEventAPIController extends ControllerAPI
     /**
      * GET - Search PromotionalEvent
      *
-     * @author Tian <tian@dominopos.com>
-     * @author Firmansyah <firmansyah@dominopos.com>
+     * @author Irianto <irianto@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -1687,10 +1686,10 @@ class PromotionalEventAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,promotionalevent_name,object_type,total_location,description,begin_date,end_date,updated_at,status',
+                    'sort_by' => 'in:registered_date,promotional_event_name,object_type,total_location,description,begin_date,end_date,updated_at,status',
                 ),
                 array(
-                    'in' => Lang::get('validation.orbit.empty.promotionalevent_sortby'),
+                    'in' => Lang::get('validation.orbit.empty.promotional_event_sortby'),
                 )
             );
 
@@ -1724,46 +1723,47 @@ class PromotionalEventAPIController extends ControllerAPI
 
             $object_type = OrbitInput::get('object_type');
 
-            $filterName = OrbitInput::get('promotionalevent_name_like', '');
+            $filterName = OrbitInput::get('promotional_event_name_like', '');
 
             // Builder object
             $prefix = DB::getTablePrefix();
-            $promotionalevent = PromotionalEvent::allowedForPMPUser($user, $object_type[0])
-                        ->select('promotionalevent.*', 'promotionalevent.promotionalevent_id as campaign_id', 'promotionalevent.object_type as campaign_type', 'campaign_status.order', 'campaign_price.campaign_price_id', 'promotionalevent_translations.promotionalevent_name as display_name', DB::raw('media.path as image_path'),
-                            DB::raw("COUNT(DISTINCT {$prefix}promotionalevent_merchant.promotionalevent_merchant_id) as total_location"),
+            $promotionalevent = News::allowedForPMPUser($user, $object_type[0])
+                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as display_name', DB::raw('media.path as image_path'),
+                            DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
                             DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
-                                from {$prefix}promotionalevent_merchant
-                                    left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotionalevent_merchant.merchant_id
+                                from {$prefix}news_merchant
+                                    left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
                                     left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
-                                    where {$prefix}promotionalevent_merchant.promotionalevent_id = {$prefix}promotionalevent.promotionalevent_id) as campaign_location_names"),
-                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotionalevent.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                    where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as campaign_location_names"),
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                    WHERE om.merchant_id = {$prefix}promotionalevent.mall_id)
+                                    WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
-                            DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}promotionalevent.end_date, {$prefix}promotionalevent.begin_date) + 1) * (SELECT COUNT(nm.promotionalevent_merchant_id) FROM {$prefix}promotionalevent_merchant as nm WHERE nm.object_type != 'mall' and nm.promotionalevent_id = {$prefix}promotionalevent.promotionalevent_id)) AS estimated"))
+                            DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (SELECT COUNT(nm.news_merchant_id) FROM {$prefix}news_merchant as nm WHERE nm.object_type != 'mall' and nm.news_id = {$prefix}news.news_id)) AS estimated"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
-                                $join->on('promotionalevent.promotionalevent_id', '=', 'campaign_price.campaign_id')
+                                $join->on('news.news_id', '=', 'campaign_price.campaign_id')
                                      ->where('campaign_price.campaign_type', '=', $object_type);
                           })
-                        ->leftJoin('promotionalevent_merchant', 'promotionalevent_merchant.promotionalevent_id', '=', 'promotionalevent.promotionalevent_id')
-                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotionalevent.campaign_status_id')
-                        ->leftJoin('promotionalevent_translations', 'promotionalevent_translations.promotionalevent_id', '=', 'promotionalevent.promotionalevent_id')
-                        ->leftJoin('languages', 'languages.language_id', '=', 'promotionalevent_translations.merchant_language_id')
-                        ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'promotionalevent_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'promotionalevent_translations.promotionalevent_translation_id')
-                        ->excludeDeleted('promotionalevent')
-                        ->groupBy('promotionalevent.promotionalevent_id');
+                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
+                        ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
+                        ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'news_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
+                        ->excludeDeleted('news')
+                        ->where('is_having_reward', 'Y')
+                        ->groupBy('news.news_id');
 
             if ($filterName === '') {
                 $promotionalevent->where('languages.name', '=', DB::raw("(SELECT IF({$prefix}merchants.object_type = 'tenant', pm.mobile_default_language, {$prefix}merchants.mobile_default_language)
                                 FROM {$prefix}merchants
                                 LEFT JOIN {$prefix}merchants pm ON pm.merchant_id = {$prefix}merchants.parent_id
-                                WHERE {$prefix}merchants.merchant_id = (SELECT nm.merchant_id FROM {$prefix}promotionalevent_merchant nm WHERE nm.promotionalevent_id = {$prefix}promotionalevent.promotionalevent_id LIMIT 1))"));
+                                WHERE {$prefix}merchants.merchant_id = (SELECT nm.merchant_id FROM {$prefix}news_merchant nm WHERE nm.news_id = {$prefix}news.news_id LIMIT 1))"));
             }
 
             // Filter promotionalevent by Ids
-            OrbitInput::get('promotionalevent_id', function($promotionaleventIds) use ($promotionalevent)
+            OrbitInput::get('news_id', function($promotionaleventIds) use ($promotionalevent)
             {
-                $promotionalevent->whereIn('promotionalevent.promotionalevent_id', (array)$promotionaleventIds);
+                $promotionalevent->whereIn('news.news_id', (array)$promotionaleventIds);
             });
 
 
@@ -1781,64 +1781,64 @@ class PromotionalEventAPIController extends ControllerAPI
             // });
 
             // Filter promotionalevent by promotionalevent name
-            OrbitInput::get('promotionalevent_name', function($promotionaleventname) use ($promotionalevent)
+            OrbitInput::get('news_name', function($promotionaleventname) use ($promotionalevent)
             {
-                $promotionalevent->where('promotionalevent.promotionalevent_name', '=', $promotionaleventname);
+                $promotionalevent->where('news.news_name', '=', $promotionaleventname);
             });
 
             // Filter promotionalevent by matching promotionalevent name pattern
-            OrbitInput::get('promotionalevent_name_like', function($promotionaleventname) use ($promotionalevent)
+            OrbitInput::get('news_name_like', function($promotionaleventname) use ($promotionalevent)
             {
-                $promotionalevent->where('promotionalevent_translations.promotionalevent_name', 'like', "%$promotionaleventname%");
+                $promotionalevent->where('news_translations.news_name', 'like', "%$newsname%");
             });
 
             // Filter promotionalevent by object type
             OrbitInput::get('object_type', function($objectTypes) use ($promotionalevent)
             {
-                $promotionalevent->whereIn('promotionalevent.object_type', $objectTypes);
+                $promotionalevent->whereIn('news.object_type', $objectTypes);
             });
 
             // Filter promotionalevent by description
             OrbitInput::get('description', function($description) use ($promotionalevent)
             {
-                $promotionalevent->whereIn('promotionalevent.description', $description);
+                $promotionalevent->whereIn('news.description', $description);
             });
 
             // Filter promotionalevent by matching description pattern
             OrbitInput::get('description_like', function($description) use ($promotionalevent)
             {
-                $promotionalevent->where('promotionalevent.description', 'like', "%$description%");
+                $promotionalevent->where('news.description', 'like', "%$description%");
             });
 
             // Filter promotionalevent by date
             OrbitInput::get('end_date', function($enddate) use ($promotionalevent)
             {
-                $promotionalevent->where('promotionalevent.begin_date', '<=', $enddate);
+                $promotionalevent->where('news.begin_date', '<=', $enddate);
             });
 
             // Filter promotionalevent by date
             OrbitInput::get('begin_date', function($begindate) use ($promotionalevent)
             {
-                $promotionalevent->where('promotionalevent.end_date', '>=', $begindate);
+                $promotionalevent->where('news.end_date', '>=', $begindate);
             });
 
             // Filter promotionalevent by sticky order
             OrbitInput::get('sticky_order', function ($stickyorder) use ($promotionalevent) {
-                $promotionalevent->whereIn('promotionalevent.sticky_order', $stickyorder);
+                $promotionalevent->whereIn('news.sticky_order', $stickyorder);
             });
 
             // Filter promotionalevent by status
             OrbitInput::get('campaign_status', function ($statuses) use ($promotionalevent, $prefix) {
-                $promotionalevent->whereIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotionalevent.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                $promotionalevent->whereIn(DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                     FROM {$prefix}merchants om
                                                                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
-                                                                                    WHERE om.merchant_id = {$prefix}promotionalevent.mall_id)
+                                                                                    WHERE om.merchant_id = {$prefix}news.mall_id)
                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END"), $statuses);
             });
 
             // Filter promotionalevent by link object type
             OrbitInput::get('link_object_type', function ($linkObjectTypes) use ($promotionalevent) {
-                $promotionalevent->whereIn('promotionalevent.link_object_type', $linkObjectTypes);
+                $promotionalevent->whereIn('news.link_object_type', $linkObjectTypes);
             });
 
             // Filter promotionalevent merchants by retailer(tenant) id
@@ -1867,11 +1867,11 @@ class PromotionalEventAPIController extends ControllerAPI
                 $mall_name_like = "%" . $mall_name_like . "%";
                 $mall_name_like = $quote($mall_name_like);
                 $promotionalevent->whereRaw(DB::raw("
-                    ((
+                    ((news
                         (select count(mtenant.merchant_id) from {$prefix}merchants mtenant
-                            inner join {$prefix}promotionalevent_merchant onm on mtenant.merchant_id = onm.merchant_id
+                            inner join {$prefix}news_merchant onm on mtenant.merchant_id = onm.merchant_id
                             where mtenant.object_type = 'tenant'
-                            and onm.promotionalevent_id = {$prefix}promotionalevent.promotionalevent_id
+                            and onm.news_id = {$prefix}news.news_id
                             and (
                                 select count(mmall.merchant_id) from {$prefix}merchants mmall
                                 where mmall.object_type = 'mall' and
@@ -1887,8 +1887,8 @@ class PromotionalEventAPIController extends ControllerAPI
                     OR
                     (
                         (select count(mmall.merchant_id) from {$prefix}merchants mmall
-                            inner join {$prefix}promotionalevent_merchant onm on mmall.merchant_id = onm.merchant_id
-                            inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.promotionalevent_id
+                            inner join {$prefix}news_merchant onm on mmall.merchant_id = onm.merchant_id
+                            inner join {$prefix}user_campaign ucp on ucp.campaign_id = onm.news_id
                             where mmall.object_type = 'mall' and
                             ucp.user_id = '{$user_id}' and
                             mmall.name like {$mall_name_like} and
@@ -1898,7 +1898,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 "));
             });
 
-            // Filter promotionalevent by estimated total cost
+            // Filter promotionaleventnews by estimated total cost
             OrbitInput::get('etc_from', function ($etcfrom) use ($promotionalevent) {
                 $etcto = OrbitInput::get('etc_to');
                 if (empty($etcto)) {
@@ -1984,15 +1984,15 @@ class PromotionalEventAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'registered_date' => 'promotionalevent.created_at',
-                    'promotionalevent_name'       => 'promotionalevent_translations.promotionalevent_name',
-                    'object_type'     => 'promotionalevent.object_type',
-                    'total_location'  => 'total_location',
-                    'description'     => 'promotionalevent.description',
-                    'begin_date'      => 'promotionalevent.begin_date',
-                    'end_date'        => 'promotionalevent.end_date',
-                    'updated_at'      => 'promotionalevent.updated_at',
-                    'status'          => 'campaign_status'
+                    'registered_date'        => 'news.created_at',
+                    'promotional_event_name' => 'news_translations.news_name',
+                    'object_type'            => 'news.object_type',
+                    'total_location'         => 'total_location',
+                    'description'            => 'news.description',
+                    'begin_date'             => 'news.begin_date',
+                    'end_date'               => 'news.end_date',
+                    'updated_at'             => 'news.updated_at',
+                    'status'                 => 'campaign_status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -2007,8 +2007,8 @@ class PromotionalEventAPIController extends ControllerAPI
             $promotionalevent->orderBy($sortBy, $sortMode);
 
             //with name
-            if ($sortBy !== 'promotionalevent_translations.promotionalevent_name') {
-                $promotionalevent->orderBy('promotionalevent_translations.promotionalevent_name', 'asc');
+            if ($sortBy !== 'newsnews_translations.news_name') {
+                $promotionalevent->orderBy('news_translations.news_name', 'asc');
             }
 
             // Return the instance of Query Builder
@@ -2026,7 +2026,7 @@ class PromotionalEventAPIController extends ControllerAPI
 
             if ($totalPromotionalEvent === 0) {
                 $data->records = NULL;
-                $this->response->message = Lang::get('statuses.orbit.nodata.promotionalevent');
+                $this->response->message = Lang::get('statuses.orbit.nodata.news');
             }
 
             $this->response->data = $data;
@@ -2749,6 +2749,10 @@ class PromotionalEventAPIController extends ControllerAPI
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'reward translations']));
         }
 
+        if (! array_key_exists($id_language_default, $data)) {
+            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.language_default', ['field' => 'id language default']));
+        }
+
         // translate
         foreach ($data as $language_id => $translations) {
             $language = Language::where('language_id', '=', $language_id)
@@ -2780,7 +2784,7 @@ class PromotionalEventAPIController extends ControllerAPI
                     // additional validation
                     $validator_value[$field] = $value;
                     // required for default language
-                    if ($language->language_id === $id_language_default) {
+                    if ($language_id === $id_language_default) {
                         $validation_label = 'required|max:10';
                     } else {
                         $validation_label = 'max:10';
