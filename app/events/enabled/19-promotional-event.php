@@ -179,6 +179,69 @@ Event::listen('orbit.promotionalevent.after.translation.save', function($control
 
 
 /**
+ * Listen on:    `orbit.promotionalevent.after.rewardtranslation.save`
+ * Purpose:      Handle file upload on media cause selected language translation
+ *
+ * @author Irianto <irianto@dominopos.com>
+ *
+ * @param NewsAPIController $controller
+ * @param RewardDetailTranslations $reward_detail_translation
+ */
+Event::listen('orbit.promotionalevent.after.rewardtranslation.save', function($controller, $reward_detail_translation)
+{
+
+    $image_id = $reward_detail_translation->language_id;
+
+    // upload image sign up desktop
+    $files = OrbitInput::files('image_sign_up_desktop_translation_' . $image_id);
+    if (! $files) {
+        return;
+    }
+
+    $_POST['reward_detail_translation'] = $reward_detail_translation->reward_detail_translation_id;
+    $_POST['reward_id'] = $reward_detail_translation->reward_id;
+    $_POST['language_id'] = $reward_detail_translation->language_id;
+    $response = UploadAPIController::create('raw')
+                                   ->setCalledFrom('reward.translations')
+                                   ->postUploadSignUpDesktopTranslationImage();
+
+    if ($response->code !== 0)
+    {
+        throw new \Exception($response->message, $response->code);
+    }
+
+    unset($_POST['reward_detail_translation']);
+    unset($_POST['reward_id']);
+    unset($_POST['language_id']);
+
+    $reward_detail_translation->setRelation('media', $response->data);
+    $reward_detail_translation->media = $response->data;
+    $reward_detail_translation->image_sign_up_desktop_translation = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $reward_detail_translation->reward_detail_translation_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => '', // ask
+            'es_id'         => $reward_detail_translation->reward_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
+});
+
+/**
  * Listen on:    `orbit.promotionalevent.postnewpromotionalevent.after.commit`
  * Purpose:      Send email to marketing after create promotional event
  *
@@ -189,6 +252,10 @@ Event::listen('orbit.promotionalevent.after.translation.save', function($control
  */
 Event::listen('orbit.promotionalevent.postnewpromotionalevent.after.commit', function($controller, $promotional_event)
 {
+    // Notify the queueing system to update Elasticsearch document
+    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
+        'news_id' => $promotional_event->news_id
+    ]);
 
     $timestamp = new DateTime($promotional_event->created_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
