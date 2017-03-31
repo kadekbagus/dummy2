@@ -217,7 +217,7 @@ Event::listen('orbit.promotionalevent.after.rewardtranslation.save', function($c
     unset($_POST['language_id']);
 
     $reward_detail_translation->setRelation('media', $response->data);
-    $reward_detail_translation->media = $response->data;
+    $reward_detail_translation->media_reward_signup_bg_desktop = $response->data;
     $reward_detail_translation->reward_signup_bg_desktop = $response->data[0]->path;
 
     // queue for data amazon s3
@@ -269,7 +269,7 @@ Event::listen('orbit.promotionalevent.after.rewardtranslation.save', function($c
     unset($_POST['language_id']);
 
     $reward_detail_translation->setRelation('media', $response->data);
-    $reward_detail_translation->media = $response->data;
+    $reward_detail_translation->media_reward_signup_bg_mobile = $response->data;
     $reward_detail_translation->reward_signup_bg_mobile = $response->data[0]->path;
 
     // queue for data amazon s3

@@ -6158,7 +6158,7 @@ class UploadAPIController extends ControllerAPI
      * @param integer    `reward_id`                         (required) - ID of the news
      * @param integer    `reward_detail_translation_id`      (required) - ID of the news tranlation
      * @param integer    `language_id`                       (required) - ID of the merchan language
-     * @param file|array `image_sign_up_desktop_translation` (required) - News translation images
+     * @param file|array `reward_signup_bg_desktop`          (required) - News translation images
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -6167,27 +6167,27 @@ class UploadAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            Event::fire('orbit.upload.postuploadnewstranslationimage.before.auth', array($this));
+            Event::fire('orbit.upload.postuploadsignupdesktopbackground.before.auth', array($this));
 
             if (! $this->calledFrom('reward.translations'))
             {
                 // Require authentication
                 $this->checkAuth();
 
-                Event::fire('orbit.upload.postuploadnewstranslationimage.after.auth', array($this));
+                Event::fire('orbit.upload.postuploadsignupdesktopbackground.after.auth', array($this));
 
                 // Try to check access control list, does this merchant allowed to
                 // perform this action
                 $user = $this->api->user;
-                Event::fire('orbit.upload.postuploadnewstranslationimage.before.authz', array($this, $user));
+                Event::fire('orbit.upload.postuploadsignupdesktopbackground.before.authz', array($this, $user));
 
                 if (! ACL::create($user)->isAllowed('update_news')) {
-                    Event::fire('orbit.upload.postuploadnewstranslationimage.authz.notallowed', array($this, $user));
+                    Event::fire('orbit.upload.postuploadsignupdesktopbackground.authz.notallowed', array($this, $user));
                     $editNewsLang = Lang::get('validation.orbit.actionlist.update_news');
                     $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editNewsLang));
                     ACL::throwAccessForbidden($message);
                 }
-                Event::fire('orbit.upload.postuploadnewstranslationimage.after.authz', array($this, $user));
+                Event::fire('orbit.upload.postuploadsignupdesktopbackground.after.authz', array($this, $user));
             }
 
             $upload_image_config = Config::get('orbit.upload.reward_detail.reward_signup_bg_desktop');
@@ -6223,7 +6223,7 @@ class UploadAPIController extends ControllerAPI
                 $messages
             );
 
-            Event::fire('orbit.upload.postuploadnewstranslationimage.before.validation', array($this, $validator));
+            Event::fire('orbit.upload.postuploadsignupdesktopbackground.before.validation', array($this, $validator));
 
             if (! $this->calledFrom('reward.translations')) {
                 // Begin database transaction
@@ -6235,7 +6235,7 @@ class UploadAPIController extends ControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
-            Event::fire('orbit.upload.postuploadnewstranslationimage.after.validation', array($this, $validator));
+            Event::fire('orbit.upload.postuploadsignupdesktopbackground.after.validation', array($this, $validator));
 
             // We already had Event Translation instance on the RegisterCustomValidation
             // get it from there no need to re-query the database
@@ -6257,7 +6257,7 @@ class UploadAPIController extends ControllerAPI
             // Create the uploader object
             $uploader = new Uploader($config, $message);
 
-            Event::fire('orbit.upload.postuploadnewstranslationimage.before.save', array($this, $reward_detail_translations, $uploader));
+            Event::fire('orbit.upload.postuploadsignupdesktopbackground.before.save', array($this, $reward_detail_translations, $uploader));
 
             // Begin uploading the files
             $uploaded = $uploader->upload($image_translation);
@@ -6304,7 +6304,7 @@ class UploadAPIController extends ControllerAPI
                 $reward_detail_translations->save();
             }
 
-            Event::fire('orbit.upload.postuploadnewstranslationimage.after.save', array($this, $reward_detail_translations, $uploader));
+            Event::fire('orbit.upload.postuploadsignupdesktopbackground.after.save', array($this, $reward_detail_translations, $uploader));
 
             $extras = new \stdClass();
             $extras->isUpdate = $isUpdate;
@@ -6320,9 +6320,9 @@ class UploadAPIController extends ControllerAPI
                 $this->commit();
             }
 
-            Event::fire('orbit.upload.postuploadnewstranslationimage.after.commit', array($this, $reward_detail_translations, $uploader));
+            Event::fire('orbit.upload.postuploadsignupdesktopbackground.after.commit', array($this, $reward_detail_translations, $uploader));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.upload.postuploadnewstranslationimage.access.forbidden', array($this, $e));
+            Event::fire('orbit.upload.postuploadsignupdesktopbackground.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -6335,7 +6335,7 @@ class UploadAPIController extends ControllerAPI
                 $this->rollBack();
             }
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.upload.postuploadnewstranslationimage.invalid.arguments', array($this, $e));
+            Event::fire('orbit.upload.postuploadsignupdesktopbackground.invalid.arguments', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -6348,7 +6348,7 @@ class UploadAPIController extends ControllerAPI
                 $this->rollBack();
             }
         } catch (QueryException $e) {
-            Event::fire('orbit.upload.postuploadnewstranslationimage.query.error', array($this, $e));
+            Event::fire('orbit.upload.postuploadsignupdesktopbackground.query.error', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -6367,7 +6367,7 @@ class UploadAPIController extends ControllerAPI
                 $this->rollBack();
             }
         } catch (Exception $e) {
-            Event::fire('orbit.upload.postuploadnewstranslationimage.general.exception', array($this, $e));
+            Event::fire('orbit.upload.postuploadsignupdesktopbackground.general.exception', array($this, $e));
 
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
@@ -6381,7 +6381,245 @@ class UploadAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.upload.postuploadnewstranslationimage.before.render', array($this, $output));
+        Event::fire('orbit.upload.postuploadsignupdesktopbackground.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload image for a sign up mobile (selected language).
+     *
+     * @author Irianto <irianto@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `reward_id`                         (required) - ID of the news
+     * @param integer    `reward_detail_translation_id`      (required) - ID of the news tranlation
+     * @param integer    `language_id`                       (required) - ID of the merchan language
+     * @param file|array `reward_signup_bg_mobile` (required) - News translation images
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadSignUpMobileBackground()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadsignupmobilebackground.before.auth', array($this));
+
+            if (! $this->calledFrom('reward.translations'))
+            {
+                // Require authentication
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadsignupmobilebackground.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadsignupmobilebackground.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('update_news')) {
+                    Event::fire('orbit.upload.postuploadsignupmobilebackground.authz.notallowed', array($this, $user));
+                    $editNewsLang = Lang::get('validation.orbit.actionlist.update_news');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editNewsLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadsignupmobilebackground.after.authz', array($this, $user));
+            }
+
+            $upload_image_config = Config::get('orbit.upload.reward_detail.reward_signup_bg_mobile');
+            $element_name = $upload_image_config['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $reward_detail_translation_id = OrbitInput::post('reward_detail_translation_id');
+            $reward_detail_id = OrbitInput::post('reward_detail_id');
+            $language_id = OrbitInput::post('language_id');
+            $image_translation = OrbitInput::files($element_name . '_' . $language_id);
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'reward_detail_translation_id' => $reward_detail_translation_id,
+                    'reward_detail_id'             => $reward_detail_id,
+                    'language_id'                  => $language_id,
+                    $element_name                  => $image_translation,
+                ),
+                array(
+                    'reward_detail_translation_id' => 'required|orbit.empty.reward_detail_translation',
+                    'reward_detail_id'             => 'required|orbit.empty.reward_detail',
+                    'language_id'                  => 'required|orbit.empty.merchant_language',
+                    $element_name                  => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadsignupmobilebackground.before.validation', array($this, $validator));
+
+            if (! $this->calledFrom('reward.translations')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadsignupmobilebackground.after.validation', array($this, $validator));
+
+            // We already had Event Translation instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $reward_detail_translations = App::make('orbit.empty.reward_detail_translation');
+
+            // Callback to rename the file, we will format it as follow
+            // [PROMOTION_ID]-[PROMOTION_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($reward_detail_translations)
+            {
+                $reward_detail_translation_id = $reward_detail_translations->reward_detail_translation_id;
+                $slug = Str::slug('signup_mobile');
+                $file['new']->name = sprintf('%s-%s-%s', $reward_detail_translation_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($upload_image_config);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadsignupmobilebackground.before.save', array($this, $reward_detail_translations, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($image_translation);
+
+            // Delete old news translation image
+            $pastMedia = Media::where('object_id', $reward_detail_translations->reward_detail_translation_id)
+                              ->where('object_name', 'reward_detail')
+                              ->where('media_name_id', $element_name);
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
+            foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            $isUpdate = false;
+            if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
+                $pastMedia->delete();
+            }
+
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $reward_detail_translations->reward_detail_translation_id,
+                'name'          => 'reward_detail',
+                'media_name_id' => $element_name,
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image_translation` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per news
+            if (isset($uploaded[0])) {
+                $reward_detail_translations->save();
+            }
+
+            Event::fire('orbit.upload.postuploadsignupmobilebackground.after.save', array($this, $reward_detail_translations, $uploader));
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = $element_name;
+            $mediaList['extras'] = $extras;
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.news_translation.main');
+
+            if (! $this->calledFrom('reward.translations')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadsignupmobilebackground.after.commit', array($this, $reward_detail_translations, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadsignupmobilebackground.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('reward.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadsignupmobilebackground.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('reward.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadsignupmobilebackground.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('reward.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadsignupmobilebackground.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('reward.translations')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadsignupmobilebackground.before.render', array($this, $output));
 
         return $output;
     }

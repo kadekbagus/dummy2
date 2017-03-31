@@ -704,7 +704,7 @@ class PromotionalEventAPIController extends ControllerAPI
 
             $promotional_event_id = OrbitInput::post('promotional_event_id');
             $mall_id = OrbitInput::post('current_mall');;
-            $object_type = OrbitInput::post('object_type');
+            $object_type = OrbitInput::post('object_type', 'news');
             $reward_type = OrbitInput::post('reward_type');
             $campaign_status = OrbitInput::post('campaign_status');
             $link_object_type = OrbitInput::post('link_object_type');
@@ -738,7 +738,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 'is_all_gender'        => $is_all_gender,
                 'is_all_age'           => $is_all_age,
                 'partner_exclusive'    => $is_exclusive,
-                'is_new_user_only'            => $is_new_user_only,
+                'is_new_user_only'     => $is_new_user_only,
             );
 
             // Validate promotionalevent_name only if exists in POST.
@@ -749,9 +749,9 @@ class PromotionalEventAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
+                    'object_type'            => 'required|orbit.empty.promotional_event_object_type',
                     'promotional_event_id'   => 'required|orbit.update.promotional_event:' . $object_type,
                     'promotional_event_name' => 'sometimes|required|max:255',
-                    'object_type'            => 'required|orbit.empty.promotional_event_object_type',
                     'reward_type'            => 'required|orbit.empty.promotional_event_reward_type',
                     'status'                 => 'orbit.empty.promotional_event_status',
                     'link_object_type'       => 'orbit.empty.link_object_type',
