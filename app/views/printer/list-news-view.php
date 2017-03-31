@@ -109,7 +109,7 @@
 </div>
 
 <div id="main">
-    <h2 style="margin-bottom:0.5em;">News List</h2>
+    <h2 style="margin-bottom:0.5em;">Event List</h2>
     <table style="width:100%; margin-bottom:1em;" class="noborder">
         <tr>
             <td style="width:150px"></td>
@@ -117,7 +117,7 @@
             <td><strong></strong></td>
         </tr>
         <tr>
-            <td>Total News</td>
+            <td>Total Event</td>
             <td>:</td>
             <td><strong><?php echo number_format($totalRec); ?></strong></td>
         </tr>
@@ -125,7 +125,7 @@
         <!-- Filtering -->
         <?php if ($newsName != '') { ?>
             <tr>
-                <td>Filter by News Name</td>
+                <td>Filter by Event Name</td>
                 <td>:</td>
                 <td><strong><?php echo htmlentities($newsName); ?></strong></td>
             </tr>
@@ -215,7 +215,7 @@
     <table style="width:100%">
         <thead>
             <th style="text-align:left;">No</th>
-            <th style="text-align:left;">News Name</th>
+            <th style="text-align:left;">Event Name</th>
             <th style="text-align:left;">Start Date & Time</th>
             <th style="text-align:left;">End Date & Time</th>
             <th style="text-align:left;">Location(s)</th>

@@ -14,4 +14,16 @@ class RewardDetail extends Eloquent
      * with `status` field.
      */
     use ModelStatusTrait;
+
+
+    public function rewardTranslations()
+    {
+        return $this->hasMany('RewardDetailTranslation', 'reward_detail_id', 'reward_detail_id')
+            ->join('languages', 'languages.language_id', '=', 'reward_detail_translations.language_id');
+    }
+
+    public function rewardCodes()
+    {
+        return $this->hasMany('RewardDetailCode', 'reward_detail_id', 'reward_detail_id');
+    }
 }
