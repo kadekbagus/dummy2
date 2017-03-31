@@ -9798,6 +9798,21 @@ class UploadAPIController extends ControllerAPI
             });
         }
 
+        Validator::extend('orbit.empty.news', function ($attribute, $value, $parameters) {
+            $news = News::excludeDeleted()
+                        ->where('news_id', $value)
+                        ->first();
+
+            if (empty($news)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.news', $news);
+
+            return TRUE;
+        });
+
+
         if ($this->calledFrom('default')) {
             // Check the existance of product id
             Validator::extend('orbit.empty.product', function ($attribute, $value, $parameters) {
