@@ -1946,8 +1946,6 @@ class PromotionalEventAPIController extends ControllerAPI
                         }]);
                     } elseif ($relation === 'rewardTranslations') {
                         $promotionalevent->with('rewardDetail.rewardTranslations');
-                    } elseif ($relation === 'rewardCodes') {
-                        $promotionalevent->with('rewardDetail.rewardCodes');
                     }
                 }
             });
