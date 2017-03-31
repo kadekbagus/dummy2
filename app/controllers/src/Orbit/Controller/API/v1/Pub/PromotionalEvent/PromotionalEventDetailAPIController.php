@@ -58,7 +58,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                     'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
-                    'required' => 'Promotion ID is required',
+                    'required' => 'News ID is required',
                 )
             );
 
