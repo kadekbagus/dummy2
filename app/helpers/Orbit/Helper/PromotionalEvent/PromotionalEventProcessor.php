@@ -53,7 +53,7 @@ class PromotionalEventProcessor
 
     public function getRewardDetail($peId='', $peType='') {
         $rewardDetail = RewardDetail::where('object_type', $peType)
-                                    ->where('object_id', $peId);
+                                    ->where('object_id', $peId)
                                     ->first();
 
         return $rewardDetail;
@@ -80,8 +80,8 @@ class PromotionalEventProcessor
     public function checkUserReward($userId='', $peId='', $peType='') {
         $rewardDetail = $this->getRewardDetail($peId, $peType);
         $userReward = UserReward::where('user_id', $userId)
-                                ->('reward_detail_id', $rewardDetail->reward_detail_id)
-                                ->('status', '!=', 'expired')
+                                ->where('reward_detail_id', $rewardDetail->reward_detail_id)
+                                ->where('status', '!=', 'expired')
                                 ->first();
 
         return $userReward;

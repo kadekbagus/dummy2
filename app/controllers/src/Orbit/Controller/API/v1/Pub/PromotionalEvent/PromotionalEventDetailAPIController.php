@@ -1,4 +1,9 @@
-<?php namespace Orbit\Controller\API\v1\Pub\News;
+<?php namespace Orbit\Controller\API\v1\Pub\PromotionalEvent;
+
+/**
+ * @author firmansyah <firmansyah@dominopos.com>
+ * @desc Controller for get detail page of promotional event
+ */
 
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -10,64 +15,49 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
-use News;
-use NewsMerchant;
 use Language;
 use Validator;
-use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Mall;
-use Orbit\Controller\API\v1\Pub\SocMedAPIController;
-use Orbit\Controller\API\v1\Pub\News\NewsHelper;
-use OrbitShop\API\v1\ResponseProvider;
 use Partner;
+use News;
+use App;
+use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 
+
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
-
-	/**
-     * GET - get the news detail
-     *
-     * @author Ahmad <ahmad@dominopos.com>
-     *
-     * List of API Parameters
-     * ----------------------
-     * @param string news_id
-     *
-     * @return Illuminate\Support\Facades\Response
-     */
-    public function getNewsItem()
+     public function getPromotionalEventItem()
     {
         $httpCode = 200;
-        $this->response = new ResponseProvider();
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
 
         try{
             $user = $this->getUser();
-
             $newsId = OrbitInput::get('news_id', null);
+            $sort_by = OrbitInput::get('sortby', 'name');
+            $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
-            $mallId = OrbitInput::get('mall_id', null);
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
             $partnerToken = OrbitInput::get('token', null);
 
-            $newsHelper = NewsHelper::create();
-            $newsHelper->registerCustomValidation();
+            $this->registerCustomValidation();
+
             $validator = Validator::make(
                 array(
-                    'news_id' => $newsId,
+                    'promotion_id' => $newsId,
                     'language' => $language,
                 ),
                 array(
-                    'news_id' => 'required',
+                    'promotion_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
-                    'required' => 'News ID is required',
+                    'required' => 'Promotion ID is required',
                 )
             );
 
@@ -77,7 +67,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $valid_language = $newsHelper->getValidLanguage();
+            $valid_language = $this->getValidLanguage();
 
             $prefix = DB::getTablePrefix();
             App::setLocale($language);
@@ -91,7 +81,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
             }
 
-            $news = News::select(
+            $promotionalEvent = News::select(
                             'news.news_id as news_id',
                             DB::Raw("
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
@@ -163,30 +153,27 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news.is_having_reward', '=', 'Y')
-                        ->with(['keywords' => function ($q) {
-                                $q->addSelect('keyword', 'object_id');
-                            }])
                         ->first();
 
             $message = 'Request Ok';
-            if (! is_object($news)) {
-                OrbitShopAPI::throwInvalidArgument('News that you specify is not found');
+            if (! is_object($promotionalEvent)) {
+                OrbitShopAPI::throwInvalidArgument('Promotion that you specify is not found');
             }
 
-            if ($news->is_exclusive === 'Y') {
+            if ($promotionalEvent->is_exclusive === 'Y') {
                 // check token
                 $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
-                                    ->where('object_partner.object_type', 'news')
-                                    ->where('object_partner.object_id', $news->news_id)
+                                    ->where('object_partner.object_type', 'promotion')
+                                    ->where('object_partner.object_id', $promotionalEvent->news_id)
                                     ->where('partners.is_exclusive', 'Y')
                                     ->where('partners.token', $partnerToken)
                                     ->first();
 
                 if (! is_object($partnerTokens)) {
-                    throw new OrbitCustomException('News is exclusive, please specify partner token', News::IS_EXCLUSIVE_ERROR_CODE, NULL);
+                    throw new OrbitCustomException('Promotion is exclusive, please specify partner token', News::IS_EXCLUSIVE_ERROR_CODE, NULL);
                 }
 
-                $news->is_exclusive = 'N';
+                $promotionalEvent->is_exclusive = 'N';
             }
 
             $mall = null;
@@ -195,9 +182,9 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             }
 
             // check promotional event access and get lucky_draw/promotion code
-            $news->code = null;
-            $news->information_message = null;
-            $news->code_message = null;
+            $promotionalEvent->code = null;
+            $promotionalEvent->information_message = null;
+            $promotionalEvent->code_message = null;
 
             if (! empty($user->user_id)) {
                 $promotionalEvent = PromotionalEventProcessor::format($user->user_id, $newsId, 'news', $language);
@@ -206,42 +193,41 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                     $updateReward = PromotionalEventProcessor::insertRewardCode($user->user_id, $newsId, 'news', $language);
                 }
 
-                $news->code = $promotionalEvent['code'];
-                $news->information_message = $promotionalEvent['message'];
-                $news->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
+                $promotionalEvent->code = $promotionalEvent['code'];
+                $promotionalEvent->information_message = $promotionalEvent['message'];
+                $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
             }
 
-
             if (is_object($mall)) {
-                $activityNotes = sprintf('Page viewed: View mall event detail');
+                $activityNotes = sprintf('Page viewed: View Promotional Event Page');
                 $activity->setUser($user)
-                    ->setActivityName('view_mall_event_detail')
-                    ->setActivityNameLong('View mall event detail')
-                    ->setObject($news)
-                    ->setNews($news)
+                    ->setActivityName('view_promotional_event_detail')
+                    ->setActivityNameLong('View Promotional Event Page')
+                    ->setObject($promotionalEvent)
+                    ->setNews($promotionalEvent)
                     ->setLocation($mall)
-                    ->setModuleName('News')
+                    ->setModuleName('Application')
                     ->setNotes($activityNotes)
                     ->responseOK()
                     ->save();
             } else {
-                $activityNotes = sprintf('Page viewed: Landing Page News Detail Page');
+                $activityNotes = sprintf('Page viewed: View Promotional Event Page');
                 $activity->setUser($user)
-                    ->setActivityName('view_landing_page_news_detail')
-                    ->setActivityNameLong('View GoToMalls News Detail')
-                    ->setObject($news)
+                    ->setActivityName('view_promotional_event_detail')
+                    ->setActivityNameLong('View Promotional Event Page')
+                    ->setObject($promotionalEvent)
+                    ->setNews($promotionalEvent)
                     ->setLocation($mall)
-                    ->setNews($news)
-                    ->setModuleName('News')
+                    ->setModuleName('Application')
                     ->setNotes($activityNotes)
                     ->responseOK()
                     ->save();
             }
 
             // add facebook share url dummy page
-            $news->facebook_share_url = SocMedAPIController::getSharedUrl('news', $news->news_id, $news->news_name, $country, $cities);
+            $promotionalEvent->facebook_share_url = SocMedAPIController::getSharedUrl('promotional-event', $promotionalEvent->news_id, $promotionalEvent->news_name, $country, $cities);
 
-            $this->response->data = $news;
+            $this->response->data = $promotionalEvent;
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = $message;
@@ -295,8 +281,34 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
         return $this->render($httpCode);
     }
 
+    protected function registerCustomValidation()
+    {
+        // Check language is exists
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $lang_name = $value;
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang_name)
+                            ->first();
+
+            if (empty($language)) {
+                return FALSE;
+            }
+
+            $this->valid_language = $language;
+            return TRUE;
+        });
+    }
+
+    public function getValidLanguage()
+    {
+        return $this->valid_language;
+    }
+
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
     }
+
+
 }
