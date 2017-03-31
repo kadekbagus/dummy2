@@ -2020,7 +2020,7 @@ class PromotionalEventAPIController extends ControllerAPI
             $promotionalevent->orderBy($sortBy, $sortMode);
 
             //with name
-            if ($sortBy !== 'newsnews_translations.news_name') {
+            if ($sortBy !== 'news_translations.news_name') {
                 $promotionalevent->orderBy('news_translations.news_name', 'asc');
             }
 
