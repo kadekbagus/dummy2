@@ -54,6 +54,8 @@ class RegistrationAPIController extends IntermediateBaseController
             $password_confirmation = OrbitInput::post('password_confirmation');
             $useTransaction = OrbitInput::post('use_transaction', TRUE);
             $language = OrbitInput::get('language', 'id');
+            $rewardId = OrbitInput::post('reward_id', NULL);
+            $rewardType = OrbitInput::post('reward_type', NULL);
 
             $user = User::with('role')
                         ->whereHas('role', function($q) {
@@ -152,6 +154,8 @@ class RegistrationAPIController extends IntermediateBaseController
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Sign Up Success';
+
+            Event::fire('orbit.registration.after.createuser', array($userId, $rewardId, $rewardType, $language))
 
             if ($useTransaction) {
                 DB::commit();
