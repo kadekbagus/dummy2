@@ -704,7 +704,7 @@ class PromotionalEventAPIController extends ControllerAPI
 
             $promotional_event_id = OrbitInput::post('promotional_event_id');
             $mall_id = OrbitInput::post('current_mall');;
-            $object_type = OrbitInput::post('object_type');
+            $object_type = OrbitInput::post('object_type', 'news');
             $reward_type = OrbitInput::post('reward_type');
             $campaign_status = OrbitInput::post('campaign_status');
             $link_object_type = OrbitInput::post('link_object_type');
@@ -738,7 +738,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 'is_all_gender'        => $is_all_gender,
                 'is_all_age'           => $is_all_age,
                 'partner_exclusive'    => $is_exclusive,
-                'is_new_user_only'            => $is_new_user_only,
+                'is_new_user_only'     => $is_new_user_only,
             );
 
             // Validate promotionalevent_name only if exists in POST.
@@ -749,9 +749,9 @@ class PromotionalEventAPIController extends ControllerAPI
             $validator = Validator::make(
                 $data,
                 array(
+                    'object_type'            => 'required|orbit.empty.promotional_event_object_type',
                     'promotional_event_id'   => 'required|orbit.update.promotional_event:' . $object_type,
                     'promotional_event_name' => 'sometimes|required|max:255',
-                    'object_type'            => 'required|orbit.empty.promotional_event_object_type',
                     'reward_type'            => 'required|orbit.empty.promotional_event_reward_type',
                     'status'                 => 'orbit.empty.promotional_event_status',
                     'link_object_type'       => 'orbit.empty.link_object_type',
@@ -760,7 +760,7 @@ class PromotionalEventAPIController extends ControllerAPI
                     'is_all_gender'          => 'required|orbit.empty.is_all_gender',
                     'is_all_age'             => 'required|orbit.empty.is_all_age',
                     'partner_exclusive'      => 'in:Y,N|orbit.empty.exclusive_partner',
-                    'is_new_user_only'            => 'in:Y,N',
+                    'is_new_user_only'       => 'in:Y,N',
                 ),
                 array(
                    'promotional_event_name_exists_but_me' => Lang::get('validation.orbit.exists.promotional_event_name'),
@@ -890,7 +890,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($updatedpromotional_event, $translation_json_string, 'update');
             });
 
-            OrbitInput::post('reward_translations', function($reward_translation_json_string) use ($updatedpromotional_event, $reward_detail) {
+            OrbitInput::post('reward_translations', function($reward_translation_json_string) use ($updatedpromotional_event, $reward_detail, $id_language_default) {
                 $this->validateAndSaveRewardTranslations($updatedpromotional_event, $reward_detail, $reward_translation_json_string, $id_language_default, 'update');
             });
 
@@ -2114,8 +2114,6 @@ class PromotionalEventAPIController extends ControllerAPI
      * @param string   `city`                  (optional) - City name
      * @param string   `city_like`             (optional) - City name like
      * @param integer  `retailer_id`           (optional) - Retailer IDs
-     *
-     * @return Illuminate\Support\Facades\Response
      */
     public function getSearchPromotionalEventPromotionByRetailer()
     {
@@ -2839,7 +2837,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 // Fire an promotional_event which listen on orbit.promotionalevent.after.rewardtranslation.save
                 // @param ControllerAPI $this
                 // @param RewardDetailTranslation $new_reward_detail_translation
-            // Event::fire('orbit.promotionalevent.after.rewardtranslation.save', array($this, $new_reward_detail_translation));
+                Event::fire('orbit.promotionalevent.after.rewardtranslation.save', array($this, $new_reward_detail_translation));
 
                 $promotional_event->setRelation('reward_detail_translation_'. $new_reward_detail_translation->language_id, $new_reward_detail_translation);
             }
@@ -2858,7 +2856,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 // Fire an promotional_event which listen on orbit.promotional_event.after.rewardtranslation.save
                 // @param ControllerAPI $this
                 // @param RewardDetailTranslation $existing_translation
-            // Event::fire('orbit.promotionalevent.after.rewardtranslation.save', array($this, $existing_translation));
+                Event::fire('orbit.promotionalevent.after.rewardtranslation.save', array($this, $existing_translation));
 
                 // return respones if any upload image or no
                 $existing_translation->load('media');
