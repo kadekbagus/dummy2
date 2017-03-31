@@ -1779,21 +1779,21 @@ class PromotionalEventAPIController extends ControllerAPI
             }
 
             // Filter promotionalevent by Ids
-            OrbitInput::get('news_id', function($promotionaleventIds) use ($promotionalevent)
+            OrbitInput::get('promotional_event_id', function($promotionaleventIds) use ($promotionalevent)
             {
                 $promotionalevent->whereIn('news.news_id', (array)$promotionaleventIds);
             });
 
             // Filter promotionalevent by promotionalevent name
-            OrbitInput::get('news_name', function($promotionaleventname) use ($promotionalevent)
+            OrbitInput::get('promotional_event_name', function($promotionaleventname) use ($promotionalevent)
             {
                 $promotionalevent->where('news.news_name', '=', $promotionaleventname);
             });
 
             // Filter promotionalevent by matching promotionalevent name pattern
-            OrbitInput::get('news_name_like', function($promotionaleventname) use ($promotionalevent)
+            OrbitInput::get('promotional_event_name_like', function($promotionaleventname) use ($promotionalevent)
             {
-                $promotionalevent->where('news_translations.news_name', 'like', "%$newsname%");
+                $promotionalevent->where('news_translations.news_name', 'like', "%$promotionaleventname%");
             });
 
             // Filter promotionalevent by object type
