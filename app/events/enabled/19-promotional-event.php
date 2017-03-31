@@ -1,19 +1,19 @@
 <?php
 /**
- * Event listener for News related events.
+ * Event listener for Promotional Event.
  *
- * @author Tian <tian@dominopos.com>
+ * @author Irianto <irianto@dominopos.com>
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 /**
- * Listen on:    `orbit.news.postnewnews.after.save`
+ * Listen on:    `orbit.promotionalevent.postnewpromotionalevent.after.save`
  * Purpose:      Handle file upload on news creation
  *
  * @param NewsAPIController $controller - The instance of the NewsAPIController or its subclass
- * @param News $news - Instance of object News
+ * @param News $promotional_event - Instance of object News
  */
-Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
+Event::listen('orbit.promotionalevent.postnewpromotionalevent.after.save', function($controller, $promotional_event)
 {
     $files = OrbitInput::files('images');
     if (! $files) {
@@ -23,7 +23,7 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
     // This will be used on UploadAPIController
     App::instance('orbit.upload.user', $controller->api->user);
 
-    $_POST['news_id'] = $news->news_id;
+    $_POST['news_id'] = $promotional_event->news_id;
     $response = UploadAPIController::create('raw')
                                    ->setCalledFrom('news.new')
                                    ->postUploadNewsImage();
@@ -34,9 +34,9 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
     }
     unset($_POST['news_id']);
 
-    $news->setRelation('media', $response->data);
-    $news->media = $response->data;
-    $news->image = $response->data[0]->path;
+    $promotional_event->setRelation('media', $response->data);
+    $promotional_event->media = $response->data;
+    $promotional_event->image = $response->data[0]->path;
 
     // queue for data amazon s3
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
@@ -51,24 +51,24 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
         }
 
         Queue::push($queueFile, [
-            'object_id'     => $news->news_id,
+            'object_id'     => $promotional_event->news_id,
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
-            'es_type'       => $news->object_type,
-            'es_id'         => $news->news_id,
+            'es_type'       => $promotional_event->object_type,
+            'es_id'         => $promotional_event->news_id,
             'bucket_name'   => $bucketName
         ], $queueName);
     }
 });
 
 /**
- * Listen on:       `orbit.news.postupdatenews.after.save`
+ * Listen on:       `orbit.promotionalevent.postupdatepromotionalevent.after.save`
  *   Purpose:       Handle file upload on news update
  *
  * @param NewsAPIController $controller - The instance of the NewsAPIController or its subclass
  * @param News $news - Instance of object News
  */
-Event::listen('orbit.news.postupdatenews.after.save', function($controller, $news)
+Event::listen('orbit.promotionalevent.postupdatepromotionalevent.after.save', function($controller, $news)
 {
     $images = OrbitInput::files('images');
 
@@ -116,27 +116,27 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
 
 
 /**
- * Listen on:    `orbit.news.after.translation.save`
+ * Listen on:    `orbit.promotionalevent.after.translation.save`
  * Purpose:      Handle file upload on news cause selected language translation
  *
- * @author Firmansyah <firmansyah@dominopos.com>
+ * @author Irianto <irianto@dominopos.com>
  *
  * @param NewsAPIController $controller
- * @param NewsTranslations $news_translations
+ * @param NewsTranslations $promotional_event_translations
  */
-Event::listen('orbit.news.after.translation.save', function($controller, $news_translations)
+Event::listen('orbit.promotionalevent.after.translation.save', function($controller, $promotional_event_translations)
 {
 
-    $image_id = $news_translations->merchant_language_id;
+    $image_id = $promotional_event_translations->merchant_language_id;
 
     $files = OrbitInput::files('image_translation_' . $image_id);
     if (! $files) {
         return;
     }
 
-    $_POST['news_translation_id'] = $news_translations->news_translation_id;
-    $_POST['news_id'] = $news_translations->news_id;
-    $_POST['merchant_language_id'] = $news_translations->merchant_language_id;
+    $_POST['news_translation_id'] = $promotional_event_translations->news_translation_id;
+    $_POST['news_id'] = $promotional_event_translations->news_id;
+    $_POST['merchant_language_id'] = $promotional_event_translations->merchant_language_id;
     $response = UploadAPIController::create('raw')
                                    ->setCalledFrom('news.translations')
                                    ->postUploadNewsTranslationImage();
@@ -150,9 +150,9 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
     unset($_POST['news_id']);
     unset($_POST['merchant_language_id']);
 
-    $news_translations->setRelation('media', $response->data);
-    $news_translations->media = $response->data;
-    $news_translations->image_translation = $response->data[0]->path;
+    $promotional_event_translations->setRelation('media', $response->data);
+    $promotional_event_translations->media = $response->data;
+    $promotional_event_translations->image_translation = $response->data[0]->path;
 
     // queue for data amazon s3
     $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
@@ -167,11 +167,11 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
         }
 
         Queue::push($queueFile, [
-            'object_id'     => $news_translations->news_translation_id,
+            'object_id'     => $promotional_event_translations->news_translation_id,
             'media_name_id' => $response->data['extras']->mediaNameId,
             'old_path'      => $response->data['extras']->oldPath,
-            'es_type'       => $news_translations->object_type,
-            'es_id'         => $news_translations->news_id,
+            'es_type'       => $promotional_event_translations->object_type,
+            'es_id'         => $promotional_event_translations->news_id,
             'bucket_name'   => $bucketName
         ], $queueName);
     }
@@ -179,25 +179,88 @@ Event::listen('orbit.news.after.translation.save', function($controller, $news_t
 
 
 /**
- * Listen on:    `orbit.news.postnewnews.after.commit`
- * Purpose:      Send email to marketing after create news or promotion
+ * Listen on:    `orbit.promotionalevent.after.rewardtranslation.save`
+ * Purpose:      Handle file upload on media cause selected language translation
  *
- * @author kadek <kadek@dominopos.com>
+ * @author Irianto <irianto@dominopos.com>
  *
  * @param NewsAPIController $controller
- * @param News $news
+ * @param RewardDetailTranslations $reward_detail_translation
  */
-Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news)
+Event::listen('orbit.promotionalevent.after.rewardtranslation.save', function($controller, $reward_detail_translation)
+{
+
+    $image_id = $reward_detail_translation->language_id;
+
+    // upload image sign up desktop
+    $files = OrbitInput::files('image_sign_up_desktop_translation_' . $image_id);
+    if (! $files) {
+        return;
+    }
+
+    $_POST['reward_detail_translation'] = $reward_detail_translation->reward_detail_translation_id;
+    $_POST['reward_id'] = $reward_detail_translation->reward_id;
+    $_POST['language_id'] = $reward_detail_translation->language_id;
+    $response = UploadAPIController::create('raw')
+                                   ->setCalledFrom('reward.translations')
+                                   ->postUploadSignUpDesktopTranslationImage();
+
+    if ($response->code !== 0)
+    {
+        throw new \Exception($response->message, $response->code);
+    }
+
+    unset($_POST['reward_detail_translation']);
+    unset($_POST['reward_id']);
+    unset($_POST['language_id']);
+
+    $reward_detail_translation->setRelation('media', $response->data);
+    $reward_detail_translation->media = $response->data;
+    $reward_detail_translation->image_sign_up_desktop_translation = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $reward_detail_translation->reward_detail_translation_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => '', // ask
+            'es_id'         => $reward_detail_translation->reward_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
+});
+
+/**
+ * Listen on:    `orbit.promotionalevent.postnewpromotionalevent.after.commit`
+ * Purpose:      Send email to marketing after create promotional event
+ *
+ * @author Irianto <irianto@dominopos.com>
+ *
+ * @param NewsAPIController $controller
+ * @param News $promotional_event
+ */
+Event::listen('orbit.promotionalevent.postnewpromotionalevent.after.commit', function($controller, $promotional_event)
 {
     // Notify the queueing system to update Elasticsearch document
     Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
-        'news_id' => $news->news_id
+        'news_id' => $promotional_event->news_id
     ]);
 
-    $timestamp = new DateTime($news->created_at);
+    $timestamp = new DateTime($promotional_event->created_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
 
-    if ($news->object_type === 'promotion') {
+    if ($promotional_event->object_type === 'promotion') {
         $campaignType = 'Promotion';
     } else {
         $campaignType = 'News';
@@ -206,11 +269,11 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
     // Send email process to the queue
     Queue::push('Orbit\\Queue\\CampaignMail', [
         'campaignType'       => $campaignType,
-        'campaignName'       => $news->news_name,
+        'campaignName'       => $promotional_event->news_name,
         'pmpUser'            => $controller->api->user->username,
         'eventType'          => 'created',
         'date'               => $date,
-        'campaignId'         => $news->news_id,
+        'campaignId'         => $promotional_event->news_id,
         'mode'               => 'create'
     ]);
 
@@ -218,7 +281,7 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
 
 
 /**
- * Listen on:    `orbit.news.postupdatenews.after.commit`
+ * Listen on:    `orbit.promotionalevent.postupdatepromotionalevent.after.commit`
  * Purpose:      Send email to marketing after update news or promotion
  *
  * @author kadek <kadek@dominopos.com>
@@ -226,7 +289,7 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
  * @param NewsAPIController $controller
  * @param News $news
  */
-Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $news, $temporaryContentId)
+Event::listen('orbit.promotionalevent.postupdatepromotionalevent.after.commit', function($controller, $news, $temporaryContentId)
 {
     $timestamp = new DateTime($news->updated_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';

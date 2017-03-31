@@ -61,7 +61,7 @@ class NewsPrinterController extends DataPrinterController
         $beginDate = OrbitInput::get('begin_date');
         $endDate = OrbitInput::get('end_date');
 
-        $pageTitle = 'News List';
+        $pageTitle = 'Event List';
 
         switch ($mode) {
             case 'csv':
@@ -70,8 +70,8 @@ class NewsPrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . $this->getFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', null) );
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'News List', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total News', round($totalRec), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Event List', '', '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Event', round($totalRec), '', '', '','');
 
                 // Filtering
                 if ($newsName != '') {
@@ -117,7 +117,7 @@ class NewsPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,\n", 'No', 'News Name', 'Start Date & Time', 'End Date & Time', 'Location(s)', 'Status', 'Last Update');
+                printf("%s,%s,%s,%s,%s,%s,%s,\n", 'No', 'Event Name', 'Start Date & Time', 'End Date & Time', 'Location(s)', 'Status', 'Last Update');
                 printf("%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '', '');
 
                 $count = 1;
