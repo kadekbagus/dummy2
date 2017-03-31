@@ -121,9 +121,9 @@ class AdvertLinkAPIController extends ControllerAPI
             OrbitInput::get('placement', function($placement) use ($link)
             {
                 if ($placement == 'top_banner') {
-                    $link->whereIn('advert_type', array('no_link', 'information', 'url', 'store', 'promotion', 'coupon', 'news'));
+                    $link->whereIn('advert_type', array('no_link', 'information', 'url', 'store', 'promotion', 'coupon'));
                 } else if ($placement == 'footer_banner') {
-                    $link->whereIn('advert_type', array('information', 'url', 'store', 'promotion', 'coupon', 'news'));
+                    $link->whereIn('advert_type', array('information', 'url', 'store', 'promotion', 'coupon'));
                 } else if ($placement == 'preferred_list_regular' || $placement == 'preferred_list_large' || $placement == 'featured_list') {
                     $link->whereIn('advert_type', array('store', 'promotion', 'coupon', 'news'));
                 }
