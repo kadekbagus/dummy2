@@ -130,3 +130,13 @@ Route::get('/api/v1/pub/promotional-event/suggestion/list', function()
 });
 
 Route::get('/app/v1/pub/promotional-event/suggestion/list', ['as' => 'pub-promotional-event-suggestion-list', 'uses' => 'IntermediatePubAuthController@PromotionalEvent\PromotionalEventAlsoLikeList_getSearchPromotionalEvent']);
+
+/**
+ * Get promotional event detail
+ */
+Route::get('/api/v1/pub/promotional-event/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\PromotionalEvent\PromotionalEventDetailAPIController::create()->getPromotionalEventItem();
+});
+
+Route::get('/app/v1/pub/promotional-event/detail', ['as' => 'pub-promotional-event', 'uses' => 'IntermediatePubAuthController@PromotionalEvent\PromotionalEventDetail_getPromotionalEventItem']);
