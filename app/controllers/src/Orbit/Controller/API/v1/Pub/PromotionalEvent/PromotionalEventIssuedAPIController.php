@@ -16,6 +16,7 @@ use Activity;
 use App;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
+use stdclass;
 
 class PromotionalEventIssuedAPIController extends PubControllerAPI
 {
@@ -76,11 +77,16 @@ class PromotionalEventIssuedAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
             App::setLocale($language);
 
+            $updateReward = new stdclass();
+
             if ($role != 'Guest') {
-                $updateReward = PromotionalEventProcessor::insertRewardCode($user->user_id, $newsId, 'news', $language);
+                $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
+                $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
             }
 
-            $this->response->data = $promotionalEvent;
+            $message = 'Request Ok';
+
+            $this->response->data = $updateReward;
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = $message;

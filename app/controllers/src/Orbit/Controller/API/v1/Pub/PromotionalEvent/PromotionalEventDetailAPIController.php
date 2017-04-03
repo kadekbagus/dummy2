@@ -20,6 +20,7 @@ use App;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
+use Lang;
 
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
@@ -45,6 +46,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
+        $mall = null;
 
         try{
             $user = $this->getUser();
@@ -53,6 +55,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $mallId = OrbitInput::get('mall_id', null);
             $language = OrbitInput::get('language', 'id');
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
@@ -201,7 +204,6 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $promotionalEvent->is_exclusive = 'N';
             }
 
-            $mall = null;
             if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
@@ -218,28 +220,28 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
 
             if ($role != 'Guest') {
-                $promotionalEvent = $pe->format($user->user_id, $newsId, 'news', $language);
-                $promotionalEvent->code = $promotionalEvent['code'];
-                $promotionalEvent->message_title = $promotionalEvent['message_title'];
-                $promotionalEvent->message_content = $promotionalEvent['message_content'];
-                $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
+                $promotionalEventData = $pe->format($user->user_id, $newsId, 'news', $language);
+                $promotionalEvent->code = $promotionalEventData['code'];
+                $promotionalEvent->message_title = $promotionalEventData['message_title'];
+                $promotionalEvent->message_content = $promotionalEventData['message_content'];
+                $promotionalEvent->code_message = $promotionalEventData['code_message'];
                 $promotionalEvent->with_button = false;
                 $promotionalEvent->button_label = null;
                 $promotionalEvent->user_status = 'user';
 
-                if ($promotionalEvent['status'] === 'play_button') {
+                if ($promotionalEventData['status'] === 'play_button') {
                     $promotionalEvent->with_button = true;
                     $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
-                } elseif ($promotionalEvent['status'] === 'reward_ok') {
+                } elseif ($promotionalEventData['status'] === 'reward_ok') {
                     $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
                 }
             }
 
             if (is_object($mall)) {
-                $activityNotes = sprintf('Page viewed: View Promotional Event Page');
+                $activityNotes = sprintf('Page viewed: View Promotional Event');
                 $activity->setUser($user)
                     ->setActivityName('view_promotional_event_detail')
-                    ->setActivityNameLong('View Promotional Event Page')
+                    ->setActivityNameLong('View Promotional Event Detail')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)
                     ->setLocation($mall)
@@ -248,10 +250,10 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                     ->responseOK()
                     ->save();
             } else {
-                $activityNotes = sprintf('Page viewed: View Promotional Event Page');
+                $activityNotes = sprintf('Page viewed: View Promotional Event Detail');
                 $activity->setUser($user)
                     ->setActivityName('view_promotional_event_detail')
-                    ->setActivityNameLong('View Promotional Event Page')
+                    ->setActivityNameLong('View Promotional Event Detail')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)
                     ->setLocation($mall)
