@@ -834,7 +834,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 $reward_detail->reward_type = $reward_type;
             });
 
-            OrbitInput::post('promotionalevent_name', function ($promotionalevent_name) use ($updatedpromotional_event) {
+            OrbitInput::post('promotional_event_name', function ($promotional_event_name) use ($updatedpromotional_event) {
                 $updatedpromotional_event->news_name = $promotional_event_name;
             });
 
@@ -1998,7 +1998,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'registered_date'        => 'news.created_at',
-                    'promotional_event_name' => 'news_translations.news_name',
+                    'promotional_event_name' => 'news_name',
                     'object_type'            => 'news.object_type',
                     'total_location'         => 'total_location',
                     'description'            => 'news.description',
@@ -2020,8 +2020,8 @@ class PromotionalEventAPIController extends ControllerAPI
             $promotionalevent->orderBy($sortBy, $sortMode);
 
             //with name
-            if ($sortBy !== 'news_translations.news_name') {
-                $promotionalevent->orderBy('news_translations.news_name', 'asc');
+            if ($sortBy !== 'news_name') {
+                $promotionalevent->orderBy('news_name', 'asc');
             }
 
             // Return the instance of Query Builder
