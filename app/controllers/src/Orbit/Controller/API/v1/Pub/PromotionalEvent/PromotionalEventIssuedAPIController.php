@@ -76,13 +76,14 @@ class PromotionalEventIssuedAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
             App::setLocale($language);
 
+            $updateReward = new StdClass();
 
             if ($role != 'Guest') {
                 $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
                 $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
             }
 
-            $this->response->data = $promotionalEvent;
+            $this->response->data = $updateReward;
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = $message;
