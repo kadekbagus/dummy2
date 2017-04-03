@@ -1,10 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\PromotionalEvent;
 
-/**
- * @author firmansyah <firmansyah@dominopos.com>
- * @desc Controller for get detail page of promotional event
- */
-
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -28,6 +23,23 @@ use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
+    /**
+     * GET - get detail page of promotional event
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string news_id
+     * @param string sortby
+     * @param string sortmode
+     * @param string language
+     * @param string country
+     * @param string cities
+     * @param string token
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
      public function getPromotionalEventItem()
     {
         $httpCode = 200;
@@ -163,6 +175,9 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news.is_having_reward', '=', 'Y')
+                        ->with(['keywords' => function ($q) {
+                                $q->addSelect('keyword', 'object_id');
+                            }])
                         ->first();
 
             $message = 'Request Ok';
@@ -197,6 +212,8 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $promotionalEvent->message_content = null;
             $promotionalEvent->code_message = null;
             $promotionalEvent->with_button = true;
+            $promotionalEvent->button_label = $promotionalEvent->guest_button_label;
+            $promotionalEvent->user_status = 'guest';
 
             if ($role != 'Guest') {
                 $promotionalEvent = PromotionalEventProcessor::format($user->user_id, $newsId, 'news', $language);
@@ -205,9 +222,12 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $promotionalEvent->message_content = $promotionalEvent['message_content'];
                 $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
                 $promotionalEvent->with_button = false;
+                $promotionalEvent->button_label = null;
+                $promotionalEvent->user_status = 'user';
 
                 if ($promotionalEvent['status'] === 'play_button') {
                     $promotionalEvent->with_button = true;
+                    $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
                 } elseif ($promotionalEvent['status'] === 'reward_ok') {
                     $updateReward = PromotionalEventProcessor::insertRewardCode($user->user_id, $newsId, 'news', $language);
                 }
