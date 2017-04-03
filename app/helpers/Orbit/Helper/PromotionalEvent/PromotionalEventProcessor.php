@@ -108,10 +108,10 @@ class PromotionalEventProcessor
      * @param string peType
      */
     public function getAvailableCode($userId='', $peId='', $peType='') {
-        $code = RewardDetail::leftJoin('reward_detail_code', 'reward_detail_code.reward_detail_id', 'reward_detail.reward_detail_id')
-                        ->where('reward_detail.object_type', $peType)
-                        ->where('reward_detail.object_id', $peId)
-                        ->where('reward_detail_code.status', 'available')
+        $code = RewardDetail::leftJoin('reward_detail_codes', 'reward_detail_codes.reward_detail_id', '=', 'reward_details.reward_detail_id')
+                        ->where('reward_details.object_type', $peType)
+                        ->where('reward_details.object_id', $peId)
+                        ->where('reward_detail_codes.status', 'available')
                         ->first();
 
         if (is_object($code)) {
