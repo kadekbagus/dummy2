@@ -50,11 +50,11 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'promotion_id' => $newsId,
+                    'news_id' => $newsId,
                     'language' => $language,
                 ),
                 array(
-                    'promotion_id' => 'required',
+                    'news_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
