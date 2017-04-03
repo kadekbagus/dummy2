@@ -4232,7 +4232,7 @@ return array(
             'pmp_report_promotions',
             'pmp_employee',
             'pmp_advert',
-            'pmp_promotional_events'
+            'pmp_promotionalevents'
         )
     ),
 
