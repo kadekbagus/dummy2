@@ -43,6 +43,7 @@ use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Net\SignInRecorder;
 use Orbit\Controller\API\v1\Pub\ActivationAPIController;
+use Event;
 
 class LoginAPIController extends IntermediateBaseController
 {
@@ -375,9 +376,6 @@ class LoginAPIController extends IntermediateBaseController
                         throw new Exception($response->message, $response->code);
                     }
 
-                    // promotional event reward event
-                    Event::fire('orbit.registration.after.createuser', array($response->user_id, $reward_id_from_state, $reward_type_from_state, $language_from_state));
-
                     SignInRecorder::setSignUpActivity($response, 'google', NULL);
                     // create activation_ok activity without using token
                     $activation_ok = ActivationAPIController::create('raw')
@@ -385,12 +383,14 @@ class LoginAPIController extends IntermediateBaseController
                         ->postActivateAccount();
 
                     $loggedInUser = $this->doAutoLogin($response->user_email);
+                    // promotional event reward event
+                    Event::fire('orbit.registration.after.createuser', array($loggedInUser->user_id, $reward_id_from_state, $reward_type_from_state, $language_from_state));
                 }
 
                 SignInRecorder::setSignInActivity($loggedInUser, 'google', NULL, NULL, TRUE);
 
                 // promotional event reward event
-                Event::fire('orbit.login.after.success', array($response->user_id, $reward_id_from_state, $reward_type_from_state, $language_from_state));
+                Event::fire('orbit.login.after.success', array($loggedInUser->user_id, $reward_id_from_state, $reward_type_from_state, $language_from_state));
 
                 $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
@@ -645,9 +645,6 @@ class LoginAPIController extends IntermediateBaseController
                 throw new Exception($response->message, $response->code);
             }
 
-            // promotional event reward event
-            Event::fire('orbit.registration.after.createuser', array($response->user_id, $rewardId, $rewardType, $language));
-
             // create registration_ok activity
             SignInRecorder::setSignUpActivity($response, 'facebook', NULL);
             // create activation_ok activity without using token
@@ -655,10 +652,13 @@ class LoginAPIController extends IntermediateBaseController
                 ->setSaveAsAutoActivation($response, 'facebook')
                 ->postActivateAccount();
             $loggedInUser = $this->doAutoLogin($response->user_email);
+
+            // promotional event reward event
+            Event::fire('orbit.registration.after.createuser', array($loggedInUser->user_id, $rewardId, $rewardType, $language));
         }
 
         // promotional event reward event
-        Event::fire('orbit.login.after.success', array($response->user_id, $rewardId, $rewardType, $language));
+        Event::fire('orbit.login.after.success', array($loggedInUser->user_id, $rewardId, $rewardType, $language));
 
         SignInRecorder::setSignInActivity($loggedInUser, 'facebook', NULL, NULL, TRUE);
 

@@ -283,7 +283,8 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                 'image_url',
                 'campaign_status',
                 'begin_date',
-                'is_exclusive'
+                'is_exclusive',
+                'is_having_reward'
             ];
 
             $object = new \stdClass();

@@ -47,10 +47,16 @@ class PromotionalEventProcessor
         $this->peType = $peType;
     }
 
-    public function create($userId='', $peId='', $peType='') {
+    public static function create($userId='', $peId='', $peType='') {
         return new Static($userId, $peId, $peType);
     }
 
+    /**
+     * get Reward detail by news id and object type
+     *
+     * @param string peId
+     * @param string peType
+     */
     public function getRewardDetail($peId='', $peType='') {
         $rewardDetail = RewardDetail::where('object_type', $peType)
                                     ->where('object_id', $peId)
@@ -77,6 +83,13 @@ class PromotionalEventProcessor
         return $this;
     }
 
+    /**
+     * check user reward status
+     *
+     * @param string userId
+     * @param string peId
+     * @param string peType
+     */
     public function checkUserReward($userId='', $peId='', $peType='') {
         $rewardDetail = $this->getRewardDetail($peId, $peType);
         $userReward = UserReward::where('user_id', $userId)
@@ -87,11 +100,18 @@ class PromotionalEventProcessor
         return $userReward;
     }
 
+    /**
+     * get available code in promotional event
+     *
+     * @param string userId
+     * @param string peId
+     * @param string peType
+     */
     public function getAvailableCode($userId='', $peId='', $peType='') {
-        $code = RewardDetail::leftJoin('reward_detail_code', 'reward_detail_code.reward_detail_id', 'reward_detail.reward_detail_id')
-                        ->where('reward_detail.object_type', $peType)
-                        ->where('reward_detail.object_id', $peId)
-                        ->where('reward_detail_code.status', 'available')
+        $code = RewardDetail::leftJoin('reward_detail_codes', 'reward_detail_codes.reward_detail_id', '=', 'reward_details.reward_detail_id')
+                        ->where('reward_details.object_type', $peType)
+                        ->where('reward_details.object_id', $peId)
+                        ->where('reward_detail_codes.status', 'available')
                         ->first();
 
         if (is_object($code)) {
@@ -107,6 +127,13 @@ class PromotionalEventProcessor
         ];
     }
 
+    /**
+     * check user role in promotional event
+     *
+     * @param string userId
+     * @param string peId
+     * @param string peType
+     */
     public function format($userId='', $peId='', $peType='', $language='en') {
         $this->userId = (empty($userId)) ? $this->userId : $userId;
         $this->peId = (empty($peId)) ? $this->peId : $peId;
@@ -123,7 +150,7 @@ class PromotionalEventProcessor
         }
 
         // check user reward
-        $userReward = $this->checkUserReward($userId, $peId, $peType);
+        $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         if (is_object($userReward)) {
             switch ($userReward->status) {
                 case 'redeemed':
@@ -177,6 +204,13 @@ class PromotionalEventProcessor
         }
     }
 
+    /**
+     * insert reward to database, if user get code
+     *
+     * @param string userId
+     * @param string peId
+     * @param string peType
+     */
     public function insertRewardCode($userId='', $peId='', $peType='', $language='en') {
         $this->userId = (empty($userId)) ? $this->userId : $userId;
         $this->peId = (empty($peId)) ? $this->peId : $peId;

@@ -1,10 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\PromotionalEvent;
 
-/**
- * @author firmansyah <firmansyah@dominopos.com>
- * @desc Controller for get detail page of promotional event
- */
-
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -25,14 +20,33 @@ use App;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
+use Lang;
 
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
+    /**
+     * GET - get detail page of promotional event
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string news_id
+     * @param string sortby
+     * @param string sortmode
+     * @param string language
+     * @param string country
+     * @param string cities
+     * @param string token
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
      public function getPromotionalEventItem()
     {
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
+        $mall = null;
 
         try{
             $user = $this->getUser();
@@ -41,6 +55,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $mallId = OrbitInput::get('mall_id', null);
             $language = OrbitInput::get('language', 'id');
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
@@ -84,10 +99,10 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
 
             $promotionalEvent = News::select(
                             'news.news_id as news_id',
-                            'reward_detail_translations.guest_button_label',
-                            'reward_detail_translations.logged_in_button_label',
                             'reward_details.is_new_user_only',
                             DB::Raw("
+                                CASE WHEN ({$prefix}reward_detail_translations.guest_button_label = '' or {$prefix}reward_detail_translations.guest_button_label is null) THEN default_translation_button.guest_button_label ELSE {$prefix}reward_detail_translations.guest_button_label END as guest_button_label,
+                                CASE WHEN ({$prefix}reward_detail_translations.logged_in_button_label = '' or {$prefix}reward_detail_translations.logged_in_button_label is null) THEN default_translation_button.logged_in_button_label ELSE {$prefix}reward_detail_translations.logged_in_button_label END as logged_in_button_label,
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                                 CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN default_translation.description ELSE {$prefix}news_translations.description END as description,
                                 CASE WHEN (SELECT {$image}
@@ -160,9 +175,16 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                             $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
                               ->on('reward_detail_translations.language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                         })
+                        ->leftJoin('reward_detail_translations as default_translation_button', function ($q) use ($valid_language) {
+                            $q->on(DB::raw("default_translation_button.reward_detail_id"), '=', 'reward_details.reward_detail_id')
+                              ->on(DB::raw("default_translation_button.language_id"), '=', 'languages.language_id');
+                        })
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news.is_having_reward', '=', 'Y')
+                        ->with(['keywords' => function ($q) {
+                                $q->addSelect('keyword', 'object_id');
+                            }])
                         ->first();
 
             $message = 'Request Ok';
@@ -186,7 +208,6 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $promotionalEvent->is_exclusive = 'N';
             }
 
-            $mall = null;
             if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
@@ -197,27 +218,36 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $promotionalEvent->message_content = null;
             $promotionalEvent->code_message = null;
             $promotionalEvent->with_button = true;
+            $promotionalEvent->button_label = $promotionalEvent->guest_button_label;
+            $promotionalEvent->user_role = 'guest';
+            $promotionalEvent->user_status = $user->status;
+
+            $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
 
             if ($role != 'Guest') {
-                $promotionalEvent = PromotionalEventProcessor::format($user->user_id, $newsId, 'news', $language);
-                $promotionalEvent->code = $promotionalEvent['code'];
-                $promotionalEvent->message_title = $promotionalEvent['message_title'];
-                $promotionalEvent->message_content = $promotionalEvent['message_content'];
-                $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
+                $promotionalEventData = $pe->format($user->user_id, $newsId, 'news', $language);
+                $promotionalEvent->code = $promotionalEventData['code'];
+                $promotionalEvent->message_title = $promotionalEventData['message_title'];
+                $promotionalEvent->message_content = $promotionalEventData['message_content'];
+                $promotionalEvent->code_message = $promotionalEventData['code_message'];
                 $promotionalEvent->with_button = false;
+                $promotionalEvent->button_label = null;
+                $promotionalEvent->user_role = 'user';
+                $promotionalEvent->user_status = $user->status;
 
-                if ($promotionalEvent['status'] === 'play_button') {
+                if ($promotionalEventData['status'] === 'play_button') {
                     $promotionalEvent->with_button = true;
-                } elseif ($promotionalEvent['status'] === 'reward_ok') {
-                    $updateReward = PromotionalEventProcessor::insertRewardCode($user->user_id, $newsId, 'news', $language);
+                    $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
+                } elseif ($promotionalEventData['status'] === 'reward_ok') {
+                    $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
                 }
             }
 
             if (is_object($mall)) {
-                $activityNotes = sprintf('Page viewed: View Promotional Event Page');
+                $activityNotes = sprintf('Page viewed: View Promotional Event');
                 $activity->setUser($user)
                     ->setActivityName('view_promotional_event_detail')
-                    ->setActivityNameLong('View Promotional Event Page')
+                    ->setActivityNameLong('View Promotional Event Detail')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)
                     ->setLocation($mall)
@@ -226,10 +256,10 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                     ->responseOK()
                     ->save();
             } else {
-                $activityNotes = sprintf('Page viewed: View Promotional Event Page');
+                $activityNotes = sprintf('Page viewed: View Promotional Event Detail');
                 $activity->setUser($user)
                     ->setActivityName('view_promotional_event_detail')
-                    ->setActivityNameLong('View Promotional Event Page')
+                    ->setActivityNameLong('View Promotional Event Detail')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)
                     ->setLocation($mall)
