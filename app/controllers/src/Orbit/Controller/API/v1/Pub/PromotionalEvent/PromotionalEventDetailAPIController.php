@@ -20,6 +20,7 @@ use App;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
+use Lang;
 
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
@@ -215,21 +216,23 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $promotionalEvent->button_label = $promotionalEvent->guest_button_label;
             $promotionalEvent->user_status = 'guest';
 
+            $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
+
             if ($role != 'Guest') {
-                $promotionalEvent = PromotionalEventProcessor::format($user->user_id, $newsId, 'news', $language);
-                $promotionalEvent->code = $promotionalEvent['code'];
-                $promotionalEvent->message_title = $promotionalEvent['message_title'];
-                $promotionalEvent->message_content = $promotionalEvent['message_content'];
-                $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
+                $promotionalEventData = $pe->format($user->user_id, $newsId, 'news', $language);
+                $promotionalEvent->code = $promotionalEventData['code'];
+                $promotionalEvent->message_title = $promotionalEventData['message_title'];
+                $promotionalEvent->message_content = $promotionalEventData['message_content'];
+                $promotionalEvent->code_message = $promotionalEventData['code_message'];
                 $promotionalEvent->with_button = false;
                 $promotionalEvent->button_label = null;
                 $promotionalEvent->user_status = 'user';
 
-                if ($promotionalEvent['status'] === 'play_button') {
+                if ($promotionalEventData['status'] === 'play_button') {
                     $promotionalEvent->with_button = true;
                     $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
-                } elseif ($promotionalEvent['status'] === 'reward_ok') {
-                    $updateReward = PromotionalEventProcessor::insertRewardCode($user->user_id, $newsId, 'news', $language);
+                } elseif ($promotionalEventData['status'] === 'reward_ok') {
+                    $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
                 }
             }
 

@@ -1,10 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\PromotionalEvent;
 
-/**
- * @author firmansyah <firmansyah@dominopos.com>
- * @desc Controller for get detail page of promotional event
- */
-
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -24,6 +19,23 @@ use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 
 class PromotionalEventIssuedAPIController extends PubControllerAPI
 {
+    /**
+     * POST - for get issued code of promotional event
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string news_id
+     * @param string sortby
+     * @param string sortmode
+     * @param string language
+     * @param string country
+     * @param string cities
+     * @param string token
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
      public function postIssuedPromotionalEvent()
     {
         $httpCode = 200;
@@ -41,11 +53,11 @@ class PromotionalEventIssuedAPIController extends PubControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'promotion_id' => $newsId,
+                    'news_id' => $newsId,
                     'language' => $language,
                 ),
                 array(
-                    'promotion_id' => 'required',
+                    'news_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
                 ),
                 array(
@@ -64,8 +76,10 @@ class PromotionalEventIssuedAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
             App::setLocale($language);
 
+
             if ($role != 'Guest') {
-                $updateReward = PromotionalEventProcessor::insertRewardCode($user->user_id, $newsId, 'news', $language);
+                $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
+                $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
             }
 
             $this->response->data = $promotionalEvent;
@@ -150,6 +164,5 @@ class PromotionalEventIssuedAPIController extends PubControllerAPI
     {
         return DB::connection()->getPdo()->quote($arg);
     }
-
 
 }
