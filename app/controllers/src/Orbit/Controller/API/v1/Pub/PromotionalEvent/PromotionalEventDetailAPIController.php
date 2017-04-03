@@ -223,7 +223,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $promotionalEvent->code = $promotionalEventData['code'];
                 $promotionalEvent->message_title = $promotionalEventData['message_title'];
                 $promotionalEvent->message_content = $promotionalEventData['message_content'];
-                $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEventData['status']);
+                $promotionalEvent->code_message = $promotionalEventData['codeMessage'];
                 $promotionalEvent->with_button = false;
                 $promotionalEvent->button_label = null;
                 $promotionalEvent->user_status = 'user';
