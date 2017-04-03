@@ -2787,6 +2787,9 @@ class PromotionalEventAPIController extends ControllerAPI
                 }
                 $operations[] = ['delete', $existing_translation];
             } else {
+                $validator_value = [];
+                $validator_validation = [];
+
                 foreach ($translations as $field => $value) {
                     if (!in_array($field, $valid_fields, true)) {
                         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
@@ -2797,15 +2800,21 @@ class PromotionalEventAPIController extends ControllerAPI
 
                     // additional validation
                     $validator_value[$field] = $value;
-                    // required for default language
-                    if ($language_id === $id_language_default) {
-                        $validation_label = 'required|max:10';
-                    } else {
-                        $validation_label = 'max:10';
-                    }
                     // validation for label
                     if (in_array($field, ['guest_button_label', 'logged_in_button_label'])) {
-                        $validator_validation[$field] = $validation_label;
+                        // required for default language
+                        if ($language_id === $id_language_default) {
+                            $validator_validation[$field] = 'required|max:10';
+                        } else {
+                            $validator_validation[$field] = 'max:10';
+                        }
+                    } else {
+                        if ($language_id === $id_language_default) {
+                            $validator_validation[$field] = 'required';
+                        } else {
+                            $validator_validation[$field] = '';
+                        }
+
                     }
                     $validator = Validator::make(
                         $validator_value,
