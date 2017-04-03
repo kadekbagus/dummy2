@@ -1,10 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\PromotionalEvent;
 
-/**
- * @author firmansyah <firmansyah@dominopos.com>
- * @desc Controller for get detail page of promotional event
- */
-
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -28,6 +23,23 @@ use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
+    /**
+     * GET - get detail page of promotional event
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string news_id
+     * @param string sortby
+     * @param string sortmode
+     * @param string language
+     * @param string country
+     * @param string cities
+     * @param string token
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
      public function getPromotionalEventItem()
     {
         $httpCode = 200;
@@ -163,6 +175,9 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news.is_having_reward', '=', 'Y')
+                        ->with(['keywords' => function ($q) {
+                                $q->addSelect('keyword', 'object_id');
+                            }])
                         ->first();
 
             $message = 'Request Ok';
