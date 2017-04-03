@@ -212,6 +212,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $promotionalEvent->message_content = null;
             $promotionalEvent->code_message = null;
             $promotionalEvent->with_button = true;
+            $promotionalEvent->button_label = $promotionalEvent->guest_button_label;
 
             if ($role != 'Guest') {
                 $promotionalEvent = PromotionalEventProcessor::format($user->user_id, $newsId, 'news', $language);
@@ -223,6 +224,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
 
                 if ($promotionalEvent['status'] === 'play_button') {
                     $promotionalEvent->with_button = true;
+                    $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
                 } elseif ($promotionalEvent['status'] === 'reward_ok') {
                     $updateReward = PromotionalEventProcessor::insertRewardCode($user->user_id, $newsId, 'news', $language);
                 }
