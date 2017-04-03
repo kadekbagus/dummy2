@@ -47,7 +47,7 @@ class PromotionalEventProcessor
         $this->peType = $peType;
     }
 
-    public function create($userId='', $peId='', $peType='') {
+    public static function create($userId='', $peId='', $peType='') {
         return new Static($userId, $peId, $peType);
     }
 
@@ -150,7 +150,7 @@ class PromotionalEventProcessor
         }
 
         // check user reward
-        $userReward = $this->checkUserReward($userId, $peId, $peType);
+        $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         if (is_object($userReward)) {
             switch ($userReward->status) {
                 case 'redeemed':
