@@ -75,7 +75,7 @@ class ActivationAPIController extends IntermediateBaseController
                         ->where('token_name', 'user_registration_mobile')
                         ->first();
 
-                if (!is_object($token)) {
+                if (! is_object($token)) {
                     $errorMessage = Lang::get('validation.orbit.empty.token');
                     throw new OrbitCustomException($errorMessage, Token::TOKEN_NOT_FOUND_ERROR_CODE, NULL);
                 }
@@ -138,6 +138,14 @@ class ActivationAPIController extends IntermediateBaseController
                 $user = $this->user;
                 if (! is_object($user)) {
                     OrbitShopAPI::throwInvalidArgument('User you specified is not valid');
+                }
+            }
+
+            // append redirect_to_url metadata if any
+            if (! empty($token->metadata)) {
+                $metadata = json_decode($token->metadata);
+                if (isset($metadata['redirect_to_url']) && ! empty($metadata['redirect_to_url'])) {
+                    $user->redirect_to_url = $metadata['redirect_to_url'];
                 }
             }
 
