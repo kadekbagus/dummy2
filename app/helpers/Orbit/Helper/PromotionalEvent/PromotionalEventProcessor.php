@@ -135,11 +135,11 @@ class PromotionalEventProcessor
      * @param string peType
      */
     public function format($userId='', $peId='', $peType='', $language='en') {
-        // $this->userId = (empty($userId)) ? $this->userId : $userId;
-        // $this->peId = (empty($peId)) ? $this->peId : $peId;
-        // $this->peType = (empty($peType)) ? $this->peType : $peType;
-        $user = User::where('user_id', $userId)->first();
-        $rewardDetail = $this->getRewardDetail($peId, $peType);
+        $this->userId = (empty($userId)) ? $this->userId : $userId;
+        $this->peId = (empty($peId)) ? $this->peId : $peId;
+        $this->peType = (empty($peType)) ? $this->peType : $peType;
+        $user = User::where('user_id', $this->userId)->first();
+        $rewardDetail = $this->getRewardDetail($this->peId, $this->peType);
         App::setLocale($language);
 
         $codeMessage = Lang::get('label.promotional_event.code_message.promotion');
@@ -150,7 +150,7 @@ class PromotionalEventProcessor
         }
 
         // check user reward
-        $userReward = $this->checkUserReward($userId, $peId, $peType);
+        $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         if (is_object($userReward)) {
             switch ($userReward->status) {
                 case 'redeemed':
@@ -212,15 +212,15 @@ class PromotionalEventProcessor
      * @param string peType
      */
     public function insertRewardCode($userId='', $peId='', $peType='', $language='en') {
-        // $this->userId = (empty($userId)) ? $this->userId : $userId;
-        // $this->peId = (empty($peId)) ? $this->peId : $peId;
-        // $this->peType = (empty($peType)) ? $this->peType : $peType;
-        $user = User::where('user_id', $userId)->first();
+        $this->userId = (empty($userId)) ? $this->userId : $userId;
+        $this->peId = (empty($peId)) ? $this->peId : $peId;
+        $this->peType = (empty($peType)) ? $this->peType : $peType;
+        $user = User::where('user_id', $this->userId)->first();
         App::setLocale($language);
 
-        $rewardDetail = $this->getRewardDetail($peId, $peType);
-        $userReward = $this->checkUserReward($userId, $peId, $peType);
-        $reward = $this->getAvailableCode($userId, $peId, $peType);
+        $rewardDetail = $this->getRewardDetail($this->peId, $this->peType);
+        $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
+        $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
 
         if (! is_object($userReward)) {
             if ($reward['status'] === 'empty_code') {
