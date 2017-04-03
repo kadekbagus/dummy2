@@ -166,30 +166,14 @@ class PromotionalEventProcessor
                 'code_message' => '',
                 'code' => ''
             ];
-        }
-
-        // check reward - code is still available or not
-        $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
-        switch ($reward['status']) {
-            case 'empty_code':
-                return [
-                    'status' => 'empty_code',
-                    'message_title' => Lang::get('label.promotional_event.information_message.empty_code.title'),
-                    'message_content' => Lang::get('label.promotional_event.information_message.empty_code.content'),
-                    'code_message' => '',
-                    'code' => ''
-                ];
-                break;
-
-            case 'reward_ok':
-                return [
-                    'status' => 'reward_ok',
-                    'message_title' => Lang::get('label.promotional_event.information_message.reward_ok.title'),
-                    'message_content' => Lang::get('label.promotional_event.information_message.reward_ok.content'),
-                    'code_message' => $codeMessage,
-                    'code' => $reward['code']
-                ];
-                break;
+        } else {
+            return [
+                'status' => 'play_button',
+                'message_title' => '',
+                'message_content' => '',
+                'code_message' => '',
+                'code' => ''
+            ];
         }
     }
 
