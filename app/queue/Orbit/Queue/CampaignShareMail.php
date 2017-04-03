@@ -150,7 +150,7 @@ class CampaignShareMail
 
                     break;
 
-            case 'promotional_event' :
+            case 'promotional-event' :
                    $campaign = News::select(
                                     'news.news_id as campaign_id',
                                     DB::Raw("

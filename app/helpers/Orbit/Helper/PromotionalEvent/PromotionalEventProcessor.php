@@ -51,6 +51,12 @@ class PromotionalEventProcessor
         return new Static($userId, $peId, $peType);
     }
 
+    /**
+     * get Reward detail by news id and object type
+     *
+     * @param string peId
+     * @param string peType
+     */
     public function getRewardDetail($peId='', $peType='') {
         $rewardDetail = RewardDetail::where('object_type', $peType)
                                     ->where('object_id', $peId)
@@ -77,6 +83,13 @@ class PromotionalEventProcessor
         return $this;
     }
 
+    /**
+     * check user reward status
+     *
+     * @param string userId
+     * @param string peId
+     * @param string peType
+     */
     public function checkUserReward($userId='', $peId='', $peType='') {
         $rewardDetail = $this->getRewardDetail($peId, $peType);
         $userReward = UserReward::where('user_id', $userId)
@@ -87,6 +100,13 @@ class PromotionalEventProcessor
         return $userReward;
     }
 
+    /**
+     * get available code in promotional event
+     *
+     * @param string userId
+     * @param string peId
+     * @param string peType
+     */
     public function getAvailableCode($userId='', $peId='', $peType='') {
         $code = RewardDetail::leftJoin('reward_detail_code', 'reward_detail_code.reward_detail_id', 'reward_detail.reward_detail_id')
                         ->where('reward_detail.object_type', $peType)
@@ -107,6 +127,13 @@ class PromotionalEventProcessor
         ];
     }
 
+    /**
+     * check user role in promotional event
+     *
+     * @param string userId
+     * @param string peId
+     * @param string peType
+     */
     public function format($userId='', $peId='', $peType='', $language='en') {
         $this->userId = (empty($userId)) ? $this->userId : $userId;
         $this->peId = (empty($peId)) ? $this->peId : $peId;
@@ -177,6 +204,13 @@ class PromotionalEventProcessor
         }
     }
 
+    /**
+     * insert reward to database, if user get code
+     *
+     * @param string userId
+     * @param string peId
+     * @param string peType
+     */
     public function insertRewardCode($userId='', $peId='', $peType='', $language='en') {
         $this->userId = (empty($userId)) ? $this->userId : $userId;
         $this->peId = (empty($peId)) ? $this->peId : $peId;

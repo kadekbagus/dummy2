@@ -43,6 +43,7 @@ use Orbit\Helper\Session\UserGetter;
 use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Net\SignInRecorder;
 use Orbit\Controller\API\v1\Pub\ActivationAPIController;
+use Event;
 
 class LoginAPIController extends IntermediateBaseController
 {

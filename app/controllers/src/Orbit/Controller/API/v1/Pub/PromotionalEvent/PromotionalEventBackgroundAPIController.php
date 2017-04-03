@@ -74,7 +74,7 @@ class PromotionalEventBackgroundAPIController extends PubControllerAPI
             }
 
             $promotionalEvent = News::select(
-                            'news.news_id as news_id',
+                            'news.news_id as reward_id',
                             'reward_details.reward_detail_id',
                             DB::Raw("
                                 CASE WHEN (SELECT {$image}
