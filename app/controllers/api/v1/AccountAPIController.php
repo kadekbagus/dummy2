@@ -1563,14 +1563,18 @@ class AccountAPIController extends ControllerAPI
 
                             //get data in news and promotion
                             $newsPromotionActive = News::allowedForPMPUser($update_user, 'news_promotion')
-                                                        ->select('news.news_id', 'news.object_type')
+                                                        ->select('news.news_id', 'news.object_type', 'news.is_having_reward')
                                                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                                                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                                                         ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
                                                         ->where('news_merchant.merchant_id', $tenant_id)
                                                         ->first();
                             if (! empty($newsPromotionActive)) {
-                                $errorMessage = "Cannot unlink the tenant with an active {$newsPromotionActive->object_type} on {$mall->object_type} {$mall->name}";
+                                if ($newsPromotionActive->is_having_reward === 'Y') {
+                                    $errorMessage = "Cannot unlink the tenant with an active promotional event on {$mall->object_type} {$mall->name}";
+                                } else {
+                                    $errorMessage = "Cannot unlink the tenant with an active {$newsPromotionActive->object_type} on {$mall->object_type} {$mall->name}";
+                                }
                                 OrbitShopAPI::throwInvalidArgument($errorMessage);
                             }
 
