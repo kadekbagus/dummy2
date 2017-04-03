@@ -30,6 +30,7 @@ use Queue;
 use Orbit\Helper\Net\SignInRecorder;
 use \Exception;
 use App;
+use Event;
 
 class RegistrationAPIController extends IntermediateBaseController
 {
