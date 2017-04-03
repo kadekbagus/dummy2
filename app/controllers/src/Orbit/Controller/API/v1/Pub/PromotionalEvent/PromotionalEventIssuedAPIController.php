@@ -16,6 +16,7 @@ use Activity;
 use App;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
+use stdclass;
 
 class PromotionalEventIssuedAPIController extends PubControllerAPI
 {
