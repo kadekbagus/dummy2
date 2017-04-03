@@ -218,19 +218,19 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
 
             if ($role != 'Guest') {
-                $promotionalEvent = $pe->format($user->user_id, $newsId, 'news', $language);
-                $promotionalEvent->code = $promotionalEvent['code'];
-                $promotionalEvent->message_title = $promotionalEvent['message_title'];
-                $promotionalEvent->message_content = $promotionalEvent['message_content'];
-                $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
+                $promotionalEventData = $pe->format($user->user_id, $newsId, 'news', $language);
+                $promotionalEvent->code = $promotionalEventData['code'];
+                $promotionalEvent->message_title = $promotionalEventData['message_title'];
+                $promotionalEvent->message_content = $promotionalEventData['message_content'];
+                $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEventData['status']);
                 $promotionalEvent->with_button = false;
                 $promotionalEvent->button_label = null;
                 $promotionalEvent->user_status = 'user';
 
-                if ($promotionalEvent['status'] === 'play_button') {
+                if ($promotionalEventData['status'] === 'play_button') {
                     $promotionalEvent->with_button = true;
                     $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
-                } elseif ($promotionalEvent['status'] === 'reward_ok') {
+                } elseif ($promotionalEventData['status'] === 'reward_ok') {
                     $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
                 }
             }
