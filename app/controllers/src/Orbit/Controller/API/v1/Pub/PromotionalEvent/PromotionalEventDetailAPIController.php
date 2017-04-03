@@ -46,6 +46,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
+        $mall = null;
 
         try{
             $user = $this->getUser();
@@ -54,6 +55,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $newsId = OrbitInput::get('news_id', null);
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $mallId = OrbitInput::get('mall_id', null);
             $language = OrbitInput::get('language', 'id');
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
@@ -202,7 +204,6 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $promotionalEvent->is_exclusive = 'N';
             }
 
-            $mall = null;
             if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
@@ -237,10 +238,10 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             }
 
             if (is_object($mall)) {
-                $activityNotes = sprintf('Page viewed: View Promotional Event Page');
+                $activityNotes = sprintf('Page viewed: View Promotional Event');
                 $activity->setUser($user)
                     ->setActivityName('view_promotional_event_detail')
-                    ->setActivityNameLong('View Promotional Event Page')
+                    ->setActivityNameLong('View Promotional Event Detail')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)
                     ->setLocation($mall)
@@ -249,10 +250,10 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                     ->responseOK()
                     ->save();
             } else {
-                $activityNotes = sprintf('Page viewed: View Promotional Event Page');
+                $activityNotes = sprintf('Page viewed: View Promotional Event Detail');
                 $activity->setUser($user)
                     ->setActivityName('view_promotional_event_detail')
-                    ->setActivityNameLong('View Promotional Event Page')
+                    ->setActivityNameLong('View Promotional Event Detail')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)
                     ->setLocation($mall)
