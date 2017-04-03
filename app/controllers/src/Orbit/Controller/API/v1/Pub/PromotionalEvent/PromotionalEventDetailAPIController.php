@@ -99,10 +99,10 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
 
             $promotionalEvent = News::select(
                             'news.news_id as news_id',
-                            'reward_detail_translations.guest_button_label',
-                            'reward_detail_translations.logged_in_button_label',
                             'reward_details.is_new_user_only',
                             DB::Raw("
+                                CASE WHEN ({$prefix}reward_detail_translations.guest_button_label = '' or {$prefix}reward_detail_translations.guest_button_label is null) THEN default_translation_button.guest_button_label ELSE {$prefix}reward_detail_translations.guest_button_label END as guest_button_label,
+                                CASE WHEN ({$prefix}reward_detail_translations.logged_in_button_label = '' or {$prefix}reward_detail_translations.logged_in_button_label is null) THEN default_translation_button.logged_in_button_label ELSE {$prefix}reward_detail_translations.logged_in_button_label END as logged_in_button_label,
                                 CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
                                 CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN default_translation.description ELSE {$prefix}news_translations.description END as description,
                                 CASE WHEN (SELECT {$image}
@@ -174,6 +174,10 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                         ->leftJoin('reward_detail_translations', function ($q) use ($valid_language) {
                             $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
                               ->on('reward_detail_translations.language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
+                        ->leftJoin('reward_detail_translations as default_translation_button', function ($q) use ($valid_language) {
+                            $q->on(DB::raw("default_translation_button.reward_detail_id"), '=', 'reward_details.reward_detail_id')
+                              ->on(DB::raw("default_translation_button.language_id"), '=', 'languages.language_id');
                         })
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
