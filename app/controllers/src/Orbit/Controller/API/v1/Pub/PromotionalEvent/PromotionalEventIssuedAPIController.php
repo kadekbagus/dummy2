@@ -84,6 +84,8 @@ class PromotionalEventIssuedAPIController extends PubControllerAPI
                 $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
             }
 
+            $message = 'Request Ok';
+
             $this->response->data = $updateReward;
             $this->response->code = 0;
             $this->response->status = 'success';
