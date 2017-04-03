@@ -20,6 +20,7 @@ use App;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
+use Lang;
 
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
