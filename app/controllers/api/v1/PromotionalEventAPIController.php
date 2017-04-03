@@ -834,7 +834,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 $reward_detail->reward_type = $reward_type;
             });
 
-            OrbitInput::post('promotionalevent_name', function ($promotionalevent_name) use ($updatedpromotional_event) {
+            OrbitInput::post('promotional_event_name', function ($promotional_event_name) use ($updatedpromotional_event) {
                 $updatedpromotional_event->news_name = $promotional_event_name;
             });
 
@@ -1779,21 +1779,21 @@ class PromotionalEventAPIController extends ControllerAPI
             }
 
             // Filter promotionalevent by Ids
-            OrbitInput::get('news_id', function($promotionaleventIds) use ($promotionalevent)
+            OrbitInput::get('promotional_event_id', function($promotionaleventIds) use ($promotionalevent)
             {
                 $promotionalevent->whereIn('news.news_id', (array)$promotionaleventIds);
             });
 
             // Filter promotionalevent by promotionalevent name
-            OrbitInput::get('news_name', function($promotionaleventname) use ($promotionalevent)
+            OrbitInput::get('promotional_event_name', function($promotionaleventname) use ($promotionalevent)
             {
                 $promotionalevent->where('news.news_name', '=', $promotionaleventname);
             });
 
             // Filter promotionalevent by matching promotionalevent name pattern
-            OrbitInput::get('news_name_like', function($promotionaleventname) use ($promotionalevent)
+            OrbitInput::get('promotional_event_name_like', function($promotionaleventname) use ($promotionalevent)
             {
-                $promotionalevent->where('news_translations.news_name', 'like', "%$newsname%");
+                $promotionalevent->where('news_translations.news_name', 'like', "%$promotionaleventname%");
             });
 
             // Filter promotionalevent by object type
@@ -1950,6 +1950,9 @@ class PromotionalEventAPIController extends ControllerAPI
                         }]);
                     } elseif ($relation === 'rewardTranslations') {
                         $promotionalevent->with('rewardDetail.rewardTranslations');
+                    } elseif ($relation === 'rewardTranslationMedia') {
+                        $promotionalevent->with(['rewardDetail.rewardTranslations.rewardSignUpDesktopBackground',
+                            'rewardDetail.rewardTranslations.rewardSignUpMobileBackground']);
                     }
                 }
             });
@@ -1995,7 +1998,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'registered_date'        => 'news.created_at',
-                    'promotional_event_name' => 'news_translations.news_name',
+                    'promotional_event_name' => 'news_name',
                     'object_type'            => 'news.object_type',
                     'total_location'         => 'total_location',
                     'description'            => 'news.description',
@@ -2017,8 +2020,8 @@ class PromotionalEventAPIController extends ControllerAPI
             $promotionalevent->orderBy($sortBy, $sortMode);
 
             //with name
-            if ($sortBy !== 'newsnews_translations.news_name') {
-                $promotionalevent->orderBy('news_translations.news_name', 'asc');
+            if ($sortBy !== 'news_name') {
+                $promotionalevent->orderBy('news_name', 'asc');
             }
 
             // Return the instance of Query Builder
