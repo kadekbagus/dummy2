@@ -213,6 +213,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $promotionalEvent->code_message = null;
             $promotionalEvent->with_button = true;
             $promotionalEvent->button_label = $promotionalEvent->guest_button_label;
+            $promotionalEvent->user_status = 'guest';
 
             if ($role != 'Guest') {
                 $promotionalEvent = PromotionalEventProcessor::format($user->user_id, $newsId, 'news', $language);
@@ -221,6 +222,8 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $promotionalEvent->message_content = $promotionalEvent['message_content'];
                 $promotionalEvent->code_message = Lang::get('label.promotional_event.code_message.' . $promotionalEvent['status']);
                 $promotionalEvent->with_button = false;
+                $promotionalEvent->button_label = null;
+                $promotionalEvent->user_status = 'user';
 
                 if ($promotionalEvent['status'] === 'play_button') {
                     $promotionalEvent->with_button = true;
