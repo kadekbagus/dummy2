@@ -834,7 +834,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 $reward_detail->reward_type = $reward_type;
             });
 
-            OrbitInput::post('promotionalevent_name', function ($promotionalevent_name) use ($updatedpromotional_event) {
+            OrbitInput::post('promotional_event_name', function ($promotional_event_name) use ($updatedpromotional_event) {
                 $updatedpromotional_event->news_name = $promotional_event_name;
             });
 
