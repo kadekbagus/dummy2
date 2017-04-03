@@ -55,9 +55,9 @@ class RegistrationAPIController extends IntermediateBaseController
             $password_confirmation = OrbitInput::post('password_confirmation');
             $useTransaction = OrbitInput::post('use_transaction', TRUE);
             $language = OrbitInput::get('language', 'id');
-            $rewardId = OrbitInput::post('reward_id', NULL);
-            $rewardType = OrbitInput::post('reward_type', NULL);
-            $redirectToUrl = OrbitInput::post('to_url', NULL);
+            $rewardId = OrbitInput::get('reward_id', NULL);
+            $rewardType = OrbitInput::get('reward_type', NULL);
+            $redirectToUrl = OrbitInput::get('to_url', NULL);
 
             $user = User::with('role')
                         ->whereHas('role', function($q) {
