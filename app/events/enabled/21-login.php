@@ -17,7 +17,7 @@ use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 Event::listen('orbit.login.after.success', function($userId, $rewardId, $rewardType, $language)
 {
     if (! is_null($rewardId) && ! is_null($rewardType)) {
-        $updateReward = PromotionalEventProcessor::insertRewardCode($userId, $rewardId, $rewardType, $language);
+        $updateReward = PromotionalEventProcessor::create($userId, $rewardId, $rewardType, $language)->insertRewardCode();
     }
 });
 

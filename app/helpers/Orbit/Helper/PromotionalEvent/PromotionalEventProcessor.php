@@ -47,7 +47,7 @@ class PromotionalEventProcessor
         $this->peType = $peType;
     }
 
-    public function create($userId='', $peId='', $peType='') {
+    public static function create($userId='', $peId='', $peType='') {
         return new Static($userId, $peId, $peType);
     }
 
@@ -108,10 +108,10 @@ class PromotionalEventProcessor
      * @param string peType
      */
     public function getAvailableCode($userId='', $peId='', $peType='') {
-        $code = RewardDetail::leftJoin('reward_detail_code', 'reward_detail_code.reward_detail_id', 'reward_detail.reward_detail_id')
-                        ->where('reward_detail.object_type', $peType)
-                        ->where('reward_detail.object_id', $peId)
-                        ->where('reward_detail_code.status', 'available')
+        $code = RewardDetail::leftJoin('reward_detail_codes', 'reward_detail_codes.reward_detail_id', '=', 'reward_details.reward_detail_id')
+                        ->where('reward_details.object_type', $peType)
+                        ->where('reward_details.object_id', $peId)
+                        ->where('reward_detail_codes.status', 'available')
                         ->first();
 
         if (is_object($code)) {
@@ -150,7 +150,7 @@ class PromotionalEventProcessor
         }
 
         // check user reward
-        $userReward = $this->checkUserReward($userId, $peId, $peType);
+        $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         if (is_object($userReward)) {
             switch ($userReward->status) {
                 case 'redeemed':

@@ -194,8 +194,7 @@ class LocationDetectionAPIController extends PubControllerAPI
                 break;
 
             case 'ip2location':
-                $findIp = explode(".", $clientIpAddress);
-                $ipNumber = ((int)$findIp[0] * ( 256 * 256 * 256 )) + ((int)$findIp[1] * ( 256 * 256 )) + ((int)$findIp[2] * 256) + $findIp[3];
+                $ipNumber = ip2long($clientIpAddress);
 
                 $ipData = DB::connection(Config::get('orbit.vendor_ip_database.ip2location.connection_id'))
                     ->table(Config::get('orbit.vendor_ip_database.ip2location.table'))
