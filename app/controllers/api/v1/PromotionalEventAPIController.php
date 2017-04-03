@@ -101,7 +101,7 @@ class PromotionalEventAPIController extends ControllerAPI
             $description            = OrbitInput::post('description');
             $begin_date             = OrbitInput::post('begin_date');
             $end_date               = OrbitInput::post('end_date');
-            $reward_codes           = (array) OrbitInput::post('reward_codes', []);
+            $reward_codes           = OrbitInput::post('reward_codes');
             $retailer_ids           = (array) OrbitInput::post('retailer_ids', []);
             $partner_ids            = (array) OrbitInput::post('partner_ids', []);
             $is_exclusive           = OrbitInput::post('is_exclusive', 'N');
@@ -153,7 +153,7 @@ class PromotionalEventAPIController extends ControllerAPI
                 'description'                 => 'required',
                 'begin_date'                  => 'required|date|orbit.empty.hour_format',
                 'end_date'                    => 'required|date|orbit.empty.hour_format',
-                'reward_codes'                => 'required|array',
+                'reward_codes'                => 'required',
                 'retailer_ids'                => 'required|array',
                 'id_language_default'         => 'required|orbit.empty.language_default',
                 'is_all_gender'               => 'required|orbit.empty.is_all_gender',
@@ -232,20 +232,6 @@ class PromotionalEventAPIController extends ControllerAPI
                 Event::fire('orbit.promotionalevent.postnewpromotionalevent.after.retailervalidation', array($this, $validator));
             }
 
-            // validation reward_codes
-            $unique_reward_codes = array_unique($reward_codes);
-
-            if (count($reward_codes) !== count($unique_reward_codes)) {
-                $get_duplicate = array_diff_key($reward_codes, $unique_reward_codes);
-                $errorMessage = '';
-
-                foreach ($get_duplicate as $idx => $reward_code) {
-                    $errorMessage = $errorMessage . "\n" . sprintf('The reward codes you supplied have duplicates: %s', $reward_code);
-                }
-
-                throw new Exception($errorMessage);
-            }
-
             Event::fire('orbit.promotionalevent.postnewpromotionalevent.after.validation', array($this, $validator));
 
             // Get data status like ongoing, stopped etc
@@ -286,7 +272,24 @@ class PromotionalEventAPIController extends ControllerAPI
 
             // save reward detail codes
             if (! empty($reward_codes)) {
-                foreach ($reward_codes as $reward_code) {
+                // trim and explode reward codes to array
+                $array_reward_codes = array_map('trim', explode("\n", $reward_codes));
+
+                // validation reward_codes
+                $unique_reward_codes = array_unique($array_reward_codes);
+
+                if (count($array_reward_codes) !== count($unique_reward_codes)) {
+                    $get_duplicate = array_diff_key($array_reward_codes, $unique_reward_codes);
+                    $errorMessage = '';
+
+                    foreach ($get_duplicate as $idx => $reward_code) {
+                        $errorMessage = $errorMessage . "\n" . sprintf('The reward codes you supplied have duplicates: %s', $reward_code);
+                    }
+
+                    throw new Exception($errorMessage);
+                }
+
+                foreach ($array_reward_codes as $reward_code) {
                     $new_reward_detail_code = new RewardDetailCode();
                     $new_reward_detail_code->reward_detail_id = $new_reward_detail->reward_detail_id;
                     $new_reward_detail_code->reward_code = $reward_code;
@@ -1281,7 +1284,7 @@ class PromotionalEventAPIController extends ControllerAPI
             $tempContent->save();
 
             // update promotion advert
-            if ($updatedpromotional_event->object_type === 'promotion') {
+            if ($updatedpromotional_event->object_type === 'news') {
                 if (! empty($campaign_status) || $campaign_status !== '') {
                     $promotionAdverts = Advert::excludeDeleted()
                                         ->where('link_object_id', $updatedpromotional_event->news_id)
@@ -2784,6 +2787,9 @@ class PromotionalEventAPIController extends ControllerAPI
                 }
                 $operations[] = ['delete', $existing_translation];
             } else {
+                $validator_value = [];
+                $validator_validation = [];
+
                 foreach ($translations as $field => $value) {
                     if (!in_array($field, $valid_fields, true)) {
                         OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
@@ -2794,15 +2800,21 @@ class PromotionalEventAPIController extends ControllerAPI
 
                     // additional validation
                     $validator_value[$field] = $value;
-                    // required for default language
-                    if ($language_id === $id_language_default) {
-                        $validation_label = 'required|max:10';
-                    } else {
-                        $validation_label = 'max:10';
-                    }
                     // validation for label
                     if (in_array($field, ['guest_button_label', 'logged_in_button_label'])) {
-                        $validator_validation[$field] = $validation_label;
+                        // required for default language
+                        if ($language_id === $id_language_default) {
+                            $validator_validation[$field] = 'required|max:10';
+                        } else {
+                            $validator_validation[$field] = 'max:10';
+                        }
+                    } else {
+                        if ($language_id === $id_language_default) {
+                            $validator_validation[$field] = 'required';
+                        } else {
+                            $validator_validation[$field] = '';
+                        }
+
                     }
                     $validator = Validator::make(
                         $validator_value,
