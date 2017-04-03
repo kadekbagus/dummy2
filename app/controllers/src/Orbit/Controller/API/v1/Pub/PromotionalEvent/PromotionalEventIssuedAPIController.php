@@ -76,7 +76,7 @@ class PromotionalEventIssuedAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
             App::setLocale($language);
 
-            $updateReward = new StdClass();
+            $updateReward = new stdclass();
 
             if ($role != 'Guest') {
                 $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
