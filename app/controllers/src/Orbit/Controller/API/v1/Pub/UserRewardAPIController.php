@@ -123,7 +123,7 @@ class UserRewardAPIController extends PubControllerAPI
                             'news.end_date'
                         )
                         //Join for get news and descriprion
-                        ->join('reward_details', 'reward_details.reward_detail_id', '=', 'reward_details.reward_detail_id')
+                        ->join('reward_details', 'reward_details.reward_detail_id', '=', 'user_rewards.reward_detail_id')
                         ->join('news', 'reward_details.object_id', '=', 'news.news_id')
                         // Join for get translation
                         ->leftJoin('news_translations', function ($q) use ($valid_language) {
