@@ -1284,7 +1284,7 @@ class PromotionalEventAPIController extends ControllerAPI
             $tempContent->save();
 
             // update promotion advert
-            if ($updatedpromotional_event->object_type === 'promotion') {
+            if ($updatedpromotional_event->object_type === 'news') {
                 if (! empty($campaign_status) || $campaign_status !== '') {
                     $promotionAdverts = Advert::excludeDeleted()
                                         ->where('link_object_id', $updatedpromotional_event->news_id)

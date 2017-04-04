@@ -10,8 +10,8 @@ use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
-use Text\Util\LineChecker;
 use Config;
+use Activity;
 use stdClass;
 use Validator;
 use Language;
@@ -39,6 +39,7 @@ class UserRewardAPIController extends PubControllerAPI
     public function getUserReward()
     {
         $httpCode = 200;
+        $activity = Activity::mobileci()->setActivityType('view');
         $user = NULL;
 
         try {
@@ -139,6 +140,7 @@ class UserRewardAPIController extends PubControllerAPI
                         //Join for get campaign status
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->where('user_rewards.user_id', $user->user_id)
+                        ->whereIn('user_rewards.status', array('redeemed', 'pending'))
                         ->groupBy('user_reward_id');
 
             $userReward = $userReward->orderBy($sort_by, $sort_mode);
@@ -159,7 +161,7 @@ class UserRewardAPIController extends PubControllerAPI
                 $activity->setUser($user)
                     ->setActivityName('view_promotional_event_history_page')
                     ->setActivityNameLong('View Promotional Event History Page')
-                    ->setObject(NULL)
+                    ->setObject(null)
                     ->setLocation('GTM')
                     ->setModuleName('Application')
                     ->setNotes($activityNotes)
