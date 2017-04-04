@@ -18,7 +18,6 @@ use App;
 use Language;
 use News;
 
-
 class PromotionalEventProcessor
 {
     /**
@@ -159,6 +158,8 @@ class PromotionalEventProcessor
             $codeMessage = Lang::get('label.promotional_event.code_message.lucky_draw');
             $rewardType = 'lucky number';
         }
+
+        $prefix = DB::getTablePrefix();
 
         // check user reward
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
