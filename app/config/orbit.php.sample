@@ -5333,6 +5333,26 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // User clicks call to action button in promotional event detail page
+            '116' => array(
+                'name' => 'click_call_to_action_button',
+                'name_long' => 'Click Call To Action Button',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // User views promotional event sign in page
+            '117' => array(
+                'name' => 'view_promotional_sign_in_page',
+                'name_long' => 'View Promotional Sign In Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
