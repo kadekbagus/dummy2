@@ -184,8 +184,8 @@ class CampaignShareMail
 
                     $baseUrl = Config::get('orbit.campaign_share_email.promotional_event_detail_base_url');
                     $campaignUrl = sprintf($baseUrl, $campaign->campaign_id, $this->getSlugUrl($campaign->campaign_name), $param);
-                    $message2 = Lang::get('email.campaign_share.message_part2_event');
-                    $campaignType = Lang::get('email.campaign_share.campaign_type_event');
+                    $message2 = Lang::get('email.campaign_share.message_part2_promotional_event');
+                    $campaignType = Lang::get('email.campaign_share.campaign_type_promotional_event');
 
                     break;
 
