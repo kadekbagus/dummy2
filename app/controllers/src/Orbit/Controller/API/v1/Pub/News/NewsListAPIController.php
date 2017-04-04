@@ -462,7 +462,7 @@ class NewsListAPIController extends PubControllerAPI
                 }
 
                 if ($withKeywordSearch) {
-                    $withoutAdv = array_diff($couponIds, $advertIds);
+                    $withoutAdv = array_diff($newsIds, $advertIds);
                     foreach ($withoutAdv as $wa) {
                         $esWithoutAdvert = array('match' => array('_id' => array('query' => $wa, 'boost' => $newsScore[$wa])));
                         $jsonQuery['query']['bool']['should'][] = $esWithoutAdvert;
