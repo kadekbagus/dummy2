@@ -8,11 +8,11 @@ return array(
     'promotional_event' => [
         'information_message' => [
             'already_got'    => [
-                'title' => 'Uupss Maaf!',
+                'title' => '',
                 'content' => 'Anda sudah berpartisipasi dengan promotional event ini'
             ],
             'empty_code'     => [
-                'title' => 'Kami mohon maaf',
+                'title' => '',
                 'content' => 'Jumlah peserta sudah terpenuhi. Anda bisa mencoba promotional event kami yang lain'
             ],
             'inactive_user'  => [
@@ -20,11 +20,11 @@ return array(
                 'content' => 'Untuk mendapatkan :type, anda harus memverifikasi email anda terlebih dahulu. Cek folder spam email anda atau tekan tombol dibawah ini jika anda tidak mendapatkan email dari kami'
             ],
             'new_user_only'  => [
-                'title' => 'Uupss Maaf!',
+                'title' => '',
                 'content' => 'Promotional event ini hanya berlaku untuk pengguna baru'
             ],
             'reward_ok' => [
-                'title' => 'Hello!',
+                'title' => '',
                 'content' => 'Terimakasih telah mengikuti promotional event dari Gotomalls.com'
             ]
         ],

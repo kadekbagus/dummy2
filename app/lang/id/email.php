@@ -13,10 +13,12 @@ return array(
         'message_part2_coupon'      => 'ingin Anda untuk melihat kupon berikut ini:',
         'message_part2_promotion'   => 'ingin Anda untuk melihat promosi berikut ini:',
         'message_part2_event'       => 'ingin Anda untuk melihat event berikut ini:',
+        'message_part2_promotional_event'       => 'ingin Anda untuk melihat promotional event berikut ini:',
         'button_see_now'            => 'Lihat Sekarang!',
         'campaign_type_coupon'      => 'Kupon',
         'campaign_type_promotion'   => 'Promosi',
         'campaign_type_event'       => 'Event',
+        'campaign_type_promotional_event'       => 'Promotional Event',
     ),
 
     'gotomalls_share' => array(

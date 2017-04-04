@@ -18,7 +18,6 @@ use App;
 use Language;
 use News;
 
-
 class PromotionalEventProcessor
 {
     /**
@@ -160,6 +159,8 @@ class PromotionalEventProcessor
             $rewardType = 'lucky number';
         }
 
+        $prefix = DB::getTablePrefix();
+
         // check user reward
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         if (is_object($userReward)) {
@@ -198,7 +199,7 @@ class PromotionalEventProcessor
                                                     $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
                                                       ->on('reward_detail_translations.language_id', '=', DB::raw("'{$validLanguage->language_id}'"));
                                                 })
-                                                ->leftJoin('reward_detail_translations as default_translation', function ($q) use ($valid_language) {
+                                                ->leftJoin('reward_detail_translations as default_translation', function ($q) use ($validLanguage) {
                                                     $q->on(DB::raw("default_translation.reward_detail_id"), '=', 'reward_details.reward_detail_id')
                                                       ->on(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
                                                 })
@@ -227,13 +228,29 @@ class PromotionalEventProcessor
                 'code' => ''
             ];
         } else {
-            return [
-                'status' => 'play_button',
-                'message_title' => '',
-                'message_content' => '',
-                'code_message' => '',
-                'code' => ''
-            ];
+          $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
+          switch ($reward['status']) {
+            case 'reward_ok':
+              return [
+                  'status' => 'play_button',
+                  'message_title' => '',
+                  'message_content' => '',
+                  'code_message' => '',
+                  'code' => ''
+              ];
+              break;
+
+            case 'empty_code':
+              return [
+                  'status' => 'empty_code',
+                  'message_title' => Lang::get('label.promotional_event.information_message.empty_code.title'),
+                  'message_content' => Lang::get('label.promotional_event.information_message.empty_code.content'),
+                  'code_message' => '',
+                  'code' => ''
+              ];
+              break;
+          }
+
         }
     }
 

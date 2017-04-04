@@ -90,8 +90,8 @@ class UserRewardAPIController extends PubControllerAPI
             $userReward = UserReward::select(
                             'news.news_id as news_id',
                             DB::Raw("
-                                        CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN 'default_name' ELSE {$prefix}news_translations.news_name END as name,
-                                        CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN 'default_description' ELSE {$prefix}news_translations.description END as description,
+                                        CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as name,
+                                        CASE WHEN ({$prefix}news_translations.description = '' or {$prefix}news_translations.description is null) THEN default_translation.description ELSE {$prefix}news_translations.description END as description,
                                         CASE WHEN (SELECT {$image}
                                             FROM orb_media m
                                             WHERE m.media_name_long = 'news_translation_image_orig'
@@ -157,7 +157,7 @@ class UserRewardAPIController extends PubControllerAPI
             $count = RecordCounter::create($_coupon)->count();
 
             if (empty($skip)) {
-                $activityNotes = sprintf('Page viewed: View Promotional Event History Page');
+                $activityNotes = sprintf('');
                 $activity->setUser($user)
                     ->setActivityName('view_promotional_event_history_page')
                     ->setActivityNameLong('View Promotional Event History Page')
