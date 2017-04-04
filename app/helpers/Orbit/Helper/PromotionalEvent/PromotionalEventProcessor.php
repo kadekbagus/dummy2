@@ -229,13 +229,29 @@ class PromotionalEventProcessor
                 'code' => ''
             ];
         } else {
-            return [
-                'status' => 'play_button',
-                'message_title' => '',
-                'message_content' => '',
-                'code_message' => '',
-                'code' => ''
-            ];
+          $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
+          switch ($reward['status']) {
+            case 'reward_ok':
+              return [
+                  'status' => 'play_button',
+                  'message_title' => '',
+                  'message_content' => '',
+                  'code_message' => '',
+                  'code' => ''
+              ];
+              break;
+
+            case 'empty_code':
+              return [
+                  'status' => 'empty_code',
+                  'message_title' => Lang::get('label.promotional_event.information_message.empty_code.title'),
+                  'message_content' => Lang::get('label.promotional_event.information_message.empty_code.content'),
+                  'code_message' => '',
+                  'code' => ''
+              ];
+              break;
+          }
+
         }
     }
 
