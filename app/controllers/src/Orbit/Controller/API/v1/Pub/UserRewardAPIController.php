@@ -157,7 +157,7 @@ class UserRewardAPIController extends PubControllerAPI
             $count = RecordCounter::create($_coupon)->count();
 
             if (empty($skip)) {
-                $activityNotes = sprintf('');
+                $activityNotes = '';
                 $activity->setUser($user)
                     ->setActivityName('view_promotional_event_history_page')
                     ->setActivityNameLong('View Promotional Event History Page')
