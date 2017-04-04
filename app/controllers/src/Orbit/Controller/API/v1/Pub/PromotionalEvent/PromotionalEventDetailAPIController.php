@@ -240,7 +240,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                     $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
                 } elseif ($promotionalEventData['status'] === 'reward_ok') {
                     $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
-                } elseif ($promotionalEvent['status'] == 'inactive_user'){
+                } elseif ($promotionalEventData['status'] === 'inactive_user'){
                     $promotionalEvent->user_status = 'pending';
                 }
             }
