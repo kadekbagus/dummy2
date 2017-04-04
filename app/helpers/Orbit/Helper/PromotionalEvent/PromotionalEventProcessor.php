@@ -199,7 +199,7 @@ class PromotionalEventProcessor
                                                     $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
                                                       ->on('reward_detail_translations.language_id', '=', DB::raw("'{$validLanguage->language_id}'"));
                                                 })
-                                                ->leftJoin('reward_detail_translations as default_translation', function ($q) use ($valid_language) {
+                                                ->leftJoin('reward_detail_translations as default_translation', function ($q) use ($validLanguage) {
                                                     $q->on(DB::raw("default_translation.reward_detail_id"), '=', 'reward_details.reward_detail_id')
                                                       ->on(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
                                                 })
