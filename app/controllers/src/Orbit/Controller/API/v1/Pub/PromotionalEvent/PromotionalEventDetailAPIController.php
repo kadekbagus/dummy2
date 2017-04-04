@@ -251,6 +251,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                         break;
 
                     case 'new_user_only':
+                        $promotionalEvent->with_button = true;
                         $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
                         $promotionalEvent->disable_button = true;
                         break;
