@@ -40,6 +40,8 @@ class MallInfoAPIController extends PubControllerAPI
 
             $user = $this->getUser();
 
+            $fromMallDetail = OrbitInput::get('from_mall_detail', 'y');
+
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
             $mallId = OrbitInput::get('mall_id', null);
@@ -159,16 +161,29 @@ class MallInfoAPIController extends PubControllerAPI
             }
 
 
-            $activityNotes = sprintf('Mall Detail Page');
-            $activity->setUser($user)
-                ->setActivityName('view_mall_info')
-                ->setActivityNameLong('View Mall Info')
-                ->setObject(null)
-                ->setLocation($mall)
-                ->setModuleName('Application')
-                ->setNotes($activityNotes)
-                ->responseOK()
-                ->save();
+            if ($fromMallDetail === 'y') {
+                $activityNotes = sprintf('Page viewed: Mall Detail Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall')
+                    ->setActivityNameLong('View Mall Page')
+                    ->setObject(null)
+                    ->setLocation($mall)
+                    ->setModuleName('Mall')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            } else {
+                $activityNotes = sprintf('Page viewed: Mall Info Page');
+                $activity->setUser($user)
+                    ->setActivityName('view_mall_info')
+                    ->setActivityNameLong('View Mall Info')
+                    ->setObject(null)
+                    ->setLocation($mall)
+                    ->setModuleName('Mall')
+                    ->setNotes($activityNotes)
+                    ->responseOK()
+                    ->save();
+            }
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $total;
