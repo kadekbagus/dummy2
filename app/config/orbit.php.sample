@@ -5475,9 +5475,9 @@ return array(
 
         'coupon_detail_base_url' => 'https://v30.gotomalls.cool/#!/coupons/%s/%s?%s',
 
-        'store_detail_base_url' => 'https://v215.gotomalls.cool/#!/stores/%s/%s',
+        'store_detail_base_url' => 'https://v33.gotomalls.cool/#!/stores/%s/%s',
 
-        'promotional_event_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotional-event/%s/%s?%s',
+        'promotional_event_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotional-events/%s/%s?%s',
     ),
 
     /**
