@@ -8,11 +8,11 @@ return array(
    	'promotional_event' => [
         'information_message' => [
             'already_got'    => [
-                'title' => 'Uupss Sorry!',
+                'title' => '',
                 'content' => 'You are already participating to this Promotional Event'
             ],
             'empty_code'     => [
-                'title' => 'We are Sorry..',
+                'title' => '',
                 'content' => 'The number of participants has been fulfilled. Try on our other Promotional Events'
             ],
             'inactive_user'  => [
@@ -20,11 +20,11 @@ return array(
                 'content' => 'To get your :type you need to verify your account first. If you do not receive the verification email, please look at the spam or click the button to resend the email'
             ],
             'new_user_only'  => [
-                'title' => 'Uupss Sorry!',
+                'title' => '',
                 'content' => 'This promotional event is available only to new users'
             ],
             'reward_ok' => [
-                'title' => 'Hello!',
+                'title' => '',
                 'content' => 'Thank you for joining the Promotional Event of Gotomalls.com'
             ]
         ],

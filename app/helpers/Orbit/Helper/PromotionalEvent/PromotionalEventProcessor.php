@@ -18,7 +18,6 @@ use App;
 use Language;
 use News;
 
-
 class PromotionalEventProcessor
 {
     /**
@@ -42,15 +41,24 @@ class PromotionalEventProcessor
      */
     protected $peType = '';
 
-    public function __construct($userId='', $peId='', $peType='')
+    /**
+     * user is already exist flag.
+     *
+     * @var boolean
+     */
+    protected $isExistingUser = FALSE;
+
+    public function __construct($userId='', $peId='', $peType='', $existingUser = '')
     {
         $this->userId = $userId;
         $this->peId = $peId;
         $this->peType = $peType;
+        $this->isExistingUser = (! empty($existingUser)) ? TRUE : FALSE;
     }
 
-    public static function create($userId='', $peId='', $peType='') {
-        return new Static($userId, $peId, $peType);
+    public static function create($userId='', $peId='', $peType='', $existingUser = '') {
+
+        return new Static($userId, $peId, $peType, $existingUser);
     }
 
     /**
@@ -151,6 +159,8 @@ class PromotionalEventProcessor
             $rewardType = 'lucky number';
         }
 
+        $prefix = DB::getTablePrefix();
+
         // check user reward
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         if (is_object($userReward)) {
@@ -189,7 +199,7 @@ class PromotionalEventProcessor
                                                     $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
                                                       ->on('reward_detail_translations.language_id', '=', DB::raw("'{$validLanguage->language_id}'"));
                                                 })
-                                                ->leftJoin('reward_detail_translations as default_translation', function ($q) use ($valid_language) {
+                                                ->leftJoin('reward_detail_translations as default_translation', function ($q) use ($validLanguage) {
                                                     $q->on(DB::raw("default_translation.reward_detail_id"), '=', 'reward_details.reward_detail_id')
                                                       ->on(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
                                                 })
@@ -245,6 +255,15 @@ class PromotionalEventProcessor
         $rewardDetail = $this->getRewardDetail($this->peId, $this->peType);
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
+
+        if (! is_object($rewardDetail)) {
+            return;
+        }
+
+        // prevent existing user if reward detail only apply to new user only
+        if (strtolower($rewardDetail->is_new_user_only) === 'y' && $this->isExistingUser) {
+            return;
+        }
 
         if (! is_object($userReward)) {
             if ($reward['status'] === 'empty_code') {

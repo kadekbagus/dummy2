@@ -13,10 +13,12 @@ return array(
         'message_part2_coupon'      => 'wants you to see this coupon:',
         'message_part2_promotion'   => 'wants you to see this promotion:',
         'message_part2_event'       => 'wants you to see this event:',
+        'message_part2_promotional_event'       => 'wants you to see this promotional event:',
         'button_see_now'            => 'See Now!',
         'campaign_type_coupon'      => 'Coupon',
         'campaign_type_promotion'   => 'Promotion',
         'campaign_type_event'       => 'Event',
+        'campaign_type_promotional_event'       => 'Promotional Event',
     ),
 
     'gotomalls_share' => array(

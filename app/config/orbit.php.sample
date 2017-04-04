@@ -3477,7 +3477,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 9000000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/advert',
@@ -5475,9 +5475,9 @@ return array(
 
         'coupon_detail_base_url' => 'https://v30.gotomalls.cool/#!/coupons/%s/%s?%s',
 
-        'store_detail_base_url' => 'https://v215.gotomalls.cool/#!/stores/%s/%s',
+        'store_detail_base_url' => 'https://v33.gotomalls.cool/#!/stores/%s/%s',
 
-        'promotional_event_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotional-event/%s/%s?%s',
+        'promotional_event_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotional-events/%s/%s?%s',
     ),
 
     /**
