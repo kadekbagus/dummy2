@@ -17,6 +17,7 @@ use Lang;
 use App;
 use Language;
 use News;
+use Queue;
 
 class PromotionalEventProcessor
 {
@@ -285,6 +286,15 @@ class PromotionalEventProcessor
                               'user_email' => $user->user_email);
 
             $status = 'pending';
+        }
+
+        if ($status === 'redeemed') {
+            // send the email via queue
+            Queue::push('Orbit\\Queue\\PromotionalEventMail', [
+                'campaignId'         => $this->peId,
+                'userId'             => $user->user_id,
+                'languageId'         => $language
+            ]);
         }
 
         $updateRewardDetailCode = RewardDetailCode::where('reward_detail_id', $rewardDetail->reward_detail_id)
