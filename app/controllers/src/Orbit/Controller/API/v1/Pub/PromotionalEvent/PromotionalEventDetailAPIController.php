@@ -220,7 +220,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $promotionalEvent->with_button = true;
             $promotionalEvent->button_label = $promotionalEvent->guest_button_label;
             $promotionalEvent->user_role = 'guest';
-            $promotionalEvent->user_status = $user->status;
+            $promotionalEvent->user_status = 'active';
 
             $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
 
@@ -233,13 +233,15 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $promotionalEvent->with_button = false;
                 $promotionalEvent->button_label = null;
                 $promotionalEvent->user_role = 'user';
-                $promotionalEvent->user_status = $user->status;
+                $promotionalEvent->user_status = 'active';
 
                 if ($promotionalEventData['status'] === 'play_button') {
                     $promotionalEvent->with_button = true;
                     $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
                 } elseif ($promotionalEventData['status'] === 'reward_ok') {
                     $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
+                } elseif ($promotionalEventData['status'] === 'inactive_user'){
+                    $promotionalEvent->user_status = 'pending';
                 }
             }
 

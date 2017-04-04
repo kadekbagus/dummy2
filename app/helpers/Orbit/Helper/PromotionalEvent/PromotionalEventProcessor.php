@@ -42,15 +42,24 @@ class PromotionalEventProcessor
      */
     protected $peType = '';
 
-    public function __construct($userId='', $peId='', $peType='')
+    /**
+     * user is already exist flag.
+     *
+     * @var boolean
+     */
+    protected $isExistingUser = FALSE;
+
+    public function __construct($userId='', $peId='', $peType='', $existingUser = '')
     {
         $this->userId = $userId;
         $this->peId = $peId;
         $this->peType = $peType;
+        $this->isExistingUser = (! empty($existingUser)) ? TRUE : FALSE;
     }
 
-    public static function create($userId='', $peId='', $peType='') {
-        return new Static($userId, $peId, $peType);
+    public static function create($userId='', $peId='', $peType='', $existingUser = '') {
+
+        return new Static($userId, $peId, $peType, $existingUser);
     }
 
     /**
@@ -245,6 +254,15 @@ class PromotionalEventProcessor
         $rewardDetail = $this->getRewardDetail($this->peId, $this->peType);
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
+
+        if (! is_object($rewardDetail)) {
+            return;
+        }
+
+        // prevent existing user if reward detail only apply to new user only
+        if (strtolower($rewardDetail->is_new_user_only) === 'y' && $this->isExistingUser) {
+            return;
+        }
 
         if (! is_object($userReward)) {
             if ($reward['status'] === 'empty_code') {
