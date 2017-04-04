@@ -180,7 +180,7 @@ class NewsListAPIController extends PubControllerAPI
 
             $withKeywordSearch = false;
             $filterKeyword = [];
-            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey, &$filterKeyword)
+            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$cacheKey, &$filterKeyword, &$withKeywordSearch)
             {
                 $cacheKey['keyword'] = $keyword;
 
