@@ -221,6 +221,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $promotionalEvent->button_label = $promotionalEvent->guest_button_label;
             $promotionalEvent->user_role = 'guest';
             $promotionalEvent->user_status = 'active';
+            $promotionalEvent->disable_button = false;
 
             $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
 
@@ -235,13 +236,24 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $promotionalEvent->user_role = 'user';
                 $promotionalEvent->user_status = 'active';
 
-                if ($promotionalEventData['status'] === 'play_button') {
-                    $promotionalEvent->with_button = true;
-                    $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
-                } elseif ($promotionalEventData['status'] === 'reward_ok') {
-                    $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
-                } elseif ($promotionalEventData['status'] === 'inactive_user'){
-                    $promotionalEvent->user_status = 'pending';
+                switch ($promotionalEventData['status']) {
+                    case 'play_button':
+                        $promotionalEvent->with_button = true;
+                        $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
+                        break;
+
+                    case 'reward_ok':
+                        $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
+                        break;
+
+                    case 'inactive_user':
+                        $promotionalEvent->user_status = 'pending';
+                        break;
+
+                    case 'new_user_only':
+                        $promotionalEvent->button_label = $promotionalEvent->logged_in_button_label;
+                        $promotionalEvent->disable_button = true;
+                        break;
                 }
             }
 
