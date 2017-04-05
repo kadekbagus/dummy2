@@ -198,6 +198,7 @@ class LoginAPIController extends IntermediateBaseController
                         $activity->setActivityType('login_with_reward')
                                  ->setUser($user)
                                  ->setObject($user)
+                                 ->setLocation(NULL)
                                  ->setObjectDisplayName($reward->reward_name)
                                  ->setActivityName('login_ok')
                                  ->setActivityNameLong('Sign in')
@@ -212,6 +213,7 @@ class LoginAPIController extends IntermediateBaseController
                     }
                 } else {
                     $activity->setUser($user)
+                             ->setLocation(NULL)
                              ->setActivityName('login_ok')
                              ->setActivityNameLong('Sign in')
                              ->responseOK()

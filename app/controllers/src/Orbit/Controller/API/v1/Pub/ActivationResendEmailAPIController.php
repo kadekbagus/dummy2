@@ -55,6 +55,8 @@ class ActivationResendEmailAPIController extends IntermediateBaseController
                             ->setActivityType('activation');
         try {
             $email = trim(OrbitInput::post('email'));
+            $language = OrbitInput::get('language', 'id');
+            $redirectToUrl = OrbitInput::get('to_url', NULL);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -100,7 +102,10 @@ class ActivationResendEmailAPIController extends IntermediateBaseController
             // Send email process to the queue
             Queue::push('Orbit\\Queue\\RegistrationMail', [
                 'user_id' => $this->user->user_id,
-                'mode' => 'gotomalls'],
+                'languageId' => $language,
+                'mode' => 'gotomalls',
+                'redirect_to_url' => $redirectToUrl
+                ],
                 Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
             );
 
