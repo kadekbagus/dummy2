@@ -158,8 +158,8 @@ class UserRewardAPIController extends PubControllerAPI
             if (empty($skip)) {
                 $activityNotes = '';
                 $activity->setUser($user)
-                    ->setActivityName('view_promotional_event_history_page')
-                    ->setActivityNameLong('View Promotional Event History Page')
+                    ->setActivityName('view_my_reward_page')
+                    ->setActivityNameLong('View My Reward Page')
                     ->setObject(null)
                     ->setLocation('GTM')
                     ->setModuleName('Application')
