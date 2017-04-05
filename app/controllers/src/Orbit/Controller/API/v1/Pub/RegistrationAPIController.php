@@ -135,6 +135,7 @@ class RegistrationAPIController extends IntermediateBaseController
                     if (is_object($reward)) {
                         $activity->setActivityType('registration_with_reward')
                             ->setUser($user)
+                            ->setLocation(NULL)
                             ->setObject($user)
                             ->setObjectDisplayName($reward->reward_name)
                             ->setActivityName('registration_ok')
@@ -149,6 +150,7 @@ class RegistrationAPIController extends IntermediateBaseController
                             ->setActivityType('login_with_reward');
                         $activity_login->setUser($user)
                             ->setActivityName('login_ok')
+                            ->setLocation(NULL)
                             ->setActivityNameLong('Sign In')
                             ->setObject($user)
                             ->setObjectDisplayName($reward->reward_name)
@@ -165,6 +167,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 } else {
                     $activity->setUser($user)
                         ->setObject($user)
+                        ->setLocation(NULL)
                         ->setActivityName('registration_ok')
                         ->setActivityNameLong('Sign Up via Mobile (Email Address)')
                         ->setNotes('Sign Up via Mobile (Email Address) OK')
@@ -176,6 +179,7 @@ class RegistrationAPIController extends IntermediateBaseController
                     $activity_login = Activity::mobileci()
                         ->setActivityType('login');
                     $activity_login->setUser($user)
+                        ->setLocation(NULL)
                         ->setActivityName('login_ok')
                         ->setActivityNameLong('Sign In')
                         ->setObject($user)
