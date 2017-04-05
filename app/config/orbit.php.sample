@@ -5355,8 +5355,8 @@ return array(
             ),
             // User click promotional event in promotional event history page
             '118' => array(
-                'name' => 'click_promotional_event_history',
-                'name_long' => 'Click Promotional Event History',
+                'name' => 'click_my_reward',
+                'name_long' => 'Click My Reward',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => '--SET BY object_type_parameter_name--',

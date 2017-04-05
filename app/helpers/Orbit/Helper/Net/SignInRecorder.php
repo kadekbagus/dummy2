@@ -33,7 +33,7 @@ class SignInRecorder {
                             ->setActivityName('login_ok')
                             ->setActivityNameLong('Sign In')
                             ->setObject($user)
-                            ->setObjectDisplayName($user)
+                            ->setObjectDisplayName($reward->reward_name)
                             ->setNotes(sprintf('Sign In via Mobile (%s) OK', ucfirst($from)))
                             ->setModuleName('Application')
                             ->responseOK();
