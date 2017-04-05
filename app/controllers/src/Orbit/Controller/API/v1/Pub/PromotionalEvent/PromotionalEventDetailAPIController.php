@@ -193,22 +193,6 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Promotion that you specify is not found');
             }
 
-            if ($promotionalEvent->is_exclusive === 'Y') {
-                // check token
-                $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
-                                    ->where('object_partner.object_type', 'news')
-                                    ->where('object_partner.object_id', $promotionalEvent->news_id)
-                                    ->where('partners.is_exclusive', 'Y')
-                                    ->where('partners.token', $partnerToken)
-                                    ->first();
-
-                if (! is_object($partnerTokens)) {
-                    throw new OrbitCustomException('Promotion is exclusive, please specify partner token', News::IS_EXCLUSIVE_ERROR_CODE, NULL);
-                }
-
-                $promotionalEvent->is_exclusive = 'N';
-            }
-
             if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
@@ -225,9 +209,26 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $promotionalEvent->disable_button = false;
 
             $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
+            $promotionalEventData = $pe->format($user->user_id, $newsId, 'news', $language, $firstTime);
+
+            // When promotion event is exclusive
+            if ($promotionalEvent->is_exclusive === 'Y' && $promotionalEventData['code'] === '') {
+                // check token
+                $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
+                                    ->where('object_partner.object_type', 'promotion')
+                                    ->where('object_partner.object_id', $promotionalEvent->news_id)
+                                    ->where('partners.is_exclusive', 'Y')
+                                    ->where('partners.token', $partnerToken)
+                                    ->first();
+
+                if (! is_object($partnerTokens)) {
+                    throw new OrbitCustomException('Promotion is exclusive, please specify partner token', News::IS_EXCLUSIVE_ERROR_CODE, NULL);
+                }
+
+                $promotionalEvent->is_exclusive = 'N';
+            }
 
             if ($role != 'Guest') {
-                $promotionalEventData = $pe->format($user->user_id, $newsId, 'news', $language, $firstTime);
                 $promotionalEvent->code = $promotionalEventData['code'];
                 $promotionalEvent->message_title = $promotionalEventData['message_title'];
                 $promotionalEvent->message_content = $promotionalEventData['message_content'];
