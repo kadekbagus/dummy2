@@ -42,23 +42,31 @@ class PromotionalEventProcessor
     protected $peType = '';
 
     /**
+     * language string (en, id, etc).
+     *
+     * @var string
+     */
+    protected $peLang = 'en';
+
+    /**
      * user is already exist flag.
      *
      * @var boolean
      */
     protected $isExistingUser = FALSE;
 
-    public function __construct($userId='', $peId='', $peType='', $existingUser = '')
+    public function __construct($userId='', $peId='', $peType='', $language = 'en', $existingUser = '')
     {
         $this->userId = $userId;
         $this->peId = $peId;
         $this->peType = $peType;
         $this->isExistingUser = (! empty($existingUser)) ? TRUE : FALSE;
+        $this->peLang = $language;
     }
 
-    public static function create($userId='', $peId='', $peType='', $existingUser = '') {
+    public static function create($userId='', $peId='', $peType='', $language = 'en', $existingUser = '') {
 
-        return new Static($userId, $peId, $peType, $existingUser);
+        return new Static($userId, $peId, $peType, $language, $existingUser);
     }
 
     /**
@@ -265,8 +273,9 @@ class PromotionalEventProcessor
         $this->userId = (empty($userId)) ? $this->userId : $userId;
         $this->peId = (empty($peId)) ? $this->peId : $peId;
         $this->peType = (empty($peType)) ? $this->peType : $peType;
+        $this->peLang = (empty($language)) ? $this->peLang : $language;
         $user = User::where('user_id', $this->userId)->first();
-        App::setLocale($language);
+        App::setLocale($this->peLang);
 
         $rewardDetail = $this->getRewardDetail($this->peId, $this->peType);
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
@@ -327,5 +336,37 @@ class PromotionalEventProcessor
         $newUserReward->save();
 
         return;
+    }
+
+    /**
+     * get promotional event object based on type
+     * (should be called after create())
+     *
+     * @return News or Coupon
+     */
+    public function getPromotionalEvent()
+    {
+        $reward = NULL;
+        switch (strtolower($this->peType)) {
+            case 'news':
+                $promotionalEvent = News::where('news.news_id', $this->peId)
+                    ->where('status', 'active')
+                    ->where('news.is_having_reward', '=', 'Y')
+                    ->first();
+
+                if (is_object($promotionalEvent)) {
+                    $reward = new \stdclass();
+                    $reward->reward_id = $promotionalEvent->news_id;
+                    $reward->reward_name = $promotionalEvent->news_name;
+                }
+
+                break;
+
+            default:
+                # code...
+                break;
+        }
+
+        return $reward;
     }
 }
