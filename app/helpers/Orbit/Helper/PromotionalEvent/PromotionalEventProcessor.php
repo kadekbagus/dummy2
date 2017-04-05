@@ -153,7 +153,7 @@ class PromotionalEventProcessor
      * @param string peId
      * @param string peType
      */
-    public function format($userId='', $peId='', $peType='', $language='en') {
+    public function format($userId='', $peId='', $peType='', $language='en', $firstTime=FALSE) {
         $this->userId = (empty($userId)) ? $this->userId : $userId;
         $this->peId = (empty($peId)) ? $this->peId : $peId;
         $this->peType = (empty($peType)) ? $this->peType : $peType;
@@ -170,11 +170,42 @@ class PromotionalEventProcessor
 
         $prefix = DB::getTablePrefix();
 
+        $validLanguage = Language::where('name', $language)->first();
+        $messageContent = News::select(DB::raw("CASE WHEN ({$prefix}reward_detail_translations.after_participation_content = ''
+                                            or {$prefix}reward_detail_translations.after_participation_content is null)
+                                        THEN default_translation.after_participation_content
+                                        ELSE {$prefix}reward_detail_translations.after_participation_content
+                                        END as after_participation_content"))
+                                ->join('reward_details', 'reward_details.object_id', '=', 'news.news_id')
+                                ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                                ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                                ->leftJoin('reward_detail_translations', function ($q) use ($validLanguage) {
+                                    $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
+                                      ->on('reward_detail_translations.language_id', '=', DB::raw("'{$validLanguage->language_id}'"));
+                                })
+                                ->leftJoin('reward_detail_translations as default_translation', function ($q) use ($validLanguage) {
+                                    $q->on(DB::raw("default_translation.reward_detail_id"), '=', 'reward_details.reward_detail_id')
+                                      ->on(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
+                                })
+                                ->where('news.news_id', $this->peId)
+                                ->where('news.is_having_reward', '=', 'Y')
+                                ->first();
+
         // check user reward
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         if (is_object($userReward)) {
             switch ($userReward->status) {
                 case 'redeemed':
+                    if ($firstTime) {
+                        return [
+                            'status' => 'reward_ok',
+                            'message_title' => Lang::get('label.promotional_event.information_message.reward_ok.title'),
+                            'message_content' => $messageContent->after_participation_content,
+                            'code_message' => $codeMessage,
+                            'code' => $userReward->reward_code
+                        ];
+                    }
+
                     return [
                         'status' => 'already_got',
                         'message_title' => Lang::get('label.promotional_event.information_message.already_got.title'),
@@ -194,28 +225,6 @@ class PromotionalEventProcessor
                             'code' => ''
                         ];
                     } else {
-                        $validLanguage = Language::where('name', $language)->first();
-
-                        $messageContent = News::select(DB::raw("CASE WHEN ({$prefix}reward_detail_translations.after_participation_content = ''
-                                                            or {$prefix}reward_detail_translations.after_participation_content is null)
-                                                        THEN default_translation.after_participation_content
-                                                        ELSE {$prefix}reward_detail_translations.after_participation_content
-                                                        END as after_participation_content"))
-                                                ->join('reward_details', 'reward_details.object_id', '=', 'news.news_id')
-                                                ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
-                                                ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
-                                                ->leftJoin('reward_detail_translations', function ($q) use ($validLanguage) {
-                                                    $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
-                                                      ->on('reward_detail_translations.language_id', '=', DB::raw("'{$validLanguage->language_id}'"));
-                                                })
-                                                ->leftJoin('reward_detail_translations as default_translation', function ($q) use ($validLanguage) {
-                                                    $q->on(DB::raw("default_translation.reward_detail_id"), '=', 'reward_details.reward_detail_id')
-                                                      ->on(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
-                                                })
-                                                ->where('news.news_id', $this->peId)
-                                                ->where('news.is_having_reward', '=', 'Y')
-                                                ->first();
-
                         return [
                             'status' => 'reward_ok',
                             'message_title' => Lang::get('label.promotional_event.information_message.reward_ok.title'),

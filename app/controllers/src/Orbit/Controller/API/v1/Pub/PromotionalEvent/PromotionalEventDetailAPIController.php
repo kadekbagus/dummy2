@@ -60,6 +60,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
             $partnerToken = OrbitInput::get('token', null);
+            $firstTime = OrbitInput::get('first_time', FALSE);
 
             $this->registerCustomValidation();
 
@@ -226,7 +227,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $pe = PromotionalEventProcessor::create($user->user_id, $newsId, 'news', $language);
 
             if ($role != 'Guest') {
-                $promotionalEventData = $pe->format($user->user_id, $newsId, 'news', $language);
+                $promotionalEventData = $pe->format($user->user_id, $newsId, 'news', $language, $firstTime);
                 $promotionalEvent->code = $promotionalEventData['code'];
                 $promotionalEvent->message_title = $promotionalEventData['message_title'];
                 $promotionalEvent->message_content = $promotionalEventData['message_content'];
