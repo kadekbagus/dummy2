@@ -5479,11 +5479,11 @@ return array(
         ],
 
         // base url of the campaign detail, needed for showing link on the email
-        'news_detail_base_url' => 'https://v30.gotomalls.cool/#!/events/%s/%s',
+        'news_detail_base_url' => 'https://v33.gotomalls.cool/#!/events/%s/%s',
 
-        'promotion_detail_base_url' => 'https://v30.gotomalls.cool/#!/promotions/%s/%s?%s',
+        'promotion_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotions/%s/%s?%s',
 
-        'coupon_detail_base_url' => 'https://v30.gotomalls.cool/#!/coupons/%s/%s?%s',
+        'coupon_detail_base_url' => 'https://v33.gotomalls.cool/#!/coupons/%s/%s?%s',
 
         'store_detail_base_url' => 'https://v33.gotomalls.cool/#!/stores/%s/%s',
 
@@ -5507,6 +5507,30 @@ return array(
 
         // the video url
         'video_url' => 'https://www.youtube.com/watch?v=v7x-Avxb38E',
+    ),
+
+    /**
+     * Configuration send email after user get code in promotional event
+     */
+    'promotional_event_get_code_email' => array(
+        'sender' => array(
+            'email' => 'no-reply@gotomalls.com',
+            'name'  => 'Gotomalls'
+        ),
+
+        // subject of the email
+        'subject' => '%s - Gotomalls.com',
+
+        // base url of the campaign detail, needed for showing link on the email
+        'news_detail_base_url' => 'https://v33.gotomalls.cool/#!/events/%s/%s',
+
+        'promotion_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotions/%s/%s?%s',
+
+        'coupon_detail_base_url' => 'https://v33.gotomalls.cool/#!/coupons/%s/%s?%s',
+
+        'store_detail_base_url' => 'https://v33.gotomalls.cool/#!/stores/%s/%s',
+
+        'promotional_event_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotional-events/%s/%s?%s',
     ),
 
     /**
