@@ -81,15 +81,15 @@ class PromotionalEventMail
                                 ->where('status', '!=', 'expired')
                                 ->first();
 
-        $user_full_name = $user->user_firstname . ' ' . $user->lastname;
+        $user_full_name = $user->getFullName();
 
         $arr_search = ['{{USER_FULL_NAME}}', '{{USER_EMAIL}}', '{{USER_CODE}}'];
         $arr_replace = [$user_full_name, $user->user_email, $userReward->reward_code];
-        $message = str_replace($arr_search, $arr_replace, $campaign->email_content);
+        $message1 = str_replace($arr_search, $arr_replace, $campaign->email_content);
 
         $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['languageId'];
 
-        $dataView['message'] = $message;
+        $dataView['message1'] = $message1;
         $dataView['email'] = $user->user_email;
         $dataView['campaignName'] = $campaign->news_name;
         $dataView['linkMalls']      = sprintf($baseLinkUrl, 'malls');

@@ -144,8 +144,8 @@ class ActivationAPIController extends IntermediateBaseController
             // append redirect_to_url metadata if any
             if (! empty($token->metadata)) {
                 $metadata = json_decode($token->metadata);
-                if (isset($metadata['redirect_to_url']) && ! empty($metadata['redirect_to_url'])) {
-                    $user->redirect_to_url = $metadata['redirect_to_url'];
+                if (isset($metadata->redirect_to_url) && ! empty($metadata->redirect_to_url)) {
+                    $user->redirect_to_url = $metadata->redirect_to_url;
                 }
             }
 

@@ -1,8 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub;
 
-/**
- * An API controller for get list promotional event history per user
- */
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -26,7 +23,7 @@ use Orbit\Helper\Util\CdnUrlGenerator;
 class UserRewardAPIController extends PubControllerAPI
 {
     /**
-     * get - get all of promotion event per user
+     * get - get list promotional event history per user
      *
      * @author firmansyah <firmansyah@dominopos.com>
      *
@@ -110,9 +107,10 @@ class UserRewardAPIController extends PubControllerAPI
                                     "),
                              // query for get status active based on timezone
                             DB::raw("
-                                    CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
-                                            THEN {$prefix}campaign_status.campaign_status_name
-                                            ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                    CASE
+                                        WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name
+                                        WHEN {$prefix}campaign_status.campaign_status_name = 'stopped' THEN 'expired'
+                                        ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                                                         FROM {$prefix}news_merchant onm
                                                                                             LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
                                                                                             LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
@@ -141,9 +139,10 @@ class UserRewardAPIController extends PubControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->where('user_rewards.user_id', $user->user_id)
                         ->whereIn('user_rewards.status', array('redeemed', 'pending'))
+                        //Default Order by
+                        ->orderBy('redeemed_date', 'desc')
+                        ->orderBy('campaign_status', 'desc')
                         ->groupBy('user_reward_id');
-
-            $userReward = $userReward->orderBy($sort_by, $sort_mode);
 
             $_coupon = clone $userReward;
 
@@ -159,8 +158,8 @@ class UserRewardAPIController extends PubControllerAPI
             if (empty($skip)) {
                 $activityNotes = '';
                 $activity->setUser($user)
-                    ->setActivityName('view_promotional_event_history_page')
-                    ->setActivityNameLong('View Promotional Event History Page')
+                    ->setActivityName('view_my_reward_page')
+                    ->setActivityNameLong('View My Reward Page')
                     ->setObject(null)
                     ->setLocation('GTM')
                     ->setModuleName('Application')

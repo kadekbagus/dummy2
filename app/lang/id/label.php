@@ -9,11 +9,11 @@ return array(
         'information_message' => [
             'already_got'    => [
                 'title' => '',
-                'content' => 'Anda sudah berpartisipasi dengan promotional event ini'
+                'content' => 'Terimakasih telah berpartisipasi pada promosi event ini'
             ],
             'empty_code'     => [
                 'title' => '',
-                'content' => 'Jumlah peserta sudah terpenuhi. Anda bisa mencoba promotional event kami yang lain'
+                'content' => 'Jumlah peserta sudah terpenuhi. Anda bisa mencoba promosi event kami yang lain'
             ],
             'inactive_user'  => [
                 'title' => '',
@@ -21,11 +21,11 @@ return array(
             ],
             'new_user_only'  => [
                 'title' => '',
-                'content' => 'Promotional event ini hanya berlaku untuk pengguna baru'
+                'content' => 'Promosi event ini hanya berlaku untuk pengguna baru'
             ],
             'reward_ok' => [
                 'title' => '',
-                'content' => 'Terimakasih telah mengikuti promotional event dari Gotomalls.com'
+                'content' => 'Terimakasih telah berpartisipasi pada promosi event ini'
             ]
         ],
         'code_message' => [

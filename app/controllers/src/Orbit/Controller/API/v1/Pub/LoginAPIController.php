@@ -44,6 +44,7 @@ use Orbit\Helper\Net\SessionPreparer;
 use Orbit\Helper\Net\SignInRecorder;
 use Orbit\Controller\API\v1\Pub\ActivationAPIController;
 use Event;
+use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 
 class LoginAPIController extends IntermediateBaseController
 {
@@ -189,15 +190,41 @@ class LoginAPIController extends IntermediateBaseController
             Event::fire('orbit.login.after.success', array($user->user_id, $rewardId, $rewardType, $language));
 
             if ($this->appOrigin !== 'mobile_ci') {
-                $activity->setUser($user)
-                         ->setActivityName('login_ok')
-                         ->setActivityNameLong('Sign in')
-                         ->responseOK()->setModuleName('Application')->save();
+                if (! empty($rewardId) && ! empty($rewardType)) {
+                    // registration activity that comes from promotional event page
+                    $reward = PromotionalEventProcessor::create($user->user_id, $rewardId, $rewardType, $language)->getPromotionalEvent();
 
-                $user->activity = $activity;
+                    if (is_object($reward)) {
+                        $activity->setActivityType('login_with_reward')
+                                 ->setUser($user)
+                                 ->setObject($user)
+                                 ->setLocation(NULL)
+                                 ->setObjectDisplayName($reward->reward_name)
+                                 ->setActivityName('login_ok')
+                                 ->setActivityNameLong('Sign in')
+                                 ->responseOK()
+                                 ->setModuleName('Application')
+                                 ->save();
 
-                // Save also activity user sign in in user_signin table
-                SignInRecorder::setSignInActivity($user, 'form', NULL, $activity, TRUE);
+                        $user->activity = $activity;
+
+                        // Save also activity user sign in in user_signin table
+                        SignInRecorder::setSignInActivity($user, 'form', NULL, $activity, TRUE, $rewardId, $rewardType, $language);
+                    }
+                } else {
+                    $activity->setUser($user)
+                             ->setLocation(NULL)
+                             ->setActivityName('login_ok')
+                             ->setActivityNameLong('Sign in')
+                             ->responseOK()
+                             ->setModuleName('Application')
+                             ->save();
+
+                    $user->activity = $activity;
+
+                    // Save also activity user sign in in user_signin table
+                    SignInRecorder::setSignInActivity($user, 'form', NULL, $activity, TRUE, $rewardId, $rewardType, $language);
+                }
 
             } else {
                 // set \MobileCI\MobileCIAPIController->session using $this->session
@@ -376,7 +403,7 @@ class LoginAPIController extends IntermediateBaseController
                         throw new Exception($response->message, $response->code);
                     }
 
-                    SignInRecorder::setSignUpActivity($response, 'google', NULL);
+                    SignInRecorder::setSignUpActivity($response, 'google', NULL, $reward_id_from_state, $reward_type_from_state, $language_from_state);
                     // create activation_ok activity without using token
                     $activation_ok = ActivationAPIController::create('raw')
                         ->setSaveAsAutoActivation($response, 'google')
@@ -387,7 +414,7 @@ class LoginAPIController extends IntermediateBaseController
                     Event::fire('orbit.registration.after.createuser', array($loggedInUser->user_id, $reward_id_from_state, $reward_type_from_state, $language_from_state));
                 }
 
-                SignInRecorder::setSignInActivity($loggedInUser, 'google', NULL, NULL, TRUE);
+                SignInRecorder::setSignInActivity($loggedInUser, 'google', NULL, NULL, TRUE, $reward_id_from_state, $reward_type_from_state, $language_from_state);
 
                 // promotional event reward event
                 Event::fire('orbit.login.after.success', array($loggedInUser->user_id, $reward_id_from_state, $reward_type_from_state, $language_from_state));
@@ -425,7 +452,7 @@ class LoginAPIController extends IntermediateBaseController
                     $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
                     if (is_object($user)) {
-                        $this->acquireUser($retailer, $user, 'google');
+                        $this->acquireUser($retailer, $user, 'google', $reward_id_from_state, $reward_type_from_state, $language_from_state);
                     }
                 }
                 $redirect_to_url_from_state = $this->addHttps($redirect_to_url_from_state);
@@ -646,7 +673,7 @@ class LoginAPIController extends IntermediateBaseController
             }
 
             // create registration_ok activity
-            SignInRecorder::setSignUpActivity($response, 'facebook', NULL);
+            SignInRecorder::setSignUpActivity($response, 'facebook', NULL, $rewardId, $rewardType, $language);
             // create activation_ok activity without using token
             $activation_ok = ActivationAPIController::create('raw')
                 ->setSaveAsAutoActivation($response, 'facebook')
@@ -660,7 +687,7 @@ class LoginAPIController extends IntermediateBaseController
         // promotional event reward event
         Event::fire('orbit.login.after.success', array($loggedInUser->user_id, $rewardId, $rewardType, $language));
 
-        SignInRecorder::setSignInActivity($loggedInUser, 'facebook', NULL, NULL, TRUE);
+        SignInRecorder::setSignInActivity($loggedInUser, 'facebook', NULL, NULL, TRUE, $rewardId, $rewardType, $language);
 
         $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
@@ -695,7 +722,7 @@ class LoginAPIController extends IntermediateBaseController
                 $user = UserGetter::getLoggedInUserOrGuest($this->session);
 
                 if (is_object($user)) {
-                    $this->acquireUser($retailer, $user, 'facebook');
+                    $this->acquireUser($retailer, $user, 'facebook', $rewardId, $rewardType, $language);
                 }
             }
             $encoded_redirect_to_url = $this->addHttps($encoded_redirect_to_url);
@@ -1074,7 +1101,7 @@ class LoginAPIController extends IntermediateBaseController
         return $this;
     }
 
-    protected function acquireUser($retailer, $user, $signUpVia = null)
+    protected function acquireUser($retailer, $user, $signUpVia = null, $rewardId = null, $rewardType = null, $language = 'en')
     {
         if (is_null($signUpVia)) {
             $signUpVia = 'form';
@@ -1100,7 +1127,7 @@ class LoginAPIController extends IntermediateBaseController
 
             // if the user is viewing the mall for the 1st time then set the signup activity
             if ($firstAcquired) {
-                SignInRecorder::setSignUpActivity($user, $signUpVia, $retailer);
+                SignInRecorder::setSignUpActivity($user, $signUpVia, $retailer, $rewardId, $rewardType, $language);
             }
         }
     }

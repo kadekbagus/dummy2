@@ -31,6 +31,7 @@ use Orbit\Helper\Net\SignInRecorder;
 use \Exception;
 use App;
 use Event;
+use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 
 class RegistrationAPIController extends IntermediateBaseController
 {
@@ -124,31 +125,73 @@ class RegistrationAPIController extends IntermediateBaseController
                 $sessionHeader = 'Set-' . $sessionHeader;
                 $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
 
+                Event::fire('orbit.registration.after.createuser', array($user->user_id, $rewardId, $rewardType, $language));
+
                 // Registration_ok activity
-                $activity->setUser($user)
-                    ->setObject($user)
-                    ->setActivityName('registration_ok')
-                    ->setActivityNameLong('Sign Up via Mobile (Email Address)')
-                    ->setNotes('Sign Up via Mobile (Email Address) OK')
-                    ->responseOK()
-                    ->setModuleName('Application')
-                    ->save();
+                if (! empty($rewardId) && ! empty($rewardType)) {
+                    // registration activity that comes from promotional event page
+                    $reward = PromotionalEventProcessor::create($user->user_id, $rewardId, $rewardType, $language)->getPromotionalEvent();
 
-                // Login_ok activity
-                $activity_login = Activity::mobileci()
-                    ->setActivityType('login');
-                $activity_login->setUser($user)
-                    ->setActivityName('login_ok')
-                    ->setActivityNameLong('Sign In')
-                    ->setObject($user)
-                    ->setNotes('Sign In via Mobile (Form) OK')
-                    ->setModuleName('Application')
-                    ->responseOK()
-                    ->save();
+                    if (is_object($reward)) {
+                        $activity->setActivityType('registration_with_reward')
+                            ->setUser($user)
+                            ->setLocation(NULL)
+                            ->setObject($user)
+                            ->setObjectDisplayName($reward->reward_name)
+                            ->setActivityName('registration_ok')
+                            ->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                            ->setNotes($reward->reward_id)
+                            ->responseOK()
+                            ->setModuleName('Application')
+                            ->save();
 
-                if ($activity_login) {
-                    // Save also activity user sign in in user_signin table
-                    SignInRecorder::setSignInActivity($user, 'form', NULL, $activity_login, TRUE);
+                        // Login_ok activity
+                        $activity_login = Activity::mobileci()
+                            ->setActivityType('login_with_reward');
+                        $activity_login->setUser($user)
+                            ->setActivityName('login_ok')
+                            ->setLocation(NULL)
+                            ->setActivityNameLong('Sign In')
+                            ->setObject($user)
+                            ->setObjectDisplayName($reward->reward_name)
+                            ->setNotes('Sign In via Mobile (Form) OK')
+                            ->setModuleName('Application')
+                            ->responseOK()
+                            ->save();
+
+                        if ($activity_login) {
+                            // Save also activity user sign in in user_signin table
+                            SignInRecorder::setSignInActivity($user, 'form', NULL, $activity_login, TRUE, $rewardId, $rewardType, $language);
+                        }
+                    }
+                } else {
+                    $activity->setUser($user)
+                        ->setObject($user)
+                        ->setLocation(NULL)
+                        ->setActivityName('registration_ok')
+                        ->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                        ->setNotes('Sign Up via Mobile (Email Address) OK')
+                        ->responseOK()
+                        ->setModuleName('Application')
+                        ->save();
+
+                    // Login_ok activity
+                    $activity_login = Activity::mobileci()
+                        ->setActivityType('login');
+                    $activity_login->setUser($user)
+                        ->setLocation(NULL)
+                        ->setActivityName('login_ok')
+                        ->setActivityNameLong('Sign In')
+                        ->setObject($user)
+                        ->setNotes('Sign In via Mobile (Form) OK')
+                        ->setModuleName('Application')
+                        ->responseOK()
+                        ->save();
+
+                    if ($activity_login) {
+                        // Save also activity user sign in in user_signin table
+                        SignInRecorder::setSignInActivity($user, 'form', NULL, $activity_login, TRUE);
+                    }
                 }
             }
 
@@ -156,8 +199,6 @@ class RegistrationAPIController extends IntermediateBaseController
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Sign Up Success';
-
-            Event::fire('orbit.registration.after.createuser', array($user->user_id, $rewardId, $rewardType, $language));
 
             if ($useTransaction) {
                 DB::commit();

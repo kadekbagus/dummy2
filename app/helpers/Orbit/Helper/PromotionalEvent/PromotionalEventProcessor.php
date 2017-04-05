@@ -43,23 +43,31 @@ class PromotionalEventProcessor
     protected $peType = '';
 
     /**
+     * language string (en, id, etc).
+     *
+     * @var string
+     */
+    protected $peLang = 'en';
+
+    /**
      * user is already exist flag.
      *
      * @var boolean
      */
     protected $isExistingUser = FALSE;
 
-    public function __construct($userId='', $peId='', $peType='', $existingUser = '')
+    public function __construct($userId='', $peId='', $peType='', $language = 'en', $existingUser = '')
     {
         $this->userId = $userId;
         $this->peId = $peId;
         $this->peType = $peType;
         $this->isExistingUser = (! empty($existingUser)) ? TRUE : FALSE;
+        $this->peLang = $language;
     }
 
-    public static function create($userId='', $peId='', $peType='', $existingUser = '') {
+    public static function create($userId='', $peId='', $peType='', $language = 'en', $existingUser = '') {
 
-        return new Static($userId, $peId, $peType, $existingUser);
+        return new Static($userId, $peId, $peType, $language, $existingUser);
     }
 
     /**
@@ -145,7 +153,7 @@ class PromotionalEventProcessor
      * @param string peId
      * @param string peType
      */
-    public function format($userId='', $peId='', $peType='', $language='en') {
+    public function format($userId='', $peId='', $peType='', $language='en', $firstTime='false') {
         $this->userId = (empty($userId)) ? $this->userId : $userId;
         $this->peId = (empty($peId)) ? $this->peId : $peId;
         $this->peType = (empty($peType)) ? $this->peType : $peType;
@@ -160,13 +168,21 @@ class PromotionalEventProcessor
             $rewardType = 'lucky number';
         }
 
-        $prefix = DB::getTablePrefix();
-
         // check user reward
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         if (is_object($userReward)) {
             switch ($userReward->status) {
                 case 'redeemed':
+                    if (strtolower($firstTime) != 'false') {
+                        return [
+                            'status' => 'reward_ok',
+                            'message_title' => Lang::get('label.promotional_event.information_message.reward_ok.title'),
+                            'message_content' => Lang::get('label.promotional_event.information_message.reward_ok.content'),
+                            'code_message' => $codeMessage,
+                            'code' => $userReward->reward_code
+                        ];
+                    }
+
                     return [
                         'status' => 'already_got',
                         'message_title' => Lang::get('label.promotional_event.information_message.already_got.title'),
@@ -186,38 +202,27 @@ class PromotionalEventProcessor
                             'code' => ''
                         ];
                     } else {
-                        $validLanguage = Language::where('name', $language)->first();
-
-                        $messageContent = News::select(DB::raw("CASE WHEN ({$prefix}reward_detail_translations.after_participation_content = ''
-                                                            or {$prefix}reward_detail_translations.after_participation_content is null)
-                                                        THEN default_translation.after_participation_content
-                                                        ELSE {$prefix}reward_detail_translations.after_participation_content
-                                                        END as after_participation_content"))
-                                                ->join('reward_details', 'reward_details.object_id', '=', 'news.news_id')
-                                                ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
-                                                ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
-                                                ->leftJoin('reward_detail_translations', function ($q) use ($validLanguage) {
-                                                    $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
-                                                      ->on('reward_detail_translations.language_id', '=', DB::raw("'{$validLanguage->language_id}'"));
-                                                })
-                                                ->leftJoin('reward_detail_translations as default_translation', function ($q) use ($validLanguage) {
-                                                    $q->on(DB::raw("default_translation.reward_detail_id"), '=', 'reward_details.reward_detail_id')
-                                                      ->on(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
-                                                })
-                                                ->where('news.news_id', $this->peId)
-                                                ->where('news.is_having_reward', '=', 'Y')
-                                                ->first();
-
                         return [
                             'status' => 'reward_ok',
                             'message_title' => Lang::get('label.promotional_event.information_message.reward_ok.title'),
-                            'message_content' => $messageContent->after_participation_content,
+                            'message_content' => Lang::get('label.promotional_event.information_message.reward_ok.content'),
                             'code_message' => $codeMessage,
                             'code' => $userReward->reward_code
                         ];
                     }
                     break;
             }
+        }
+
+        $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
+        if ($reward['status'] === 'empty_code') {
+            return [
+              'status' => 'empty_code',
+              'message_title' => Lang::get('label.promotional_event.information_message.empty_code.title'),
+              'message_content' => Lang::get('label.promotional_event.information_message.empty_code.content'),
+              'code_message' => '',
+              'code' => ''
+            ];
         }
 
         if ($rewardDetail->is_new_user_only === 'Y') {
@@ -228,31 +233,15 @@ class PromotionalEventProcessor
                 'code_message' => '',
                 'code' => ''
             ];
-        } else {
-          $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
-          switch ($reward['status']) {
-            case 'reward_ok':
-              return [
-                  'status' => 'play_button',
-                  'message_title' => '',
-                  'message_content' => '',
-                  'code_message' => '',
-                  'code' => ''
-              ];
-              break;
-
-            case 'empty_code':
-              return [
-                  'status' => 'empty_code',
-                  'message_title' => Lang::get('label.promotional_event.information_message.empty_code.title'),
-                  'message_content' => Lang::get('label.promotional_event.information_message.empty_code.content'),
-                  'code_message' => '',
-                  'code' => ''
-              ];
-              break;
-          }
-
         }
+
+        return [
+          'status' => 'play_button',
+          'message_title' => '',
+          'message_content' => '',
+          'code_message' => '',
+          'code' => ''
+        ];
     }
 
     /**
@@ -266,12 +255,15 @@ class PromotionalEventProcessor
         $this->userId = (empty($userId)) ? $this->userId : $userId;
         $this->peId = (empty($peId)) ? $this->peId : $peId;
         $this->peType = (empty($peType)) ? $this->peType : $peType;
+        $this->peLang = (empty($language)) ? $this->peLang : $language;
         $user = User::where('user_id', $this->userId)->first();
-        App::setLocale($language);
+        App::setLocale($this->peLang);
 
         $rewardDetail = $this->getRewardDetail($this->peId, $this->peType);
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
+
+        $userRewardStatus = '';
 
         if (! is_object($rewardDetail)) {
             return;
@@ -289,28 +281,31 @@ class PromotionalEventProcessor
             $code = $reward['code'];
         } else {
             $code = $userReward->reward_code;
+            $userRewardStatus = $userReward->status;
         }
 
-        $updateField = array('status' => 'redeemed',
+        $updateField = array('status' => 'pending',
+                          'user_id' => $user->user_id,
+                          'user_email' => $user->user_email);
+
+        $status = 'pending';
+
+        if ($user->status === 'active') {
+            $updateField = array('status' => 'redeemed',
                               'user_id' => $user->user_id,
                               'user_email' => $user->user_email);
-        $status = 'redeemed';
+            $status = 'redeemed';
 
-        if ($user->status != 'active') {
-            $updateField = array('status' => 'pending',
-                              'user_id' => $user->user_id,
-                              'user_email' => $user->user_email);
-
-            $status = 'pending';
-        }
-
-        if ($status === 'redeemed') {
-            // send the email via queue
-            Queue::push('Orbit\\Queue\\PromotionalEventMail', [
-                'campaignId'         => $this->peId,
-                'userId'             => $user->user_id,
-                'languageId'         => $language
-            ]);
+            // if user already redeemed the code, it's mean user already get email
+            // so doesn't need to send email twice
+            if ($userRewardStatus != 'redeemed') {
+                // send the email via queue
+                Queue::push('Orbit\\Queue\\PromotionalEventMail', [
+                    'campaignId'         => $this->peId,
+                    'userId'             => $user->user_id,
+                    'languageId'         => $language
+                ]);
+            }
         }
 
         $updateRewardDetailCode = RewardDetailCode::where('reward_detail_id', $rewardDetail->reward_detail_id)
@@ -320,8 +315,14 @@ class PromotionalEventProcessor
         if (is_object($userReward)) {
             $updateUserReward = UserReward::where('reward_detail_id', $rewardDetail->reward_detail_id)
                                           ->where('user_id', $user->user_id)
-                                          ->where('reward_code', $code)
-                                          ->update(array('status' => $status));
+                                          ->where('reward_code', $code);
+
+            $updateUserRewardField = array('status' => $status);
+            if ($status === 'redeemed') {
+                $updateUserRewardField = array('status' => $status, 'redeemed_date' => date("Y-m-d H:i:s"));
+            }
+
+            $updateUserReward->update($updateUserRewardField);
 
             return;
         }
@@ -334,8 +335,43 @@ class PromotionalEventProcessor
         $newUserReward->reward_code = $code;
         $newUserReward->issued_date = date("Y-m-d H:i:s");
         $newUserReward->status = $status;
+        if ($status === 'redeemed') {
+            $newUserReward->redeemed_date = date("Y-m-d H:i:s");
+        }
         $newUserReward->save();
 
         return;
+    }
+
+    /**
+     * get promotional event object based on type
+     * (should be called after create())
+     *
+     * @return News or Coupon
+     */
+    public function getPromotionalEvent()
+    {
+        $reward = NULL;
+        switch (strtolower($this->peType)) {
+            case 'news':
+                $promotionalEvent = News::where('news.news_id', $this->peId)
+                    ->where('status', 'active')
+                    ->where('news.is_having_reward', '=', 'Y')
+                    ->first();
+
+                if (is_object($promotionalEvent)) {
+                    $reward = new \stdclass();
+                    $reward->reward_id = $promotionalEvent->news_id;
+                    $reward->reward_name = $promotionalEvent->news_name;
+                }
+
+                break;
+
+            default:
+                # code...
+                break;
+        }
+
+        return $reward;
     }
 }

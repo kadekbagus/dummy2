@@ -6,6 +6,7 @@
  */
 use Activity;
 use UserSignin;
+use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 
 class SignInRecorder {
 
@@ -16,26 +17,55 @@ class SignInRecorder {
      * @param Mall $mall - optional
      * @return void
      */
-    public static function setSignInActivity($user, $from, $mall = NULL, $activity = NULL, $saveUserSignIn = FALSE)
+    public static function setSignInActivity($user, $from, $mall = NULL, $activity = NULL, $saveUserSignIn = FALSE, $rewardId = null, $rewardType = null, $language = 'en')
     {
-        if (is_object($user)) {
-            if (is_null($activity)) {
-                $activity = Activity::mobileci()
-                    ->setActivityType('login')
-                    ->setLocation($mall)
-                    ->setUser($user)
-                    ->setActivityName('login_ok')
-                    ->setActivityNameLong('Sign In')
-                    ->setObject($user)
-                    ->setNotes(sprintf('Sign In via Mobile (%s) OK', ucfirst($from)))
-                    ->setModuleName('Application')
-                    ->responseOK();
+        if (! empty($rewardId) && ! empty($rewardType)) {
+            // registration activity that comes from promotional event page
+            $reward = PromotionalEventProcessor::create($user->user_id, $rewardId, $rewardType, $language)->getPromotionalEvent();
 
-                $activity->save();
+            if (is_object($reward)) {
+                if (is_object($user)) {
+                    if (is_null($activity)) {
+                        $activity = Activity::mobileci()
+                            ->setActivityType('login_with_reward')
+                            ->setLocation($mall)
+                            ->setUser($user)
+                            ->setActivityName('login_ok')
+                            ->setActivityNameLong('Sign In')
+                            ->setObject($user)
+                            ->setObjectDisplayName($reward->reward_name)
+                            ->setNotes(sprintf('Sign In via Mobile (%s) OK', ucfirst($from)))
+                            ->setModuleName('Application')
+                            ->responseOK();
+
+                        $activity->save();
+                    }
+
+                    if ($saveUserSignIn) {
+                        static::saveUserSignIn($user, $from, $mall, $activity);
+                    }
+                }
             }
+        } else {
+            if (is_object($user)) {
+                if (is_null($activity)) {
+                    $activity = Activity::mobileci()
+                        ->setActivityType('login')
+                        ->setLocation($mall)
+                        ->setUser($user)
+                        ->setActivityName('login_ok')
+                        ->setActivityNameLong('Sign In')
+                        ->setObject($user)
+                        ->setNotes(sprintf('Sign In via Mobile (%s) OK', ucfirst($from)))
+                        ->setModuleName('Application')
+                        ->responseOK();
 
-            if ($saveUserSignIn) {
-                static::saveUserSignIn($user, $from, $mall, $activity);
+                    $activity->save();
+                }
+
+                if ($saveUserSignIn) {
+                    static::saveUserSignIn($user, $from, $mall, $activity);
+                }
             }
         }
     }
@@ -47,29 +77,57 @@ class SignInRecorder {
      * @param Mall $mall - optional
      * @return void
      */
-    public static function setSignUpActivity($user, $from, $mall)
+    public static function setSignUpActivity($user, $from, $mall, $rewardId = null, $rewardType = null, $language = 'en')
     {
-        $activity = Activity::mobileci()
-            ->setLocation($mall)
-            ->setActivityType('registration')
-            ->setUser($user)
-            ->setActivityName('registration_ok')
-            ->setObject($user)
-            ->setModuleName('User')
-            ->responseOK();
+        if (! empty($rewardId) && ! empty($rewardType)) {
+            // registration activity that comes from promotional event page
+            $reward = PromotionalEventProcessor::create($user->user_id, $rewardId, $rewardType, $language)->getPromotionalEvent();
 
-        if ($from === 'facebook') {
-            $activity->setActivityNameLong('Sign Up via Mobile (Facebook)')
-                    ->setNotes('Sign Up via Mobile (Facebook) OK');
-        } else if ($from === 'google') {
-            $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
-                    ->setNotes('Sign Up via Mobile (Google+) OK');
-        } else if ($from === 'form') {
-            $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
-                    ->setNotes('Sign Up via Mobile (Email Address) OK');
+            if (is_object($reward)) {
+                $activity = Activity::mobileci()
+                    ->setLocation($mall)
+                    ->setActivityType('registration_with_reward')
+                    ->setUser($user)
+                    ->setActivityName('registration_ok')
+                    ->setObject($user)
+                    ->setObjectDisplayName($reward->reward_name)
+                    ->setModuleName('User')
+                    ->setNotes($reward->reward_id)
+                    ->responseOK();
+
+                if ($from === 'facebook') {
+                    $activity->setActivityNameLong('Sign Up via Mobile (Facebook)');
+                } else if ($from === 'google') {
+                    $activity->setActivityNameLong('Sign Up via Mobile (Google+)');
+                } else if ($from === 'form') {
+                    $activity->setActivityNameLong('Sign Up via Mobile (Email Address)');
+                }
+
+                $activity->save();
+            }
+        } else {
+            $activity = Activity::mobileci()
+                ->setLocation($mall)
+                ->setActivityType('registration')
+                ->setUser($user)
+                ->setActivityName('registration_ok')
+                ->setObject($user)
+                ->setModuleName('User')
+                ->responseOK();
+
+            if ($from === 'facebook') {
+                $activity->setActivityNameLong('Sign Up via Mobile (Facebook)')
+                        ->setNotes('Sign Up via Mobile (Facebook) OK');
+            } else if ($from === 'google') {
+                $activity->setActivityNameLong('Sign Up via Mobile (Google+)')
+                        ->setNotes('Sign Up via Mobile (Google+) OK');
+            } else if ($from === 'form') {
+                $activity->setActivityNameLong('Sign Up via Mobile (Email Address)')
+                        ->setNotes('Sign Up via Mobile (Email Address) OK');
+            }
+
+            $activity->save();
         }
-
-        $activity->save();
     }
 
     /**
