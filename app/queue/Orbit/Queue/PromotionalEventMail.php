@@ -50,7 +50,7 @@ class PromotionalEventMail
                                 ELSE {$prefix}news_translations.news_name END as news_name,
                             CASE WHEN ({$prefix}reward_detail_translations.email_content = ''
                                     or {$prefix}reward_detail_translations.email_content is null)
-                                THEN default_translation.email_content
+                                THEN reward_default_translation.email_content
                                 ELSE {$prefix}reward_detail_translations.email_content
                                 END as email_content"))
                     ->join('reward_details', 'reward_details.object_id', '=', 'news.news_id')
@@ -68,9 +68,9 @@ class PromotionalEventMail
                         $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
                           ->on('reward_detail_translations.language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
                     })
-                    ->leftJoin('reward_detail_translations as default_translation', function ($q) use ($valid_language) {
-                        $q->on(DB::raw("default_translation.reward_detail_id"), '=', 'reward_details.reward_detail_id')
-                          ->on(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
+                    ->leftJoin('reward_detail_translations as reward_default_translation', function ($q) use ($valid_language) {
+                        $q->on(DB::raw("reward_default_translation.reward_detail_id"), '=', 'reward_details.reward_detail_id')
+                          ->on(DB::raw("reward_default_translation.language_id"), '=', 'languages.language_id');
                     })
                     ->where('news.news_id', $data['campaignId'])
                     ->where('news.is_having_reward', '=', 'Y')
