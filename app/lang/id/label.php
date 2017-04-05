@@ -9,7 +9,7 @@ return array(
         'information_message' => [
             'already_got'    => [
                 'title' => '',
-                'content' => 'Anda sudah berpartisipasi dengan promosi event ini'
+                'content' => 'Terimakasih telah berpartisipasi pada promosi event ini'
             ],
             'empty_code'     => [
                 'title' => '',
@@ -25,7 +25,7 @@ return array(
             ],
             'reward_ok' => [
                 'title' => '',
-                'content' => 'Terimakasih telah mengikuti promosi event dari Gotomalls.com'
+                'content' => 'Terimakasih telah berpartisipasi pada promosi event ini'
             ]
         ],
         'code_message' => [
