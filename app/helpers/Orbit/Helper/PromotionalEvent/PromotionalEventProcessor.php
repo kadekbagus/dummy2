@@ -309,20 +309,18 @@ class PromotionalEventProcessor
             $code = $userReward->reward_code;
         }
 
-        $updateField = array('status' => 'redeemed',
+        $updateField = array('status' => 'pending',
+                          'user_id' => $user->user_id,
+                          'user_email' => $user->user_email);
+
+        $status = 'pending';
+
+        if ($user->status === 'active') {
+            $updateField = array('status' => 'redeemed',
                               'user_id' => $user->user_id,
                               'user_email' => $user->user_email);
-        $status = 'redeemed';
+            $status = 'redeemed';
 
-        if ($user->status != 'active') {
-            $updateField = array('status' => 'pending',
-                              'user_id' => $user->user_id,
-                              'user_email' => $user->user_email);
-
-            $status = 'pending';
-        }
-
-        if ($status === 'redeemed') {
             // send the email via queue
             Queue::push('Orbit\\Queue\\PromotionalEventMail', [
                 'campaignId'         => $this->peId,
