@@ -153,7 +153,7 @@ class PromotionalEventProcessor
      * @param string peId
      * @param string peType
      */
-    public function format($userId='', $peId='', $peType='', $language='en', $firstTime=FALSE) {
+    public function format($userId='', $peId='', $peType='', $language='en', $firstTime='false') {
         $this->userId = (empty($userId)) ? $this->userId : $userId;
         $this->peId = (empty($peId)) ? $this->peId : $peId;
         $this->peType = (empty($peType)) ? $this->peType : $peType;
@@ -196,7 +196,7 @@ class PromotionalEventProcessor
         if (is_object($userReward)) {
             switch ($userReward->status) {
                 case 'redeemed':
-                    if ($firstTime) {
+                    if (strtolower($firstTime) != 'false') {
                         return [
                             'status' => 'reward_ok',
                             'message_title' => Lang::get('label.promotional_event.information_message.reward_ok.title'),
