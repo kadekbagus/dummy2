@@ -5509,18 +5509,7 @@ return array(
         ),
 
         // subject of the email
-        'subject' => '%s - Gotomalls.com',
-
-        // base url of the campaign detail, needed for showing link on the email
-        'news_detail_base_url' => 'https://v33.gotomalls.cool/#!/events/%s/%s',
-
-        'promotion_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotions/%s/%s?%s',
-
-        'coupon_detail_base_url' => 'https://v33.gotomalls.cool/#!/coupons/%s/%s?%s',
-
-        'store_detail_base_url' => 'https://v33.gotomalls.cool/#!/stores/%s/%s',
-
-        'promotional_event_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotional-events/%s/%s?%s',
+        'subject' => '%s - Gotomalls.com'
     ),
 
     /**
