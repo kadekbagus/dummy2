@@ -81,7 +81,7 @@ class PromotionalEventMail
                                 ->where('status', '!=', 'expired')
                                 ->first();
 
-        $user_full_name = $user->user_firstname . ' ' . $user->lastname;
+        $user_full_name = $user->getFullName();
 
         $arr_search = ['{{USER_FULL_NAME}}', '{{USER_EMAIL}}', '{{USER_CODE}}'];
         $arr_replace = [$user_full_name, $user->user_email, $userReward->reward_code];
