@@ -91,6 +91,7 @@ class PromotionalEventMail
 
         $dataView['message'] = $message;
         $dataView['email'] = $user->user_email;
+        $dataView['campaignName'] = $campaign->news_name;
         $dataView['linkMalls']      = sprintf($baseLinkUrl, 'malls');
         $dataView['linkStores']     = sprintf($baseLinkUrl, 'stores');
         $dataView['linkPromotions'] = sprintf($baseLinkUrl, 'promotions');
@@ -125,14 +126,14 @@ class PromotionalEventMail
 
         Mail::send($mailviews, $data, function($message) use ($data)
         {
-            $emailconf = Config::get('orbit.campaign_share_email.sender');
+            $emailconf = Config::get('orbit.promotional_event_get_code_email.sender');
             $from = $emailconf['email'];
             $name = $emailconf['name'];
 
             $email = $data['email'];
 
-            $subjectConfig = Config::get('orbit.campaign_share_email.subject');
-            $subject = sprintf($subjectConfig, ucfirst($data['campaignType']), $data['campaignName']);
+            $subjectConfig = Config::get('orbit.promotional_event_get_code_email.subject');
+            $subject = sprintf($subjectConfig, $data['campaignName']);
 
             $message->from($from, $name);
             $message->subject($subject);
