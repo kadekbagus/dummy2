@@ -5353,6 +5353,16 @@ return array(
                 'object_type_parameter_name' => 'object_type',
                 'parameter_name' => 'object_id'
             ),
+            // User click promotional event in promotional event history page
+            '118' => array(
+                'name' => 'click_promotional_event_history',
+                'name_long' => 'Click Promotional Event History',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 

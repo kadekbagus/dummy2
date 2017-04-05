@@ -1702,10 +1702,7 @@ class NewsAPIController extends ControllerAPI
                         ->groupBy('news.news_id');
 
             if ($filterName === '') {
-                $news->where('languages.name', '=', DB::raw("(SELECT IF({$prefix}merchants.object_type = 'tenant', pm.mobile_default_language, {$prefix}merchants.mobile_default_language)
-                                FROM {$prefix}merchants
-                                LEFT JOIN {$prefix}merchants pm ON pm.merchant_id = {$prefix}merchants.parent_id
-                                WHERE {$prefix}merchants.merchant_id = (SELECT nm.merchant_id FROM {$prefix}news_merchant nm WHERE nm.news_id = {$prefix}news.news_id LIMIT 1))"));
+                $news->where('languages.name', '=', DB::raw("ca.mobile_default_language"));
             }
 
             // Filter news by Ids
