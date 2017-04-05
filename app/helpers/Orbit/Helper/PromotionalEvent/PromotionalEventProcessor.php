@@ -263,6 +263,8 @@ class PromotionalEventProcessor
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
 
+        $userRewardStatus = '';
+
         if (! is_object($rewardDetail)) {
             return;
         }
@@ -276,7 +278,9 @@ class PromotionalEventProcessor
             if ($reward['status'] === 'empty_code') {
                 return;
             }
+
             $code = $reward['code'];
+            $userRewardStatus = $userReward->status;
         } else {
             $code = $userReward->reward_code;
         }
@@ -293,12 +297,16 @@ class PromotionalEventProcessor
                               'user_email' => $user->user_email);
             $status = 'redeemed';
 
-            // send the email via queue
-            Queue::push('Orbit\\Queue\\PromotionalEventMail', [
-                'campaignId'         => $this->peId,
-                'userId'             => $user->user_id,
-                'languageId'         => $language
-            ]);
+            // if user already redeemed the code, it's mean user already get email
+            // so doesn't need to send email twice
+            if ($userRewardStatus != 'redeemed') {
+                // send the email via queue
+                Queue::push('Orbit\\Queue\\PromotionalEventMail', [
+                    'campaignId'         => $this->peId,
+                    'userId'             => $user->user_id,
+                    'languageId'         => $language
+                ]);
+            }
         }
 
         $updateRewardDetailCode = RewardDetailCode::where('reward_detail_id', $rewardDetail->reward_detail_id)
