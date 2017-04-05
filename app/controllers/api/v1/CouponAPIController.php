@@ -2396,10 +2396,7 @@ class CouponAPIController extends ControllerAPI
                 ->groupBy('promotions.promotion_id');
 
             if($filterName === '') {
-                $coupons->where('languages.name', '=', DB::raw("(SELECT IF({$table_prefix}merchants.object_type = 'tenant', pm.mobile_default_language, {$table_prefix}merchants.mobile_default_language)
-                                FROM {$table_prefix}merchants
-                                LEFT JOIN {$table_prefix}merchants pm ON pm.merchant_id = {$table_prefix}merchants.parent_id
-                                WHERE {$table_prefix}merchants.merchant_id = (SELECT nm.retailer_id FROM {$table_prefix}promotion_retailer nm WHERE nm.promotion_id = {$table_prefix}promotions.promotion_id LIMIT 1))"));
+                $coupons->where('languages.name', '=', DB::raw("ca.mobile_default_language"));
             }
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
