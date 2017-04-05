@@ -338,8 +338,14 @@ class PromotionalEventProcessor
         if (is_object($userReward)) {
             $updateUserReward = UserReward::where('reward_detail_id', $rewardDetail->reward_detail_id)
                                           ->where('user_id', $user->user_id)
-                                          ->where('reward_code', $code)
-                                          ->update(array('status' => $status));
+                                          ->where('reward_code', $code);
+
+            $updateUserRewardField = array('status' => $status);
+            if ($status === 'redeemed') {
+                $updateUserRewardField = array('status' => $status, 'redeemed_date' => date("Y-m-d H:i:s"));
+            }
+
+            $updateUserReward->update($updateUserRewardField);
 
             return;
         }
@@ -352,6 +358,9 @@ class PromotionalEventProcessor
         $newUserReward->reward_code = $code;
         $newUserReward->issued_date = date("Y-m-d H:i:s");
         $newUserReward->status = $status;
+        if ($status === 'redeemed') {
+            $newUserReward->redeemed_date = date("Y-m-d H:i:s");
+        }
         $newUserReward->save();
 
         return;
