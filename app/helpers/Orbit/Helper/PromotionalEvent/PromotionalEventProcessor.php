@@ -278,11 +278,10 @@ class PromotionalEventProcessor
             if ($reward['status'] === 'empty_code') {
                 return;
             }
-
             $code = $reward['code'];
-            $userRewardStatus = $userReward->status;
         } else {
             $code = $userReward->reward_code;
+            $userRewardStatus = $userReward->status;
         }
 
         $updateField = array('status' => 'pending',
