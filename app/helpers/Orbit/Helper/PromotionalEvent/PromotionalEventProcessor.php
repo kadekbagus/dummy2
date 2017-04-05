@@ -214,7 +214,19 @@ class PromotionalEventProcessor
             }
         }
 
+        $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
+
         if ($rewardDetail->is_new_user_only === 'Y') {
+            if ($reward['status'] === 'empty_code') {
+                return [
+                  'status' => 'empty_code',
+                  'message_title' => Lang::get('label.promotional_event.information_message.empty_code.title'),
+                  'message_content' => Lang::get('label.promotional_event.information_message.empty_code.content'),
+                  'code_message' => '',
+                  'code' => ''
+                ];
+            }
+
             return [
                 'status' => 'new_user_only',
                 'message_title' => Lang::get('label.promotional_event.information_message.new_user_only.title'),
@@ -223,7 +235,6 @@ class PromotionalEventProcessor
                 'code' => ''
             ];
         } else {
-          $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
           switch ($reward['status']) {
             case 'reward_ok':
               return [
