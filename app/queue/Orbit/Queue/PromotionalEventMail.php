@@ -3,8 +3,7 @@
  * Process queue for sending user email after registration. This email
  * contains activation link.
  *
- * @author Rio Astamal <me@rioastamal.net>
- * @author Irianto Pratama <irianto@dominopos.com>
+ * @author Kadek <kadek@dominopos.com>
  */
 use User;
 use Mail;

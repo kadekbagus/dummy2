@@ -128,7 +128,7 @@
                                                 <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-spacing:0px;" align="center" border="0">
                                                     <tbody>
                                                         <tr>
-                                                            <td style="width:600px;"><img alt="Gotomalls Logo" title="" height="auto" src="{{ asset('emails/header-big-deals.jpg') }}" style="border:none;border-radius:;display:block;outline:none;text-decoration:none;width:100%;height:auto;" width="600">
+                                                            <td style="width:600px;"><img alt="Gotomalls Logo" title="" height="auto" src="{{ asset('emails/header-promotional-event.jpg') }}" style="border:none;border-radius:;display:block;outline:none;text-decoration:none;width:100%;height:auto;" width="600">
                                                             </td>
                                                         </tr>
                                                     </tbody>
