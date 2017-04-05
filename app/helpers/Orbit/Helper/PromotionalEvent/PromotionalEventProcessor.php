@@ -215,18 +215,17 @@ class PromotionalEventProcessor
         }
 
         $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
+        if ($reward['status'] === 'empty_code') {
+            return [
+              'status' => 'empty_code',
+              'message_title' => Lang::get('label.promotional_event.information_message.empty_code.title'),
+              'message_content' => Lang::get('label.promotional_event.information_message.empty_code.content'),
+              'code_message' => '',
+              'code' => ''
+            ];
+        }
 
         if ($rewardDetail->is_new_user_only === 'Y') {
-            if ($reward['status'] === 'empty_code') {
-                return [
-                  'status' => 'empty_code',
-                  'message_title' => Lang::get('label.promotional_event.information_message.empty_code.title'),
-                  'message_content' => Lang::get('label.promotional_event.information_message.empty_code.content'),
-                  'code_message' => '',
-                  'code' => ''
-                ];
-            }
-
             return [
                 'status' => 'new_user_only',
                 'message_title' => Lang::get('label.promotional_event.information_message.new_user_only.title'),
@@ -234,30 +233,15 @@ class PromotionalEventProcessor
                 'code_message' => '',
                 'code' => ''
             ];
-        } else {
-          switch ($reward['status']) {
-            case 'reward_ok':
-              return [
-                  'status' => 'play_button',
-                  'message_title' => '',
-                  'message_content' => '',
-                  'code_message' => '',
-                  'code' => ''
-              ];
-              break;
-
-            case 'empty_code':
-              return [
-                  'status' => 'empty_code',
-                  'message_title' => Lang::get('label.promotional_event.information_message.empty_code.title'),
-                  'message_content' => Lang::get('label.promotional_event.information_message.empty_code.content'),
-                  'code_message' => '',
-                  'code' => ''
-              ];
-              break;
-          }
-
         }
+
+        return [
+          'status' => 'play_button',
+          'message_title' => '',
+          'message_content' => '',
+          'code_message' => '',
+          'code' => ''
+        ];
     }
 
     /**
@@ -279,6 +263,8 @@ class PromotionalEventProcessor
         $userReward = $this->checkUserReward($this->userId, $this->peId, $this->peType);
         $reward = $this->getAvailableCode($this->userId, $this->peId, $this->peType);
 
+        $userRewardStatus = '';
+
         if (! is_object($rewardDetail)) {
             return;
         }
@@ -292,7 +278,9 @@ class PromotionalEventProcessor
             if ($reward['status'] === 'empty_code') {
                 return;
             }
+
             $code = $reward['code'];
+            $userRewardStatus = $userReward->status;
         } else {
             $code = $userReward->reward_code;
         }
@@ -309,12 +297,16 @@ class PromotionalEventProcessor
                               'user_email' => $user->user_email);
             $status = 'redeemed';
 
-            // send the email via queue
-            Queue::push('Orbit\\Queue\\PromotionalEventMail', [
-                'campaignId'         => $this->peId,
-                'userId'             => $user->user_id,
-                'languageId'         => $language
-            ]);
+            // if user already redeemed the code, it's mean user already get email
+            // so doesn't need to send email twice
+            if ($userRewardStatus != 'redeemed') {
+                // send the email via queue
+                Queue::push('Orbit\\Queue\\PromotionalEventMail', [
+                    'campaignId'         => $this->peId,
+                    'userId'             => $user->user_id,
+                    'languageId'         => $language
+                ]);
+            }
         }
 
         $updateRewardDetailCode = RewardDetailCode::where('reward_detail_id', $rewardDetail->reward_detail_id)
