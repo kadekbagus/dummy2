@@ -1702,7 +1702,12 @@ class NewsAPIController extends ControllerAPI
                         ->groupBy('news.news_id');
 
             if ($filterName === '') {
-                $news->where('languages.name', '=', DB::raw("ca.mobile_default_language"));
+                // handle role campaign admin cause not join with campaign account
+                if ($role->role_name === 'Campaign Admin' ) {
+                    $news->where('languages.name', '=', DB::raw("(select ca.mobile_default_language from {$prefix}campaign_account ca where ca.user_id = {$this->quote($user->user_id)})"));
+                } else {
+                    $news->where('languages.name', '=', DB::raw("ca.mobile_default_language"));
+                }
             }
 
             // Filter news by Ids

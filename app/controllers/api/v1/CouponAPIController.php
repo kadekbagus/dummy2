@@ -2396,7 +2396,12 @@ class CouponAPIController extends ControllerAPI
                 ->groupBy('promotions.promotion_id');
 
             if($filterName === '') {
-                $coupons->where('languages.name', '=', DB::raw("ca.mobile_default_language"));
+                // handle role campaign admin cause not join with campaign account
+                if ($role->role_name === 'Campaign Admin' ) {
+                    $coupons->where('languages.name', '=', DB::raw("(select ca.mobile_default_language from {$table_prefix}campaign_account ca where ca.user_id = {$this->quote($user->user_id)})"));
+                } else {
+                    $coupons->where('languages.name', '=', DB::raw("ca.mobile_default_language"));
+                }
             }
 
             if (strtolower($user->role->role_name) === 'mall customer service') {
