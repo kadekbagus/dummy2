@@ -295,17 +295,6 @@ class PromotionalEventProcessor
                               'user_id' => $user->user_id,
                               'user_email' => $user->user_email);
             $status = 'redeemed';
-
-            // if user already redeemed the code, it's mean user already get email
-            // so doesn't need to send email twice
-            if ($userRewardStatus != 'redeemed') {
-                // send the email via queue
-                Queue::push('Orbit\\Queue\\PromotionalEventMail', [
-                    'campaignId'         => $this->peId,
-                    'userId'             => $user->user_id,
-                    'languageId'         => $language
-                ]);
-            }
         }
 
         $updateRewardDetailCode = RewardDetailCode::where('reward_detail_id', $rewardDetail->reward_detail_id)
@@ -321,8 +310,18 @@ class PromotionalEventProcessor
             if ($status === 'redeemed') {
                 $updateUserRewardField = array('status' => $status, 'redeemed_date' => date("Y-m-d H:i:s"));
             }
-
             $updateUserReward->update($updateUserRewardField);
+
+            // if user already redeemed the code, it means user already get email
+            // so doesn't need to send email twice
+            if ($status === 'redeemed' && $userRewardStatus != 'redeemed') {
+                // send the email via queue
+                Queue::push('Orbit\\Queue\\PromotionalEventMail', [
+                    'campaignId'         => $this->peId,
+                    'userId'             => $user->user_id,
+                    'languageId'         => $language
+                ]);
+            }
 
             return;
         }
@@ -339,6 +338,17 @@ class PromotionalEventProcessor
             $newUserReward->redeemed_date = date("Y-m-d H:i:s");
         }
         $newUserReward->save();
+
+        // if user already redeemed the code, it means user already get email
+        // so doesn't need to send email twice
+        if ($status === 'redeemed' && $userRewardStatus != 'redeemed') {
+            // send the email via queue
+            Queue::push('Orbit\\Queue\\PromotionalEventMail', [
+                'campaignId'         => $this->peId,
+                'userId'             => $user->user_id,
+                'languageId'         => $language
+            ]);
+        }
 
         return;
     }
