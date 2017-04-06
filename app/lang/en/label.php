@@ -9,7 +9,7 @@ return array(
         'information_message' => [
             'already_got'    => [
                 'title' => '',
-                'content' => 'Thank you for participating this Promotional Event'
+                'content' => 'Thank you for participating to this Promotional Event'
             ],
             'empty_code'     => [
                 'title' => '',
@@ -25,7 +25,7 @@ return array(
             ],
             'reward_ok' => [
                 'title' => '',
-                'content' => 'Thank you for participating this Promotional Event'
+                'content' => 'Thank you for participating to this Promotional Event'
             ]
         ],
         'code_message' => [
