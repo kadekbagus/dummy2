@@ -2810,14 +2810,15 @@ class PromotionalEventAPIController extends ControllerAPI
                         } else {
                             $validator_validation[$field] = 'max:10';
                         }
-                    } else {
+                    }
+                    if (in_array($field, ['email_content'])) {
                         if ($language_id === $id_language_default) {
                             $validator_validation[$field] = 'required';
                         } else {
                             $validator_validation[$field] = '';
                         }
-
                     }
+
                     $validator = Validator::make(
                         $validator_value,
                         $validator_validation
