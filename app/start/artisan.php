@@ -212,6 +212,9 @@ Artisan::add(new FillTableIp2LocationCitiesCommand);
 // Update coupon link to tenant
 Artisan::add(new CouponUpdateLinkToTenant);
 
+// Fill table grab_cities
+Artisan::add(new FillTableGrabCitiesCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
