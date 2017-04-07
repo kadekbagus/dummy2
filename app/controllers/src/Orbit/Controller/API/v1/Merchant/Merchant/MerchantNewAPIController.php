@@ -73,6 +73,8 @@ class MerchantNewAPIController extends ControllerAPI
             $keywords = (array) $keywords;
             $languages = OrbitInput::post('languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
+            $phone = OrbitInput::post('phone');
+            $email = OrbitInput::post('email');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -82,13 +84,17 @@ class MerchantNewAPIController extends ControllerAPI
                     'merchantName'            => $merchantName,
                     'country'                 => $countryId,
                     'languages'               => $languages,
-                    'mobile_default_language' => $mobile_default_language
+                    'mobile_default_language' => $mobile_default_language,
+                    'phone'                   => $phone,
+                    'email'                   => $email
                 ),
                 array(
                     'merchantName'            => 'required|orbit.exist.merchant_name:' . $countryId,
                     'country'                 => 'required',
                     'languages'               => 'required|array',
-                    'mobile_default_language' => 'required|size:2|orbit.supported.language'
+                    'mobile_default_language' => 'required|size:2|orbit.supported.language',
+                    'phone'                   => 'required',
+                    'email'                   => 'required'
                 ),
                 array(
                     'orbit.exist.merchant_name' => 'Merchant is already exist',
@@ -138,6 +144,8 @@ class MerchantNewAPIController extends ControllerAPI
             $newBaseMerchant->country_id = $countryId;
             $newBaseMerchant->facebook_url = $facebookUrl;
             $newBaseMerchant->url = $websiteUrl;
+            $newBaseMerchant->phone = $phone;
+            $newBaseMerchant->email = $email;
             $newBaseMerchant->status = 'active';
 
             if (! empty($translations) ) {
