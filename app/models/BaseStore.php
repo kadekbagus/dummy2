@@ -124,6 +124,40 @@ class BaseStore extends Eloquent
     }
 
     /**
+     * Base Store has many uploaded images.
+     *
+     * @author kadek <kadek@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaImageGrab()
+    {
+        return $this->media()->where('media_name_id', 'base_store_image_grab');
+    }
+
+    /**
+     * Base Store has many uploaded images with original type.
+     *
+     * @author kadek <kadek@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaImageGrabOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'base_store_image_grab');
+    }
+
+    /**
+     * Base Store has many uploaded images with cropped_default type.
+     *
+     * @author kadek <kadek@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaImageGrabCroppedDefault()
+    {
+        return $this->mediaCroppedDefault()->where('media_name_id', 'base_store_image_grab');
+    }
+
+
+    /**
      * Get all store data (presync)
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
