@@ -832,6 +832,389 @@ class StoreUploadAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Upload images grab for Base Store.
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `base_store_id`               (required) - ID of the base store
+     * @param file|array `grab_pictures`               (required) - Pictures of the Image
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadBaseStoreImageGrab()
+    {
+        try {
+            $httpCode = 200;
+            $user = App::make('orbit.upload.user');
+
+            // Load the orbit configuration for base store upload image
+            $uploadImageConfig = Config::get('orbit.upload.base_store.grab_picture');
+            $elementName = $uploadImageConfig['name'];
+
+            // Register custom validation
+            $storeHelper = StoreHelper::create();
+            $storeHelper->storeCustomValidator();
+
+            // Application input
+            $base_store_id = OrbitInput::post('base_store_id');
+            $images = OrbitInput::files($elementName);
+
+            $messages = array(
+                'nomore.than' => Lang::get('validation.max.array', array(
+                    'max' => 3
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'base_store_id' => $base_store_id,
+                    $elementName    => $images,
+                ),
+                array(
+                    'base_store_id' => 'required|orbit.empty.base_store',
+                    $elementName    => 'required|array|nomore.than:3',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadstoreimage.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('basestore.new, basestore.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadstoreimage.after.validation', array($this, $validator));
+
+            // We already had validation base store
+            // get it from there no need to re-query the database
+            $base_store = $storeHelper->getValidBaseStore();
+
+            // Callback to rename the file, we will format it as follow
+            // [BASE_STORE_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($base_store)
+            {
+                $base_store_id = $base_store->base_store_id;
+                $slug = Str::slug($base_store->name);
+                $file['new']->name = sprintf('%s-%s-%s', $base_store_id, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadstoreimage.before.save', array($this, $base_store, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // Delete old base_store image
+            $pastMedia = Media::where('object_id', $base_store->base_store_id)
+                              ->where('object_name', 'base_store')
+                              ->where('media_name_id', 'base_store_image_grab');
+
+            // Get the index of the image to delete the right one
+            $increment = 0;
+            $imgOrder = array_keys($images['name']);
+
+            $pastMedia->where(function($q) use ($increment, $imgOrder) {
+                foreach ($imgOrder as $indexOrder) {
+                    $q->orWhere('metadata', 'order-' . $indexOrder);
+                }
+            });
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $base_store->base_store_id,
+                'name'          => 'base_store',
+                'media_name_id' => 'base_store_image_grab',
+                'modified_by'   => $user->user_id
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            if (isset($uploaded[0])) {
+                $base_store->save();
+            }
+
+            Event::fire('orbit.upload.postuploadstoreimage.after.save', array($this, $base_store, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = 'Base Store Image Grab has been successfully uploaded.';
+
+            // Commit the changes
+            if (! $this->calledFrom('basestore.new, basestore.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadstoreimage.after.commit', array($this, $base_store, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadstoreimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('basestore.new, basestore.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadstoreimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('basestore.new, basestore.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadstoreimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('basestore.new, basestore.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadstoreimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getLine();
+
+            // Rollback the changes
+            if (! $this->calledFrom('basestore.new, basestore.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadstoreimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
+
+    /**
+     * Delete images grab for a base store.
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `base_store_id`                (required) - ID of the merchant/retailer
+     * @param integer    `picture_index`                (required) - Index of the picture
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postDeleteBaseStoreImage()
+    {
+        try {
+            $httpCode = 200;
+
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->deleteStoreImageRoles;
+            if (! in_array(strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            // Register custom validation
+            $storeHelper = StoreHelper::create();
+            $storeHelper->storeCustomValidator();
+
+            // Application input
+            $base_store_id = OrbitInput::post('base_store_id');
+            $picture_index = OrbitInput::post('picture_index');
+
+            $validator = Validator::make(
+                array(
+                    'base_store_id' => $base_store_id,
+                    'picture_index' => $picture_index,
+                ),
+                array(
+                    'base_store_id' => 'required|orbit.empty.base_store',
+                    'picture_index' => 'array',
+                )
+            );
+
+            Event::fire('orbit.upload.postdeletebasestoreimage.before.validation', array($this, $validator));
+
+            if (! $this->calledFrom('basestore.new,basestore.update')) {
+                // Begin database transaction
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postdeletebasestoreimage.after.validation', array($this, $validator));
+
+            // We already had validation base store
+            // get it from there no need to re-query the database
+            $base_store = $storeHelper->getValidBaseStore();
+
+            // Delete old base_store image
+            $pastMedia = Media::where('object_id', $base_store->base_store_id)
+                              ->where('object_name', 'base_store')
+                              ->where('media_name_id', 'base_store_image_grab');
+
+            if (! empty($picture_index)) {
+                $pastMedia->where(function($q) use ($picture_index) {
+                    foreach ($picture_index as $indexOrder) {
+                        $q->orWhere('metadata', 'order-' . $indexOrder);
+                    }
+                });
+            }
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            Event::fire('orbit.upload.postdeletebasestoreimage.before.save', array($this, $base_store));
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right now the business rules actually
+            // only allows one image per base_store
+            $base_store->save();
+
+            Event::fire('orbit.upload.postdeletebasestoreimage.after.save', array($this, $base_store));
+
+            $this->response->data = $base_store;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.retailer.delete_image');
+
+            if (! $this->calledFrom('basestore.new,basestore.update')) {
+                // Commit the changes
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postdeletebasestoreimage.after.commit', array($this, $base_store));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postdeletebasestoreimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('basestore.new,basestore.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postdeletebasestoreimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            if (! $this->calledFrom('basestore.new,basestore.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postdeletebasestoreimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            if (! $this->calledFrom('basestore.new,basestore.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postdeletebasestoreimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = NULL;
+
+            if (! $this->calledFrom('basestore.new, basestore.update')) {
+                // Rollback the changes
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postdeletebasestoreimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
     public function calledFrom($list)
     {
         if (! is_array($list))
