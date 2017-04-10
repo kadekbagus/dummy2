@@ -146,6 +146,12 @@ class StoreListAPIController extends ControllerAPI
                         $store->with('mediaMap');
                     } elseif ($relation === 'mediaMapOrig') {
                         $store->with('mediaMapOrig');
+                    } elseif ($relation === 'mediaImageGrab') {
+                        $store->with('mediaImageGrab');
+                    } elseif ($relation === 'mediaImageGrabOrig') {
+                        $store->with('mediaImageGrabOrig');
+                    } elseif ($relation === 'mediaImageGrabCroppedDefault') {
+                        $store->with('mediaImageGrabCroppedDefault');
                     }
                 }
             });
