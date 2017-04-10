@@ -633,17 +633,18 @@ class AccountAPIController extends ControllerAPI
             $disable_mobile_default_language = ($row->total_campaign > 0) ? true : false;
 
             $records[] = [
-                'account_name'       => $row->campaignAccount->account_name,
-                'company_name'       => $row->company_name,
-                'city'               => $row->userDetail->city,
-                'role_name'          => $row->role_name,
-                'account_type_id'    => $row->campaignAccount->account_type_id,
-                'type_name'          => $row->type_name,
-                'select_all_tenants' => $row->campaignAccount->is_link_to_all,
-                'is_subscribed'      => $row->campaignAccount->is_subscribed,
-                'mobile_default_language' => $row->campaignAccount->mobile_default_language,
+                'account_name'                    => $row->campaignAccount->account_name,
+                'company_name'                    => $row->company_name,
+                'city'                            => $row->userDetail->city,
+                'role_name'                       => $row->role_name,
+                'account_type_id'                 => $row->campaignAccount->account_type_id,
+                'type_name'                       => $row->type_name,
+                'select_all_tenants'              => $row->campaignAccount->is_link_to_all,
+                'is_subscribed'                   => $row->campaignAccount->is_subscribed,
+                'mobile_default_language'         => $row->campaignAccount->mobile_default_language,
+                'phone'                           => $row->campaignAccount->phone,
                 'disable_mobile_default_language' => $disable_mobile_default_language,
-                'tenant_count'       => $tenantAtMallArray,
+                'tenant_count'                    => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model
                 //                                                     What is this?
