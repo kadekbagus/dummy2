@@ -783,6 +783,7 @@ class AccountAPIController extends ControllerAPI
             $province        = OrbitInput::post('province');
             $postal_code     = OrbitInput::post('postal_code');
             $position        = OrbitInput::post('position');
+            $phone           = OrbitInput::post('phone');
 
             $languages = OrbitInput::post('languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
@@ -924,6 +925,7 @@ class AccountAPIController extends ControllerAPI
             $campaignAccount->is_link_to_all  = $select_all_tenants;
             $campaignAccount->is_subscribed   = $is_subscribed;
             $campaignAccount->position        = $position;
+            $campaignAccount->phone           = $phone;
             $campaignAccount->status          = $status;
 
             // check mobile default language must in supported language
@@ -1130,6 +1132,7 @@ class AccountAPIController extends ControllerAPI
             $account_type_id = OrbitInput::post('account_type_id');
             $role_name       = OrbitInput::post('role_name');
             $user_password   = OrbitInput::post('user_password');
+            $phone           = OrbitInput::post('phone');
 
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $languages = OrbitInput::post('languages');
@@ -1349,6 +1352,10 @@ class AccountAPIController extends ControllerAPI
 
             OrbitInput::post('position', function($position) use ($campaignAccount) {
                 $campaignAccount->position = $position;
+            });
+
+            OrbitInput::post('phone', function($phone) use ($campaignAccount) {
+                $campaignAccount->phone = $phone;
             });
 
             OrbitInput::post('status', function($status) use ($campaignAccount) {
