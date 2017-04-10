@@ -1050,7 +1050,7 @@ class StoreUploadAPIController extends ControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function postDeleteBaseStoreImage()
+    public function postDeleteBaseStoreImageGrab()
     {
         try {
             $httpCode = 200;
