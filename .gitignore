@@ -19,6 +19,7 @@ app/config/orbit.php
 app/config/mail.php
 app/config/orbit-notifier.php
 app/config/dynamic-listing.php
+app/config/queue.php
 public/mobile-ci/scripts/config.js
 public/templatepos/js/config.js
 
