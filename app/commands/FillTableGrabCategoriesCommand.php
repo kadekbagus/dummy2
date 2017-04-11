@@ -109,8 +109,8 @@ class FillTableGrabCategoriesCommand extends Command
                 $this->info(sprintf("Update category %s with description %s and status %s", $grab_category_name, $grab_description, $grab_status));
             }
 
-            $this->info("Done");
         }
+        $this->info("Done");
     }
 
     /**
