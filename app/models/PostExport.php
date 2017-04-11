@@ -1,6 +1,6 @@
 <?php
 
-class PostSync extends Eloquent
+class PostExport extends Eloquent
 {
     protected $table = 'post_export';
 
