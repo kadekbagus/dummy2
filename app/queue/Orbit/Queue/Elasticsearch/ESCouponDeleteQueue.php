@@ -77,6 +77,7 @@ class ESCouponDeleteQueue
                     })
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
+                    ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
                     ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                     ->havingRaw("(campaign_status in ('stopped', 'expired') or available = 0)")
                     ->first();
