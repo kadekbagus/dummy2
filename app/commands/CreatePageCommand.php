@@ -95,14 +95,12 @@ class CreatePageCommand extends Command {
                 ),
                 array(
                     'country'     => 'required|orbit.exist.country',
-                    'object_type' => 'required|orbit.exist.object_type',
                     'language'    => 'required|orbit.exist.language',
                     'content'     => 'required',
-                    'status'      => 'required|orbit.exist.status',
+                    'status'      => 'required|in:active,inactive,deleted',
                 ),
                 array(
                     'orbit.exist.country'     => 'Country is invalid',
-                    'orbit.exist.object_type' => 'Object type id is invalid',
                     'orbit.exist.language'    => 'language is invalid',
                     'orbit.exist.status'      => 'Status is invalid',
                 )
@@ -176,28 +174,6 @@ class CreatePageCommand extends Command {
             $existCountryId = Language::where('name', $value)->first();
             if (! empty($existCountryId)) {
                 $valid = true;
-            }
-
-            return $valid;
-        });
-
-        // Check the existence of the news object type
-        Validator::extend('orbit.exist.object_type', function ($attribute, $value, $parameters) {
-            $valid = false;
-            $objectTypes = array('about_us', 'privacy_policy', 'terms_and_conditions', 'advertise_with_us','feedback');
-            foreach ($objectTypes as $objectType) {
-                if($value === $objectType) $valid = $valid || true;
-            }
-
-            return $valid;
-        });
-
-        // Check the existence of the news status
-        Validator::extend('orbit.exist.status', function ($attribute, $value, $parameters) {
-            $valid = false;
-            $statuses = array('active', 'inactive', 'deleted');
-            foreach ($statuses as $status) {
-                if($value === $status) $valid = $valid || true;
             }
 
             return $valid;
