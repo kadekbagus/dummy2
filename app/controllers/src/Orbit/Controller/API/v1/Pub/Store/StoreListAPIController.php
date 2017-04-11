@@ -731,4 +731,14 @@ class StoreListAPIController extends PubControllerAPI
         return $output;
     }
 
+    /**
+     * Force $withScore value to FALSE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setWithOutScore()
+    {
+        $this->withoutScore = TRUE;
+
+        return $this;
+    }
 }
