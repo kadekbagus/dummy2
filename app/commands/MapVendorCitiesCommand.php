@@ -100,7 +100,7 @@ class MapVendorCitiesCommand extends Command
 
             $validation_error = [
                 'gtm_country' => 'required|orbit.empty.gtm_country',
-                'vendor_type' => 'required|in:ip2location,dbip',
+                'vendor_type' => 'required|in:ip2location,dbip,grab',
                 'vendor_city' => 'required|orbit.empty.vendor_city:' . $vendor_type,
                 'gtm_cities'  => 'required|array',
             ];
@@ -196,8 +196,10 @@ class MapVendorCitiesCommand extends Command
 
             if ($vendor === 'ip2location') {
                 $check_city = Ip2LocationCity::where('city', $value)->first();
-            } else {
+            } elseif ($vendor === 'dbip') {
                 $check_city = DBIPCity::where('city', $value)->first();
+            } elseif ($vendor === 'grab') {
+                $check_city = GrabCity::where('grab_city_external_id', $value)->first();
             }
 
             if (empty($check_city)) {

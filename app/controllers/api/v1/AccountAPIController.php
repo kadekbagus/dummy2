@@ -633,17 +633,18 @@ class AccountAPIController extends ControllerAPI
             $disable_mobile_default_language = ($row->total_campaign > 0) ? true : false;
 
             $records[] = [
-                'account_name'       => $row->campaignAccount->account_name,
-                'company_name'       => $row->company_name,
-                'city'               => $row->userDetail->city,
-                'role_name'          => $row->role_name,
-                'account_type_id'    => $row->campaignAccount->account_type_id,
-                'type_name'          => $row->type_name,
-                'select_all_tenants' => $row->campaignAccount->is_link_to_all,
-                'is_subscribed'      => $row->campaignAccount->is_subscribed,
-                'mobile_default_language' => $row->campaignAccount->mobile_default_language,
+                'account_name'                    => $row->campaignAccount->account_name,
+                'company_name'                    => $row->company_name,
+                'city'                            => $row->userDetail->city,
+                'role_name'                       => $row->role_name,
+                'account_type_id'                 => $row->campaignAccount->account_type_id,
+                'type_name'                       => $row->type_name,
+                'select_all_tenants'              => $row->campaignAccount->is_link_to_all,
+                'is_subscribed'                   => $row->campaignAccount->is_subscribed,
+                'mobile_default_language'         => $row->campaignAccount->mobile_default_language,
+                'phone'                           => $row->campaignAccount->phone,
                 'disable_mobile_default_language' => $disable_mobile_default_language,
-                'tenant_count'       => $tenantAtMallArray,
+                'tenant_count'                    => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model
                 //                                                     What is this?
@@ -783,6 +784,7 @@ class AccountAPIController extends ControllerAPI
             $province        = OrbitInput::post('province');
             $postal_code     = OrbitInput::post('postal_code');
             $position        = OrbitInput::post('position');
+            $phone           = OrbitInput::post('phone');
 
             $languages = OrbitInput::post('languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
@@ -924,6 +926,7 @@ class AccountAPIController extends ControllerAPI
             $campaignAccount->is_link_to_all  = $select_all_tenants;
             $campaignAccount->is_subscribed   = $is_subscribed;
             $campaignAccount->position        = $position;
+            $campaignAccount->phone           = $phone;
             $campaignAccount->status          = $status;
 
             // check mobile default language must in supported language
@@ -1130,6 +1133,7 @@ class AccountAPIController extends ControllerAPI
             $account_type_id = OrbitInput::post('account_type_id');
             $role_name       = OrbitInput::post('role_name');
             $user_password   = OrbitInput::post('user_password');
+            $phone           = OrbitInput::post('phone');
 
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $languages = OrbitInput::post('languages');
@@ -1349,6 +1353,10 @@ class AccountAPIController extends ControllerAPI
 
             OrbitInput::post('position', function($position) use ($campaignAccount) {
                 $campaignAccount->position = $position;
+            });
+
+            OrbitInput::post('phone', function($phone) use ($campaignAccount) {
+                $campaignAccount->phone = $phone;
             });
 
             OrbitInput::post('status', function($status) use ($campaignAccount) {

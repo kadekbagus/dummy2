@@ -84,17 +84,13 @@ class MerchantNewAPIController extends ControllerAPI
                     'merchantName'            => $merchantName,
                     'country'                 => $countryId,
                     'languages'               => $languages,
-                    'mobile_default_language' => $mobile_default_language,
-                    'phone'                   => $phone,
-                    'email'                   => $email
+                    'mobile_default_language' => $mobile_default_language
                 ),
                 array(
                     'merchantName'            => 'required|orbit.exist.merchant_name:' . $countryId,
                     'country'                 => 'required',
                     'languages'               => 'required|array',
-                    'mobile_default_language' => 'required|size:2|orbit.supported.language',
-                    'phone'                   => 'required',
-                    'email'                   => 'required'
+                    'mobile_default_language' => 'required|size:2|orbit.supported.language'
                 ),
                 array(
                     'orbit.exist.merchant_name' => 'Merchant is already exist',
