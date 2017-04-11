@@ -72,6 +72,8 @@ class MerchantUpdateAPIController extends ControllerAPI
             $keywords = (array) $keywords;
             $languages = OrbitInput::post('languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
+            $phone = OrbitInput::post('phone');
+            $email = OrbitInput::post('email');
 
             // Begin database transaction
             $this->beginTransaction();
@@ -83,7 +85,7 @@ class MerchantUpdateAPIController extends ControllerAPI
                     'merchantName'            => $merchantName,
                     'country'                 => $countryId,
                     'languages'               => $languages,
-                    'mobile_default_language' => $mobile_default_language,
+                    'mobile_default_language' => $mobile_default_language
                 ),
                 array(
                     'baseMerchantId'          => 'required|orbit.exist.base_merchant_id',
@@ -122,6 +124,14 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             OrbitInput::post('facebook_url', function($facebook_url) use ($updatedBaseMerchant) {
                 $updatedBaseMerchant->facebook_url = $facebook_url;
+            });
+
+            OrbitInput::post('phone', function($phone) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->phone = $phone;
+            });
+
+            OrbitInput::post('email', function($email) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->email = $email;
             });
 
             // Translations

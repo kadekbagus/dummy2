@@ -65,6 +65,30 @@ Event::listen('orbit.basestore.postnewstore.after.save', function($controller, $
     }
     $base_store->load('mediaMap');
     $base_store->load('mediaMapOrig');
+
+    // 3rd party picture (grab)
+    $grab_pictures = OrbitInput::files('grab_pictures');
+
+    if (! empty($grab_pictures)) {
+        $_POST['base_store_id'] = $base_store->base_store_id;
+
+        // This will be used on StoreUploadAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        $response = StoreUploadAPIController::create('raw')
+                       ->setCalledFrom('basestore.new')
+                       ->postUploadBaseStoreImageGrab();
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+
+        $base_store->setRelation('media_image_grab', $response->data);
+        $base_store->media_image_grab = $response->data;
+    }
+    $base_store->load('mediaImageGrab');
+    $base_store->load('mediaImageGrabOrig');
 });
 
 
@@ -126,6 +150,29 @@ Event::listen('orbit.basestore.postupdatestore.after.save', function($controller
     $base_store->load('mediaMap');
     $base_store->load('mediaMapOrig');
 
+    // 3rd party picture (grab)
+    $grab_pictures = OrbitInput::files('grab_pictures');
+
+    if (! empty($grab_pictures)) {
+        $_POST['base_store_id'] = $base_store->base_store_id;
+
+        // This will be used on StoreUploadAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        $response = StoreUploadAPIController::create('raw')
+                       ->setCalledFrom('basestore.update')
+                       ->postUploadBaseStoreImageGrab();
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+
+        $base_store->setRelation('media_image_grab', $response->data);
+        $base_store->media_image_grab = $response->data;
+    }
+    $base_store->load('mediaImageGrab');
+    $base_store->load('mediaImageGrabOrig');
 });
 
 Event::listen('orbit.basestore.sync.begin', function($syncObject) {

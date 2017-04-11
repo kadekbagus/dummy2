@@ -6,6 +6,7 @@
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadLogoAPIController;
+use Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadLogoThirdPartyAPIController;
 
 
 /**
@@ -21,11 +22,12 @@ use Orbit\Controller\API\v1\Merchant\Merchant\MerchantUploadLogoAPIController;
  */
 Event::listen('orbit.basemerchant.postnewbasemerchant.after.save', function($controller, $baseMerchant)
 {
+    // Upload logo
     $logo = OrbitInput::files('logo');
 
     if (! empty($logo)) {
         $_POST['merchant_id'] = $baseMerchant->base_merchant_id;
-        $_POST['object_type'] = 'base_merchant';
+        $_POST['object_type'] = $baseMerchant->object_type;
 
         // This will be used on UploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
@@ -39,8 +41,29 @@ Event::listen('orbit.basemerchant.postnewbasemerchant.after.save', function($con
             throw new \Exception($response->message, $response->code);
         }
     }
-    $baseMerchant->load('mediaLogo');
 
+    // Upload Logo for 3rd Party
+    $logoThirdParty = OrbitInput::files('logo_third_party');
+
+    if (! empty($logoThirdParty)) {
+        $_POST['merchant_id'] = $baseMerchant->base_merchant_id;
+        $_POST['object_type'] = $baseMerchant->object_type;
+
+        // This will be used on UploadAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        $response = MerchantUploadLogoThirdPartyAPIController::create('raw')
+                                       ->setCalledFrom('merchant.update')
+                                       ->postUploadMerchantLogoThirdParty();
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+    }
+
+    $baseMerchant->load('mediaLogo');
+    $baseMerchant->load('mediaLogoGrab');
 });
 
 /**
@@ -55,6 +78,7 @@ Event::listen('orbit.basemerchant.postnewbasemerchant.after.save', function($con
  */
 Event::listen('orbit.basemerchant.postupdatebasemerchant.after.save', function($controller, $baseMerchant)
 {
+    // Upload logo
     $logo = OrbitInput::files('logo');
 
     if (! empty($logo)) {
@@ -73,5 +97,28 @@ Event::listen('orbit.basemerchant.postupdatebasemerchant.after.save', function($
             throw new \Exception($response->message, $response->code);
         }
     }
+
+    // Upload Logo for 3rd Party
+    $logoThirdParty = OrbitInput::files('logo_third_party');
+
+    if (! empty($logoThirdParty)) {
+        $_POST['merchant_id'] = $baseMerchant->base_merchant_id;
+        $_POST['object_type'] = $baseMerchant->object_type;
+
+        // This will be used on UploadAPIController
+        App::instance('orbit.upload.user', $controller->api->user);
+
+        $response = MerchantUploadLogoThirdPartyAPIController::create('raw')
+                                       ->setCalledFrom('merchant.update')
+                                       ->postUploadMerchantLogoThirdParty();
+
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
+        }
+    }
+
     $baseMerchant->load('mediaLogo');
+    $baseMerchant->load('mediaLogoGrab');
+
 });
