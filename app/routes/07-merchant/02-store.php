@@ -43,6 +43,16 @@ Route::post('/api/v1/merchant/store/map/delete', function()
 Route::post('/app/v1/merchant/store/map/delete', ['as' => 'store-api-store-map-delete', 'uses' => 'IntermediateMerchantAuthController@Store\StoreUpload_postDeleteBaseStoreMap']);
 
 /**
+ * delete store image grab
+ */
+Route::post('/api/v1/merchant/store/image-grab/delete', function()
+{
+    return Orbit\Controller\API\v1\Merchant\Store\StoreUploadAPIController::create()->postDeleteBaseStoreImageGrab();
+});
+
+Route::post('/app/v1/merchant/store/image-grab/delete', ['as' => 'store-api-store-image-grab-delete', 'uses' => 'IntermediateMerchantAuthController@Store\StoreUpload_postDeleteBaseStoreImageGrab']);
+
+/**
  * update store
  */
 Route::post('/api/v1/merchant/store/update', function()
