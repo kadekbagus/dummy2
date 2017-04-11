@@ -79,7 +79,7 @@ class StoreNewAPIController extends ControllerAPI
             // generate array validation image
             $images_validation = $storeHelper->generate_validation_image('store_image', $images, 'orbit.upload.retailer.picture', 3);
             $map_validation = $storeHelper->generate_validation_image('store_map', $map, 'orbit.upload.retailer.map');
-            $images_validation = $storeHelper->generate_validation_image('store_image_grab', $grab_images, 'orbit.upload.base_store.grab_picture', 3);
+            $images_validation = $storeHelper->generate_validation_image('store_image_3rd_party_coupon', $grab_images, 'orbit.upload.base_store.grab_picture', 3);
 
             $validation_data = [
                 'base_merchant_id'    => $base_merchant_id,

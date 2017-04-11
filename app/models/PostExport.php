@@ -29,7 +29,7 @@ class PostSync extends Eloquent
             return FALSE;
         }
 
-        $export->finish_export = $export->finish_export + 1;
+        $export->finished_export = $export->finished_export + 1;
         $export->save();
 
         return $export;
