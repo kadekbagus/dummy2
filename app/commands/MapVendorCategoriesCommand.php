@@ -143,7 +143,9 @@ class MapVendorCategoriesCommand extends Command
 
                 $vendor_category = VendorGTMCategory::where('vendor_type', $vendor_type)
                                         ->where('vendor_category_id', $vendor_category_id)
+                                        ->where('gtm_category_id', $gtm_category_id)
                                         ->first();
+
                 if (empty($vendor_category)) {
                     // create
                     $newvendor_category = new VendorGTMCategory();
@@ -155,16 +157,9 @@ class MapVendorCategoriesCommand extends Command
                         $newvendor_category->save();
                     }
 
-                    $this->info( sprintf('Insert Category Id: %s, Category name: %s, Vendor type: %s, to GTM Category %s', $vendor_category_id, $valid_vendor_category->category_name, $vendor_type, $valid_gmt_category->category_name) );
+                    $this->info( sprintf('Mapping Vendor Category Id: %s, Category name: %s, Vendor type: %s, to GTM Category %s', $vendor_category_id, $valid_vendor_category->category_name, $vendor_type, $valid_gmt_category->category_name) );
                 } else {
-                    // update
-                    $vendor_category->gtm_category_id = $gtm_category_id;
-
-                    if (! $dryRun) {
-                        $vendor_category->save();
-                    }
-
-                    $this->info( sprintf('Update Category Id: %s, Category name: %s, Vendor type: %s, to GTM Category %s', $vendor_category_id, $valid_vendor_category->category_name, $vendor_type, $valid_gmt_category->category_name) );
+                    $this->info( sprintf('Already exists Vendor Category Id: %s, Category name: %s, Vendor type: %s, to GTM Category %s', $vendor_category_id, $valid_vendor_category->category_name, $vendor_type, $valid_gmt_category->category_name) );
                 }
             }
 

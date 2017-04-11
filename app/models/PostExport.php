@@ -1,8 +1,8 @@
 <?php
 
-class PostSync extends Eloquent
+class PostExport extends Eloquent
 {
-    protected $table = 'post_export';
+    protected $table = 'post_exports';
 
     protected $primaryKey = 'post_export_id';
 
