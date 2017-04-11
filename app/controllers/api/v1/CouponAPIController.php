@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use \Queue;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -456,8 +457,10 @@ class CouponAPIController extends ControllerAPI
                 }
 
                 // validate PMP Account's required fields for 3rd party
-                $userDetail = $user->userdetail();
-                if (empty($userDetail->mobile_default_language)) {
+                $userDetail = $user->userdetail()->first();
+                $userCampaignAccount = $user->campaignAccount()->first();
+
+                if (empty($userCampaignAccount->mobile_default_language)) {
                     $errorMessage = 'PMP Account missing mobile default language field';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
@@ -468,16 +471,21 @@ class CouponAPIController extends ControllerAPI
 
                 // validate Merchant's required fields for 3rd party
                 $errorTenants = [];
-                foreach ($linkToTenantIds as $tenantId) {
+                foreach ($linkToTenantIds as $linkToTenantId) {
+                    $data = @json_decode($linkToTenantId);
+                    $tenantId = $data->tenant_id;
                     $errorReason = new \stdclass();
-                    $errorReason->reason = array();
+                    $errorReason->reasons = array();
                     $tenant = Tenant::with([
+                            'baseStore' => function($q) {
+                                $q->with('mediaImageGrabOrig', 'baseMerchant.mediaLogoGrab');
+                            },
                             'mediaLogoGrabOrig',
                             'mediaImageGrabOrig',
-                            'mall' => function($q){
-                                $q->addSelect('merchants.*');
-                                $q->includeLatLong();
-                                $q->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
+                            'mall' => function($q) {
+                                $q->addSelect('merchants.*')
+                                    ->includeLatLong()
+                                    ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
                             }
                         ])
                         ->excludeDeleted()
@@ -487,58 +495,62 @@ class CouponAPIController extends ControllerAPI
                     if (is_object($tenant)) {
                         $valid = TRUE;
                         if (!isset($tenant->phone) || empty($tenant->phone)) {
-                            $errorReason->reason[] = 'Tenant missing phone field';
+                            $errorReason->reasons[] = 'Tenant missing phone field';
                             $valid = FALSE;
                         }
                         if (!isset($tenant->email) || empty($tenant->email)) {
-                            $errorReason->reason[] = 'Tenant missing email field';
+                            $errorReason->reasons[] = 'Tenant missing email field';
                             $valid = FALSE;
                         }
-                        if (empty($tenant->mediaLogoGrabOrig) || !isset($tenant->mediaLogoGrabOrig[0]->path)) {
-                            $errorReason->reason[] = 'Tenant missing 3rd party logo field';
+                        if (empty($tenant->baseStore->baseMerchant->mediaLogoGrab) || !isset($tenant->baseStore->baseMerchant->mediaLogoGrab[0])) {
+                            $errorReason->reasons[] = 'Tenant missing 3rd party logo field';
                             $valid = FALSE;
                         }
-                        if (empty($tenant->mediaImageGrabOrig) || !isset($tenant->mediaImageGrabOrig[0]->path)) {
-                            $errorReason->reason[] = 'Tenant missing 3rd party image field';
+                        if (empty($tenant->baseStore->mediaImageGrabOrig) || !isset($tenant->baseStore->mediaImageGrabOrig[0])) {
+                            $errorReason->reasons[] = 'Tenant missing 3rd party image field';
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->country_id) || empty($tenant->mall->country_id)) {
-                            $errorReason->reason[] = "Tenant's mall missing country field";
+                            $errorReason->reasons[] = "Tenant's mall missing country field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->city) || empty($tenant->mall->city)) {
-                            $errorReason->reason[] = "Tenant's mall missing city field";
+                            $errorReason->reasons[] = "Tenant's mall missing city field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->address_line1) || empty($tenant->mall->address_line1)) {
-                            $errorReason->reason[] = "Tenant's mall missing address field";
+                            $errorReason->reasons[] = "Tenant's mall missing address field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->postal_code) || empty($tenant->mall->postal_code)) {
-                            $errorReason->reason[] = "Tenant's mall missing postal code field";
+                            $errorReason->reasons[] = "Tenant's mall missing postal code field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->longitude) || empty($tenant->mall->longitude)) {
-                            $errorReason->reason[] = "Tenant's mall missing longitude field";
+                            $errorReason->reasons[] = "Tenant's mall missing longitude field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->latitude) || empty($tenant->mall->latitude)) {
-                            $errorReason->reason[] = "Tenant's mall missing latitude field";
+                            $errorReason->reasons[] = "Tenant's mall missing latitude field";
                             $valid = FALSE;
                         }
                         if (! $valid) {
                             $errorReason->tenant_id = $tenantId;
+                            $errorReason->tenant_name = $tenant->name;
+                            $errorReason->mall_name = $tenant->mall->name;
                             $errorTenants[] = $errorReason;
                         }
+
                     } else {
                         $errorReason->tenant_id = $tenantId;
-                        $errorReason->reason = 'Tenant not found';
+                        $errorReason->reasons = 'Tenant not found';
                         $errorTenants[] = $errorReason;
                     }
                 }
+
                 if (! empty($errorTenants)) {
-                    $errorMessage = 'Link to Tenant error ';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    $errorMessage = 'Link to Tenant error';
+                    throw new OrbitCustomException($errorMessage, Coupon::THIRD_PARTY_COUPON_TENANT_VALIDATION_ERROR, $errorTenants);
                 }
             }
 
@@ -1037,6 +1049,25 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Create Coupon Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            Event::fire('orbit.coupon.postnewcoupon.custom.exception', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getCustomData();
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_coupon')
+                    ->setActivityNameLong('Create Coupon Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+
         } catch (Exception $e) {
             Event::fire('orbit.coupon.postnewcoupon.general.exception', array($this, $e));
 
