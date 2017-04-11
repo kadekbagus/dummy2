@@ -2540,7 +2540,13 @@ class CouponAPIController extends ControllerAPI
                     DB::raw("(SELECT GROUP_CONCAT(issued_coupon_code separator '\n')
                         FROM {$table_prefix}issued_coupons ic
                         WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
-                            ) as coupon_codes")
+                            ) as coupon_codes"),
+                    DB::raw("CASE
+                                WHEN is_3rd_party_field_complete = 'Y' AND {$table_prefix}pre_exports.object_id IS NOT NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'in_progress'
+                                WHEN is_3rd_party_field_complete = 'Y' AND {$table_prefix}pre_exports.object_id IS NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'available'
+                                WHEN is_3rd_party_field_complete = 'N' THEN 'not_available'
+                            END AS export_status
+                        ")
                 )
                 ->leftJoin('campaign_price', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
@@ -2550,6 +2556,11 @@ class CouponAPIController extends ControllerAPI
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                // Join for get export status
+                ->leftJoin('pre_exports', function ($join) {
+                         $join->on('promotions.promotion_id', '=', 'pre_exports.object_id')
+                              ->where('pre_exports.object_type', '=', 'coupon');
+                  })
                 ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
