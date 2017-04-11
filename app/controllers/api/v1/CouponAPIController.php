@@ -584,6 +584,7 @@ class CouponAPIController extends ControllerAPI
                 $newcoupon->is_visible = $isVisible;
                 $newcoupon->is_3rd_party_promotion = $is3rdPartyPromotion;
                 $newcoupon->third_party_name = $thirdPartyName;
+                $newcoupon->is_3rd_party_field_complete = 'Y';
             }
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
