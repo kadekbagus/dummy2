@@ -190,7 +190,7 @@ class CouponAPIController extends ControllerAPI
             $redemptionMethod = OrbitInput::post('redemption_method', 'online');
             $shortDescription = OrbitInput::post('short_description', NULL);
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
-            $3rdPartyName = OrbitInput::post('3rd_party_name', NULL);
+            $thirdPartyName = OrbitInput::post('3rd_party_name', NULL);
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -271,7 +271,7 @@ class CouponAPIController extends ControllerAPI
             );
 
             if ($is3rdPartyPromotion === 'Y') {
-                $3rdPartyValidatorValue = [
+                $thirdPartyValidatorValue = [
                     'coupon_validity_in_date' => $coupon_validity_in_date,
                     'promotion_value' => $promotionValue,
                     'currency' => $currency,
@@ -280,9 +280,9 @@ class CouponAPIController extends ControllerAPI
                     'original_price' => $originalPrice,
                     'redemption_method' => $redemptionMethod,
                     'short_description' => $shortDescription,
-                    '3rd_party_name' => $3rdPartyName
+                    '3rd_party_name' => $thirdPartyName
                 ];
-                $3rdPartyValidatorValidation = [
+                $thirdPartyValidatorValidation = [
                     'coupon_validity_in_date' => 'required',
                     'promotion_value' => 'required|numeric',
                     'currency' => 'required',
@@ -294,9 +294,9 @@ class CouponAPIController extends ControllerAPI
                     '3rd_party_name' => 'required',
                 ];
 
-                $3rdValidator = Validator::make(
-                    $3rdPartyValidatorValue,
-                    $3rdPartyValidatorValidation,
+                $thirdValidator = Validator::make(
+                    $thirdPartyValidatorValue,
+                    $thirdPartyValidatorValidation,
                     []
                 );
             }
@@ -433,8 +433,8 @@ class CouponAPIController extends ControllerAPI
 
             // 3rd party coupon validation
             if ($is3rdPartyPromotion === 'Y') {
-                if ($3rdValidator->fails()) {
-                    $errorMessage = $3rdValidator->messages()->first();
+                if ($thirdValidator->fails()) {
+                    $errorMessage = $thirdValidator->messages()->first();
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -471,11 +471,15 @@ class CouponAPIController extends ControllerAPI
                 foreach ($linkToTenantIds as $tenantId) {
                     $errorReason = new \stdclass();
                     $errorReason->reason = array();
-                    $tenant = Tenant::with(['mall' => function($q){
-                            $q->addSelect('merchants.*');
-                            $q->includeLatLong();
-                            $q->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
-                        }])
+                    $tenant = Tenant::with([
+                            'mediaLogoGrabOrig',
+                            'mediaImageGrabOrig',
+                            'mall' => function($q){
+                                $q->addSelect('merchants.*');
+                                $q->includeLatLong();
+                                $q->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
+                            }
+                        ])
                         ->excludeDeleted()
                         ->where('merchant_id', $tenantId)
                         ->first();
@@ -488,6 +492,14 @@ class CouponAPIController extends ControllerAPI
                         }
                         if (!isset($tenant->email) || empty($tenant->email)) {
                             $errorReason->reason[] = 'Tenant missing email field';
+                            $valid = FALSE;
+                        }
+                        if (empty($tenant->mediaLogoGrabOrig) || !isset($tenant->mediaLogoGrabOrig[0]->path)) {
+                            $errorReason->reason[] = 'Tenant missing 3rd party logo field';
+                            $valid = FALSE;
+                        }
+                        if (empty($tenant->mediaImageGrabOrig) || !isset($tenant->mediaImageGrabOrig[0]->path)) {
+                            $errorReason->reason[] = 'Tenant missing 3rd party image field';
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->country_id) || empty($tenant->mall->country_id)) {
@@ -571,7 +583,7 @@ class CouponAPIController extends ControllerAPI
                 $newcoupon->short_description = $shortDescription;
                 $newcoupon->is_visible = $isVisible;
                 $newcoupon->is_3rd_party_promotion = $is3rdPartyPromotion;
-                $newcoupon->3rd_party_name = $3rdPartyName;
+                $newcoupon->3rd_party_name = $thirdPartyName;
             }
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
