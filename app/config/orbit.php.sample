@@ -6082,4 +6082,17 @@ return array(
         // eg: /malls/Kv4LROXoxLpH8XBI/grand-indonesia/stores/Kv4b_8XoxMON93FY/ace-home-center?country=Indonesia&cities=Jakarta%20Pusat&sortby=created_date&sortmode=desc&order=latest&lang=en
         'uri' => ''
     ],
+
+    /**
+     * Export related configuration
+     */
+    'export' => [
+        // Base directory of exported file.
+        // The writer should another directory
+        // with name YYYYMMDD
+        // e.g: '/var/www/data/20171022'
+        'output_dir' => storage_path() . '/export_files/',
+
+        'chunk' => 50,
+    ],
 );
