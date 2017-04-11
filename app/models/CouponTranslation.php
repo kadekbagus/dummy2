@@ -34,4 +34,14 @@ class CouponTranslation extends Eloquent
     {
         return $this->media()->where('media_name_long', '=', 'coupon_translation_image_orig');
     }
+
+    public function mediaGrabHeader()
+    {
+        return $this->media()->where('media_name_id', '=', 'coupon_header_grab_translation');
+    }
+
+    public function mediaGrabImage1()
+    {
+        return $this->media()->where('media_name_id', '=', 'coupon_image1_grab_translation');
+    }
 }
