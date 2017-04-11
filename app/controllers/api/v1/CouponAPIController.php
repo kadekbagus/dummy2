@@ -4329,6 +4329,8 @@ class CouponAPIController extends ControllerAPI
                 // @param ControllerAPI $this
                 // @param EventTranslation $new_transalation
                 Event::fire('orbit.coupon.after.translation.save', array($this, $new_translation));
+                Event::fire('orbit.coupon.after.header.translation.save', array($this, $new_translation));
+                Event::fire('orbit.coupon.after.image1.translation.save', array($this, $new_translation));
 
                 $coupon->setRelation('translation_' . $new_translation->merchant_language_id, $new_translation);
             }
