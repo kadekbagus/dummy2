@@ -26,7 +26,7 @@ class Export extends Eloquent
      */
     public function isCompleted()
     {
-        if ((int) $this->total_export !== (int) $this->finish_export) {
+        if ((int) $this->total_export !== (int) $this->finished_export) {
             return FALSE;
         }
 

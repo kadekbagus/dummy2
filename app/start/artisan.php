@@ -215,6 +215,12 @@ Artisan::add(new CouponUpdateLinkToTenant);
 // Fill table grab_cities
 Artisan::add(new FillTableGrabCitiesCommand);
 
+// Fill table grab_categori
+Artisan::add(new FillTableGrabCategoriesCommand);
+
+// Map Categories Vendor to GTM
+Artisan::add(new MapVendorCategoriesCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
