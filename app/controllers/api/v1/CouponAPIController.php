@@ -190,7 +190,7 @@ class CouponAPIController extends ControllerAPI
             $redemptionMethod = OrbitInput::post('redemption_method', 'online');
             $shortDescription = OrbitInput::post('short_description', NULL);
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
-            $thirdPartyName = OrbitInput::post('3rd_party_name', NULL);
+            $thirdPartyName = OrbitInput::post('third_party_name', NULL);
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
