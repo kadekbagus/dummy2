@@ -215,6 +215,9 @@ Artisan::add(new CouponUpdateLinkToTenant);
 // Fill table grab_cities
 Artisan::add(new FillTableGrabCitiesCommand);
 
+// Fill table grab_categori
+Artisan::add(new FillTableGrabCategoriesCommand);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
