@@ -354,6 +354,28 @@ class Tenant extends Eloquent
     }
 
     /**
+     * Retailer has logo images for 3rd party.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaLogoGrabOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'retailer_logo_grab');
+    }
+
+    /**
+     * Retailer has image for 3rd party.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function mediaImageGrabOrig()
+    {
+        return $this->mediaOrig()->where('media_name_id', 'retailer_image_grab');
+    }
+
+    /**
      * Retailer has many uploaded images.
      *
      * @author Rio Astamal <me@rioastamal.net>
