@@ -369,10 +369,11 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                 })
                 ->where('promotions.promotion_id', $coupon->promotion_id)
                 ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
+                ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
                 ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                 ->first();
 
-    if (! empty($coupon)) {
+    if (! empty($coupon) && ! empty($coupon->promotion_id)) {
         if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0) {
             // Notify the queueing system to delete Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
