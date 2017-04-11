@@ -73,6 +73,7 @@ class ESCouponSuggestionUpdateQueue
                     })
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
+                    ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
                     ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                     ->whereRaw("{$prefix}promotions.status = 'active'")
                     ->having('campaign_status', '=', 'ongoing')
