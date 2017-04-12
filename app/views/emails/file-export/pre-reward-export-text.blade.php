@@ -1,10 +1,10 @@
 Hello,
 User {{ $userEmail}} started reward CSV Export process at {{ $exportDate }} UTC. The details as follow:
-Export ID: {{ $syncId }}
+Export ID: {{ $exportId }}
 Coupon(s) to Export: {{ $totalExport }}
 @forelse ($coupons as $c)
     {{ $c }}
-@endforeach
+@endforelse
 
 Once the export process is completed you will get notified by email.
 

@@ -6,11 +6,11 @@
     <p>Hello,</p>
     <p>User {{ $userEmail}} started reward CSV Export process at {{ $exportDate }} UTC. The details as follow:</p>
     <p>
-        Export ID: {{ $syncId }} <br/>
+        Export ID: {{ $exportId }} <br/>
         Coupon(s) to Export: {{ $totalExport }} <br/>
         @forelse ($coupons as $c)
             {{ $c }}
-        @endforeach
+        @endforelse
     </p>
     <p>Once the export process is completed you will get notified by email.</p>
     <p>
