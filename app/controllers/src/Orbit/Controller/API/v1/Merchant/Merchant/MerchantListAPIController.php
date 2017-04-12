@@ -76,9 +76,7 @@ class MerchantListAPIController extends ControllerAPI
                     'base_merchants.base_merchant_id',
                     'country_id',
                     'name',
-                    DB::raw("
-                            count({$prefix}base_stores.base_store_id) as location_count
-                        ")
+                    DB::raw("count({$prefix}base_stores.base_store_id) as location_count")
                 )
                 ->leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                 ->excludeDeleted('base_merchants');
