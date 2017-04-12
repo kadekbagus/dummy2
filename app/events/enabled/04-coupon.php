@@ -359,7 +359,8 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                                                                     )
                         THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
                     END AS campaign_status,
-                    COUNT({$prefix}issued_coupons.issued_coupon_id) as available
+                    COUNT({$prefix}issued_coupons.issued_coupon_id) as available,
+                    {$prefix}promotions.is_visible
                 "))
                 ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                 ->join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -369,12 +370,11 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                 })
                 ->where('promotions.promotion_id', $coupon->promotion_id)
                 ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
-                ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
                 ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                 ->first();
 
-    if (! empty($coupon) && ! empty($coupon->promotion_id)) {
-        if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0) {
+    if (! empty($coupon)) {
+        if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0 || $coupon->is_visible === 'N') {
             // Notify the queueing system to delete Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
                 'coupon_id' => $coupon->promotion_id
@@ -385,10 +385,12 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                 'coupon_id' => $coupon->promotion_id
             ]);
         } else {
-            // Notify the queueing system to update Elasticsearch document
-            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                'coupon_id' => $coupon->promotion_id
-            ]);
+            if ($coupon->is_visible === 'Y') {
+                // Notify the queueing system to update Elasticsearch document
+                Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                    'coupon_id' => $coupon->promotion_id
+                ]);
+            }
         }
     }
 
