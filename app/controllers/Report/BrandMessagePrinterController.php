@@ -48,7 +48,7 @@ class BrandMessagePrinterController extends DataPrinterController
                     $filePath = $dtExport->file_path;
 
                     if (! file_exists($dir)) {
-                        mkdir($dir, 0777);
+                        mkdir($dir, 0777, true);
                     }
 
                     $content = array(
