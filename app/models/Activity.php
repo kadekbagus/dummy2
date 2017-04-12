@@ -849,13 +849,27 @@ class Activity extends Eloquent
 
         $result = parent::save($options);
 
+        // Normal referer
+        $referer = NULL;
+        // Orbit Referer (Custom one for AJAX nagivation)
+        $orbitReferer = NULL;
+
+        if (isset($_SERVER['HTTP_REFERER']) && ! empty($_SERVER['HTTP_REFERER'])) {
+            $referer = $_SERVER['HTTP_REFERER'];
+        }
+
+        // Orbit specific referer, this may override above
+        if (isset($_SERVER['HTTP_X_ORBIT_REFERER']) && ! empty($_SERVER['HTTP_X_ORBIT_REFERER'])) {
+            $orbitReferer = $_SERVER['HTTP_X_ORBIT_REFERER'];
+        }
+
         // Save to additional activities table
-        $this->saveToCampaignPageViews();
-        $this->saveToCampaignPopUpView();
-        $this->saveToCampaignPopUpClick();
-        $this->saveToMerchantPageView();
-        $this->saveToWidgetClick();
-        $this->saveToConnectionTime();
+        Queue::push('Orbit\\Queue\\Activity\\AdditionalActivityQueue', [
+            'activity_id' => $this->activity_id,
+            'referer' => substr($referer, 0, 2048),
+            'orbit_referer' => substr($orbitReferer, 0, 2048)
+        ]);
+
         $this->saveEmailToMailchimp();
 
         if ($this->group === 'mobile-ci') {
