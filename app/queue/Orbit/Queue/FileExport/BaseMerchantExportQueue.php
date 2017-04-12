@@ -161,7 +161,7 @@ class BaseMerchantExportQueue
             $dir = Config::get('orbit.export.output_dir', '');
 
             $exportFiles = array();
-            $postExport->chunk($chunk, function($_postExport) use ($exportId, $exportType, $dir, &$exportFiles) {
+            $postExport->chunk($chunk, function($_postExport) use ($exportId, $dir, &$exportFiles) {
                 foreach ($_postExport as $pe) {
                     $fileName = 'Gotomalls_' . str_replace(" ", "_", $pe->name) . '_Brand.csv';
                     if ($pe->export_process_type === 'brand_message') {
