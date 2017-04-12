@@ -140,8 +140,8 @@ class UserRewardAPIController extends PubControllerAPI
                         ->where('user_rewards.user_id', $user->user_id)
                         ->whereIn('user_rewards.status', array('redeemed', 'pending'))
                         //Default Order by
-                        ->orderBy('redeemed_date', 'desc')
                         ->orderBy('campaign_status', 'desc')
+                        ->orderBy('redeemed_date', 'desc')
                         ->groupBy('user_reward_id');
 
             $_coupon = clone $userReward;
