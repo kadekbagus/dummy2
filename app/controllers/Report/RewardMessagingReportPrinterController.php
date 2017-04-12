@@ -8,14 +8,26 @@ use Orbit\Text as OrbitText;
 use Response;
 use Coupon;
 
-class RewardInformationReportPrinterController extends DataPrinterController
+class RewardMessagingReportPrinterController extends DataPrinterController
 {
-    public function postPrintRewardInformation()
+
+    /*
+        Field :
+        ---------------------
+        SKU
+        Locale
+        Highlight
+        Promotional Link URL 1
+        Promotional Link URL 1 Title
+        Term Detail
+    */
+
+    public function postPrintRewardMessaging()
     {
         try {
             $couponIds = OrbitInput::post('coupon_ids');
             $exportId = OrbitInput::post('export_id');
-            $exportType = 'reward_information';
+            $exportType = 'reward_messaging';
             $chunk = Config::get('orbit.export.chunk', 50);
 
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
@@ -34,11 +46,6 @@ class RewardInformationReportPrinterController extends DataPrinterController
                     DB::raw("default_translation.promotion_name as name"),
                     'users.user_email', // Support Email
                     'campaign_account.phone', // Support Phone
-                    DB::raw('"category"'),// Category
-                    'promotions.maximum_issued_coupon as total_inventory',
-                    'promotions.promotion_value as reward_value',
-                    'promotions.currency',
-                    'countries.name as country',// Country
                     // City
                     DB::raw("
                         (SELECT
@@ -48,42 +55,6 @@ class RewardInformationReportPrinterController extends DataPrinterController
                         LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
                         LEFT JOIN {$prefix}vendor_gtm_cities ovgc ON ovgc.gtm_city = (CASE WHEN om.object_type = 'mall' THEN om.city ELSE oms.city END) AND vendor_type = 'grab'
                         where promotion_id = {$prefix}promotions.promotion_id) as vendor_grab_city
-                    "),
-                    'promotions.begin_date',// Offer Start Date
-                    'promotions.end_date',// Offer End Date
-                    'promotions.begin_date',// Validity Start Date
-                    'promotions.coupon_validity_in_date',// Validity End Date
-                    'promotions.offer_type',
-                    'promotions.offer_value as voucher_value', //voucher
-                    'promotions.offer_value as discount_percentage', //discount
-                    'promotions.offer_value as deal_list_price', //deal
-                    'promotions.original_price', //deal
-                    'promotions.redemption_method',
-                    // Header Image URL
-                    DB::raw("
-                            (SELECT {$image}
-                            FROM orb_media m
-                            WHERE m.media_name_long = 'coupon_header_grab_translation_image_orig'
-                            AND m.object_id = default_translation.coupon_translation_id) AS header_original_media_path
-                    "),
-                    // Image 1 URL
-                    DB::raw("
-                            (SELECT {$image}
-                            FROM orb_media m
-                            WHERE m.media_name_long = 'coupon_image_grab_translation_image_orig'
-                            AND m.object_id = default_translation.coupon_translation_id) AS image_original_media_path
-                    "),
-                    DB::raw("
-                        (SELECT
-                            ot.timezone_name
-                        FROM {$prefix}promotion_retailer opt
-                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                            LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
-                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                        WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                        ORDER BY CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) ASC
-                        LIMIT 1
-                        ) as timezone
                     ")
                 )
                 // Get campaign account
@@ -115,33 +86,14 @@ class RewardInformationReportPrinterController extends DataPrinterController
                     }
 
                     $offsetTimezone = '';
-                    $keywords = '';
+
 
                     $content = array(
                                     array(
                                         $dtExport->sku,
                                         $dtExport->name,
                                         $dtExport->user_email,
-                                        $dtExport->phone,
-                                        $keywords,
-                                        $dtExport->category,
-                                        $dtExport->total_inventory,
-                                        $dtExport->reward_value,
-                                        $dtExport->currency,
-                                        $dtExport->country,
-                                        $dtExport->vendor_grab_city,
-                                        $dtExport->begin_date,
-                                        $dtExport->end_date,
-                                        $dtExport->begin_date,
-                                        $dtExport->coupon_validity_in_date,
-                                        $dtExport->offer_type,
-                                        $dtExport->voucher_value,
-                                        $dtExport->discount_percentage,
-                                        $dtExport->deal_list_price,
-                                        $dtExport->original_price,
-                                        $dtExport->redemption,
-                                        $dtExport->header_original_media_path,
-                                        $dtExport->image_original_media_path
+                                        $dtExport->phone
                                     ),
                             );
 
@@ -185,7 +137,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
             return ['status' => 'ok'];
 
         } catch (InvalidArgsException $e) {
-            \Log::error('*** Reward information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Brand messaging export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
 
             return [
@@ -193,7 +145,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                 'message' => $e->getMessage()
             ];
         } catch (QueryException $e) {
-            \Log::error('*** Reward information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Brand messaging export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
 
             return [
@@ -201,7 +153,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                 'message' => $e->getMessage()
             ];
         } catch (Exception $e) {
-            \Log::error('*** Reward information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Brand messaging export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
 
             return [
@@ -210,5 +162,6 @@ class RewardInformationReportPrinterController extends DataPrinterController
             ];
         }
     }
+
 
 }
