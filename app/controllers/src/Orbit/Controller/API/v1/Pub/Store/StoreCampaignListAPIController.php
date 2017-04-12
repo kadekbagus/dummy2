@@ -453,6 +453,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                                 $q->whereRaw("{$prefix}merchants.country_id = {$this->quote($country_id)}")
                                     ->orWhereRaw("oms.country_id = {$this->quote($country_id)}");
                             })
+                            ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
                             ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
                             ->groupBy('campaign_id')
                             ->orderBy(DB::raw("{$prefix}promotions.created_at"), 'desc');

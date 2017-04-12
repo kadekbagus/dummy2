@@ -16,8 +16,19 @@ use PreExport;
 use PostExport;
 use Export;
 
-class BrandInformationPrinterController extends DataPrinterController
+class BrandInformationPrinterController
 {
+    /**
+     * Static method to instantiate the object.
+     *
+     * @param string $contentType
+     * @return ControllerAPI
+     */
+    public static function create()
+    {
+        return new static;
+    }
+
     public function getBrandInformationPrintView()
     {
         try {
@@ -100,15 +111,33 @@ class BrandInformationPrinterController extends DataPrinterController
                     DB::commit();
                 }
             });
+
+            return ['status' => 'ok'];
+
         } catch (InvalidArgsException $e) {
-            \Log::error('*** Brand Information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage()
+            ];
         } catch (QueryException $e) {
-            \Log::error('*** Brand Information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage()
+            ];
         } catch (Exception $e) {
-            \Log::error('*** Brand Information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage()
+            ];
         }
     }
 }

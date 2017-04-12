@@ -21,6 +21,7 @@ use Orbit\FakeJob;
 use Report\BrandInformationPrinterController;
 use Report\BrandMessagePrinterController;
 use Mail;
+use Orbit\Helper\Util\JobBurier;
 
 class BaseMerchantExportQueue
 {
@@ -137,10 +138,20 @@ class BaseMerchantExportQueue
             // main process
             $_GET['base_merchant_ids'] = $exportData;
             $_GET['export_id'] = $exportId;
+
             // export Brand Information
-            $brandInformation = BrandInformationPrinterController::getBrandInformationPrintView();
+            $brandInformation = BrandInformationPrinterController::create()
+                                                                ->getBrandInformationPrintView();
+            if ($brandInformation['status'] === 'fail') {
+                $this->failedJob($job, $exportId, $brandInformation['message']);
+            }
+
             // export Brand Message
-            $brandMessage = BrandMessagePrinterController::getBrandMessagePrintView();
+            $brandMessage = BrandMessagePrinterController::create()
+                                                        ->getBrandMessagePrintView();
+            if ($brandMessage['status'] === 'fail') {
+                $this->failedJob($job, $exportId, $brandMessage['message']);
+            }
 
             // rename attachment file
             $postExport = PostExport::select('post_exports.file_path', 'post_exports.export_process_type', 'base_merchants.name')
@@ -150,11 +161,12 @@ class BaseMerchantExportQueue
             $dir = Config::get('orbit.export.output_dir', '');
 
             $exportFiles = array();
-            $postExport->chunk($chunk, function($_postExport) use ($exportId, $exportType, $dir, &$exportFiles) {
+            $postExport->chunk($chunk, function($_postExport) use ($exportId, $dir, &$exportFiles) {
                 foreach ($_postExport as $pe) {
-                    $fileName = 'Gotomalls_' . str_replace(" ", "_", $pe->name) . '_Brand.csv';
+                    $name = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(" ", "_", $pe->name));
+                    $fileName = 'Gotomalls_' . $name . '_Brand.csv';
                     if ($pe->export_process_type === 'brand_message') {
-                        $fileName = 'Gotomalls_' . $pe->name . '_Brand_Msg.csv';
+                        $fileName = 'Gotomalls_' . $name . '_Brand_Msg.csv';
                     }
                     $exportFiles[] = array('file_path' => $dir . $pe->file_path, 'name' => $fileName);
                 }
@@ -175,6 +187,21 @@ class BaseMerchantExportQueue
 
             $this->sendMail($postExportMailViews, $exportDataView);
 
+            // Safely delete the object
+            $job->delete();
+
+            $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: OK; Export ID: %s;',
+                                $job->getJobId(),
+                                $exportId);
+
+            $this->debug($message . "\n");
+            \Log::info($message);
+
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
+
         } catch (InvalidArgsException $e) {
             \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
@@ -186,9 +213,20 @@ class BaseMerchantExportQueue
             DB::rollBack();
         }
 
-        // Don't care if the job success or not we will provide user
-        // another link to resend the activation
-        $job->delete();
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+       $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: FAIL; Export ID: %s;',
+                            $job->getJobId(),
+                            $exportId);
+        \Log::error($message);
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     protected function quote($arg)
@@ -237,5 +275,18 @@ class BaseMerchantExportQueue
     public function setDebug($value)
     {
         $this->debug = $value;
+    }
+
+    protected function failedJob($job, $exportId, $message) {
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: FAIL; Export ID: %s;',
+                            $job->getJobId(),
+                            $exportId);
+        \Log::error($message);
     }
 }
