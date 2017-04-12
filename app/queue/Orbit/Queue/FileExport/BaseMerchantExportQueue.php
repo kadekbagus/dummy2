@@ -57,7 +57,20 @@ class BaseMerchantExportQueue
 
             $preExportCount = count($preExport);
             if ($preExportCount >= $totalExport) {
-                return FALSE;
+                // Bury the job for later inspection
+                JobBurier::create($job, function($theJob) {
+                    // The queue driver does not support bury.
+                    $theJob->delete();
+                })->bury();
+
+                $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: fail; Message: All file still in progress;',
+                                $job->getJobId());
+                \Log::error($message);
+
+                return [
+                    'status' => 'fail',
+                    'message' => $message
+                ];
             }
 
             DB::beginTransaction();
@@ -161,11 +174,12 @@ class BaseMerchantExportQueue
             $dir = Config::get('orbit.export.output_dir', '');
 
             $exportFiles = array();
-            $postExport->chunk($chunk, function($_postExport) use ($exportId, $exportType, $dir, &$exportFiles) {
+            $postExport->chunk($chunk, function($_postExport) use ($exportId, $dir, &$exportFiles) {
                 foreach ($_postExport as $pe) {
-                    $fileName = 'Gotomalls_' . str_replace(" ", "_", $pe->name) . '_Brand.csv';
+                    $name = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(" ", "_", $pe->name));
+                    $fileName = 'Gotomalls_' . $name . '_Brand.csv';
                     if ($pe->export_process_type === 'brand_message') {
-                        $fileName = 'Gotomalls_' . $pe->name . '_Brand_Msg.csv';
+                        $fileName = 'Gotomalls_' . $name . '_Brand_Msg.csv';
                     }
                     $exportFiles[] = array('file_path' => $dir . $pe->file_path, 'name' => $fileName);
                 }

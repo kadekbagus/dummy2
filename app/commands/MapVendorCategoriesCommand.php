@@ -20,6 +20,7 @@ class MapVendorCategoriesCommand extends Command
     protected $description = 'Command for map vendor and gtm categories from json file.';
 
     protected $valid_vendor_category = NULL;
+    protected $valid_gtm_category = NULL;
 
     /**
      * Create a new command instance.
@@ -87,19 +88,19 @@ class MapVendorCategoriesCommand extends Command
             }
 
             $vendor_type = trim($data['vendor_type']);
-            $vendor_category_id = trim($data['vendor_category_id']);
-            $gtm_categories_id = $data['gtm_categories_id'];
+            $vendor_category = trim($data['vendor_category']);
+            $gtm_categories = $data['gtm_categories'];
 
             $validator_value = [
                 'vendor_type'        => $vendor_type,
-                'vendor_category_id' => $vendor_category_id,
-                'gtm_categories_id'    => $gtm_categories_id,
+                'vendor_category' => $vendor_category,
+                'gtm_categories'    => $gtm_categories,
             ];
 
             $validator_check = [
                 'vendor_type'        => 'required|in:grab',
-                'vendor_category_id' => 'required|orbit.empty.vendor_category:' . $vendor_type,
-                'gtm_categories_id'    => 'required|array',
+                'vendor_category' => 'required|orbit.empty.vendor_category:' . $vendor_type,
+                'gtm_categories'    => 'required|array',
             ];
 
             $this->registerCustomValidation();
@@ -117,13 +118,13 @@ class MapVendorCategoriesCommand extends Command
 
             $valid_vendor_category = $this->valid_vendor_category;
 
-            foreach ($gtm_categories_id as $key => $gtm_category_id) {
+            foreach ($gtm_categories as $key => $gtm_category) {
                 $validator_value = [
-                    'gtm_category_id'    => $gtm_category_id,
+                    'gtm_category'    => $gtm_category,
                 ];
 
                 $validator_check = [
-                    'gtm_category_id'    => 'orbit.empty.gtm_category',
+                    'gtm_category'    => 'orbit.empty.gtm_category',
                 ];
 
                 $this->registerCustomValidation();
@@ -139,27 +140,27 @@ class MapVendorCategoriesCommand extends Command
                     throw new Exception($errorMessage);
                 }
 
-                $valid_gmt_category = $this->valid_gmt_category;
+                $valid_gtm_category = $this->valid_gtm_category;
 
-                $vendor_category = VendorGTMCategory::where('vendor_type', $vendor_type)
-                                        ->where('vendor_category_id', $vendor_category_id)
-                                        ->where('gtm_category_id', $gtm_category_id)
+                $vendor_gtm_category = VendorGTMCategory::where('vendor_type', $vendor_type)
+                                        ->where('vendor_category_id', $valid_vendor_category->grab_category_id)
+                                        ->where('gtm_category_id', $valid_gtm_category->category_id)
                                         ->first();
 
-                if (empty($vendor_category)) {
+                if (empty($vendor_gtm_category)) {
                     // create
                     $newvendor_category = new VendorGTMCategory();
                     $newvendor_category->vendor_type = $vendor_type;
-                    $newvendor_category->vendor_category_id = $vendor_category_id;
-                    $newvendor_category->gtm_category_id = $gtm_category_id;
+                    $newvendor_category->vendor_category_id = $valid_vendor_category->grab_category_id;
+                    $newvendor_category->gtm_category_id = $valid_gtm_category->category_id;
 
                     if (! $dryRun) {
                         $newvendor_category->save();
                     }
 
-                    $this->info( sprintf('Mapping Vendor Category Id: %s, Category name: %s, Vendor type: %s, to GTM Category %s', $vendor_category_id, $valid_vendor_category->category_name, $vendor_type, $valid_gmt_category->category_name) );
+                    $this->info( sprintf('Mapping Vendor Category name: %s, Vendor type: %s, to GTM Category %s', $vendor_category, $vendor_type, $gtm_category) );
                 } else {
-                    $this->info( sprintf('Already exists Vendor Category Id: %s, Category name: %s, Vendor type: %s, to GTM Category %s', $vendor_category_id, $valid_vendor_category->category_name, $vendor_type, $valid_gmt_category->category_name) );
+                    $this->info( sprintf('Already exists Vendor Category name: %s, Vendor type: %s, to GTM Category %s', $vendor_category, $vendor_type, $gtm_category) );
                 }
             }
 
@@ -177,7 +178,7 @@ class MapVendorCategoriesCommand extends Command
             $vendor = $parameters[0];
 
             if ($vendor === 'grab') {
-                $check_category = GrabCategory::where('grab_category_id', $value)->first();
+                $check_category = GrabCategory::where('category_name', $value)->first();
             }
 
             if (empty($check_category)) {
@@ -190,13 +191,13 @@ class MapVendorCategoriesCommand extends Command
 
         // Check the existance of gtm category
         Validator::extend('orbit.empty.gtm_category', function ($attribute, $value, $parameters) {
-            $check_category = Category::where('category_id', $value)->first();
+            $check_category = Category::where('category_name', $value)->first();
 
             if (empty($check_category)) {
                 return FALSE;
             }
 
-            $this->valid_gmt_category = $check_category;
+            $this->valid_gtm_category = $check_category;
             return TRUE;
         });
     }
