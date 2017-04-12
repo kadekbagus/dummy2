@@ -113,4 +113,9 @@ class Category extends Eloquent
         return $this->hasMany('Media', 'object_id', 'category_id')
                     ->where('object_name', 'category');
     }
+
+    public function vendorGTMCategory()
+    {
+        return $this->hasOne('VendorGTMCategory', 'gtm_category_id', 'category_id');
+    }
 }

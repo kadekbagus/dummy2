@@ -6,4 +6,8 @@ class VendorGTMCategory extends Eloquent
 
     protected $table = 'vendor_gtm_categories';
 
+    public function grabCategory()
+    {
+        return $this->belongsTo('GrabCategory', 'vendor_category_id', 'grab_category_id');
+    }
 }
