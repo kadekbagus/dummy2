@@ -79,11 +79,11 @@ class MerchantListAPIController extends ControllerAPI
                     DB::raw("(CASE
                         WHEN COUNT({$prefix}pre_exports.object_id) > 0 THEN 'in_progress'
                         ELSE
-                            CASE WHEN ({$prefix}media.path IS NOT NULL or {$prefix}media.path != '') and
-                                    ({$prefix}base_merchants.phone IS NOT NULL or {$prefix}base_merchants.phone != '') and
-                                    ({$prefix}base_merchants.email IS NOT NULL or {$prefix}base_merchants.email != '')
-                                THEN 'available'
-                            ELSE 'not_available'
+                            CASE WHEN ({$prefix}media.path IS NULL or {$prefix}media.path = '') or
+                                    ({$prefix}base_merchants.phone IS NULL or {$prefix}base_merchants.phone = '') or
+                                    ({$prefix}base_merchants.email IS NULL or {$prefix}base_merchants.email = '')
+                                THEN 'not_available'
+                            ELSE 'available'
                             END
                         END) as export_status"),
                     DB::raw("count({$prefix}base_stores.base_store_id) as location_count")
