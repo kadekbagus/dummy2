@@ -76,28 +76,9 @@ class MerchantListAPIController extends ControllerAPI
                     'base_merchants.base_merchant_id',
                     'country_id',
                     'name',
-                    DB::raw("(CASE
-                        WHEN COUNT(pre_exports.object_id) > 0 THEN 'in_progress'
-                        ELSE
-                            CASE WHEN ({$prefix}media.path IS NOT NULL or {$prefix}media.path != '') and
-                                    ({$prefix}base_stores.phone IS NOT NULL or {$prefix}base_stores.phone != '') and
-                                    ({$prefix}base_stores.email IS NOT NULL or {$prefix}base_stores.email != '')
-                                THEN 'available'
-                            ELSE 'not_available'
-                            END
-                        END as export_status
-                        )"),
                     DB::raw("count({$prefix}base_stores.base_store_id) as location_count")
                 )
                 ->leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
-                ->leftJoin('media', function ($q){
-                    $q->on('media.object_id', '=', 'base_merchants.base_merchant_id')
-                      ->on('media.media_name_id', '=', DB::raw("'base_merchant_logo_grab'"));
-                })
-                ->leftJoin('pre_exports', function ($q){
-                    $q->on('pre_exports.object_id', '=', 'base_merchants.base_merchant_id')
-                      ->on('pre_exports.object_type', '=', DB::raw("'merchant'"));
-                })
                 ->excludeDeleted('base_merchants');
 
             OrbitInput::get('merchant_id', function($data) use ($merchants)
