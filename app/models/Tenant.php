@@ -354,6 +354,17 @@ class Tenant extends Eloquent
     }
 
     /**
+     * Retailer belongsTo BaseStore.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function baseStore()
+    {
+        return $this->belongsTo('BaseStore', 'merchant_id', 'base_store_id');
+    }
+
+    /**
      * Retailer has many uploaded images.
      *
      * @author Rio Astamal <me@rioastamal.net>

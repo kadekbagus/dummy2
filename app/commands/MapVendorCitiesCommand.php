@@ -20,6 +20,7 @@ class MapVendorCitiesCommand extends Command
     protected $description = 'Command for map vendor and gtm cities from json file.';
 
     protected $valid_gtm_country = NULL;
+    protected $valid_vendor_city = NULL;
 
     /**
      * Create a new command instance.
@@ -100,7 +101,7 @@ class MapVendorCitiesCommand extends Command
 
             $validation_error = [
                 'gtm_country' => 'required|orbit.empty.gtm_country',
-                'vendor_type' => 'required|in:ip2location,dbip',
+                'vendor_type' => 'required|in:ip2location,dbip,grab',
                 'vendor_city' => 'required|orbit.empty.vendor_city:' . $vendor_type,
                 'gtm_cities'  => 'required|array',
             ];
@@ -124,6 +125,13 @@ class MapVendorCitiesCommand extends Command
             }
 
             $valid_gtm_country = $this->valid_gtm_country;
+            $valid_vendor_city = $this->valid_vendor_city;
+
+            // required for grab is vendor_city = grab_city_external_id
+            $vendor_city_name = $vendor_city;
+            if ($vendor_type === 'grab') {
+                $vendor_city = $valid_vendor_city->grab_city_external_id;
+            }
 
             foreach ($gtm_cities as $key => $gtm_city) {
                 $check_vendor_city = VendorGTMCity::where('vendor_city', $vendor_city)
@@ -140,7 +148,7 @@ class MapVendorCitiesCommand extends Command
                         $check_vendor_city->save();
                     }
 
-                    $this->info( sprintf('Update Country %s, Vendor City %s to GTM City %s with Vendor Country %s.', $gtm_country, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
+                    $this->info( sprintf('Update Country %s, Vendor City %s to GTM City %s with Vendor Country %s.', $gtm_country, $vendor_city_name, $gtm_city, $valid_gtm_country->vendor_country) );
                 } else {
                     $check_vendor_city = VendorGTMCity::where('vendor_city', $vendor_city)
                                                 ->where('vendor_type', $vendor_type)
@@ -160,9 +168,9 @@ class MapVendorCitiesCommand extends Command
                         if (! $dryRun) {
                             $newvendorcity->save();
                         }
-                        $this->info( sprintf('Mapping Country %s, Vendor %s, Vendor City %s to GTM City %s with Vendor Country %s.', $gtm_country, $vendor_type, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
+                        $this->info( sprintf('Mapping Country %s, Vendor %s, Vendor City %s to GTM City %s with Vendor Country %s.', $gtm_country, $vendor_type, $vendor_city_name, $gtm_city, $valid_gtm_country->vendor_country) );
                     } else {
-                        $this->info( sprintf('Country %s, Vendor %s, Vendor City %s to GTM City %s with Vendor Country %s, already exist.', $gtm_country, $vendor_type, $vendor_city, $gtm_city, $valid_gtm_country->vendor_country) );
+                        $this->info( sprintf('Country %s, Vendor %s, Vendor City %s to GTM City %s with Vendor Country %s, already exist.', $gtm_country, $vendor_type, $vendor_city_name, $gtm_city, $valid_gtm_country->vendor_country) );
                     }
                 }
 
@@ -196,14 +204,17 @@ class MapVendorCitiesCommand extends Command
 
             if ($vendor === 'ip2location') {
                 $check_city = Ip2LocationCity::where('city', $value)->first();
-            } else {
+            } elseif ($vendor === 'dbip') {
                 $check_city = DBIPCity::where('city', $value)->first();
+            } elseif ($vendor === 'grab') {
+                $check_city = GrabCity::where('grab_city_name', $value)->first();
             }
 
             if (empty($check_city)) {
                 return FALSE;
             }
 
+            $this->valid_vendor_city = $check_city;
             return TRUE;
         });
 

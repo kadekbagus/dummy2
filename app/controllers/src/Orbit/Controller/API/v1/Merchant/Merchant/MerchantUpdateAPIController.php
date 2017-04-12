@@ -85,9 +85,7 @@ class MerchantUpdateAPIController extends ControllerAPI
                     'merchantName'            => $merchantName,
                     'country'                 => $countryId,
                     'languages'               => $languages,
-                    'mobile_default_language' => $mobile_default_language,
-                    'phone'                   => $phone,
-                    'email'                   => $email
+                    'mobile_default_language' => $mobile_default_language
                 ),
                 array(
                     'baseMerchantId'          => 'required|orbit.exist.base_merchant_id',
@@ -95,9 +93,7 @@ class MerchantUpdateAPIController extends ControllerAPI
                     'merchantName'            => 'required|orbit.exist.merchant_name_not_me:' . $baseMerchantId . ',' . $countryId,
                     'country'                 => 'required|orbit.store.country:' . $baseMerchantId . ',' . $countryId,
                     'languages'               => 'required|array',
-                    'mobile_default_language' => 'required|size:2|orbit.supported.language|orbit.store.language:' . $baseMerchantId . ',' . $mobile_default_language,
-                    'phone'                   => 'required',
-                    'email'                   => 'required'
+                    'mobile_default_language' => 'required|size:2|orbit.supported.language|orbit.store.language:' . $baseMerchantId . ',' . $mobile_default_language
                 ),
                 array(
                     'orbit.exist.base_merchant_id'     => 'Base Merchant ID is invalid',

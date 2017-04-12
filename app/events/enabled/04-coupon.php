@@ -168,6 +168,125 @@ Event::listen('orbit.coupon.after.translation.save', function($controller, $coup
     }
 });
 
+/**
+ * Listen on:    `orbit.coupon.after.header.translation.save`
+ * Purpose:      Handle file upload on coupon with language translation
+ *
+ * @author Ahmad Anshori <ahmad@dominopos.com>
+ *
+ * @param CouponAPIController $controller
+ * @param CouponTranslations $coupon_translations
+ */
+Event::listen('orbit.coupon.after.header.translation.save', function($controller, $coupon_translations)
+{
+    $image_id = $coupon_translations->merchant_language_id;
+
+    $header_files = OrbitInput::files('header_image_translation_' . $image_id);
+    if (! $header_files) {
+        return;
+    }
+
+    $_POST['coupon_translation_id'] = $coupon_translations->coupon_translation_id;
+    $_POST['promotion_id'] = $coupon_translations->promotion_id;
+    $_POST['merchant_language_id'] = $coupon_translations->merchant_language_id;
+    $response = UploadAPIController::create('raw')
+                                   ->setCalledFrom('coupon.translations')
+                                   ->postUploadCouponHeaderTranslationImage();
+
+    if ($response->code !== 0)
+    {
+        throw new \Exception($response->message, $response->code);
+    }
+
+    unset($_POST['coupon_translation_id']);
+    unset($_POST['coupon_id']);
+    unset($_POST['merchant_language_id']);
+
+    $coupon_translations->setRelation('mediaGrabHeader', $response->data);
+    $coupon_translations->media = $response->data;
+    $coupon_translations->header_image_translation = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $coupon_translations->coupon_translation_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => 'coupon',
+            'es_id'         => $coupon_translations->promotion_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
+});
+
+/**
+ * Listen on:    `orbit.coupon.after.image1.translation.save`
+ * Purpose:      Handle file upload on coupon with language translation
+ *
+ * @author Ahmad Anshori <ahmad@dominopos.com>
+ *
+ * @param CouponAPIController $controller
+ * @param CouponTranslations $coupon_translations
+ */
+Event::listen('orbit.coupon.after.image1.translation.save', function($controller, $coupon_translations)
+{
+    $image_id = $coupon_translations->merchant_language_id;
+
+    $header_files = OrbitInput::files('image1_translation_' . $image_id);
+    if (! $header_files) {
+        return;
+    }
+
+    $_POST['coupon_translation_id'] = $coupon_translations->coupon_translation_id;
+    $_POST['promotion_id'] = $coupon_translations->promotion_id;
+    $_POST['merchant_language_id'] = $coupon_translations->merchant_language_id;
+    $response = UploadAPIController::create('raw')
+                                   ->setCalledFrom('coupon.translations')
+                                   ->postUploadCouponImage1TranslationImage();
+
+    if ($response->code !== 0)
+    {
+        throw new \Exception($response->message, $response->code);
+    }
+
+    unset($_POST['coupon_translation_id']);
+    unset($_POST['coupon_id']);
+    unset($_POST['merchant_language_id']);
+
+    $coupon_translations->setRelation('mediaGrabImage1', $response->data);
+    $coupon_translations->media = $response->data;
+    $coupon_translations->image1_translation = $response->data[0]->path;
+
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
+
+        Queue::push($queueFile, [
+            'object_id'     => $coupon_translations->coupon_translation_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => 'coupon',
+            'es_id'         => $coupon_translations->promotion_id,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
+});
 
 /**
  * Listen on:    `orbit.coupon.postnewcoupon.after.commit`
@@ -240,7 +359,8 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                                                                     )
                         THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
                     END AS campaign_status,
-                    COUNT({$prefix}issued_coupons.issued_coupon_id) as available
+                    COUNT({$prefix}issued_coupons.issued_coupon_id) as available,
+                    {$prefix}promotions.is_visible
                 "))
                 ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                 ->join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -254,7 +374,7 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                 ->first();
 
     if (! empty($coupon)) {
-        if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0) {
+        if ($coupon->campaign_status === 'stopped' || $coupon->campaign_status === 'expired' || $coupon->available === 0 || $coupon->is_visible === 'N') {
             // Notify the queueing system to delete Elasticsearch document
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
                 'coupon_id' => $coupon->promotion_id
@@ -265,10 +385,12 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
                 'coupon_id' => $coupon->promotion_id
             ]);
         } else {
-            // Notify the queueing system to update Elasticsearch document
-            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                'coupon_id' => $coupon->promotion_id
-            ]);
+            if ($coupon->is_visible === 'Y') {
+                // Notify the queueing system to update Elasticsearch document
+                Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                    'coupon_id' => $coupon->promotion_id
+                ]);
+            }
         }
     }
 

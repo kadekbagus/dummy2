@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use \Queue;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -181,6 +182,17 @@ class CouponAPIController extends ControllerAPI
             $partner_ids = (array) $partner_ids;
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
 
+            $is3rdPartyPromotion = OrbitInput::post('is_3rd_party_promotion', 'N');
+            $promotionValue = OrbitInput::post('promotion_value', NULL);
+            $currency = OrbitInput::post('currency', NULL);
+            $offerType = OrbitInput::post('offer_type', NULL);
+            $offerValue = OrbitInput::post('offer_value', NULL);
+            $originalPrice = OrbitInput::post('original_price', NULL);
+            $redemptionVerificationCode = OrbitInput::post('redemption_verification_code', NULL);
+            $shortDescription = OrbitInput::post('short_description', NULL);
+            $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
+            $thirdPartyName = OrbitInput::post('third_party_name', NULL);
+
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
             }
@@ -210,6 +222,8 @@ class CouponAPIController extends ControllerAPI
                 'sticky_order'            => $sticky_order,
                 'is_popup'                => $is_popup,
                 'coupon_codes'            => $couponCodes,
+                'is_visible'              => $isVisible,
+                'is_3rd_party_promotion'  => $is3rdPartyPromotion,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -231,6 +245,8 @@ class CouponAPIController extends ControllerAPI
                 'sticky_order'            => 'in:0,1',
                 'is_popup'                => 'in:Y,N',
                 'coupon_codes'            => 'required',
+                'is_visible'              => 'required|in:Y,N',
+                'is_3rd_party_promotion'  => 'required|in:Y,N',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -254,6 +270,39 @@ class CouponAPIController extends ControllerAPI
                 $validator_validation,
                 $validator_message
             );
+
+            if ($is3rdPartyPromotion === 'Y') {
+                $thirdPartyValidatorValue = [
+                    'coupon_validity_in_date' => $coupon_validity_in_date,
+                    'promotion_value' => $promotionValue,
+                    'currency' => $currency,
+                    'offer_type' => $offerType,
+                    'offer_value' => $offerValue,
+                    'original_price' => $originalPrice,
+                    'redemption_verification_code' => $redemptionVerificationCode,
+                    // 'redemption_method' => $redemptionMethod,
+                    'short_description' => $shortDescription,
+                    '3rd_party_name' => $thirdPartyName
+                ];
+                $thirdPartyValidatorValidation = [
+                    'coupon_validity_in_date' => 'required',
+                    'promotion_value' => 'required|numeric',
+                    'currency' => 'required',
+                    'offer_type' => 'required|in:voucher,discount,general,deal',
+                    'offer_value' => 'numeric',
+                    'original_price' => 'numeric',
+                    'redemption_verification_code' => 'required',
+                    // 'redemption_method' => 'required|in:online,4-digit PIN,Barcode: code 128,Barcode: ean-128,Barcode: ean-13,Barcode: upc-a,Barcode: gs1-databar,QRCode,Plain Text',
+                    'short_description' => 'required',
+                    '3rd_party_name' => 'required',
+                ];
+
+                $thirdValidator = Validator::make(
+                    $thirdPartyValidatorValue,
+                    $thirdPartyValidatorValidation,
+                    []
+                );
+            }
 
             Event::fire('orbit.coupon.postnewcoupon.before.validation', array($this, $validator));
 
@@ -385,6 +434,147 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
+            // 3rd party coupon validation
+            if ($is3rdPartyPromotion === 'Y') {
+                if ($thirdValidator->fails()) {
+                    $errorMessage = $thirdValidator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                // offer value is required when offer_type = 'voucher', 'discount', or 'deal'
+                $offerTypeValues = ['voucher', 'discount', 'deal'];
+                if (in_array(strtolower($offerType), $offerTypeValues)) {
+                    if (empty($offerValue)) {
+                        $errorMessage = 'The coupon voucher value is required';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
+
+                // original_price is required when offer_type = 'deal'
+                if (strtolower($offerType) === 'deal') {
+                    if (empty($originalPrice)) {
+                        $errorMessage = 'The coupon original price is required';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
+
+                // validate PMP Account's required fields for 3rd party
+                $userDetail = $user->userdetail()->first();
+                $userCampaignAccount = $user->campaignAccount()->first();
+
+                if (empty($userCampaignAccount->mobile_default_language)) {
+                    $errorMessage = 'PMP Account missing mobile default language field';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                if (empty($userDetail->phone)) {
+                    $errorMessage = 'PMP Account missing phone field';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                // validate Merchant's required fields for 3rd party
+                $errorTenants = [];
+                $tenantIds = [];
+                foreach ($linkToTenantIds as $linkToTenantId) {
+                    $data = @json_decode($linkToTenantId);
+                    $tenantIds[] = $data->tenant_id;
+                }
+                $tenants = Tenant::with([
+                        'baseStore' => function($q) {
+                            $q->with('mediaImageGrabOrig', 'baseMerchant.mediaLogoGrab');
+                        },
+                        'categories.vendorGTMCategory.grabCategory',
+                        'mall' => function($q) {
+                            $q->addSelect('merchants.*')
+                                ->includeLatLong()
+                                ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
+                        }
+                    ])
+                    ->excludeDeleted()
+                    ->whereIn('merchant_id', $tenantIds)
+                    ->get();
+
+                foreach ($tenants as $tenant) {
+                    $errorReason = new \stdclass();
+                    $errorReason->reasons = array();
+
+                    if (is_object($tenant)) {
+                        $valid = TRUE;
+                        if (!isset($tenant->phone) || empty($tenant->phone)) {
+                            $errorReason->reasons[] = 'Tenant missing phone field';
+                            $valid = FALSE;
+                        }
+                        if (!isset($tenant->email) || empty($tenant->email)) {
+                            $errorReason->reasons[] = 'Tenant missing email field';
+                            $valid = FALSE;
+                        }
+                        if (empty($tenant->baseStore->baseMerchant->mediaLogoGrab) || !isset($tenant->baseStore->baseMerchant->mediaLogoGrab[0])) {
+                            $errorReason->reasons[] = 'Tenant missing 3rd party logo field';
+                            $valid = FALSE;
+                        }
+                        if (empty($tenant->baseStore->mediaImageGrabOrig) || !isset($tenant->baseStore->mediaImageGrabOrig[0])) {
+                            $errorReason->reasons[] = 'Tenant missing 3rd party image field';
+                            $valid = FALSE;
+                        }
+                        if (!isset($tenant->mall->country_id) || empty($tenant->mall->country_id)) {
+                            $errorReason->reasons[] = "Tenant's mall missing country field";
+                            $valid = FALSE;
+                        }
+                        if (!isset($tenant->mall->city) || empty($tenant->mall->city)) {
+                            $errorReason->reasons[] = "Tenant's mall missing city field";
+                            $valid = FALSE;
+                        }
+                        if (!isset($tenant->mall->address_line1) || empty($tenant->mall->address_line1)) {
+                            $errorReason->reasons[] = "Tenant's mall missing address field";
+                            $valid = FALSE;
+                        }
+                        if (!isset($tenant->mall->postal_code) || empty($tenant->mall->postal_code)) {
+                            $errorReason->reasons[] = "Tenant's mall missing postal code field";
+                            $valid = FALSE;
+                        }
+                        if (!isset($tenant->mall->longitude) || empty($tenant->mall->longitude)) {
+                            $errorReason->reasons[] = "Tenant's mall missing longitude field";
+                            $valid = FALSE;
+                        }
+                        if (!isset($tenant->mall->latitude) || empty($tenant->mall->latitude)) {
+                            $errorReason->reasons[] = "Tenant's mall missing latitude field";
+                            $valid = FALSE;
+                        }
+                        if (empty($tenant->categories)) {
+                            $errorReason->reasons[] = 'Tenant missing categories field';
+                            $valid = FALSE;
+                        } else {
+                            $categoryIsValid = FALSE;
+                            $validCategories = ['Eat', 'Play', 'Shop', 'Travel', 'Service'];
+                            foreach ($tenant->categories as $category) {
+                                if (isset($category->vendorGTMCategory->grabCategory)) {
+                                    $categoryIsValid = $categoryIsValid || in_array($category->vendorGTMCategory->grabCategory->category_name, $validCategories);
+                                }
+                            }
+                            if (! $categoryIsValid) {
+                                $errorReason->reasons[] = 'Tenant category is not in Eat, Play, Shop, Travel, or Service';
+                                $valid = FALSE;
+                            }
+                        }
+                        if (! $valid) {
+                            $errorReason->tenant_id = $tenant->merchant_id;
+                            $errorReason->tenant_name = $tenant->name;
+                            $errorReason->mall_name = $tenant->mall->name;
+                            $errorTenants[] = $errorReason;
+                        }
+
+                    } else {
+                        $errorReason->tenant_id = $tenant->merchant_id;
+                        $errorReason->reasons = 'Tenant not found';
+                        $errorTenants[] = $errorReason;
+                    }
+                }
+
+                if (! empty($errorTenants)) {
+                    $errorMessage = 'Link to Tenant error';
+                    throw new OrbitCustomException($errorMessage, Coupon::THIRD_PARTY_COUPON_TENANT_VALIDATION_ERROR, $errorTenants);
+                }
+            }
+
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
             // save Coupon.
@@ -414,6 +604,22 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->is_popup = $is_popup;
             $newcoupon->sticky_order = $sticky_order;
             $newcoupon->is_exclusive = $is_exclusive;
+
+            // save 3rd party coupon fields
+            if ($is3rdPartyPromotion === 'Y') {
+                $newcoupon->promotion_value = $promotionValue;
+                $newcoupon->currency = $currency;
+                $newcoupon->offer_type = $offerType;
+                $newcoupon->offer_value = $offerValue;
+                $newcoupon->original_price = $originalPrice;
+                $newcoupon->redemption_method = '4-digit PIN';
+                $newcoupon->redemption_verification_code = $redemptionVerificationCode;
+                $newcoupon->short_description = $shortDescription;
+                $newcoupon->is_visible = $isVisible;
+                $newcoupon->is_3rd_party_promotion = $is3rdPartyPromotion;
+                $newcoupon->third_party_name = $thirdPartyName;
+                $newcoupon->is_3rd_party_field_complete = 'Y';
+            }
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -865,6 +1071,25 @@ class CouponAPIController extends ControllerAPI
                     ->setActivityNameLong('Create Coupon Failed')
                     ->setNotes($e->getMessage())
                     ->responseFailed();
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            Event::fire('orbit.coupon.postnewcoupon.custom.exception', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getCustomData();
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_coupon')
+                    ->setActivityNameLong('Create Coupon Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+
         } catch (Exception $e) {
             Event::fire('orbit.coupon.postnewcoupon.general.exception', array($this, $e));
 
@@ -2381,7 +2606,13 @@ class CouponAPIController extends ControllerAPI
                     DB::raw("(SELECT GROUP_CONCAT(issued_coupon_code separator '\n')
                         FROM {$table_prefix}issued_coupons ic
                         WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
-                            ) as coupon_codes")
+                            ) as coupon_codes"),
+                    DB::raw("CASE
+                                WHEN is_3rd_party_field_complete = 'Y' AND {$table_prefix}pre_exports.object_id IS NOT NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'in_progress'
+                                WHEN is_3rd_party_field_complete = 'Y' AND {$table_prefix}pre_exports.object_id IS NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'available'
+                                WHEN is_3rd_party_field_complete = 'N' THEN 'not_available'
+                            END AS export_status
+                        ")
                 )
                 ->leftJoin('campaign_price', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
@@ -2391,6 +2622,11 @@ class CouponAPIController extends ControllerAPI
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                // Join for get export status
+                ->leftJoin('pre_exports', function ($join) {
+                         $join->on('promotions.promotion_id', '=', 'pre_exports.object_id')
+                              ->where('pre_exports.object_type', '=', 'coupon');
+                  })
                 ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
@@ -4081,13 +4317,13 @@ class CouponAPIController extends ControllerAPI
          * Having a value of null means deleting the translation
          *
          * where Coupon object is object with keys:
-         *   promotion_name, description, long_description
+         *   promotion_name, description, long_description, short_description
          *
          * No requirement for including fields. If field not included it means not updated. If field included with
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['promotion_name', 'description', 'long_description'];
+        $valid_fields = ['promotion_name', 'description', 'long_description', 'short_description'];
         $user = $this->api->user;
         $operations = [];
 
@@ -4147,6 +4383,8 @@ class CouponAPIController extends ControllerAPI
                 // @param ControllerAPI $this
                 // @param EventTranslation $new_transalation
                 Event::fire('orbit.coupon.after.translation.save', array($this, $new_translation));
+                Event::fire('orbit.coupon.after.header.translation.save', array($this, $new_translation));
+                Event::fire('orbit.coupon.after.image1.translation.save', array($this, $new_translation));
 
                 $coupon->setRelation('translation_' . $new_translation->merchant_language_id, $new_translation);
             }

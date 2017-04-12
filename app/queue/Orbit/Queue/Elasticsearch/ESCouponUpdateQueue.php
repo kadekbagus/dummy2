@@ -85,6 +85,7 @@ class ESCouponUpdateQueue
                     ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
+                    ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
                     ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                     ->orderBy('promotions.promotion_id', 'asc')
                     ->first();

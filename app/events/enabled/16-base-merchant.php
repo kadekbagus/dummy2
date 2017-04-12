@@ -27,7 +27,7 @@ Event::listen('orbit.basemerchant.postnewbasemerchant.after.save', function($con
 
     if (! empty($logo)) {
         $_POST['merchant_id'] = $baseMerchant->base_merchant_id;
-        $_POST['object_type'] = 'base_merchant';
+        $_POST['object_type'] = $baseMerchant->object_type;
 
         // This will be used on UploadAPIController
         App::instance('orbit.upload.user', $controller->api->user);
