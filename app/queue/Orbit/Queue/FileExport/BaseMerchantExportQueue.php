@@ -189,7 +189,7 @@ class BaseMerchantExportQueue
 
             $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: OK; Export ID: %s;',
                                 $job->getJobId(),
-                                $exportId)
+                                $exportId);
 
             $this->debug($message . "\n");
             \Log::info($message);
