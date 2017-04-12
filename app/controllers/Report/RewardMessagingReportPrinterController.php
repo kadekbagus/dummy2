@@ -7,8 +7,9 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
 use Response;
 use Coupon;
+use Str;
 
-class RewardMessagingReportPrinterController extends DataPrinterController
+class RewardMessagingReportPrinterController
 {
 
     /*
@@ -22,6 +23,17 @@ class RewardMessagingReportPrinterController extends DataPrinterController
         Term Detail
     */
 
+    /**
+     * Static method to instantiate the object.
+     *
+     * @param string $contentType
+     * @return ControllerAPI
+     */
+    public static function create()
+    {
+        return new static;
+    }
+
     public function postPrintRewardMessaging()
     {
         try {
@@ -29,6 +41,7 @@ class RewardMessagingReportPrinterController extends DataPrinterController
             $exportId = OrbitInput::post('export_id');
             $exportType = 'reward_messaging';
             $chunk = Config::get('orbit.export.chunk', 50);
+            $dir = Config::get('orbit.export.output_dir', '');
 
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
@@ -41,59 +54,60 @@ class RewardMessagingReportPrinterController extends DataPrinterController
                 $image = "CASE WHEN cdn_url IS NULL THEN CONCAT('{$urlPrefix}', path) ELSE cdn_url END";
             }
 
-            $export = Coupon::select(
-                    'promotions.promotion_id as sku',
-                    DB::raw("default_translation.promotion_name as name"),
-                    'users.user_email', // Support Email
-                    'campaign_account.phone', // Support Phone
-                    // City
-                    DB::raw("
-                        (SELECT
-                        group_concat(DISTINCT vendor_city) as vendor_grab_city
-                        FROM orbit_cloud_34.{$prefix}promotion_retailer opt
-                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                        LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
-                        LEFT JOIN {$prefix}vendor_gtm_cities ovgc ON ovgc.gtm_city = (CASE WHEN om.object_type = 'mall' THEN om.city ELSE oms.city END) AND vendor_type = 'grab'
-                        where promotion_id = {$prefix}promotions.promotion_id) as vendor_grab_city
-                    ")
-                )
-                // Get campaign account
-                ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
-                // Get defaulrt language
-                ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
-                // Get email and phone
-                ->join('users', 'users.user_id', '=', 'campaign_account.user_id')
-                // Get country base on pmp user
-                ->join('user_details', 'users.user_id', '=', 'campaign_account.user_id')
-                ->join('countries', 'user_details.country_id' , '=' , 'countries.country_id')
-                // get default content language
-                ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('coupon_translations as default_translation', function ($q) {
-                    $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
-                      ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
-                })
-                ->whereIn('promotions.promotion_id', $couponIds)
-                ->groupBy('promotions.promotion_id')
-                ->with('keywords');
+            $export = Coupon::select('promotions.promotion_id as sku',
+                                    'campaign_account.mobile_default_language as locale',
+                                    'coupon_translations.short_description',
+                                    'coupon_translations.promotion_name',
+                                    'coupon_translations.description',
+                                    'pre_exports.file_path'
+                                    )
+                            ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                            ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                            ->leftJoin('coupon_translations', function ($q) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('coupon_translations.merchant_language_id', '=', 'languages.language_id');
+                            })
+                            ->leftJoin('pre_exports', function ($q){
+                                    $q->on('pre_exports.object_id', '=', 'promotions.promotion_id')
+                                      ->on('pre_exports.object_type', '=', DB::raw("'coupon'"));
+                            })
+                            ->where('pre_exports.export_id', $exportId)
+                            ->where('pre_exports.export_process_type', $exportType)
+                            ->whereIn('promotions.promotion_id', $couponIds);
 
-            $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType) {
+            $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType, $dir) {
                 foreach ($_export as $dtExport) {
-                    $dir = Config::get('orbit.export.output_dir', '');
                     $filePath = $dtExport->file_path;
 
                     if (! file_exists($dir)) {
-                        mkdir($dir, 0777);
+                        mkdir($dir, 0777, true);
                     }
 
-                    $offsetTimezone = '';
+                    $hashbang = '/';
+                    if ((Config::get('sitemap.hashbang'))) {
+                        $hashbang = '/#!/';
+                    }
 
-
+                    $url = Config::get('app.url') . $hashbang . 'coupons/' . $dtExport->sku . '/' . Str::slug($dtExport->promotion_name);
                     $content = array(
                                     array(
                                         $dtExport->sku,
-                                        $dtExport->name,
-                                        $dtExport->user_email,
-                                        $dtExport->phone
+                                        $dtExport->locale,
+                                        $dtExport->short_description,
+                                        '',
+                                        '',
+                                        $url,
+                                        $dtExport->promotion_name,
+                                        '',
+                                        '',
+                                        $dtExport->description,
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        ''
                                     ),
                             );
 
@@ -109,7 +123,7 @@ class RewardMessagingReportPrinterController extends DataPrinterController
 
                     $checkPre = PreExport::where('export_id',$exportId)
                                         ->where('object_type', 'coupon')
-                                        ->where('object_id', $dtExport->base_merchant_id);
+                                        ->where('object_id', $dtExport->sku);
 
                     $preExport = clone $checkPre;
                     $preExport = $preExport->where('export_process_type', $exportType)->first();
