@@ -8,14 +8,21 @@ use Orbit\Text as OrbitText;
 use Response;
 use Coupon;
 
-class RewardInformationReportPrinterController extends DataPrinterController
+
+class RewardPOIMessageReportPrinterController extends DataPrinterController
 {
-    public function postPrintRewardInformation()
+    /*
+        Field :
+        ---------------------
+        POI Name
+        Locale
+    */
+    public function postPrintRewardPOIMessage()
     {
         try {
             $couponIds = OrbitInput::post('coupon_ids');
             $exportId = OrbitInput::post('export_id');
-            $exportType = 'reward_information';
+            $exportType = 'reward_poi_message';
             $chunk = Config::get('orbit.export.chunk', 50);
 
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
@@ -185,7 +192,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
             return ['status' => 'ok'];
 
         } catch (InvalidArgsException $e) {
-            \Log::error('*** Reward information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Reward POI Message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
 
             return [
@@ -193,7 +200,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                 'message' => $e->getMessage()
             ];
         } catch (QueryException $e) {
-            \Log::error('*** Reward information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Reward POI Message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
 
             return [
@@ -201,7 +208,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                 'message' => $e->getMessage()
             ];
         } catch (Exception $e) {
-            \Log::error('*** Reward information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Reward POI Message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
 
             return [
