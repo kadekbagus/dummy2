@@ -187,12 +187,12 @@ class BaseMerchantExportQueue
             // Safely delete the object
             $job->delete();
 
-            return [
-                'status' => 'ok',
-                'message' => sprintf('[Job ID: `%s`] Export Brand file csv; Status: OK; Export ID: %s;',
+            $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: OK; Export ID: %s;',
                                 $job->getJobId(),
-                                $exportId,
-            ];
+                                $exportId)
+
+            $this->debug($message . "\n");
+            \Log::info($message);
 
         } catch (InvalidArgsException $e) {
             \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
@@ -211,12 +211,10 @@ class BaseMerchantExportQueue
             $theJob->delete();
         })->bury();
 
-       return [
-            'status' => 'fail',
-            'message' => sprintf('[Job ID: `%s`] Export Brand file csv; Status: FAIL; Export ID: %s;',
+       $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: FAIL; Export ID: %s;',
                             $job->getJobId(),
-                            $exportId,
-        ];
+                            $exportId);
+        \Log::error($message);
     }
 
     protected function quote($arg)
@@ -274,11 +272,9 @@ class BaseMerchantExportQueue
             $theJob->delete();
         })->bury();
 
-        return [
-            'status' => 'fail',
-            'message' => sprintf('[Job ID: `%s`] Export Brand file csv; Status: FAIL; Export ID: %s;',
+        $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: FAIL; Export ID: %s;',
                             $job->getJobId(),
-                            $exportId,
-        ];
+                            $exportId);
+        \Log::error($message);
     }
 }
