@@ -120,19 +120,19 @@ class BaseMerchantExportQueue
             // send pre export email
             $exportDate = date('d-m-y H:i:s', strtotime($newExport->created_at));
 
-            $preExportDataView['subject']     = Config::get('orbit.export.email.brand.pre_export_subject');
-            $preExportDataView['userEmail']   = $user->user_email;
-            $preExportDataView['exportDate']  = $exportDate;
-            $preExportDataView['exportId']    = $exportId;
-            $preExportDataView['totalExport'] = $totalExport;
-            $preExportDataView['merchants']   = BaseMerchant::whereIn('base_merchant_id', $listAllExportData)->lists('name');
+            $exportDataView['subject']     = Config::get('orbit.export.email.brand.pre_export_subject');
+            $exportDataView['userEmail']   = $user->user_email;
+            $exportDataView['exportDate']  = $exportDate;
+            $exportDataView['exportId']    = $exportId;
+            $exportDataView['totalExport'] = $totalExport;
+            $exportDataView['merchants']   = BaseMerchant::whereIn('base_merchant_id', $listAllExportData)->lists('name');
 
             $preExportMailViews = array(
                                 'html' => 'emails.file-export.pre-brand-export-html',
                                 'text' => 'emails.file-export.pre-brand-export-text'
             );
 
-            $this->sendMail($preExportMailViews, $preExportDataView);
+            $this->sendMail($preExportMailViews, $exportDataView);
 
             // main process
             $_GET['base_merchant_ids'] = $exportData;
@@ -143,7 +143,7 @@ class BaseMerchantExportQueue
             $brandMessage = BrandMessagePrinterController::getBrandMessagePrintView();
 
             // rename attachment file
-            $postExport = PostExport::select('post_exports.file_path', 'base_merchants.name')
+            $postExport = PostExport::select('post_exports.file_path', 'post_exports.export_process_type', 'base_merchants.name')
                                     ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'post_exports.object_id')
                                     ->where('post_exports.export_id', $exportId)
                                     ->where('post_exports.object_type', 'merchant');
@@ -152,25 +152,25 @@ class BaseMerchantExportQueue
             $exportFiles = array();
             $postExport->chunk($chunk, function($_postExport) use ($exportId, $exportType, $dir, &$exportFiles) {
                 foreach ($_postExport as $pe) {
-                    $exportFiles[] = array('file_path' => $dir . $pe->file_path, 'name' => 'Gotomalls_' . $pe->name . '_Brand.csv');
+                    $fileName = 'Gotomalls_' . $pe->name . '_Brand.csv';
+                    if ($pe->export_process_type === 'brand_message') {
+                        $fileName = 'Gotomalls_' . $pe->name . '_Brand_Msg.csv';
+                    }
+                    $exportFiles[] = array('file_path' => $dir . $pe->file_path, 'name' => $fileName);
                 }
             });
 
-            $postExportDataView['subject']          = Config::get('orbit.export.email.brand.post_export_subject');
-            $postExportDataView['userEmail']        = $user->user_email;
-            $postExportDataView['exportDate']       = $exportDate;
-            $postExportDataView['exportId']         = $exportId;
-            $postExportDataView['totalExport']      = $totalExport;
-            $postExportDataView['merchants']        = BaseMerchant::whereIn('base_merchant_id', $exportData)->lists('name');
-            $postExportDataView['attachment']       = $exportFiles;
-            $postExportDataView['skippedMerchants'] = BaseMerchant::whereIn('base_merchant_id', $skippedMerchants)->lists('name');
+            $exportDataView['subject']          = Config::get('orbit.export.email.brand.post_export_subject');
+            $exportDataView['merchants']        = BaseMerchant::whereIn('base_merchant_id', $exportData)->lists('name');
+            $exportDataView['attachment']       = $exportFiles;
+            $exportDataView['skippedMerchants'] = BaseMerchant::whereIn('base_merchant_id', $skippedMerchants)->lists('name');
 
             $postExportMailViews = array(
                                 'html' => 'emails.file-export.post-brand-export-html',
                                 'text' => 'emails.file-export.post-brand-export-text'
             );
 
-            $this->sendMail($postExportMailViews, $postExportDataView);
+            $this->sendMail($postExportMailViews, $exportDataView);
 
         } catch (InvalidArgsException $e) {
             \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
