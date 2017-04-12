@@ -91,15 +91,33 @@ class BrandMessagePrinterController extends DataPrinterController
                     DB::commit();
                 }
             });
+
+            return ['status' => 'ok'];
+
         } catch (InvalidArgsException $e) {
             \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage();
+            ];
         } catch (QueryException $e) {
             \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage();
+            ];
         } catch (Exception $e) {
             \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage();
+            ];
         }
     }
 }
