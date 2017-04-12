@@ -20,6 +20,8 @@ use Queue;
 use Orbit\FakeJob;
 use Report\BrandInformationPrinterController;
 use Report\BrandMessagePrinterController;
+use Mail;
+use Orbit\Helper\Util\JobBurier;
 
 class BaseMerchantExportQueue
 {
@@ -38,11 +40,12 @@ class BaseMerchantExportQueue
             $prefix = DB::getTablePrefix();
             $exportData = $data['export_data'];
             $userId = $data['user'];
-            // $chunk = Config::get('orbit.mdm.synchronization.chunk', 50);
+            $chunk = Config::get('orbit.export.chunk', 50);
 
             $user = User::where('user_id', $userId)->firstOrFail();
             $processType = ['brand_information', 'brand_message'];
             $totalExport = count($exportData);
+            $listAllExportData = $exportData;
 
             // check pre export, if total row in pre_export table is more than equal in $totalExport no need to export, because we still have same data that already in exporting process
             $preExport = PreExport::leftJoin('exports', 'exports.export_id', '=', 'pre_exports.export_id')
@@ -53,7 +56,7 @@ class BaseMerchantExportQueue
                                     ->lists('pre_exports.object_id');
 
             $preExportCount = count($preExport);
-            if ($preExportCount >= count($exportData)) {
+            if ($preExportCount >= $totalExport) {
                 return FALSE;
             }
 
@@ -115,15 +118,88 @@ class BaseMerchantExportQueue
 
             DB::commit();
 
+            // send pre export email
+            $exportDate = date('d-m-y H:i:s', strtotime($newExport->created_at));
+
+            $exportDataView['subject']     = Config::get('orbit.export.email.brand.pre_export_subject');
+            $exportDataView['userEmail']   = $user->user_email;
+            $exportDataView['exportDate']  = $exportDate;
+            $exportDataView['exportId']    = $exportId;
+            $exportDataView['totalExport'] = $totalExport;
+            $exportDataView['merchants']   = BaseMerchant::whereIn('base_merchant_id', $listAllExportData)->lists('name');
+
+            $preExportMailViews = array(
+                                'html' => 'emails.file-export.pre-brand-export-html',
+                                'text' => 'emails.file-export.pre-brand-export-text'
+            );
+
+            $this->sendMail($preExportMailViews, $exportDataView);
+
+            // main process
             $_GET['base_merchant_ids'] = $exportData;
             $_GET['export_id'] = $exportId;
 
             // export Brand Information
-            $brandInformation = BrandInformationPrinterController::getBrandInformationPrintView();
+            $brandInformation = BrandInformationPrinterController::create()
+                                                                ->getBrandInformationPrintView();
+            if ($brandInformation['status'] === 'fail') {
+                $this->failedJob($job, $exportId, $brandInformation['message']);
+            }
+
             // export Brand Message
-            $brandMessage = BrandMessagePrinterController::getBrandMessagePrintView();
+            $brandMessage = BrandMessagePrinterController::create()
+                                                        ->getBrandMessagePrintView();
+            if ($brandMessage['status'] === 'fail') {
+                $this->failedJob($job, $exportId, $brandMessage['message']);
+            }
 
+            // rename attachment file
+            $postExport = PostExport::select('post_exports.file_path', 'post_exports.export_process_type', 'base_merchants.name')
+                                    ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'post_exports.object_id')
+                                    ->where('post_exports.export_id', $exportId)
+                                    ->where('post_exports.object_type', 'merchant');
+            $dir = Config::get('orbit.export.output_dir', '');
 
+            $exportFiles = array();
+            $postExport->chunk($chunk, function($_postExport) use ($exportId, $dir, &$exportFiles) {
+                foreach ($_postExport as $pe) {
+                    $fileName = 'Gotomalls_' . str_replace(" ", "_", $pe->name) . '_Brand.csv';
+                    if ($pe->export_process_type === 'brand_message') {
+                        $fileName = 'Gotomalls_' . $pe->name . '_Brand_Msg.csv';
+                    }
+                    $exportFiles[] = array('file_path' => $dir . $pe->file_path, 'name' => $fileName);
+                }
+            });
+
+            $exportDataView['subject']          = Config::get('orbit.export.email.brand.post_export_subject');
+            $exportDataView['merchants']        = BaseMerchant::whereIn('base_merchant_id', $exportData)->lists('name');
+            $exportDataView['attachment']       = $exportFiles;
+            $exportDataView['skippedMerchants'] = array();
+            if (! empty($skippedMerchants)) {
+                $exportDataView['skippedMerchants'] = BaseMerchant::whereIn('base_merchant_id', $skippedMerchants)->lists('name');
+            }
+
+            $postExportMailViews = array(
+                                'html' => 'emails.file-export.post-brand-export-html',
+                                'text' => 'emails.file-export.post-brand-export-text'
+            );
+
+            $this->sendMail($postExportMailViews, $exportDataView);
+
+            // Safely delete the object
+            $job->delete();
+
+            $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: OK; Export ID: %s;',
+                                $job->getJobId(),
+                                $exportId);
+
+            $this->debug($message . "\n");
+            \Log::info($message);
+
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
 
         } catch (InvalidArgsException $e) {
             \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
@@ -136,9 +212,20 @@ class BaseMerchantExportQueue
             DB::rollBack();
         }
 
-        // Don't care if the job success or not we will provide user
-        // another link to resend the activation
-        $job->delete();
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+       $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: FAIL; Export ID: %s;',
+                            $job->getJobId(),
+                            $exportId);
+        \Log::error($message);
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     protected function quote($arg)
@@ -146,69 +233,35 @@ class BaseMerchantExportQueue
         return DB::connection()->getPdo()->quote($arg);
     }
 
-    protected function updateMedia($type, $data, $store_id) {
-        $path = public_path();
+    /**
+     * Common routine for sending email.
+     *
+     * @param array $data
+     * @return void
+     */
+    protected function sendMail($mailviews, $data)
+    {
 
-        $baseConfig = Config::get('orbit.upload.base_store');
-        $retailerConfig = Config::get('orbit.upload.retailer');
-        $images = array();
+        Mail::send($mailviews, $data, function($message) use ($data)
+        {
+            $emailConf = Config::get('orbit.generic_email.sender');
+            $from = $emailConf['email'];
+            $name = $emailConf['name'];
 
-        foreach ($data as $dt) {
-            $filename = $dt->file_name;
-            switch ($type) {
-                case 'logo':
-                    $filename = $store_id . '-' . $dt->file_name;
-                    $nameid = "retailer_logo";
-                    break;
+            $email = Config::get('orbit.export.email.brand.to');
 
-                case 'picture':
-                    $nameid = "retailer_image";
-                    break;
+            $subject = $data['subject'];
 
-                case 'map':
-                    $nameid = "retailer_map";
-                    break;
+            $message->from($from, $name);
+            $message->subject($subject);
+            $message->to($email);
 
-                default:
-                    $nameid = "";
-                    break;
+            if (! empty($data['attachment'])) {
+                foreach ($data['attachment'] as $file) {
+                    $message->attach($file['file_path'], array('as' => $file['name']));
+                }
             }
-
-            $sourceMediaPath = $path . DS . $baseConfig[$type]['path'] . DS . $dt->file_name;
-            $destMediaPath = $path . DS . $retailerConfig[$type]['path'] . DS . $filename;
-            $this->debug(sprintf("Starting to copy from: %s to %s\n", $sourceMediaPath, $destMediaPath));
-            if (! @copy($sourceMediaPath, $destMediaPath)) {
-                $this->debug("Failed to copy\n");
-            }
-
-            if ($dt->object_name === 'base_merchant') {
-                $name_long = str_replace('base_merchant_', 'retailer_', $dt->media_name_long);
-            } else {
-                $name_long = str_replace('base_store_', 'retailer_', $dt->media_name_long);
-                $name_long = str_replace('base_', 'retailer_', $name_long);
-            }
-
-            $newMedia = new Media;
-            $newMedia->media_name_id = $nameid;
-            $newMedia->media_name_long = $name_long;
-            $newMedia->object_id = $store_id;
-            $newMedia->object_name = 'retailer';
-            $newMedia->file_name = $filename;
-            $newMedia->file_extension = $dt->file_extension;
-            $newMedia->file_size = $dt->file_size;
-            $newMedia->mime_type = $dt->mime_type;
-            $newMedia->path = $retailerConfig[$type]['path'] . DS . $filename;
-            $newMedia->realpath = $destMediaPath;
-            $newMedia->metadata = $dt->metadata;
-            $newMedia->modified_by = $dt->modified_by;
-            $newMedia->created_at = $dt->created_at;
-            $newMedia->updated_at = $dt->updated_at;
-            $newMedia->save();
-
-            $images[] = $newMedia->realpath;
-        }
-
-        return $images;
+        });
     }
 
     protected function debug($message = '')
@@ -221,5 +274,18 @@ class BaseMerchantExportQueue
     public function setDebug($value)
     {
         $this->debug = $value;
+    }
+
+    protected function failedJob($job, $exportId, $message) {
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: FAIL; Export ID: %s;',
+                            $job->getJobId(),
+                            $exportId);
+        \Log::error($message);
     }
 }

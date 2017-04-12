@@ -188,7 +188,7 @@ class CouponAPIController extends ControllerAPI
             $offerType = OrbitInput::post('offer_type', NULL);
             $offerValue = OrbitInput::post('offer_value', NULL);
             $originalPrice = OrbitInput::post('original_price', NULL);
-            $redemptionMethod = OrbitInput::post('redemption_method', 'online');
+            $redemptionVerificationCode = OrbitInput::post('redemption_verification_code', NULL);
             $shortDescription = OrbitInput::post('short_description', NULL);
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
             $thirdPartyName = OrbitInput::post('third_party_name', NULL);
@@ -279,7 +279,8 @@ class CouponAPIController extends ControllerAPI
                     'offer_type' => $offerType,
                     'offer_value' => $offerValue,
                     'original_price' => $originalPrice,
-                    'redemption_method' => $redemptionMethod,
+                    'redemption_verification_code' => $redemptionVerificationCode,
+                    // 'redemption_method' => $redemptionMethod,
                     'short_description' => $shortDescription,
                     '3rd_party_name' => $thirdPartyName
                 ];
@@ -290,7 +291,8 @@ class CouponAPIController extends ControllerAPI
                     'offer_type' => 'required|in:voucher,discount,general,deal',
                     'offer_value' => 'numeric',
                     'original_price' => 'numeric',
-                    'redemption_method' => 'required|in:online,4-digit PIN,Barcode: code 128,Barcode: ean-128,Barcode: ean-13,Barcode: upc-a,Barcode: gs1-databar,QRCode,Plain Text',
+                    'redemption_verification_code' => 'required',
+                    // 'redemption_method' => 'required|in:online,4-digit PIN,Barcode: code 128,Barcode: ean-128,Barcode: ean-13,Barcode: upc-a,Barcode: gs1-databar,QRCode,Plain Text',
                     'short_description' => 'required',
                     '3rd_party_name' => 'required',
                 ];
@@ -471,26 +473,29 @@ class CouponAPIController extends ControllerAPI
 
                 // validate Merchant's required fields for 3rd party
                 $errorTenants = [];
+                $tenantIds = [];
                 foreach ($linkToTenantIds as $linkToTenantId) {
                     $data = @json_decode($linkToTenantId);
-                    $tenantId = $data->tenant_id;
+                    $tenantIds[] = $data->tenant_id;
+                }
+                $tenants = Tenant::with([
+                        'baseStore' => function($q) {
+                            $q->with('mediaImageGrabOrig', 'baseMerchant.mediaLogoGrab');
+                        },
+                        'categories.vendorGTMCategory.grabCategory',
+                        'mall' => function($q) {
+                            $q->addSelect('merchants.*')
+                                ->includeLatLong()
+                                ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
+                        }
+                    ])
+                    ->excludeDeleted()
+                    ->whereIn('merchant_id', $tenantIds)
+                    ->get();
+
+                foreach ($tenants as $tenant) {
                     $errorReason = new \stdclass();
                     $errorReason->reasons = array();
-                    $tenant = Tenant::with([
-                            'baseStore' => function($q) {
-                                $q->with('mediaImageGrabOrig', 'baseMerchant.mediaLogoGrab');
-                            },
-                            'mediaLogoGrabOrig',
-                            'mediaImageGrabOrig',
-                            'mall' => function($q) {
-                                $q->addSelect('merchants.*')
-                                    ->includeLatLong()
-                                    ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
-                            }
-                        ])
-                        ->excludeDeleted()
-                        ->where('merchant_id', $tenantId)
-                        ->first();
 
                     if (is_object($tenant)) {
                         $valid = TRUE;
@@ -534,15 +539,31 @@ class CouponAPIController extends ControllerAPI
                             $errorReason->reasons[] = "Tenant's mall missing latitude field";
                             $valid = FALSE;
                         }
+                        if (empty($tenant->categories)) {
+                            $errorReason->reasons[] = 'Tenant missing categories field';
+                            $valid = FALSE;
+                        } else {
+                            $categoryIsValid = FALSE;
+                            $validCategories = ['Eat', 'Play', 'Shop', 'Travel', 'Service'];
+                            foreach ($tenant->categories as $category) {
+                                if (isset($category->vendorGTMCategory->grabCategory)) {
+                                    $categoryIsValid = $categoryIsValid || in_array($category->vendorGTMCategory->grabCategory->category_name, $validCategories);
+                                }
+                            }
+                            if (! $categoryIsValid) {
+                                $errorReason->reasons[] = 'Tenant category is not in Eat, Play, Shop, Travel, or Service';
+                                $valid = FALSE;
+                            }
+                        }
                         if (! $valid) {
-                            $errorReason->tenant_id = $tenantId;
+                            $errorReason->tenant_id = $tenant->merchant_id;
                             $errorReason->tenant_name = $tenant->name;
                             $errorReason->mall_name = $tenant->mall->name;
                             $errorTenants[] = $errorReason;
                         }
 
                     } else {
-                        $errorReason->tenant_id = $tenantId;
+                        $errorReason->tenant_id = $tenant->merchant_id;
                         $errorReason->reasons = 'Tenant not found';
                         $errorTenants[] = $errorReason;
                     }
@@ -591,7 +612,8 @@ class CouponAPIController extends ControllerAPI
                 $newcoupon->offer_type = $offerType;
                 $newcoupon->offer_value = $offerValue;
                 $newcoupon->original_price = $originalPrice;
-                $newcoupon->redemption_method = $redemptionMethod;
+                $newcoupon->redemption_method = '4-digit PIN';
+                $newcoupon->redemption_verification_code = $redemptionVerificationCode;
                 $newcoupon->short_description = $shortDescription;
                 $newcoupon->is_visible = $isVisible;
                 $newcoupon->is_3rd_party_promotion = $is3rdPartyPromotion;

@@ -16,8 +16,19 @@ use PreExport;
 use PostExport;
 use Export;
 
-class BrandInformationPrinterController extends DataPrinterController
+class BrandInformationPrinterController
 {
+    /**
+     * Static method to instantiate the object.
+     *
+     * @param string $contentType
+     * @return ControllerAPI
+     */
+    public static function create()
+    {
+        return new static;
+    }
+
     public function getBrandInformationPrintView()
     {
         try {
@@ -25,6 +36,7 @@ class BrandInformationPrinterController extends DataPrinterController
             $exportId = OrbitInput::get('export_id');
             $exportType = 'brand_information';
             $chunk = Config::get('orbit.export.chunk', 50);
+            $dir = Config::get('orbit.export.output_dir', '');
 
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
@@ -51,13 +63,12 @@ class BrandInformationPrinterController extends DataPrinterController
                                 ->whereIn('base_merchants.base_merchant_id', $baseMerchantIds)
                                 ->groupBy('base_merchants.base_merchant_id');
 
-            $export->chunk($chunk, function($_export) use ($baseMerchantIds, $exportId, $exportType) {
+            $export->chunk($chunk, function($_export) use ($baseMerchantIds, $exportId, $exportType, $dir) {
                 foreach ($_export as $dtExport) {
-                    $dir = Config::get('orbit.export.output_dir', '');
                     $filePath = $dtExport->file_path;
 
                     if (! file_exists($dir)) {
-                        mkdir($dir, 0777);
+                        mkdir($dir, 0777, true);
                     }
 
                     $content = array(
@@ -100,15 +111,33 @@ class BrandInformationPrinterController extends DataPrinterController
                     DB::commit();
                 }
             });
+
+            return ['status' => 'ok'];
+
         } catch (InvalidArgsException $e) {
-            \Log::error('*** Brand Information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage()
+            ];
         } catch (QueryException $e) {
-            \Log::error('*** Brand Information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage()
+            ];
         } catch (Exception $e) {
-            \Log::error('*** Brand Information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage()
+            ];
         }
     }
 }

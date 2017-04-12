@@ -33,8 +33,8 @@ class MerchantExportAPIController extends ControllerAPI
     {
         try {
             $httpCode = 200;
-            $syncData = OrbitInput::post('ids', null);
-            $syncType = OrbitInput::post('type', 'merchant');
+            $exportData = OrbitInput::post('ids', null);
+            $exportType = OrbitInput::post('type', 'merchant');
 
             // Require authentication
             $this->checkAuth();
@@ -51,16 +51,16 @@ class MerchantExportAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            if (empty($syncData)) {
+            if (empty($exportData)) {
                 $message = 'Merchant is required';
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
             // queue for data synchronization
-            // Queue::push('Orbit\\Queue\\FileExport\\BaseMerchantExportQueue', [
-            //     'sync_data' => $syncData,
-            //     'user' => $user->user_id
-            // ], 'gtm_export_csv');
+            Queue::push('Orbit\\Queue\\FileExport\\BaseMerchantExportQueue', [
+                'export_data' => $exportData,
+                'user' => $user->user_id
+            ], 'gtm_export_csv');
 
         } catch (ACLForbiddenException $e) {
 

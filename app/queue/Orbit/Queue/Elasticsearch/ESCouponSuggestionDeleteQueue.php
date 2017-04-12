@@ -67,7 +67,8 @@ class ESCouponSuggestionDeleteQueue
                                                                         )
                             THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
                         END AS campaign_status,
-                        COUNT({$prefix}issued_coupons.issued_coupon_id) as available
+                        COUNT({$prefix}issued_coupons.issued_coupon_id) as available,
+                        {$prefix}promotions.is_visible
                     "))
                     ->join('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                     ->join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -77,9 +78,8 @@ class ESCouponSuggestionDeleteQueue
                     })
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
-                    ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
                     ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
-                    ->havingRaw("(campaign_status in ('stopped', 'expired') or available = 0)")
+                    ->havingRaw("(campaign_status in ('stopped', 'expired') or available = 0 or is_visible = 'N')")
                     ->first();
 
         if (! is_object($coupon)) {
