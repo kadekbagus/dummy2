@@ -57,7 +57,20 @@ class BaseMerchantExportQueue
 
             $preExportCount = count($preExport);
             if ($preExportCount >= $totalExport) {
-                return FALSE;
+                // Bury the job for later inspection
+                JobBurier::create($job, function($theJob) {
+                    // The queue driver does not support bury.
+                    $theJob->delete();
+                })->bury();
+
+                $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: fail; Message: All file still in progress;',
+                                $job->getJobId());
+                \Log::error($message);
+
+                return [
+                    'status' => 'fail',
+                    'message' => $message
+                ];
             }
 
             DB::beginTransaction();
