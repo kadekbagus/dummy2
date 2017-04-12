@@ -25,6 +25,7 @@ class BrandMessagePrinterController extends DataPrinterController
             $exportId = OrbitInput::get('export_id');
             $exportType = 'brand_message';
             $chunk = Config::get('orbit.export.chunk', 50);
+            $dir = Config::get('orbit.export.output_dir', '');
 
             $export = BaseMerchant::select('base_merchants.base_merchant_id', 'base_merchants.name', 'base_merchants.mobile_default_language', 'base_merchant_translations.description', 'base_merchants.url', 'pre_exports.file_path'
                                 )
@@ -42,9 +43,8 @@ class BrandMessagePrinterController extends DataPrinterController
                                 ->whereIn('base_merchants.base_merchant_id', $baseMerchantIds)
                                 ->groupBy('base_merchants.base_merchant_id');
 
-            $export->chunk($chunk, function($_export) use ($baseMerchantIds, $exportId, $exportType) {
+            $export->chunk($chunk, function($_export) use ($baseMerchantIds, $exportId, $exportType, $dir) {
                 foreach ($_export as $dtExport) {
-                    $dir = Config::get('orbit.export.output_dir', '');
                     $filePath = $dtExport->file_path;
 
                     if (! file_exists($dir)) {

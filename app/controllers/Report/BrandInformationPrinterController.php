@@ -25,6 +25,7 @@ class BrandInformationPrinterController extends DataPrinterController
             $exportId = OrbitInput::get('export_id');
             $exportType = 'brand_information';
             $chunk = Config::get('orbit.export.chunk', 50);
+            $dir = Config::get('orbit.export.output_dir', '');
 
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
@@ -51,9 +52,8 @@ class BrandInformationPrinterController extends DataPrinterController
                                 ->whereIn('base_merchants.base_merchant_id', $baseMerchantIds)
                                 ->groupBy('base_merchants.base_merchant_id');
 
-            $export->chunk($chunk, function($_export) use ($baseMerchantIds, $exportId, $exportType) {
+            $export->chunk($chunk, function($_export) use ($baseMerchantIds, $exportId, $exportType, $dir) {
                 foreach ($_export as $dtExport) {
-                    $dir = Config::get('orbit.export.output_dir', '');
                     $filePath = $dtExport->file_path;
 
                     if (! file_exists($dir)) {
