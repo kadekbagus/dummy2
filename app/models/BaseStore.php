@@ -19,6 +19,17 @@ class BaseStore extends Eloquent
     protected $table = 'base_stores';
 
     /**
+     * BaseStore belongs to BaseMerchant.
+     *
+     * @author Ahmad <ahmad@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function baseMerchant()
+    {
+        return $this->belongsTo('BaseMerchant', 'base_merchant_id', 'base_merchant_id');
+    }
+
+    /**
      * Base Store has many uploaded media.
      *
      * @author Irianto <irianto@dominopos.com>
