@@ -12,6 +12,35 @@ class RewardInformationReportPrinterController extends DataPrinterController
 {
     public function postPrintRewardInformation()
     {
+
+        /*
+            Field :
+            ---------------------
+            SKU
+            name
+            Support Email
+            Support Phone
+            Category
+            Tag
+            Total Inventory
+            Reward Value
+            Reward Value Currency
+            Country
+            City
+            Offer Start Date
+            Offer End Date
+            Validity Start Date
+            Validity End Date
+            Offer Type
+            Voucher Value
+            Discount Percentage
+            Deal List Price
+            Deal Original Price
+            Redemption Method
+            Header Image URL
+            Image 1 URL
+        */
+
         try {
             $couponIds = OrbitInput::post('coupon_ids');
             $exportId = OrbitInput::post('export_id');
@@ -32,44 +61,54 @@ class RewardInformationReportPrinterController extends DataPrinterController
             $export = Coupon::select(
                     'promotions.promotion_id as sku',
                     DB::raw("default_translation.promotion_name as name"),
-                    'users.user_email', // Support Email
-                    'campaign_account.phone', // Support Phone
-                    DB::raw('"category"'),// Category
+                    'users.user_email',
+                    'campaign_account.phone',
+                    DB::raw("
+                        (SELECT GROUP_CONCAT(DISTINCT ok.keyword) as test
+                        FROM {$prefix}promotions op
+                        LEFT JOIN {$prefix}keyword_object ork ON ork.object_id = op.promotion_id AND ork.object_type = 'coupon'
+                        INNER JOIN {$prefix}keywords ok ON ok.keyword_id = ork.keyword_id
+                        where promotion_id = {$prefix}promotions.promotion_id
+                        ) as keywords
+                    "),
+                    DB::raw('"category"'),
                     'promotions.maximum_issued_coupon as total_inventory',
                     'promotions.promotion_value as reward_value',
                     'promotions.currency',
-                    'countries.name as country',// Country
+                    'countries.name as country',
                     // City
                     DB::raw("
                         (SELECT
-                        group_concat(DISTINCT vendor_city) as vendor_grab_city
-                        FROM orbit_cloud_34.{$prefix}promotion_retailer opt
+                        group_concat(DISTINCT ogc.grab_city_name) as grab_city_name
+                        FROM {$prefix}promotion_retailer opt
                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
                         LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
                         LEFT JOIN {$prefix}vendor_gtm_cities ovgc ON ovgc.gtm_city = (CASE WHEN om.object_type = 'mall' THEN om.city ELSE oms.city END) AND vendor_type = 'grab'
-                        where promotion_id = {$prefix}promotions.promotion_id) as vendor_grab_city
+                        INNER JOIN {$prefix}grab_cities ogc ON ogc.grab_city_external_id = ovgc.vendor_city
+                        where promotion_id = {$prefix}promotions.promotion_id
+                        ) as grab_city_name
                     "),
-                    'promotions.begin_date',// Offer Start Date
-                    'promotions.end_date',// Offer End Date
-                    'promotions.begin_date',// Validity Start Date
-                    'promotions.coupon_validity_in_date',// Validity End Date
+                    'promotions.begin_date',
+                    'promotions.end_date',
+                    'promotions.begin_date',
+                    'promotions.coupon_validity_in_date',
                     'promotions.offer_type',
-                    'promotions.offer_value as voucher_value', //voucher
-                    'promotions.offer_value as discount_percentage', //discount
-                    'promotions.offer_value as deal_list_price', //deal
-                    'promotions.original_price', //deal
+                    'promotions.offer_value as voucher_value',
+                    'promotions.offer_value as discount_percentage',
+                    'promotions.offer_value as deal_list_price',
+                    'promotions.original_price',
                     'promotions.redemption_method',
                     // Header Image URL
                     DB::raw("
                             (SELECT {$image}
-                            FROM orb_media m
+                            FROM {$prefix}media m
                             WHERE m.media_name_long = 'coupon_header_grab_translation_image_orig'
                             AND m.object_id = default_translation.coupon_translation_id) AS header_original_media_path
                     "),
                     // Image 1 URL
                     DB::raw("
                             (SELECT {$image}
-                            FROM orb_media m
+                            FROM {$prefix}media m
                             WHERE m.media_name_long = 'coupon_image_grab_translation_image_orig'
                             AND m.object_id = default_translation.coupon_translation_id) AS image_original_media_path
                     "),
@@ -102,8 +141,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                       ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                 })
                 ->whereIn('promotions.promotion_id', $couponIds)
-                ->groupBy('promotions.promotion_id')
-                ->with('keywords');
+                ->groupBy('promotions.promotion_id');
 
             $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType) {
                 foreach ($_export as $dtExport) {
@@ -114,8 +152,10 @@ class RewardInformationReportPrinterController extends DataPrinterController
                         mkdir($dir, 0777);
                     }
 
-                    $offsetTimezone = '';
-                    $keywords = '';
+                    // Get offset timezone
+                    $timezoneArea = new \DateTimeZone($dtExport->timezone);
+                    $myDateTime = new \DateTime('now', $timezoneArea);
+                    $offsetTimezone = substr($myDateTime->format('r'), -5); // Wed, 12 Apr 2017 21:52:51 +0700
 
                     $content = array(
                                     array(
@@ -123,17 +163,17 @@ class RewardInformationReportPrinterController extends DataPrinterController
                                         $dtExport->name,
                                         $dtExport->user_email,
                                         $dtExport->phone,
-                                        $keywords,
+                                        $dtExport->keyword,
                                         $dtExport->category,
                                         $dtExport->total_inventory,
                                         $dtExport->reward_value,
                                         $dtExport->currency,
                                         $dtExport->country,
-                                        $dtExport->vendor_grab_city,
-                                        $dtExport->begin_date,
-                                        $dtExport->end_date,
-                                        $dtExport->begin_date,
-                                        $dtExport->coupon_validity_in_date,
+                                        $dtExport->grab_city_name,
+                                        $dtExport->begin_date . $offsetTimezone,
+                                        $dtExport->end_date . $offsetTimezone,
+                                        $dtExport->begin_date . $offsetTimezone,
+                                        $dtExport->coupon_validity_in_date . $offsetTimezone,
                                         $dtExport->offer_type,
                                         $dtExport->voucher_value,
                                         $dtExport->discount_percentage,
@@ -157,7 +197,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
 
                     $checkPre = PreExport::where('export_id',$exportId)
                                         ->where('object_type', 'coupon')
-                                        ->where('object_id', $dtExport->base_merchant_id);
+                                        ->where('object_id', $dtExport->sku);
 
                     $preExport = clone $checkPre;
                     $preExport = $preExport->where('export_process_type', $exportType)->first();
