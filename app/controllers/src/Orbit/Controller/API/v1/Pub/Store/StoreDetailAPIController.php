@@ -88,6 +88,7 @@ class StoreDetailAPIController extends PubControllerAPI
                                 'merchants.merchant_id',
                                 'merchants.name',
                                 'merchants.name as mall_name',
+                                'merchants.description as mall_description',
                                 DB::Raw("CASE WHEN (
                                                 select mt.description
                                                 from {$prefix}merchant_translations mt

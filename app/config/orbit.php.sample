@@ -6305,6 +6305,11 @@ return array(
                 'to' => ['marketing@dominopos.com'],
                 'pre_export_subject' => 'Gotomalls Grab CSV Files for Brand is Started',
                 'post_export_subject' => 'Gotomalls Grab CSV File for Brand is Completed'
+            ],
+            'reward' => [
+                'to' => ['marketing@dominopos.com'],
+                'pre_export_subject' => 'Gotomalls Grab CSV Files for Reward is Started',
+                'post_export_subject' => 'Gotomalls Grab CSV File for Reward is Completed'
             ]
         ]
     ],

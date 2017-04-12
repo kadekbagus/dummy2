@@ -152,7 +152,7 @@ class BaseMerchantExportQueue
             $exportFiles = array();
             $postExport->chunk($chunk, function($_postExport) use ($exportId, $exportType, $dir, &$exportFiles) {
                 foreach ($_postExport as $pe) {
-                    $fileName = 'Gotomalls_' . $pe->name . '_Brand.csv';
+                    $fileName = 'Gotomalls_' . str_replace(" ", "_", $pe->name) . '_Brand.csv';
                     if ($pe->export_process_type === 'brand_message') {
                         $fileName = 'Gotomalls_' . $pe->name . '_Brand_Msg.csv';
                     }
@@ -163,7 +163,10 @@ class BaseMerchantExportQueue
             $exportDataView['subject']          = Config::get('orbit.export.email.brand.post_export_subject');
             $exportDataView['merchants']        = BaseMerchant::whereIn('base_merchant_id', $exportData)->lists('name');
             $exportDataView['attachment']       = $exportFiles;
-            $exportDataView['skippedMerchants'] = BaseMerchant::whereIn('base_merchant_id', $skippedMerchants)->lists('name');
+            $exportDataView['skippedMerchants'] = array();
+            if (! empty($skippedMerchants)) {
+                $exportDataView['skippedMerchants'] = BaseMerchant::whereIn('base_merchant_id', $skippedMerchants)->lists('name');
+            }
 
             $postExportMailViews = array(
                                 'html' => 'emails.file-export.post-brand-export-html',
