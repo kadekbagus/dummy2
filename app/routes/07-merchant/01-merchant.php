@@ -87,3 +87,13 @@ Route::get('/api/v1/merchant/language/{search}', function()
 
 Route::get('/app/v1/merchant/language/{search}', ['as' => 'merchant-api-language-list', 'uses' => 'IntermediateMerchantAuthController@LanguageList_getSearchLanguageList'])
     ->where('search', '(list|search)');
+
+/**
+ * Merchant Export
+ */
+Route::post('/api/v1/merchant/merchant-export', function()
+{
+    return Orbit\Controller\API\v1\Merchant\MerchantExportAPIController::create()->postMerchantExport();
+});
+
+Route::post('/app/v1/merchant/merchant-export', ['as' => 'merchant-export', 'uses' => 'IntermediateMerchantAuthController@MerchantExport_postMerchantExport']);
