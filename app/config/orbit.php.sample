@@ -6299,5 +6299,13 @@ return array(
         'output_dir' => storage_path() . '/export_files/',
 
         'chunk' => 50,
+
+        'email' => [
+            'brand' => [
+                'to' => ['marketing@dominopos.com'],
+                'pre_export_subject' => 'Gotomalls Grab CSV Files for Brand is Started',
+                'post_export_subject' => 'Gotomalls Grab CSV File for Brand is Completed'
+            ]
+        ]
     ],
 );

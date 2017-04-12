@@ -57,10 +57,10 @@ class MerchantExportAPIController extends ControllerAPI
             }
 
             // queue for data synchronization
-            Queue::push('Orbit\\Queue\\FileExport\\BaseMerchantExportQueue', [
-                'sync_data' => $syncData,
-                'user' => $user->user_id
-            ], 'gtm_export_csv');
+            // Queue::push('Orbit\\Queue\\FileExport\\BaseMerchantExportQueue', [
+            //     'sync_data' => $syncData,
+            //     'user' => $user->user_id
+            // ], 'gtm_export_csv');
 
         } catch (ACLForbiddenException $e) {
 
