@@ -140,13 +140,15 @@ class BaseMerchantExportQueue
             $_GET['export_id'] = $exportId;
 
             // export Brand Information
-            $brandInformation = BrandInformationPrinterController::getBrandInformationPrintView();
+            $brandInformation = BrandInformationPrinterController::create()
+                                                                ->getBrandInformationPrintView();
             if ($brandInformation['status'] === 'fail') {
                 $this->failedJob($job, $exportId, $brandInformation['message']);
             }
 
             // export Brand Message
-            $brandMessage = BrandMessagePrinterController::getBrandMessagePrintView();
+            $brandMessage = BrandMessagePrinterController::create()
+                                                        ->getBrandMessagePrintView();
             if ($brandMessage['status'] === 'fail') {
                 $this->failedJob($job, $exportId, $brandMessage['message']);
             }
@@ -194,6 +196,11 @@ class BaseMerchantExportQueue
             $this->debug($message . "\n");
             \Log::info($message);
 
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
+
         } catch (InvalidArgsException $e) {
             \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
@@ -215,6 +222,10 @@ class BaseMerchantExportQueue
                             $job->getJobId(),
                             $exportId);
         \Log::error($message);
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     protected function quote($arg)
