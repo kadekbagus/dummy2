@@ -171,7 +171,8 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
                             }])
-                        ->where('promotions.promotion_id', $couponId);
+                        ->where('promotions.promotion_id', $couponId)
+                        ->where('promotions.is_visible', 'Y');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
