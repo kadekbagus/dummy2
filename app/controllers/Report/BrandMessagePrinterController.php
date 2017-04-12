@@ -100,7 +100,7 @@ class BrandMessagePrinterController extends DataPrinterController
 
             return [
                 'status' => 'fail',
-                'message' => $e->getMessage();
+                'message' => $e->getMessage()
             ];
         } catch (QueryException $e) {
             \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
@@ -108,7 +108,7 @@ class BrandMessagePrinterController extends DataPrinterController
 
             return [
                 'status' => 'fail',
-                'message' => $e->getMessage();
+                'message' => $e->getMessage()
             ];
         } catch (Exception $e) {
             \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
@@ -116,7 +116,7 @@ class BrandMessagePrinterController extends DataPrinterController
 
             return [
                 'status' => 'fail',
-                'message' => $e->getMessage();
+                'message' => $e->getMessage()
             ];
         }
     }
