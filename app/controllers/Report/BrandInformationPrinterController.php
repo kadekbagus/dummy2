@@ -16,8 +16,19 @@ use PreExport;
 use PostExport;
 use Export;
 
-class BrandInformationPrinterController extends DataPrinterController
+class BrandInformationPrinterController
 {
+    /**
+     * Static method to instantiate the object.
+     *
+     * @param string $contentType
+     * @return ControllerAPI
+     */
+    public static function create()
+    {
+        return new static;
+    }
+
     public function getBrandInformationPrintView()
     {
         try {
