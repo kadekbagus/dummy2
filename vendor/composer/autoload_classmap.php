@@ -104,6 +104,7 @@ return array(
     'AlterTablePromotionsAddFieldCampaignStatusId' => $baseDir . '/app/database/migrations/2016_02_25_060121_alter_table_promotions_add_field_campaign_status_id.php',
     'AlterTablePromotionsAddFieldIsAllGenderIsAllAgeIsPopup' => $baseDir . '/app/database/migrations/2015_12_29_042351_alter_table_promotions_add_field_is_all_gender_is_all_age_is_popup.php',
     'AlterTablePromotionsAddFieldIsExclusive' => $baseDir . '/app/database/migrations/2017_02_16_030102_alter_table_promotions_add_field_is_exclusive.php',
+    'AlterTablePromotionsAddFieldRedemptionVerificationCode' => $baseDir . '/app/database/migrations/2017_04_12_021151_alter_table_promotions_add_field_redemption_verification_code.php',
     'AlterTablePromotionsAddNewColumnsForGrab' => $baseDir . '/app/database/migrations/2017_04_07_063228_alter_table_promotions_add_new_columns_for_grab.php',
     'AlterTablePromotionsAddStickyOrderColumn' => $baseDir . '/app/database/migrations/2016_10_17_023925_alter_table_promotions_add_sticky_order_column.php',
     'AlterTablePromotionsChangeNameField3rdPartyName' => $baseDir . '/app/database/migrations/2017_04_11_073931_alter_table_promotions_change_name_field_3rd_party_name.php',
