@@ -3,12 +3,10 @@
 use Report\DataPrinterController;
 use Config;
 use DB;
-use PDO;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
 use Response;
 use Coupon;
-use Carbon\Carbon as Carbon;
 
 class RewardInformationReportPrinterController extends DataPrinterController
 {
@@ -158,7 +156,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                     DB::beginTransaction();
 
                     $checkPre = PreExport::where('export_id',$exportId)
-                                        ->where('object_type', 'merchant')
+                                        ->where('object_type', 'coupon')
                                         ->where('object_id', $dtExport->base_merchant_id);
 
                     $preExport = clone $checkPre;
@@ -187,7 +185,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
             return ['status' => 'ok'];
 
         } catch (InvalidArgsException $e) {
-            \Log::error('*** Brand information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Reward information export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
 
             return [
@@ -195,7 +193,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                 'message' => $e->getMessage()
             ];
         } catch (QueryException $e) {
-            \Log::error('*** Brand information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Reward information export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
 
             return [
@@ -203,7 +201,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                 'message' => $e->getMessage()
             ];
         } catch (Exception $e) {
-            \Log::error('*** Brand information export file error, messge: ' . $e->getMessage() . '***');
+            \Log::error('*** Reward information export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
 
             return [
