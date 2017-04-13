@@ -47,8 +47,8 @@ class RewardExportQueue
             $chunk = Config::get('orbit.export.chunk', 50);
 
             $user = User::where('user_id', $userId)->firstOrFail();
-            // $processType = ['reward_information', 'reward_message', 'reward_poi_message', 'reward_poi', 'reward_unique_redemtion_code', 'reward_post_integration'];
-            $processType = ['reward_information', 'reward_message', 'reward_poi_message', 'reward_poi', 'reward_unique_redemtion_code'];
+            // $processType = ['reward_information', 'reward_message', 'reward_poi_message', 'reward_poi', 'reward_unique_redemption_code', 'reward_post_integration'];
+            $processType = ['reward_information', 'reward_message', 'reward_poi_message', 'reward_poi', 'reward_unique_redemption_code'];
             $totalExport = count($exportData);
             $listAllExportData = $exportData;
 
@@ -180,7 +180,7 @@ class RewardExportQueue
                 $this->failedJob($job, $exportId, $rewardPOI['message']);
             }
 
-            // export Reward Unique Redemtion Code
+            // // export Reward Unique Redemtion Code
             $rewardUniqueRedemtionCode = RewardUniqueRedemptionCodeReportPrinterController::create()->postPrintRewardUniqueRedemptionCode();
             if ($rewardUniqueRedemtionCode['status'] === 'fail') {
                 $this->failedJob($job, $exportId, $rewardUniqueRedemtionCode['message']);
@@ -191,9 +191,11 @@ class RewardExportQueue
             $tenanList = PostExport::join('promotions', 'promotions.promotion_id', '=', 'post_exports.object_id')
                                      ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                      ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                     ->where('post_exports.export_id', $exportId)
                                      ->groupBy('merchants.name')
                                      ->orderBy('merchants.name', 'asc')
                                      ->lists('mrechants.name');
+
             $tenantName = implode('_', $tenanList);
             $name = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $tenantName));
 
@@ -205,7 +207,7 @@ class RewardExportQueue
             $groupFile = array();
             $postExport->chunk($chunk, function($_postExport) use (&$groupFile) {
                 foreach ($_postExport as $pe) {
-                    if ($pt === 'reward_information') {
+                    if ($pe->export_process_type === 'reward_information') {
                         $groupFile['reward_information'][] = $pe->file_path;
                     } elseif ($pe->export_process_type === 'reward_message') {
                         $groupFile['reward_message'][] = $pe->file_path;
@@ -213,8 +215,8 @@ class RewardExportQueue
                         $groupFile['reward_poi_message'][] = $pe->file_path;
                     } elseif ($pe->export_process_type === 'reward_poi') {
                         $groupFile['reward_poi'][] = $pe->file_path;
-                    } elseif ($pe->export_process_type === 'reward_unique_redemtion_code') {
-                        $groupFile['reward_unique_redemtion_code'][] = $pe->file_path;
+                    } elseif ($pe->export_process_type === 'reward_unique_redemption_code') {
+                        $groupFile['reward_unique_redemption_code'][] = $pe->file_path;
                     }
                 }
             });
@@ -241,7 +243,7 @@ class RewardExportQueue
                         $fileName = 'Gotomalls_' . $name . '_Reward_POI_Msg.csv';
                     } elseif ($pt === 'reward_poi') {
                         $fileName = 'Gotomalls_' . $name . '_Reward_POI.csv';
-                    } elseif ($pt === 'reward_unique_redemtion_code') {
+                    } elseif ($pt === 'reward_unique_redemption_code') {
                         $fileName = 'Gotomalls_' . $name . '_Reward_Post_Integration.csv';
                     }
 
