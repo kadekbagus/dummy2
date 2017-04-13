@@ -4019,8 +4019,10 @@ class CouponAPIController extends ControllerAPI
             $total_issued_coupons = IssuedCoupon::where('promotion_id', '=', $promotion_id)
                                                 ->count();
 
-            if ($value < $total_issued_coupons) {
-                return FALSE;
+            if ($value === '' || $value = 0) {
+                if ($value < $total_issued_coupons) {
+                    return FALSE;
+                }
             }
 
             App::instance('orbit.max.total_issued_coupons', $total_issued_coupons);
@@ -4599,6 +4601,7 @@ class CouponAPIController extends ControllerAPI
         $pmpAccountDefaultLanguage = Language::where('name', '=', $this->pmpAccountDefaultLanguage)
                 ->first();
 
+
         foreach ($data as $merchant_language_id => $translations) {
             $language = Language::where('language_id', '=', $merchant_language_id)
                 ->first();
@@ -4609,6 +4612,7 @@ class CouponAPIController extends ControllerAPI
                 ->where('promotion_id', '=', $coupon->promotion_id)
                 ->where('merchant_language_id', '=', $merchant_language_id)
                 ->first();
+
             if ($translations === null) {
                 // deleting, verify exists
                 if (empty($existing_translation)) {
@@ -4690,13 +4694,20 @@ class CouponAPIController extends ControllerAPI
                 if ($isThirdParty) {
                     // validate header & image 1 if the coupon translation language = pmp account default language
                     if ($existing_translation->merchant_language_id === $pmpAccountDefaultLanguage->language_id) {
+
+                        //check media header and image1
+                        $header = Media::where('object_id', $existing_translation->coupon_translation_id)
+                                        ->where('media_name_id', 'coupon_header_grab_translation')->first();
+                        $image1 = Media::where('object_id', $existing_translation->coupon_translation_id)
+                                        ->where('media_name_id', 'coupon_image1_grab_translation')->first();
+
                         $header_files = OrbitInput::files('header_image_translation_' . $existing_translation->merchant_language_id);
-                        if (! $header_files && $isThirdParty) {
+                        if (! $header_files && $isThirdParty && empty($header)) {
                             $errorMessage = 'Header image is required for ' . $pmpAccountDefaultLanguage->name_long;
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
                         $image1_files = OrbitInput::files('image1_translation_' . $existing_translation->merchant_language_id);
-                        if (! $image1_files && $isThirdParty) {
+                        if (! $image1_files && $isThirdParty && empty($image1)) {
                             $errorMessage = 'Image 1 is required for ' . $pmpAccountDefaultLanguage->name_long;
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
