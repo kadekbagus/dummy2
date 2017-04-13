@@ -965,10 +965,10 @@ class CouponAPIController extends ControllerAPI
             $required_desc = false;
 
             if (is_object($isAvailable)) {
-                if ($val->promotion_name === '' || empty($val->promotion_name)) {
+                if ($isAvailable->promotion_name === '' || empty($isAvailable->promotion_name)) {
                     $required_name = true;
                 }
-                if ($val->description === '' || empty($val->description)) {
+                if ($isAvailable->description === '' || empty($isAvailable->description)) {
                     $required_desc = true;
                 }
             }
