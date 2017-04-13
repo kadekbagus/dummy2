@@ -176,7 +176,7 @@ class BaseMerchantExportQueue
             $exportFiles = array();
             $postExport->chunk($chunk, function($_postExport) use ($exportId, $dir, &$exportFiles) {
                 foreach ($_postExport as $pe) {
-                    $name = preg_replace('/[^A-Za-z0-9\-]/', '', str_replace(" ", "_", $pe->name));
+                    $name = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $pe->name));
                     $fileName = 'Gotomalls_' . $name . '_Brand.csv';
                     if ($pe->export_process_type === 'brand_message') {
                         $fileName = 'Gotomalls_' . $name . '_Brand_Msg.csv';
