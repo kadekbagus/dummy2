@@ -7,40 +7,24 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
 use Response;
 use Coupon;
+use PreExport;
+use PostExport;
+use Export;
 
 class RewardInformationReportPrinterController extends DataPrinterController
 {
+    /**
+     * Static method to instantiate the object.
+     *
+     * @param string $contentType
+     * @return ControllerAPI
+     */
+    public static function create()
+    {
+        return new static;
+    }
     public function postPrintRewardInformation()
     {
-
-        /*
-            Field :
-            ---------------------
-            SKU
-            name
-            Support Email
-            Support Phone
-            Category
-            Tag
-            Total Inventory
-            Reward Value
-            Reward Value Currency
-            Country
-            City
-            Offer Start Date
-            Offer End Date
-            Validity Start Date
-            Validity End Date
-            Offer Type
-            Voucher Value
-            Discount Percentage
-            Deal List Price
-            Deal Original Price
-            Redemption Method
-            Header Image URL
-            Image 1 URL
-        */
-
         try {
             $couponIds = OrbitInput::post('coupon_ids');
             $exportId = OrbitInput::post('export_id');
@@ -79,23 +63,20 @@ class RewardInformationReportPrinterController extends DataPrinterController
                     // City
                     DB::raw("
                         (SELECT
-                        group_concat(DISTINCT ogc.grab_city_name) as grab_city_name
+                        group_concat(DISTINCT ovgc.vendor_city) as vendor_city
                         FROM {$prefix}promotion_retailer opt
                         LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
                         LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
                         LEFT JOIN {$prefix}vendor_gtm_cities ovgc ON ovgc.gtm_city = (CASE WHEN om.object_type = 'mall' THEN om.city ELSE oms.city END) AND vendor_type = 'grab'
-                        INNER JOIN {$prefix}grab_cities ogc ON ogc.grab_city_external_id = ovgc.vendor_city
                         where promotion_id = {$prefix}promotions.promotion_id
-                        ) as grab_city_name
+                        ) as vendor_city
                     "),
                     'promotions.begin_date',
                     'promotions.end_date',
                     'promotions.begin_date',
                     'promotions.coupon_validity_in_date',
                     'promotions.offer_type',
-                    'promotions.offer_value as voucher_value',
-                    'promotions.offer_value as discount_percentage',
-                    'promotions.offer_value as deal_list_price',
+                    'promotions.offer_value offer_value',
                     'promotions.original_price',
                     'promotions.redemption_method',
                     // Header Image URL
@@ -124,6 +105,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                         LIMIT 1
                         ) as timezone
                     ")
+                    ,'users.user_id'
                 )
                 // Get campaign account
                 ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
@@ -155,33 +137,68 @@ class RewardInformationReportPrinterController extends DataPrinterController
                     // Get offset timezone
                     $timezoneArea = new \DateTimeZone($dtExport->timezone);
                     $myDateTime = new \DateTime('now', $timezoneArea);
-                    $offsetTimezone = substr($myDateTime->format('r'), -5); // Wed, 12 Apr 2017 21:52:51 +0700
+                    $offsetTimezone = substr($myDateTime->format('r'), -5); // Wed, 12 Apr 2017 21:52:51 +0700, get offset
 
+                    // Get offer value
+                    $offerType = $dtExport->offer_type;
+                    $offerValue = $dtExport->offer_value;
+
+                    $voucherValue = '';
+                    $discountPercentage = '';
+                    $dealListPrice = '';
+                    $originalPrice = '';
+
+                    if ($offerType == 'voucher') {
+                        $voucherValue = $offerValue;
+                    } elseif ($offerType == 'discount') {
+                        $discountPercentage = $offerValue;
+                    } elseif ($offerType == 'general' || $offerType == 'deal') {
+                        $dealListPrice = $offerValue;
+                        $originalPrice = $dtExport->original_price;
+                    }
+
+                    // Content csv
                     $content = array(
                                     array(
                                         $dtExport->sku,
                                         $dtExport->name,
                                         $dtExport->user_email,
                                         $dtExport->phone,
-                                        $dtExport->keyword,
                                         $dtExport->category,
+                                        $dtExport->keyword,
                                         $dtExport->total_inventory,
+                                        '',
                                         $dtExport->reward_value,
                                         $dtExport->currency,
                                         $dtExport->country,
-                                        $dtExport->grab_city_name,
+                                        $dtExport->vendor_city,
+                                        '',
                                         $dtExport->begin_date . $offsetTimezone,
                                         $dtExport->end_date . $offsetTimezone,
                                         $dtExport->begin_date . $offsetTimezone,
                                         $dtExport->coupon_validity_in_date . $offsetTimezone,
                                         $dtExport->offer_type,
-                                        $dtExport->voucher_value,
-                                        $dtExport->discount_percentage,
-                                        $dtExport->deal_list_price,
-                                        $dtExport->original_price,
+                                        $voucherValue,
+                                        $discountPercentage,
+                                        $dealListPrice,
+                                        $originalPrice,
                                         $dtExport->redemption,
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
                                         $dtExport->header_original_media_path,
-                                        $dtExport->image_original_media_path
+                                        $dtExport->image_original_media_path,
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        ''
                                     ),
                             );
 
