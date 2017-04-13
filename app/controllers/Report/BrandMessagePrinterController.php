@@ -16,8 +16,19 @@ use PreExport;
 use PostExport;
 use Export;
 
-class BrandMessagePrinterController extends DataPrinterController
+class BrandMessagePrinterController
 {
+    /**
+     * Static method to instantiate the object.
+     *
+     * @param string $contentType
+     * @return ControllerAPI
+     */
+    public static function create()
+    {
+        return new static;
+    }
+
     public function getBrandMessagePrintView()
     {
         try {
@@ -25,6 +36,7 @@ class BrandMessagePrinterController extends DataPrinterController
             $exportId = OrbitInput::get('export_id');
             $exportType = 'brand_message';
             $chunk = Config::get('orbit.export.chunk', 50);
+            $dir = Config::get('orbit.export.output_dir', '');
 
             $export = BaseMerchant::select('base_merchants.base_merchant_id', 'base_merchants.name', 'base_merchants.mobile_default_language', 'base_merchant_translations.description', 'base_merchants.url', 'pre_exports.file_path'
                                 )
@@ -42,13 +54,12 @@ class BrandMessagePrinterController extends DataPrinterController
                                 ->whereIn('base_merchants.base_merchant_id', $baseMerchantIds)
                                 ->groupBy('base_merchants.base_merchant_id');
 
-            $export->chunk($chunk, function($_export) use ($baseMerchantIds, $exportId, $exportType) {
+            $export->chunk($chunk, function($_export) use ($baseMerchantIds, $exportId, $exportType, $dir) {
                 foreach ($_export as $dtExport) {
-                    $dir = Config::get('orbit.export.output_dir', '');
                     $filePath = $dtExport->file_path;
 
                     if (! file_exists($dir)) {
-                        mkdir($dir, 0777);
+                        mkdir($dir, 0777, true);
                     }
 
                     $content = array(
@@ -91,15 +102,33 @@ class BrandMessagePrinterController extends DataPrinterController
                     DB::commit();
                 }
             });
+
+            return ['status' => 'ok'];
+
         } catch (InvalidArgsException $e) {
             \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage()
+            ];
         } catch (QueryException $e) {
             \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage()
+            ];
         } catch (Exception $e) {
             \Log::error('*** Brand message export file error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
+
+            return [
+                'status' => 'fail',
+                'message' => $e->getMessage()
+            ];
         }
     }
 }

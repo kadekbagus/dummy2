@@ -4098,7 +4098,7 @@ return array(
                 'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
 
                 // Maximum file size allowed in bytes
-                'file_size'     => 9000000,
+                'file_size'     => 90000,
 
                 // The target path which file to be stored
                 'path'          => 'uploads/base_store/logo',
@@ -6305,6 +6305,11 @@ return array(
                 'to' => ['marketing@dominopos.com'],
                 'pre_export_subject' => 'Gotomalls Grab CSV Files for Brand is Started',
                 'post_export_subject' => 'Gotomalls Grab CSV File for Brand is Completed'
+            ],
+            'reward' => [
+                'to' => ['marketing@dominopos.com'],
+                'pre_export_subject' => 'Gotomalls Grab CSV Files for Reward is Started',
+                'post_export_subject' => 'Gotomalls Grab CSV File for Reward is Completed'
             ]
         ]
     ],
