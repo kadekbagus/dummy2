@@ -1376,7 +1376,7 @@ class CouponAPIController extends ControllerAPI
                     'redemption_verification_code' => $redemption_verification_code,
                     // 'redemption_method' => $redemption_method,
                     'short_description' => $short_description,
-                    '3rd_party_name' => $third_party_name
+                    '3rd_party_name' => $third_party_name,
                     'maximum_issued_coupon' => $maximum_issued_coupon
                 ];
                 $third_party_validator_check = [
