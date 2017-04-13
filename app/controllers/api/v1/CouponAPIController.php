@@ -513,7 +513,7 @@ class CouponAPIController extends ControllerAPI
                             $errorReason->reasons[] = 'missing phone field';
                             $valid = FALSE;
                         }
-                        if (!isset($tenant->email) || empty($tenant->email)) {
+                        if (!isset($tenant->baseStore->baseMerchant->email) || empty($tenant->baseStore->baseMerchant->email)) {
                             $errorReason->reasons[] = 'missing email field';
                             $valid = FALSE;
                         }
@@ -1376,7 +1376,8 @@ class CouponAPIController extends ControllerAPI
                     'redemption_verification_code' => $redemption_verification_code,
                     // 'redemption_method' => $redemption_method,
                     'short_description' => $short_description,
-                    '3rd_party_name' => $third_party_name
+                    '3rd_party_name' => $third_party_name,
+                    'maximum_issued_coupon' => $maximum_issued_coupon
                 ];
                 $third_party_validator_check = [
                     'coupon_validity_in_date' => 'required',
@@ -1389,6 +1390,7 @@ class CouponAPIController extends ControllerAPI
                     // 'redemption_method' => 'required|in:online,4-digit PIN,Barcode: code 128,Barcode: ean-128,Barcode: ean-13,Barcode: upc-a,Barcode: gs1-databar,QRCode,Plain Text',
                     'short_description' => 'required',
                     '3rd_party_name' => 'required',
+                    'maximum_issued_coupon' => 'required',
                 ];
 
                 $third_party_validator = Validator::make(
@@ -1464,7 +1466,7 @@ class CouponAPIController extends ControllerAPI
                             $errorReason->reasons[] = 'missing phone field';
                             $valid = FALSE;
                         }
-                        if (!isset($tenant->email) || empty($tenant->email)) {
+                        if (!isset($tenant->baseStore->baseMerchant->email) || empty($tenant->baseStore->baseMerchant->email)) {
                             $errorReason->reasons[] = 'missing email field';
                             $valid = FALSE;
                         }
@@ -1528,11 +1530,11 @@ class CouponAPIController extends ControllerAPI
                         $errorReason->reasons = 'Tenant not found';
                         $error_tenants[] = $errorReason;
                     }
-                }
 
-                if (! empty($error_tenants)) {
-                    $errorMessage = 'Link to Tenant error';
-                    throw new OrbitCustomException($errorMessage, Coupon::THIRD_PARTY_COUPON_TENANT_VALIDATION_ERROR, $error_tenants);
+                    if (! empty($error_tenants)) {
+                        $errorMessage = 'Link to Tenant error';
+                        throw new OrbitCustomException($errorMessage, Coupon::THIRD_PARTY_COUPON_TENANT_VALIDATION_ERROR, $errorReason);
+                    }
                 }
             }
 
@@ -4017,7 +4019,7 @@ class CouponAPIController extends ControllerAPI
             $total_issued_coupons = IssuedCoupon::where('promotion_id', '=', $promotion_id)
                                                 ->count();
 
-            if ($value < $total_issued_coupons) {
+            if (! empty($value) && $value < $total_issued_coupons) {
                 return FALSE;
             }
 
@@ -4597,6 +4599,7 @@ class CouponAPIController extends ControllerAPI
         $pmpAccountDefaultLanguage = Language::where('name', '=', $this->pmpAccountDefaultLanguage)
                 ->first();
 
+
         foreach ($data as $merchant_language_id => $translations) {
             $language = Language::where('language_id', '=', $merchant_language_id)
                 ->first();
@@ -4607,6 +4610,7 @@ class CouponAPIController extends ControllerAPI
                 ->where('promotion_id', '=', $coupon->promotion_id)
                 ->where('merchant_language_id', '=', $merchant_language_id)
                 ->first();
+
             if ($translations === null) {
                 // deleting, verify exists
                 if (empty($existing_translation)) {
@@ -4688,13 +4692,20 @@ class CouponAPIController extends ControllerAPI
                 if ($isThirdParty) {
                     // validate header & image 1 if the coupon translation language = pmp account default language
                     if ($existing_translation->merchant_language_id === $pmpAccountDefaultLanguage->language_id) {
+
+                        //check media header and image1
+                        $header = Media::where('object_id', $existing_translation->coupon_translation_id)
+                                        ->where('media_name_id', 'coupon_header_grab_translation')->first();
+                        $image1 = Media::where('object_id', $existing_translation->coupon_translation_id)
+                                        ->where('media_name_id', 'coupon_image1_grab_translation')->first();
+
                         $header_files = OrbitInput::files('header_image_translation_' . $existing_translation->merchant_language_id);
-                        if (! $header_files && $isThirdParty) {
+                        if (! $header_files && $isThirdParty && empty($header)) {
                             $errorMessage = 'Header image is required for ' . $pmpAccountDefaultLanguage->name_long;
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
                         $image1_files = OrbitInput::files('image1_translation_' . $existing_translation->merchant_language_id);
-                        if (! $image1_files && $isThirdParty) {
+                        if (! $image1_files && $isThirdParty && empty($image1)) {
                             $errorMessage = 'Image 1 is required for ' . $pmpAccountDefaultLanguage->name_long;
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
