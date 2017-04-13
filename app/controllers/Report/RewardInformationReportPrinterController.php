@@ -76,7 +76,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                     'promotions.begin_date',
                     'promotions.coupon_validity_in_date',
                     'promotions.offer_type',
-                    'promotions.offer_value offer_value',
+                    'promotions.offer_value',
                     'promotions.original_price',
                     'promotions.redemption_method',
                     // Header Image URL
