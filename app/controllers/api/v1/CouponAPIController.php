@@ -1461,47 +1461,47 @@ class CouponAPIController extends ControllerAPI
                     if (is_object($tenant)) {
                         $valid = TRUE;
                         if (!isset($tenant->phone) || empty($tenant->phone)) {
-                            $errorReason->reasons[] = 'Tenant missing phone field';
+                            $errorReason->reasons[] = 'missing phone field';
                             $valid = FALSE;
                         }
                         if (!isset($tenant->email) || empty($tenant->email)) {
-                            $errorReason->reasons[] = 'Tenant missing email field';
+                            $errorReason->reasons[] = 'missing email field';
                             $valid = FALSE;
                         }
                         if (empty($tenant->baseStore->baseMerchant->mediaLogoGrab) || !isset($tenant->baseStore->baseMerchant->mediaLogoGrab[0])) {
-                            $errorReason->reasons[] = 'Tenant missing 3rd party logo field';
+                            $errorReason->reasons[] = 'missing 3rd party logo field';
                             $valid = FALSE;
                         }
                         if (empty($tenant->baseStore->mediaImageGrabOrig) || !isset($tenant->baseStore->mediaImageGrabOrig[0])) {
-                            $errorReason->reasons[] = 'Tenant missing 3rd party image field';
+                            $errorReason->reasons[] = 'missing 3rd party image field';
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->country_id) || empty($tenant->mall->country_id)) {
-                            $errorReason->reasons[] = "Tenant's mall missing country field";
+                            $errorReason->reasons[] = "mall missing country field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->city) || empty($tenant->mall->city)) {
-                            $errorReason->reasons[] = "Tenant's mall missing city field";
+                            $errorReason->reasons[] = "mall missing city field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->address_line1) || empty($tenant->mall->address_line1)) {
-                            $errorReason->reasons[] = "Tenant's mall missing address field";
+                            $errorReason->reasons[] = "mall missing address field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->postal_code) || empty($tenant->mall->postal_code)) {
-                            $errorReason->reasons[] = "Tenant's mall missing postal code field";
+                            $errorReason->reasons[] = "mall missing postal code field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->longitude) || empty($tenant->mall->longitude)) {
-                            $errorReason->reasons[] = "Tenant's mall missing longitude field";
+                            $errorReason->reasons[] = "mall missing longitude field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->latitude) || empty($tenant->mall->latitude)) {
-                            $errorReason->reasons[] = "Tenant's mall missing latitude field";
+                            $errorReason->reasons[] = "mall missing latitude field";
                             $valid = FALSE;
                         }
                         if (empty($tenant->categories)) {
-                            $errorReason->reasons[] = 'Tenant missing categories field';
+                            $errorReason->reasons[] = 'missing categories field';
                             $valid = FALSE;
                         } else {
                             $categoryIsValid = FALSE;
@@ -2427,6 +2427,25 @@ class CouponAPIController extends ControllerAPI
                     ->setObject($updatedcoupon)
                     ->setNotes($e->getMessage())
                     ->responseFailed();
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            Event::fire('orbit.coupon.postnewcoupon.custom.exception', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getCustomData();
+            $httpCode = 500;
+
+            // Rollback the changes
+            $this->rollBack();
+
+            // Creation failed Activity log
+            $activity->setUser($user)
+                    ->setActivityName('create_coupon')
+                    ->setActivityNameLong('Create Coupon Failed')
+                    ->setNotes($e->getMessage())
+                    ->responseFailed();
+
         } catch (Exception $e) {
             Event::fire('orbit.coupon.postupdatecoupon.general.exception', array($this, $e));
 
@@ -4630,21 +4649,23 @@ class CouponAPIController extends ControllerAPI
                 // @param EventTranslation $new_transalation
                 Event::fire('orbit.coupon.after.translation.save', array($this, $new_translation));
 
-                // validate header & image 1 if the coupon translation language = pmp account default language
-                if ($new_translation->merchant_language_id === $pmpAccountDefaultLanguage->language_id) {
-                    $header_files = OrbitInput::files('header_image_translation_' . $new_translation->merchant_language_id);
-                    if (! $header_files && $isThirdParty) {
-                        $errorMessage = 'Header image is required for ' . $pmpAccountDefaultLanguage->name_long;
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                if ($isThirdParty) {
+                    // validate header & image 1 if the coupon translation language = pmp account default language
+                    if ($new_translation->merchant_language_id === $pmpAccountDefaultLanguage->language_id) {
+                        $header_files = OrbitInput::files('header_image_translation_' . $new_translation->merchant_language_id);
+                        if (! $header_files && $isThirdParty) {
+                            $errorMessage = 'Header image is required for ' . $pmpAccountDefaultLanguage->name_long;
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+                        $image1_files = OrbitInput::files('image1_translation_' . $new_translation->merchant_language_id);
+                        if (! $image1_files && $isThirdParty) {
+                            $errorMessage = 'Image 1 is required for ' . $pmpAccountDefaultLanguage->name_long;
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
                     }
-                    $image1_files = OrbitInput::files('image1_translation_' . $new_translation->merchant_language_id);
-                    if (! $image1_files && $isThirdParty) {
-                        $errorMessage = 'Image 1 is required for ' . $pmpAccountDefaultLanguage->name_long;
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
+                    Event::fire('orbit.coupon.after.header.translation.save', array($this, $new_translation));
+                    Event::fire('orbit.coupon.after.image1.translation.save', array($this, $new_translation));
                 }
-                Event::fire('orbit.coupon.after.header.translation.save', array($this, $new_translation));
-                Event::fire('orbit.coupon.after.image1.translation.save', array($this, $new_translation));
 
                 $coupon->setRelation('translation_' . $new_translation->merchant_language_id, $new_translation);
             }
@@ -4664,21 +4685,23 @@ class CouponAPIController extends ControllerAPI
                 // @param EventTranslation $new_transalation
                 Event::fire('orbit.coupon.after.translation.save', array($this, $existing_translation));
 
-                // validate header & image 1 if the coupon translation language = pmp account default language
-                if ($existing_translation->merchant_language_id === $pmpAccountDefaultLanguage->language_id) {
-                    $header_files = OrbitInput::files('header_image_translation_' . $existing_translation->merchant_language_id);
-                    if (! $header_files && $isThirdParty) {
-                        $errorMessage = 'Header image is required for ' . $pmpAccountDefaultLanguage->name_long;
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                if ($isThirdParty) {
+                    // validate header & image 1 if the coupon translation language = pmp account default language
+                    if ($existing_translation->merchant_language_id === $pmpAccountDefaultLanguage->language_id) {
+                        $header_files = OrbitInput::files('header_image_translation_' . $existing_translation->merchant_language_id);
+                        if (! $header_files && $isThirdParty) {
+                            $errorMessage = 'Header image is required for ' . $pmpAccountDefaultLanguage->name_long;
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+                        $image1_files = OrbitInput::files('image1_translation_' . $existing_translation->merchant_language_id);
+                        if (! $image1_files && $isThirdParty) {
+                            $errorMessage = 'Image 1 is required for ' . $pmpAccountDefaultLanguage->name_long;
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
                     }
-                    $image1_files = OrbitInput::files('image1_translation_' . $existing_translation->merchant_language_id);
-                    if (! $image1_files && $isThirdParty) {
-                        $errorMessage = 'Image 1 is required for ' . $pmpAccountDefaultLanguage->name_long;
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
+                    Event::fire('orbit.coupon.after.header.translation.save', array($this, $existing_translation));
+                    Event::fire('orbit.coupon.after.image1.translation.save', array($this, $existing_translation));
                 }
-                Event::fire('orbit.coupon.after.header.translation.save', array($this, $existing_translation));
-                Event::fire('orbit.coupon.after.image1.translation.save', array($this, $existing_translation));
 
                 // return respones if any upload image or no
                 $existing_translation->load('media');
