@@ -325,12 +325,6 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // check maximum_issued_coupon and coupon code count
-            if (! empty($maximum_issued_coupon) && $maximum_issued_coupon !== count($arrayCouponCode)) {
-                $errorMessage = sprintf('Maximum issued coupons does not match with the total coupon codes (%s).', count($arrayCouponCode));
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
             // validating retailer_ids.
             foreach ($retailer_ids as $retailer_json) {
                 $data = @json_decode($retailer_json);
@@ -439,6 +433,12 @@ class CouponAPIController extends ControllerAPI
                     $stringDupes = implode(',', $dupes);
                     $errorMessage = 'The coupon codes you supplied have duplicates: %s';
                     OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $stringDupes));
+                }
+
+                // check maximum_issued_coupon and coupon code count
+                if (! empty($maximum_issued_coupon) && $maximum_issued_coupon !== count($arrayCouponCode)) {
+                    $errorMessage = sprintf('Maximum issued coupons does not match with the total coupon codes (%s).', count($arrayCouponCode));
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
 
