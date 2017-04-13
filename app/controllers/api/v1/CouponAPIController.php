@@ -513,7 +513,7 @@ class CouponAPIController extends ControllerAPI
                             $errorReason->reasons[] = 'missing phone field';
                             $valid = FALSE;
                         }
-                        if (!isset($tenant->email) || empty($tenant->email)) {
+                        if (!isset($tenant->baseStore->baseMerchant->email) || empty($tenant->baseStore->baseMerchant->email)) {
                             $errorReason->reasons[] = 'missing email field';
                             $valid = FALSE;
                         }
