@@ -253,6 +253,8 @@ Route::filter('pub-fb-bot', function() {
             $redirect_to = URL::to($gtmUrl);
         }
 
+        $_POST['plain'] = true;
+
         return Redirect::to($redirect_to);
     }
 });
