@@ -41,14 +41,12 @@ class AdditionalActivityQueue
     public function fire($job, $data)
     {
         try {
+            $this->data = $data;
             $activityId = $data['activity_id'];
             $activity = Activity::excludeDeleted()
                         ->where('activity_id', $activityId)
                         ->where('group', 'mobile-ci')
                         ->first();
-
-            Log::info('Additional Activity Queue HTTP_REFERER value: ' . $data['referer']);
-            Log::info('Additional Activity Queue HTTP_X_ORBIT_REFERER value: ' . $data['orbit_referer']);
 
             if (! is_object($activity)) {
                 $job->delete();
@@ -284,7 +282,7 @@ class AdditionalActivityQueue
         $connection->user_id = $activity->user_id;
         $connection->location_id = $activity->location_id;
 
-        $now = date('Y-m-d H:i:s');
+        $now = $this->data['datetime'];
         if ($activity->activity_name === 'login_ok') {
             $connection->login_at = $now;
             $connection->logout_at = NULL;
