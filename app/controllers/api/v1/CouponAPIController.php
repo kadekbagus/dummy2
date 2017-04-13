@@ -4019,10 +4019,8 @@ class CouponAPIController extends ControllerAPI
             $total_issued_coupons = IssuedCoupon::where('promotion_id', '=', $promotion_id)
                                                 ->count();
 
-            if ($value === '' || $value = 0) {
-                if ($value < $total_issued_coupons) {
-                    return FALSE;
-                }
+            if (! empty($value) && $value < $total_issued_coupons) {
+                return FALSE;
             }
 
             App::instance('orbit.max.total_issued_coupons', $total_issued_coupons);
