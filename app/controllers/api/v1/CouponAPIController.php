@@ -604,6 +604,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->is_popup = $is_popup;
             $newcoupon->sticky_order = $sticky_order;
             $newcoupon->is_exclusive = $is_exclusive;
+            $newcoupon->is_visible = $isVisible;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
@@ -615,7 +616,6 @@ class CouponAPIController extends ControllerAPI
                 $newcoupon->redemption_method = '4-digit PIN';
                 $newcoupon->redemption_verification_code = $redemptionVerificationCode;
                 $newcoupon->short_description = $shortDescription;
-                $newcoupon->is_visible = $isVisible;
                 $newcoupon->is_3rd_party_promotion = $is3rdPartyPromotion;
                 $newcoupon->third_party_name = $thirdPartyName;
                 $newcoupon->is_3rd_party_field_complete = 'Y';
@@ -1259,6 +1259,8 @@ class CouponAPIController extends ControllerAPI
             $partner_ids = (array) $partner_ids;
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
 
+            $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
+
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
             if ($campaignStatus === 'ongoing') {
@@ -1284,6 +1286,7 @@ class CouponAPIController extends ControllerAPI
                 'is_all_gender'           => $is_all_gender,
                 'is_all_age'              => $is_all_age,
                 'partner_exclusive'       => $is_exclusive,
+                'is_visible'              => $isVisible,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -1313,6 +1316,7 @@ class CouponAPIController extends ControllerAPI
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
                     'is_all_age'              => 'required|orbit.empty.is_all_age',
                     'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
+                    'is_visible'              => 'required|in:Y,N',
                 ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
@@ -1612,6 +1616,8 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::post('coupon_notification', function($coupon_notification) use ($updatedcoupon) {
                 $updatedcoupon->coupon_notification = $coupon_notification;
             });
+
+            $updatedcoupon->is_visible = $is_visible;
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
