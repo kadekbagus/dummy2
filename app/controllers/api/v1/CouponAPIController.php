@@ -1377,6 +1377,7 @@ class CouponAPIController extends ControllerAPI
                     // 'redemption_method' => $redemption_method,
                     'short_description' => $short_description,
                     '3rd_party_name' => $third_party_name
+                    'maximum_issued_coupon' => $maximum_issued_coupon
                 ];
                 $third_party_validator_check = [
                     'coupon_validity_in_date' => 'required',
@@ -1389,6 +1390,7 @@ class CouponAPIController extends ControllerAPI
                     // 'redemption_method' => 'required|in:online,4-digit PIN,Barcode: code 128,Barcode: ean-128,Barcode: ean-13,Barcode: upc-a,Barcode: gs1-databar,QRCode,Plain Text',
                     'short_description' => 'required',
                     '3rd_party_name' => 'required',
+                    'maximum_issued_coupon' => 'required',
                 ];
 
                 $third_party_validator = Validator::make(
