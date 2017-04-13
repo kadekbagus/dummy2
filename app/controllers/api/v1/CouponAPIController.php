@@ -27,6 +27,8 @@ class CouponAPIController extends ControllerAPI
     protected $couponModifiyRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee'];
     protected $couponModifiyRolesWithConsumer = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign admin', 'consumer'];
 
+    protected $pmpAccountDefaultLanguage = NULL;
+
     /**
      * POST - Create New Coupon
      *
@@ -276,7 +278,7 @@ class CouponAPIController extends ControllerAPI
             if ($is3rdPartyPromotion === 'Y') {
                 $thirdPartyValidatorValue = [
                     'coupon_validity_in_date' => $coupon_validity_in_date,
-                    'promotion_value' => $promotionValue,
+                    'reward_value' => $promotionValue,
                     'currency' => $currency,
                     'offer_type' => $offerType,
                     'offer_value' => $offerValue,
@@ -288,7 +290,7 @@ class CouponAPIController extends ControllerAPI
                 ];
                 $thirdPartyValidatorValidation = [
                     'coupon_validity_in_date' => 'required',
-                    'promotion_value' => 'required|numeric',
+                    'reward_value' => 'required|numeric',
                     'currency' => 'required',
                     'offer_type' => 'required|in:voucher,discount,general,deal',
                     'offer_value' => 'numeric',
@@ -468,6 +470,7 @@ class CouponAPIController extends ControllerAPI
 
                 // validate PMP Account's required fields for 3rd party
                 $userCampaignAccount = $user->campaignAccount()->first();
+                $this->pmpAccountDefaultLanguage = $userCampaignAccount->mobile_default_language;
 
                 if (empty($userCampaignAccount->mobile_default_language)) {
                     $errorMessage = 'PMP Account missing mobile default language field';
@@ -945,8 +948,9 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
-            OrbitInput::post('translations', function($translation_json_string) use ($newcoupon, $mallid) {
-                $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create');
+            OrbitInput::post('translations', function($translation_json_string) use ($newcoupon, $mallid, $is3rdPartyPromotion) {
+                $isThirdParty = $is3rdPartyPromotion === 'Y' ? TRUE : FALSE;
+                $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create', $isThirdParty);
             });
 
             // Default language for pmp_account is required
@@ -998,7 +1002,7 @@ class CouponAPIController extends ControllerAPI
             if (! empty($arrayCouponCode)) {
                 IssuedCoupon::bulkIssue($arrayCouponCode, $newcoupon->promotion_id, $newcoupon->coupon_validity_in_date, $user);
             }
-
+dd('x');
             // Commit the changes
             $this->commit();
 
@@ -4322,7 +4326,7 @@ class CouponAPIController extends ControllerAPI
      * @param string $scenario 'create' / 'update'
      * @throws InvalidArgsException
      */
-    private function validateAndSaveTranslations($coupon, $translations_json_string, $scenario = 'create')
+    private function validateAndSaveTranslations($coupon, $translations_json_string, $scenario = 'create', $isThirdParty = FALSE)
     {
         /*
          * JSON structure: object with keys = merchant_language_id and values = ProductTranslation object or null
@@ -4345,6 +4349,10 @@ class CouponAPIController extends ControllerAPI
         if (json_last_error() != JSON_ERROR_NONE) {
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
         }
+
+        $pmpAccountDefaultLanguage = Language::where('name', '=', $this->pmpAccountDefaultLanguage)
+                ->first();
+
         foreach ($data as $merchant_language_id => $translations) {
             $language = Language::where('language_id', '=', $merchant_language_id)
                 ->first();
@@ -4396,6 +4404,20 @@ class CouponAPIController extends ControllerAPI
                 // @param ControllerAPI $this
                 // @param EventTranslation $new_transalation
                 Event::fire('orbit.coupon.after.translation.save', array($this, $new_translation));
+
+                // validate header & image 1 if the coupon translation language = pmp account default language
+                if ($new_translation->merchant_language_id === $pmpAccountDefaultLanguage->language_id) {
+                    $header_files = OrbitInput::files('header_image_translation_' . $new_translation->merchant_language_id);
+                    if (! $header_files && $isThirdParty) {
+                        $errorMessage = 'Header image is required for ' . $pmpAccountDefaultLanguage->name_long;
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                    $image1_files = OrbitInput::files('image1_translation_' . $new_translation->merchant_language_id);
+                    if (! $image1_files && $isThirdParty) {
+                        $errorMessage = 'Image 1 is required for ' . $pmpAccountDefaultLanguage->name_long;
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
                 Event::fire('orbit.coupon.after.header.translation.save', array($this, $new_translation));
                 Event::fire('orbit.coupon.after.image1.translation.save', array($this, $new_translation));
 
