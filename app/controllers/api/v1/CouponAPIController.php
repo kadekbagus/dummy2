@@ -510,47 +510,47 @@ class CouponAPIController extends ControllerAPI
                     if (is_object($tenant)) {
                         $valid = TRUE;
                         if (!isset($tenant->phone) || empty($tenant->phone)) {
-                            $errorReason->reasons[] = 'Tenant missing phone field';
+                            $errorReason->reasons[] = 'missing phone field';
                             $valid = FALSE;
                         }
                         if (!isset($tenant->email) || empty($tenant->email)) {
-                            $errorReason->reasons[] = 'Tenant missing email field';
+                            $errorReason->reasons[] = 'missing email field';
                             $valid = FALSE;
                         }
                         if (empty($tenant->baseStore->baseMerchant->mediaLogoGrab) || !isset($tenant->baseStore->baseMerchant->mediaLogoGrab[0])) {
-                            $errorReason->reasons[] = 'Tenant missing 3rd party logo field';
+                            $errorReason->reasons[] = 'missing 3rd party logo field';
                             $valid = FALSE;
                         }
                         if (empty($tenant->baseStore->mediaImageGrabOrig) || !isset($tenant->baseStore->mediaImageGrabOrig[0])) {
-                            $errorReason->reasons[] = 'Tenant missing 3rd party image field';
+                            $errorReason->reasons[] = 'missing 3rd party image field';
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->country_id) || empty($tenant->mall->country_id)) {
-                            $errorReason->reasons[] = "Tenant's mall missing country field";
+                            $errorReason->reasons[] = "mall missing country field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->city) || empty($tenant->mall->city)) {
-                            $errorReason->reasons[] = "Tenant's mall missing city field";
+                            $errorReason->reasons[] = "mall missing city field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->address_line1) || empty($tenant->mall->address_line1)) {
-                            $errorReason->reasons[] = "Tenant's mall missing address field";
+                            $errorReason->reasons[] = "mall missing address field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->postal_code) || empty($tenant->mall->postal_code)) {
-                            $errorReason->reasons[] = "Tenant's mall missing postal code field";
+                            $errorReason->reasons[] = "mall missing postal code field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->longitude) || empty($tenant->mall->longitude)) {
-                            $errorReason->reasons[] = "Tenant's mall missing longitude field";
+                            $errorReason->reasons[] = "mall missing longitude field";
                             $valid = FALSE;
                         }
                         if (!isset($tenant->mall->latitude) || empty($tenant->mall->latitude)) {
-                            $errorReason->reasons[] = "Tenant's mall missing latitude field";
+                            $errorReason->reasons[] = "mall missing latitude field";
                             $valid = FALSE;
                         }
                         if (empty($tenant->categories)) {
-                            $errorReason->reasons[] = 'Tenant missing categories field';
+                            $errorReason->reasons[] = 'missing categories field';
                             $valid = FALSE;
                         } else {
                             $categoryIsValid = FALSE;
@@ -577,11 +577,11 @@ class CouponAPIController extends ControllerAPI
                         $errorReason->reasons = 'Tenant not found';
                         $errorTenants[] = $errorReason;
                     }
-                }
 
-                if (! empty($errorTenants)) {
-                    $errorMessage = 'Link to Tenant error';
-                    throw new OrbitCustomException($errorMessage, Coupon::THIRD_PARTY_COUPON_TENANT_VALIDATION_ERROR, $errorTenants);
+                    if (! empty($errorTenants)) {
+                        $errorMessage = 'Link to Tenant error';
+                        throw new OrbitCustomException($errorMessage, Coupon::THIRD_PARTY_COUPON_TENANT_VALIDATION_ERROR, $errorReason);
+                    }
                 }
             }
 
