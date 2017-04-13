@@ -224,6 +224,7 @@ class CouponAPIController extends ControllerAPI
                 'coupon_codes'            => $couponCodes,
                 'is_visible'              => $isVisible,
                 'is_3rd_party_promotion'  => $is3rdPartyPromotion,
+                'maximum_issued_coupon'   => $maximum_issued_coupon,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -247,6 +248,7 @@ class CouponAPIController extends ControllerAPI
                 'coupon_codes'            => 'required',
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
+                'maximum_issued_coupon'   => 'numeric',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -320,6 +322,12 @@ class CouponAPIController extends ControllerAPI
             $int_validity_date = strtotime($coupon_validity_in_date);
             if ($int_validity_date <= $int_before_end_date) {
                 $errorMessage = 'The validity redeem date should be greater than the end date.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // check maximum_issued_coupon and coupon code count
+            if (! empty($maximum_issued_coupon) && $maximum_issued_coupon !== count($arrayCouponCode)) {
+                $errorMessage = sprintf('Maximum issued coupons does not match with the total coupon codes (%s).', count($arrayCouponCode));
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -445,7 +453,7 @@ class CouponAPIController extends ControllerAPI
                 $offerTypeValues = ['voucher', 'discount', 'deal'];
                 if (in_array(strtolower($offerType), $offerTypeValues)) {
                     if (empty($offerValue)) {
-                        $errorMessage = 'The coupon voucher value is required';
+                        $errorMessage = 'The coupon offer value is required';
                         OrbitShopAPI::throwInvalidArgument($errorMessage);
                     }
                 }
@@ -459,14 +467,13 @@ class CouponAPIController extends ControllerAPI
                 }
 
                 // validate PMP Account's required fields for 3rd party
-                $userDetail = $user->userdetail()->first();
                 $userCampaignAccount = $user->campaignAccount()->first();
 
                 if (empty($userCampaignAccount->mobile_default_language)) {
                     $errorMessage = 'PMP Account missing mobile default language field';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
-                if (empty($userDetail->phone)) {
+                if (empty($userCampaignAccount->phone)) {
                     $errorMessage = 'PMP Account missing phone field';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }

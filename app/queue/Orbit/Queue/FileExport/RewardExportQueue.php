@@ -88,11 +88,11 @@ class RewardExportQueue
 
             DB::beginTransaction();
 
-            // unset merchant_id and put into skippedCoupon if that merchant_id already exported by another process
-            $skippedCoupon = array();
+            // unset merchant_id and put into skippedCoupons if that merchant_id already exported by another process
+            $skippedCoupons = array();
             foreach ($preExport as $pe) {
                 if (($key = array_search($pe, $exportData)) !== false) {
-                    $skippedCoupon[] = $exportData[$key];
+                    $skippedCoupons[] = $exportData[$key];
                     unset($exportData[$key]);
                 }
             }
@@ -266,9 +266,9 @@ class RewardExportQueue
             $exportDataView['subject']       = Config::get('orbit.export.email.reward.post_export_subject');
             $exportDataView['coupons']       = Coupon::whereIn('promotion_id', $exportData)->lists('promotion_name');
             $exportDataView['attachment']    = $exportFiles;
-            $exportDataView['skippedCoupon'] = array();
-            if (! empty($skippedCoupon)) {
-                $exportDataView['skippedCoupon'] = Coupon::whereIn('promotion_id', $skippedCoupon)->lists('promotion_name');
+            $exportDataView['skippedCoupons'] = array();
+            if (! empty($skippedCoupons)) {
+                $exportDataView['skippedCoupons'] = Coupon::whereIn('promotion_id', $skippedCoupons)->lists('promotion_name');
             }
 
             $postExportMailViews = array(
