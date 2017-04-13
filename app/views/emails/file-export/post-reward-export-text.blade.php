@@ -3,9 +3,9 @@ User {{ $userEmail}} started reward CSV Export process at {{ $exportDate }} UTC.
 Export ID: {{ $exportId }}
 Coupon(s) to Export: {{ $totalExport }}
 
-@forelse ($coupons as $c)
-    {{ $c }}
-@endforelse
+@foreach ($coupons as $c)
+    - {{ $c }}
+@endforeach
 
 @if(! empty($skippedCoupons))
     List of coupon that not included because it is already in export process:

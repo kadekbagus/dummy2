@@ -8,21 +8,12 @@ use Orbit\Text as OrbitText;
 use Response;
 use Coupon;
 use Str;
+use PreExport;
+use PostExport;
+use Export;
 
 class RewardMessagingReportPrinterController
 {
-
-    /*
-        Field :
-        ---------------------
-        SKU
-        Locale
-        Highlight
-        Promotional Link URL 1
-        Promotional Link URL 1 Title
-        Term Detail
-    */
-
     /**
      * Static method to instantiate the object.
      *
@@ -110,7 +101,7 @@ class RewardMessagingReportPrinterController
                                 );
 
                     $csv_handler = fopen($dir . $filePath, 'w');
-                    fputcsv($csv_handler, $fields);
+                    fputcsv($csv_handler, $content);
                     fclose($csv_handler);
 
                     DB::beginTransaction();

@@ -1002,7 +1002,7 @@ class CouponAPIController extends ControllerAPI
             if (! empty($arrayCouponCode)) {
                 IssuedCoupon::bulkIssue($arrayCouponCode, $newcoupon->promotion_id, $newcoupon->coupon_validity_in_date, $user);
             }
-dd('x');
+
             // Commit the changes
             $this->commit();
 
@@ -1250,7 +1250,7 @@ dd('x');
             $is_all_retailer = OrbitInput::post('is_all_retailer');
             $is_all_employee = OrbitInput::post('is_all_employee');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
-            $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
+            $maximum_issued_coupon = (int) OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $discount_value = OrbitInput::post('discount_value');
@@ -1332,7 +1332,7 @@ dd('x');
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
                     'is_all_employee'         => 'orbit.empty.status_link_to',
                     'id_language_default'     => 'required|orbit.empty.language_default',
-                    'maximum_issued_coupon'   => 'orbit.max.total_issued_coupons:' . $promotion_id,
+                    'maximum_issued_coupon'   => 'numeric|orbit.max.total_issued_coupons:' . $promotion_id,
                     'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
                     'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
@@ -1368,7 +1368,7 @@ dd('x');
             if ($is_3rd_party_promotion === 'Y') {
                 $third_party_validator_value = [
                     'coupon_validity_in_date' => $coupon_validity_in_date,
-                    'promotion_value' => $promotion_value,
+                    'reward_value' => $promotion_value,
                     'currency' => $currency,
                     'offer_type' => $offer_type,
                     'offer_value' => $offer_value,
@@ -1380,7 +1380,7 @@ dd('x');
                 ];
                 $third_party_validator_check = [
                     'coupon_validity_in_date' => 'required',
-                    'promotion_value' => 'required|numeric',
+                    'reward_value' => 'required|numeric',
                     'currency' => 'required',
                     'offer_type' => 'required|in:voucher,discount,general,deal',
                     'offer_value' => 'numeric',
@@ -1421,6 +1421,7 @@ dd('x');
 
                 // validate PMP Account's required fields for 3rd party
                 $user_campaign_account = $user->campaignAccount()->first();
+                $this->pmpAccountDefaultLanguage = $user_campaign_account->mobile_default_language;
 
                 if (empty($user_campaign_account->mobile_default_language)) {
                     $errorMessage = 'PMP Account missing mobile default language field';
@@ -2280,8 +2281,9 @@ dd('x');
 
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
 
-            OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid) {
-                $this->validateAndSaveTranslations($updatedcoupon, $translation_json_string, 'create');
+            OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid, $is_3rd_party_promotion) {
+                $is_third_party = $is_3rd_party_promotion === 'Y' ? TRUE : FALSE;
+                $this->validateAndSaveTranslations($updatedcoupon, $translation_json_string, 'create', $is_third_party);
             });
 
             // Default language for pmp_account is required
@@ -4661,6 +4663,22 @@ dd('x');
                 // @param ControllerAPI $this
                 // @param EventTranslation $new_transalation
                 Event::fire('orbit.coupon.after.translation.save', array($this, $existing_translation));
+
+                // validate header & image 1 if the coupon translation language = pmp account default language
+                if ($existing_translation->merchant_language_id === $pmpAccountDefaultLanguage->language_id) {
+                    $header_files = OrbitInput::files('header_image_translation_' . $existing_translation->merchant_language_id);
+                    if (! $header_files && $isThirdParty) {
+                        $errorMessage = 'Header image is required for ' . $pmpAccountDefaultLanguage->name_long;
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                    $image1_files = OrbitInput::files('image1_translation_' . $existing_translation->merchant_language_id);
+                    if (! $image1_files && $isThirdParty) {
+                        $errorMessage = 'Image 1 is required for ' . $pmpAccountDefaultLanguage->name_long;
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
+                Event::fire('orbit.coupon.after.header.translation.save', array($this, $existing_translation));
+                Event::fire('orbit.coupon.after.image1.translation.save', array($this, $existing_translation));
 
                 // return respones if any upload image or no
                 $existing_translation->load('media');
