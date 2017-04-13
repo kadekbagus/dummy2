@@ -11,7 +11,7 @@ use PreExport;
 use PostExport;
 use Export;
 
-class RewardInformationReportPrinterController extends DataPrinterController
+class RewardInformationReportPrinterController
 {
     /**
      * Static method to instantiate the object.
@@ -43,6 +43,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
             }
 
             $export = Coupon::select(
+                    'pre_exports.file_path',
                     'promotions.promotion_id as sku',
                     DB::raw("default_translation.promotion_name as name"),
                     'users.user_email',
@@ -122,6 +123,12 @@ class RewardInformationReportPrinterController extends DataPrinterController
                     $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
                       ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                 })
+                ->leftJoin('pre_exports', function ($q){
+                        $q->on('pre_exports.object_id', '=', 'promotions.promotion_id')
+                          ->on('pre_exports.object_type', '=', DB::raw("'coupon'"));
+                })
+                ->where('pre_exports.export_id', $exportId)
+                ->where('pre_exports.export_process_type', $exportType)
                 ->whereIn('promotions.promotion_id', $couponIds)
                 ->groupBy('promotions.promotion_id');
 
