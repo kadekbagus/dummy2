@@ -604,6 +604,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->is_popup = $is_popup;
             $newcoupon->sticky_order = $sticky_order;
             $newcoupon->is_exclusive = $is_exclusive;
+            $newcoupon->is_visible = $isVisible;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
@@ -615,7 +616,6 @@ class CouponAPIController extends ControllerAPI
                 $newcoupon->redemption_method = '4-digit PIN';
                 $newcoupon->redemption_verification_code = $redemptionVerificationCode;
                 $newcoupon->short_description = $shortDescription;
-                $newcoupon->is_visible = $isVisible;
                 $newcoupon->is_3rd_party_promotion = $is3rdPartyPromotion;
                 $newcoupon->third_party_name = $thirdPartyName;
                 $newcoupon->is_3rd_party_field_complete = 'Y';
