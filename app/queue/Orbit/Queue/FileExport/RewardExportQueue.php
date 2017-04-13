@@ -2,7 +2,7 @@
 /**
  * Process queue for export reward to scv
  *
- * @author Firmansyah <firmansyah@dominopos.com>
+ * @author Shelgi Prasetyo <shelgi@dominopos.com>
  */
 use PreExport;
 use PostExport;
@@ -18,7 +18,12 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Queue;
 use Coupon;
 use Orbit\FakeJob;
+use Report\RewardInformationReportPrinterController;
 use Report\RewardMessagingReportPrinterController;
+use Report\RewardPOIMessageReportPrinterController;
+use Report\RewardPOIReportPrinterController;
+use Report\RewardPostIntegrationReportPrinterController;
+use Report\RewardUniqueRedemptionCodeReportPrinterController;
 use Mail;
 use Orbit\Helper\Util\JobBurier;
 
@@ -29,7 +34,7 @@ class RewardExportQueue
     /**
      * Laravel main method to fire a job on a queue.
      *
-     * @author Firmansyah <firmansyah@dominopos.com>
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
      * @param Job $job
      * @param array $data [sync_type => store, sync_data=>array(), user]
      */
@@ -176,7 +181,7 @@ class RewardExportQueue
             }
 
             // export Reward Unique Redemtion Code
-            $rewardUniqueRedemtionCode = RewardUniqueRedemtionCodeReportPrinterController::create()->getPrintRewardUniqueRedemtionCode();
+            $rewardUniqueRedemtionCode = RewardUniqueRedemptionCodeReportPrinterController::create()->postPrintRewardUniqueRedemptionCode();
             if ($rewardUniqueRedemtionCode['status'] === 'fail') {
                 $this->failedJob($job, $exportId, $rewardUniqueRedemtionCode['message']);
             }
