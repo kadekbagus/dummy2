@@ -326,7 +326,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             // check maximum_issued_coupon and coupon code count
-            if ($maximum_issued_coupon !== count($arrayCouponCode)) {
+            if (! empty($maximum_issued_coupon) && $maximum_issued_coupon !== count($arrayCouponCode)) {
                 $errorMessage = sprintf('Maximum issued coupons does not match with the total coupon codes (%s).', count($arrayCouponCode));
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
