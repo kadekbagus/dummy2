@@ -2,7 +2,7 @@
 /**
  * Process queue for export reward to scv
  *
- * @author Firmansyah <firmansyah@dominopos.com>
+ * @author Shelgi Prasetyo <shelgi@dominopos.com>
  */
 use PreExport;
 use PostExport;
@@ -18,8 +18,14 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Queue;
 use Coupon;
 use Orbit\FakeJob;
-use Report\rewardInformationPrinterController;
-use Report\rewardMessagePrinterController;
+use Report\RewardInformationReportPrinterController;
+use Report\RewardMessagingReportPrinterController;
+use Report\RewardPOIMessageReportPrinterController;
+use Report\RewardPOIReportPrinterController;
+use Report\RewardPostIntegrationReportPrinterController;
+use Report\RewardUniqueRedemptionCodeReportPrinterController;
+use Mail;
+use Orbit\Helper\Util\JobBurier;
 
 class RewardExportQueue
 {
@@ -28,7 +34,7 @@ class RewardExportQueue
     /**
      * Laravel main method to fire a job on a queue.
      *
-     * @author Firmansyah <firmansyah@dominopos.com>
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
      * @param Job $job
      * @param array $data [sync_type => store, sync_data=>array(), user]
      */
@@ -147,7 +153,7 @@ class RewardExportQueue
 
             $this->sendMail($preExportMailViews, $exportDataView);
 
-            $_POST['coupons_ids'] = $exportData;
+            $_POST['coupon_ids'] = $exportData;
             $_POST['export_id'] = $exportId;
 
             // export Reward Information
@@ -175,7 +181,7 @@ class RewardExportQueue
             }
 
             // export Reward Unique Redemtion Code
-            $rewardUniqueRedemtionCode = RewardUniqueRedemtionCodeReportPrinterController::create()->getPrintRewardUniqueRedemtionCode();
+            $rewardUniqueRedemtionCode = RewardUniqueRedemptionCodeReportPrinterController::create()->postPrintRewardUniqueRedemptionCode();
             if ($rewardUniqueRedemtionCode['status'] === 'fail') {
                 $this->failedJob($job, $exportId, $rewardUniqueRedemtionCode['message']);
             }
@@ -186,7 +192,7 @@ class RewardExportQueue
                                      ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                      ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                      ->groupBy('merchants.name')
-                                     ->orderBy('merchants.name')
+                                     ->orderBy('merchants.name', 'asc')
                                      ->lists('mrechants.name');
             $tenantName = implode('_', $tenanList);
             $name = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $tenantName));
@@ -197,70 +203,50 @@ class RewardExportQueue
                                     ->where('post_exports.object_type', 'coupon');
 
             $groupFile = array();
-            $postExport->chunk($chunk, function($_postExport) use ($exportId, $dir, $name, &$exportFiles) {
+            $postExport->chunk($chunk, function($_postExport) use (&$groupFile) {
                 foreach ($_postExport as $pe) {
-
-                    switch ($pe->export_process_type) {
-                        case 'reward_information':
-                            $groupFile['reward_information'][] = $pre->file_path;
-                            break;
-
-                        case 'reward_message':
-                            $groupFile['reward_message'][] = $pre->file_path;
-                            break;
-
-                        case 'reward_poi_message':
-                            $groupFile['reward_poi_message'][] = $pre->file_path;
-                            break;
-
-                        case 'reward_poi':
-                            $groupFile['reward_poi'][] = $pre->file_path;
-                            break;
-
-                        case 'reward_unique_redemtion_code':
-                            $groupFile['reward_unique_redemtion_code'][] = $pre->file_path;
-                            break;
-
-                        // case 'reward_post_integration':
-                        //     $groupFile['reward_post_integration'][] = $pre->file_path;
-                        //     break;
+                    if ($pt === 'reward_information') {
+                        $groupFile['reward_information'][] = $pe->file_path;
+                    } elseif ($pe->export_process_type === 'reward_message') {
+                        $groupFile['reward_message'][] = $pe->file_path;
+                    } elseif ($pe->export_process_type === 'reward_poi_message') {
+                        $groupFile['reward_poi_message'][] = $pe->file_path;
+                    } elseif ($pe->export_process_type === 'reward_poi') {
+                        $groupFile['reward_poi'][] = $pe->file_path;
+                    } elseif ($pe->export_process_type === 'reward_unique_redemtion_code') {
+                        $groupFile['reward_unique_redemtion_code'][] = $pe->file_path;
                     }
                 }
             });
 
             // join file
             $exportFiles = array();
+            $dir = Config::get('orbit.export.output_dir', '');
             foreach ($processType as $pt) {
-                $newJoinFile = 'file_join_' . $pt . '_' . $exportId '.csv';
-                $afterJoin = $this->joinFiles($groupFile[$pt], $newJoinFile);
-                $fileName = '';
-                switch ($pt) {
-                    case 'reward_information':
+                $newJoinFile = 'file_join_' . $pt . '_' . $exportId . '.csv';
+
+                if (! empty($groupFile[$pt])) {
+                    $afterJoin = $this->joinFiles($groupFile[$pt], $newJoinFile);
+
+                    if (! $afterJoin) {
+                        $this->failedJob($job, $exportId, 'Failed joining files: ' . $pt);
+                    }
+
+                    $fileName = '';
+                    if ($pt === 'reward_information') {
                         $fileName = 'Gotomalls_' . $name . '_Reward.csv';
-                        break;
-
-                    case 'reward_message':
+                    } elseif ($pt === 'reward_message') {
                         $fileName = 'Gotomalls_' . $name . '_Reward_Msg.csv';
-                        break;
-
-                    case 'reward_poi_message':
+                    } elseif ($pt === 'reward_poi_message') {
                         $fileName = 'Gotomalls_' . $name . '_Reward_POI_Msg.csv';
-                        break;
-
-                    case 'reward_poi':
+                    } elseif ($pt === 'reward_poi') {
                         $fileName = 'Gotomalls_' . $name . '_Reward_POI.csv';
-                        break;
-
-                    case 'reward_unique_redemtion_code':
+                    } elseif ($pt === 'reward_unique_redemtion_code') {
                         $fileName = 'Gotomalls_' . $name . '_Reward_Post_Integration.csv';
-                        break;
+                    }
 
-                    // case 'reward_post_integration':
-                    //     $fileName = 'Gotomalls_' . $name . '_Reward_Redemtion_Code.csv';
-                    //     break;
+                    $exportFiles[] = array('file_path' => $dir . $newJoinFile, 'name' => $fileName);
                 }
-
-                $exportFiles[] = array('file_path' => $dir . $newJoinFile, 'name' => $fileName);
             }
 
             $exportDataView['subject']       = Config::get('orbit.export.email.reward.post_export_subject');
@@ -371,8 +357,12 @@ class RewardExportQueue
     }
 
     protected function joinFiles(array $files, $result) {
+        if (empty($files)) {
+            return false;
+        }
+
         if (!is_array($files)) {
-            throw new Exception('`$files` must be an array');
+            return false;
         }
 
         $dir = Config::get('orbit.export.output_dir', '');
@@ -380,7 +370,7 @@ class RewardExportQueue
             mkdir($dir, 0777, true);
         }
 
-        $newFile = fopen($dir . $result, "w+");
+        $newFile = fopen($dir . $result, "w");
 
         foreach($files as $file) {
             $oldFile = fopen($dir . $file, "r");
@@ -391,12 +381,10 @@ class RewardExportQueue
 
             fclose($oldFile);
             unset($oldFile);
-            fwrite($newFile, "\n"); //usually last line doesn't have a newline
         }
 
         fclose($newFile);
         unset($newFile);
-
-        return $result;
+        return true;
     }
 }

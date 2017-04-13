@@ -139,7 +139,7 @@ class BaseMerchantExportQueue
             $exportDataView['exportDate']  = $exportDate;
             $exportDataView['exportId']    = $exportId;
             $exportDataView['totalExport'] = $totalExport;
-            $exportDataView['merchants']   = BaseMerchant::whereIn('base_merchant_id', $listAllExportData)->lists('name');
+            $exportDataView['merchants']   = BaseMerchant::whereIn('base_merchant_id', $listAllExportData)->orderBy('name', 'asc')->lists('name');
 
             $preExportMailViews = array(
                                 'html' => 'emails.file-export.pre-brand-export-html',
@@ -186,11 +186,11 @@ class BaseMerchantExportQueue
             });
 
             $exportDataView['subject']          = Config::get('orbit.export.email.brand.post_export_subject');
-            $exportDataView['merchants']        = BaseMerchant::whereIn('base_merchant_id', $exportData)->lists('name');
+            $exportDataView['merchants']        = BaseMerchant::whereIn('base_merchant_id', $exportData)->orderBy('name', 'asc')->lists('name');
             $exportDataView['attachment']       = $exportFiles;
             $exportDataView['skippedMerchants'] = array();
             if (! empty($skippedMerchants)) {
-                $exportDataView['skippedMerchants'] = BaseMerchant::whereIn('base_merchant_id', $skippedMerchants)->lists('name');
+                $exportDataView['skippedMerchants'] = BaseMerchant::whereIn('base_merchant_id', $skippedMerchants)->orderBy('name', 'asc')->lists('name');
             }
 
             $postExportMailViews = array(

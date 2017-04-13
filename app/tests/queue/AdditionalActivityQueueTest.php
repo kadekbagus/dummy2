@@ -42,45 +42,13 @@ class AdditionalActivityQueueTest extends TestCase
         $this->assertSame($message, $response['message']);
     }
 
-    public function test_FAIL_save_missing_referer()
-    {
-        $data = [
-            'activity_id' => $this->activity->activity_id,
-        ];
-        $queueObj = new AdditionalActivityQueue();
-        $response = $queueObj->fire($this->job, $data);
-        $message = 'Undefined index: referer';
-
-        $this->assertSame('fail', $response['status']);
-        $this->assertSame($message, $response['message']);
-    }
-
-    public function test_FAIL_save_missing_orbit_referer()
-    {
-        $referer = 'xxx';
-        $data = [
-            'activity_id' => $this->activity->activity_id,
-            'referer' => $referer,
-        ];
-        $queueObj = new AdditionalActivityQueue();
-        $response = $queueObj->fire($this->job, $data);
-        $message = 'Undefined index: orbit_referer';
-
-        $this->assertSame('fail', $response['status']);
-        $this->assertSame($message, $response['message']);
-    }
-
     public function test_OK_saveToCampaignPageViews()
     {
-        $referer = 'xxx';
-        $orbitReferer = 'yyy';
         $this->activity->activity_name = 'view_promotion';
         $this->activity->object_id = 'Th30BjECt-Id';
         $this->activity->save();
         $data = [
-            'activity_id' => $this->activity->activity_id,
-            'referer' => $referer,
-            'orbit_referer' => $orbitReferer,
+            'activity_id' => $this->activity->activity_id
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);
@@ -98,16 +66,12 @@ class AdditionalActivityQueueTest extends TestCase
 
     public function test_OK_saveToCampaignPopUpView()
     {
-        $referer = 'xxx';
-        $orbitReferer = 'yyy';
         $this->activity->activity_name = 'view_coupon_pop_up';
         $this->activity->activity_name_long = 'View Coupon Pop Up';
         $this->activity->object_id = 'Th30BjECt-Id';
         $this->activity->save();
         $data = [
-            'activity_id' => $this->activity->activity_id,
-            'referer' => $referer,
-            'orbit_referer' => $orbitReferer,
+            'activity_id' => $this->activity->activity_id
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);
@@ -125,16 +89,12 @@ class AdditionalActivityQueueTest extends TestCase
 
     public function test_OK_saveToCampaignPopUpClick()
     {
-        $referer = 'xxx';
-        $orbitReferer = 'yyy';
         $this->activity->activity_name = 'click_coupon_pop_up';
         $this->activity->activity_name_long = 'Click Coupon Pop Up';
         $this->activity->object_id = 'Th30BjECt-Id';
         $this->activity->save();
         $data = [
-            'activity_id' => $this->activity->activity_id,
-            'referer' => $referer,
-            'orbit_referer' => $orbitReferer,
+            'activity_id' => $this->activity->activity_id
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);
@@ -152,16 +112,12 @@ class AdditionalActivityQueueTest extends TestCase
 
     public function test_OK_saveToMerchantPageView()
     {
-        $referer = 'xxx';
-        $orbitReferer = 'yyy';
         $this->activity->activity_name = 'view_retailer';
         $this->activity->activity_name_long = 'View Tenant Detail';
         $this->activity->object_id = 'Th30BjECt-Id';
         $this->activity->save();
         $data = [
-            'activity_id' => $this->activity->activity_id,
-            'referer' => $referer,
-            'orbit_referer' => $orbitReferer,
+            'activity_id' => $this->activity->activity_id
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);
@@ -179,16 +135,12 @@ class AdditionalActivityQueueTest extends TestCase
 
     public function test_OK_saveToWidgetClick()
     {
-        $referer = 'xxx';
-        $orbitReferer = 'yyy';
         $this->activity->activity_name = 'widget_click';
         $this->activity->activity_name_long = 'Widget Click Promotion';
         $this->activity->object_id = 'Th30BjECt-Id';
         $this->activity->save();
         $data = [
-            'activity_id' => $this->activity->activity_id,
-            'referer' => $referer,
-            'orbit_referer' => $orbitReferer,
+            'activity_id' => $this->activity->activity_id
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);
@@ -206,16 +158,13 @@ class AdditionalActivityQueueTest extends TestCase
 
     public function test_OK_saveToConnectionTime()
     {
-        $referer = 'xxx';
-        $orbitReferer = 'yyy';
         $this->activity->activity_name = 'login_ok';
         $this->activity->activity_name_long = 'Widget Click Promotion';
         $this->activity->session_id = '53sS10N-Id';
         $this->activity->save();
         $data = [
             'activity_id' => $this->activity->activity_id,
-            'referer' => $referer,
-            'orbit_referer' => $orbitReferer,
+            'datetime' => date('Y-m-d H:i:s')
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);

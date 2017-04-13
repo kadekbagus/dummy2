@@ -88,9 +88,9 @@ class FillTableGrabCitiesCommand extends Command
         foreach ($grab_cities_array as $idx => $data) {
             $explode_data = explode(',', $data);
 
-            $grab_city_external_id = $explode_data[0];
-            $grab_city_name = $explode_data[1];
-            $grab_country = $explode_data[2];
+            $grab_city_external_id = trim($explode_data[0]);
+            $grab_city_name = trim($explode_data[1]);
+            $grab_country = trim($explode_data[2]);
 
             $country = Country::where('name', $grab_country)->first();
 
