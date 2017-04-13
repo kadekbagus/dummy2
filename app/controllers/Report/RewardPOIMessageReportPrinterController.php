@@ -7,7 +7,9 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
 use Response;
 use Coupon;
-
+use PreExport;
+use PostExport;
+use Export;
 
 class RewardPOIMessageReportPrinterController extends DataPrinterController
 {
@@ -17,6 +19,17 @@ class RewardPOIMessageReportPrinterController extends DataPrinterController
         POI Name
         Locale
     */
+    /**
+     * Static method to instantiate the object.
+     *
+     * @param string $contentType
+     * @return ControllerAPI
+     */
+    public static function create()
+    {
+        return new static;
+    }
+
     public function postPrintRewardPOIMessage()
     {
         try {
@@ -25,92 +38,17 @@ class RewardPOIMessageReportPrinterController extends DataPrinterController
             $exportType = 'reward_poi_message';
             $chunk = Config::get('orbit.export.chunk', 50);
 
-            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
-            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
-            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
-
             $prefix = DB::getTablePrefix();
 
-            $image = "CONCAT('{$urlPrefix}', path)";
-            if ($usingCdn) {
-                $image = "CASE WHEN cdn_url IS NULL THEN CONCAT('{$urlPrefix}', path) ELSE cdn_url END";
-            }
-
             $export = Coupon::select(
-                    'promotions.promotion_id as sku',
-                    DB::raw("default_translation.promotion_name as name"),
-                    'users.user_email', // Support Email
-                    'campaign_account.phone', // Support Phone
-                    DB::raw('"category"'),// Category
-                    'promotions.maximum_issued_coupon as total_inventory',
-                    'promotions.promotion_value as reward_value',
-                    'promotions.currency',
-                    'countries.name as country',// Country
-                    // City
-                    DB::raw("
-                        (SELECT
-                        group_concat(DISTINCT vendor_city) as vendor_grab_city
-                        FROM orbit_cloud_34.{$prefix}promotion_retailer opt
-                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                        LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
-                        LEFT JOIN {$prefix}vendor_gtm_cities ovgc ON ovgc.gtm_city = (CASE WHEN om.object_type = 'mall' THEN om.city ELSE oms.city END) AND vendor_type = 'grab'
-                        where promotion_id = {$prefix}promotions.promotion_id) as vendor_grab_city
-                    "),
-                    'promotions.begin_date',// Offer Start Date
-                    'promotions.end_date',// Offer End Date
-                    'promotions.begin_date',// Validity Start Date
-                    'promotions.coupon_validity_in_date',// Validity End Date
-                    'promotions.offer_type',
-                    'promotions.offer_value as voucher_value', //voucher
-                    'promotions.offer_value as discount_percentage', //discount
-                    'promotions.offer_value as deal_list_price', //deal
-                    'promotions.original_price', //deal
-                    'promotions.redemption_method',
-                    // Header Image URL
-                    DB::raw("
-                            (SELECT {$image}
-                            FROM orb_media m
-                            WHERE m.media_name_long = 'coupon_header_grab_translation_image_orig'
-                            AND m.object_id = default_translation.coupon_translation_id) AS header_original_media_path
-                    "),
-                    // Image 1 URL
-                    DB::raw("
-                            (SELECT {$image}
-                            FROM orb_media m
-                            WHERE m.media_name_long = 'coupon_image_grab_translation_image_orig'
-                            AND m.object_id = default_translation.coupon_translation_id) AS image_original_media_path
-                    "),
-                    DB::raw("
-                        (SELECT
-                            ot.timezone_name
-                        FROM {$prefix}promotion_retailer opt
-                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                            LEFT JOIN {$prefix}merchants oms ON oms.merchant_id = om.parent_id
-                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                        WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                        ORDER BY CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) ASC
-                        LIMIT 1
-                        ) as timezone
-                    ")
-                )
-                // Get campaign account
+                    'promotions.promotion_id',
+                    'campaign_account.mobile_default_language as locale',
+                    'merchants.name as poi_name'
+                    )
                 ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
-                // Get defaulrt language
-                ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
-                // Get email and phone
-                ->join('users', 'users.user_id', '=', 'campaign_account.user_id')
-                // Get country base on pmp user
-                ->join('user_details', 'users.user_id', '=', 'campaign_account.user_id')
-                ->join('countries', 'user_details.country_id' , '=' , 'countries.country_id')
-                // get default content language
-                ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('coupon_translations as default_translation', function ($q) {
-                    $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
-                      ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
-                })
+                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                 ->whereIn('promotions.promotion_id', $couponIds)
-                ->groupBy('promotions.promotion_id')
-                ->with('keywords');
 
             $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType) {
                 foreach ($_export as $dtExport) {
@@ -126,29 +64,18 @@ class RewardPOIMessageReportPrinterController extends DataPrinterController
 
                     $content = array(
                                     array(
-                                        $dtExport->sku,
-                                        $dtExport->name,
-                                        $dtExport->user_email,
-                                        $dtExport->phone,
-                                        $keywords,
-                                        $dtExport->category,
-                                        $dtExport->total_inventory,
-                                        $dtExport->reward_value,
-                                        $dtExport->currency,
-                                        $dtExport->country,
-                                        $dtExport->vendor_grab_city,
-                                        $dtExport->begin_date,
-                                        $dtExport->end_date,
-                                        $dtExport->begin_date,
-                                        $dtExport->coupon_validity_in_date,
-                                        $dtExport->offer_type,
-                                        $dtExport->voucher_value,
-                                        $dtExport->discount_percentage,
-                                        $dtExport->deal_list_price,
-                                        $dtExport->original_price,
-                                        $dtExport->redemption,
-                                        $dtExport->header_original_media_path,
-                                        $dtExport->image_original_media_path
+                                        $dtExport->poi_name,
+                                        $dtExport->locale,
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        '',
+                                        ''
                                     ),
                             );
 
@@ -164,7 +91,7 @@ class RewardPOIMessageReportPrinterController extends DataPrinterController
 
                     $checkPre = PreExport::where('export_id',$exportId)
                                         ->where('object_type', 'coupon')
-                                        ->where('object_id', $dtExport->base_merchant_id);
+                                        ->where('object_id', $dtExport->promotion_id);
 
                     $preExport = clone $checkPre;
                     $preExport = $preExport->where('export_process_type', $exportType)->first();
