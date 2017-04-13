@@ -1258,7 +1258,7 @@ class CouponAPIController extends ControllerAPI
             $partner_ids = (array) $partner_ids;
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
 
-            $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
+            $is_visible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -1285,7 +1285,7 @@ class CouponAPIController extends ControllerAPI
                 'is_all_gender'           => $is_all_gender,
                 'is_all_age'              => $is_all_age,
                 'partner_exclusive'       => $is_exclusive,
-                'is_visible'              => $isVisible,
+                'is_visible'              => $is_visible,
             );
 
             // Validate promotion_name only if exists in POST.

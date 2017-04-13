@@ -82,9 +82,7 @@ class MerchantListAPIController extends ControllerAPI
                                                 CASE WHEN ({$prefix}media.path IS NULL or {$prefix}media.path = '') or
                                                         ({$prefix}base_merchants.phone IS NULL or {$prefix}base_merchants.phone = '') or
                                                         ({$prefix}base_merchants.email IS NULL or {$prefix}base_merchants.email = '') or
-                                                        ({$prefix}base_merchants.mobile_default_language IS NULL or {$prefix}base_merchants.mobile_default_language = '') or
-                                                        ({$prefix}base_merchants.url IS NULL or {$prefix}base_merchants.url = '') or
-                                                        ({$prefix}base_merchant_translations.description IS NULL or {$prefix}base_merchant_translations.description = '')
+                                                        ({$prefix}base_merchants.mobile_default_language IS NULL or {$prefix}base_merchants.mobile_default_language = '')
                                                     THEN 'not_available'
                                                 ELSE 'available'
                                                 END
@@ -99,11 +97,6 @@ class MerchantListAPIController extends ControllerAPI
                                     ->leftJoin('pre_exports', function ($q){
                                         $q->on('pre_exports.object_id', '=', 'base_merchants.base_merchant_id')
                                           ->on('pre_exports.object_type', '=', DB::raw("'merchant'"));
-                                    })
-                                    ->join('languages', 'languages.name', '=', 'base_merchants.mobile_default_language')
-                                    ->leftJoin('base_merchant_translations', function ($q){
-                                        $q->on('base_merchant_translations.base_merchant_id', '=', 'base_merchants.base_merchant_id')
-                                          ->on('base_merchant_translations.language_id', '=', 'languages.language_id');
                                     })
                                     ->excludeDeleted('base_merchants');
 

@@ -16,9 +16,10 @@ use User;
 use Event;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Queue;
+use Coupon;
 use Orbit\FakeJob;
-use Report\BrandInformationPrinterController;
-use Report\BrandMessagePrinterController;
+use Report\rewardInformationPrinterController;
+use Report\rewardMessagePrinterController;
 
 class RewardExportQueue
 {
@@ -37,10 +38,11 @@ class RewardExportQueue
             $prefix = DB::getTablePrefix();
             $exportData = $data['export_data'];
             $userId = $data['user'];
-            // $chunk = Config::get('orbit.mdm.synchronization.chunk', 50);
+            $chunk = Config::get('orbit.export.chunk', 50);
 
             $user = User::where('user_id', $userId)->firstOrFail();
-            $processType = ['brand_information', 'brand_message'];
+            // $processType = ['reward_information', 'reward_message', 'reward_poi_message', 'reward_poi', 'reward_unique_redemtion_code', 'reward_post_integration'];
+            $processType = ['reward_information', 'reward_message', 'reward_poi_message', 'reward_poi', 'reward_unique_redemtion_code'];
             $totalExport = count($exportData);
             $listAllExportData = $exportData;
 
@@ -53,8 +55,21 @@ class RewardExportQueue
                                     ->lists('pre_exports.object_id');
 
             $preExportCount = count($preExport);
-            if ($preExportCount >= count($exportData)) {
-                return FALSE;
+            if ($preExportCount >= $totalExport) {
+                // Bury the job for later inspection
+                JobBurier::create($job, function($theJob) {
+                    // The queue driver does not support bury.
+                    $theJob->delete();
+                })->bury();
+
+                $message = sprintf('[Job ID: `%s`] Export Reward file csv; Status: fail; Message: All file still in progress;',
+                                $job->getJobId());
+                \Log::error($message);
+
+                return [
+                    'status' => 'fail',
+                    'message' => $message
+                ];
             }
 
             DB::beginTransaction();
@@ -62,7 +77,7 @@ class RewardExportQueue
             $newExport = new Export;
             $newExport->user_id = $userId;
             $newExport->export_type = 'coupon';
-            $newExport->total_export = count($exportData);
+            $newExport->total_export = $totalExport;
             $newExport->finished_export = 0;
             $newExport->status = 'processing';
             $newExport->save();
@@ -73,11 +88,11 @@ class RewardExportQueue
 
             DB::beginTransaction();
 
-            // unset merchant_id and put into skippedMerchants if that merchant_id already exported by another process
-            $skippedMerchants = array();
+            // unset merchant_id and put into skippedCoupon if that merchant_id already exported by another process
+            $skippedCoupon = array();
             foreach ($preExport as $pe) {
                 if (($key = array_search($pe, $exportData)) !== false) {
-                    $skippedMerchants[] = $exportData[$key];
+                    $skippedCoupon[] = $exportData[$key];
                     unset($exportData[$key]);
                 }
             }
@@ -118,35 +133,165 @@ class RewardExportQueue
             // send pre export email
             $exportDate = date('d-m-y H:i:s', strtotime($newExport->created_at));
 
-            $exportDataView['subject']     = Config::get('orbit.export.email.brand.pre_export_subject');
+            $exportDataView['subject']     = Config::get('orbit.export.email.reward.pre_export_subject');
             $exportDataView['userEmail']   = $user->user_email;
             $exportDataView['exportDate']  = $exportDate;
             $exportDataView['exportId']    = $exportId;
             $exportDataView['totalExport'] = $totalExport;
-            $exportDataView['merchants']   = BaseMerchant::whereIn('base_merchant_id', $listAllExportData)->lists('name');
+            $exportDataView['coupons']     = Coupon::whereIn('promotion_id', $listAllExportData)->lists('promotion_name');
 
             $preExportMailViews = array(
-                                'html' => 'emails.file-export.pre-brand-export-html',
-                                'text' => 'emails.file-export.pre-brand-export-text'
+                                'html' => 'emails.file-export.pre-reward-export-html',
+                                'text' => 'emails.file-export.pre-reward-export-text'
             );
 
             $this->sendMail($preExportMailViews, $exportDataView);
-
-
 
             $_POST['coupons_ids'] = $exportData;
             $_POST['export_id'] = $exportId;
 
             // export Reward Information
-            $rewardInformation = RewardInformationReportPrinterController::postPrintRewardInformation();
+            $rewardInformation = RewardInformationReportPrinterController::create()->postPrintRewardInformation();
+            if ($rewardInformation['status'] === 'fail') {
+                $this->failedJob($job, $exportId, $rewardInformation['message']);
+            }
+
             // export Reward Messaging Report
-            $rewardMessaging = RewardMessagingReportPrinterController::postPrintRewardMessaging();
+            $rewardMessaging = RewardMessagingReportPrinterController::create()->postPrintRewardMessaging();
+            if ($rewardMessaging['status'] === 'fail') {
+                $this->failedJob($job, $exportId, $rewardMessaging['message']);
+            }
+
             // export Reward POI Message
-            $rewardPOIMessage = RewardPOIMessageReportPrinterController::postPrintRewardPOIMessage();
+            $rewardPOIMessage = RewardPOIMessageReportPrinterController::create()->postPrintRewardPOIMessage();
+            if ($rewardPOIMessage['status'] === 'fail') {
+                $this->failedJob($job, $exportId, $rewardPOIMessage['message']);
+            }
+
             // export Reward POI Report
-            $rewardPOI = RewardPOIReportPrinterController::postPrintRewardPOI();
+            $rewardPOI = RewardPOIReportPrinterController::create()->postPrintRewardPOI();
+            if ($rewardPOI['status'] === 'fail') {
+                $this->failedJob($job, $exportId, $rewardPOI['message']);
+            }
+
             // export Reward Unique Redemtion Code
-            $rewardUniqueRedemtionCode = RewardUniqueRedemtionCodeReportPrinterController::getPrintRewardUniqueRedemtionCode();
+            $rewardUniqueRedemtionCode = RewardUniqueRedemtionCodeReportPrinterController::create()->getPrintRewardUniqueRedemtionCode();
+            if ($rewardUniqueRedemtionCode['status'] === 'fail') {
+                $this->failedJob($job, $exportId, $rewardUniqueRedemtionCode['message']);
+            }
+
+            // join and rename file before send as email attachmend
+            // get file name based on merchant name from link to tenant
+            $tenanList = PostExport::join('promotions', 'promotions.promotion_id', '=', 'post_exports.object_id')
+                                     ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                     ->groupBy('merchants.name')
+                                     ->orderBy('merchants.name')
+                                     ->lists('mrechants.name');
+            $tenantName = implode('_', $tenanList);
+            $name = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $tenantName));
+
+            $postExport = PostExport::select('post_exports.file_path', 'post_exports.export_process_type')
+                                    ->join('promotions', 'promotions.promotion_id', '=', 'post_exports.object_id')
+                                    ->where('post_exports.export_id', $exportId)
+                                    ->where('post_exports.object_type', 'coupon');
+
+            $groupFile = array();
+            $postExport->chunk($chunk, function($_postExport) use ($exportId, $dir, $name, &$exportFiles) {
+                foreach ($_postExport as $pe) {
+
+                    switch ($pe->export_process_type) {
+                        case 'reward_information':
+                            $groupFile['reward_information'][] = $pre->file_path;
+                            break;
+
+                        case 'reward_message':
+                            $groupFile['reward_message'][] = $pre->file_path;
+                            break;
+
+                        case 'reward_poi_message':
+                            $groupFile['reward_poi_message'][] = $pre->file_path;
+                            break;
+
+                        case 'reward_poi':
+                            $groupFile['reward_poi'][] = $pre->file_path;
+                            break;
+
+                        case 'reward_unique_redemtion_code':
+                            $groupFile['reward_unique_redemtion_code'][] = $pre->file_path;
+                            break;
+
+                        // case 'reward_post_integration':
+                        //     $groupFile['reward_post_integration'][] = $pre->file_path;
+                        //     break;
+                    }
+                }
+            });
+
+            // join file
+            $exportFiles = array();
+            foreach ($processType as $pt) {
+                $newJoinFile = 'file_join_' . $pt . '_' . $exportId '.csv';
+                $afterJoin = $this->joinFiles($groupFile[$pt], $newJoinFile);
+                $fileName = '';
+                switch ($pt) {
+                    case 'reward_information':
+                        $fileName = 'Gotomalls_' . $name . '_Reward.csv';
+                        break;
+
+                    case 'reward_message':
+                        $fileName = 'Gotomalls_' . $name . '_Reward_Msg.csv';
+                        break;
+
+                    case 'reward_poi_message':
+                        $fileName = 'Gotomalls_' . $name . '_Reward_POI_Msg.csv';
+                        break;
+
+                    case 'reward_poi':
+                        $fileName = 'Gotomalls_' . $name . '_Reward_POI.csv';
+                        break;
+
+                    case 'reward_unique_redemtion_code':
+                        $fileName = 'Gotomalls_' . $name . '_Reward_Post_Integration.csv';
+                        break;
+
+                    // case 'reward_post_integration':
+                    //     $fileName = 'Gotomalls_' . $name . '_Reward_Redemtion_Code.csv';
+                    //     break;
+                }
+
+                $exportFiles[] = array('file_path' => $dir . $newJoinFile, 'name' => $fileName);
+            }
+
+            $exportDataView['subject']       = Config::get('orbit.export.email.reward.post_export_subject');
+            $exportDataView['coupons']       = Coupon::whereIn('promotion_id', $exportData)->lists('promotion_name');
+            $exportDataView['attachment']    = $exportFiles;
+            $exportDataView['skippedCoupon'] = array();
+            if (! empty($skippedCoupon)) {
+                $exportDataView['skippedCoupon'] = Coupon::whereIn('promotion_id', $skippedCoupon)->lists('promotion_name');
+            }
+
+            $postExportMailViews = array(
+                                'html' => 'emails.file-export.post-reward-export-html',
+                                'text' => 'emails.file-export.post-reward-export-text'
+            );
+
+            $this->sendMail($postExportMailViews, $exportDataView);
+
+            // Safely delete the object
+            $job->delete();
+
+            $message = sprintf('[Job ID: `%s`] Export reward file csv; Status: OK; Export ID: %s;',
+                                $job->getJobId(),
+                                $exportId);
+
+            $this->debug($message . "\n");
+            \Log::info($message);
+
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
 
         } catch (InvalidArgsException $e) {
             \Log::error('*** Reward export error, messge: ' . $e->getMessage() . '***');
@@ -169,6 +314,37 @@ class RewardExportQueue
         return DB::connection()->getPdo()->quote($arg);
     }
 
+    /**
+     * Common routine for sending email.
+     *
+     * @param array $data
+     * @return void
+     */
+    protected function sendMail($mailviews, $data)
+    {
+
+        Mail::send($mailviews, $data, function($message) use ($data)
+        {
+            $emailConf = Config::get('orbit.generic_email.sender');
+            $from = $emailConf['email'];
+            $name = $emailConf['name'];
+
+            $email = Config::get('orbit.export.email.reward.to');
+
+            $subject = $data['subject'];
+
+            $message->from($from, $name);
+            $message->subject($subject);
+            $message->to($email);
+
+            if (! empty($data['attachment'])) {
+                foreach ($data['attachment'] as $file) {
+                    $message->attach($file['file_path'], array('as' => $file['name']));
+                }
+            }
+        });
+    }
+
     protected function debug($message = '')
     {
         if ($this->debug) {
@@ -179,5 +355,48 @@ class RewardExportQueue
     public function setDebug($value)
     {
         $this->debug = $value;
+    }
+
+    protected function failedJob($job, $exportId, $message) {
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        $message = sprintf('[Job ID: `%s`] Export reward file csv; Status: FAIL; Export ID: %s;',
+                            $job->getJobId(),
+                            $exportId);
+        \Log::error($message);
+    }
+
+    protected function joinFiles(array $files, $result) {
+        if (!is_array($files)) {
+            throw new Exception('`$files` must be an array');
+        }
+
+        $dir = Config::get('orbit.export.output_dir', '');
+        if (! file_exists($dir)) {
+            mkdir($dir, 0777, true);
+        }
+
+        $newFile = fopen($dir . $result, "w+");
+
+        foreach($files as $file) {
+            $oldFile = fopen($dir . $file, "r");
+
+            while (!feof($oldFile)) {
+                fwrite($newFile, fgets($oldFile));
+            }
+
+            fclose($oldFile);
+            unset($oldFile);
+            fwrite($newFile, "\n"); //usually last line doesn't have a newline
+        }
+
+        fclose($newFile);
+        unset($newFile);
+
+        return $result;
     }
 }

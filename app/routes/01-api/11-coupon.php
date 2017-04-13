@@ -273,3 +273,14 @@ Route::get('/api/v1/pub/coupon/suggestion/list', function()
 });
 
 Route::get('/app/v1/pub/coupon/suggestion/list', ['as' => 'pub-coupon-suggestion-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponAlsoLikeList_getCouponList']);
+
+/**
+ * Coupon Export
+ */
+Route::post('/api/v1/coupon/coupon-export', function()
+{
+
+    return Orbit\Controller\API\v1\CouponExportAPIController::create()->postCouponExport();
+});
+
+Route::post('/app/v1/coupon/coupon-export', ['as' => 'coupon-export', 'uses' => 'IntermediateAuthController@CouponExport_postCouponExport']);
