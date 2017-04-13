@@ -39,7 +39,7 @@ class RewardMessagingReportPrinterController
         try {
             $couponIds = OrbitInput::post('coupon_ids');
             $exportId = OrbitInput::post('export_id');
-            $exportType = 'reward_messaging';
+            $exportType = 'reward_message';
             $chunk = Config::get('orbit.export.chunk', 50);
             $dir = Config::get('orbit.export.output_dir', '');
 
@@ -90,33 +90,27 @@ class RewardMessagingReportPrinterController
 
                     $url = Config::get('app.url') . $hashbang . 'coupons/' . $dtExport->sku . '/' . Str::slug($dtExport->promotion_name);
                     $content = array(
-                                    array(
-                                        $dtExport->sku,
-                                        $dtExport->locale,
-                                        $dtExport->short_description,
-                                        '',
-                                        '',
-                                        $url,
-                                        $dtExport->promotion_name,
-                                        '',
-                                        '',
-                                        $dtExport->description,
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        ''
-                                    ),
-                            );
+                                    $dtExport->sku,
+                                    $dtExport->locale,
+                                    $dtExport->short_description,
+                                    '',
+                                    '',
+                                    $url,
+                                    $dtExport->promotion_name,
+                                    '',
+                                    '',
+                                    $dtExport->description,
+                                    '',
+                                    '',
+                                    '',
+                                    '',
+                                    '',
+                                    '',
+                                    ''
+                                );
 
                     $csv_handler = fopen($dir . $filePath, 'w');
-
-                    foreach ($content as $fields) {
-                        fputcsv($csv_handler, $fields);
-                    }
-
+                    fputcsv($csv_handler, $fields);
                     fclose($csv_handler);
 
                     DB::beginTransaction();
