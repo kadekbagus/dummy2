@@ -74,8 +74,8 @@ class MerchantListAPIController extends ControllerAPI
 
             $merchants = BaseMerchant::select(
                                         'base_merchants.base_merchant_id',
-                                        'country_id',
-                                        'name',
+                                        'base_merchants.country_id',
+                                        'base_merchants.name',
                                         DB::raw("(CASE
                                             WHEN COUNT({$prefix}pre_exports.object_id) > 0 THEN 'in_progress'
                                             ELSE
