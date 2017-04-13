@@ -7,9 +7,11 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
 use Response;
 use Coupon;
+use PreExport;
+use PostExport;
+use Export;
 
-
-class RewardUniqueRedemtionCodeReportPrinterController extends DataPrinterController
+class RewardUniqueRedemptionCodeReportPrinterController extends DataPrinterController
 {
     /*
         Field :
@@ -17,7 +19,20 @@ class RewardUniqueRedemtionCodeReportPrinterController extends DataPrinterContro
         SKU
         Code
     */
-    public function postPrintRewardUniqueRedemtionCode()
+
+    /**
+     * Static method to instantiate the object.
+     *
+     * @param string $contentType
+     * @return ControllerAPI
+     */
+    public static function create()
+    {
+        return new static;
+    }
+
+
+    public function postPrintRewardUniqueRedemptionCode()
     {
         try {
             $couponIds = OrbitInput::post('coupon_ids');
@@ -25,22 +40,14 @@ class RewardUniqueRedemtionCodeReportPrinterController extends DataPrinterContro
             $exportType = 'reward_unique_redemtion_code';
             $chunk = Config::get('orbit.export.chunk', 50);
 
-            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
-            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
-            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
-
             $prefix = DB::getTablePrefix();
-
-            $image = "CONCAT('{$urlPrefix}', path)";
-            if ($usingCdn) {
-                $image = "CASE WHEN cdn_url IS NULL THEN CONCAT('{$urlPrefix}', path) ELSE cdn_url END";
-            }
 
             $export = Coupon::select(
                     'promotions.promotion_id as sku',
+                    'issued_coupons.issued_coupon_code as code'
                 )
-                ->whereIn('promotions.promotion_id', $couponIds)
-                ;
+                ->join('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                ->whereIn('promotions.promotion_id', $couponIds);
 
             $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType) {
                 foreach ($_export as $dtExport) {
@@ -54,6 +61,7 @@ class RewardUniqueRedemtionCodeReportPrinterController extends DataPrinterContro
                     $content = array(
                                     array(
                                         $dtExport->sku,
+                                        $dtExport->code
                                     ),
                             );
 
