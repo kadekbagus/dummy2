@@ -33,7 +33,7 @@ class RewardPostIntegrationReportPrinterController
         try {
             $couponIds = OrbitInput::post('coupon_ids');
             $exportId = OrbitInput::post('export_id');
-            $exportType = 'reward_unique_redemption_code';
+            $exportType = 'reward_post_integration';
             $chunk = Config::get('orbit.export.chunk', 50);
 
             $prefix = DB::getTablePrefix();
