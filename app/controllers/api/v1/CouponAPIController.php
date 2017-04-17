@@ -137,7 +137,6 @@ class CouponAPIController extends ControllerAPI
             $is_all_retailer = OrbitInput::post('is_all_retailer');
             $is_all_employee = OrbitInput::post('is_all_employee');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
-            $maximum_issued_coupon = (int) OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $coupon_notification = OrbitInput::post('coupon_notification');
@@ -226,7 +225,6 @@ class CouponAPIController extends ControllerAPI
                 'coupon_codes'            => $couponCodes,
                 'is_visible'              => $isVisible,
                 'is_3rd_party_promotion'  => $is3rdPartyPromotion,
-                'maximum_issued_coupon'   => $maximum_issued_coupon,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -250,7 +248,6 @@ class CouponAPIController extends ControllerAPI
                 'coupon_codes'            => 'required',
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
-                'maximum_issued_coupon'   => 'numeric',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -287,7 +284,6 @@ class CouponAPIController extends ControllerAPI
                     // 'redemption_method' => $redemptionMethod,
                     'short_description' => $shortDescription,
                     '3rd_party_name' => $thirdPartyName,
-                    'maximum_issued_coupon' => $maximum_issued_coupon,
                 ];
                 $thirdPartyValidatorValidation = [
                     'coupon_validity_in_date' => 'required',
@@ -300,7 +296,6 @@ class CouponAPIController extends ControllerAPI
                     // 'redemption_method' => 'required|in:online,4-digit PIN,Barcode: code 128,Barcode: ean-128,Barcode: ean-13,Barcode: upc-a,Barcode: gs1-databar,QRCode,Plain Text',
                     'short_description' => 'required',
                     '3rd_party_name' => 'required',
-                    'maximum_issued_coupon' => 'required',
                 ];
 
                 $thirdValidator = Validator::make(
@@ -422,6 +417,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             $arrayCouponCode = [];
+
             // validate coupon codes
             if (! empty($couponCodes)) {
                 $dupes = array();
@@ -445,17 +441,6 @@ class CouponAPIController extends ControllerAPI
             if ($is3rdPartyPromotion === 'Y') {
                 if ($thirdValidator->fails()) {
                     $errorMessage = $thirdValidator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                if (empty($maximum_issued_coupon)) {
-                    $errorMessage = 'The maximum issued coupon is required';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                // check maximum_issued_coupon and coupon code count
-                if ($maximum_issued_coupon !== count($arrayCouponCode)) {
-                    $errorMessage = sprintf('Maximum issued coupons does not match with the total coupon codes (%s).', count($arrayCouponCode));
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -612,7 +597,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->is_all_retailer = $is_all_retailer;
             $newcoupon->is_all_employee = $is_all_employee;
             $newcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
-            $newcoupon->maximum_issued_coupon = $maximum_issued_coupon;
+            $newcoupon->maximum_issued_coupon = count($arrayCouponCode);
             $newcoupon->coupon_validity_in_days = $coupon_validity_in_days;
             $newcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             $newcoupon->coupon_notification = $coupon_notification;
@@ -1258,7 +1243,6 @@ class CouponAPIController extends ControllerAPI
             $is_all_retailer = OrbitInput::post('is_all_retailer');
             $is_all_employee = OrbitInput::post('is_all_employee');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
-            $maximum_issued_coupon = (int) OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $discount_value = OrbitInput::post('discount_value');
@@ -1310,7 +1294,6 @@ class CouponAPIController extends ControllerAPI
                 'is_all_retailer'         => $is_all_retailer,
                 'is_all_employee'         => $is_all_employee,
                 'id_language_default'     => $id_language_default,
-                'maximum_issued_coupon'   => $maximum_issued_coupon,
                 'rule_begin_date'         => $rule_begin_date,
                 'rule_end_date'           => $rule_end_date,
                 'is_all_gender'           => $is_all_gender,
@@ -1320,7 +1303,14 @@ class CouponAPIController extends ControllerAPI
                 'is_3rd_party_promotion'  => $is_3rd_party_promotion,
             );
 
-            $validator_value = [
+            // Validate promotion_name only if exists in POST.
+            OrbitInput::post('promotion_name', function($promotion_name) use (&$data) {
+                $data['promotion_name'] = $promotion_name;
+            });
+
+            $validator = Validator::make(
+                $data,
+                array(
                     'promotion_id'            => 'required|orbit.update.coupon',
                     'promotion_name'          => 'sometimes|required|max:255',
                     'promotion_type'          => 'orbit.empty.coupon_type',
@@ -1334,7 +1324,6 @@ class CouponAPIController extends ControllerAPI
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
                     'is_all_employee'         => 'orbit.empty.status_link_to',
                     'id_language_default'     => 'required|orbit.empty.language_default',
-                    'maximum_issued_coupon'   => 'numeric|orbit.max.total_issued_coupons:' . $promotion_id,
                     'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
                     'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                     'is_all_gender'           => 'required|orbit.empty.is_all_gender',
@@ -1342,20 +1331,7 @@ class CouponAPIController extends ControllerAPI
                     'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
                     'is_visible'              => 'in:Y,N',
                     'is_3rd_party_promotion'  => 'in:Y,N',
-            ];
-
-            if ($is_3rd_party_promotion === 'Y') {
-                $validator_value['maximum_issued_coupon'] = 'numeric';
-            }
-
-            // Validate promotion_name only if exists in POST.
-            OrbitInput::post('promotion_name', function($promotion_name) use (&$data) {
-                $data['promotion_name'] = $promotion_name;
-            });
-
-            $validator = Validator::make(
-                $data,
-                $validator_value,
+                ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
                     'rule_value.numeric'        => 'The amount to obtain must be a number',
@@ -1379,26 +1355,6 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $array_coupon_codes = [];
-            // validate coupon codes
-            if (! empty($coupon_codes)) {
-                $dupes = array();
-                // trim and explode coupon codes to array
-                $array_coupon_codes = array_map('trim', explode("\n", $coupon_codes));
-                // delete empty array and reorder it
-                $array_coupon_codes = array_values(array_filter($array_coupon_codes));
-                // find the dupes
-                foreach(array_count_values($array_coupon_codes) as $val => $frequency) {
-                    if ($frequency > 1) $dupes[] = $val;
-                }
-
-                if (! empty($dupes)) {
-                    $stringDupes = implode(',', $dupes);
-                    $errorMessage = 'The coupon codes you supplied have duplicates: %s';
-                    OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $stringDupes));
-                }
-            }
-
             // 3rd party coupon validation
             if ($is_3rd_party_promotion === 'Y') {
                 $third_party_validator_value = [
@@ -1412,7 +1368,6 @@ class CouponAPIController extends ControllerAPI
                     // 'redemption_method' => $redemption_method,
                     'short_description' => $short_description,
                     '3rd_party_name' => $third_party_name,
-                    'maximum_issued_coupon' => $maximum_issued_coupon
                 ];
                 $third_party_validator_check = [
                     'coupon_validity_in_date' => 'required',
@@ -1425,7 +1380,6 @@ class CouponAPIController extends ControllerAPI
                     // 'redemption_method' => 'required|in:online,4-digit PIN,Barcode: code 128,Barcode: ean-128,Barcode: ean-13,Barcode: upc-a,Barcode: gs1-databar,QRCode,Plain Text',
                     'short_description' => 'required',
                     '3rd_party_name' => 'required',
-                    'maximum_issued_coupon' => 'required',
                 ];
 
                 $third_party_validator = Validator::make(
@@ -1436,17 +1390,6 @@ class CouponAPIController extends ControllerAPI
 
                 if ($third_party_validator->fails()) {
                     $errorMessage = $third_party_validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                if (empty($maximum_issued_coupon)) {
-                    $errorMessage = 'The maximum issued coupon is required';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                // check maximum_issued_coupon and coupon code count
-                if ($maximum_issued_coupon !== count($array_coupon_codes)) {
-                    $errorMessage = sprintf('Maximum issued coupons does not match with the total coupon codes (%s).', count($array_coupon_codes));
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -1823,10 +1766,6 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
                 $updatedcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
-            });
-
-            OrbitInput::post('maximum_issued_coupon', function($maximum_issued_coupon) use ($updatedcoupon) {
-                $updatedcoupon->maximum_issued_coupon = $maximum_issued_coupon;
             });
 
             OrbitInput::post('coupon_validity_in_days', function($coupon_validity_in_days) use ($updatedcoupon) {
@@ -2919,9 +2858,9 @@ class CouponAPIController extends ControllerAPI
                         WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
                             ) as coupon_codes"),
                     DB::raw("CASE
-                                WHEN is_3rd_party_field_complete = 'Y' AND {$table_prefix}pre_exports.object_id IS NOT NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'in_progress'
-                                WHEN is_3rd_party_field_complete = 'Y' AND {$table_prefix}pre_exports.object_id IS NULL THEN 'available'
-                                WHEN is_3rd_party_field_complete = 'N' THEN 'not_available'
+                                WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NOT NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'in_progress'
+                                WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NULL THEN 'available'
+                                WHEN is_3rd_party_promotion = 'N' THEN 'not_available'
                             END AS export_status
                         ")
                 )
