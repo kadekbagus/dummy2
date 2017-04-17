@@ -1,4 +1,4 @@
-<?php namespace Orbit\Queue\ElasticSearch;
+<?php namespace Orbit\Queue\Elasticsearch;
 /**
  * Delete Elasticsearch index when promotion has been deleted.
  *
