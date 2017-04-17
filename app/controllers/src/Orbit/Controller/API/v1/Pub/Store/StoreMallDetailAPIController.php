@@ -67,6 +67,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
             $mallId = OrbitInput::get('mall_id', null);
+            $is_mall = OrbitInput::get('is_mall', 'n');
             $merchantId = OrbitInput::get('merchant_id');
             $location = (array) OrbitInput::get('location', []);
             $cities = (array) OrbitInput::get('cities', []);
@@ -92,6 +93,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             // Make sure there is no missing one.
             $cacheKey = [
                 'mall_id' => $mallId,
+                'is_mall' => $is_mall,
                 'merchant_id' => $merchantId,
                 'location' => $location,
                 'cities' => $cities,
@@ -180,7 +182,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                     $mall->whereIn(DB::raw('mall.city'), $location);
                 }
             } else {
-                if (! empty($cities)) {
+                if ($is_mall !== 'y' && ! empty($cities)) {
                     // filter by cities
                     if (! in_array('0', $cities)) {
                         $mall->whereIn(DB::raw('mall.city'), $cities);
