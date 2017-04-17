@@ -443,6 +443,11 @@ class CouponAPIController extends ControllerAPI
 
             // 3rd party coupon validation
             if ($is3rdPartyPromotion === 'Y') {
+                if ($thirdValidator->fails()) {
+                    $errorMessage = $thirdValidator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
                 if (empty($maximum_issued_coupon)) {
                     $errorMessage = 'The maximum issued coupon is required';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -451,11 +456,6 @@ class CouponAPIController extends ControllerAPI
                 // check maximum_issued_coupon and coupon code count
                 if ($maximum_issued_coupon !== count($arrayCouponCode)) {
                     $errorMessage = sprintf('Maximum issued coupons does not match with the total coupon codes (%s).', count($arrayCouponCode));
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                if ($thirdValidator->fails()) {
-                    $errorMessage = $thirdValidator->messages()->first();
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -1269,6 +1269,7 @@ class CouponAPIController extends ControllerAPI
             $is_all_gender = OrbitInput::post('is_all_gender');
             $is_all_age = OrbitInput::post('is_all_age');
             $translations = OrbitInput::post('translations');
+            $coupon_codes = OrbitInput::post('coupon_codes');
 
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
@@ -1319,14 +1320,7 @@ class CouponAPIController extends ControllerAPI
                 'is_3rd_party_promotion'  => $is_3rd_party_promotion,
             );
 
-            // Validate promotion_name only if exists in POST.
-            OrbitInput::post('promotion_name', function($promotion_name) use (&$data) {
-                $data['promotion_name'] = $promotion_name;
-            });
-
-            $validator = Validator::make(
-                $data,
-                array(
+            $validator_value = [
                     'promotion_id'            => 'required|orbit.update.coupon',
                     'promotion_name'          => 'sometimes|required|max:255',
                     'promotion_type'          => 'orbit.empty.coupon_type',
@@ -1348,7 +1342,20 @@ class CouponAPIController extends ControllerAPI
                     'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
                     'is_visible'              => 'in:Y,N',
                     'is_3rd_party_promotion'  => 'in:Y,N',
-                ),
+            ];
+
+            if ($is_3rd_party_promotion === 'Y') {
+                $validator_value['maximum_issued_coupon'] = 'numeric';
+            }
+
+            // Validate promotion_name only if exists in POST.
+            OrbitInput::post('promotion_name', function($promotion_name) use (&$data) {
+                $data['promotion_name'] = $promotion_name;
+            });
+
+            $validator = Validator::make(
+                $data,
+                $validator_value,
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
                     'rule_value.numeric'        => 'The amount to obtain must be a number',
@@ -1370,6 +1377,26 @@ class CouponAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $array_coupon_codes = [];
+            // validate coupon codes
+            if (! empty($coupon_codes)) {
+                $dupes = array();
+                // trim and explode coupon codes to array
+                $array_coupon_codes = array_map('trim', explode("\n", $coupon_codes));
+                // delete empty array and reorder it
+                $array_coupon_codes = array_values(array_filter($array_coupon_codes));
+                // find the dupes
+                foreach(array_count_values($array_coupon_codes) as $val => $frequency) {
+                    if ($frequency > 1) $dupes[] = $val;
+                }
+
+                if (! empty($dupes)) {
+                    $stringDupes = implode(',', $dupes);
+                    $errorMessage = 'The coupon codes you supplied have duplicates: %s';
+                    OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $stringDupes));
+                }
             }
 
             // 3rd party coupon validation
@@ -1414,6 +1441,12 @@ class CouponAPIController extends ControllerAPI
 
                 if (empty($maximum_issued_coupon)) {
                     $errorMessage = 'The maximum issued coupon is required';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                // check maximum_issued_coupon and coupon code count
+                if ($maximum_issued_coupon !== count($array_coupon_codes)) {
+                    $errorMessage = sprintf('Maximum issued coupons does not match with the total coupon codes (%s).', count($array_coupon_codes));
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
