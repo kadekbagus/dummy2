@@ -8,9 +8,9 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\FakeJob;
-use Orbit\Queue\ElasticSearch\ESPromotionSuggestionUpdateQueue;
+use Orbit\Queue\Elasticsearch\ESPromotionSuggestionUpdateQueue;
 
-class ElasticsearchResyncPromotionSuggestionCommand extends Command 
+class ElasticsearchResyncPromotionSuggestionCommand extends Command
 {
     /**
      * The console command name.

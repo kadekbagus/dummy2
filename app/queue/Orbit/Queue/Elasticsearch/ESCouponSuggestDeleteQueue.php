@@ -1,4 +1,4 @@
-<?php namespace Orbit\Queue\ElasticSearch;
+<?php namespace Orbit\Queue\Elasticsearch;
 /**
  * Delete Coupon Suggest Elasticsearch Per ID
  *
