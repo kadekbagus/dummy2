@@ -3506,7 +3506,19 @@ class UploadAPIController extends ControllerAPI
             // Load the orbit configuration for event upload
             $uploadCouponConfig = Config::get('orbit.upload.coupon.third_party_header');
 
-            $message = new UploaderMessage([]);
+            $message = new UploaderMessage(array(
+                'errors' => array(
+                    'unknown_error'         => 'Unknown upload error.',
+                    'no_file_uploaded'      => 'No file being uploaded.',
+                    'path_not_found'        => 'Unable to find the upload directory.',
+                    'no_write_access'       => 'Unable to write to the upload directory.',
+                    'file_too_big'          => 'Header image size is too big, maximum size allowed is :size :unit.',
+                    'file_type_not_allowed' => 'File extension ":extension" is not allowed.',
+                    'mime_type_not_allowed' => 'File with mime type of ":mime" is not allowed.',
+                    'dimension_not_allowed' => 'Maximum dimension allowed is :maxdimension, your image dimension is :yoursdimension',
+                    'unable_to_upload'      => 'Unable to move the uploaded file.'
+                ),
+            ));
             $config = new UploaderConfig($uploadCouponConfig);
             $config->setConfig('before_saving', $renameFile);
 
@@ -3743,7 +3755,19 @@ class UploadAPIController extends ControllerAPI
             // Load the orbit configuration for event upload
             $uploadCouponConfig = Config::get('orbit.upload.coupon.third_party_image');
 
-            $message = new UploaderMessage([]);
+            $message = new UploaderMessage(array(
+                'errors' => array(
+                    'unknown_error'         => 'Unknown upload error.',
+                    'no_file_uploaded'      => 'No file being uploaded.',
+                    'path_not_found'        => 'Unable to find the upload directory.',
+                    'no_write_access'       => 'Unable to write to the upload directory.',
+                    'file_too_big'          => 'Image 1 size is too big, maximum size allowed is :size :unit.',
+                    'file_type_not_allowed' => 'File extension ":extension" is not allowed.',
+                    'mime_type_not_allowed' => 'File with mime type of ":mime" is not allowed.',
+                    'dimension_not_allowed' => 'Maximum dimension allowed is :maxdimension, your image dimension is :yoursdimension',
+                    'unable_to_upload'      => 'Unable to move the uploaded file.'
+                ),
+            ));
             $config = new UploaderConfig($uploadCouponConfig);
             $config->setConfig('before_saving', $renameFile);
 
