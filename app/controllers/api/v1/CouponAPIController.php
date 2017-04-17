@@ -286,7 +286,8 @@ class CouponAPIController extends ControllerAPI
                     'redemption_verification_code' => $redemptionVerificationCode,
                     // 'redemption_method' => $redemptionMethod,
                     'short_description' => $shortDescription,
-                    '3rd_party_name' => $thirdPartyName
+                    '3rd_party_name' => $thirdPartyName,
+                    'maximum_issued_coupon' => $maximum_issued_coupon,
                 ];
                 $thirdPartyValidatorValidation = [
                     'coupon_validity_in_date' => 'required',
@@ -299,6 +300,7 @@ class CouponAPIController extends ControllerAPI
                     // 'redemption_method' => 'required|in:online,4-digit PIN,Barcode: code 128,Barcode: ean-128,Barcode: ean-13,Barcode: upc-a,Barcode: gs1-databar,QRCode,Plain Text',
                     'short_description' => 'required',
                     '3rd_party_name' => 'required',
+                    'maximum_issued_coupon' => 'required',
                 ];
 
                 $thirdValidator = Validator::make(
@@ -448,6 +450,11 @@ class CouponAPIController extends ControllerAPI
             if ($is3rdPartyPromotion === 'Y') {
                 if ($thirdValidator->fails()) {
                     $errorMessage = $thirdValidator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                if (empty($maximum_issued_coupon)) {
+                    $errorMessage = 'The maximum issued coupon is required';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
@@ -1401,6 +1408,11 @@ class CouponAPIController extends ControllerAPI
 
                 if ($third_party_validator->fails()) {
                     $errorMessage = $third_party_validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                if (empty($maximum_issued_coupon)) {
+                    $errorMessage = 'The maximum issued coupon is required';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
