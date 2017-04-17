@@ -1253,6 +1253,7 @@ class CouponAPIController extends ControllerAPI
             $is_all_gender = OrbitInput::post('is_all_gender');
             $is_all_age = OrbitInput::post('is_all_age');
             $translations = OrbitInput::post('translations');
+            $coupon_codes = OrbitInput::post('coupon_codes');
 
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;

@@ -143,7 +143,7 @@ class RewardPOIReportPrinterController
                                         $coupon->sku,
                                         $coupon->poi_name,
                                         $coupon->address,
-                                        $coupon->unit . ' / ' . $coupon->floor,
+                                        $coupon->floor . ' / ' . $coupon->unit,
                                         $coupon->city,
                                         $coupon->province,
                                         $coupon->country,
@@ -152,7 +152,7 @@ class RewardPOIReportPrinterController
                                         $coupon->longitude,
                                         $coupon->phone,
                                         '',
-                                        'true',
+                                        'false',
                                         '',
                                         '',
                                         '',
@@ -182,9 +182,12 @@ class RewardPOIReportPrinterController
                                             ->where('object_type', 'coupon')
                                             ->where('object_id', $dtExport->promotion_id);
 
-                        $preExport = clone $checkPre;
-                        $preExport = $preExport->where('export_process_type', $exportType)->first();
-                        $postExport = $preExport->moveToPostExport();
+                        $_preExport = clone $checkPre;
+                        $preExport = $_preExport->where('export_process_type', $exportType)->first();
+
+                        if (is_object($preExport)) {
+                            $postExport = $preExport->moveToPostExport();
+                        }
 
                         $checkPre = $checkPre->count();
 

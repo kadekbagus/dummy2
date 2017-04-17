@@ -110,9 +110,12 @@ class RewardMessagingReportPrinterController
                                         ->where('object_type', 'coupon')
                                         ->where('object_id', $dtExport->sku);
 
-                    $preExport = clone $checkPre;
-                    $preExport = $preExport->where('export_process_type', $exportType)->first();
-                    $postExport = $preExport->moveToPostExport();
+                    $_preExport = clone $checkPre;
+                    $preExport = $_preExport->where('export_process_type', $exportType)->first();
+
+                    if (is_object($preExport)) {
+                        $postExport = $preExport->moveToPostExport();
+                    }
 
                     $checkPre = $checkPre->count();
 
