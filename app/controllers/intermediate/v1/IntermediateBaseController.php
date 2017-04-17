@@ -207,7 +207,7 @@ class IntermediateBaseController extends Controller
 
         if ($theClass === 'IntermediateAuthController') {
             if ($userId = $this->authCheck()) {
-                $user = User::find($userId);
+                $user = User::onWriteConnection()->find($userId);
 
                 // This will query the database if the apikey has not been set up yet
                 $apikey = $user->apikey;
@@ -226,7 +226,7 @@ class IntermediateBaseController extends Controller
         } elseif ($theClass === 'IntermediateCIAuthController') {
             $namespace = 'Orbit\Controller\API\v1\Customer\\';
             if ($userId = $this->authCheckFromAngularCI()) {
-                $user = User::find($userId);
+                $user = User::onWriteConnection()->find($userId);
                 // This will query the database if the apikey has not been set up yet
                 $apikey = $user->apikey;
 
@@ -243,7 +243,7 @@ class IntermediateBaseController extends Controller
         } elseif ($theClass === 'IntermediatePubAuthController') {
             $namespace = 'Orbit\Controller\API\v1\Pub\\';
             if ($userId = $this->authCheckPub()) {
-                $user = User::find($userId);
+                $user = User::onWriteConnection()->find($userId);
                 // This will query the database if the apikey has not been set up yet
                 $apikey = $user->apikey;
 
@@ -260,7 +260,7 @@ class IntermediateBaseController extends Controller
         } elseif ($theClass === 'IntermediateMerchantAuthController') {
             $namespace = 'Orbit\Controller\API\v1\Merchant\\';
             if ($userId = $this->authCheck()) {
-                $user = User::find($userId);
+                $user = User::onWriteConnection()->find($userId);
 
                 // This will query the database if the apikey has not been set up yet
                 $apikey = $user->apikey;
