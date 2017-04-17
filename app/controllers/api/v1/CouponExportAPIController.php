@@ -51,10 +51,10 @@ class CouponExportAPIController extends ControllerAPI
             }
 
             // queue for data synchronization
-            // Queue::push('Orbit\\Queue\\FileExport\\RewardExportQueue', [
-            //     'export_data' => $exportData,
-            //     'user' => $user->user_id
-            // ], 'gtm_export_csv');
+            Queue::push('Orbit\\Queue\\FileExport\\RewardExportQueue', [
+                'export_data' => $exportData,
+                'user' => $user->user_id
+            ], 'gtm_export_csv');
 
         } catch (ACLForbiddenException $e) {
 
