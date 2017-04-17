@@ -189,7 +189,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             }
 
             if (! empty($mallId)) {
-                $mall->where(DB::raw("mall.merchant_id"), '=', $mallId)->first();
+                $mall->where(DB::raw("mall.merchant_id"), '=', $mallId);
             }
 
             // Order data city alphabetical
