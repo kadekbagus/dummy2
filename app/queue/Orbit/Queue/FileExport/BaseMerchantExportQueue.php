@@ -47,6 +47,10 @@ class BaseMerchantExportQueue
             $totalExport = count($exportData);
             $listAllExportData = $exportData;
 
+            $exportDataView['userEmail']   = $user->user_email;
+            $exportDataView['totalExport'] = $totalExport;
+            $exportDataView['merchants']   = BaseMerchant::whereIn('base_merchant_id', $listAllExportData)->orderBy('name', 'asc')->lists('name');
+
             // check pre export, if total row in pre_export table is more than equal in $totalExport no need to export, because we still have same data that already in exporting process
             $preExport = PreExport::leftJoin('exports', 'exports.export_id', '=', 'pre_exports.export_id')
                                     ->where('exports.export_type', 'merchant')
@@ -66,6 +70,17 @@ class BaseMerchantExportQueue
                 $message = sprintf('[Job ID: `%s`] Export Brand file csv; Status: fail; Message: All file still in progress;',
                                 $job->getJobId());
                 \Log::error($message);
+
+                $exportDataView['subject']          = Config::get('orbit.export.email.brand.post_export_subject');
+                $exportDataView['exportDate']       = date("Y-m-d H:i:s");
+                $exportDataView['exportId']         = '-';
+                $exportDataView['skippedMerchants'] = BaseMerchant::whereIn('base_merchant_id', $listAllExportData)->orderBy('name', 'asc')->lists('name');
+                $postExportMailViews = array(
+                                    'html' => 'emails.file-export.post-brand-export-html',
+                                    'text' => 'emails.file-export.post-brand-export-text'
+                );
+
+                $this->sendMail($postExportMailViews, $exportDataView);
 
                 return [
                     'status' => 'fail',
@@ -135,11 +150,8 @@ class BaseMerchantExportQueue
             $exportDate = date('d-m-y H:i:s', strtotime($newExport->created_at));
 
             $exportDataView['subject']     = Config::get('orbit.export.email.brand.pre_export_subject');
-            $exportDataView['userEmail']   = $user->user_email;
             $exportDataView['exportDate']  = $exportDate;
             $exportDataView['exportId']    = $exportId;
-            $exportDataView['totalExport'] = $totalExport;
-            $exportDataView['merchants']   = BaseMerchant::whereIn('base_merchant_id', $listAllExportData)->orderBy('name', 'asc')->lists('name');
 
             $preExportMailViews = array(
                                 'html' => 'emails.file-export.pre-brand-export-html',

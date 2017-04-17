@@ -11,18 +11,15 @@ use PreExport;
 use PostExport;
 use Export;
 
-class RewardPostIntegrationReportPrinterController extends DataPrinterController
+class RewardPostIntegrationReportPrinterController
 {
-    /*
-        Field :
-        ---------------------
-        SKU
-        Code
-    */
-
     /**
      * Static method to instantiate the object.
      *
+     * Field :
+     * ---------------------
+     * SKU
+     * Code
      * @param string $contentType
      * @return ControllerAPI
      */
@@ -31,13 +28,12 @@ class RewardPostIntegrationReportPrinterController extends DataPrinterController
         return new static;
     }
 
-
     public function postPrintRewardPostIntegration()
     {
         try {
             $couponIds = OrbitInput::post('coupon_ids');
             $exportId = OrbitInput::post('export_id');
-            $exportType = 'reward_unique_redemtion_code';
+            $exportType = 'reward_unique_redemption_code';
             $chunk = Config::get('orbit.export.chunk', 50);
 
             $prefix = DB::getTablePrefix();
@@ -80,7 +76,7 @@ class RewardPostIntegrationReportPrinterController extends DataPrinterController
 
                     $checkPre = PreExport::where('export_id',$exportId)
                                         ->where('object_type', 'coupon')
-                                        ->where('object_id', $dtExport->base_merchant_id);
+                                        ->where('object_id', $dtExport->sku);
 
                     $preExport = clone $checkPre;
                     $preExport = $preExport->where('export_process_type', $exportType)->first();

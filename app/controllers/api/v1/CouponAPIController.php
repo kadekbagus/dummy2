@@ -1376,7 +1376,8 @@ class CouponAPIController extends ControllerAPI
                     'redemption_verification_code' => $redemption_verification_code,
                     // 'redemption_method' => $redemption_method,
                     'short_description' => $short_description,
-                    '3rd_party_name' => $third_party_name
+                    '3rd_party_name' => $third_party_name,
+                    'maximum_issued_coupon' => $maximum_issued_coupon
                 ];
                 $third_party_validator_check = [
                     'coupon_validity_in_date' => 'required',
@@ -1389,6 +1390,7 @@ class CouponAPIController extends ControllerAPI
                     // 'redemption_method' => 'required|in:online,4-digit PIN,Barcode: code 128,Barcode: ean-128,Barcode: ean-13,Barcode: upc-a,Barcode: gs1-databar,QRCode,Plain Text',
                     'short_description' => 'required',
                     '3rd_party_name' => 'required',
+                    'maximum_issued_coupon' => 'required',
                 ];
 
                 $third_party_validator = Validator::make(
@@ -1528,11 +1530,11 @@ class CouponAPIController extends ControllerAPI
                         $errorReason->reasons = 'Tenant not found';
                         $error_tenants[] = $errorReason;
                     }
-                }
 
-                if (! empty($error_tenants)) {
-                    $errorMessage = 'Link to Tenant error';
-                    throw new OrbitCustomException($errorMessage, Coupon::THIRD_PARTY_COUPON_TENANT_VALIDATION_ERROR, $error_tenants);
+                    if (! empty($error_tenants)) {
+                        $errorMessage = 'Link to Tenant error';
+                        throw new OrbitCustomException($errorMessage, Coupon::THIRD_PARTY_COUPON_TENANT_VALIDATION_ERROR, $errorReason);
+                    }
                 }
             }
 
@@ -4017,10 +4019,8 @@ class CouponAPIController extends ControllerAPI
             $total_issued_coupons = IssuedCoupon::where('promotion_id', '=', $promotion_id)
                                                 ->count();
 
-            if ($value === '' || $value = 0) {
-                if ($value < $total_issued_coupons) {
-                    return FALSE;
-                }
+            if (! empty($value) && $value < $total_issued_coupons) {
+                return FALSE;
             }
 
             App::instance('orbit.max.total_issued_coupons', $total_issued_coupons);

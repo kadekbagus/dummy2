@@ -203,7 +203,7 @@ class LocationDetectionAPIController extends PubControllerAPI
                     ->first();
                 break;
         }
-dd($ipData);
+
         if (is_object($ipData)) {
             // Cache result of all possible calls to backend storage
             $cacheConfig = Config::get('orbit.cache.context');
