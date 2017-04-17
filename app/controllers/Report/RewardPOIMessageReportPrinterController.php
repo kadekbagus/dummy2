@@ -59,10 +59,23 @@ class RewardPOIMessageReportPrinterController
                         mkdir($dir, 0777);
                     }
 
-                    $couponData = Coupon::select('campaign_account.mobile_default_language as locale', 'merchants.name as poi_name')
+                    $couponData = Coupon::select(
+                                            DB::raw("
+                                                (
+                                                    select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name)) separator ', ')
+                                                    from {$prefix}merchants
+                                                    inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                                    where {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
+                                                ) as poi_name
+                                            "),
+                                            'campaign_account.mobile_default_language'
+                                        )
                                         ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                        ->leftJoin('merchants as omp', function ($q) {
+                                            $q->on(DB::raw('omp.merchant_id'), '=', 'merchants.parent_id');
+                                        })
                                         ->where('promotions.promotion_id', $dtExport->promotion_id)
                                         ->get();
 
@@ -70,7 +83,7 @@ class RewardPOIMessageReportPrinterController
                     foreach ($couponData as $coupon) {
                         $content[] = array(
                                         $coupon->poi_name,
-                                        $coupon->locale,
+                                        $coupon->mobile_default_language,
                                         '',
                                         '',
                                         '',
