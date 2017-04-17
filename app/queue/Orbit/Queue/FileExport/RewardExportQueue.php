@@ -79,7 +79,7 @@ class RewardExportQueue
                 $exportDataView['subject']     = Config::get('orbit.export.email.reward.pre_export_subject');
                 $exportDataView['exportDate']  = date("Y-m-d H:i:s");
                 $exportDataView['exportId']    = '-';
-                $exportDataView['skippedCoupons'] = Coupon::whereIn('promotion_id', $skippedCoupons)->lists('promotion_name');
+                $exportDataView['skippedCoupons'] = Coupon::whereIn('promotion_id', $listAllExportData)->lists('promotion_name');
                 $postExportMailViews = array(
                                     'html' => 'emails.file-export.post-reward-export-html',
                                     'text' => 'emails.file-export.post-reward-export-text'
