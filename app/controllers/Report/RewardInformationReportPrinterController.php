@@ -84,14 +84,14 @@ class RewardInformationReportPrinterController
                     DB::raw("
                             (SELECT {$image}
                             FROM {$prefix}media m
-                            WHERE m.media_name_long = 'coupon_header_grab_translation_image_orig'
+                            WHERE m.media_name_long = 'coupon_header_grab_translation_orig'
                             AND m.object_id = default_translation.coupon_translation_id) AS header_original_media_path
                     "),
                     // Image 1 URL
                     DB::raw("
                             (SELECT {$image}
                             FROM {$prefix}media m
-                            WHERE m.media_name_long = 'coupon_image_grab_translation_image_orig'
+                            WHERE m.media_name_long = 'coupon_image_grab_translation_orig'
                             AND m.object_id = default_translation.coupon_translation_id) AS image_original_media_path
                     "),
                     DB::raw("
@@ -172,7 +172,7 @@ class RewardInformationReportPrinterController
                                         $dtExport->user_email,
                                         $dtExport->phone,
                                         $dtExport->category,
-                                        $dtExport->keyword,
+                                        $dtExport->keywords,
                                         $dtExport->total_inventory,
                                         '',
                                         $dtExport->reward_value,
