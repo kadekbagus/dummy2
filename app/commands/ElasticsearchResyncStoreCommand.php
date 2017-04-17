@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\FakeJob;
-use Orbit\Queue\ElasticSearch\ESStoreUpdateQueue;
+use Orbit\Queue\Elasticsearch\ESStoreUpdateQueue;
 
 class ElasticsearchResyncStoreCommand extends Command {
 
