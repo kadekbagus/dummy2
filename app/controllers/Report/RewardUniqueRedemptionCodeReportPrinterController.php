@@ -49,7 +49,7 @@ class RewardUniqueRedemptionCodeReportPrinterController
                             ->whereIn('promotions.promotion_id', $couponIds)
                             ->groupBy('promotions.promotion_id');
 
-            $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType, $chunk, $take, $skip) {
+            $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType, $chunk) {
                 foreach ($_export as $dtExport) {
                     $dir = Config::get('orbit.export.output_dir', '');
                     $filePath = $dtExport->file_path;
