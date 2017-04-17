@@ -1885,6 +1885,8 @@ class CouponAPIController extends ControllerAPI
 
                 if (! empty($original_price)) {
                     $updatedcoupon->original_price = $original_price;
+                } else {
+                    $updatedcoupon->original_price = null;
                 }
 
                 if (! empty($redemption_verification_code)) {
