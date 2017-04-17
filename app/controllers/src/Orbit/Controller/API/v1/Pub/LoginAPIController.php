@@ -187,7 +187,9 @@ class LoginAPIController extends IntermediateBaseController
             setcookie('orbit_firstname', $user->user_firstname, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
             setcookie('login_from', 'Form', time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);
 
+            DB::beginTransaction();
             Event::fire('orbit.login.after.success', array($user->user_id, $rewardId, $rewardType, $language));
+            DB::commit();
 
             if ($this->appOrigin !== 'mobile_ci') {
                 if (! empty($rewardId) && ! empty($rewardType)) {
@@ -411,13 +413,17 @@ class LoginAPIController extends IntermediateBaseController
 
                     $loggedInUser = $this->doAutoLogin($response->user_email);
                     // promotional event reward event
+                    DB::beginTransaction();
                     Event::fire('orbit.registration.after.createuser', array($loggedInUser->user_id, $reward_id_from_state, $reward_type_from_state, $language_from_state));
+                    DB::commit();
                 }
 
                 SignInRecorder::setSignInActivity($loggedInUser, 'google', NULL, NULL, TRUE, $reward_id_from_state, $reward_type_from_state, $language_from_state);
 
                 // promotional event reward event
+                DB::beginTransaction();
                 Event::fire('orbit.login.after.success', array($loggedInUser->user_id, $reward_id_from_state, $reward_type_from_state, $language_from_state));
+                DB::commit();
 
                 $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
@@ -681,11 +687,15 @@ class LoginAPIController extends IntermediateBaseController
             $loggedInUser = $this->doAutoLogin($response->user_email);
 
             // promotional event reward event
+            DB::beginTransaction();
             Event::fire('orbit.registration.after.createuser', array($loggedInUser->user_id, $rewardId, $rewardType, $language));
+            DB::commit();
         }
 
         // promotional event reward event
+        DB::beginTransaction();
         Event::fire('orbit.login.after.success', array($loggedInUser->user_id, $rewardId, $rewardType, $language));
+        DB::commit();
 
         SignInRecorder::setSignInActivity($loggedInUser, 'facebook', NULL, NULL, TRUE, $rewardId, $rewardType, $language);
 
