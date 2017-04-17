@@ -60,6 +60,10 @@ class RewardExportQueue
                                     ->groupBy('pre_exports.object_id')
                                     ->lists('pre_exports.object_id');
 
+            $exportDataView['userEmail']   = $user->user_email;
+            $exportDataView['totalExport'] = $totalExport;
+            $exportDataView['coupons']     = Coupon::whereIn('promotion_id', $listAllExportData)->lists('promotion_name');
+
             $preExportCount = count($preExport);
             if ($preExportCount >= $totalExport) {
                 // Bury the job for later inspection
@@ -71,6 +75,17 @@ class RewardExportQueue
                 $message = sprintf('[Job ID: `%s`] Export Reward file csv; Status: fail; Message: All file still in progress;',
                                 $job->getJobId());
                 \Log::error($message);
+
+                $exportDataView['subject']     = Config::get('orbit.export.email.reward.pre_export_subject');
+                $exportDataView['exportDate']  = date("Y-m-d H:i:s");
+                $exportDataView['exportId']    = '-';
+                $exportDataView['skippedCoupons'] = Coupon::whereIn('promotion_id', $skippedCoupons)->lists('promotion_name');
+                $postExportMailViews = array(
+                                    'html' => 'emails.file-export.post-reward-export-html',
+                                    'text' => 'emails.file-export.post-reward-export-text'
+                );
+
+                $this->sendMail($postExportMailViews, $exportDataView);
 
                 return [
                     'status' => 'fail',
