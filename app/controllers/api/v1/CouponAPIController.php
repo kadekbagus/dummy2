@@ -506,14 +506,6 @@ class CouponAPIController extends ControllerAPI
                             $errorReason->reasons[] = 'missing phone field';
                             $valid = FALSE;
                         }
-                        if (!isset($tenant->baseStore->baseMerchant->email) || empty($tenant->baseStore->baseMerchant->email)) {
-                            $errorReason->reasons[] = 'missing email field';
-                            $valid = FALSE;
-                        }
-                        if (empty($tenant->baseStore->baseMerchant->mediaLogoGrab) || !isset($tenant->baseStore->baseMerchant->mediaLogoGrab[0])) {
-                            $errorReason->reasons[] = 'missing 3rd party logo field';
-                            $valid = FALSE;
-                        }
                         if (empty($tenant->baseStore->mediaImageGrabOrig) || !isset($tenant->baseStore->mediaImageGrabOrig[0])) {
                             $errorReason->reasons[] = 'missing 3rd party image field';
                             $valid = FALSE;
@@ -1453,14 +1445,6 @@ class CouponAPIController extends ControllerAPI
                         $valid = TRUE;
                         if (!isset($tenant->phone) || empty($tenant->phone)) {
                             $errorReason->reasons[] = 'missing phone field';
-                            $valid = FALSE;
-                        }
-                        if (!isset($tenant->baseStore->baseMerchant->email) || empty($tenant->baseStore->baseMerchant->email)) {
-                            $errorReason->reasons[] = 'missing email field';
-                            $valid = FALSE;
-                        }
-                        if (empty($tenant->baseStore->baseMerchant->mediaLogoGrab) || !isset($tenant->baseStore->baseMerchant->mediaLogoGrab[0])) {
-                            $errorReason->reasons[] = 'missing 3rd party logo field';
                             $valid = FALSE;
                         }
                         if (empty($tenant->baseStore->mediaImageGrabOrig) || !isset($tenant->baseStore->mediaImageGrabOrig[0])) {
