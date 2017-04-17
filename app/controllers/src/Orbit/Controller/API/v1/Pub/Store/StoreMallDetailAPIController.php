@@ -193,7 +193,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             }
 
             // Order data city alphabetical
-            $mall->orderBy('city', 'asc');
+            $mall->orderBy(DB::raw('mall.city'), 'asc');
             $mall->orderBy('merchants.name', 'asc');
 
             $mall = $mall->groupBy('merchants.merchant_id');
