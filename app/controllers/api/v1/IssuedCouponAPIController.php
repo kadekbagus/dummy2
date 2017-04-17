@@ -552,7 +552,7 @@ class IssuedCouponAPIController extends ControllerAPI
                     'fields'  => $fields,
                 ),
                 array(
-                    'sort_by' => 'in:registered_date,issued_coupon_code,expired_date,issued_date,redeemed_date,status',
+                    'sort_by' => 'in:issued_coupon_id,registered_date,issued_coupon_code,expired_date,issued_date,redeemed_date,status',
                     'fields'  => 'array',
                 ),
                 array(
@@ -693,12 +693,13 @@ class IssuedCouponAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'registered_date'     => 'issued_coupons.created_at',
-                    'issued_coupon_code'  => 'issued_coupons.issued_coupon_code',
-                    'expired_date'        => 'issued_coupons.expired_date',
-                    'issued_date'         => 'issued_coupons.issued_date',
-                    'redeemed_date'       => 'issued_coupons.redeemed_date',
-                    'status'              => 'issued_coupons.status'
+                    'issued_coupon_id'   => 'issued_coupons.issued_coupon_id',
+                    'registered_date'    => 'issued_coupons.created_at',
+                    'issued_coupon_code' => 'issued_coupons.issued_coupon_code',
+                    'expired_date'       => 'issued_coupons.expired_date',
+                    'issued_date'        => 'issued_coupons.issued_date',
+                    'redeemed_date'      => 'issued_coupons.redeemed_date',
+                    'status'             => 'issued_coupons.status'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
