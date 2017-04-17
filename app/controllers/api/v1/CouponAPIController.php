@@ -421,6 +421,7 @@ class CouponAPIController extends ControllerAPI
                 Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
             }
 
+            $arrayCouponCode = [];
             // validate coupon codes
             if (! empty($couponCodes)) {
                 $dupes = array();
@@ -438,23 +439,23 @@ class CouponAPIController extends ControllerAPI
                     $errorMessage = 'The coupon codes you supplied have duplicates: %s';
                     OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $stringDupes));
                 }
-
-                // check maximum_issued_coupon and coupon code count
-                if (! empty($maximum_issued_coupon) && $maximum_issued_coupon !== count($arrayCouponCode)) {
-                    $errorMessage = sprintf('Maximum issued coupons does not match with the total coupon codes (%s).', count($arrayCouponCode));
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
             }
 
             // 3rd party coupon validation
             if ($is3rdPartyPromotion === 'Y') {
-                if ($thirdValidator->fails()) {
-                    $errorMessage = $thirdValidator->messages()->first();
+                if (empty($maximum_issued_coupon)) {
+                    $errorMessage = 'The maximum issued coupon is required';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
-                if (empty($maximum_issued_coupon)) {
-                    $errorMessage = 'The maximum issued coupon is required';
+                // check maximum_issued_coupon and coupon code count
+                if ($maximum_issued_coupon !== count($arrayCouponCode)) {
+                    $errorMessage = sprintf('Maximum issued coupons does not match with the total coupon codes (%s).', count($arrayCouponCode));
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                if ($thirdValidator->fails()) {
+                    $errorMessage = $thirdValidator->messages()->first();
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
