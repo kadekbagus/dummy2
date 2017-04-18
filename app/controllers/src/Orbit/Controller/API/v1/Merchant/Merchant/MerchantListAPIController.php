@@ -93,6 +93,7 @@ class MerchantListAPIController extends ControllerAPI
                                     ->leftJoin('media', function ($q){
                                         $q->on('media.object_id', '=', 'base_merchants.base_merchant_id')
                                           ->on('media.media_name_id', '=', DB::raw("'base_merchant_logo_grab'"));
+                                        $q->on('media.media_name_long', '=', DB::raw("'base_merchant_logo_grab_orig'"));
                                     })
                                     ->leftJoin('pre_exports', function ($q){
                                         $q->on('pre_exports.object_id', '=', 'base_merchants.base_merchant_id')
