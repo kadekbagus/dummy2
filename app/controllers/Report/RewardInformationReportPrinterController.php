@@ -56,7 +56,16 @@ class RewardInformationReportPrinterController
                         where promotion_id = {$prefix}promotions.promotion_id
                         ) as keywords
                     "),
-                    DB::raw('"category"'),
+                    DB::raw("
+                        (SELECT
+                            group_concat(DISTINCT ogc.category_name) as cat
+                            FROM {$prefix}promotion_retailer opr
+                            LEFT JOIN {$prefix}category_merchant ocm ON ocm.merchant_id = opr.retailer_id
+                            LEFT JOIN {$prefix}vendor_gtm_categories ovgc ON ovgc.gtm_category_id = ocm.category_id
+                            LEFT JOIN {$prefix}grab_categories ogc ON ogc.grab_category_id = ovgc.vendor_category_id
+                            where opr.promotion_id = {$prefix}promotions.promotion_id
+                        ) as category
+                    "),
                     'promotions.maximum_issued_coupon as total_inventory',
                     'promotions.promotion_value as reward_value',
                     'promotions.currency',

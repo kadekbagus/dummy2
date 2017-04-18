@@ -7,6 +7,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Text as OrbitText;
 use Response;
 use Coupon;
+use IssuedCoupon;
 use PreExport;
 use PostExport;
 use Export;
@@ -35,8 +36,6 @@ class RewardUniqueRedemptionCodeReportPrinterController
             $exportId = OrbitInput::post('export_id');
             $exportType = 'reward_unique_redemption_code';
             $chunk = Config::get('orbit.export.chunk', 50);
-            $take = 50;
-            $skip = 0;
 
             $prefix = DB::getTablePrefix();
 
@@ -50,7 +49,7 @@ class RewardUniqueRedemptionCodeReportPrinterController
                             ->whereIn('promotions.promotion_id', $couponIds)
                             ->groupBy('promotions.promotion_id');
 
-            $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType, $chunk, $take, $skip) {
+            $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType, $chunk) {
                 foreach ($_export as $dtExport) {
                     $dir = Config::get('orbit.export.output_dir', '');
                     $filePath = $dtExport->file_path;
@@ -61,16 +60,18 @@ class RewardUniqueRedemptionCodeReportPrinterController
 
                     $content = array();
 
+                    $take = 50;
+                    $skip = 0;
+
                     do {
-                        $couponData = Coupon::select(
-                                                'promotions.promotion_id as sku',
-                                                'issued_coupons.issued_coupon_code as code'
-                                            )
-                                            ->leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
-                                            ->where('promotions.promotion_id', $dtExport->promotion_id)
-                                            ->take($take)
-                                            ->skip($skip)
-                                            ->get();
+                        $couponData = IssuedCoupon::select(
+                                'promotion_id as sku',
+                                'issued_coupon_code as code'
+                            )
+                            ->where('promotion_id', $dtExport->promotion_id)
+                            ->take($take)
+                            ->skip($skip)
+                            ->get();
 
                         $skip = $take + $skip;
 
