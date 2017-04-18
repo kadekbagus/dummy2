@@ -69,6 +69,13 @@ return array(
 			'ttr'    => 60,
 		),
 
+		'gtm_export_csv' => array(
+			'driver' => 'beanstalkd',
+			'host'   => 'localhost',
+			'queue'  => 'gtm_export_csv',
+			'ttr'    => 60,
+		),
+
 		'sqs' => array(
 			'driver' => 'sqs',
 			'key'    => 'your-public-key',
