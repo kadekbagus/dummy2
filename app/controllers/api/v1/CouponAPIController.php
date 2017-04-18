@@ -1823,6 +1823,8 @@ class CouponAPIController extends ControllerAPI
                 if (! empty($third_party_name)) {
                     $updatedcoupon->third_party_name = $third_party_name;
                 }
+
+                $updatedcoupon->redemption_method = '4-digit PIN';
             }
 
             $updatedcoupon->is_visible = $is_visible;
