@@ -267,7 +267,7 @@ class RewardExportQueue
             }
 
             $exportDataView['subject']       = Config::get('orbit.export.email.reward.post_export_subject');
-            $exportDataView['coupons']       = Coupon::whereIn('promotion_id', $exportData)->lists('promotion_name');
+            $exportDataView['coupons']       = Coupon::whereIn('promotion_id', $exportData)->orderBy('promotion_name', 'asc')->lists('promotion_name');
             $exportDataView['attachment']    = $exportFiles;
             $exportDataView['skippedCoupons'] = array();
             if (! empty($skippedCoupons)) {
