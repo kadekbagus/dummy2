@@ -48,7 +48,8 @@ class RewardPOIMessageReportPrinterController
                                 ->where('pre_exports.export_id', $exportId)
                                 ->where('pre_exports.export_process_type', $exportType)
                                 ->whereIn('promotions.promotion_id', $couponIds)
-                                ->groupBy('promotions.promotion_id');
+                                ->groupBy('promotions.promotion_id')
+                                ->orderBy('promotions.promotion_name', 'asc');
 
             $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType, $prefix) {
                 foreach ($_export as $dtExport) {

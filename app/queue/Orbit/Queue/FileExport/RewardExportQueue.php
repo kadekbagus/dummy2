@@ -259,7 +259,7 @@ class RewardExportQueue
                     } elseif ($pt === 'reward_poi') {
                         $fileName = 'Gotomalls_' . $name . '_Reward_POI.csv';
                     } elseif ($pt === 'reward_unique_redemption_code') {
-                        $fileName = 'Gotomalls_' . $name . '_Reward_Unique_Redemption_Code.csv';
+                        $fileName = 'Gotomalls_' . $name . '_Reward_Redemption_Code.csv';
                     }
 
                     $exportFiles[] = array('file_path' => $dir . $newJoinFile, 'name' => $fileName);
@@ -267,7 +267,7 @@ class RewardExportQueue
             }
 
             $exportDataView['subject']       = Config::get('orbit.export.email.reward.post_export_subject');
-            $exportDataView['coupons']       = Coupon::whereIn('promotion_id', $exportData)->lists('promotion_name');
+            $exportDataView['coupons']       = Coupon::whereIn('promotion_id', $exportData)->orderBy('promotion_name', 'asc')->lists('promotion_name');
             $exportDataView['attachment']    = $exportFiles;
             $exportDataView['skippedCoupons'] = array();
             if (! empty($skippedCoupons)) {
