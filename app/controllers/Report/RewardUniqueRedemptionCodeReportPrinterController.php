@@ -69,6 +69,7 @@ class RewardUniqueRedemptionCodeReportPrinterController
                                 'issued_coupon_code as code'
                             )
                             ->where('promotion_id', $dtExport->promotion_id)
+                            ->where('status', '=', 'available')
                             ->take($take)
                             ->skip($skip)
                             ->get();
