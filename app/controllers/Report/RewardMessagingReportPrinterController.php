@@ -8,21 +8,12 @@ use Orbit\Text as OrbitText;
 use Response;
 use Coupon;
 use Str;
+use PreExport;
+use PostExport;
+use Export;
 
 class RewardMessagingReportPrinterController
 {
-
-    /*
-        Field :
-        ---------------------
-        SKU
-        Locale
-        Highlight
-        Promotional Link URL 1
-        Promotional Link URL 1 Title
-        Term Detail
-    */
-
     /**
      * Static method to instantiate the object.
      *
@@ -73,7 +64,8 @@ class RewardMessagingReportPrinterController
                             })
                             ->where('pre_exports.export_id', $exportId)
                             ->where('pre_exports.export_process_type', $exportType)
-                            ->whereIn('promotions.promotion_id', $couponIds);
+                            ->whereIn('promotions.promotion_id', $couponIds)
+                            ->orderBy('promotions.promotion_name', 'asc');
 
             $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType, $dir) {
                 foreach ($_export as $dtExport) {
@@ -110,7 +102,7 @@ class RewardMessagingReportPrinterController
                                 );
 
                     $csv_handler = fopen($dir . $filePath, 'w');
-                    fputcsv($csv_handler, $fields);
+                    fputcsv($csv_handler, $content);
                     fclose($csv_handler);
 
                     DB::beginTransaction();
@@ -119,9 +111,12 @@ class RewardMessagingReportPrinterController
                                         ->where('object_type', 'coupon')
                                         ->where('object_id', $dtExport->sku);
 
-                    $preExport = clone $checkPre;
-                    $preExport = $preExport->where('export_process_type', $exportType)->first();
-                    $postExport = $preExport->moveToPostExport();
+                    $_preExport = clone $checkPre;
+                    $preExport = $_preExport->where('export_process_type', $exportType)->first();
+
+                    if (is_object($preExport)) {
+                        $postExport = $preExport->moveToPostExport();
+                    }
 
                     $checkPre = $checkPre->count();
 

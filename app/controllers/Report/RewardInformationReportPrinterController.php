@@ -11,7 +11,7 @@ use PreExport;
 use PostExport;
 use Export;
 
-class RewardInformationReportPrinterController extends DataPrinterController
+class RewardInformationReportPrinterController
 {
     /**
      * Static method to instantiate the object.
@@ -43,6 +43,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
             }
 
             $export = Coupon::select(
+                    'pre_exports.file_path',
                     'promotions.promotion_id as sku',
                     DB::raw("default_translation.promotion_name as name"),
                     'users.user_email',
@@ -55,7 +56,16 @@ class RewardInformationReportPrinterController extends DataPrinterController
                         where promotion_id = {$prefix}promotions.promotion_id
                         ) as keywords
                     "),
-                    DB::raw('"category"'),
+                    DB::raw("
+                        (SELECT
+                            group_concat(DISTINCT ogc.category_name) as cat
+                            FROM {$prefix}promotion_retailer opr
+                            LEFT JOIN {$prefix}category_merchant ocm ON ocm.merchant_id = opr.retailer_id
+                            LEFT JOIN {$prefix}vendor_gtm_categories ovgc ON ovgc.gtm_category_id = ocm.category_id
+                            LEFT JOIN {$prefix}grab_categories ogc ON ogc.grab_category_id = ovgc.vendor_category_id
+                            where opr.promotion_id = {$prefix}promotions.promotion_id
+                        ) as category
+                    "),
                     'promotions.maximum_issued_coupon as total_inventory',
                     'promotions.promotion_value as reward_value',
                     'promotions.currency',
@@ -83,14 +93,14 @@ class RewardInformationReportPrinterController extends DataPrinterController
                     DB::raw("
                             (SELECT {$image}
                             FROM {$prefix}media m
-                            WHERE m.media_name_long = 'coupon_header_grab_translation_image_orig'
+                            WHERE m.media_name_long = 'coupon_header_grab_translation_orig'
                             AND m.object_id = default_translation.coupon_translation_id) AS header_original_media_path
                     "),
                     // Image 1 URL
                     DB::raw("
                             (SELECT {$image}
                             FROM {$prefix}media m
-                            WHERE m.media_name_long = 'coupon_image_grab_translation_image_orig'
+                            WHERE m.media_name_long = 'coupon_image1_grab_translation_orig'
                             AND m.object_id = default_translation.coupon_translation_id) AS image_original_media_path
                     "),
                     DB::raw("
@@ -122,8 +132,15 @@ class RewardInformationReportPrinterController extends DataPrinterController
                     $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
                       ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                 })
+                ->leftJoin('pre_exports', function ($q){
+                        $q->on('pre_exports.object_id', '=', 'promotions.promotion_id')
+                          ->on('pre_exports.object_type', '=', DB::raw("'coupon'"));
+                })
+                ->where('pre_exports.export_id', $exportId)
+                ->where('pre_exports.export_process_type', $exportType)
                 ->whereIn('promotions.promotion_id', $couponIds)
-                ->groupBy('promotions.promotion_id');
+                ->groupBy('promotions.promotion_id')
+                ->orderBy('promotions.promotion_name', 'asc');
 
             $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType) {
                 foreach ($_export as $dtExport) {
@@ -165,7 +182,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                                         $dtExport->user_email,
                                         $dtExport->phone,
                                         $dtExport->category,
-                                        $dtExport->keyword,
+                                        $dtExport->keywords,
                                         $dtExport->total_inventory,
                                         '',
                                         $dtExport->reward_value,
@@ -182,7 +199,7 @@ class RewardInformationReportPrinterController extends DataPrinterController
                                         $discountPercentage,
                                         $dealListPrice,
                                         $originalPrice,
-                                        $dtExport->redemption,
+                                        $dtExport->redemption_method,
                                         '',
                                         '',
                                         '',
@@ -216,9 +233,12 @@ class RewardInformationReportPrinterController extends DataPrinterController
                                         ->where('object_type', 'coupon')
                                         ->where('object_id', $dtExport->sku);
 
-                    $preExport = clone $checkPre;
-                    $preExport = $preExport->where('export_process_type', $exportType)->first();
-                    $postExport = $preExport->moveToPostExport();
+                    $_preExport = clone $checkPre;
+                    $preExport = $_preExport->where('export_process_type', $exportType)->first();
+
+                    if (is_object($preExport)) {
+                        $postExport = $preExport->moveToPostExport();
+                    }
 
                     $checkPre = $checkPre->count();
 

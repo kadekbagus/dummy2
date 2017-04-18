@@ -11,7 +11,7 @@ use PreExport;
 use PostExport;
 use Export;
 
-class RewardPOIMessageReportPrinterController extends DataPrinterController
+class RewardPOIMessageReportPrinterController
 {
     /*
         Field :
@@ -40,17 +40,18 @@ class RewardPOIMessageReportPrinterController extends DataPrinterController
 
             $prefix = DB::getTablePrefix();
 
-            $export = Coupon::select(
-                    'promotions.promotion_id',
-                    'campaign_account.mobile_default_language as locale',
-                    'merchants.name as poi_name'
-                    )
-                ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
-                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                ->whereIn('promotions.promotion_id', $couponIds)
+            $export = Coupon::select('promotions.promotion_id', 'pre_exports.file_path')
+                                ->leftJoin('pre_exports', function ($q){
+                                        $q->on('pre_exports.object_id', '=', 'promotions.promotion_id')
+                                          ->on('pre_exports.object_type', '=', DB::raw("'coupon'"));
+                                })
+                                ->where('pre_exports.export_id', $exportId)
+                                ->where('pre_exports.export_process_type', $exportType)
+                                ->whereIn('promotions.promotion_id', $couponIds)
+                                ->groupBy('promotions.promotion_id')
+                                ->orderBy('promotions.promotion_name', 'asc');
 
-            $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType) {
+            $export->chunk($chunk, function($_export) use ($couponIds, $exportId, $exportType, $prefix) {
                 foreach ($_export as $dtExport) {
                     $dir = Config::get('orbit.export.output_dir', '');
                     $filePath = $dtExport->file_path;
@@ -59,13 +60,31 @@ class RewardPOIMessageReportPrinterController extends DataPrinterController
                         mkdir($dir, 0777);
                     }
 
-                    $offsetTimezone = '';
-                    $keywords = '';
+                    $couponData = Coupon::select(
+                                            DB::raw("
+                                                (
+                                                    select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name)) separator ', ')
+                                                    from {$prefix}merchants
+                                                    inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                                    where {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
+                                                ) as poi_name
+                                            "),
+                                            'campaign_account.mobile_default_language'
+                                        )
+                                        ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                        ->leftJoin('merchants as omp', function ($q) {
+                                            $q->on(DB::raw('omp.merchant_id'), '=', 'merchants.parent_id');
+                                        })
+                                        ->where('promotions.promotion_id', $dtExport->promotion_id)
+                                        ->get();
 
-                    $content = array(
-                                    array(
-                                        $dtExport->poi_name,
-                                        $dtExport->locale,
+                    $content = array();
+                    foreach ($couponData as $coupon) {
+                        $content[] = array(
+                                        $coupon->poi_name,
+                                        $coupon->mobile_default_language,
                                         '',
                                         '',
                                         '',
@@ -76,8 +95,37 @@ class RewardPOIMessageReportPrinterController extends DataPrinterController
                                         '',
                                         '',
                                         ''
-                                    ),
-                            );
+                                    );
+                        DB::beginTransaction();
+
+                        $checkPre = PreExport::where('export_id',$exportId)
+                                            ->where('object_type', 'coupon')
+                                            ->where('object_id', $dtExport->promotion_id);
+
+                        $_preExport = clone $checkPre;
+                        $preExport = $_preExport->where('export_process_type', $exportType)->first();
+
+                        if (is_object($preExport)) {
+                            $postExport = $preExport->moveToPostExport();
+                        }
+
+                        $checkPre = $checkPre->count();
+
+                        if ($checkPre === 0) {
+                            $export = Export::where('export_id', $exportId)->first();
+                            $totalFinished = $export->finished_export + 1;
+
+                            $export->finished_export = $totalFinished;
+
+                            if ((int) $export->total_export === (int) $totalFinished) {
+                                $export->status = 'done';
+                            }
+
+                            $export->save();
+                        }
+
+                        DB::commit();
+                    }
 
                     $csv_handler = fopen($dir . $filePath, 'w');
 
@@ -86,33 +134,6 @@ class RewardPOIMessageReportPrinterController extends DataPrinterController
                     }
 
                     fclose($csv_handler);
-
-                    DB::beginTransaction();
-
-                    $checkPre = PreExport::where('export_id',$exportId)
-                                        ->where('object_type', 'coupon')
-                                        ->where('object_id', $dtExport->promotion_id);
-
-                    $preExport = clone $checkPre;
-                    $preExport = $preExport->where('export_process_type', $exportType)->first();
-                    $postExport = $preExport->moveToPostExport();
-
-                    $checkPre = $checkPre->count();
-
-                    if ($checkPre === 0) {
-                        $export = Export::where('export_id', $exportId)->first();
-                        $totalFinished = $export->finished_export + 1;
-
-                        $export->finished_export = $totalFinished;
-
-                        if ((int) $export->total_export === (int) $totalFinished) {
-                            $export->status = 'done';
-                        }
-
-                        $export->save();
-                    }
-
-                    DB::commit();
                 }
             });
 
