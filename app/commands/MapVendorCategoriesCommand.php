@@ -191,7 +191,10 @@ class MapVendorCategoriesCommand extends Command
 
         // Check the existance of gtm category
         Validator::extend('orbit.empty.gtm_category', function ($attribute, $value, $parameters) {
-            $check_category = Category::where('category_name', $value)->first();
+            $check_category = Category::where('status', 'active')
+                ->where('category_name', $value)
+                ->where('merchant_id', '0')
+                ->first();
 
             if (empty($check_category)) {
                 return FALSE;
