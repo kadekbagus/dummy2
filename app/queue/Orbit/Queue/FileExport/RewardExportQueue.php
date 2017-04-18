@@ -259,7 +259,7 @@ class RewardExportQueue
                     } elseif ($pt === 'reward_poi') {
                         $fileName = 'Gotomalls_' . $name . '_Reward_POI.csv';
                     } elseif ($pt === 'reward_unique_redemption_code') {
-                        $fileName = 'Gotomalls_' . $name . '_Reward_Unique_Redemption_Code.csv';
+                        $fileName = 'Gotomalls_' . $name . '_Reward_Redemption_Code.csv';
                     }
 
                     $exportFiles[] = array('file_path' => $dir . $newJoinFile, 'name' => $fileName);
