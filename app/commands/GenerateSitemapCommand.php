@@ -37,6 +37,20 @@ class GenerateSitemapCommand extends Command
      */
     protected $formatOutput = FALSE;
 
+    /**
+     * country name, eg: Indonesia, Singapore, etc.
+     *
+     * @var string
+     */
+    protected $country = 0;
+
+    /**
+     * Extra query string
+     *
+     * @var array
+     */
+    protected $extraParam = [];
+
     protected $sitemapType = '';
 
     protected $priority = '0.8';
@@ -99,6 +113,11 @@ class GenerateSitemapCommand extends Command
             $this->formatOutput = $this->option('format-output');
             $this->sitemapType = $this->option('type');
             $this->sleep = $this->option('sleep');
+            $this->country = $this->option('country');
+            if (! empty($this->country)) {
+                $this->extraParam['country'] = $this->country;
+                $this->extraParam['cities'] = 0;
+            }
 
             $xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" .
                    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
@@ -170,6 +189,9 @@ class GenerateSitemapCommand extends Command
             $_GET['sortby'] = 'updated_date';
             $_GET['sortmode'] = 'desc';
             $_GET['list_type'] = 'preferred';
+            if (! empty($this->country)) {
+                $_GET['country'] = $this->country;
+            }
 
             $_GET['take'] = 1;
             $_GET['skip'] = 0;
@@ -191,7 +213,7 @@ class GenerateSitemapCommand extends Command
                     break;
 
                 case 'store':
-                    $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getStoreList();
+                    $response = Orbit\Controller\API\v1\Pub\Store\StoreListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getStoreList();
                     break;
 
                 case 'mall':
@@ -279,6 +301,9 @@ class GenerateSitemapCommand extends Command
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
+        if (! empty($this->country)) {
+            $_GET['country'] = $this->country;
+        }
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
@@ -321,6 +346,9 @@ class GenerateSitemapCommand extends Command
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.event', []);
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
+        }
+        if (! empty($this->country)) {
+            $_GET['country'] = $this->country;
         }
 
         $_GET['take'] = 50;
@@ -366,6 +394,9 @@ class GenerateSitemapCommand extends Command
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
+        if (! empty($this->country)) {
+            $_GET['country'] = $this->country;
+        }
 
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
@@ -408,6 +439,9 @@ class GenerateSitemapCommand extends Command
     {
         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
 
+        if (! empty($this->country)) {
+            $_GET['country'] = $this->country;
+        }
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $mallSkip = 0;
@@ -429,6 +463,9 @@ class GenerateSitemapCommand extends Command
                 while ($counter < $response->data->total_records) {
                     unset($_GET);
 
+                    if (! empty($this->country)) {
+                        $_GET['country'] = $this->country;
+                    }
                     $_GET['take'] = 50;
                     $mallSkip = $mallSkip + $_GET['take'];
                     $_GET['skip'] = $mallSkip;
@@ -461,10 +498,13 @@ class GenerateSitemapCommand extends Command
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
+        if (! empty($this->country)) {
+            $_GET['country'] = $this->country;
+        }
 
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
-        $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
+        $response = Orbit\Controller\API\v1\Pub\Store\StoreListAPIController::create('raw')->setUser($this->user)->getStoreList();
 
         if ($this->responseCheck($response)) {
             $counter = $response->data->returned_records;
@@ -481,7 +521,7 @@ class GenerateSitemapCommand extends Command
 
                 while ($counter < $response->data->total_records) {
                     $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                    $response = Orbit\Controller\API\v1\Pub\StoreAPIController::create('raw')->setUser($this->user)->getStoreList();
+                    $response = Orbit\Controller\API\v1\Pub\Store\StoreListAPIController::create('raw')->setUser($this->user)->getStoreList();
 
                     $this->detailAppender($response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
 
@@ -504,6 +544,9 @@ class GenerateSitemapCommand extends Command
         $_GET['visible'] = 'yes';
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
+        if (! empty($this->country)) {
+            $_GET['country'] = $this->country;
+        }
         $response = Orbit\Controller\API\v1\Pub\Partner\PartnerListAPIController::create('raw')->setUser($this->user)->getSearchPartner();
 
         if ($this->responseCheck($response)) {
@@ -604,6 +647,10 @@ class GenerateSitemapCommand extends Command
      */
     protected function urlStringPrinter($url, $lastmod, $changefreq, $priority = null)
     {
+        if (! empty($this->extraParam)) {
+            $queryString = http_build_query($this->extraParam);
+            $url = $url . '?' . $queryString;
+        }
         $priority = is_null($priority) ? $this->priority : $priority;
         $urlProp = sprintf("<url>\n<loc>%s</loc>\n<lastmod>%s</lastmod>\n<changefreq>%s</changefreq>\n<priority>%s</priority>\n</url>\n", $url, $lastmod, $changefreq, $priority);
 
@@ -635,6 +682,9 @@ class GenerateSitemapCommand extends Command
         $_GET['list_type'] = 'preferred';
         $_GET['take'] = 1;
         $_GET['skip'] = 0;
+        if (! empty($this->country)) {
+            $_GET['country'] = $this->country;
+        }
         if (! empty($mall_id)) {
             $_GET['mall_id'] = $mall_id;
         }
@@ -671,6 +721,7 @@ class GenerateSitemapCommand extends Command
                 array('type', NULL, InputOption::VALUE_OPTIONAL, 'URL type.', 'all'),
                 array('sleep', NULL, InputOption::VALUE_OPTIONAL, 'Sleep value.', 500000),
                 array('format-output', 0, InputOption::VALUE_NONE, 'Format sitemap XML file output.'),
+                array('country', 0, InputOption::VALUE_OPTIONAL, 'Filter sitemap by country ID.'),
             );
     }
 }
