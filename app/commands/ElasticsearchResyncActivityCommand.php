@@ -47,6 +47,7 @@ class ElasticsearchResyncActivityCommand extends Command
             'activity_id' => trim($input),
             'referer' => $this->option('referer'),
             'orbit_referer' => $this->option('orbit-referer'),
+            'current_url' => $this->option('current-url'),
         ];
 
         try {
@@ -85,6 +86,7 @@ class ElasticsearchResyncActivityCommand extends Command
             array('activity-id', null, InputOption::VALUE_REQUIRED, 'The activity id from MySQL source.', null),
             array('referer', null, InputOption::VALUE_OPTIONAL, 'The referer.', 'from-resync-commandline'),
             array('orbit-referer', null, InputOption::VALUE_OPTIONAL, 'The orbit referer.', 'from-rsync-commandline'),
+            array('current-url', null, InputOption::VALUE_OPTIONAL, 'The current url.', null),
         );
     }
 
