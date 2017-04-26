@@ -4,7 +4,7 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\FakeJob;
-use Orbit\Queue\ElasticSearch\ESActivityUpdateQueue;
+use Orbit\Queue\Elasticsearch\ESActivityUpdateQueue;
 
 class ElasticsearchResyncActivityCommand extends Command
 {
