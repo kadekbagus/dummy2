@@ -87,9 +87,8 @@ class MerchantListAPIController extends ControllerAPI
                                                 ELSE 'available'
                                                 END
                                             END) as export_status"),
-                                        DB::raw("count({$prefix}base_stores.base_store_id) as location_count")
+                                        DB::raw("(SELECT count(base_store_id) FROM {$prefix}base_stores WHERE base_merchant_id = {$prefix}base_merchants.base_merchant_id) as location_count")
                                     )
-                                    ->leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                                     ->leftJoin('media', function ($q){
                                         $q->on('media.object_id', '=', 'base_merchants.base_merchant_id')
                                           ->on('media.media_name_id', '=', DB::raw("'base_merchant_logo_grab'"));
