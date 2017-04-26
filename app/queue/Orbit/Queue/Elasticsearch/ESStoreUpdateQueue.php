@@ -52,24 +52,6 @@ class ESStoreUpdateQueue
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $updateRelated = (empty($data['update_related']) ? FALSE : $data['update_related']);
 
-            if (empty($data['name'])) {
-                $job->delete();
-
-                return [
-                    'status' => 'fail',
-                    'message' => sprintf('[Job ID: `%s`] Store Name is empty.', $job->getJobId())
-                ];
-            }
-
-            if (empty($data['country'])) {
-                $job->delete();
-
-                return [
-                    'status' => 'fail',
-                    'message' => sprintf('[Job ID: `%s`] Country name from store `%s` is empty.', $job->getJobId(), $data['name'])
-                ];
-            }
-
             $storeName = $data['name'];
             $countryName = $data['country'];
             $store = Tenant::with('keywords','translations','adverts','campaignObjectPartners', 'categories')
