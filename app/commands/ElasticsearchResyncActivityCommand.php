@@ -40,12 +40,15 @@ class ElasticsearchResyncActivityCommand extends Command
      */
     public function fire()
     {
+        $input = ! empty($this->option('activity-id')) ? $this->option('activity-id') : file_get_contents("php://stdin");
+
         $job = new FakeJob();
         $data = [
-            'activity_id' => $this->option('activity-id'),
-            'referer' => 'from-resync-commandline',
-            'orbit_referer' => 'from-rsync-commandline'
+            'activity_id' => trim($input),
+            'referer' => $this->option('referer'),
+            'orbit_referer' => $this->option('orbit-referer'),
         ];
+
         try {
             $esQueue = new ESActivityUpdateQueue();
             $response = $esQueue->fire($job, $data);
@@ -80,6 +83,8 @@ class ElasticsearchResyncActivityCommand extends Command
     {
         return array(
             array('activity-id', null, InputOption::VALUE_REQUIRED, 'The activity id from MySQL source.', null),
+            array('referer', null, InputOption::VALUE_OPTIONAL, 'The referer.', 'from-resync-commandline'),
+            array('orbit-referer', null, InputOption::VALUE_OPTIONAL, 'The orbit referer.', 'from-rsync-commandline'),
         );
     }
 
