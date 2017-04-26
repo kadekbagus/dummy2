@@ -62,6 +62,10 @@ class ElasticsearchResyncStoreCommand extends Command {
 
             $input = explode($separator, $name);
 
+            if (empty($input[0]) || empty($input[1])) {
+                throw new Exception("Store name or country is empty", 1);
+            }
+
             $job = new FakeJob();
             $data = [
                 'name' => $input[0],

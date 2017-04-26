@@ -46,59 +46,77 @@ class ESStoreUpdateQueue
      */
     public function fire($job, $data)
     {
-        $prefix = DB::getTablePrefix();
-        $esConfig = Config::get('orbit.elasticsearch');
-        $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-        $updateRelated = (empty($data['update_related']) ? FALSE : $data['update_related']);
-
-        $storeName = $data['name'];
-        $countryName = $data['country'];
-        $store = Tenant::with('keywords','translations','adverts','campaignObjectPartners', 'categories')
-                        ->select(
-                            'merchants.merchant_id',
-                            'merchants.name',
-                            'merchants.description',
-                            'merchants.phone',
-                            'merchants.floor',
-                            'merchants.unit',
-                            'merchants.url',
-                            'merchants.object_type',
-                            'merchants.created_at',
-                            'merchants.updated_at',
-                            'merchants.mobile_default_language',
-                            'media.path',
-                            'media.cdn_url',
-                            DB::raw("x({$prefix}merchant_geofences.position) as latitude"),
-                            DB::raw("y({$prefix}merchant_geofences.position) as longitude"),
-                            DB::raw('oms.merchant_id as mall_id'),
-                            DB::raw('oms.name as mall_name'),
-                            DB::raw('oms.city'),
-                            DB::raw('oms.province'),
-                            DB::raw('oms.country'),
-                            DB::raw('oms.address_line1 as address'),
-                            DB::raw('oms.operating_hours'))
-                        ->join(DB::raw("(
-                            select merchant_id, name, status, parent_id, city,
-                                   province, country, address_line1, operating_hours
-                            from {$prefix}merchants
-                            where status = 'active'
-                                and object_type = 'mall'
-                            ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                        ->leftJoin('media', function($q) {
-                            $q->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
-                            $q->on('media.object_id', '=', 'merchants.merchant_id');
-                        })
-                        ->leftJoin('merchant_geofences', function($q) {
-                            $q->on('merchant_geofences.merchant_id', '=', 'merchants.parent_id');
-                        })
-                        ->whereRaw("{$prefix}merchants.status = 'active'")
-                        ->whereRaw("oms.status = 'active'")
-                        ->where('merchants.name', '=', $storeName)
-                        ->whereRaw("oms.country = '{$countryName}'")
-                        ->orderBy('merchants.created_at', 'asc')
-                        ->get();
-
         try {
+            $prefix = DB::getTablePrefix();
+            $esConfig = Config::get('orbit.elasticsearch');
+            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+            $updateRelated = (empty($data['update_related']) ? FALSE : $data['update_related']);
+
+            if (empty($data['name'])) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] Store Name is empty.', $job->getJobId())
+                ];
+            }
+
+            if (empty($data['country'])) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] Country name from store `%s` is empty.', $job->getJobId(), $data['name'])
+                ];
+            }
+
+            $storeName = $data['name'];
+            $countryName = $data['country'];
+            $store = Tenant::with('keywords','translations','adverts','campaignObjectPartners', 'categories')
+                            ->select(
+                                'merchants.merchant_id',
+                                'merchants.name',
+                                'merchants.description',
+                                'merchants.phone',
+                                'merchants.floor',
+                                'merchants.unit',
+                                'merchants.url',
+                                'merchants.object_type',
+                                'merchants.created_at',
+                                'merchants.updated_at',
+                                'merchants.mobile_default_language',
+                                'media.path',
+                                'media.cdn_url',
+                                DB::raw("x({$prefix}merchant_geofences.position) as latitude"),
+                                DB::raw("y({$prefix}merchant_geofences.position) as longitude"),
+                                DB::raw('oms.merchant_id as mall_id'),
+                                DB::raw('oms.name as mall_name'),
+                                DB::raw('oms.city'),
+                                DB::raw('oms.province'),
+                                DB::raw('oms.country'),
+                                DB::raw('oms.address_line1 as address'),
+                                DB::raw('oms.operating_hours'))
+                            ->join(DB::raw("(
+                                select merchant_id, name, status, parent_id, city,
+                                       province, country, address_line1, operating_hours
+                                from {$prefix}merchants
+                                where status = 'active'
+                                    and object_type = 'mall'
+                                ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                            ->leftJoin('media', function($q) {
+                                $q->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
+                                $q->on('media.object_id', '=', 'merchants.merchant_id');
+                            })
+                            ->leftJoin('merchant_geofences', function($q) {
+                                $q->on('merchant_geofences.merchant_id', '=', 'merchants.parent_id');
+                            })
+                            ->whereRaw("{$prefix}merchants.status = 'active'")
+                            ->whereRaw("oms.status = 'active'")
+                            ->where('merchants.name', '=', $storeName)
+                            ->whereRaw("oms.country = '{$countryName}'")
+                            ->orderBy('merchants.created_at', 'asc')
+                            ->get();
+
             // check exist elasticsearch index
             $params_search = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index'),
