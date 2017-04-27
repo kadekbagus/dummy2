@@ -9,6 +9,7 @@ use DB;
 use Coupon;
 use Media;
 use User;
+use PromotionRetailer;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 use Log;
@@ -51,7 +52,7 @@ class GTMRequirementFieldUpdateQueue
                       if (!$completed) {
                           $_coupon->is_3rd_party_field_complete = 'N';
                       } else {
-                          $_coupon->is_3rd_party_field_complete = 'Y';
+                          $_coupon->is_3rd_party_field_complete = $this->setComplete($coupon->promotion_id);
                       }
                       $_coupon->save();
                   }
@@ -85,7 +86,7 @@ class GTMRequirementFieldUpdateQueue
                       if (!$completed) {
                           $_coupon->is_3rd_party_field_complete = 'N';
                       } else {
-                          $_coupon->is_3rd_party_field_complete = 'Y';
+                          $_coupon->is_3rd_party_field_complete = $this->setComplete($coupon->promotion_id);
                       }
                       $_coupon->save();
                   }
@@ -125,7 +126,7 @@ class GTMRequirementFieldUpdateQueue
                       if (!$completed) {
                           $_coupon->is_3rd_party_field_complete = 'N';
                       } else {
-                          $_coupon->is_3rd_party_field_complete = 'Y';
+                          $_coupon->is_3rd_party_field_complete = $this->setComplete($coupon->promotion_id);
                       }
                       $_coupon->save();
                   }
@@ -147,5 +148,62 @@ class GTMRequirementFieldUpdateQueue
             // The queue driver does not support bury.
             $theJob->delete();
         })->bury();
+    }
+
+    public function setComplete($promotion_id=null) {
+      $prefix = DB::getTablePrefix();
+      $all_complete = 'N';
+
+
+      // check pmp account
+      $user = User::select( DB::raw("CASE
+                                  WHEN ({$prefix}campaign_account.phone IS NULL OR {$prefix}campaign_account.phone = '') THEN 'not_complete'
+                                  WHEN ({$prefix}user_details.country_id IS NULL OR {$prefix}user_details.country_id = '') THEN 'not_complete'
+                                  WHEN ({$prefix}campaign_account.mobile_default_language IS NULL OR {$prefix}campaign_account.mobile_default_language = '') THEN 'not_complete'
+                                  ELSE 'complete'
+                              END AS status
+                                  ")
+                              )
+                        ->leftJoin('user_details', 'user_details.user_id', '=', 'users.user_id')
+                        ->leftJoin('campaign_account', 'campaign_account.user_id', '=', 'users.user_id')
+                        ->join('promotions', 'promotions.created_by', '=', 'users.user_id')
+                        ->where('promotions.promotion_id', '=', $promotion_id)
+                        ->first();
+
+      $all_complete = $user->status == 'complete' ? 'Y' : 'N';
+
+      // check store
+      $media = PromotionRetailer::leftJoin('media', 'media.object_id', '=', 'promotion_retailer.retailer_id')
+                                ->where('media_name_id', '=', 'base_store_image_grab')
+                                ->where('metadata', '=', 'order-0')
+                                ->where('promotion_retailer.promotion_id', $promotion_id)
+                                ->count();
+
+      $all_complete = $media <= 0 ? 'N' : 'Y';
+
+      // check mall
+      $mall_id = PromotionRetailer::leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                  ->where('promotion_retailer.promotion_id', $promotion_id)
+                                  ->lists('parent_id');
+
+      $mall = Mall::select(DB::raw("sum(
+                          CASE
+                            WHEN ({$prefix}merchants.postal_code IS NULL OR {$prefix}merchants.postal_code = '') THEN 1
+                            WHEN ({$prefix}merchants.address_line1 IS NULL OR {$prefix}merchants.address_line1 = '') THEN 1
+                            WHEN ({$prefix}merchants.country IS NULL OR {$prefix}merchants.country = '') THEN 1
+                            WHEN ({$prefix}merchants.city IS NULL OR {$prefix}merchants.city = '') THEN 1
+                            WHEN ({$prefix}merchants.province IS NULL OR {$prefix}merchants.province = '') THEN 1
+                            WHEN (X({$prefix}merchant_geofences.position) IS NULL OR X({$prefix}merchant_geofences.position) = '') THEN 1
+                            WHEN (Y({$prefix}merchant_geofences.position) IS NULL OR Y({$prefix}merchant_geofences.position) = '') THEN 1
+                            ELSE 0
+                          END) AS status
+                      "))
+                ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
+                ->whereIn('merchants.merchant_id', $mall_id)
+                ->first();
+
+      $all_complete = $mall->status > 0 ? 'N' : 'Y';
+
+      return $all_complete;
     }
 }
