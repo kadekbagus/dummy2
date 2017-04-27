@@ -109,7 +109,7 @@ class GTMRequirementFieldUpdateQueue
                     ->where('merchants.merchant_id', '=', $merchant_id)
                     ->first();
 
-                  $completed = $user->status == 'complete' ? true : false;
+                  $completed = $mall->status == 'complete' ? true : false;
 
                   $coupons = Coupon::select('promotions.promotion_id')
                                   ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
