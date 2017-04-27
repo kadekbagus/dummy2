@@ -99,6 +99,7 @@ class GTMRequirementFieldUpdateQueue
                                 WHEN ({$prefix}merchants.address_line1 IS NULL OR {$prefix}merchants.address_line1 = '') THEN 'not_complete'
                                 WHEN ({$prefix}merchants.country IS NULL OR {$prefix}merchants.country = '') THEN 'not_complete'
                                 WHEN ({$prefix}merchants.city IS NULL OR {$prefix}merchants.city = '') THEN 'not_complete'
+                                WHEN ({$prefix}merchants.province IS NULL OR {$prefix}merchants.province = '') THEN 'not_complete'
                                 WHEN (X({$prefix}merchant_geofences.position) IS NULL OR X({$prefix}merchant_geofences.position) = '') THEN 'not_complete'
                                 WHEN (Y({$prefix}merchant_geofences.position) IS NULL OR Y({$prefix}merchant_geofences.position) = '') THEN 'not_complete'
                                 ELSE 'complete'
