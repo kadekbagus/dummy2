@@ -2844,9 +2844,9 @@ class CouponAPIController extends ControllerAPI
                         WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
                             ) as coupon_codes"),
                     DB::raw("CASE
+                                WHEN is_3rd_party_promotion = 'Y' AND is_3rd_party_field_complete = 'N' THEN 'not_available'
                                 WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NOT NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'in_progress'
                                 WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NULL THEN 'available'
-                                WHEN is_3rd_party_promotion = 'Y' AND is_3rd_party_field_complete = 'N' THEN 'not_available'
                                 WHEN is_3rd_party_promotion = 'N' THEN 'not_available'
                             END AS export_status
                         ")
