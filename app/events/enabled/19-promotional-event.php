@@ -195,103 +195,98 @@ Event::listen('orbit.promotionalevent.after.rewardtranslation.save', function($c
     $upload_image_config = Config::get('orbit.upload.reward_detail.reward_signup_bg_desktop');
     $element_name = $upload_image_config['name'];
 
-    $files = OrbitInput::files($element_name . '_' . $image_id);
-    if (! $files) {
-        return;
-    }
+    $files_bg_desktop = OrbitInput::files($element_name . '_' . $image_id);
+    if ($files_bg_desktop) {
+        $_POST['reward_detail_translation_id'] = $reward_detail_translation->reward_detail_translation_id;
+        $_POST['reward_detail_id'] = $reward_detail_translation->reward_detail_id;
+        $_POST['language_id'] = $reward_detail_translation->language_id;
+        $response = UploadAPIController::create('raw')
+                                       ->setCalledFrom('reward.translations')
+                                       ->postUploadSignUpDesktopBackground();
 
-    $_POST['reward_detail_translation_id'] = $reward_detail_translation->reward_detail_translation_id;
-    $_POST['reward_detail_id'] = $reward_detail_translation->reward_detail_id;
-    $_POST['language_id'] = $reward_detail_translation->language_id;
-    $response = UploadAPIController::create('raw')
-                                   ->setCalledFrom('reward.translations')
-                                   ->postUploadSignUpDesktopBackground();
-
-    if ($response->code !== 0)
-    {
-        throw new \Exception($response->message, $response->code);
-    }
-
-    unset($_POST['reward_detail_translation_id']);
-    unset($_POST['reward_detail_id']);
-    unset($_POST['language_id']);
-
-    $reward_detail_translation->setRelation('media', $response->data);
-    $reward_detail_translation->media_reward_signup_bg_desktop = $response->data;
-    $reward_detail_translation->reward_signup_bg_desktop = $response->data[0]->path;
-
-    // queue for data amazon s3
-    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
-
-    if ($usingCdn) {
-        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
-        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
-
-        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
-        if ($response->data['extras']->isUpdate) {
-            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
         }
 
-        Queue::push($queueFile, [
-            'object_id'     => $reward_detail_translation->reward_detail_translation_id,
-            'media_name_id' => $response->data['extras']->mediaNameId,
-            'old_path'      => $response->data['extras']->oldPath,
-            'es_type'       => '', // ask
-            'es_id'         => $reward_detail_translation->reward_detail_id,
-            'bucket_name'   => $bucketName
-        ], $queueName);
-    }
+        unset($_POST['reward_detail_translation_id']);
+        unset($_POST['reward_detail_id']);
+        unset($_POST['language_id']);
 
+        $reward_detail_translation->setRelation('media', $response->data);
+        $reward_detail_translation->media_reward_signup_bg_desktop = $response->data;
+        $reward_detail_translation->reward_signup_bg_desktop = $response->data[0]->path;
+
+        // queue for data amazon s3
+        $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+        if ($usingCdn) {
+            $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+            $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+            if ($response->data['extras']->isUpdate) {
+                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+            }
+
+            Queue::push($queueFile, [
+                'object_id'     => $reward_detail_translation->reward_detail_translation_id,
+                'media_name_id' => $response->data['extras']->mediaNameId,
+                'old_path'      => $response->data['extras']->oldPath,
+                'es_type'       => '', // ask
+                'es_id'         => $reward_detail_translation->reward_detail_id,
+                'bucket_name'   => $bucketName
+            ], $queueName);
+        }
+    }
 
     // upload reward_signup_bg_mobile
     $upload_image_config = Config::get('orbit.upload.reward_detail.reward_signup_bg_mobile');
     $element_name = $upload_image_config['name'];
 
-    $files = OrbitInput::files($element_name . '_' . $image_id);
-    if (! $files) {
-        return;
-    }
+    $files_bg_mobile = OrbitInput::files($element_name . '_' . $image_id);
+    if ($files_bg_mobile) {
+        $_POST['reward_detail_translation_id'] = $reward_detail_translation->reward_detail_translation_id;
+        $_POST['reward_detail_id'] = $reward_detail_translation->reward_detail_id;
+        $_POST['language_id'] = $reward_detail_translation->language_id;
+        $response = UploadAPIController::create('raw')
+                                       ->setCalledFrom('reward.translations')
+                                       ->postUploadSignUpMobileBackground();
 
-    $_POST['reward_detail_translation_id'] = $reward_detail_translation->reward_detail_translation_id;
-    $_POST['reward_detail_id'] = $reward_detail_translation->reward_detail_id;
-    $_POST['language_id'] = $reward_detail_translation->language_id;
-    $response = UploadAPIController::create('raw')
-                                   ->setCalledFrom('reward.translations')
-                                   ->postUploadSignUpMobileBackground();
-
-    if ($response->code !== 0)
-    {
-        throw new \Exception($response->message, $response->code);
-    }
-
-    unset($_POST['reward_detail_translation_id']);
-    unset($_POST['reward_detail_id']);
-    unset($_POST['language_id']);
-
-    $reward_detail_translation->setRelation('media', $response->data);
-    $reward_detail_translation->media_reward_signup_bg_mobile = $response->data;
-    $reward_detail_translation->reward_signup_bg_mobile = $response->data[0]->path;
-
-    // queue for data amazon s3
-    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
-
-    if ($usingCdn) {
-        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
-        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
-
-        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
-        if ($response->data['extras']->isUpdate) {
-            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        if ($response->code !== 0)
+        {
+            throw new \Exception($response->message, $response->code);
         }
 
-        Queue::push($queueFile, [
-            'object_id'     => $reward_detail_translation->reward_detail_translation_id,
-            'media_name_id' => $response->data['extras']->mediaNameId,
-            'old_path'      => $response->data['extras']->oldPath,
-            'es_type'       => '', // ask
-            'es_id'         => $reward_detail_translation->reward_detail_id,
-            'bucket_name'   => $bucketName
-        ], $queueName);
+        unset($_POST['reward_detail_translation_id']);
+        unset($_POST['reward_detail_id']);
+        unset($_POST['language_id']);
+
+        $reward_detail_translation->setRelation('media', $response->data);
+        $reward_detail_translation->media_reward_signup_bg_mobile = $response->data;
+        $reward_detail_translation->reward_signup_bg_mobile = $response->data[0]->path;
+
+        // queue for data amazon s3
+        $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+
+        if ($usingCdn) {
+            $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+            $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+            if ($response->data['extras']->isUpdate) {
+                $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+            }
+
+            Queue::push($queueFile, [
+                'object_id'     => $reward_detail_translation->reward_detail_translation_id,
+                'media_name_id' => $response->data['extras']->mediaNameId,
+                'old_path'      => $response->data['extras']->oldPath,
+                'es_type'       => '', // ask
+                'es_id'         => $reward_detail_translation->reward_detail_id,
+                'bucket_name'   => $bucketName
+            ], $queueName);
+        }
     }
 });
 

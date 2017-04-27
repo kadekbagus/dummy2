@@ -181,14 +181,11 @@ class NewsLocationAPIController extends PubControllerAPI
                                     ->where('merchants.status', '=', 'active');
 
             // filter news by mall id
-            $group_by = '';
-
             OrbitInput::get('mall_id', function($mallid) use ($newsLocations, &$group_by) {
                 $newsLocations->where(function($q) use ($mallid){
                                     $q->where('merchants.parent_id', '=', $mallid)
                                       ->orWhere('merchants.merchant_id', '=', $mallid);
                                 });
-                $group_by = 'mall';
             });
 
             // Get user location
@@ -225,11 +222,7 @@ class NewsLocationAPIController extends PubControllerAPI
                 $newsLocations->orderBy('name', 'asc');
             }
 
-            if ($group_by === 'mall') {
-                $newsLocations->groupBy('mall_id');
-            } else {
-                $newsLocations->groupBy('merchants.merchant_id');
-            }
+            $newsLocations->groupBy('merchants.merchant_id');
 
             $_newsLocations = clone($newsLocations);
 
