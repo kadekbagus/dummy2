@@ -61,9 +61,9 @@ class GTMRequirementFieldUpdateQueue
                   $user_id = $data['id'];
                   $completed = false;
                   $user = User::select( DB::raw("CASE
-                                  WHEN {$prefix}campaign_account.phone IS NULL THEN 'not_complete'
-                                  WHEN {$prefix}user_details.country_id IS NULL THEN 'not_complete'
-                                  WHEN {$prefix}campaign_account.mobile_default_language IS NULL THEN 'not_complete'
+                                  WHEN ({$prefix}campaign_account.phone IS NULL OR {$prefix}campaign_account.phone = '') THEN 'not_complete'
+                                  WHEN ({$prefix}user_details.country_id IS NULL OR {$prefix}user_details.country_id = '') THEN 'not_complete'
+                                  WHEN ({$prefix}campaign_account.mobile_default_language IS NULL OR {$prefix}campaign_account.mobile_default_language = '') THEN 'not_complete'
                                   ELSE 'complete'
                               END AS status
                                   ")
@@ -94,15 +94,15 @@ class GTMRequirementFieldUpdateQueue
                   $merchant_id = $data['id'];
                   $completed = false;
                   $mall = Mall::select(DB::raw("
-                                    CASE
-                                      WHEN {$prefix}merchants.postal_code IS NULL THEN 'not_complete'
-                                      WHEN {$prefix}merchants.address_line1 IS NULL THEN 'not_complete'
-                                      WHEN {$prefix}merchants.country IS NULL THEN 'not_complete'
-                                      WHEN {$prefix}merchants.city IS NULL THEN 'not_complete'
-                                      WHEN X({$prefix}merchant_geofences.position) IS NULL THEN 'not_complete'
-                                      WHEN Y({$prefix}merchant_geofences.position) IS NULL THEN 'not_complete'
-                                      ELSE 'complete'
-                                    END AS status
+                              CASE
+                                WHEN ({$prefix}merchants.postal_code IS NULL OR {$prefix}merchants.postal_code = '') THEN 'not_complete'
+                                WHEN ({$prefix}merchants.address_line1 IS NULL OR {$prefix}merchants.address_line1 = '') THEN 'not_complete'
+                                WHEN ({$prefix}merchants.country IS NULL OR {$prefix}merchants.country = '') THEN 'not_complete'
+                                WHEN ({$prefix}merchants.city IS NULL OR {$prefix}merchants.city = '') THEN 'not_complete'
+                                WHEN (X({$prefix}merchant_geofences.position) IS NULL OR X({$prefix}merchant_geofences.position) = '') THEN 'not_complete'
+                                WHEN (Y({$prefix}merchant_geofences.position) IS NULL OR Y({$prefix}merchant_geofences.position) = '') THEN 'not_complete'
+                                ELSE 'complete'
+                              END AS status
                           "))
                     ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
                     ->where('merchants.merchant_id', '=', $merchant_id)
