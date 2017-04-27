@@ -173,6 +173,9 @@ Event::listen('orbit.basestore.postupdatestore.after.save', function($controller
     }
     $base_store->load('mediaImageGrab');
     $base_store->load('mediaImageGrabOrig');
+
+    // update required 3party grab field
+    Queue::push('Orbit\\Queue\\GTMRequirementFieldUpdateQueue', ['id' => $base_store->base_store_id, 'from' => 'base_store']);
 });
 
 Event::listen('orbit.basestore.sync.begin', function($syncObject) {

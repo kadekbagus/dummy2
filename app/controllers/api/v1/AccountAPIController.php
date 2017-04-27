@@ -1635,6 +1635,7 @@ class AccountAPIController extends ControllerAPI
             }
 
             $this->response->data = $update_user;
+            Event::fire('orbit.user.postupdateaccount.after.save', array($this, $update_user));
 
             // Commit the changes
             $this->commit();
