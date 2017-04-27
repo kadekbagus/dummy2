@@ -1815,6 +1815,9 @@ class MallAPIController extends ControllerAPI
 
             OrbitInput::post('postal_code', function($postal_code) use ($updatedmall) {
                 $updatedmall->postal_code = $postal_code;
+                if ($postal_code == '') {
+                  $updatedmall->postal_code = null;
+                }
             });
 
             OrbitInput::post('city_id', function($city_id) use ($updatedmall) {
