@@ -1851,7 +1851,7 @@ class AccountAPIController extends ControllerAPI
                     $mall_tenant = CampaignLocation::where('merchants.status', '=', 'active')
                                                 ->whereIn('merchants.object_type', $access)
                                                 ->whereIn('merchants.merchant_id', $value)
-                                                ->get()->count();
+                                                ->count();
                     if ($mall_tenant !== count($value)) {
                         return FALSE;
                     }
