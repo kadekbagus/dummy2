@@ -90,7 +90,7 @@ class GTMRequirementFieldUpdateQueue
                       }
                       $_coupon->save();
                   }
-
+                  break;
               case 'mall_admin_portal' :
                   $merchant_id = $data['id'];
                   $completed = false;
@@ -130,6 +130,7 @@ class GTMRequirementFieldUpdateQueue
                       }
                       $_coupon->save();
                   }
+                break;
           }
 
             // Safely delete the object
