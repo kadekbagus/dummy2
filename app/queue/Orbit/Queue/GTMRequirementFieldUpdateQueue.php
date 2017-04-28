@@ -160,6 +160,9 @@ class GTMRequirementFieldUpdateQueue
             // The queue driver does not support bury.
             $theJob->delete();
         })->bury();
+
+        Log::info($message);
+        return $message;
     }
 
     public function setComplete($promotion_id=null, $type) {
