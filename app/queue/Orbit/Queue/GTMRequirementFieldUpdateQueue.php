@@ -147,6 +147,8 @@ class GTMRequirementFieldUpdateQueue
 
             $message = sprintf('GTM requirement field update queue from %s success', $data['from']);
             Log::info($message);
+
+            return $message;
         } catch (Exception $e) {
             $message = sprintf('error GTM requirement field update queue, message: %s', $e);
             Log::info($message);
