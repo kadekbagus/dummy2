@@ -29,140 +29,138 @@ class GTMRequirementFieldUpdateQueue
     {
       try {
         $prefix = DB::getTablePrefix();
-        // check required field
-          switch ($data['from']) {
-              case 'base_store' :
-                  $base_store_id = $data['id'];
-                  $completed = false;
-                  $media = Media::where('media_name_id', '=', 'base_store_image_grab')
-                                 ->where('metadata', '=', 'order-0')
-                                 ->where('object_id', '=', $base_store_id)
-                                 ->count();
+      // check required field
+        switch ($data['from']) {
+            case 'base_store' :
+                $base_store_id = $data['id'];
+                $completed = false;
+                $media = Media::where('media_name_id', '=', 'base_store_image_grab')
+                               ->where('metadata', '=', 'order-0')
+                               ->where('object_id', '=', $base_store_id)
+                               ->count();
 
-                  $completed = $media <= 0 ? false : true;
+                $completed = $media <= 0 ? false : true;
+
+                $coupons = Coupon::select('promotions.promotion_id')
+                                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                ->where('promotion_retailer.retailer_id', '=', $base_store_id)
+                                ->where('promotions.is_3rd_party_promotion', '=', 'Y')
+                                ->get();
+
+                foreach ($coupons as $coupon) {
+                    $_coupon = Coupon::where('promotion_id', '=', $coupon->promotion_id)->first();
+                    if (!$completed) {
+                        $_coupon->is_3rd_party_field_complete = 'N';
+                    } else {
+                        $_coupon->is_3rd_party_field_complete = $this->setComplete($coupon->promotion_id, 'base_store');
+                    }
+                    $_coupon->save();
+                }
+                break;
+
+            case 'pmp_admin_portal' :
+                $user_id = $data['id'];
+                $completed = false;
+                $user = User::select( DB::raw("CASE
+                                WHEN ({$prefix}campaign_account.phone IS NULL OR {$prefix}campaign_account.phone = '') THEN 'not_complete'
+                                WHEN ({$prefix}user_details.country_id IS NULL OR {$prefix}user_details.country_id = '') THEN 'not_complete'
+                                WHEN ({$prefix}campaign_account.mobile_default_language IS NULL OR {$prefix}campaign_account.mobile_default_language = '') THEN 'not_complete'
+                                ELSE 'complete'
+                            END AS status
+                                ")
+                            )
+                      ->leftJoin('user_details', 'user_details.user_id', '=', 'users.user_id')
+                      ->leftJoin('campaign_account', 'campaign_account.user_id', '=', 'users.user_id')
+                      ->where('users.user_id', '=', $user_id)
+                      ->first();
+
+                if (!empty($user)) {
+                  $completed = $user->status == 'complete' ? true : false;
 
                   $coupons = Coupon::select('promotions.promotion_id')
-                                  ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                  ->where('promotion_retailer.retailer_id', '=', $base_store_id)
+                                  ->where('promotions.created_by', '=', $user_id)
                                   ->where('promotions.is_3rd_party_promotion', '=', 'Y')
                                   ->get();
 
-                  foreach ($coupons as $coupon) {
-                      $_coupon = Coupon::where('promotion_id', '=', $coupon->promotion_id)->first();
-                      if (!$completed) {
-                          $_coupon->is_3rd_party_field_complete = 'N';
-                      } else {
-                          $_coupon->is_3rd_party_field_complete = $this->setComplete($coupon->promotion_id, 'base_store');
-                      }
-                      $_coupon->save();
-                  }
-                  break;
-
-              case 'pmp_admin_portal' :
-                  $user_id = $data['id'];
-                  $completed = false;
-                  $user = User::select( DB::raw("CASE
-                                  WHEN ({$prefix}campaign_account.phone IS NULL OR {$prefix}campaign_account.phone = '') THEN 'not_complete'
-                                  WHEN ({$prefix}user_details.country_id IS NULL OR {$prefix}user_details.country_id = '') THEN 'not_complete'
-                                  WHEN ({$prefix}campaign_account.mobile_default_language IS NULL OR {$prefix}campaign_account.mobile_default_language = '') THEN 'not_complete'
-                                  ELSE 'complete'
-                              END AS status
-                                  ")
-                              )
-                        ->leftJoin('user_details', 'user_details.user_id', '=', 'users.user_id')
-                        ->leftJoin('campaign_account', 'campaign_account.user_id', '=', 'users.user_id')
-                        ->where('users.user_id', '=', $user_id)
-                        ->first();
-
-                  if (!empty($user)) {
-                    $completed = $user->status == 'complete' ? true : false;
-
-                    $coupons = Coupon::select('promotions.promotion_id')
-                                    ->where('promotions.created_by', '=', $user_id)
-                                    ->where('promotions.is_3rd_party_promotion', '=', 'Y')
-                                    ->get();
-
-                    if (count($coupons)) {
-                      foreach ($coupons as $coupon) {
-                          $_coupon = Coupon::where('promotion_id', '=', $coupon->promotion_id)->first();
-                          if (!$completed) {
-                              $_coupon->is_3rd_party_field_complete = 'N';
-                          } else {
-                              $_coupon->is_3rd_party_field_complete = $this->setComplete($coupon->promotion_id, 'pmp_admin_portal');
-                          }
-                          $_coupon->save();
-                      }
+                  if (count($coupons)) {
+                    foreach ($coupons as $coupon) {
+                        $_coupon = Coupon::where('promotion_id', '=', $coupon->promotion_id)->first();
+                        if (!$completed) {
+                            $_coupon->is_3rd_party_field_complete = 'N';
+                        } else {
+                            $_coupon->is_3rd_party_field_complete = $this->setComplete($coupon->promotion_id, 'pmp_admin_portal');
+                        }
+                        $_coupon->save();
                     }
                   }
-                  break;
-
-              case 'mall_admin_portal' :
-                  $merchant_id = $data['id'];
-                  $completed = false;
-                  $mall = Mall::select(DB::raw("
-                              CASE
-                                WHEN ({$prefix}merchants.postal_code IS NULL OR {$prefix}merchants.postal_code = '') THEN 'not_complete'
-                                WHEN ({$prefix}merchants.address_line1 IS NULL OR {$prefix}merchants.address_line1 = '') THEN 'not_complete'
-                                WHEN ({$prefix}merchants.country IS NULL OR {$prefix}merchants.country = '') THEN 'not_complete'
-                                WHEN ({$prefix}merchants.city IS NULL OR {$prefix}merchants.city = '') THEN 'not_complete'
-                                WHEN ({$prefix}merchants.province IS NULL OR {$prefix}merchants.province = '') THEN 'not_complete'
-                                WHEN (X({$prefix}merchant_geofences.position) IS NULL OR X({$prefix}merchant_geofences.position) = '') THEN 'not_complete'
-                                WHEN (Y({$prefix}merchant_geofences.position) IS NULL OR Y({$prefix}merchant_geofences.position) = '') THEN 'not_complete'
-                                ELSE 'complete'
-                              END AS status
-                          "))
-                    ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
-                    ->where('merchants.merchant_id', '=', $merchant_id)
-                    ->first();
-
-                  if (!empty($mall)) {
-                    $completed = $mall->status == 'complete' ? true : false;
-
-                    $coupons = Coupon::select('promotions.promotion_id')
-                                    ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                                    ->where('merchants.parent_id', '=', $merchant_id)
-                                    ->orWhere('merchants.merchant_id', '=', $merchant_id)
-                                    ->where('promotions.is_3rd_party_promotion', '=', 'Y')
-                                    ->groupBy('promotions.promotion_id')
-                                    ->get();
-
-                    if (count($coupons)) {
-                      foreach ($coupons as $coupon) {
-                          $_coupon = Coupon::where('promotion_id', '=', $coupon->promotion_id)->first();
-                          if (!$completed) {
-                              $_coupon->is_3rd_party_field_complete = 'N';
-                          } else {
-                              $_coupon->is_3rd_party_field_complete = $this->setComplete($coupon->promotion_id, 'mall_admin_portal');
-                          }
-                          $_coupon->save();
-                      }
-                    }
-                  }
+                }
                 break;
-          }
 
-            // Safely delete the object
-            $job->delete();
+            case 'mall_admin_portal' :
+                $merchant_id = $data['id'];
+                $completed = false;
+                $mall = Mall::select(DB::raw("
+                            CASE
+                              WHEN ({$prefix}merchants.postal_code IS NULL OR {$prefix}merchants.postal_code = '') THEN 'not_complete'
+                              WHEN ({$prefix}merchants.address_line1 IS NULL OR {$prefix}merchants.address_line1 = '') THEN 'not_complete'
+                              WHEN ({$prefix}merchants.country IS NULL OR {$prefix}merchants.country = '') THEN 'not_complete'
+                              WHEN ({$prefix}merchants.city IS NULL OR {$prefix}merchants.city = '') THEN 'not_complete'
+                              WHEN ({$prefix}merchants.province IS NULL OR {$prefix}merchants.province = '') THEN 'not_complete'
+                              WHEN (X({$prefix}merchant_geofences.position) IS NULL OR X({$prefix}merchant_geofences.position) = '') THEN 'not_complete'
+                              WHEN (Y({$prefix}merchant_geofences.position) IS NULL OR Y({$prefix}merchant_geofences.position) = '') THEN 'not_complete'
+                              ELSE 'complete'
+                            END AS status
+                        "))
+                  ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
+                  ->where('merchants.merchant_id', '=', $merchant_id)
+                  ->first();
 
-            $message = sprintf('GTM requirement field update queue from %s success', $data['from']);
-            Log::info($message);
+                if (!empty($mall)) {
+                  $completed = $mall->status == 'complete' ? true : false;
 
-            return $message;
-        } catch (Exception $e) {
-            $message = sprintf('error GTM requirement field update queue, message: %s', $e);
-            Log::info($message);
-            return $message;
+                  $coupons = Coupon::select('promotions.promotion_id')
+                                  ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                  ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                  ->where('merchants.parent_id', '=', $merchant_id)
+                                  ->orWhere('merchants.merchant_id', '=', $merchant_id)
+                                  ->where('promotions.is_3rd_party_promotion', '=', 'Y')
+                                  ->groupBy('promotions.promotion_id')
+                                  ->get();
+
+                  if (count($coupons)) {
+                    foreach ($coupons as $coupon) {
+                        $_coupon = Coupon::where('promotion_id', '=', $coupon->promotion_id)->first();
+                        if (!$completed) {
+                            $_coupon->is_3rd_party_field_complete = 'N';
+                        } else {
+                            $_coupon->is_3rd_party_field_complete = $this->setComplete($coupon->promotion_id, 'mall_admin_portal');
+                        }
+                        $_coupon->save();
+                    }
+                  }
+                }
+                break;
         }
 
-        // Bury the job for later inspection
-        JobBurier::create($job, function($theJob) {
-            // The queue driver does not support bury.
-            $theJob->delete();
-        })->bury();
+          // Safely delete the object
+        $job->delete();
 
+        $message = sprintf('GTM requirement field update queue from %s success', $data['from']);
         Log::info($message);
+
         return $message;
+      } catch (Exception $e) {
+          $message = sprintf('error GTM requirement field update queue, message: %s', $e);
+
+          // Bury the job for later inspection
+          JobBurier::create($job, function($theJob) {
+              // The queue driver does not support bury.
+              $theJob->delete();
+          })->bury();
+
+          Log::info($message);
+          return $message;
+      }
     }
 
     public function setComplete($promotion_id=null, $type) {
