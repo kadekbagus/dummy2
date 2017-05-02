@@ -2445,12 +2445,16 @@ class TenantAPIController extends ControllerAPI
             }
 
             if (! empty($keywords)) {
-                if ($from === 'advert' && $link_type !== 'store') {
-                    if ($link_type !== 'store') {
-                        $tenants->where(DB::raw('pm.name'), 'like', "$keywords%");
+                if ($from === 'advert') {
+                    if ($link_type === 'store' && ! empty($merchant_name)) {
+                        $tenants->where(DB::raw('pm.name'), 'like', "$keywords%"); // find mall
+                    } elseif ($link_type === 'store') {
+                        $tenants->where('merchants.name', 'like', "$keywords%"); // find tenant
+                    } elseif (in_array($link_type, ['promotion', 'news', 'coupon'])) {
+                        $tenants->having(DB::raw('display_name'), 'like', "$keywords%"); // find mall
                     }
                 } else {
-                    $tenants->where('merchants.name', 'like', "$keywords%");
+                    $tenants->where('merchants.name', 'like', "$keywords%"); // find tenant and mall
                 }
             }
 
