@@ -2442,8 +2442,12 @@ class TenantAPIController extends ControllerAPI
                                 GROUP BY um.merchant_id
                         )");
                 }
+            }
 
-                if (! empty($keywords)) {
+            if (! empty($keywords)) {
+                if ($from === 'advert') {
+                    $tenants->where(DB::raw('pm.name'), 'like', "$keywords%");
+                } else {
                     $tenants->where('merchants.name', 'like', "$keywords%");
                 }
             }
