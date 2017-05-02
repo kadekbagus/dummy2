@@ -1635,6 +1635,7 @@ class AccountAPIController extends ControllerAPI
             }
 
             $this->response->data = $update_user;
+            Event::fire('orbit.user.postupdateaccount.after.save', array($this, $update_user));
 
             // Commit the changes
             $this->commit();
@@ -1733,8 +1734,7 @@ class AccountAPIController extends ControllerAPI
     {
         // Check username, it should not exists
         Validator::extend('orbit.exists.username', function ($attribute, $value, $parameters) {
-            $user = User::excludeDeleted()
-                        ->where(function ($q) use ($value) {
+            $user = User::where(function ($q) use ($value) {
                             $q->where('user_email', '=', $value)
                               ->orWhere('username', '=', $value);
                           })
@@ -1742,8 +1742,14 @@ class AccountAPIController extends ControllerAPI
                                 $q->select('role_id')
                                   ->from('roles')
                                   ->whereNotIn('role_name', ['Consumer','Guest']);
-                          })
-                        ->first();
+                          });
+
+            $user_sql = $user->toSql();
+            $user_query = $user->getQuery();
+
+            $user = DB::table(DB::raw("({$user_sql}) as sub_query"))
+                    ->mergeBindings($user_query)
+                    ->whereRaw("sub_query.status != 'deleted'")->first();
 
             if (! empty($user)) {
                 OrbitShopAPI::throwInvalidArgument('The email address has already been taken');
@@ -1854,7 +1860,7 @@ class AccountAPIController extends ControllerAPI
                     $mall_tenant = CampaignLocation::where('merchants.status', '=', 'active')
                                                 ->whereIn('merchants.object_type', $access)
                                                 ->whereIn('merchants.merchant_id', $value)
-                                                ->get()->count();
+                                                ->count();
                     if ($mall_tenant !== count($value)) {
                         return FALSE;
                     }

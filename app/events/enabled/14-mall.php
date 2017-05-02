@@ -232,6 +232,8 @@ Event::listen('orbit.mall.postupdatemall.after.save', function($controller, $mal
     }
     $mall->load('mediaMap');
 
+    // update required 3party grab field
+    Queue::push('Orbit\\Queue\\GTMRequirementFieldUpdateQueue', ['id' => $mall->merchant_id, 'from' => 'mall_admin_portal']);
 });
 
 /**

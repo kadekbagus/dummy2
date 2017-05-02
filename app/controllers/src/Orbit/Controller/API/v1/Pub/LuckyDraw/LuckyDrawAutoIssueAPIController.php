@@ -178,7 +178,7 @@ class LuckyDrawAutoIssueAPIController extends PubControllerAPI
 
             $total_lucky_draw_number = LuckyDrawNumber::where('lucky_draw_id', $lucky_draw_id)
                 ->where('user_id', $user->user_id)
-                ->get()->count();
+                ->count();
 
             // Successfull Creation
             $activity->setUser($user)

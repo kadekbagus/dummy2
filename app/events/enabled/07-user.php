@@ -232,3 +232,10 @@ Event::listen('orbit.user.postnewmembership.after.commit', function($controller,
         'retailer_id' => $retailerId
     ]);
 });
+
+
+Event::listen('orbit.user.postupdateaccount.after.save', function($controller, $user)
+{
+    // update required 3party grab field
+    Queue::push('Orbit\\Queue\\GTMRequirementFieldUpdateQueue', ['id' => $user->user_id, 'from' => 'pmp_admin_portal']);
+});

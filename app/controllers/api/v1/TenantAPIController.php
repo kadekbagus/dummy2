@@ -2237,15 +2237,18 @@ class TenantAPIController extends ControllerAPI
             $merchant_name = OrbitInput::get('merchant_name');
             $merchant_id = OrbitInput::get('merchant_id');
             $object_type = (array) OrbitInput::get('object_type', ['mall', 'tenant']);
+            $keywords = OrbitInput::get('keywords');
 
             $validator = Validator::make(
                 array(
                     'sortby' => $sort_by,
                     'account_type_id' => $account_type_id,
+                    'keywords' => $keywords,
                 ),
                 array(
                     'sortby' => 'in:registered_date,retailer_name,retailer_email,retailer_userid,retailer_description,retailerid,retailer_address1,retailer_address2,retailer_address3,retailer_cityid,retailer_city,retailer_countryid,retailer_country,retailer_phone,retailer_fax,retailer_status,retailer_currency,contact_person_firstname,merchant_name,retailer_floor,retailer_unit,retailer_external_object_id,retailer_created_at,retailer_updated_at',
                     'account_type_id' => 'orbit.empty.account_type',
+                    'keywords' => 'min:3',
                 ),
                 array(
                     'sortby.in' => Lang::get('validation.orbit.empty.retailer_sortby'),
@@ -2438,6 +2441,10 @@ class TenantAPIController extends ControllerAPI
                                     AND {$prefix}merchants.merchant_id = um.merchant_id
                                 GROUP BY um.merchant_id
                         )");
+                }
+
+                if (! empty($keywords)) {
+                    $tenants->where('merchants.name', 'like', "$keywords%");
                 }
             }
 
