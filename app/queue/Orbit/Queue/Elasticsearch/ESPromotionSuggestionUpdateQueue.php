@@ -1,4 +1,4 @@
-<?php namespace Orbit\Queue\ElasticSearch;
+<?php namespace Orbit\Queue\Elasticsearch;
 /**
  * Update Elasticsearch index when promotions has been updated.
  *
@@ -146,7 +146,7 @@ class ESPromotionSuggestionUpdateQueue
                 'begin_date' => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
                 'end_date' => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z'
             ];
-            
+
             foreach ($news->translations as $translationCollection) {
                 $suggest = array();
 
@@ -165,7 +165,7 @@ class ESPromotionSuggestionUpdateQueue
                         $input[] = substr($textName, 0, -1);
                     }
 
-                    $suggest = [ 
+                    $suggest = [
                         'input'   => $input,
                         'output'  => $translationCollection->news_name,
                         'payload' => ['id' => $news->news_id, 'type' => 'promotion']

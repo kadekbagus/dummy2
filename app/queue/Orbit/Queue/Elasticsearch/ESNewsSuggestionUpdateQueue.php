@@ -1,4 +1,4 @@
-<?php namespace Orbit\Queue\ElasticSearch;
+<?php namespace Orbit\Queue\Elasticsearch;
 /**
  * Update Elasticsearch news suggestion index when news has been updated.
  *

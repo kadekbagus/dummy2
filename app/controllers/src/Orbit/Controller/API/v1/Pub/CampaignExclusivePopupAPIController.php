@@ -101,7 +101,7 @@ class CampaignExclusivePopupAPIController extends PubControllerAPI
                 })
                 ->leftJoin('partner_translations as default_translation', function ($q) use ($prefix){
                     $q->on(DB::raw("default_translation.partner_id"), '=', 'partners.partner_id')
-                      ->where(DB::raw("default_translation.language_id"), '=', 'languages.language_id');
+                      ->on(DB::raw("default_translation.language_id"), '=', DB::raw("(select language_id from {$prefix}languages where name = {$prefix}partners.mobile_default_language)"));
                 })
                 ->where('object_partner.object_id', $campaign_id)
                 ->where('object_partner.object_type', $campaign_type)
