@@ -1,9 +1,15 @@
 <?php namespace Orbit\Database;
-
+/**
+ * @author Yudi Rahono
+ * @author William Shallum
+ * @author Rio Astamal <rio@dominopos.com>
+ * @desc Extends original model to support unique ID and some other goodies.
+ */
 use Illuminate\Database\Eloquent\Model;
 use Orbit\Database\Relation\BelongToManyWithObjectID;
 
-class ModelWithObjectID extends Model {
+class ModelWithObjectID extends Model
+{
     public $incrementing = false;
 
 
@@ -77,4 +83,16 @@ class ModelWithObjectID extends Model {
         return $this->belongsToManyObjectID($related, $table, $foreignKey, $otherKey, $pivotKey, $relation);
     }
 
+    /**
+     * Force the model to use write connection
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public static function onWriteConnection()
+    {
+        $instance = new static;
+        $instance->getConnection()->setReadPdo(NULL);
+
+        return $instance->newQuery();
+    }
 }

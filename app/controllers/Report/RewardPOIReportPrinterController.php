@@ -99,7 +99,7 @@ class RewardPOIReportPrinterController
                                                 DB::raw("IF({$prefix}merchants.object_type = 'mall', {$prefix}merchants.postal_code, omp.postal_code) as postal_code"),
                                                 DB::raw("x({$prefix}merchant_geofences.position) as latitude"),
                                                 DB::raw("y({$prefix}merchant_geofences.position) as longitude"),
-                                                DB::raw("IF({$prefix}merchants.object_type = 'mall', {$prefix}merchants.phone, omp.phone) as phone"),
+                                                DB::raw("IF({$prefix}merchants.object_type = 'tenant', {$prefix}merchants.phone, omp.phone) as phone"),
                                                 //Country
                                                 DB::raw("
                                                         (SELECT {$image}

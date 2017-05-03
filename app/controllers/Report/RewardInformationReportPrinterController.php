@@ -124,7 +124,7 @@ class RewardInformationReportPrinterController
                 // Get email and phone
                 ->join('users', 'users.user_id', '=', 'campaign_account.user_id')
                 // Get country base on pmp user
-                ->join('user_details', 'users.user_id', '=', 'campaign_account.user_id')
+                ->join('user_details', 'user_details.user_id', '=', 'campaign_account.user_id')
                 ->join('countries', 'user_details.country_id' , '=' , 'countries.country_id')
                 // get default content language
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')

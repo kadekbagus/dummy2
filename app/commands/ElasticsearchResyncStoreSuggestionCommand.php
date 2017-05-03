@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\FakeJob;
-use Orbit\Queue\ElasticSearch\ESStoreSuggestionUpdateQueue;
+use Orbit\Queue\Elasticsearch\ESStoreSuggestionUpdateQueue;
 
 class ElasticsearchResyncStoreSuggestionCommand extends Command {
 

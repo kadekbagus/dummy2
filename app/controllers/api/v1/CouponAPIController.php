@@ -2744,15 +2744,18 @@ class CouponAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+            $keywords = OrbitInput::get('keywords');
             $currentmall = OrbitInput::get('current_mall');
 
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
+                    'keywords' => $keywords,
                     'current_mall' => $currentmall
                 ),
                 array(
                     'sort_by' => 'in:registered_date,promotion_name,promotion_type,total_location,description,begin_date,end_date,status,is_permanent,rule_type,tenant_name,is_auto_issuance,display_discount_value,updated_at,coupon_status',
+                    'keywords' => 'min:3',
                     'current_mall' => 'orbit.empty.merchant'
                 ),
                 array(
@@ -2844,6 +2847,7 @@ class CouponAPIController extends ControllerAPI
                         WHERE ic.promotion_id = {$table_prefix}promotions.promotion_id
                             ) as coupon_codes"),
                     DB::raw("CASE
+                                WHEN is_3rd_party_promotion = 'Y' AND is_3rd_party_field_complete = 'N' THEN 'not_available'
                                 WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NOT NULL AND {$table_prefix}pre_exports.object_type = 'coupon' THEN 'in_progress'
                                 WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NULL THEN 'available'
                                 WHEN is_3rd_party_promotion = 'N' THEN 'not_available'
@@ -2920,6 +2924,12 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::get('promotion_name_like', function($promotionName) use ($coupons)
             {
                 $coupons->where('coupon_translations.promotion_name', 'like', "%$promotionName%");
+            });
+
+            // Filter coupon by keywords for advert link to
+            OrbitInput::get('keywords', function($keywords) use ($coupons)
+            {
+                $coupons->where('coupon_translations.promotion_name', 'like', "$keywords%");
             });
 
             // Filter coupon by promotion type
