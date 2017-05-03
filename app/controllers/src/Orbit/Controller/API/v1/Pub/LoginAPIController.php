@@ -516,30 +516,51 @@ class LoginAPIController extends IntermediateBaseController
 
     protected function getFacebookError($encoded_caller_url = NULL)
     {
+        $encoded_redirect_to_url = \Input::get('redirect_to_url', Config::get('orbit.shop.after_social_sign_in'));
         // error=access_denied&
         // error_code=200&
         // error_description=Permissions+error
         // &error_reason=user_denied
         // &state=28d0463ac4dc53131ae19826476bff74#_=_
-        $fbError = 'Unknown Error';
+        $fbError = 'access_denied';
+        $fbErrorMessage = 'Unknown Error';
+        $error = \Input::get('error', NULL);
+        if (! is_null($error)) {
+            $fbError = $error;
+        }
 
         $errorDesc = \Input::get('error_description', NULL);
         if (! is_null($errorDesc)) {
-            $fbError = $errorDesc;
+            $fbErrorMessage = $errorDesc;
         }
         $caller_url = Config::get('orbit.shop.after_social_sign_in');
         if (! empty($encoded_caller_url)) {
             $caller_url = $encoded_caller_url;
         }
-        $errorMessage = 'Facebook Error: ' . $fbError;
-        $parsed_caller_url = parse_url((string)$caller_url);
-        if (isset($parsed_caller_url['query'])) {
-            $caller_url .= '&error=' . $errorMessage;
-        } else {
-            $caller_url .= '?error=' . $errorMessage;
+
+        $_POST['plain'] = 'yes';
+        $errorParam = [
+            'error' => $fbError,
+            'errorMessage' => $fbErrorMessage,
+            'to_url' => $encoded_redirect_to_url
+        ];
+
+        $rewardId = \Input::get('reward_id', NULL);
+        $rewardType = \Input::get('reward_type', NULL);
+        if (! empty($rewardId)) {
+            $errorParam['reward_id'] = $rewardId;
+            $errorParam['reward_type'] = $rewardType;
         }
-        $_POST['plain'] = TRUE;
-        return Redirect::to($caller_url);
+
+        $queryString = http_build_query($errorParam);
+
+        $qmark = strpos($caller_url, '?');
+        if ($qmark === false) {
+            $queryString = '?' . $queryString;
+        } else {
+            $queryString = '&' . $queryString;
+        }
+        return Redirect::to($caller_url . $queryString);
     }
 
     public function getSocialLoginCallbackView()
@@ -625,14 +646,26 @@ class LoginAPIController extends IntermediateBaseController
         // so we double check it here
         if (empty($userEmail)) {
             $_POST['plain'] = 'yes';
-            $errorMessage = 'error=no_fb_email';
+            $errorParam = [
+                'error' => 'no_fb_email',
+                'errorMessage' => 'User not providing email address',
+                'to_url' => $encoded_redirect_to_url
+            ];
+
+            if (! empty($rewardId)) {
+                $errorParam['reward_id'] = $rewardId;
+                $errorParam['reward_type'] = $rewardType;
+            }
+
+            $queryString = http_build_query($errorParam);
+
             $qmark = strpos($encoded_caller_url, '?');
             if ($qmark === false) {
-                $errorMessage = '?' . $errorMessage;
+                $queryString = '?' . $queryString;
             } else {
-                $errorMessage = '&' . $errorMessage;
+                $queryString = '&' . $queryString;
             }
-            return Redirect::to($encoded_caller_url . $errorMessage);
+            return Redirect::to($encoded_caller_url . $queryString);
         }
 
         $data = [
