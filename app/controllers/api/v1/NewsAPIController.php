@@ -1630,12 +1630,16 @@ class NewsAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $sort_by = OrbitInput::get('sortby');
+            $keywords = OrbitInput::get('keywords');
+
             $validator = Validator::make(
                 array(
                     'sort_by' => $sort_by,
+                    'keywords' => $keywords,
                 ),
                 array(
                     'sort_by' => 'in:registered_date,news_name,object_type,total_location,description,begin_date,end_date,updated_at,status',
+                    'keywords' => 'min:3',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.news_sortby'),
@@ -1740,6 +1744,12 @@ class NewsAPIController extends ControllerAPI
             OrbitInput::get('news_name_like', function($newsname) use ($news)
             {
                 $news->where('news_translations.news_name', 'like', "%$newsname%");
+            });
+
+            // Filter news by keywords for advert link to
+            OrbitInput::get('keywords', function($keywords) use ($news)
+            {
+                $news->where('news_translations.news_name', 'like', "$keywords%");
             });
 
             // Filter news by object type
