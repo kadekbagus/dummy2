@@ -117,6 +117,13 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
 
     public function to($path, $extra = array(), $secure = null)
     {
+        if (isset($_POST['plain'])) {
+            if ($_POST['plain']) {
+                unset($_POST['plain']);
+                return $path;
+            }
+        }
+
         $original = parent::to($path, $extra, $secure);
 
         $sessionString = '';
@@ -180,13 +187,6 @@ class UrlGenerator extends \Illuminate\Routing\UrlGenerator
                 // ....
                 $insert_at = strlen($original);
                 $insert_qmark = empty($additional_query) ? false : true;
-            }
-        }
-
-        if (isset($_POST['plain'])) {
-            if ($_POST['plain']) {
-                unset($_POST['plain']);
-                return $path;
             }
         }
 

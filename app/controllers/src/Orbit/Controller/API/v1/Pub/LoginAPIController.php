@@ -620,6 +620,21 @@ class LoginAPIController extends IntermediateBaseController
         $gender = isset($user['gender']) ? $user['gender'] : '';
         $socialid = isset($user['id']) ? $user['id'] : '';
 
+        // There is a chance that user not 'grant' his email while approving our app
+        // or user sign up facebook using phone number via facebook mobile app
+        // so we double check it here
+        if (empty($userEmail)) {
+            $_POST['plain'] = 'yes';
+            $errorMessage = 'error=no_fb_email';
+            $qmark = strpos($encoded_caller_url, '?');
+            if ($qmark === false) {
+                $errorMessage = '?' . $errorMessage;
+            } else {
+                $errorMessage = '&' . $errorMessage;
+            }
+            return Redirect::to($encoded_caller_url . $errorMessage);
+        }
+
         $data = [
             'email' => $userEmail,
             'fname' => $firstName,
@@ -656,12 +671,6 @@ class LoginAPIController extends IntermediateBaseController
 
         // Merge the standard and extended permission (if any)
         $data = $extendedData + $data;
-
-        // There is a chance that user not 'grant' his email while approving our app
-        // so we double check it here
-        if (empty($userEmail)) {
-            return Redirect::to($encoded_caller_url . '/#/?error=no_email');
-        }
 
         $loggedInUser = $this->doAutoLogin($userEmail);
         if (! is_object($loggedInUser)) {
