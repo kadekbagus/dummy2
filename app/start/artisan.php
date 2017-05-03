@@ -224,6 +224,9 @@ Artisan::add(new MapVendorCategoriesCommand);
 // Update promotional-event link to tenant
 Artisan::add(new PromotionalEventUpdateLinkToTenant);
 
+// Update vendor gtm cities
+Artisan::add(new UpdateVendorGTMCitiesTable);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
