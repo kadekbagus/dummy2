@@ -7,7 +7,6 @@
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
-use \Config;
 use OrbitShop\API\v1\Helper\Generator;
 
 class GenerateSitemapCommand extends Command

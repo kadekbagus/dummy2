@@ -84,7 +84,9 @@ class ModelWithObjectID extends Model
     }
 
     /**
-     * Force the model to use write connection
+     * Force the model to use write connection.
+     * Downside: Once you execute this method the rest of the script will be using
+     * write connection. Use find below
      *
      * @return \Illuminate\Database\Eloquent\Builder
      */
@@ -94,5 +96,25 @@ class ModelWithObjectID extends Model
         $instance->getConnection()->setReadPdo(NULL);
 
         return $instance->newQuery();
+    }
+
+    /**
+     * @param  mixed  $id
+     * @param  array  $columns
+     * @return \Illuminate\Support\Collection|static
+     */
+    public static function findOnWriteConnection($id, $columns = array('*'))
+    {
+        $readPdo = static::resolveConnection()->getReadPdo();
+        static::resolveConnection()->setReadPdo(NULL);
+
+        $result = parent::find($id, $columns);
+
+        // Set the read PDO back to previous object so other object that
+        // uses the ConnectionResolver will not affected
+        static::resolveConnection()->setReadPdo($readPdo);
+        $readPdo = NULL;
+
+        return $result;
     }
 }

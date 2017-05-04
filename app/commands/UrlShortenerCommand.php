@@ -10,9 +10,6 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\Helper\Net\BitlyShortener;
 use Orbit\Helper\Security\Encrypter;
-use \Config;
-use \Coupon;
-use \IssuedCoupon;
 
 class UrlShortenerCommand extends Command
 {
