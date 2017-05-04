@@ -1,1 +1,1 @@
-{{{ $message1 }}}
+{{ $message1 }}
