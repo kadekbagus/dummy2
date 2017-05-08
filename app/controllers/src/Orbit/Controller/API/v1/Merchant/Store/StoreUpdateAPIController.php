@@ -103,8 +103,8 @@ class StoreUpdateAPIController extends ControllerAPI
 
             $validation_error_message = [
                 'orbit.mall.country' => 'Mall does not exist in your selected country',
-                'orbit.check_link.pmp_account' => 'Store is linked to PMP Account(s)',
-                'orbit.check_link.active_campaign' => 'Store is linked to active campaign(s)',
+                'orbit.check_link.pmp_account' => 'Store is linked to PMP Account',
+                'orbit.check_link.active_campaign' => 'Store is linked to active campaign',
             ];
 
             // unit make floor_id is required
