@@ -82,6 +82,25 @@ class StoreHelper
             return TRUE;
         });
 
+        // linked to pmp account
+        Validator::extend('orbit.check_link.pmp_account', function ($attribute, $value, $parameters) {
+            if ($value !== 'inactive') {
+                return TRUE;
+            }
+
+            $pmpAccount = User::leftJoin('user_merchant', 'user_merchant.user_id', '=', 'users.user_id')
+                        ->leftJoin('base_stores', 'base_stores.base_store_id', '=', 'user_merchant.merchant_id')
+                        ->where('users.status', 'active')
+                        ->where('base_store_id', $parameters[0])
+                        ->first();
+
+            if (is_object($pmpAccount)) {
+                return FALSE;
+            }
+
+            return TRUE;
+        });
+
         // exist base store
         Validator::extend('orbit.empty.base_store', function ($attribute, $value, $parameters) {
             $prefix = DB::getTablePrefix();
