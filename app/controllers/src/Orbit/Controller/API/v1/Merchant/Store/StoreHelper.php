@@ -16,6 +16,7 @@ use Mall;
 use Object;
 use Tenant;
 use UserVerificationNumber;
+use User;
 
 class StoreHelper
 {
