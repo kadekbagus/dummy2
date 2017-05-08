@@ -90,10 +90,14 @@ class StoreHelper
 
         // linked to pmp account
         Validator::extend('orbit.check_link.pmp_account', function ($attribute, $value, $parameters) {
-            $tenant = Tenant::where('merchant_id', $parameters[0])
+            $baseStore = BaseStore::where('base_store_id', $parameters[0])
                 ->first();
 
-            if ($tenant->status !== 'active' && $value !== 'inactive') {
+            if (! is_object($baseStore)) {
+                return TRUE;
+            }
+
+            if ($baseStore->status !== 'active' && $value !== 'inactive') {
                 return TRUE;
             }
 
@@ -114,6 +118,11 @@ class StoreHelper
         Validator::extend('orbit.check_link.active_campaign', function ($attribute, $value, $parameters) {
             $tenant = Tenant::where('merchant_id', $parameters[0])
                 ->first();
+
+            // the BaseStore is not synced yet
+            if (! is_object($tenant)) {
+                return TRUE;
+            }
 
             if ($tenant->status !== 'active' && $value !== 'inactive') {
                 return TRUE;
