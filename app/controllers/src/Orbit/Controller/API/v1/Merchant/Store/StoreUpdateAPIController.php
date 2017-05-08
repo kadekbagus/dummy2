@@ -97,12 +97,14 @@ class StoreUpdateAPIController extends ControllerAPI
                 'base_merchant_id'    => 'required|orbit.empty.base_merchant',
                 'mall_id'             => 'required|orbit.empty.mall|orbit.mall.country:' . $base_merchant_id,
                 'floor_id'            => 'orbit.empty.floor:' . $mall_id,
-                'status'              => 'in:active,inactive|orbit.check_link.pmp_account:' . $base_store_id,
+                'status'              => 'in:active,inactive|orbit.check_link.pmp_account:' . $base_store_id . '|orbit.check_link.active_campaign:' . $base_store_id,
                 'verification_number' => 'alpha_num|orbit.unique.verification_number:' . $mall_id . ',' . $base_store_id,
             ];
 
             $validation_error_message = [
-                'orbit.mall.country' => 'Mall does not exist in your selected country'
+                'orbit.mall.country' => 'Mall does not exist in your selected country',
+                'orbit.check_link.pmp_account' => 'Store is linked to PMP Account(s)',
+                'orbit.check_link.active_campaign' => 'Store is linked to active campaign(s)',
             ];
 
             // unit make floor_id is required
