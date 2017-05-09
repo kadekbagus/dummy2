@@ -97,18 +97,16 @@ class StoreHelper
                 return TRUE;
             }
 
-            if ($baseStore->status !== 'active' && $value !== 'inactive') {
-                return TRUE;
-            }
-
-            $pmpAccount = User::leftJoin('user_merchant', 'user_merchant.user_id', '=', 'users.user_id')
+            if ($baseStore->status === 'active' && $value === 'inactive') {
+                $pmpAccount = User::leftJoin('user_merchant', 'user_merchant.user_id', '=', 'users.user_id')
                         ->leftJoin('base_stores', 'base_stores.base_store_id', '=', 'user_merchant.merchant_id')
                         ->where('users.status', 'active')
                         ->where('base_store_id', $parameters[0])
                         ->first();
 
-            if (is_object($pmpAccount)) {
-                return FALSE;
+                if (is_object($pmpAccount)) {
+                    return FALSE;
+                }
             }
 
             return TRUE;
@@ -124,50 +122,48 @@ class StoreHelper
                 return TRUE;
             }
 
-            if ($tenant->status !== 'active' && $value !== 'inactive') {
-                return TRUE;
-            }
+            if ($tenant->status === 'active' && $value === 'inactive') {
+                $campaignLocation = CampaignLocation::select('parent_id')->where('merchant_id', '=', $tenant->merchant_id)->first();
 
-            $campaignLocation = CampaignLocation::select('parent_id')->where('merchant_id', '=', $tenant->merchant_id)->first();
-
-            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
-                ->where('merchants.merchant_id','=', $campaignLocation->parent_id)
-                ->first();
-
-            $timezoneName = $timezone->timezone_name;
-
-            $nowMall = Carbon::now($timezoneName);
-
-            $prefix = DB::getTablePrefix();
-
-            $coupon = CouponRetailer::leftjoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
-                    ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                    ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
-                    ->where('promotion_retailer.retailer_id', $tenant->merchant_id)
+                $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                    ->where('merchants.merchant_id','=', $campaignLocation->parent_id)
                     ->first();
 
-            if (is_object($coupon)) {
-                return FALSE;
-            }
+                $timezoneName = $timezone->timezone_name;
 
-            $couponRedeem = CouponRetailerRedeem::leftjoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer_redeem.promotion_id')
-                    ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                    ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
-                    ->where('promotion_retailer_redeem.retailer_id', $tenant->merchant_id)
-                    ->first();
+                $nowMall = Carbon::now($timezoneName);
 
-            if (is_object($couponRedeem)) {
-                return FALSE;
-            }
+                $prefix = DB::getTablePrefix();
 
-            $promotionNews = NewsMerchant::leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
-                        ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
-                        ->where('news_merchant.merchant_id', $tenant->merchant_id)
+                $coupon = CouponRetailer::leftjoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                        ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                        ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                        ->where('promotion_retailer.retailer_id', $tenant->merchant_id)
                         ->first();
 
-            if (is_object($promotionNews)) {
-                return FALSE;
+                if (is_object($coupon)) {
+                    return FALSE;
+                }
+
+                $couponRedeem = CouponRetailerRedeem::leftjoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer_redeem.promotion_id')
+                        ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                        ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                        ->where('promotion_retailer_redeem.retailer_id', $tenant->merchant_id)
+                        ->first();
+
+                if (is_object($couponRedeem)) {
+                    return FALSE;
+                }
+
+                $promotionNews = NewsMerchant::leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
+                            ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                            ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                            ->where('news_merchant.merchant_id', $tenant->merchant_id)
+                            ->first();
+
+                if (is_object($promotionNews)) {
+                    return FALSE;
+                }
             }
 
             return TRUE;
