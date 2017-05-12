@@ -866,7 +866,10 @@ class Activity extends Eloquent
         // Save to additional activities table
         Queue::push('Orbit\\Queue\\Activity\\AdditionalActivityQueue', [
             'activity_id' => $this->activity_id,
-            'datetime' => date('Y-m-d H:i:s')
+            'datetime' => date('Y-m-d H:i:s'),
+            'referer' => substr($referer, 0, 2048),
+            'orbit_referer' => substr($orbitReferer, 0, 2048),
+            'current_url' => Request::fullUrl()
         ]);
 
         $this->saveEmailToMailchimp();

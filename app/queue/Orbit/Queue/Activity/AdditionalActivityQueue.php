@@ -18,6 +18,9 @@ use WidgetGroupName;
 use WidgetClick;
 use ConnectionTime;
 use CampaignGroupName;
+use Orbit\Helper\Util\FilterParser;
+use Orbit\Helper\Util\CampaignSourceParser;
+use ExtendedActivity;
 
 class AdditionalActivityQueue
 {
@@ -63,6 +66,7 @@ class AdditionalActivityQueue
             $this->saveToMerchantPageView($activity);
             $this->saveToWidgetClick($activity);
             $this->saveToConnectionTime($activity);
+            $this->saveExtendedData($activity);
 
             $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
                     $job->getJobId(),
@@ -388,5 +392,42 @@ class AdditionalActivityQueue
         $object = CampaignGroupName::get()->keyBy('campaign_group_name')->get($groupName);
 
         return is_object($object) ? $object->campaign_group_name_id : '0';
+    }
+
+    /**
+     * Save to extended activity table
+     *
+     * @author Ahmad Anshori <ahmad@dominopos.com>
+     * @return void
+     */
+    protected function saveExtendedData($activity)
+    {
+        // Normal referer
+        $referer = $this->data['referer'];
+        $fullCurrentUrl = $this->data['current_url'];
+
+        $urlForTracking = [$referer, $fullCurrentUrl];
+        $campaignData = CampaignSourceParser::create()
+                            ->setUrls($urlForTracking)
+                            ->getCampaignSource();
+
+        $filterData = FilterParser::create()
+                            ->setUrls($urlForTracking)
+                            ->getFilters();
+
+        $extendedActivity = new ExtendedActivity();
+        $extendedActivity->activity_id = $activity->activity_id;
+        $extendedActivity->referrer = $referer;
+        $extendedActivity->utm_source = $campaignData['campaign_source'];
+        $extendedActivity->utm_medium = $campaignData['campaign_medium'];
+        $extendedActivity->utm_term = $campaignData['campaign_term'];
+        $extendedActivity->utm_content = $campaignData['campaign_content'];
+        $extendedActivity->utm_campaign = $campaignData['campaign_name'];
+        $extendedActivity->filter_country = $filterData['filter_country'];
+        $extendedActivity->filter_cities = $filterData['filter_cities'];
+        $extendedActivity->filter_keywords = $filterData['filter_keywords'];
+        $extendedActivity->filter_categories = $filterData['filter_categories'];
+        $extendedActivity->filter_partner = $filterData['filter_partner'];
+        $extendedActivity->save();
     }
 }

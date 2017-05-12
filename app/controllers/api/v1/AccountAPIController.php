@@ -644,7 +644,7 @@ class AccountAPIController extends ControllerAPI
                 'mobile_default_language'         => $row->campaignAccount->mobile_default_language,
                 'phone'                           => $row->campaignAccount->phone,
                 'disable_mobile_default_language' => $disable_mobile_default_language,
-                'tenant_count'                    => $tenantAtMallArray,
+                'tenant_count'       => $tenantAtMallArray,
 
                 // Taken from getUserCreatedAtAttribute() in the model
                 //                                                     What is this?
@@ -1861,6 +1861,7 @@ class AccountAPIController extends ControllerAPI
                                                 ->whereIn('merchants.object_type', $access)
                                                 ->whereIn('merchants.merchant_id', $value)
                                                 ->count();
+
                     if ($mall_tenant !== count($value)) {
                         return FALSE;
                     }

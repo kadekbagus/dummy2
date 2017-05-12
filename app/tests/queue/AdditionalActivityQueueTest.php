@@ -23,6 +23,8 @@ class AdditionalActivityQueueTest extends TestCase
         $this->job = $stubJob;
 
         $this->activity = Factory::create('Activity', ['group' => 'mobile-ci']);
+        $this->referer = 'https://www.facebook.com';
+        $this->currentUrl = 'https://www.gotomalls.com';
     }
 
     public function test_OK_object_instance()
@@ -48,7 +50,9 @@ class AdditionalActivityQueueTest extends TestCase
         $this->activity->object_id = 'Th30BjECt-Id';
         $this->activity->save();
         $data = [
-            'activity_id' => $this->activity->activity_id
+            'activity_id' => $this->activity->activity_id,
+            'referer' => $this->referer,
+            'current_url' => $this->currentUrl
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);
@@ -71,7 +75,9 @@ class AdditionalActivityQueueTest extends TestCase
         $this->activity->object_id = 'Th30BjECt-Id';
         $this->activity->save();
         $data = [
-            'activity_id' => $this->activity->activity_id
+            'activity_id' => $this->activity->activity_id,
+            'referer' => $this->referer,
+            'current_url' => $this->currentUrl
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);
@@ -94,7 +100,9 @@ class AdditionalActivityQueueTest extends TestCase
         $this->activity->object_id = 'Th30BjECt-Id';
         $this->activity->save();
         $data = [
-            'activity_id' => $this->activity->activity_id
+            'activity_id' => $this->activity->activity_id,
+            'referer' => $this->referer,
+            'current_url' => $this->currentUrl
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);
@@ -117,7 +125,9 @@ class AdditionalActivityQueueTest extends TestCase
         $this->activity->object_id = 'Th30BjECt-Id';
         $this->activity->save();
         $data = [
-            'activity_id' => $this->activity->activity_id
+            'activity_id' => $this->activity->activity_id,
+            'referer' => $this->referer,
+            'current_url' => $this->currentUrl
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);
@@ -140,7 +150,9 @@ class AdditionalActivityQueueTest extends TestCase
         $this->activity->object_id = 'Th30BjECt-Id';
         $this->activity->save();
         $data = [
-            'activity_id' => $this->activity->activity_id
+            'activity_id' => $this->activity->activity_id,
+            'referer' => $this->referer,
+            'current_url' => $this->currentUrl
         ];
         $queueObj = new AdditionalActivityQueue();
         $response = $queueObj->fire($this->job, $data);
@@ -164,6 +176,8 @@ class AdditionalActivityQueueTest extends TestCase
         $this->activity->save();
         $data = [
             'activity_id' => $this->activity->activity_id,
+            'referer' => $this->referer,
+            'current_url' => $this->currentUrl,
             'datetime' => date('Y-m-d H:i:s')
         ];
         $queueObj = new AdditionalActivityQueue();
@@ -178,5 +192,44 @@ class AdditionalActivityQueueTest extends TestCase
 
         $connectionTime = ConnectionTime::where('session_id', $this->activity->session_id)->first();
         $this->assertTrue(is_object($connectionTime));
+    }
+
+    public function test_OK_saveExtendedData()
+    {
+        $this->activity->activity_name = 'view_news_main_page';
+        $this->activity->activity_name_long = 'View News Main Page';
+        $this->activity->activity_name_long = 'View News Main Page';
+        $this->activity->session_id = '53sS10N-Id';
+        $this->activity->save();
+        $query = [
+            'country' => 'Indonesia',
+            'cities' => ['Bali', 'Surabaya'],
+            'keyword' => 'Shoes',
+            'category_id' => ['C4t3G0Ry_Id'],
+            'partner_id' => 'P4rtN3R_Id',
+        ];
+
+        $queryString = http_build_query($query);
+
+        $this->currentUrl = 'http://www.gotomalls.com/app/v1/news-list?' . $queryString;
+
+        $data = [
+            'activity_id' => $this->activity->activity_id,
+            'referer' => $this->referer,
+            'current_url' => $this->currentUrl,
+            'datetime' => date('Y-m-d H:i:s')
+        ];
+        $queueObj = new AdditionalActivityQueue();
+        $response = $queueObj->fire($this->job, $data);
+        $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
+                    $this->job->getJobId(),
+                    $this->activity->activity_id,
+                    $this->activity->activity_name_long);
+
+        $this->assertSame('ok', $response['status']);
+        $this->assertSame($message, $response['message']);
+
+        $extendedActivity = ExtendedActivity::where('activity_id', $this->activity->activity_id)->first();
+        $this->assertTrue(is_object($extendedActivity));
     }
 }

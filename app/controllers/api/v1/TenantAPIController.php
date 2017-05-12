@@ -2442,6 +2442,10 @@ class TenantAPIController extends ControllerAPI
                                 GROUP BY um.merchant_id
                         )");
                 }
+
+                if (! empty($keywords)) {
+                    $tenants->where('merchants.name', 'like', "$keywords%");
+                }
             }
 
             if (! empty($keywords)) {
