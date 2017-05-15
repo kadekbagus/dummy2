@@ -14,7 +14,6 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class SeoTextAPIController extends ControllerAPI
 {
-    protected $viewSeoTextRoles = ['super admin', 'mall admin', 'mall owner'];
     protected $modifySeoTextRoles = ['super admin', 'mall admin', 'mall owner'];
 
     /**

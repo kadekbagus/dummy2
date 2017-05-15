@@ -169,7 +169,22 @@ class ESCouponUpdateQueue
                 $advertIds[] = $advertCollection->advert_id;
             }
 
+            // get translation from default lang
+            $defaultTranslation = array();
+            foreach ($coupon->translations as $defTranslation) {
+                if ($defTranslation->name === $coupon->mobile_default_language) {
+                    $defaultTranslation = array(
+                        'name'          => $defTranslation->promotion_name,
+                        'description'   => $defTranslation->description,
+                        'language_id'   => $defTranslation->merchant_language_id,
+                        'language_code' => $defTranslation->name,
+                        'image_url'     => NULL
+                    );
+                }
+            }
+
             $translations = array();
+            $translationBody['name_default'] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $defaultTranslation['name']));
             foreach ($coupon->translations as $translationCollection) {
                 $translation = array(
                     'name' => $translationCollection->promotion_name,
@@ -184,6 +199,21 @@ class ESCouponUpdateQueue
                     $translation['image_cdn_url'] = $media->cdn_url;
                 }
                 $translations[] = $translation;
+
+                // for "sort A-Z" feature
+                $couponName = $translationCollection->promotion_name;
+                $couponDesc = $translationCollection->description;
+
+                //if name and description is empty fill with name and desc from default translation
+                if (empty($translationCollection->promotion_name) || $translationCollection->promotion_name === '') {
+                    $couponName = $defaultTranslation['name'];
+                }
+
+                if (empty($translationCollection->description) || $translationCollection->description === '') {
+                    $couponDesc = $defaultTranslation['description'];
+                }
+
+                $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $couponName));
             }
 
             $body = [
@@ -210,15 +240,20 @@ class ESCouponUpdateQueue
                 'is_exclusive'    => ! empty($coupon->is_exclusive) ? $coupon->is_exclusive : 'N',
             ];
 
+            $body = array_merge($body, $translationBody);
+
             if ($response_search['hits']['total'] > 0) {
-                $params['body'] = [
-                    'doc' => $body
+                $params = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.coupons.type'),
+                    'id' => $response_search['hits']['hits'][0]['_id']
                 ];
-                $response = $this->poster->update($params);
-            } else {
-                $params['body'] = $body;
-                $response = $this->poster->index($params);
+
+                $response = $this->poster->delete($params);
             }
+
+            $params['body'] = $body;
+            $response = $this->poster->index($params);
 
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
