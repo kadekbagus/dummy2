@@ -15,6 +15,7 @@ use Str;
 use App;
 use Lang;
 use UserReward;
+use Orbit\Helper\Util\Parsedown;
 
 class PromotionalEventMail
 {
@@ -85,11 +86,14 @@ class PromotionalEventMail
 
         $arr_search = ['{{USER_FULL_NAME}}', '{{USER_EMAIL}}', '{{USER_CODE}}'];
         $arr_replace = [$user_full_name, $user->user_email, $userReward->reward_code];
-        $message1 = str_replace($arr_search, $arr_replace, $campaign->email_content);
+        $message_content = str_replace($arr_search, $arr_replace, $campaign->email_content);
+
+        $parsedown = new Parsedown(); //markdown
+        $message = $parsedown->text($message_content);
 
         $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['languageId'];
 
-        $dataView['message1'] = $message1;
+        $dataView['message1'] = $message;
         $dataView['email'] = $user->user_email;
         $dataView['campaignName'] = $campaign->news_name;
         $dataView['linkMalls']      = sprintf($baseLinkUrl, 'malls');
