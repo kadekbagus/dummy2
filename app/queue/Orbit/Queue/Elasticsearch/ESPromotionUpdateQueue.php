@@ -162,7 +162,22 @@ class ESPromotionUpdateQueue
                 $advertIds[] = $advertCollection->advert_id;
             }
 
+            // get translation from default lang
+            $defaultTranslation = array();
+            foreach ($news->translations as $defTranslation) {
+                if ($defTranslation->name === $news->mobile_default_language) {
+                    $defaultTranslation = array(
+                        'name'          => $defTranslation->news_name,
+                        'description'   => $defTranslation->description,
+                        'language_id'   => $defTranslation->merchant_language_id,
+                        'language_code' => $defTranslation->name,
+                        'image_url'     => NULL
+                    );
+                }
+            }
+
             $translations = array();
+            $translationBody['name_default'] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $defaultTranslation['name']));
             foreach ($news->translations as $translationCollection) {
                 $translation = array(
                     'name'          => $translationCollection->news_name,
@@ -177,6 +192,21 @@ class ESPromotionUpdateQueue
                     $translation['image_cdn_url'] = $media->cdn_url;
                 }
                 $translations[] = $translation;
+
+                // for "sort A-Z" feature
+                $newsName = $translationCollection->news_name;
+                $newsDesc = $translationCollection->description;
+
+                //if name and description is empty fill with name and desc from default translation
+                if (empty($translationCollection->news_name) || $translationCollection->news_name === '') {
+                    $newsName = $defaultTranslation['name'];
+                }
+
+                if (empty($translationCollection->description) || $translationCollection->description === '') {
+                    $newsDesc = $defaultTranslation['description'];
+                }
+
+                $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $newsName));
             }
 
             $body = [
@@ -204,15 +234,20 @@ class ESPromotionUpdateQueue
                 'is_exclusive'    => ! empty($news->is_exclusive) ? $news->is_exclusive : 'N',
             ];
 
+            $body = array_merge($body, $translationBody);
+
             if ($response_search['hits']['total'] > 0) {
-                $params['body'] = [
-                    'doc' => $body
+                $params = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.promotions.type'),
+                    'id' => $response_search['hits']['hits'][0]['_id']
                 ];
-                $response = $this->poster->update($params);
-            } else {
-                $params['body'] = $body;
-                $response = $this->poster->index($params);
+
+                $response = $this->poster->delete($params);
             }
+
+            $params['body'] = $body;
+            $response = $this->poster->index($params);
 
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
