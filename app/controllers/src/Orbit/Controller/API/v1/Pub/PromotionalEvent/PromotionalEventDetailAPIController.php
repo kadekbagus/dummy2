@@ -245,7 +245,9 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                         break;
 
                     case 'reward_ok':
+                        DB::beginTransaction();
                         $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
+                        DB::commit();
                         break;
 
                     case 'inactive_user':
