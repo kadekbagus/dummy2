@@ -16,6 +16,12 @@ use Mall;
 use Object;
 use Tenant;
 use UserVerificationNumber;
+use User;
+use \Carbon\Carbon;
+use CampaignLocation;
+use CouponRetailer;
+use CouponRetailerRedeem;
+use NewsMerchant;
 
 class StoreHelper
 {
@@ -79,6 +85,87 @@ class StoreHelper
             }
 
             $this->valid_base_merchant = $base_merchant;
+            return TRUE;
+        });
+
+        // linked to pmp account
+        Validator::extend('orbit.check_link.pmp_account', function ($attribute, $value, $parameters) {
+            $baseStore = BaseStore::where('base_store_id', $parameters[0])
+                ->first();
+
+            if (! is_object($baseStore)) {
+                return TRUE;
+            }
+
+            if ($baseStore->status === 'active' && $value === 'inactive') {
+                $pmpAccount = User::leftJoin('user_merchant', 'user_merchant.user_id', '=', 'users.user_id')
+                        ->leftJoin('base_stores', 'base_stores.base_store_id', '=', 'user_merchant.merchant_id')
+                        ->where('users.status', 'active')
+                        ->where('base_store_id', $parameters[0])
+                        ->first();
+
+                if (is_object($pmpAccount)) {
+                    return FALSE;
+                }
+            }
+
+            return TRUE;
+        });
+
+        // linked to active campaign
+        Validator::extend('orbit.check_link.active_campaign', function ($attribute, $value, $parameters) {
+            $tenant = Tenant::where('merchant_id', $parameters[0])
+                ->first();
+
+            // the BaseStore is not synced yet
+            if (! is_object($tenant)) {
+                return TRUE;
+            }
+
+            if ($tenant->status === 'active' && $value === 'inactive') {
+                $campaignLocation = CampaignLocation::select('parent_id')->where('merchant_id', '=', $tenant->merchant_id)->first();
+
+                $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                    ->where('merchants.merchant_id','=', $campaignLocation->parent_id)
+                    ->first();
+
+                $timezoneName = $timezone->timezone_name;
+
+                $nowMall = Carbon::now($timezoneName);
+
+                $prefix = DB::getTablePrefix();
+
+                $coupon = CouponRetailer::leftjoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer.promotion_id')
+                        ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                        ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                        ->where('promotion_retailer.retailer_id', $tenant->merchant_id)
+                        ->first();
+
+                if (is_object($coupon)) {
+                    return FALSE;
+                }
+
+                $couponRedeem = CouponRetailerRedeem::leftjoin('promotions', 'promotions.promotion_id', '=', 'promotion_retailer_redeem.promotion_id')
+                        ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                        ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                        ->where('promotion_retailer_redeem.retailer_id', $tenant->merchant_id)
+                        ->first();
+
+                if (is_object($couponRedeem)) {
+                    return FALSE;
+                }
+
+                $promotionNews = NewsMerchant::leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
+                            ->leftjoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                            ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                            ->where('news_merchant.merchant_id', $tenant->merchant_id)
+                            ->first();
+
+                if (is_object($promotionNews)) {
+                    return FALSE;
+                }
+            }
+
             return TRUE;
         });
 
@@ -244,5 +331,10 @@ class StoreHelper
     public function getValidFloor()
     {
         return $this->valid_floor;
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
