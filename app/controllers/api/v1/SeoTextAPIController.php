@@ -280,7 +280,7 @@ class SeoTextAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $seo_texts = Page::select('pages_id', 'title', 'content as description', 'object_type', 'language')
+            $seo_texts = Page::select('pages_id', 'title', 'content as description', 'object_type', 'language', 'status')
                               ->where('object_type', 'like', '%seo_%');
 
             OrbitInput::get('status', function($status) use ($seo_texts) {
