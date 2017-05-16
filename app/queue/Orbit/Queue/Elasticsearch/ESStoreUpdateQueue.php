@@ -8,6 +8,8 @@ use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use DB;
 use Tenant;
+use BaseMerchant;
+use TotalObjectPageView;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
@@ -226,6 +228,34 @@ class ESStoreUpdateQueue
                 $tenantDetails[] = $tenantDetail;
             }
 
+            // Query for get total page view per location id
+            $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
+                                ->where('base_merchants.name' , $storeName)
+                                ->where('countries.name', $countryName)
+                                ->first();
+
+            $mallPageViews = array();
+            $gtmPageViews = 0;
+
+            if (! empty($baseMerchant)) {
+                $totalObjectPageViews = TotalObjectPageView::where('object_id', $baseMerchant->base_merchant_id)
+                                            ->where('object_type', 'store')
+                                            ->get();
+
+                foreach($totalObjectPageViews as $pageView) {
+                    if ($pageView->location_id != '0') {
+                        $mallPageView = array(
+                            "total_views" => $pageView->total_view,
+                            "location_id" => $pageView->location_id
+                        );
+                    } else {
+                        $gtmPageViews = $pageView->total_view;
+                    }
+
+                    $mallPageViews[] = $mallPageView;
+                }
+            }
+
             $body = [
                 'merchant_id' => $store[0]->merchant_id,
                 'name' => $store[0]->name,
@@ -242,7 +272,9 @@ class ESStoreUpdateQueue
                 'updated_at' => date('Y-m-d', strtotime($store[0]->updated_at)) . 'T' . date('H:i:s', strtotime($store[0]->updated_at)) . 'Z',
                 'tenant_detail_count' => count($store),
                 'translation' => $translations,
-                'tenant_detail' => $tenantDetails
+                'tenant_detail' => $tenantDetails,
+                'gtm_page_views' => $gtmPageViews,
+                'mall_page_views' => $mallPageViews
             ];
 
             $params['body'] = $body;
