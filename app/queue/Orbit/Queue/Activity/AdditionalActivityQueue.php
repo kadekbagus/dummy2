@@ -168,6 +168,7 @@ class AdditionalActivityQueue
                     $new_total_object_page_view->object_id = $activity->object_id;
                     $new_total_object_page_view->location_id = $activity->location_id;
                     $new_total_object_page_view->total_view = 1;
+                    $new_total_object_page_view->save();
                 }
 
                 // update elastic search
