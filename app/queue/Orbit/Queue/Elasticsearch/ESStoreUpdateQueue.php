@@ -230,28 +230,30 @@ class ESStoreUpdateQueue
 
             // Query for get total page view per location id
             $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
-                                ->where('base_merchants.status', '=', 'active')
                                 ->where('base_merchants.name' , $storeName)
                                 ->where('countries.name', $countryName)
                                 ->first();
 
-            $totalObjectPageViews = TotalObjectPageView::where('object_id', $baseMerchant->base_merchant_id)
-                                        ->where('object_type', 'store')
-                                        ->get();
-
             $mallPageViews = array();
             $gtmPageViews = 0;
-            foreach($totalObjectPageViews as $pageView) {
-                if ($pageView->location_id != '0') {
-                    $mallPageView = array(
-                        "total_views" => $pageView->total_view,
-                        "location_id" => $pageView->location_id
-                    );
-                } else {
-                    $gtmPageViews = $pageView->total_view;
-                }
 
-                $mallPageViews[] = $mallPageView;
+            if (! empty($baseMerchant)) {
+                $totalObjectPageViews = TotalObjectPageView::where('object_id', $baseMerchant->base_merchant_id)
+                                            ->where('object_type', 'store')
+                                            ->get();
+
+                foreach($totalObjectPageViews as $pageView) {
+                    if ($pageView->location_id != '0') {
+                        $mallPageView = array(
+                            "total_views" => $pageView->total_view,
+                            "location_id" => $pageView->location_id
+                        );
+                    } else {
+                        $gtmPageViews = $pageView->total_view;
+                    }
+
+                    $mallPageViews[] = $mallPageView;
+                }
             }
 
             $body = [
