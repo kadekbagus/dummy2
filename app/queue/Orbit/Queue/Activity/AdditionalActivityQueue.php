@@ -66,7 +66,9 @@ class AdditionalActivityQueue
             $this->saveToMerchantPageView($activity);
             $this->saveToWidgetClick($activity);
             $this->saveToConnectionTime($activity);
-            $this->saveExtendedData($activity);
+            // $this->saveExtendedData($activity);
+
+            $job->delete();
 
             $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
                     $job->getJobId(),
