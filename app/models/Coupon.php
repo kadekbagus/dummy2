@@ -103,6 +103,11 @@ class Coupon extends Eloquent
         return $this->belongsTo('CampaignStatus', 'campaign_status_id', 'campaign_status_id');
     }
 
+    public function total_page_views()
+    {
+        return $this->hasMany('TotalObjectPageView', 'object_id', 'promotion_id');
+    }
+
     public function adverts()
     {
         return $this->hasMany('Advert', 'link_object_id', 'promotion_id')

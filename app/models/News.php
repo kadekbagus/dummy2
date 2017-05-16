@@ -170,6 +170,11 @@ class News extends Eloquent
         return $this->belongsTo('CampaignStatus', 'campaign_status_id', 'campaign_status_id');
     }
 
+    public function total_page_views()
+    {
+        return $this->hasMany('TotalObjectPageView', 'object_id', 'news_id');
+    }
+
     public function scopeIsNews($query)
     {
         return $query->where('object_type', 'news');
