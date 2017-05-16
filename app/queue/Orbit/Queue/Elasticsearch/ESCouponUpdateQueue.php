@@ -55,7 +55,8 @@ class ESCouponUpdateQueue
                             'campaignLocations.categories',
                             'esCampaignLocations.geofence',
                             'campaignObjectPartners',
-                            'adverts.media_orig'
+                            'adverts.media_orig',
+                            'total_page_views'
                         )
                     ->with (['keywords' => function ($q) {
                                 $q->groupBy('keyword');
@@ -216,6 +217,20 @@ class ESCouponUpdateQueue
                 $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $couponName));
             }
 
+            $total_view_on_gtm = 0;
+            $total_view_on_mall = array();
+            foreach ($coupon->total_page_views as $key => $total_page_view) {
+                if ($total_page_view->location_id != '0') {
+                    $total_views = array(
+                        'total_views' => $total_page_view->total_view,
+                        'location_id' => $total_page_view->location_id
+                    );
+                    $total_view_on_mall[] = $total_views;
+                } else {
+                    $total_view_on_gtm = $total_page_view->total_view;
+                }
+            }
+
             $body = [
                 'promotion_id'    => $coupon->promotion_id,
                 'name'            => $coupon->promotion_name,
@@ -238,6 +253,8 @@ class ESCouponUpdateQueue
                 'advert_ids'      => $advertIds,
                 'link_to_tenant'  => $linkToTenants,
                 'is_exclusive'    => ! empty($coupon->is_exclusive) ? $coupon->is_exclusive : 'N',
+                'gtm_page_views'   => $total_view_on_gtm,
+                'mall_page_views'  => $total_view_on_mall,
             ];
 
             $body = array_merge($body, $translationBody);
