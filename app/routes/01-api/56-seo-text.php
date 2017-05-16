@@ -12,6 +12,14 @@ Route::post('/api/v1/seo-text/new', function()
 });
 
 /**
+ * Update seo text
+ */
+Route::post('/api/v1/seo-text/update', function()
+{
+    return SeoTextAPIController::create()->postUpdateSeoText();
+});
+
+/**
  * Get search seo text
  */
 Route::get('/api/v1/seo-text/list', function()
