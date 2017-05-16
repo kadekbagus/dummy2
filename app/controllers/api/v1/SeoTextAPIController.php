@@ -54,10 +54,12 @@ class SeoTextAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'object_type' => $object_type,
+                    'translations' => $translations,
                     'status' => $status,
                 ),
                 array(
                     'object_type' => 'required|in:seo_promotion_list,seo_coupon_list,seo_event_list,seo_store_list,seo_mall_list,seo_homepage',
+                    'translations' => 'required',
                     'status' => 'in:active,inactive',
                 )
             );
@@ -163,10 +165,12 @@ class SeoTextAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'object_type' => $object_type,
+                    'translations' => $translations,
                     'status' => $status,
                 ),
                 array(
                     'object_type' => 'required|in:seo_promotion_list,seo_coupon_list,seo_event_list,seo_store_list,seo_mall_list,seo_homepage',
+                    'translations' => 'required',
                     'status' => 'in:active,inactive',
                 )
             );
