@@ -193,10 +193,12 @@ class AdditionalActivityQueue
                         ->where('merchant_id', $activity->object_id)
                         ->first();
 
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
-                        'name'    => $store->name,
-                        'country' => $store->country,
-                    ]);
+                    if (! empty($store)) {
+                        Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
+                            'name'    => $store->name,
+                            'country' => $store->country,
+                        ]);
+                    }
                 }
                 break;
         }
