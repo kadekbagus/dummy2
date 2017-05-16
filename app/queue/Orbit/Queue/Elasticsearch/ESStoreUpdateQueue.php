@@ -230,7 +230,6 @@ class ESStoreUpdateQueue
 
             // Query for get total page view per location id
             $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
-                                ->where('base_merchants.status', '=', 'active')
                                 ->where('base_merchants.name' , $storeName)
                                 ->where('countries.name', $countryName)
                                 ->first();
