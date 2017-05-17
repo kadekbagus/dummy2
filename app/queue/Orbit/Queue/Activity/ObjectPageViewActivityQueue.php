@@ -12,6 +12,7 @@ use Orbit\Helper\Util\JobBurier;
 use ObjectPageView;
 use TotalObjectPageView;
 use Exception;
+use Tenant;
 use Orbit\FakeJob;
 use Orbit\Queue\Elasticsearch\ESCouponUpdateQueue;
 use Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue;
@@ -82,22 +83,26 @@ class ObjectPageViewActivityQueue
                                                 ->where('location_id', $activity->location_id)
                                                 ->lockForUpdate()
                                                 ->first();
-                    if (! empty($total_object_page_view)) {
-                        // update total_object_page_views
-                        $total_object_page_view->total_view = $total_object_page_view->total_view + 1;
-                        $total_object_page_view->save();
-                    } else {
-                        // insert to total_object_page_views
-                        $new_total_object_page_view = new TotalObjectPageView();
-                        $new_total_object_page_view->object_type = strtolower($activity->object_name);
-                        $new_total_object_page_view->object_id = $activity->object_id;
-                        $new_total_object_page_view->location_id = $activity->location_id;
-                        $new_total_object_page_view->total_view = 1;
-                        $new_total_object_page_view->save();
+
+                    if (! is_object($total_object_page_view)) {
+                        $total_object_page_view = new TotalObjectPageView();
+                        $total_object_page_view->total_view = 0;
                     }
 
+                    $total_object_page_view->object_type = strtolower($activity->object_name);
+                    $total_object_page_view->object_id = $activity->object_id;
+                    $total_object_page_view->location_id = $activity->location_id;
+                    $total_object_page_view->total_view = $total_object_page_view->total_view + 1;
+                    $total_object_page_view->save();
+
                     // update elastic search
-                    $job = new FakeJob();
+                    $fakeJob = new FakeJob();
+                    $data = [];
+                    $message = sprintf('[Job ID: `%s`] Object Page View Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
+                            $fakeJob->getJobId(),
+                            $activity->activity_id,
+                            $activity->activity_name_long);
+
                     if ($activity->object_name === 'Coupon') {
                         $data = [
                             'coupon_id' => $activity->object_id
@@ -130,20 +135,25 @@ class ObjectPageViewActivityQueue
                         if (! empty($store)) {
                             $data = [
                                 'name'    => $store->name,
-                                'country' => $store->country,
+                                'country' => $store->country
                             ];
 
                             $esQueue = new ESStoreUpdateQueue();
+                        } else {
+                            $message = sprintf('[Job ID: `%s`] Tenant Not Found, Object Page View Activity Queue; Status: Fail; Activity ID: %s; Activity Name: %s',
+                                    $fakeJob->getJobId(),
+                                    $activity->activity_id,
+                                    $activity->activity_name_long);
                         }
                     }
-                    $response = $esQueue->fire($job, $data);
+
+                    if (! empty($data)) {
+                        $response = $esQueue->fire($fakeJob, $data);
+                    }
                     break;
             }
 
-            $message = sprintf('[Job ID: `%s`] Object Page View Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
-                    $job->getJobId(),
-                    $activity->activity_id,
-                    $activity->activity_name_long);
+            $fakeJob->delete();
 
             return [
                 'status' => 'ok',

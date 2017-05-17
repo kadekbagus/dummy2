@@ -872,6 +872,11 @@ class Activity extends Eloquent
             'current_url' => Request::fullUrl()
         ]);
 
+        // Save to object page views table
+        Queue::push('Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue', [
+            'activity_id' => $this->activity_id
+        ]);
+
         $this->saveEmailToMailchimp();
 
         if ($this->group === 'mobile-ci') {
@@ -1026,41 +1031,6 @@ class Activity extends Eloquent
     }
 
     /**
-     * Save to campaign_page_views table
-     *
-     * @author Rio Astamal <rio@dominopos.com>
-     * @return void
-     */
-    protected function saveToCampaignPageViews()
-    {
-        if (empty($this->object_id)) {
-            return;
-        }
-        // Save also the activity to particular `campaign_xyz` table
-        switch ($this->activity_name) {
-            case 'view_promotion':
-            case 'view_coupon':
-            case 'view_lucky_draw':
-            case 'view_event':
-            case 'view_news':
-            case 'view_landing_page_coupon_detail':
-            case 'view_landing_page_news_detail':
-            case 'view_landing_page_promotion_detail':
-            case 'view_mall_event_detail':
-            case 'view_mall_promotion_detail':
-            case 'view_mall_coupon_detail':
-                $campaign = new CampaignPageView();
-                $campaign->campaign_id = $this->object_id;
-                $campaign->user_id = $this->user_id;
-                $campaign->location_id = ! empty($this->location_id) ? $this->location_id : 0;
-                $campaign->activity_id = $this->activity_id;
-                $campaign->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
-                $campaign->save();
-                break;
-        }
-    }
-
-    /**
      * Check, Create and Update Connected Now.
      *
      * @author Irianto <irianto@dominopos.com>
@@ -1115,128 +1085,6 @@ class Activity extends Eloquent
     }
 
     /**
-     * Save to merchant_page_views table
-     *
-     * @author Rio Astamal <rio@dominopos.com>
-     * @return void
-     */
-    protected function saveToMerchantPageView()
-    {
-        $proceed = $this->activity_name === 'view_retailer' && $this->activity_name_long == 'View Tenant Detail';
-        if (! $proceed) {
-            return;
-        }
-
-        // Save also the activity to particular `campaign_xyz` table
-        $pageview = new MerchantPageView();
-        $pageview->merchant_id = $this->object_id;
-        $pageview->merchant_type = strtolower($this->object_name);
-        $pageview->user_id = $this->user_id;
-        $pageview->location_id = $this->location_id;
-        $pageview->activity_id = $this->activity_id;
-        $pageview->save();
-    }
-
-    /**
-     * Save to campaign_popup_views table
-     *
-     * @author Ahmad <ahmad@dominopos.com>
-     * @return void
-     */
-    protected function saveToCampaignPopUpView()
-    {
-        $activity_name_long_array = array(
-            'View Coupon Pop Up'       => 'View Coupon Pop Up',
-            'View Promotion Pop Up'    => 'View Promotion Pop Up',
-            'View News Pop Up'         => 'View News Pop Up'
-        );
-
-        $proceed = in_array($this->activity_name_long, $activity_name_long_array);
-        if (! $proceed) {
-            return;
-        }
-
-        // Save also the activity to particular `campaign_xyz` table
-        $popupview = new CampaignPopupView();
-        $popupview->campaign_id = $this->object_id;
-        $popupview->user_id = $this->user_id;
-        $popupview->location_id = $this->location_id;
-        $popupview->activity_id = $this->activity_id;
-        $popupview->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
-        $popupview->save();
-    }
-
-    /**
-     * Save to campaign_popup_views table
-     *
-     * @author Ahmad <ahmad@dominopos.com>
-     * @return void
-     */
-    protected function saveToCampaignPopUpClick()
-    {
-        $activity_name_long_array = array(
-            'Click Coupon Pop Up'          => 'Click Coupon Pop Up',
-            'Click Promotion Pop Up'       => 'Click Promotion Pop Up',
-            'Click News Pop Up'            => 'Click News Pop Up',
-            'Click mall featured carousel' => 'Click mall featured carousel',
-        );
-
-        $proceed = in_array($this->activity_name_long, $activity_name_long_array);
-        if (! $proceed) {
-            return;
-        }
-
-        $location_id = $this->location_id;
-        if ($this->activity_name === 'click_mall_featured_carousel') {
-            $location_id = 0;
-        }
-
-        // Save also the activity to particular `campaign_xyz` table
-        $popupview = new CampaignClicks();
-        $popupview->campaign_id = $this->object_id;
-        $popupview->user_id = $this->user_id;
-        $popupview->location_id = $location_id;
-        $popupview->activity_id = $this->activity_id;
-        $popupview->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName();
-        $popupview->save();
-    }
-
-    /**
-     * Save to `connection_times` table. Only succesful operation (no failed response) recorded.
-     *
-     * @author Rio Astamal <rio@dominopos.com>
-     * @return void
-     */
-    protected function saveToConnectionTime()
-    {
-        $proceed = ($this->activity_name === 'login_ok' || $this->activity_name === 'logout_ok') && $this->session_id;
-        if (! $proceed) {
-            return;
-        }
-
-        // Save also the activity to particular `campaign_xyz` table
-        $connection = ConnectionTime::where('session_id', $this->session_id)->where('location_id', $this->location_id)->first();
-        if (! is_object($connection)) {
-            $connection = new ConnectionTime();
-        }
-
-        $connection->session_id = $this->session_id;
-        $connection->user_id = $this->user_id;
-        $connection->location_id = $this->location_id;
-
-        $now = date('Y-m-d H:i:s');
-        if ($this->activity_name === 'login_ok') {
-            $connection->login_at = $now;
-            $connection->logout_at = NULL;
-        }
-        if ($this->activity_name === 'logout_ok') {
-            $connection->logout_at = $now;
-        }
-
-        $connection->save();
-    }
-
-    /**
      * Create new document in elasticsearch.
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
@@ -1284,61 +1132,6 @@ class Activity extends Eloquent
         Queue::push('Orbit\\Queue\\Mailchimp\\MailchimpSubscriberAddQueue', [
             'activity_id' => $this->activity_id
         ]);
-    }
-
-    /**
-     * Save to `widget_clicks` table
-     *
-     * @author Rio Astamal <rio@dominopos.com>
-     * @return void
-     */
-    protected function saveToWidgetClick()
-    {
-        if ($this->activity_name !== 'widget_click') {
-            return;
-        }
-
-        $click = new WidgetClick();
-        $click->widget_id = $this->object_id;
-        $click->user_id = $this->user_id;
-        $click->location_id = $this->location_id;
-        $click->activity_id = $this->activity_id;
-
-        $groupName = 'Unknown';
-        switch ($this->activity_name_long) {
-            case 'Widget Click Promotion':
-                $groupName = 'Promotion';
-                break;
-
-            case 'Widget Click News':
-                $groupName = 'News';
-                break;
-
-            case 'Widget Click Tenant':
-                $groupName = 'Tenant';
-                break;
-
-            case 'Widget Click Service':
-                $groupName = 'Service';
-                break;
-
-            case 'Widget Click Coupon':
-                $groupName = 'Coupon';
-                break;
-
-            case 'Widget Click Lucky Draw':
-                $groupName = 'Lucky Draw';
-                break;
-
-            case 'Widget Click Free Wifi':
-                $groupName = 'Free Wifi';
-                break;
-        }
-
-        $object = WidgetGroupName::get()->keyBy('widget_group_name')->get($groupName);
-        $click->widget_group_name_id = is_object($object) ? $object->widget_group_name_id : '0';
-
-        $return = $click->save();
     }
 
     /**

@@ -21,8 +21,6 @@ use CampaignGroupName;
 use Orbit\Helper\Util\FilterParser;
 use Orbit\Helper\Util\CampaignSourceParser;
 use ExtendedActivity;
-use Orbit\FakeJob;
-use Orbit\Queue\Activity\ObjectPageViewActivityQueue;
 
 class AdditionalActivityQueue
 {
@@ -69,14 +67,6 @@ class AdditionalActivityQueue
             $this->saveToWidgetClick($activity);
             $this->saveToConnectionTime($activity);
             $this->saveExtendedData($activity);
-            // update total view
-            $job = new FakeJob();
-            $data = [
-                'activity_id' => $activity->activity_id
-            ];
-
-            $esQueue = new ObjectPageViewActivityQueue();
-            $response = $esQueue->fire($job, $data);
 
             $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
                     $job->getJobId(),
