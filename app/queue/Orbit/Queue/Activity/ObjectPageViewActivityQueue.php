@@ -12,6 +12,7 @@ use Orbit\Helper\Util\JobBurier;
 use ObjectPageView;
 use TotalObjectPageView;
 use Exception;
+use Tenant;
 use Orbit\FakeJob;
 use Orbit\Queue\Elasticsearch\ESCouponUpdateQueue;
 use Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue;
@@ -128,7 +129,7 @@ class ObjectPageViewActivityQueue
                         if (! empty($store)) {
                             $data = [
                                 'name'    => $store->name,
-                                'country' => $store->country,
+                                'country' => $store->country
                             ];
 
                             $esQueue = new ESStoreUpdateQueue();
