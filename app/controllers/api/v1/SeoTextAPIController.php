@@ -14,6 +14,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class SeoTextAPIController extends ControllerAPI
 {
+    protected $viewSeoTextRoles = ['super admin', 'mall admin', 'mall owner'];
     protected $modifySeoTextRoles = ['super admin', 'mall admin', 'mall owner'];
 
     /**
@@ -53,10 +54,12 @@ class SeoTextAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'object_type' => $object_type,
+                    'translations' => $translations,
                     'status' => $status,
                 ),
                 array(
                     'object_type' => 'required|in:seo_promotion_list,seo_coupon_list,seo_event_list,seo_store_list,seo_mall_list,seo_homepage',
+                    'translations' => 'required',
                     'status' => 'in:active,inactive',
                 )
             );
@@ -162,10 +165,12 @@ class SeoTextAPIController extends ControllerAPI
             $validator = Validator::make(
                 array(
                     'object_type' => $object_type,
+                    'translations' => $translations,
                     'status' => $status,
                 ),
                 array(
                     'object_type' => 'required|in:seo_promotion_list,seo_coupon_list,seo_event_list,seo_store_list,seo_mall_list,seo_homepage',
+                    'translations' => 'required',
                     'status' => 'in:active,inactive',
                 )
             );
@@ -257,13 +262,13 @@ class SeoTextAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = $this->modifySeoTextRoles;
+            $validRoles = $this->viewSeoTextRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
 
-            $object_type = OrbitInput::post('object_type');
+            $object_type = OrbitInput::get('object_type');
 
             $validator = Validator::make(
                 array(
@@ -280,8 +285,10 @@ class SeoTextAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $seo_texts = Page::select('pages_id', 'title', 'content as description', 'object_type', 'language', 'status')
-                              ->where('object_type', 'like', '%seo_%');
+            $seo_texts = Page::select('pages.pages_id', 'pages.title', 'pages.content as description',
+                                      'pages.object_type', 'pages.language', 'pages.status', 'languages.language_id')
+                                ->leftJoin('languages', 'languages.name', '=', 'pages.language')
+                                ->where('object_type', 'like', '%seo_%');
 
             OrbitInput::get('status', function($status) use ($seo_texts) {
                 $seo_texts->where('pages.status', '=', $status);
