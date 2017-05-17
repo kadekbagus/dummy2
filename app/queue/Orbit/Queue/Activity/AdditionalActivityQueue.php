@@ -21,6 +21,8 @@ use CampaignGroupName;
 use Orbit\Helper\Util\FilterParser;
 use Orbit\Helper\Util\CampaignSourceParser;
 use ExtendedActivity;
+use Orbit\FakeJob;
+use Orbit\Queue\Activity\ObjectPageViewActivityQueue;
 
 class AdditionalActivityQueue
 {
@@ -61,13 +63,20 @@ class AdditionalActivityQueue
             }
 
             $this->saveToCampaignPageViews($activity);
-            $this->saveToObjectPageView($activity);
             $this->saveToCampaignPopUpView($activity);
             $this->saveToCampaignPopUpClick($activity);
             $this->saveToMerchantPageView($activity);
             $this->saveToWidgetClick($activity);
             $this->saveToConnectionTime($activity);
             $this->saveExtendedData($activity);
+            // update total view
+            $job = new FakeJob();
+            $data = [
+                'activity_id' => $activity->activity_id
+            ];
+
+            $esQueue = new ObjectPageViewActivityQueue();
+            $response = $esQueue->fire($job, $data);
 
             $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
                     $job->getJobId(),
@@ -118,88 +127,6 @@ class AdditionalActivityQueue
                 $campaign->activity_id = $activity->activity_id;
                 $campaign->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName($activity->activity_name);
                 $campaign->save();
-                break;
-        }
-    }
-
-    /**
-     * Save to object_page_views and total_object_page_views table
-     *
-     * @param Activity $activity Object of Activity
-     * @return void | NULL
-     */
-    protected function saveToObjectPageView(Activity $activity)
-    {
-        if (empty($activity->object_id)) {
-            return;
-        }
-        // Save also the activity to particular `campaign_xyz` table
-        switch ($activity->activity_name) {
-            case 'view_mall':
-            case 'view_landing_page_store_detail':
-            case 'view_landing_page_news_detail':
-            case 'view_landing_page_promotion_detail':
-            case 'view_landing_page_coupon_detail':
-            case 'view_mall_store_detail':
-            case 'view_mall_event_detail':
-            case 'view_mall_promotion_detail':
-            case 'view_mall_coupon_detail':
-                // insert to object_page_views
-                $object_page_view = new ObjectPageView();
-                $object_page_view->object_type = strtolower($activity->object_name);
-                $object_page_view->object_id = $activity->object_id;
-                $object_page_view->user_id = $activity->user_id;
-                $object_page_view->location_id = $activity->location_id;
-                $object_page_view->activity_id = $activity->activity_id;
-                $object_page_view->save();
-
-                $total_object_page_view = TotalObjectPageView::where('object_type', strtolower($activity->object_name))
-                                            ->where('object_id', $activity->object_id)
-                                            ->where('location_id', $activity->location_id)
-                                            ->first();
-
-                if (! empty($total_object_page_view)) {
-                    // update total_object_page_views
-                    $total_object_page_view->total_view = $total_object_page_view->total_view + 1;
-                } else {
-                    // insert to total_object_page_views
-                    $new_total_object_page_view = new TotalObjectPageView();
-                    $new_total_object_page_view->object_type = strtolower($activity->object_name);
-                    $new_total_object_page_view->object_id = $activity->object_id;
-                    $new_total_object_page_view->location_id = $activity->location_id;
-                    $new_total_object_page_view->total_view = 1;
-                    $new_total_object_page_view->save();
-                }
-
-                // update elastic search
-                if ($activity->object_name === 'Coupon') {
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                        'promotion_id' => $activity->object_id
-                    ]);
-                } elseif ($activity->object_name === 'Promotion'){
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
-                        'news_id' => $activity->object_id
-                    ]);
-                } elseif ($activity->object_name === 'News'){
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
-                        'news_id' => $activity->object_id
-                    ]);
-                } elseif ($activity->object_name === 'Mall'){
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
-                        'mall_id' => $activity->object_id
-                    ]);
-                } elseif ($activity->object_name === 'Tenant'){
-                    $store = Tenant::excludeDeleted()
-                        ->where('merchant_id', $activity->object_id)
-                        ->first();
-
-                    if (! empty($store)) {
-                        Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
-                            'name'    => $store->name,
-                            'country' => $store->country,
-                        ]);
-                    }
-                }
                 break;
         }
     }
