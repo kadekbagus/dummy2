@@ -75,6 +75,8 @@ class AdditionalActivityQueue
                     $activity->activity_id,
                     $activity->activity_name_long);
 
+            Log::info($message);
+
             return [
                 'status' => 'ok',
                 'message' => $message
