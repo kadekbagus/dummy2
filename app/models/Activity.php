@@ -872,6 +872,11 @@ class Activity extends Eloquent
             'current_url' => Request::fullUrl()
         ]);
 
+        // Save to object page views table
+        Queue::push('Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue', [
+            'activity_id' => $this->activity_id
+        ]);
+
         $this->saveEmailToMailchimp();
 
         if ($this->group === 'mobile-ci') {

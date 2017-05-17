@@ -139,10 +139,10 @@ class ObjectPageViewActivityQueue
                     break;
             }
 
-            $job->delete();
+            $fakeJob->delete();
 
             $message = sprintf('[Job ID: `%s`] Object Page View Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
-                    $job->getJobId(),
+                    $fakeJob->getJobId(),
                     $activity->activity_id,
                     $activity->activity_name_long);
 
