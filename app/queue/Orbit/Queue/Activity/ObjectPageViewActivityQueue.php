@@ -82,19 +82,19 @@ class ObjectPageViewActivityQueue
                                                 ->where('location_id', $activity->location_id)
                                                 ->lockForUpdate()
                                                 ->first();
-                    if (! empty($total_object_page_view)) {
-                        // update total_object_page_views
-                        $total_object_page_view->total_view = $total_object_page_view->total_view + 1;
-                        $total_object_page_view->save();
+
+                    $total_view = 1;
+                    if (! is_object($total_object_page_view)) {
+                        $total_object_page_view = new TotalObjectPageView();
                     } else {
-                        // insert to total_object_page_views
-                        $new_total_object_page_view = new TotalObjectPageView();
-                        $new_total_object_page_view->object_type = strtolower($activity->object_name);
-                        $new_total_object_page_view->object_id = $activity->object_id;
-                        $new_total_object_page_view->location_id = $activity->location_id;
-                        $new_total_object_page_view->total_view = 1;
-                        $new_total_object_page_view->save();
+                        $total_view = $total_object_page_view->total_view + $total_view;
                     }
+
+                    $total_object_page_view->object_type = strtolower($activity->object_name);
+                    $total_object_page_view->object_id = $activity->object_id;
+                    $total_object_page_view->location_id = $activity->location_id;
+                    $total_object_page_view->total_view = $total_view;
+                    $total_object_page_view->save();
 
                     // update elastic search
                     $job = new FakeJob();
