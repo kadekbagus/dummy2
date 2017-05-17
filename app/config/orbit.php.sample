@@ -129,6 +129,12 @@ return array(
             'mall_suggestions'
         ],
 
+        'popular_indices' => [
+            'news',
+            'promotions',
+            'coupons',
+        ],
+
         'nearest' => [
             'multiple' => 5,
             'max_try' => 10
