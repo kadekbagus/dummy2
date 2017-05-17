@@ -97,6 +97,12 @@ class ObjectPageViewActivityQueue
 
                     // update elastic search
                     $fakeJob = new FakeJob();
+                    $data = [];
+                    $message = sprintf('[Job ID: `%s`] Object Page View Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
+                            $fakeJob->getJobId(),
+                            $activity->activity_id,
+                            $activity->activity_name_long);
+
                     if ($activity->object_name === 'Coupon') {
                         $data = [
                             'coupon_id' => $activity->object_id
@@ -133,19 +139,21 @@ class ObjectPageViewActivityQueue
                             ];
 
                             $esQueue = new ESStoreUpdateQueue();
+                        } else {
+                            $message = sprintf('[Job ID: `%s`] Tenant Not Found, Object Page View Activity Queue; Status: Fail; Activity ID: %s; Activity Name: %s',
+                                    $fakeJob->getJobId(),
+                                    $activity->activity_id,
+                                    $activity->activity_name_long);
                         }
                     }
 
-                    $response = $esQueue->fire($fakeJob, $data);
+                    if (! empty($data)) {
+                        $response = $esQueue->fire($fakeJob, $data);
+                    }
                     break;
             }
 
             $fakeJob->delete();
-
-            $message = sprintf('[Job ID: `%s`] Object Page View Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
-                    $fakeJob->getJobId(),
-                    $activity->activity_id,
-                    $activity->activity_name_long);
 
             return [
                 'status' => 'ok',
