@@ -66,7 +66,7 @@ class AdditionalActivityQueue
             $this->saveToMerchantPageView($activity);
             $this->saveToWidgetClick($activity);
             $this->saveToConnectionTime($activity);
-            // $this->saveExtendedData($activity);
+            $this->saveExtendedData($activity);
 
             $job->delete();
 
@@ -80,7 +80,7 @@ class AdditionalActivityQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            Log::error(sprintf('[Job ID: `%s`] Additional Activity Queue ERROR: %s', $activityId, $e->getMessage()));
+            Log::error(sprintf('[Job ID: `%s`] Activity ID: %s. Additional Activity Queue ERROR: %s', $job->getJobId(), $activityId, $e->getMessage()));
             return [
                 'status' => 'fail',
                 'message' => $e->getMessage()
