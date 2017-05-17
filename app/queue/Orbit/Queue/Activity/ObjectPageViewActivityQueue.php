@@ -83,7 +83,8 @@ class ObjectPageViewActivityQueue
                                                 ->lockForUpdate()
                                                 ->first();
 
-                    $total_view = 1;
+                    $total_view = 0;
+
                     if (! is_object($total_object_page_view)) {
                         $total_object_page_view = new TotalObjectPageView();
                     } else {
