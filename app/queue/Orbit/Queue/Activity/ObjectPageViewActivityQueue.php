@@ -83,22 +83,19 @@ class ObjectPageViewActivityQueue
                                                 ->lockForUpdate()
                                                 ->first();
 
-                    $total_view = 0;
-
                     if (! is_object($total_object_page_view)) {
                         $total_object_page_view = new TotalObjectPageView();
-                    } else {
-                        $total_view = $total_object_page_view->total_view + $total_view;
+                        $total_object_page_view->total_view = 0;
                     }
 
                     $total_object_page_view->object_type = strtolower($activity->object_name);
                     $total_object_page_view->object_id = $activity->object_id;
                     $total_object_page_view->location_id = $activity->location_id;
-                    $total_object_page_view->total_view = $total_view;
+                    $total_object_page_view->total_view = $total_object_page_view->total_view + 1;
                     $total_object_page_view->save();
 
                     // update elastic search
-                    $job = new FakeJob();
+                    $fakeJob = new FakeJob();
                     if ($activity->object_name === 'Coupon') {
                         $data = [
                             'coupon_id' => $activity->object_id
@@ -137,9 +134,12 @@ class ObjectPageViewActivityQueue
                             $esQueue = new ESStoreUpdateQueue();
                         }
                     }
-                    $response = $esQueue->fire($job, $data);
+
+                    $response = $esQueue->fire($fakeJob, $data);
                     break;
             }
+
+            $job->delete();
 
             $message = sprintf('[Job ID: `%s`] Object Page View Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
                     $job->getJobId(),
