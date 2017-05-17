@@ -82,6 +82,7 @@ class CreatePageCommand extends Command {
             $language = trim($data['language']);
             $content = trim($data['content']);
             $status = trim($data['status']);
+            $title = empty($data['title']) ? null : trim($data['title']);
 
             $this->registerCustomValidation();
 
@@ -112,8 +113,13 @@ class CreatePageCommand extends Command {
                 throw new Exception($errorMessage);
             }
 
-            //Get country id
-            $getCountry = Country::where('name', $country)->first();
+            //Get country id, for seotext country_id = 0
+            if ($country === '0') {
+                $getCountry = new StdClass();
+                $getCountry->country_id = 0;
+            } else {
+                $getCountry = Country::where('name', $country)->first();
+            }
 
             //Check insert or update when exist
             $existPage = Page::where('object_type', $object_type)
@@ -129,6 +135,7 @@ class CreatePageCommand extends Command {
                 $newPage->country_id = $getCountry->country_id;
                 $newPage->object_type = $object_type;
                 $newPage->language = $language;
+                $newPage->title = $title;
                 $newPage->content = $content;
                 $newPage->status = $status;
                 $newPage->save();
@@ -138,6 +145,7 @@ class CreatePageCommand extends Command {
                 $updatePage->country_id = $getCountry->country_id;
                 $updatePage->object_type = $object_type;
                 $updatePage->language = $language;
+                $updatePage->title = $title;
                 $updatePage->content = $content;
                 $updatePage->status = $status;
                 $updatePage->save();
@@ -158,7 +166,10 @@ class CreatePageCommand extends Command {
         // Check the existence of the news object type
         Validator::extend('orbit.exist.country', function ($attribute, $value, $parameters) {
             $valid = false;
-
+            // for seotext country_id = 0
+            if ($value === '0') {
+                $valid = true;
+            }
             $existCountryId = Country::where('name', $value)->first();
             if (! empty($existCountryId)) {
                 $valid = true;
