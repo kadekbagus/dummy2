@@ -129,6 +129,7 @@ return array(
             'mall_suggestions'
         ],
 
+        // index list will be include in popular
         'popular_indices' => [
             'news',
             'promotions',
