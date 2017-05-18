@@ -2805,10 +2805,9 @@ class PromotionalEventAPIController extends ControllerAPI
                     // validation for label
                     if (in_array($field, ['guest_button_label', 'logged_in_button_label'])) {
                         // required for default language
+                        $validator_validation[$field] = 'max:30';
                         if ($language_id === $id_language_default) {
-                            $validator_validation[$field] = 'required|max:10';
-                        } else {
-                            $validator_validation[$field] = 'max:10';
+                            $validator_validation[$field] = 'required|max:30';
                         }
                     }
                     if (in_array($field, ['email_content'])) {
