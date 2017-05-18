@@ -43,6 +43,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
+            $mallId = OrbitInput::get('mall_id', null);
             $partnerToken = OrbitInput::get('token', null);
 
             $couponHelper = CouponHelper::create();
@@ -90,6 +91,11 @@ class CouponDetailAPIController extends PubControllerAPI
                 $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
             }
 
+            $location = $mallId;
+            if (empty($location)) {
+                $location = 0;
+            }
+
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
@@ -113,6 +119,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                 "),
                             'promotions.end_date',
                             'promotions.is_exclusive',
+                            'total_object_page_views.total_view',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -168,6 +175,11 @@ class CouponDetailAPIController extends PubControllerAPI
                             })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                        ->leftJoin('total_object_page_views', function ($q) use ($location){
+                            $q->on('total_object_page_views.object_id', '=', 'promotions.promotion_id')
+                                ->on('total_object_page_views.object_type', '=', DB::raw("'coupon'"))
+                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
+                        })
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
                             }])
