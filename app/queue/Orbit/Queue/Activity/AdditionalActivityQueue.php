@@ -68,17 +68,21 @@ class AdditionalActivityQueue
             $this->saveToConnectionTime($activity);
             $this->saveExtendedData($activity);
 
+            $job->delete();
+
             $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
                     $job->getJobId(),
                     $activity->activity_id,
                     $activity->activity_name_long);
+
+            Log::info($message);
 
             return [
                 'status' => 'ok',
                 'message' => $message
             ];
         } catch (Exception $e) {
-            Log::error(sprintf('[Job ID: `%s`] Additional Activity Queue ERROR: %s', $activityId, $e->getMessage()));
+            Log::error(sprintf('[Job ID: `%s`] Activity ID: %s. Additional Activity Queue ERROR: %s', $job->getJobId(), $activityId, $e->getMessage()));
             return [
                 'status' => 'fail',
                 'message' => $e->getMessage()
