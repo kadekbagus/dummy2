@@ -147,6 +147,7 @@ class ESMallUpdateQueue
                 'is_subscribed'   => $mall->is_subscribed,
                 'updated_at'      => date('Y-m-d', strtotime($mall->updated_at)) . 'T' . date('H:i:s', strtotime($mall->updated_at)) . 'Z',
                 'keywords'        => '',
+                'postal_code'     => $mall->postal_code,
                 'position'        => [
                     'lon' => $geofence->longitude,
                     'lat' => $geofence->latitude
