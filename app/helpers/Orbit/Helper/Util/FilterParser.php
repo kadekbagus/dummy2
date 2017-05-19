@@ -76,19 +76,33 @@ class FilterParser
         foreach ($this->urls as $url) {
             parse_str(parse_url($url, PHP_URL_QUERY), $params);
 
-            $this->result['filter_country'] = isset($params['country']) && !empty($params['country'])
+            $this->result['filter_country'] = (isset($params['country']) && ! empty($params['country']))
                 ? $params['country'] : $this->result['filter_country'];
-            $this->result['filter_cities'] = isset($params['cities']) && !empty($params['cities'])
+            $this->result['filter_cities'] = (isset($params['cities']) && ! empty($params['cities']))
                 ? $params['cities'] : $this->result['filter_cities'];
-            $this->result['filter_keywords'] = isset($params['keyword']) && !empty($params['keyword'])
+            $this->result['filter_keywords'] = (isset($params['keyword']) && ! empty($params['keyword']))
                 ? $params['keyword'] : $this->result['filter_keywords'];
-            $this->result['filter_categories'] = isset($params['category_id']) && !empty($params['category_id'])
+            $this->result['filter_categories'] = (isset($params['category_id']) && ! empty($params['category_id']))
                 ? $params['category_id'] : $this->result['filter_categories'];
-            $this->result['filter_partner'] = isset($params['partner_id']) && !empty($params['partner_id'])
+            $this->result['filter_partner'] = (isset($params['partner_id']) && ! empty($params['partner_id']))
                 ? $params['partner_id'] : $this->result['filter_partner'];
 
+
+            if (is_array($this->result['filter_country'])) {
+                $this->result['filter_country'] = implode(', ', $this->result['filter_country']);
+                // prevent string 0 being saved
+                $this->result['filter_country'] = $this->result['filter_country'] === "0" ? NULL : $this->result['filter_country'];
+            }
             if (is_array($this->result['filter_cities'])) {
                 $this->result['filter_cities'] = implode(', ', $this->result['filter_cities']);
+                // prevent string 0 being saved
+                $this->result['filter_cities'] = $this->result['filter_cities'] === "0" ? NULL : $this->result['filter_cities'];
+            }
+            if (is_array($this->result['filter_keywords'])) {
+                $this->result['filter_keywords'] = implode(', ', $this->result['filter_keywords']);
+            }
+            if (is_array($this->result['filter_partner'])) {
+                $this->result['filter_partner'] = implode(', ', $this->result['filter_partner']);
             }
             if (is_array($this->result['filter_categories'])) {
                 $this->result['filter_categories'] = implode(', ', $this->result['filter_categories']);

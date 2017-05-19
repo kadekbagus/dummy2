@@ -316,7 +316,8 @@ class PromotionListAPIController extends PubControllerAPI
             } elseif ($sort_by === 'updated_date') {
                 $sort = array('updated_at' => array('order' => $sort_mode));
             } else {
-                $sort = array('name.raw' => array('order' => $sort_mode));
+                $sortScript = "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
+                $sort = array('_script' => array('script' => $sortScript, 'type' => 'string', 'order' => $sort_mode));
             }
 
             $sortby = $sort;

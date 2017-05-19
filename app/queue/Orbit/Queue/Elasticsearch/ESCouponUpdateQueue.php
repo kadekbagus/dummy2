@@ -55,7 +55,8 @@ class ESCouponUpdateQueue
                             'campaignLocations.categories',
                             'esCampaignLocations.geofence',
                             'campaignObjectPartners',
-                            'adverts.media_orig'
+                            'adverts.media_orig',
+                            'total_page_views'
                         )
                     ->with (['keywords' => function ($q) {
                                 $q->groupBy('keyword');
@@ -169,7 +170,22 @@ class ESCouponUpdateQueue
                 $advertIds[] = $advertCollection->advert_id;
             }
 
+            // get translation from default lang
+            $defaultTranslation = array();
+            foreach ($coupon->translations as $defTranslation) {
+                if ($defTranslation->name === $coupon->mobile_default_language) {
+                    $defaultTranslation = array(
+                        'name'          => $defTranslation->promotion_name,
+                        'description'   => $defTranslation->description,
+                        'language_id'   => $defTranslation->merchant_language_id,
+                        'language_code' => $defTranslation->name,
+                        'image_url'     => NULL
+                    );
+                }
+            }
+
             $translations = array();
+            $translationBody['name_default'] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $defaultTranslation['name']));
             foreach ($coupon->translations as $translationCollection) {
                 $translation = array(
                     'name' => $translationCollection->promotion_name,
@@ -184,6 +200,35 @@ class ESCouponUpdateQueue
                     $translation['image_cdn_url'] = $media->cdn_url;
                 }
                 $translations[] = $translation;
+
+                // for "sort A-Z" feature
+                $couponName = $translationCollection->promotion_name;
+                $couponDesc = $translationCollection->description;
+
+                //if name and description is empty fill with name and desc from default translation
+                if (empty($translationCollection->promotion_name) || $translationCollection->promotion_name === '') {
+                    $couponName = $defaultTranslation['name'];
+                }
+
+                if (empty($translationCollection->description) || $translationCollection->description === '') {
+                    $couponDesc = $defaultTranslation['description'];
+                }
+
+                $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $couponName));
+            }
+
+            $total_view_on_gtm = 0;
+            $total_view_on_mall = array();
+            foreach ($coupon->total_page_views as $key => $total_page_view) {
+                if ($total_page_view->location_id != '0') {
+                    $total_views = array(
+                        'total_views' => $total_page_view->total_view,
+                        'location_id' => $total_page_view->location_id
+                    );
+                    $total_view_on_mall[] = $total_views;
+                } else {
+                    $total_view_on_gtm = $total_page_view->total_view;
+                }
             }
 
             $body = [
@@ -208,17 +253,24 @@ class ESCouponUpdateQueue
                 'advert_ids'      => $advertIds,
                 'link_to_tenant'  => $linkToTenants,
                 'is_exclusive'    => ! empty($coupon->is_exclusive) ? $coupon->is_exclusive : 'N',
+                'gtm_page_views'   => $total_view_on_gtm,
+                'mall_page_views'  => $total_view_on_mall,
             ];
 
+            $body = array_merge($body, $translationBody);
+
             if ($response_search['hits']['total'] > 0) {
-                $params['body'] = [
-                    'doc' => $body
+                $params = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.coupons.type'),
+                    'id' => $response_search['hits']['hits'][0]['_id']
                 ];
-                $response = $this->poster->update($params);
-            } else {
-                $params['body'] = $body;
-                $response = $this->poster->index($params);
+
+                $response = $this->poster->delete($params);
             }
+
+            $params['body'] = $body;
+            $response = $this->poster->index($params);
 
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);

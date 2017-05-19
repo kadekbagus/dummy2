@@ -7,6 +7,7 @@
 use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use Mall;
+use TotalObjectPageView;
 use ObjectPartner;
 use DB;
 use MerchantGeofence;
@@ -107,6 +108,26 @@ class ESMallUpdateQueue
                 'body' => []
             ];
 
+            // Query for get total page view per location id
+            $totalObjectPageViews = TotalObjectPageView::where('object_id', $mallId)
+                                        ->where('object_type', 'mall')
+                                        ->get();
+
+            $mallPageViews = array();
+            $gtmPageViews = 0;
+            foreach($totalObjectPageViews as $pageView) {
+                if ($pageView->location_id != '0') {
+                    $mallPageView = array(
+                        "total_views" => $pageView->total_view,
+                        "location_id" => $pageView->location_id
+                    );
+                } else {
+                    $gtmPageViews = $pageView->total_view;
+                }
+
+                $mallPageViews[] = $mallPageView;
+            }
+
             $esBody = [
                 'name'            => $mall->name,
                 'description'     => $mall->description,
@@ -126,6 +147,7 @@ class ESMallUpdateQueue
                 'is_subscribed'   => $mall->is_subscribed,
                 'updated_at'      => date('Y-m-d', strtotime($mall->updated_at)) . 'T' . date('H:i:s', strtotime($mall->updated_at)) . 'Z',
                 'keywords'        => '',
+                'postal_code'     => $mall->postal_code,
                 'position'        => [
                     'lon' => $geofence->longitude,
                     'lat' => $geofence->latitude
@@ -133,7 +155,9 @@ class ESMallUpdateQueue
                 'area' => [
                     'type'        => 'polygon',
                     'coordinates' => $geofence->area
-                ]
+                ],
+                'gtm_page_views'  => $gtmPageViews,
+                'mall_page_views' => $mallPageViews
             ];
 
             if (! empty($object_partner)) {

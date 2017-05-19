@@ -55,7 +55,8 @@ class ESNewsUpdateQueue
                             'campaignLocations.categories',
                             'esCampaignLocations.geofence',
                             'campaignObjectPartners',
-                            'adverts.media_orig'
+                            'adverts.media_orig',
+                            'total_page_views'
                         )
                     ->with (['keywords' => function ($q) {
                                 $q->groupBy('keyword');
@@ -162,7 +163,22 @@ class ESNewsUpdateQueue
                 $advertIds[] = $advertCollection->advert_id;
             }
 
+            // get translation from default lang
+            $defaultTranslation = array();
+            foreach ($news->translations as $defTranslation) {
+                if ($defTranslation->name === $news->mobile_default_language) {
+                    $defaultTranslation = array(
+                        'name'          => $defTranslation->news_name,
+                        'description'   => $defTranslation->description,
+                        'language_id'   => $defTranslation->merchant_language_id,
+                        'language_code' => $defTranslation->name,
+                        'image_url'     => NULL
+                    );
+                }
+            }
+
             $translations = array();
+            $translationBody['name_default'] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $defaultTranslation['name']));
             foreach ($news->translations as $translationCollection) {
                 $translation = array(
                     'name'          => $translationCollection->news_name,
@@ -177,6 +193,35 @@ class ESNewsUpdateQueue
                     $translation['image_cdn_url'] = $media->cdn_url;
                 }
                 $translations[] = $translation;
+
+                // for "sort A-Z" feature
+                $newsName = $translationCollection->news_name;
+                $newsDesc = $translationCollection->description;
+
+                //if name and description is empty fill with name and desc from default translation
+                if (empty($translationCollection->news_name) || $translationCollection->news_name === '') {
+                    $newsName = $defaultTranslation['name'];
+                }
+
+                if (empty($translationCollection->description) || $translationCollection->description === '') {
+                    $newsDesc = $defaultTranslation['description'];
+                }
+
+                $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $newsName));
+            }
+
+            $total_view_on_gtm = 0;
+            $total_view_on_mall = array();
+            foreach ($news->total_page_views as $key => $total_page_view) {
+                if ($total_page_view->location_id != '0') {
+                    $total_views = array(
+                        'total_views' => $total_page_view->total_view,
+                        'location_id' => $total_page_view->location_id
+                    );
+                    $total_view_on_mall[] = $total_views;
+                } else {
+                    $total_view_on_gtm = $total_page_view->total_view;
+                }
             }
 
             $body = [
@@ -203,17 +248,24 @@ class ESNewsUpdateQueue
                 'link_to_tenant'   => $linkToTenants,
                 'is_exclusive'     => ! empty($news->is_exclusive) ? $news->is_exclusive : 'N',
                 'is_having_reward' => $news->is_having_reward,
+                'gtm_page_views'   => $total_view_on_gtm,
+                'mall_page_views'  => $total_view_on_mall,
             ];
 
+            $body = array_merge($body, $translationBody);
+
             if ($response_search['hits']['total'] > 0) {
-                $params['body'] = [
-                    'doc' => $body
+                $params = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.news.type'),
+                    'id' => $response_search['hits']['hits'][0]['_id']
                 ];
-                $response = $this->poster->update($params);
-            } else {
-                $params['body'] = $body;
-                $response = $this->poster->index($params);
+
+                $response = $this->poster->delete($params);
             }
+
+            $params['body'] = $body;
+            $response = $this->poster->index($params);
 
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);

@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\ACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Config;
 use Mall;
+use BaseMerchant;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
@@ -89,6 +90,7 @@ class StoreDetailAPIController extends PubControllerAPI
                                 'merchants.name',
                                 'merchants.name as mall_name',
                                 'merchants.description as mall_description',
+                                DB::raw("CASE WHEN ({$prefix}total_object_page_views.total_view IS NULL OR {$prefix}total_object_page_views.total_view = '') THEN 0 ELSE {$prefix}total_object_page_views.total_view END as total_view"),
                                 DB::Raw("CASE WHEN (
                                                 select mt.description
                                                 from {$prefix}merchant_translations mt
@@ -153,26 +155,41 @@ class StoreDetailAPIController extends PubControllerAPI
                     },  'keywords' => function ($q) {
                         $q->addSelect('keyword', 'object_id');
                     }])
-                ->join(DB::raw("(select merchant_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                ->join(DB::raw("(select merchant_id, country_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->join('languages', 'languages.name', '=', 'merchants.mobile_default_language')
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'");
 
+            $storeInfo = Tenant::select('merchants.name')
+                            ->where('merchant_id', $merchantid)
+                            ->first();
+            if (! is_object($storeInfo)) {
+                OrbitShopAPI::throwInvalidArgument('Unable to find store.');
+            }
+
             if (! is_null($mallId)) {
-                $store2 = Tenant::where('merchant_id', $merchantid)->first();
-
-                if (! is_object($store2)) {
-                    OrbitShopAPI::throwInvalidArgument('Unable to find store.');
-                }
-
-                $store->where('merchants.name', $store2->name)
+                $store->leftJoin('total_object_page_views', function ($q) use ($mallId){
+                            $q->on('total_object_page_views.object_id', '=', 'merchants.merchant_id')
+                                ->on('total_object_page_views.object_type', '=', DB::raw("'tenant'"))
+                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$mallId}'"));
+                        })
+                      ->where('merchants.name', $storeInfo->name)
                       ->where('merchants.parent_id', $mallId);
 
                 $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $mallId)
                         ->first();
             } else {
-                $store->where('merchants.merchant_id', $merchantid);
+                $store->leftJoin('base_merchants', function ($q) {
+                            $q->on('base_merchants.name', '=', 'merchants.name')
+                              ->on('base_merchants.country_id', '=', DB::raw("oms.country_id"));
+                        })
+                      ->leftJoin('total_object_page_views', function ($q) {
+                            $q->on('total_object_page_views.object_id', '=', 'base_merchants.base_merchant_id')
+                                ->on('total_object_page_views.object_type', '=', DB::raw("'tenant'"))
+                                ->on('total_object_page_views.location_id', '=', DB::raw("'0'"));
+                        })
+                      ->where('merchants.merchant_id', $merchantid);
             }
 
             $store = $store->orderBy('merchants.created_at', 'asc')
