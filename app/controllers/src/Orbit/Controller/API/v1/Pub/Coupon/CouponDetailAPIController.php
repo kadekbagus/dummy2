@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Config;
 use Coupon;
+use IssuedCoupon;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
@@ -123,8 +124,6 @@ class CouponDetailAPIController extends PubControllerAPI
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
-                            // get available coupon
-                            DB::raw("count({$prefix}issued_coupons.issued_coupon_id) as available_coupon"),
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -172,7 +171,8 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                         ->leftJoin('issued_coupons', function ($q) use ($user) {
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $q->on('issued_coupons.status', '=', DB::Raw("'available'"));
+                                $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
+                                $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
                             })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
@@ -201,6 +201,20 @@ class CouponDetailAPIController extends PubControllerAPI
             if (! is_object($coupon)) {
                 OrbitShopAPI::throwInvalidArgument('Coupon that you specify is not found');
             }
+
+            $availableCoupon = IssuedCoupon::select(DB::raw("COUNT(issued_coupon_id) as available_coupon"))
+                                            ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                                            ->where('issued_coupons.status', 'available')
+                                            ->where('promotions.promotion_id', $couponId)
+                                            ->groupBy('promotions.promotion_id')
+                                            ->first();
+
+            $totalAvailable = 0;
+            if (is_object($availableCoupon)) {
+                $totalAvailable = $availableCoupon->available_coupon;
+            }
+
+            $coupon->available_coupon = $totalAvailable;
 
             if ($coupon->is_exclusive === 'Y') {
                 // check token
