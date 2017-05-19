@@ -98,6 +98,11 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
             }
 
+            $location = $mallId;
+            if (empty($location)) {
+                $location = 0;
+            }
+
             $promotionalEvent = News::select(
                             'news.news_id as news_id',
                             'reward_details.is_new_user_only',
@@ -125,6 +130,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                             'news.object_type',
                             'news.end_date',
                             'news.is_exclusive',
+                            'total_object_page_views.total_view',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -179,6 +185,11 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                         ->leftJoin('reward_detail_translations as default_translation_button', function ($q) use ($valid_language) {
                             $q->on(DB::raw("default_translation_button.reward_detail_id"), '=', 'reward_details.reward_detail_id')
                               ->on(DB::raw("default_translation_button.language_id"), '=', 'languages.language_id');
+                        })
+                        ->leftJoin('total_object_page_views', function ($q) use ($location){
+                            $q->on('total_object_page_views.object_id', '=', 'news.news_id')
+                                ->on('total_object_page_views.object_type', '=', DB::raw("'news'"))
+                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
                         })
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
@@ -245,7 +256,9 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                         break;
 
                     case 'reward_ok':
+                        DB::beginTransaction();
                         $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
+                        DB::commit();
                         break;
 
                     case 'inactive_user':

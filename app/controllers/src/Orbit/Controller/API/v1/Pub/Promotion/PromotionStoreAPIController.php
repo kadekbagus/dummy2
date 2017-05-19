@@ -75,17 +75,32 @@ class PromotionStoreAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $merchantLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as merchant_logo";
+            if ($usingCdn) {
+                $merchantLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as merchant_logo";
+            }
+
             $prefix = DB::getTablePrefix();
             $promotionLocation = NewsMerchant::select(
                                         "merchants.merchant_id",
                                         DB::raw("{$prefix}merchants.name as name"),
-                                        "merchants.object_type"
+                                        "merchants.object_type",
+                                        DB::raw("{$merchantLogo}")
                                     )
                                     ->join('news', function ($q) {
                                         $q->on('news_merchant.news_id', '=', 'news.news_id')
                                           ->on('news.object_type', '=', DB::raw("'promotion'"));
                                     })
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                    // Logo
+                                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
+                                        $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                                          ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
+                                    })
                                     ->where('news_merchant.news_id', '=', $promotionId)
                                     ->where('merchants.object_type', 'tenant')
                                     ->groupBy("name")
@@ -178,5 +193,10 @@ class PromotionStoreAPIController extends PubControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
