@@ -191,6 +191,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                                 ->on('total_object_page_views.object_type', '=', DB::raw("'news'"))
                                 ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
                         })
+                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news.is_having_reward', '=', 'Y')
