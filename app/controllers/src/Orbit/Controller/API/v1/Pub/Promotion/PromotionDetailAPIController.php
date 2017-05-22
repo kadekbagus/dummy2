@@ -162,6 +162,7 @@ class PromotionDetailAPIController extends PubControllerAPI
                                 ->on('total_object_page_views.object_type', '=', DB::raw("'promotion'"))
                                 ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
                         })
+                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $promotionId)
                         ->where('news.object_type', '=', 'promotion')
                         ->with(['keywords' => function ($q) {
