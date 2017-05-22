@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Config;
 use Coupon;
+use IssuedCoupon;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
@@ -43,6 +44,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
+            $mallId = OrbitInput::get('mall_id', null);
             $partnerToken = OrbitInput::get('token', null);
 
             $couponHelper = CouponHelper::create();
@@ -90,6 +92,11 @@ class CouponDetailAPIController extends PubControllerAPI
                 $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
             }
 
+            $location = $mallId;
+            if (empty($location)) {
+                $location = 0;
+            }
+
             $coupon = Coupon::select(
                             'promotions.promotion_id as promotion_id',
                             DB::Raw("
@@ -113,6 +120,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                 "),
                             'promotions.end_date',
                             'promotions.is_exclusive',
+                            'total_object_page_views.total_view',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -168,9 +176,15 @@ class CouponDetailAPIController extends PubControllerAPI
                             })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                        ->leftJoin('total_object_page_views', function ($q) use ($location){
+                            $q->on('total_object_page_views.object_id', '=', 'promotions.promotion_id')
+                                ->on('total_object_page_views.object_type', '=', DB::raw("'coupon'"))
+                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
+                        })
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
                             }])
+                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('promotions.promotion_id', $couponId)
                         ->where('promotions.is_visible', 'Y');
 
@@ -185,8 +199,22 @@ class CouponDetailAPIController extends PubControllerAPI
 
             $message = 'Request Ok';
             if (! is_object($coupon)) {
-                OrbitShopAPI::throwInvalidArgument('Coupon that you specify is not found');
+                throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
+
+            $availableCoupon = IssuedCoupon::select(DB::raw("COUNT(issued_coupon_id) as available_coupon"))
+                                            ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
+                                            ->where('issued_coupons.status', 'available')
+                                            ->where('promotions.promotion_id', $couponId)
+                                            ->groupBy('promotions.promotion_id')
+                                            ->first();
+
+            $totalAvailable = 0;
+            if (is_object($availableCoupon)) {
+                $totalAvailable = $availableCoupon->available_coupon;
+            }
+
+            $coupon->available_coupon = $totalAvailable;
 
             if ($coupon->is_exclusive === 'Y') {
                 // check token

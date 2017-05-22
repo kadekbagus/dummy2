@@ -104,6 +104,7 @@ class ESMallCreateQueue
                     'ci_domain'       => $mall->ci_domain,
                     'is_subscribed'   => $mall->is_subscribed,
                     'keywords'        => '',
+                    'postal_code'     => $mall->postal_code,
                     'position'        => [
                         'lon' => $geofence->longitude,
                         'lat' => $geofence->latitude

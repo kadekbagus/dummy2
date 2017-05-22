@@ -457,6 +457,7 @@ class CouponListAPIController extends PubControllerAPI
             if (! empty($advertData)) {
                 unset($jsonQuery['sort']);
                 $withScore = true;
+                $advertIds = array();
                 foreach ($advertData as $dt) {
                     if ($list_type === 'featured') {
                         if ($dt->placement_type_orig === 'featured_list') {

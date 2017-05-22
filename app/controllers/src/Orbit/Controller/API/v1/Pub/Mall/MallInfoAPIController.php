@@ -149,6 +149,10 @@ class MallInfoAPIController extends PubControllerAPI
                         $areadata['maps_url'] = $val;
                     }
 
+                    if ($source === 'gtm_page_views') {
+                        $areadata['total_view'] = $val;
+                    }
+
                     $areadata[$source] = $val;
                     $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
 
