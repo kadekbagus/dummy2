@@ -220,7 +220,6 @@ class PromotionLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $promotionLocation->orderBy('distance', 'asc');
             } else {
-                $promotionLocation->orderBy('city', 'asc');
                 $promotionLocation->orderBy('name', 'asc');
             }
 
