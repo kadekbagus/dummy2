@@ -164,7 +164,7 @@ class StoreDetailAPIController extends PubControllerAPI
                             ->where('merchant_id', $merchantid)
                             ->first();
             if (! is_object($storeInfo)) {
-                OrbitShopAPI::throwInvalidArgument('Unable to find store.');
+                throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
             }
 
             if (! is_null($mallId)) {

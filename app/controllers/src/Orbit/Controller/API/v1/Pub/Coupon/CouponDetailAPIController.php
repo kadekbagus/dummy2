@@ -199,7 +199,7 @@ class CouponDetailAPIController extends PubControllerAPI
 
             $message = 'Request Ok';
             if (! is_object($coupon)) {
-                OrbitShopAPI::throwInvalidArgument('Coupon that you specify is not found');
+                throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
 
             $availableCoupon = IssuedCoupon::select(DB::raw("COUNT(issued_coupon_id) as available_coupon"))
