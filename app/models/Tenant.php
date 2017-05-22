@@ -25,7 +25,7 @@ class Tenant extends Eloquent
      * Column name which determine the type of Mall or Tenant.
      */
     const OBJECT_TYPE = 'object_type';
-
+    const NOT_FOUND_ERROR_CODE = 9002;
 
     protected $primaryKey = 'merchant_id';
 
