@@ -33,8 +33,9 @@ class SeoTextAPIController extends PubControllerAPI
     	try {
     		$user = $this->getUser();
             $object_type = OrbitInput::get('object_type');
-            $language = OrbitInput::get('language', 'id');
+            $language = OrbitInput::get('language');
             $mall_id = OrbitInput::get('mall_id');
+            $default_language = 'en';
 
             $validator = Validator::make(
                 array(
@@ -52,6 +53,7 @@ class SeoTextAPIController extends PubControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
+            $flag_page = false;
 
             switch ($object_type) {
             	case 'seo_mall_homepage':
@@ -67,9 +69,10 @@ class SeoTextAPIController extends PubControllerAPI
             			break;
 
             	default:
-            		$seo_text = Page::select('content as seo_text', 'language')
+            		$seo_text = Page::select('title', 'content as seo_text', 'language')
             						->where('object_type', '=', $object_type)
             						->where('status', '=', 'active');
+                    $flag_page = true;
             			break;
             }
 
@@ -81,7 +84,17 @@ class SeoTextAPIController extends PubControllerAPI
             	}
             });
 
-            $seo = $seo_text->get();
+            $seo = $seo_text->first();
+
+            // fallback to english if content not found
+            if ($flag_page && !is_object($seo) || $seo->seo_text == '' || $seo->seo_text == null) {
+                $seo_text_default = Page::select('title', 'content as seo_text', 'language')
+                                ->where('object_type', '=', $object_type)
+                                ->where('status', '=', 'active')
+                                ->where('pages.language', '=', $default_language)
+                                ->first();
+                $seo = $seo_text_default;
+            }
 
             $this->response->data = new stdClass();
             $this->response->data = $seo;
