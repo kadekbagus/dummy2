@@ -21,9 +21,9 @@ class SeoTextAPIController extends PubControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string    `object_type`          (required) - object type of the seo text
-     * @param string    `language`             (required) - language
-     * @param string    `mall_id`              (optional) - mall_id for object type seo_mall_homepage
+     * @param string    `object_type`   (required) - object type of the seo text
+     * @param string    `language`      (required) - language
+     * @param string    `mall_id`       (optional) - mall_id for object type seo_mall_homepage
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -33,8 +33,9 @@ class SeoTextAPIController extends PubControllerAPI
     	try {
     		$user = $this->getUser();
             $object_type = OrbitInput::get('object_type');
-            $language = OrbitInput::get('language', 'id');
+            $language = OrbitInput::get('language', 'en');
             $mall_id = OrbitInput::get('mall_id');
+            $default_language = 'en';
 
             $validator = Validator::make(
                 array(
@@ -55,33 +56,29 @@ class SeoTextAPIController extends PubControllerAPI
 
             switch ($object_type) {
             	case 'seo_mall_homepage':
-            		$seo_text = Mall::select(DB::raw("CASE WHEN ({$prefix}merchant_translations.description = '' or
-            													 {$prefix}merchant_translations.description is null)
-            										  THEN {$prefix}merchants.description
-								                      ELSE {$prefix}merchant_translations.description
-							                          END as seo_text"),
-					                        'languages.name as language')
-									->leftJoin('merchant_translations', 'merchant_translations.merchant_id', '=', 'merchants.merchant_id')
-									->leftJoin('languages', 'languages.language_id', '=', 'merchant_translations.merchant_language_id')
-									->where('merchants.merchant_id', '=', $mall_id);
+            		$seo_text = Mall::select('description as seo_text')
+									->where('merchants.merchant_id', '=', $mall_id)
+                                    ->first();
             			break;
 
             	default:
-            		$seo_text = Page::select('content as seo_text', 'language')
+            		$seo_text = Page::select('title', 'content as seo_text', 'language')
             						->where('object_type', '=', $object_type)
-            						->where('status', '=', 'active');
-            			break;
+            						->where('status', '=', 'active')
+                	                ->where('pages.language', '=', $language)
+                                    ->first();
+
+                    // fallback to english if content not found
+                    if (!is_object($seo_text) || $seo_text->seo_text == '' || $seo_text->seo_text == null) {
+                        $seo_text = Page::select('title', 'content as seo_text', 'language')
+                                        ->where('object_type', '=', $object_type)
+                                        ->where('status', '=', 'active')
+                                        ->where('pages.language', '=', $default_language)
+                                        ->first();
+                    }
+                        break;
             }
-
-            OrbitInput::get('language', function($language) use ($seo_text, $object_type) {
-            	if ($object_type === 'seo_mall_homepage') {
-            		$seo_text->where('languages.name', '=', $language);
-            	} else {
-                	$seo_text->where('pages.language', '=', $language);
-            	}
-            });
-
-            $seo = $seo_text->get();
+            $seo = $seo_text;
 
             $this->response->data = new stdClass();
             $this->response->data = $seo;
