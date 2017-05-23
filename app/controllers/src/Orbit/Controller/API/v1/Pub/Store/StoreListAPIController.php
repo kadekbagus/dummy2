@@ -536,6 +536,7 @@ class StoreListAPIController extends PubControllerAPI
                 $localPath = '';
                 $cdnPath = '';
                 $default_lang = '';
+                $pageView = 0;
                 foreach ($record['_source'] as $key => $value) {
 
                     $localPath = ($key == 'logo') ? $value : $localPath;
@@ -584,6 +585,18 @@ class StoreListAPIController extends PubControllerAPI
                             }
                         }
                     }
+
+                    if (empty($mallId)) {
+                        if ($key === 'gtm_page_views') {
+                            $pageView = $value;
+                        }
+                    } else {
+                        foreach ($record['_source']['mall_page_views'] as $dt) {
+                            if ($dt['location_id'] === $mallId) {
+                                $pageView = $dt['total_views'];
+                            }
+                        }
+                    }
                 }
 
                 if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
@@ -591,6 +604,8 @@ class StoreListAPIController extends PubControllerAPI
                         $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
                     }
                 }
+
+                $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];
                 $listOfRec[] = $data;
             }
