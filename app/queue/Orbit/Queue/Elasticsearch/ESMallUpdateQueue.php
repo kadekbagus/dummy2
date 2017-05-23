@@ -111,22 +111,7 @@ class ESMallUpdateQueue
             // Query for get total page view per location id
             $totalObjectPageViews = TotalObjectPageView::where('object_id', $mallId)
                                         ->where('object_type', 'mall')
-                                        ->get();
-
-            $mallPageViews = array();
-            $gtmPageViews = 0;
-            foreach($totalObjectPageViews as $pageView) {
-                if ($pageView->location_id != '0') {
-                    $mallPageView = array(
-                        "total_views" => $pageView->total_view,
-                        "location_id" => $pageView->location_id
-                    );
-                } else {
-                    $gtmPageViews = $pageView->total_view;
-                }
-
-                $mallPageViews[] = $mallPageView;
-            }
+                                        ->sum('total_view');
 
             $esBody = [
                 'name'            => $mall->name,
@@ -156,8 +141,7 @@ class ESMallUpdateQueue
                     'type'        => 'polygon',
                     'coordinates' => $geofence->area
                 ],
-                'gtm_page_views'  => $gtmPageViews,
-                'mall_page_views' => $mallPageViews
+                'gtm_page_views'  => $totalObjectPageViews
             ];
 
             if (! empty($object_partner)) {
