@@ -72,7 +72,7 @@ class LoginAPIController extends IntermediateBaseController
             $rewardId = OrbitInput::get('reward_id', null);
             $rewardType = OrbitInput::get('reward_type', null);
             $language = OrbitInput::get('language', 'id');
-            $redirect_to_url = OrbitInput::get('to_url', null);
+            $redirect_to_url = OrbitInput::post('to_url', null);
             // $mode = OrbitInput::post('mode', 'login');
 
             if (trim($email) === '') {
