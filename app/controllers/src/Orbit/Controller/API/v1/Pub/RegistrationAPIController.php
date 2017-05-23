@@ -58,7 +58,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $language = OrbitInput::get('language', 'id');
             $rewardId = OrbitInput::get('reward_id', NULL);
             $rewardType = OrbitInput::get('reward_type', NULL);
-            $redirectToUrl = OrbitInput::get('to_url', NULL);
+            $redirectToUrl = OrbitInput::post('to_url', NULL);
 
             $user = User::with('role')
                         ->whereHas('role', function($q) {
@@ -195,6 +195,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 }
             }
 
+            $user->redirect_to_url = $redirectToUrl;
             $this->response->data = $user;
             $this->response->code = 0;
             $this->response->status = 'success';
