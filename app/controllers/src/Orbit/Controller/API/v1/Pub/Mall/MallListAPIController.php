@@ -207,13 +207,13 @@ class MallListAPIController extends PubControllerAPI
             });
 
             // sort by name or location
-            $sort = array('name.raw' => array('order' => 'asc'));
+            $sort = array('name.raw' => array('order' => $sort_mode));
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withCache = FALSE;
                 $sort = array('_geo_distance' => array('position' => array('lon' => $longitude, 'lat' => $latitude), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'updated_date') {
-                $sort = array('updated_at' => array('order' => 'desc'));
+                $sort = array('updated_at' => array('order' => $sort_mode));
             }
 
             // put featured mall id in highest priority

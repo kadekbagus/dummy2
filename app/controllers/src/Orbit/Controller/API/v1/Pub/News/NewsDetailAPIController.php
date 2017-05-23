@@ -179,7 +179,7 @@ class NewsDetailAPIController extends PubControllerAPI
 
             $message = 'Request Ok';
             if (! is_object($news)) {
-                OrbitShopAPI::throwInvalidArgument('News that you specify is not found');
+                throw new OrbitCustomException('News that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
             }
 
             if ($news->is_exclusive === 'Y') {
