@@ -44,6 +44,7 @@ class ObjectPageViewActivityQueue
         try {
             $this->data = $data;
             $activityId = $data['activity_id'];
+            $message = '';
             $activity = Activity::excludeDeleted()
                         ->where('activity_id', $activityId)
                         ->where('group', 'mobile-ci')
@@ -73,7 +74,7 @@ class ObjectPageViewActivityQueue
                     $object_page_view = ObjectPageView::where('activity_id', $activity->activity_id)->lockForUpdate()->first();
 
                     if (is_object($object_page_view)) {
-                        $message = sprintf('[Job ID: `%s`] Activity ID %s already exists.', $job->getJobId(), $activityId))
+                        $message = sprintf('[Job ID: `%s`] Activity ID %s already exists.', $job->getJobId(), $activityId);
                         break;
                     }
 
