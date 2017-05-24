@@ -440,6 +440,7 @@ class PromotionListAPIController extends PubControllerAPI
             if (! empty($advertData)) {
                 unset($jsonQuery['sort']);
                 $withScore = true;
+                $advertIds = array();
                 foreach ($advertData as $dt) {
                     if ($list_type === 'featured') {
                         if ($dt->placement_type_orig === 'featured_list') {
@@ -457,7 +458,7 @@ class PromotionListAPIController extends PubControllerAPI
                 }
 
                 if ($withKeywordSearch) {
-                    $withoutAdv = array_diff($couponIds, $advertIds);
+                    $withoutAdv = array_diff($promotionIds, $advertIds);
                     foreach ($withoutAdv as $wa) {
                         $esWithoutAdvert = array('match' => array('_id' => array('query' => $wa, 'boost' => $promotionScore[$wa])));
                         $jsonQuery['query']['bool']['should'][] = $esWithoutAdvert;
