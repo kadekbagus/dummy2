@@ -219,7 +219,6 @@ class NewsLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $newsLocations->orderBy('distance', 'asc');
             } else {
-                $newsLocations->orderBy('city', 'asc');
                 $newsLocations->orderBy('name', 'asc');
             }
 
