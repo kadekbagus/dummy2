@@ -73,7 +73,7 @@ class ObjectPageViewActivityQueue
                     $object_page_view = ObjectPageView::where('activity_id', $activity->activity_id)->lockForUpdate()->first();
 
                     if (is_object($object_page_view)) {
-                        $message = sprintf('[Job ID: `%s`] Activity ID %s already exists.', $job->getJobId(), $activityId));
+                        $message = sprintf('[Job ID: `%s`] Activity ID %s already exists.', $job->getJobId(), $activityId);
                         break;
                     }
 
