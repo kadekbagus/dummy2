@@ -44,6 +44,7 @@ class ObjectPageViewActivityQueue
         try {
             $this->data = $data;
             $activityId = $data['activity_id'];
+            $message = '';
             $activity = Activity::excludeDeleted()
                         ->where('activity_id', $activityId)
                         ->where('group', 'mobile-ci')
