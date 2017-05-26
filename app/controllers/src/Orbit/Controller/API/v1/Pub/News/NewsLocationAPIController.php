@@ -253,10 +253,6 @@ class NewsLocationAPIController extends PubControllerAPI
                 $listOfRec = $newsLocations->get();
             }
 
-            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
-            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
-            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
-
             $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
             if ($usingCdn) {
                 $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";

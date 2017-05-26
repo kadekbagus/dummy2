@@ -141,7 +141,7 @@ class CouponLocationAPIController extends PubControllerAPI
             }
 
             $couponLocations = PromotionRetailer::select(
-                                            DB::raw("{$ prefix}merchants.merchant_id as merchant_id"),
+                                            DB::raw("{$prefix}merchants.merchant_id as merchant_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.parent_id ELSE {$prefix}merchants.merchant_id END as mall_id"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE CONCAT('Customer Service at ', {$prefix}merchants.name) END as name"),
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as mall_name"),
@@ -257,8 +257,28 @@ class CouponLocationAPIController extends PubControllerAPI
                 $listOfRec = $couponLocations->get();
             }
 
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+            if ($usingCdn) {
+                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+            }
+
             $couponName = Coupon::select(DB::Raw("
-                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name
+                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                    CASE WHEN (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
+                                    THEN
+                                        (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = default_translation.coupon_translation_id)
+                                    ELSE
+                                        (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
+                                    END AS original_media_path
                                 "))
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -296,6 +316,7 @@ class CouponLocationAPIController extends PubControllerAPI
             $data->total_records = $totalRec;
             if (is_object($couponName)) {
                 $data->coupon_name = $couponName->coupon_name;
+                $data->original_media_path = $couponName->original_media_path;
             }
             $data->records = $listOfRec;
 
