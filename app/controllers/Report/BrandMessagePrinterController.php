@@ -38,16 +38,10 @@ class BrandMessagePrinterController
             $chunk = Config::get('orbit.export.chunk', 50);
             $dir = Config::get('orbit.export.output_dir', '');
 
-            $export = BaseMerchant::select('base_merchants.base_merchant_id', 'base_merchants.name', 'base_merchants.mobile_default_language', 'base_merchant_translations.description', 'base_merchants.url', 'pre_exports.file_path'
-                                )
+            $export = BaseMerchant::select('base_merchants.base_merchant_id', 'pre_exports.file_path')
                                 ->leftJoin('pre_exports', function ($q){
                                     $q->on('pre_exports.object_id', '=', 'base_merchants.base_merchant_id')
                                       ->on('pre_exports.object_type', '=', DB::raw("'merchant'"));
-                                })
-                                ->join('languages', 'languages.name', '=', 'base_merchants.mobile_default_language')
-                                ->leftJoin('base_merchant_translations', function ($q){
-                                    $q->on('base_merchant_translations.base_merchant_id', '=', 'base_merchants.base_merchant_id')
-                                      ->on('base_merchant_translations.language_id', '=', 'languages.language_id');
                                 })
                                 ->where('pre_exports.export_id', $exportId)
                                 ->where('pre_exports.export_process_type', $exportType)
@@ -62,9 +56,29 @@ class BrandMessagePrinterController
                         mkdir($dir, 0777, true);
                     }
 
-                    $content = array(
-                                array($dtExport->name, $dtExport->mobile_default_language, $dtExport->description, $dtExport->url),
-                            );
+                    $prefix = DB::getTablePrefix();
+
+                    $translation = BaseMerchant::select('base_merchants.base_merchant_id',
+                                                'base_merchants.name',
+                                                'orb_languages.name as language',
+                                                DB::raw("CASE WHEN ({$prefix}base_merchant_translations.description = '' OR {$prefix}base_merchant_translations.description IS NULL)
+                                                            THEN default_translation.description
+                                                            ELSE {$prefix}base_merchant_translations.description END as description"),
+                                                'base_merchants.url')
+                                            ->leftJoin('base_merchant_translations', 'base_merchant_translations.base_merchant_id', '=', 'base_merchants.base_merchant_id')
+                                            ->leftJoin('languages', 'languages.language_id', '=', 'base_merchant_translations.language_id')
+                                            ->leftJoin('languages as default_language', DB::raw("default_language.name"), '=', 'base_merchants.mobile_default_language')
+                                            ->leftJoin('base_merchant_translations as default_translation', function ($q){
+                                                $q->on(DB::raw("default_translation.language_id"), '=', DB::raw("default_language.language_id"))
+                                                  ->on(DB::raw("default_translation.base_merchant_id"), '=', 'base_merchants.base_merchant_id');
+                                            })
+                                            ->where('base_merchants.base_merchant_id', $dtExport->base_merchant_id)
+                                            ->get();
+
+                    $content = array();
+                    foreach ($translation as $dtTranslation) {
+                        $content[] = array($dtTranslation->name, $dtTranslation->language, $dtTranslation->description, $dtTranslation->url);
+                    }
 
                     $csv_handler = fopen($dir . $filePath, 'w');
 
