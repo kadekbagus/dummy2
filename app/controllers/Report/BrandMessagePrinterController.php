@@ -60,7 +60,7 @@ class BrandMessagePrinterController
 
                     $translation = BaseMerchant::select('base_merchants.base_merchant_id',
                                                 'base_merchants.name',
-                                                'orb_languages.name as language',
+                                                'languages.name as language',
                                                 DB::raw("CASE WHEN ({$prefix}base_merchant_translations.description = '' OR {$prefix}base_merchant_translations.description IS NULL)
                                                             THEN default_translation.description
                                                             ELSE {$prefix}base_merchant_translations.description END as description"),
