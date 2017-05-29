@@ -88,10 +88,9 @@ class RewardMessagingReportPrinterController
                                     ->orderBy('promotions.promotion_name', 'asc')
                                     ->get();
 
-                    $url = Config::get('app.url') . $hashbang . 'coupons/' . $dtExport->sku . '/' . Str::slug($dtExport->promotion_name);
-
                     $content = array();
                     foreach ($translation as $dtTranslation) {
+                        $url = Config::get('app.url') . $hashbang . 'coupons/' . $dtExport->sku . '/' . Str::slug($dtTranslation->promotion_name);
                         $content[] = array(
                                     $dtTranslation->sku,
                                     $dtTranslation->locale,
