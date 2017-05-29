@@ -72,6 +72,7 @@ class BrandMessagePrinterController
                                                 $q->on(DB::raw("default_translation.language_id"), '=', DB::raw("default_language.language_id"))
                                                   ->on(DB::raw("default_translation.base_merchant_id"), '=', 'base_merchants.base_merchant_id');
                                             })
+                                            ->where('languages.status', 'active')
                                             ->where('base_merchants.base_merchant_id', $dtExport->base_merchant_id)
                                             ->get();
 

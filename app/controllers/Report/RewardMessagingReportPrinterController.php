@@ -85,6 +85,7 @@ class RewardMessagingReportPrinterController
                                           ->on(DB::raw("default_translation.merchant_language_id"), '=', DB::raw("default_language.language_id"));
                                     })
                                     ->where('promotions.promotion_id', $dtExport->sku)
+                                    ->where('languages.status', 'active')
                                     ->orderBy('promotions.promotion_name', 'asc')
                                     ->get();
 
