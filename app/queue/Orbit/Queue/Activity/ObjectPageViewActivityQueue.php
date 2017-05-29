@@ -44,6 +44,7 @@ class ObjectPageViewActivityQueue
         try {
             $this->data = $data;
             $activityId = $data['activity_id'];
+            $message = '';
             $activity = Activity::excludeDeleted()
                         ->where('activity_id', $activityId)
                         ->where('group', 'mobile-ci')
@@ -70,6 +71,13 @@ class ObjectPageViewActivityQueue
                 case 'view_mall_promotion_detail':
                 case 'view_mall_coupon_detail':
                     // insert to object_page_views
+                    $object_page_view = ObjectPageView::where('activity_id', $activity->activity_id)->lockForUpdate()->first();
+
+                    if (is_object($object_page_view)) {
+                        $message = sprintf('[Job ID: `%s`] Activity ID %s already exists.', $job->getJobId(), $activityId);
+                        break;
+                    }
+
                     $object_page_view = new ObjectPageView();
                     $object_page_view->object_type = strtolower($activity->object_name);
                     $object_page_view->object_id = $activity->object_id;
@@ -150,10 +158,10 @@ class ObjectPageViewActivityQueue
                     if (! empty($data)) {
                         $response = $esQueue->fire($fakeJob, $data);
                     }
+
+                    $fakeJob->delete();
                     break;
             }
-
-            $fakeJob->delete();
 
             return [
                 'status' => 'ok',
