@@ -80,6 +80,7 @@ class RewardPOIMessageReportPrinterController
                                         ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                                         ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                                         ->where('promotions.promotion_id', $dtExport->promotion_id)
+                                        ->where('languages.status', 'active')
                                         ->get();
 
                     $content = array();
