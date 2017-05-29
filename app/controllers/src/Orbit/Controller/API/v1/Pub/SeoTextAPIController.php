@@ -29,9 +29,9 @@ class SeoTextAPIController extends PubControllerAPI
      */
     public function getSeoText()
     {
-    	$httpCode = 200;
-    	try {
-    		$user = $this->getUser();
+        $httpCode = 200;
+        try {
+            $user = $this->getUser();
             $object_type = OrbitInput::get('object_type');
             $language = OrbitInput::get('language', 'en');
             $mall_id = OrbitInput::get('mall_id');
@@ -55,21 +55,33 @@ class SeoTextAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             switch ($object_type) {
-            	case 'seo_mall_homepage':
-            		$seo_text = Mall::select('description as seo_text')
-									->where('merchants.merchant_id', '=', $mall_id)
+                case 'seo_mall_homepage':
+                    $seo_text = Mall::select('description as seo_text')
+                                    ->where('merchants.merchant_id', '=', $mall_id)
                                     ->first();
-            			break;
+                        break;
 
-            	default:
-            		$seo_text = Page::select('title', 'content as seo_text', 'language')
-            						->where('object_type', '=', $object_type)
-            						->where('status', '=', 'active')
-                	                ->where('pages.language', '=', $language)
+                default:
+                    $seo_text = Page::select(DB::raw("CASE WHEN ({$prefix}pages.title = '' or {$prefix}pages.title is null)
+                                                       THEN (select title from {$prefix}pages
+                                                                where {$prefix}pages.object_type = {$this->quote($object_type)}
+                                                                and {$prefix}pages.language = {$this->quote($default_language)})
+                                                       ELSE {$prefix}pages.title
+                                                       END as title,
+                                                     CASE WHEN ({$prefix}pages.content = '' or {$prefix}pages.content is null)
+                                                       THEN (select content from {$prefix}pages
+                                                                where {$prefix}pages.object_type = {$this->quote($object_type)}
+                                                                and {$prefix}pages.language = {$this->quote($default_language)})
+                                                       ELSE {$prefix}pages.content
+                                                       END as seo_text"),
+                                            'language')
+                                    ->where('object_type', '=', $object_type)
+                                    ->where('status', '=', 'active')
+                                    ->where('pages.language', '=', $language)
                                     ->first();
 
-                    // fallback to english if content not found
-                    if (!is_object($seo_text) || $seo_text->seo_text == '' || $seo_text->seo_text == null) {
+                    // fallback to english if not found
+                    if (! is_object($seo_text)) {
                         $seo_text = Page::select('title', 'content as seo_text', 'language')
                                         ->where('object_type', '=', $object_type)
                                         ->where('status', '=', 'active')
@@ -83,14 +95,12 @@ class SeoTextAPIController extends PubControllerAPI
             $this->response->data = new stdClass();
             $this->response->data = $seo;
         } catch (ACLForbiddenException $e) {
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -101,7 +111,6 @@ class SeoTextAPIController extends PubControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
 
@@ -114,7 +123,6 @@ class SeoTextAPIController extends PubControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (\Exception $e) {
-
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -125,5 +133,10 @@ class SeoTextAPIController extends PubControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }
