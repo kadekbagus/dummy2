@@ -110,33 +110,33 @@ class RewardPOIMessageReportPrinterController
 
                     DB::beginTransaction();
 
-                        $checkPre = PreExport::where('export_id',$exportId)
-                                            ->where('object_type', 'coupon')
-                                            ->where('object_id', $dtExport->promotion_id);
+                    $checkPre = PreExport::where('export_id',$exportId)
+                                        ->where('object_type', 'coupon')
+                                        ->where('object_id', $dtExport->promotion_id);
 
-                        $_preExport = clone $checkPre;
-                        $preExport = $_preExport->where('export_process_type', $exportType)->first();
+                    $_preExport = clone $checkPre;
+                    $preExport = $_preExport->where('export_process_type', $exportType)->first();
 
-                        if (is_object($preExport)) {
-                            $postExport = $preExport->moveToPostExport();
+                    if (is_object($preExport)) {
+                        $postExport = $preExport->moveToPostExport();
+                    }
+
+                    $checkPre = $checkPre->count();
+
+                    if ($checkPre === 0) {
+                        $export = Export::where('export_id', $exportId)->first();
+                        $totalFinished = $export->finished_export + 1;
+
+                        $export->finished_export = $totalFinished;
+
+                        if ((int) $export->total_export === (int) $totalFinished) {
+                            $export->status = 'done';
                         }
 
-                        $checkPre = $checkPre->count();
+                        $export->save();
+                    }
 
-                        if ($checkPre === 0) {
-                            $export = Export::where('export_id', $exportId)->first();
-                            $totalFinished = $export->finished_export + 1;
-
-                            $export->finished_export = $totalFinished;
-
-                            if ((int) $export->total_export === (int) $totalFinished) {
-                                $export->status = 'done';
-                            }
-
-                            $export->save();
-                        }
-
-                        DB::commit();
+                    DB::commit();
                 }
             });
 
