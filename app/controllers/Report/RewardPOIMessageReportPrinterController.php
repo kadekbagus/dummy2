@@ -69,7 +69,7 @@ class RewardPOIMessageReportPrinterController
                                                     where {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
                                                 ) as poi_name
                                             "),
-                                            'campaign_account.mobile_default_language'
+                                            'languages.name as language'
                                         )
                                         ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
@@ -77,6 +77,8 @@ class RewardPOIMessageReportPrinterController
                                         ->leftJoin('merchants as omp', function ($q) {
                                             $q->on(DB::raw('omp.merchant_id'), '=', 'merchants.parent_id');
                                         })
+                                        ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                        ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
                                         ->where('promotions.promotion_id', $dtExport->promotion_id)
                                         ->get();
 
@@ -84,7 +86,7 @@ class RewardPOIMessageReportPrinterController
                     foreach ($couponData as $coupon) {
                         $content[] = array(
                                         $coupon->poi_name,
-                                        $coupon->mobile_default_language,
+                                        $coupon->language,
                                         '',
                                         '',
                                         '',
@@ -96,7 +98,17 @@ class RewardPOIMessageReportPrinterController
                                         '',
                                         ''
                                     );
-                        DB::beginTransaction();
+                    }
+
+                    $csv_handler = fopen($dir . $filePath, 'w');
+
+                    foreach ($content as $fields) {
+                        fputcsv($csv_handler, $fields);
+                    }
+
+                    fclose($csv_handler);
+
+                    DB::beginTransaction();
 
                         $checkPre = PreExport::where('export_id',$exportId)
                                             ->where('object_type', 'coupon')
@@ -125,15 +137,6 @@ class RewardPOIMessageReportPrinterController
                         }
 
                         DB::commit();
-                    }
-
-                    $csv_handler = fopen($dir . $filePath, 'w');
-
-                    foreach ($content as $fields) {
-                        fputcsv($csv_handler, $fields);
-                    }
-
-                    fclose($csv_handler);
                 }
             });
 
