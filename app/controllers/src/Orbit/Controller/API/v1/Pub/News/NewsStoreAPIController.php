@@ -104,14 +104,13 @@ class NewsStoreAPIController extends PubControllerAPI
                                           ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
                                     ->where('news_merchant.news_id', '=', $newsId)
-                                    ->where('merchants.object_type', 'tenant')
-                                    ->groupBy("name")
-                                    ->orderBy($sort_by, $sort_mode);
+                                    ->groupBy("name");
 
             // filter news by mall id
             OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
                 if ($is_detail != 'y') {
-                    $newsLocations->where('merchants.parent_id', '=', $mallid);
+                    $newsLocations->where('merchants.parent_id', '=', $mallid)
+                                  ->where('merchants.object_type', 'tenant');
                 }
             });
 
