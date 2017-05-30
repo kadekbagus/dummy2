@@ -253,8 +253,28 @@ class NewsLocationAPIController extends PubControllerAPI
                 $listOfRec = $newsLocations->get();
             }
 
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+            if ($usingCdn) {
+                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+            }
+
             $newsName = News::select(DB::Raw("
-                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name
+                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                                CASE WHEN (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id) is null
+                                THEN
+                                    (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = default_translation.news_translation_id)
+                                ELSE
+                                    (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id)
+                                END AS original_media_path
                             "))
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -293,6 +313,7 @@ class NewsLocationAPIController extends PubControllerAPI
             $data->total_records = $totalRec;
             if (is_object($newsName)) {
                 $data->news_name = $newsName->news_name;
+                $data->original_media_path = $newsName->original_media_path;
             }
             $data->records = $listOfRec;
 
