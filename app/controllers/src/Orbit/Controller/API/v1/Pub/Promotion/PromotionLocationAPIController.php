@@ -131,9 +131,11 @@ class PromotionLocationAPIController extends PubControllerAPI
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
             $mallLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as location_logo";
+            $locationLogo = "CONCAT({$this->quote($urlPrefix)}, img_loc.path) as location_logo_orig";
             $mallMap = "CONCAT({$this->quote($urlPrefix)}, map.path) as map_image";
             if ($usingCdn) {
                 $mallLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as location_logo";
+                $locationLogo = "CASE WHEN (img_loc.cdn_url is null or img_loc.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img_loc.path) ELSE img_loc.cdn_url END as location_logo_orig";
                 $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
             }
 
@@ -150,6 +152,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.is_subscribed ELSE {$prefix}merchants.is_subscribed END as is_subscribed"),
                                         DB::raw("{$prefix}merchants.object_type as location_type"),
                                         DB::raw("{$mallLogo}"),
+                                        DB::raw("{$locationLogo}"),
                                         DB::raw("{$mallMap}"),
                                         DB::raw("{$prefix}merchants.phone as phone"),
                                         DB::raw("{$prefix}merchants.name as name_orig"),
@@ -165,7 +168,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                                         $q->on(DB::raw('map.object_id'), '=', "merchants.merchant_id")
                                           ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig')"));
                                     })
-                                    // Logo
+                                    // Mall Logo
                                     ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
                                         $q->on(DB::raw('img.object_id'), '=', DB::Raw("
                                                         (select CASE WHEN t.object_type = 'tenant'
@@ -178,6 +181,11 @@ class PromotionLocationAPIController extends PubControllerAPI
                                                         where t.merchant_id = {$prefix}merchants.merchant_id)
                                             "))
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
+                                    })
+                                    // Location Logo
+                                    ->leftJoin(DB::raw("{$prefix}media as img_loc"), function($q) use ($prefix){
+                                        $q->on(DB::raw('img_loc.object_id'), '=', 'merchants.merchant_id')
+                                          ->on(DB::raw('img_loc.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
                                     ->where('news_merchant.news_id', '=', $promotion_id)
                                     ->where('merchants.status', '=', 'active');

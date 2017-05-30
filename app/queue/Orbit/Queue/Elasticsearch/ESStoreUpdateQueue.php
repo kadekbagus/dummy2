@@ -239,7 +239,7 @@ class ESStoreUpdateQueue
 
             if (! empty($baseMerchant)) {
                 $totalObjectPageViews = TotalObjectPageView::where('object_id', $baseMerchant->base_merchant_id)
-                                            ->where('object_type', 'store')
+                                            ->where('object_type', 'tenant')
                                             ->get();
 
                 foreach($totalObjectPageViews as $pageView) {
