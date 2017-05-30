@@ -70,6 +70,8 @@ class ObjectPageViewActivityQueue
                 case 'view_mall_event_detail':
                 case 'view_mall_promotion_detail':
                 case 'view_mall_coupon_detail':
+                case 'view_mall_promotional_event_detail';
+                case 'view_landing_page_promotional_event_detail';
                     // insert to object_page_views
                     $object_page_view = ObjectPageView::where('activity_id', $activity->activity_id)->lockForUpdate()->first();
 
