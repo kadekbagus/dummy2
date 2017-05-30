@@ -96,6 +96,7 @@ class PromotionStoreAPIController extends PubControllerAPI
                                           ->on('news.object_type', '=', DB::raw("'promotion'"));
                                     })
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     // Logo
                                     ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
                                         $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
@@ -109,6 +110,23 @@ class PromotionStoreAPIController extends PubControllerAPI
                 if ($is_detail != 'y') {
                     $promotionLocation->where('merchants.parent_id', '=', $mallid)
                                       ->where('merchants.object_type', 'tenant');
+                }
+            });
+
+            OrbitInput::get('cities', function($cities) use ($promotionLocation, $prefix) {
+                foreach ($cities as $key => $value) {
+                    if (empty($value)) {
+                       unset($cities[$key]);
+                    }
+                }
+                if (! empty($cities)) {
+                    $promotionLocation->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
+                }
+            });
+
+            OrbitInput::get('country', function($country) use ($promotionLocation, $prefix) {
+                if (! empty($country)) {
+                    $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
                 }
             });
 
