@@ -16,7 +16,7 @@ class News extends Eloquent
     use CampaignAccessTrait;
 
     const IS_EXCLUSIVE_ERROR_CODE = 9001;
-    const NOT_FOUND_ERROR_CODE = 9002;
+    const NOT_FOUND_ERROR_CODE = 404;
 
     protected $table = 'news';
 
