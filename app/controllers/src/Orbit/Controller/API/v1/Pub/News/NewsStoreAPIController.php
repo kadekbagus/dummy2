@@ -122,7 +122,7 @@ class NewsStoreAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $newsLocations->skip($skip);
 
-            $newsLocations->orderBy($sort_by, $sort_mode);
+            $newsLocations->orderBy('name', 'asc');
 
             $listOfRec = $newsLocations->get();
 

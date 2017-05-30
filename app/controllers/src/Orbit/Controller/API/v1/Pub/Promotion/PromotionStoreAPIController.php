@@ -120,7 +120,7 @@ class PromotionStoreAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $promotionLocation->skip($skip);
 
-            $promotionLocation->orderBy($sort_by, $sort_mode);
+            $promotionLocation->orderBy('name', 'asc');
 
             $listOfRec = $promotionLocation->get();
 
