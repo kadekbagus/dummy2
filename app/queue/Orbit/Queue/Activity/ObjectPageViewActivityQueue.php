@@ -71,6 +71,8 @@ class ObjectPageViewActivityQueue
                 case 'view_mall_event_detail':
                 case 'view_mall_promotion_detail':
                 case 'view_mall_coupon_detail':
+                case 'view_mall_promotional_event_detail';
+                case 'view_landing_page_promotional_event_detail';
                     // insert to object_page_views
                     $object_page_view = ObjectPageView::where('activity_id', $activity->activity_id)->lockForUpdate()->first();
 
@@ -81,7 +83,7 @@ class ObjectPageViewActivityQueue
 
                     $object_id = $activity->object_id;
                     $data = [];
-                    if ($activity->object_name === 'Tenant'){
+                    if ($activity->object_name === 'Tenant') {
                         $store = Tenant::excludeDeleted()
                             ->where('merchant_id', $object_id)
                             ->first();
@@ -91,8 +93,6 @@ class ObjectPageViewActivityQueue
                                 'name'    => $store->name,
                                 'country' => $store->country
                             ];
-
-                            $esQueue = new ESStoreUpdateQueue();
                         } else {
                             $message = sprintf('[Job ID: `%s`] Tenant Not Found, Object Page View Activity Queue; Status: Fail; Activity ID: %s; Activity Name: %s',
                                     $fakeJob->getJobId(),
@@ -100,12 +100,16 @@ class ObjectPageViewActivityQueue
                                     $activity->activity_name_long);
                         }
 
-                        $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
-                                ->where('base_merchants.name' , $store->name)
-                                ->where('countries.name', $store->country)
-                                ->first();
+                        if ($activity->location_id === '0') {
+                            $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
+                                    ->where('base_merchants.name' , $store->name)
+                                    ->where('countries.name', $store->country)
+                                    ->first();
 
-                        $object_id = $baseMerchant->base_merchant_id;
+                            $object_id = $baseMerchant->base_merchant_id;
+                        }
+
+                        $esQueue = new ESStoreUpdateQueue();
                     }
 
                     $object_page_view = new ObjectPageView();

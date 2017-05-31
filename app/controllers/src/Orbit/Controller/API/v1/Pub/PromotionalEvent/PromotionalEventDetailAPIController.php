@@ -277,7 +277,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View Promotional Event');
                 $activity->setUser($user)
-                    ->setActivityName('view_promotional_event_detail')
+                    ->setActivityName('view_mall_promotional_event_detail')
                     ->setActivityNameLong('View Promotional Event Detail')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)
@@ -289,7 +289,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             } else {
                 $activityNotes = sprintf('Page viewed: View Promotional Event Detail');
                 $activity->setUser($user)
-                    ->setActivityName('view_promotional_event_detail')
+                    ->setActivityName('view_landing_page_promotional_event_detail')
                     ->setActivityNameLong('View Promotional Event Detail')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)

@@ -79,16 +79,21 @@ class NewsLocationAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
 
+            // need to handle request for grouping by name_orig and order by name_orig and city
+            $groupBy = OrbitInput::get('group_by');
+
             $newsHelper = NewsHelper::create();
             $newsHelper->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'news_id' => $news_id,
                     'language' => $language,
+                    'group_by' => $groupBy,
                 ),
                 array(
                     'news_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
+                    'group_by' => 'in:name_orig',
                 ),
                 array(
                     'required' => 'News ID is required',
@@ -109,6 +114,7 @@ class NewsLocationAPIController extends PubControllerAPI
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
+                'group_by' => $groupBy,
             ];
 
             // Run the validation
@@ -227,10 +233,19 @@ class NewsLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $newsLocations->orderBy('distance', 'asc');
             } else {
-                $newsLocations->orderBy('name', 'asc');
+                if (! empty($groupBy)) {
+                    $newsLocations->orderBy('name_orig', 'asc')
+                        ->orderBy('city', 'asc');
+                } else {
+                    $newsLocations->orderBy('name', 'asc');
+                }
             }
 
-            $newsLocations->groupBy('merchants.merchant_id');
+            if (! empty($groupBy)) {
+                $newsLocations->groupBy('name_orig');
+            } else {
+                $newsLocations->groupBy('merchants.merchant_id');
+            }
 
             $_newsLocations = clone($newsLocations);
 
