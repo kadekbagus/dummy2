@@ -84,24 +84,23 @@ class ObjectPageViewActivityQueue
                     $object_id = $activity->object_id;
                     $data = [];
                     if ($activity->object_name === 'Tenant') {
+                        $store = Tenant::excludeDeleted()
+                            ->where('merchant_id', $object_id)
+                            ->first();
+
+                        if (! empty($store)) {
+                            $data = [
+                                'name'    => $store->name,
+                                'country' => $store->country
+                            ];
+                        } else {
+                            $message = sprintf('[Job ID: `%s`] Tenant Not Found, Object Page View Activity Queue; Status: Fail; Activity ID: %s; Activity Name: %s',
+                                    $fakeJob->getJobId(),
+                                    $activity->activity_id,
+                                    $activity->activity_name_long);
+                        }
 
                         if ($activity->location_id === '0') {
-                            $store = Tenant::excludeDeleted()
-                                ->where('merchant_id', $object_id)
-                                ->first();
-
-                            if (! empty($store)) {
-                                $data = [
-                                    'name'    => $store->name,
-                                    'country' => $store->country
-                                ];
-                            } else {
-                                $message = sprintf('[Job ID: `%s`] Tenant Not Found, Object Page View Activity Queue; Status: Fail; Activity ID: %s; Activity Name: %s',
-                                        $fakeJob->getJobId(),
-                                        $activity->activity_id,
-                                        $activity->activity_name_long);
-                            }
-
                             $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
                                     ->where('base_merchants.name' , $store->name)
                                     ->where('countries.name', $store->country)
