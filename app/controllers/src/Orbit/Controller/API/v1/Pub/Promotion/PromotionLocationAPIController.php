@@ -210,7 +210,7 @@ class PromotionLocationAPIController extends PubControllerAPI
             $lat = isset($position[1])?$position[1]:null;
 
             OrbitInput::get('country', function($country) use ($promotionLocation, $prefix) {
-                    $promotionLocation->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.country ELSE {$prefix}merchants.country END)"), $country);
+                    $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.country ELSE {$prefix}merchants.country END)"), $country);
             });
 
             // Filter by location
