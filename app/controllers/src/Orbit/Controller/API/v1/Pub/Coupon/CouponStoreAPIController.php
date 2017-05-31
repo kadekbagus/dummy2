@@ -95,20 +95,37 @@ class CouponStoreAPIController extends PubControllerAPI
                                         )
                                     ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     // Logo
                                     ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
                                         $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
                                           ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
                                     ->where('promotions.promotion_id', $couponId)
-                                    ->where('merchants.object_type', 'tenant')
-                                    ->groupBy("name")
-                                    ->orderBy($sort_by, $sort_mode);
+                                    ->groupBy("name");
 
             // filter news by mall id
             OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
                 if ($is_detail != 'y') {
-                    $couponLocations->where('merchants.parent_id', '=', $mallid);
+                    $couponLocations->where('merchants.parent_id', '=', $mallid)
+                                    ->where('merchants.object_type', 'tenant');
+                }
+            });
+
+            OrbitInput::get('cities', function($cities) use ($couponLocations, $prefix) {
+                foreach ($cities as $key => $value) {
+                    if (empty($value)) {
+                       unset($cities[$key]);
+                    }
+                }
+                if (! empty($cities)) {
+                    $couponLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
+                }
+            });
+
+            OrbitInput::get('country', function($country) use ($couponLocations, $prefix) {
+                if (! empty($country)) {
+                    $couponLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
                 }
             });
 
@@ -120,7 +137,7 @@ class CouponStoreAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $couponLocations->skip($skip);
 
-            $couponLocations->orderBy($sort_by, $sort_mode);
+            $couponLocations->orderBy('name', 'asc');
 
             $listOfRec = $couponLocations->get();
 

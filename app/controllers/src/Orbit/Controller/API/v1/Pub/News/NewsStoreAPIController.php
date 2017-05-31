@@ -98,20 +98,37 @@ class NewsStoreAPIController extends PubControllerAPI
                                           ->on('news.object_type', '=', DB::raw("'news'"));
                                     })
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     // Logo
                                     ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
                                         $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
                                           ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
                                     ->where('news_merchant.news_id', '=', $newsId)
-                                    ->where('merchants.object_type', 'tenant')
-                                    ->groupBy("name")
-                                    ->orderBy($sort_by, $sort_mode);
+                                    ->groupBy("name");
 
             // filter news by mall id
             OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
                 if ($is_detail != 'y') {
-                    $newsLocations->where('merchants.parent_id', '=', $mallid);
+                    $newsLocations->where('merchants.parent_id', '=', $mallid)
+                                  ->where('merchants.object_type', 'tenant');
+                }
+            });
+
+            OrbitInput::get('cities', function($cities) use ($newsLocations, $prefix) {
+                foreach ($cities as $key => $value) {
+                    if (empty($value)) {
+                       unset($cities[$key]);
+                    }
+                }
+                if (! empty($cities)) {
+                    $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
+                }
+            });
+
+            OrbitInput::get('country', function($country) use ($newsLocations, $prefix) {
+                if (! empty($country)) {
+                    $newsLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
                 }
             });
 
@@ -123,7 +140,7 @@ class NewsStoreAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $newsLocations->skip($skip);
 
-            $newsLocations->orderBy($sort_by, $sort_mode);
+            $newsLocations->orderBy('name', 'asc');
 
             $listOfRec = $newsLocations->get();
 
