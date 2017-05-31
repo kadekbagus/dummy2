@@ -83,16 +83,21 @@ class CouponLocationAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
 
+            // need to handle request for grouping by name_orig and order by name_orig and city
+            $groupBy = OrbitInput::get('group_by');
+
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
             $validator = Validator::make(
                 array(
                     'coupon_id' => $coupon_id,
                     'language' => $language,
+                    'group_by' => $groupBy,
                 ),
                 array(
                     'coupon_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
+                    'group_by' => 'in:name_orig',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -113,6 +118,7 @@ class CouponLocationAPIController extends PubControllerAPI
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
+                'group_by' => $groupBy,
             ];
 
             // Run the validation
@@ -232,10 +238,19 @@ class CouponLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $couponLocations->orderBy('distance', 'asc');
             } else {
-                $couponLocations->orderBy('name', 'asc');
+                if (! empty($groupBy)) {
+                    $couponLocations->orderBy('name_orig', 'asc')
+                        ->orderBy('city', 'asc');
+                } else {
+                    $couponLocations->orderBy('name', 'asc');
+                }
             }
 
-            $couponLocations->groupBy('merchants.merchant_id');
+            if (! empty($groupBy)) {
+                $couponLocations->groupBy('name_orig');
+            } else {
+                $couponLocations->groupBy('merchants.merchant_id');
+            }
 
             $_couponLocations = clone($couponLocations);
 
