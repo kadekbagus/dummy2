@@ -85,7 +85,7 @@ class ObjectPageViewActivityQueue
                     $data = [];
                     if ($activity->object_name === 'Tenant') {
 
-                        if ($activity->location_id != '0') {
+                        if ($activity->location_id === '0') {
                             $store = Tenant::excludeDeleted()
                                 ->where('merchant_id', $object_id)
                                 ->first();
