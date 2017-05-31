@@ -80,7 +80,7 @@ class NewsLocationAPIController extends PubControllerAPI
             $withCache = TRUE;
 
             // need to handle request for grouping by name_orig and order by name_orig and city
-            $groupBy = OrbitInput::get('group_by');
+            $sortBy = OrbitInput::get('sort_by');
 
             $newsHelper = NewsHelper::create();
             $newsHelper->registerCustomValidation();
@@ -88,12 +88,12 @@ class NewsLocationAPIController extends PubControllerAPI
                 array(
                     'news_id' => $news_id,
                     'language' => $language,
-                    'group_by' => $groupBy,
+                    'sort_by' => $sortBy,
                 ),
                 array(
                     'news_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
-                    'group_by' => 'in:name_orig',
+                    'sort_by' => 'in:name_orig',
                 ),
                 array(
                     'required' => 'News ID is required',
@@ -114,7 +114,7 @@ class NewsLocationAPIController extends PubControllerAPI
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
-                'group_by' => $groupBy,
+                'sort_by' => $sortBy,
             ];
 
             // Run the validation
@@ -233,7 +233,7 @@ class NewsLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $newsLocations->orderBy('distance', 'asc');
             } else {
-                if (! empty($groupBy)) {
+                if (! empty($sortBy)) {
                     $newsLocations->orderBy('name_orig', 'asc')
                         ->orderBy('city', 'asc');
                 } else {
@@ -241,11 +241,7 @@ class NewsLocationAPIController extends PubControllerAPI
                 }
             }
 
-            if (! empty($groupBy)) {
-                $newsLocations->groupBy('name_orig');
-            } else {
-                $newsLocations->groupBy('merchants.merchant_id');
-            }
+            $newsLocations->groupBy('merchants.merchant_id');
 
             $_newsLocations = clone($newsLocations);
 
