@@ -79,16 +79,21 @@ class PromotionLocationAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
 
+            // need to handle request for grouping by name_orig and order by name_orig and city
+            $groupBy = OrbitInput::get('group_by');
+
             $promotionHelper = PromotionHelper::create();
             $promotionHelper->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'promotion_id' => $promotion_id,
                     'language' => $language,
+                    'group_by' => $groupBy,
                 ),
                 array(
                     'promotion_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
+                    'group_by' => 'in:name_orig',
                 ),
                 array(
                     'required' => 'Promotion ID is required',
@@ -109,6 +114,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
+                'group_by' => $groupBy,
             ];
 
 
@@ -228,10 +234,19 @@ class PromotionLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $promotionLocation->orderBy('distance', 'asc');
             } else {
-                $promotionLocation->orderBy('name', 'asc');
+                if (! empty($groupBy)) {
+                    $promotionLocation->orderBy('name_orig', 'asc')
+                        ->orderBy('city', 'asc');
+                } else {
+                    $promotionLocation->orderBy('name', 'asc');
+                }
             }
 
-            $promotionLocation->groupBy('merchants.merchant_id');
+            if (! empty($groupBy)) {
+                $promotionLocation->groupBy('name_orig');
+            } else {
+                $promotionLocation->groupBy('merchants.merchant_id');
+            }
 
             $_promotionLocation = clone($promotionLocation);
 
