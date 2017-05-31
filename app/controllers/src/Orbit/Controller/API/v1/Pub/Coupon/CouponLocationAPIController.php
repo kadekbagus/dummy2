@@ -84,7 +84,7 @@ class CouponLocationAPIController extends PubControllerAPI
             $withCache = TRUE;
 
             // need to handle request for grouping by name_orig and order by name_orig and city
-            $groupBy = OrbitInput::get('group_by');
+            $sortBy = OrbitInput::get('sort_by');
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -92,12 +92,12 @@ class CouponLocationAPIController extends PubControllerAPI
                 array(
                     'coupon_id' => $coupon_id,
                     'language' => $language,
-                    'group_by' => $groupBy,
+                    'sort_by' => $sortBy,
                 ),
                 array(
                     'coupon_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
-                    'group_by' => 'in:name_orig',
+                    'sort_by' => 'in:name_orig',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -118,7 +118,7 @@ class CouponLocationAPIController extends PubControllerAPI
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
-                'group_by' => $groupBy,
+                'sort_by' => $sortBy,
             ];
 
             // Run the validation
@@ -242,7 +242,7 @@ class CouponLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $couponLocations->orderBy('distance', 'asc');
             } else {
-                if (! empty($groupBy)) {
+                if (! empty($sortBy)) {
                     $couponLocations->orderBy('name_orig', 'asc')
                         ->orderBy('city', 'asc');
                 } else {
