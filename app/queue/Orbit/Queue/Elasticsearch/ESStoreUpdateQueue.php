@@ -242,6 +242,7 @@ class ESStoreUpdateQueue
                                             ->where('object_type', 'tenant')
                                             ->get();
 
+                $mallPageView = '';
                 foreach($totalObjectPageViews as $pageView) {
                     if ($pageView->location_id != '0') {
                         $mallPageView = array(

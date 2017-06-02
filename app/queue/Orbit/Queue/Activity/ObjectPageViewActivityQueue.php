@@ -89,14 +89,12 @@ class ObjectPageViewActivityQueue
                             ->first();
 
                         if (! empty($store)) {
-                            if ($activity->location_name === 'gtm') {
-                                $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
-                                        ->where('base_merchants.name' , $store->name)
-                                        ->where('countries.name', $store->country)
-                                        ->first();
+                            $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
+                                    ->where('base_merchants.name' , $store->name)
+                                    ->where('countries.name', $store->country)
+                                    ->first();
 
-                                $object_id = $baseMerchant->base_merchant_id;
-                            }
+                            $object_id = $baseMerchant->base_merchant_id;
 
                             $data = [
                                 'name'    => $store->name,
