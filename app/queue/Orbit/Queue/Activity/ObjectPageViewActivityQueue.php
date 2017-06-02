@@ -89,27 +89,28 @@ class ObjectPageViewActivityQueue
                             ->first();
 
                         if (! empty($store)) {
+                            if ($activity->location_name === 'gtm') {
+                                $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
+                                        ->where('base_merchants.name' , $store->name)
+                                        ->where('countries.name', $store->country)
+                                        ->first();
+
+                                $object_id = $baseMerchant->base_merchant_id;
+                            }
+
                             $data = [
                                 'name'    => $store->name,
                                 'country' => $store->country
                             ];
+
+                            $esQueue = new ESStoreUpdateQueue();
+
                         } else {
                             $message = sprintf('[Job ID: `%s`] Tenant Not Found, Object Page View Activity Queue; Status: Fail; Activity ID: %s; Activity Name: %s',
                                     $fakeJob->getJobId(),
                                     $activity->activity_id,
                                     $activity->activity_name_long);
                         }
-
-                        if ($activity->location_id === '0') {
-                            $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
-                                    ->where('base_merchants.name' , $store->name)
-                                    ->where('countries.name', $store->country)
-                                    ->first();
-
-                            $object_id = $baseMerchant->base_merchant_id;
-                        }
-
-                        $esQueue = new ESStoreUpdateQueue();
                     }
 
                     $object_page_view = new ObjectPageView();
