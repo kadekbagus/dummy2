@@ -79,16 +79,21 @@ class NewsLocationAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
 
+            // need to handle request for grouping by name_orig and order by name_orig and city
+            $sortBy = OrbitInput::get('sort_by');
+
             $newsHelper = NewsHelper::create();
             $newsHelper->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'news_id' => $news_id,
                     'language' => $language,
+                    'sort_by' => $sortBy,
                 ),
                 array(
                     'news_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
+                    'sort_by' => 'in:name_orig',
                 ),
                 array(
                     'required' => 'News ID is required',
@@ -109,6 +114,7 @@ class NewsLocationAPIController extends PubControllerAPI
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
+                'sort_by' => $sortBy,
             ];
 
             // Run the validation
@@ -202,6 +208,10 @@ class NewsLocationAPIController extends PubControllerAPI
             $lon = isset($position[0])?$position[0]:null;
             $lat = isset($position[1])?$position[1]:null;
 
+            OrbitInput::get('country', function($country) use ($newsLocations, $prefix) {
+                    $newsLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.country ELSE {$prefix}merchants.country END)"), $country);
+            });
+
             // Filter by location
             if (! empty($location)) {
                 if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
@@ -227,7 +237,12 @@ class NewsLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $newsLocations->orderBy('distance', 'asc');
             } else {
-                $newsLocations->orderBy('name', 'asc');
+                if (! empty($sortBy)) {
+                    $newsLocations->orderBy('name_orig', 'asc')
+                        ->orderBy('city', 'asc');
+                } else {
+                    $newsLocations->orderBy('name', 'asc');
+                }
             }
 
             $newsLocations->groupBy('merchants.merchant_id');
