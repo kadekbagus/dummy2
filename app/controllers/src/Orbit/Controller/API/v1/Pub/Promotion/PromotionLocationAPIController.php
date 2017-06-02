@@ -80,7 +80,7 @@ class PromotionLocationAPIController extends PubControllerAPI
             $withCache = TRUE;
 
             // need to handle request for grouping by name_orig and order by name_orig and city
-            $groupBy = OrbitInput::get('group_by');
+            $sortBy = OrbitInput::get('sort_by');
 
             $promotionHelper = PromotionHelper::create();
             $promotionHelper->registerCustomValidation();
@@ -88,12 +88,12 @@ class PromotionLocationAPIController extends PubControllerAPI
                 array(
                     'promotion_id' => $promotion_id,
                     'language' => $language,
-                    'group_by' => $groupBy,
+                    'sort_by' => $sortBy,
                 ),
                 array(
                     'promotion_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
-                    'group_by' => 'in:name_orig',
+                    'sort_by' => 'in:name_orig',
                 ),
                 array(
                     'required' => 'Promotion ID is required',
@@ -114,7 +114,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
-                'group_by' => $groupBy,
+                'sort_by' => $sortBy,
             ];
 
 
@@ -209,6 +209,10 @@ class PromotionLocationAPIController extends PubControllerAPI
             $lon = isset($position[0])?$position[0]:null;
             $lat = isset($position[1])?$position[1]:null;
 
+            OrbitInput::get('country', function($country) use ($promotionLocation, $prefix) {
+                    $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.country ELSE {$prefix}merchants.country END)"), $country);
+            });
+
             // Filter by location
             if (! empty($location)) {
                 if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
@@ -234,7 +238,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $promotionLocation->orderBy('distance', 'asc');
             } else {
-                if (! empty($groupBy)) {
+                if (! empty($sortBy)) {
                     $promotionLocation->orderBy('name_orig', 'asc')
                         ->orderBy('city', 'asc');
                 } else {
@@ -242,11 +246,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                 }
             }
 
-            if (! empty($groupBy)) {
-                $promotionLocation->groupBy('name_orig');
-            } else {
-                $promotionLocation->groupBy('merchants.merchant_id');
-            }
+            $promotionLocation->groupBy('merchants.merchant_id');
 
             $_promotionLocation = clone($promotionLocation);
 
