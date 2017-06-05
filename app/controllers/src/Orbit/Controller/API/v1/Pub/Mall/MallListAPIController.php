@@ -214,6 +214,8 @@ class MallListAPIController extends PubControllerAPI
                 $sort = array('_geo_distance' => array('position' => array('lon' => $longitude, 'lat' => $latitude), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'updated_date') {
                 $sort = array('updated_at' => array('order' => $sort_mode));
+            } elseif ($sort_by === 'created_date') {
+                $sort = array('name.raw' => array('order' => 'asc'));
             }
 
             // put featured mall id in highest priority
