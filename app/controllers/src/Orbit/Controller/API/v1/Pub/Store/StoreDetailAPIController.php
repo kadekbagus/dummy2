@@ -90,6 +90,8 @@ class StoreDetailAPIController extends PubControllerAPI
                                 'merchants.name',
                                 'merchants.name as mall_name',
                                 'merchants.description as mall_description',
+                                'merchants.floor_id',
+                                'merchants.unit',
                                 DB::raw("CASE WHEN ({$prefix}total_object_page_views.total_view IS NULL OR {$prefix}total_object_page_views.total_view = '') THEN 0 ELSE {$prefix}total_object_page_views.total_view END as total_view"),
                                 DB::Raw("CASE WHEN (
                                                 select mt.description
@@ -152,9 +154,11 @@ class StoreDetailAPIController extends PubControllerAPI
                                 DB::raw("{$image}"),
                                 'media.object_id'
                             );
-                    },  'keywords' => function ($q) {
+                    }, 'keywords' => function ($q) {
                         $q->addSelect('keyword', 'object_id');
-                    }])
+                    },
+                    'tenantFloor'
+                    ])
                 ->join(DB::raw("(select merchant_id, country_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->join('languages', 'languages.name', '=', 'merchants.mobile_default_language')
                 ->leftJoin('base_merchants', function ($q) {
