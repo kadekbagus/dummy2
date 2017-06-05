@@ -221,12 +221,13 @@ class MallListAPIController extends PubControllerAPI
             // put featured mall id in highest priority
             if (OrbitInput::get('by_pass_mall_order', 'n') === 'n') {
                 $mallFeaturedIds =  Config::get('orbit.featured.mall_ids.all', []);
-                $withScore = true;
+
                 if (! empty($countryFilter)) {
                     $countryFilter = strtolower($countryFilter);
                     $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
 
                     if (! empty($cityFilters)) {
+                        $withScore = true;
                         $mallFeaturedIds = [];
                         foreach ($cityFilters as $key => $cityName) {
                             $cityName = str_replace(' ', '_', strtolower($cityName));
