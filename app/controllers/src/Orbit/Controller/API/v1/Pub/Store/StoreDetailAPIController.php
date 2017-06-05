@@ -90,6 +90,8 @@ class StoreDetailAPIController extends PubControllerAPI
                                 'merchants.name',
                                 'merchants.name as mall_name',
                                 'merchants.description as mall_description',
+                                'merchants.floor_id',
+                                'merchants.unit',
                                 DB::raw("CASE WHEN ({$prefix}total_object_page_views.total_view IS NULL OR {$prefix}total_object_page_views.total_view = '') THEN 0 ELSE {$prefix}total_object_page_views.total_view END as total_view"),
                                 DB::Raw("CASE WHEN (
                                                 select mt.description
@@ -152,11 +154,18 @@ class StoreDetailAPIController extends PubControllerAPI
                                 DB::raw("{$image}"),
                                 'media.object_id'
                             );
-                    },  'keywords' => function ($q) {
+                    }, 'keywords' => function ($q) {
                         $q->addSelect('keyword', 'object_id');
-                    }])
+                    },
+                    'tenantFloor'
+                    ])
                 ->join(DB::raw("(select merchant_id, country_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->join('languages', 'languages.name', '=', 'merchants.mobile_default_language')
+                ->leftJoin('base_merchants', function ($q) {
+                                            $q->on('base_merchants.name', '=', 'merchants.name')
+                                              ->on('base_merchants.country_id', '=', DB::raw("oms.country_id"));
+                                        })
+
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'");
 
@@ -169,7 +178,7 @@ class StoreDetailAPIController extends PubControllerAPI
 
             if (! is_null($mallId)) {
                 $store->leftJoin('total_object_page_views', function ($q) use ($mallId){
-                            $q->on('total_object_page_views.object_id', '=', 'merchants.merchant_id')
+                            $q->on('total_object_page_views.object_id', '=', 'base_merchants.base_merchant_id')
                                 ->on('total_object_page_views.object_type', '=', DB::raw("'tenant'"))
                                 ->on('total_object_page_views.location_id', '=', DB::raw("'{$mallId}'"));
                         })
@@ -180,11 +189,7 @@ class StoreDetailAPIController extends PubControllerAPI
                         ->where('merchant_id', $mallId)
                         ->first();
             } else {
-                $store->leftJoin('base_merchants', function ($q) {
-                            $q->on('base_merchants.name', '=', 'merchants.name')
-                              ->on('base_merchants.country_id', '=', DB::raw("oms.country_id"));
-                        })
-                      ->leftJoin('total_object_page_views', function ($q) {
+                $store->leftJoin('total_object_page_views', function ($q) {
                             $q->on('total_object_page_views.object_id', '=', 'base_merchants.base_merchant_id')
                                 ->on('total_object_page_views.object_type', '=', DB::raw("'tenant'"))
                                 ->on('total_object_page_views.location_id', '=', DB::raw("'0'"));

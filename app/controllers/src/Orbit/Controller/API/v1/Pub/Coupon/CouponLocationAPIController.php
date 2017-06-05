@@ -83,16 +83,21 @@ class CouponLocationAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
 
+            // need to handle request for grouping by name_orig and order by name_orig and city
+            $sortBy = OrbitInput::get('sort_by');
+
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
             $validator = Validator::make(
                 array(
                     'coupon_id' => $coupon_id,
                     'language' => $language,
+                    'sort_by' => $sortBy,
                 ),
                 array(
                     'coupon_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
+                    'sort_by' => 'in:name_orig',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -113,6 +118,7 @@ class CouponLocationAPIController extends PubControllerAPI
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
+                'sort_by' => $sortBy,
             ];
 
             // Run the validation
@@ -207,6 +213,10 @@ class CouponLocationAPIController extends PubControllerAPI
             $lon = isset($position[0])?$position[0]:null;
             $lat = isset($position[1])?$position[1]:null;
 
+            OrbitInput::get('country', function($country) use ($couponLocations, $prefix) {
+                    $couponLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.country ELSE {$prefix}merchants.country END)"), $country);
+            });
+
             // Filter by location
             if (! empty($location)) {
                 if ($location == 'mylocation' && ! empty($lon) && ! empty($lat)) {
@@ -232,10 +242,19 @@ class CouponLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $couponLocations->orderBy('distance', 'asc');
             } else {
-                $couponLocations->orderBy('name', 'asc');
+                if (! empty($sortBy)) {
+                    $couponLocations->orderBy('name_orig', 'asc')
+                        ->orderBy('city', 'asc');
+                } else {
+                    $couponLocations->orderBy('name', 'asc');
+                }
             }
 
-            $couponLocations->groupBy('merchants.merchant_id');
+            if (! empty($groupBy)) {
+                $couponLocations->groupBy('name_orig');
+            } else {
+                $couponLocations->groupBy('merchants.merchant_id');
+            }
 
             $_couponLocations = clone($couponLocations);
 
