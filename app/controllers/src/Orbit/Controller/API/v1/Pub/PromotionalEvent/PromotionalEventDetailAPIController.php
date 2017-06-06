@@ -106,6 +106,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $promotionalEvent = News::select(
                             'news.news_id as news_id',
                             'reward_details.is_new_user_only',
+                            'reward_details.reward_type',
                             DB::Raw("
                                 CASE WHEN ({$prefix}reward_detail_translations.guest_button_label = '' or {$prefix}reward_detail_translations.guest_button_label is null) THEN default_translation_button.guest_button_label ELSE {$prefix}reward_detail_translations.guest_button_label END as guest_button_label,
                                 CASE WHEN ({$prefix}reward_detail_translations.logged_in_button_label = '' or {$prefix}reward_detail_translations.logged_in_button_label is null) THEN default_translation_button.logged_in_button_label ELSE {$prefix}reward_detail_translations.logged_in_button_label END as logged_in_button_label,

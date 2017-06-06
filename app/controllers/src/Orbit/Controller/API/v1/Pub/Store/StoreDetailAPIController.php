@@ -152,6 +152,11 @@ class StoreDetailAPIController extends PubControllerAPI
                                 DB::raw("{$image}"),
                                 'media.object_id'
                             );
+                    }, 'mediaMapOrig' => function ($q) use ($image) {
+                        $q->select(
+                                DB::raw("{$image}"),
+                                'media.object_id'
+                            );
                     }, 'keywords' => function ($q) {
                         $q->addSelect('keyword', 'object_id');
                     }
