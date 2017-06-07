@@ -308,6 +308,11 @@ class LoginSocialMediaAPIController extends IntermediateBaseController
 
         SignInRecorder::setSignInActivity($loggedInUser, 'facebook', NULL, NULL, TRUE, $rewardId, $rewardType, $language);
 
+        // Send the session id via HTTP header
+        $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+        $sessionHeader = 'Set-' . $sessionHeader;
+        $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+
         $expireTime = Config::get('orbit.session.session_origin.cookie.expire');
 
         setcookie('orbit_email', $userEmail, time() + $expireTime, '/', Domain::getRootDomain('http://' . $_SERVER['HTTP_HOST']), FALSE, FALSE);

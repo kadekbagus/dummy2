@@ -188,9 +188,9 @@ Route::post(
 
 
 Route::post(
-    '/app/v1/pub/login/social-media', ['as' => 'pub.social_media_login',
+    '/{app}/v1/pub/login/social-media', ['as' => 'pub.social_media_login',
         function () {
             return Orbit\Controller\API\v1\Pub\LoginSocialMediaAPIController::create()->postLoginSocialMedia();
         },
     ]
-);
+)->where('app', '(api|app)');
