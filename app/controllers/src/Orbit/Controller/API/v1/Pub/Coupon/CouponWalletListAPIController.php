@@ -117,7 +117,10 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     THEN 'true'
                                     ELSE 'false'
                                     END AS is_started,
-                                    {$prefix}issued_coupons.issued_coupon_id
+                                    {$prefix}issued_coupons.issued_coupon_id,
+                                    CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 'redeemable' ELSE 'redeemed' END as issued_coupon_status,
+                                    {$prefix}merchants.name as store_name,
+                                    malls.name as mall_name
                                 ")
                             )
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -138,7 +141,13 @@ class CouponWalletListAPIController extends PubControllerAPI
                             })
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '=', 'issued');
+                                $join->where('issued_coupons.status', '!=', 'deleted');
+                            })
+                            ->leftJoin('merchants', function ($q) {
+                                $q->on('merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id');
+                            })
+                            ->leftJoin('merchants as malls', function ($q) {
+                                $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
                             })
                             ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
                                         FROM {$prefix}coupon_translations ct
