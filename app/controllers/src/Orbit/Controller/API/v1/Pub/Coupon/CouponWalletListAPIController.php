@@ -120,7 +120,8 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}issued_coupons.issued_coupon_id,
                                     CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 'redeemable' ELSE 'redeemed' END as issued_coupon_status,
                                     {$prefix}merchants.name as store_name,
-                                    malls.name as mall_name
+                                    malls.name as mall_name,
+                                    {$prefix}issued_coupons.redeemed_date
                                 ")
                             )
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
