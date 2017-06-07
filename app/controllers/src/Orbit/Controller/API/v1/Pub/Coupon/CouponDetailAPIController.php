@@ -76,11 +76,16 @@ class CouponDetailAPIController extends PubControllerAPI
             // This condition only for guest can issued multiple coupon with multiple email
             if ($role == 'Guest') {
                 $getCouponStatusSql = " 'false' as get_coupon_status ";
+                $issuedCouponId = " NULL as issued_coupon_id ";
             } else {
                 $getCouponStatusSql = " CASE WHEN {$prefix}issued_coupons.user_id is NULL
                                             THEN 'false'
                                             ELSE 'true'
                                         END as get_coupon_status ";
+                $issuedCouponId = " CASE WHEN {$prefix}issued_coupons.user_id = " . $this->quote($user->user_id) . "
+                                            THEN {$prefix}issued_coupons.issued_coupon_id
+                                            ELSE NULL
+                                        END as issued_coupon_id ";
             }
 
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
@@ -124,6 +129,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
+                            DB::Raw($issuedCouponId),
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -225,11 +231,9 @@ class CouponDetailAPIController extends PubControllerAPI
                                     ->where('partners.token', $partnerToken)
                                     ->first();
 
-                if (! is_object($partnerTokens)) {
-                    throw new OrbitCustomException('Coupon is exclusive, please specify partner token', Coupon::IS_EXCLUSIVE_ERROR_CODE, NULL);
+                if (is_object($partnerTokens)) {
+                    $coupon->is_exclusive = 'N';
                 }
-
-                $coupon->is_exclusive = 'N';
             }
 
             if (is_object($mall)) {
