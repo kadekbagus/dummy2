@@ -171,7 +171,7 @@ class NewsLocationAPIController extends PubControllerAPI
                                     // Map
                                     ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
                                         $q->on(DB::raw('map.object_id'), '=', "merchants.merchant_id")
-                                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig')"));
+                                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig', 'retailer_storemap_orig')"));
                                     })
                                     // Mall Logo
                                     ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
