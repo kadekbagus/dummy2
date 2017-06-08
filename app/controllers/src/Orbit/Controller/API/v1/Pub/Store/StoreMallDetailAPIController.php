@@ -155,6 +155,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                     DB::raw("mall.address_line1 as address"),
                                     'merchants.floor',
                                     'merchants.unit',
+                                    DB::raw("mall.phone"),
                                     DB::raw("mall.operating_hours"),
                                     DB::raw("mall.is_subscribed"),
                                     DB::raw("mall.object_type as location_type"),
