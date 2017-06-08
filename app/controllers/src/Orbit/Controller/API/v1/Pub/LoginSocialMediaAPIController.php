@@ -52,28 +52,60 @@ class LoginSocialMediaAPIController extends IntermediateBaseController
         $activity = Activity::mobileci()
                         ->setActivityType('login');
         try {
-
             $type = OrbitInput::post('type');
+            $rewardId = OrbitInput::get('reward_id', NULL);
+            $rewardType = OrbitInput::get('reward_type', NULL);
+            $language = OrbitInput::get('language', 'id');
+            $userEmail = OrbitInput::post('userEmail', '');
+            $firstName = OrbitInput::post('firstName', '');
+            $lastName = OrbitInput::post('lastName', '');
+            $gender = OrbitInput::post('gender', '');
+            $socialid = OrbitInput::post('socialId', '');
 
-            switch ($type) {
-                case 'facebook':
-                    $social = $this->getSocialLoginCallbackView();
-                    break;
-
-                case 'google':
-                    $social = '';
-                    break;
-
-                case 'test':
-                    $social = $this->postLoginCustomer();
-                    break;
-
-                default:
-                    $message = sprintf('social login is not found.', $type);
-                    throw new Exception($message);
+            if (trim($userEmail) === '') {
+                $errorMessage = Lang::get('validation.required', array('attribute' => 'email'));
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $this->response->data = $social;
+            $loggedInUser = $this->doAutoLogin($userEmail);
+            if (! is_object($loggedInUser)) {
+                // register user without password and birthdate
+                $status = 'active';
+                $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, NULL, TRUE, NULL, NULL, NULL, $status, 'Facebook');
+                if (get_class($response) !== 'User') {
+                    throw new Exception($response->message, $response->code);
+                }
+
+                // create registration_ok activity
+                SignInRecorder::setSignUpActivity($response, 'facebook', NULL, $rewardId, $rewardType, $language);
+                // create activation_ok activity without using token
+                $activation_ok = ActivationAPIController::create('raw')
+                    ->setSaveAsAutoActivation($response, 'facebook')
+                    ->postActivateAccount();
+                $loggedInUser = $this->doAutoLogin($response->user_email);
+
+                // promotional event reward event
+                DB::beginTransaction();
+                Event::fire('orbit.registration.after.createuser', array($loggedInUser->user_id, $rewardId, $rewardType, $language));
+                DB::commit();
+            }
+
+            // promotional event reward event
+            DB::beginTransaction();
+            Event::fire('orbit.login.after.success', array($loggedInUser->user_id, $rewardId, $rewardType, $language));
+            DB::commit();
+
+            SignInRecorder::setSignInActivity($loggedInUser, 'facebook', NULL, NULL, TRUE, $rewardId, $rewardType, $language);
+
+            // Send the session id via HTTP header
+            $sessionHeader = $this->session->getSessionConfig()->getConfig('session_origin.header.name');
+            $sessionHeader = 'Set-' . $sessionHeader;
+            $this->customHeaders[$sessionHeader] = $this->session->getSessionId();
+
+            $this->response->data = $loggedInUser;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Login Success';
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
