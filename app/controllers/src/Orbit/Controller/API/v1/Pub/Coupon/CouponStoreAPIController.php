@@ -91,7 +91,10 @@ class CouponStoreAPIController extends PubControllerAPI
                                             "merchants.merchant_id",
                                             DB::raw("{$prefix}merchants.name as name"),
                                             "merchants.object_type",
-                                            DB::raw("{$merchantLogo}")
+                                            DB::raw("{$merchantLogo}"),
+                                            DB::raw("oms.merchant_id as parent_id"),
+                                            DB::raw("oms.object_type as parent_type"),
+                                            DB::raw("oms.name as parent_name")
                                         )
                                     ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
