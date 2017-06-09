@@ -121,7 +121,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 'redeemable' ELSE 'redeemed' END as issued_coupon_status,
                                     {$prefix}merchants.name as store_name,
                                     malls.name as mall_name,
-                                    {$prefix}issued_coupons.redeemed_date
+                                    CONVERT_TZ({$prefix}issued_coupons.redeemed_date, '+00:00', {$prefix}timezones.timezone_name) as redeemed_date
                                 ")
                             )
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -149,6 +149,9 @@ class CouponWalletListAPIController extends PubControllerAPI
                             })
                             ->leftJoin('merchants as malls', function ($q) {
                                 $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
+                            })
+                            ->leftJoin('timezones', function ($q) {
+                                $q->on('timezones.timezone_id', '=', DB::raw("malls.timezone_id"));
                             })
                             ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
                                         FROM {$prefix}coupon_translations ct
