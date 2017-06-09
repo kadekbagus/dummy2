@@ -160,6 +160,8 @@ class NewsStoreAPIController extends PubControllerAPI
                 }
             });
 
+            $newsLocations = $newsLocations->groupBy('merchants.name');
+
             $_newsLocations = clone($newsLocations);
 
             $take = PaginationNumber::parseTakeFromGet('news');
