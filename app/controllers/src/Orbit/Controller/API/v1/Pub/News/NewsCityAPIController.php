@@ -48,6 +48,7 @@ class NewsCityAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'city');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $mall = null;
+            $storeName = OrbitInput::get('store_name');
 
             $validator = Validator::make(
                 array(
@@ -74,14 +75,22 @@ class NewsCityAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             $newsLocation = NewsMerchant::select(
-                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city")
+                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
+                                        DB::raw("{$prefix}merchants.name as store_name")
                                     )
                                     ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('news_merchant.news_id', '=', $newsId)
-                                    ->where('merchants.status', '=', 'active')
-                                    ->groupBy('city');
+                                    ->where('merchants.status', '=', 'active');
+
+            if (! empty($storeName)) {
+                OrbitInput::get('store_name', function($storeName) use ($newsLocation) {
+                    $newsLocation->havingRaw("store_name = '{$storeName}'");
+                });
+            } else {
+                $newsLocation = $newsLocation->groupBy('city');
+            }
 
             $_newsLocation = clone($newsLocation);
 
