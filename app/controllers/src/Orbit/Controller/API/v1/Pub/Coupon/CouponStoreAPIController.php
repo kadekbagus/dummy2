@@ -145,7 +145,7 @@ class CouponStoreAPIController extends PubControllerAPI
                     $numberOfStore += $_data->total;
                     $numberOfStoreRelatedMall++;
                 } else {
-                    $numberOfMall = $_data->total;
+                    $numberOfMall += $_data->total;
                 }
             }
 
