@@ -78,6 +78,7 @@ class NewsLocationAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
+            $skipMall = OrbitInput::get('skip_mall', 'N');
 
             // need to handle request for grouping by name_orig and order by name_orig and city
             $sortBy = OrbitInput::get('sort_by');
@@ -89,11 +90,13 @@ class NewsLocationAPIController extends PubControllerAPI
                     'news_id' => $news_id,
                     'language' => $language,
                     'sort_by' => $sortBy,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'news_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
                     'sort_by' => 'in:name_orig',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'News ID is required',
@@ -115,6 +118,7 @@ class NewsLocationAPIController extends PubControllerAPI
                 'take' => $take,
                 'skip' => $skip,
                 'sort_by' => $sortBy,
+                'skip_mall' => $skipMall,
             ];
 
             // Run the validation
@@ -195,13 +199,20 @@ class NewsLocationAPIController extends PubControllerAPI
                                     ->where('news_merchant.news_id', '=', $news_id)
                                     ->where('merchants.status', '=', 'active');
 
-            // filter news by mall id
-            OrbitInput::get('mall_id', function($mallid) use ($newsLocations, &$group_by) {
-                $newsLocations->where(function($q) use ($mallid){
-                                    $q->where('merchants.parent_id', '=', $mallid)
-                                      ->orWhere('merchants.merchant_id', '=', $mallid);
-                                });
-            });
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($newsLocations, &$group_by) {
+                    $newsLocations->havingRaw("mall_id != '{$mallid}'");
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($newsLocations, &$group_by) {
+                    $newsLocations->where(function($q) use ($mallid){
+                                        $q->where('merchants.parent_id', '=', $mallid)
+                                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                                    });
+                });
+            }
 
             // Get user location
             $position = isset($ul)?explode("|", $ul):null;
