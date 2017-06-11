@@ -75,8 +75,7 @@ class NewsCityAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             $newsLocation = NewsMerchant::select(
-                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city"),
-                                        DB::raw("{$prefix}merchants.name as store_name")
+                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.city ELSE {$prefix}merchants.city END as city")
                                     )
                                     ->leftJoin('news', 'news_merchant.news_id', '=', 'news.news_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
@@ -84,13 +83,11 @@ class NewsCityAPIController extends PubControllerAPI
                                     ->where('news_merchant.news_id', '=', $newsId)
                                     ->where('merchants.status', '=', 'active');
 
-            if (! empty($storeName)) {
-                OrbitInput::get('store_name', function($storeName) use ($newsLocation) {
-                    $newsLocation->havingRaw("store_name = '{$storeName}'");
-                });
-            } else {
-                $newsLocation = $newsLocation->groupBy('city');
-            }
+            OrbitInput::get('store_name', function($storeName) use ($newsLocation) {
+                $newsLocation->where('merchants.name', $storeName);
+            });
+
+            $newsLocation = $newsLocation->groupBy('city');
 
             $_newsLocation = clone($newsLocation);
 
