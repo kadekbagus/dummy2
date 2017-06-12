@@ -126,6 +126,23 @@ class CouponStoreAPIController extends PubControllerAPI
                 }
             });
 
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $couponLocations->where(DB::raw('oms.merchant_id'), '!=', $mallid);
+                    }
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $couponLocations->where('merchants.parent_id', '=', $mallid)
+                                        ->where('merchants.object_type', 'tenant');
+                    }
+                });
+            }
+
             // get all record with mall id
             $numberOfMall = 0;
             $numberOfStore = 0;
@@ -150,23 +167,6 @@ class CouponStoreAPIController extends PubControllerAPI
                 } else {
                     $numberOfMall += $_data->total;
                 }
-            }
-
-            if ($skipMall === 'Y') {
-                // filter news skip by mall id
-                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
-                    if ($is_detail != 'y') {
-                        $couponLocations->havingRaw("mall_id != '{$mallid}'");
-                    }
-                });
-            } else {
-                // filter news by mall id
-                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
-                    if ($is_detail != 'y') {
-                        $couponLocations->where('merchants.parent_id', '=', $mallid)
-                                        ->where('merchants.object_type', 'tenant');
-                    }
-                });
             }
 
             $couponLocations = $couponLocations->groupBy('merchants.name');

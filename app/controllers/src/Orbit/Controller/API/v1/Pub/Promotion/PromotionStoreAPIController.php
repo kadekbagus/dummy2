@@ -127,6 +127,23 @@ class PromotionStoreAPIController extends PubControllerAPI
                 }
             });
 
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $promotionLocation->where(DB::raw('oms.merchant_id'), '!=', $mallid);
+                    }
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $promotionLocation->where('merchants.parent_id', '=', $mallid)
+                                          ->where('merchants.object_type', 'tenant');
+                    }
+                });
+            }
+
             // get all record with mall id
             $numberOfMall = 0;
             $numberOfStore = 0;
@@ -151,23 +168,6 @@ class PromotionStoreAPIController extends PubControllerAPI
                 } else {
                     $numberOfMall += $_data->total;
                 }
-            }
-
-            if ($skipMall === 'Y') {
-                // filter news skip by mall id
-                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
-                    if ($is_detail != 'y') {
-                        $promotionLocation->havingRaw("mall_id != '{$mallid}'");
-                    }
-                });
-            } else {
-                // filter news by mall id
-                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
-                    if ($is_detail != 'y') {
-                        $promotionLocation->where('merchants.parent_id', '=', $mallid)
-                                          ->where('merchants.object_type', 'tenant');
-                    }
-                });
             }
 
             $promotionLocation = $promotionLocation->groupBy('merchants.name');
