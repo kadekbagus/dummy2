@@ -405,12 +405,13 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
     ]);
 
     // Delete coupon suggestion in index es when available coupon is empty
-    $availableCoupons = IssuedCoupon:: select('issued_coupon_id')
-        ->where('status', 'available')
-        ->where('promotion_id', $coupon_id)
-        ->first();
+    $availableCoupons = IssuedCoupon::totalAvailable($coupon_id);
 
-    if (empty($availableCoupons)) {
+    $coupon = Coupon::find($coupon_id);
+    $coupon->available = $availableCoupons;
+    $coupon->save();
+
+    if ($availableCoupons === 0) {
         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
             'coupon_id' => $coupon_id
         ]);

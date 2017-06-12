@@ -172,6 +172,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->addSelect('keyword', 'object_id');
                             }])
                         ->where('promotions.promotion_id', $couponId)
+                        ->where('promotions.available', '>=', 1)
                         ->where('promotions.is_visible', 'Y');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
