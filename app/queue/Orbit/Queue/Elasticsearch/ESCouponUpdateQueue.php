@@ -8,6 +8,7 @@ use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use DB;
 use Coupon;
+use IssuedCoupon;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
@@ -73,15 +74,10 @@ class ESCouponUpdateQueue
                                                                             WHERE opt.promotion_id = {$prefix}promotions.promotion_id
                                                                         )
                             THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
-                        END AS campaign_status,
-                        COUNT({$prefix}issued_coupons.issued_coupon_id) as available
+                        END AS campaign_status
                     "))
                     ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                     ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
-                    ->leftJoin('issued_coupons', function($q) {
-                        $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id')
-                            ->where('issued_coupons.status', '=', "available");
-                    })
                     ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
@@ -195,7 +191,7 @@ class ESCouponUpdateQueue
                 'end_date'        => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
                 'updated_at'      => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
                 'status'          => $coupon->status,
-                'available'       => $coupon->available,
+                'available'       => IssuedCoupon::totalAvailable($coupon->promotion_id),
                 'campaign_status' => $coupon->campaign_status,
                 'is_all_gender'   => $coupon->is_all_gender,
                 'is_all_age'      => $coupon->is_all_age,

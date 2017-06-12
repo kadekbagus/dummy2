@@ -227,6 +227,9 @@ Artisan::add(new PromotionalEventUpdateLinkToTenant);
 // Update vendor gtm cities
 Artisan::add(new UpdateVendorGTMCitiesTable);
 
+// Update total available coupon in promotions table
+Artisan::add(new CouponUpdateTotalvailable);
+
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
