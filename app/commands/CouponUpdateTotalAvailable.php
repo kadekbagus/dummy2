@@ -46,7 +46,7 @@ class CouponUpdateTotalAvailable extends Command {
             }
 
             $coupon = Coupon::find($input);
-            if (is_object($coupon)) {
+            if (! is_object($coupon)) {
                 throw new Exception("Coupon ID is not found.", 1);
             }
 
@@ -60,17 +60,18 @@ class CouponUpdateTotalAvailable extends Command {
             $message = sprintf('Update total available coupon; Status: OK; Coupon ID: %s; Coupon Name: %s',
                                 $input,
                                 $coupon->promotion_name);
-            \Log::info($message);
+            $this->info($message);
 
             return [
                 'status' => 'ok',
                 'message' => $message
             ];
+
         } catch (Exception $e) {
             $message = sprintf('Update total available coupon; Status: FAIL; Coupon ID: %s; Coupon Name: %s',
                                 $input,
                                 $coupon->promotion_name);
-            \Log::info($message);
+            $this->info($message);
         }
 
         return [
