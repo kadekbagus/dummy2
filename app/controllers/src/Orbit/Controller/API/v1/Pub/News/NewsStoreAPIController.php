@@ -168,7 +168,7 @@ class NewsStoreAPIController extends PubControllerAPI
                 OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
                     if ($is_detail != 'y') {
                         $newsLocations->where('merchants.parent_id', '=', $mallid)
-                                      ->Orwhere('merchants.merchant_id', '=', $mallid);
+                                      ->where('merchants.object_type', 'tenant');
                     }
                 });
             }

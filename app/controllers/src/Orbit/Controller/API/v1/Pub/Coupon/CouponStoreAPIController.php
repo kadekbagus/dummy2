@@ -54,13 +54,16 @@ class CouponStoreAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
             $mall = null;
+            $skipMall = OrbitInput::get('skip_mall', 'N');
 
             $validator = Validator::make(
                 array(
                     'coupon_id' => $couponId,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'coupon_id' => 'required',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -149,13 +152,22 @@ class CouponStoreAPIController extends PubControllerAPI
                 }
             }
 
-            // filter news by mall id
-            OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
-                if ($is_detail != 'y') {
-                    $couponLocations->where('merchants.parent_id', '=', $mallid)
-                                    ->where('merchants.object_type', 'tenant');
-                }
-            });
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $couponLocations->havingRaw("mall_id != '{$mallid}'");
+                    }
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $couponLocations->where('merchants.parent_id', '=', $mallid)
+                                        ->where('merchants.object_type', 'tenant');
+                    }
+                });
+            }
 
             $couponLocations = $couponLocations->groupBy('merchants.name');
 

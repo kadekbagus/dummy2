@@ -83,6 +83,7 @@ class CouponLocationAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
             $skipMall = OrbitInput::get('skip_mall', 'N');
+            $storeName = OrbitInput::get('store_name');
 
             // need to handle request for grouping by name_orig and order by name_orig and city
             $sortBy = OrbitInput::get('sort_by');
@@ -123,6 +124,7 @@ class CouponLocationAPIController extends PubControllerAPI
                 'skip' => $skip,
                 'sort_by' => $sortBy,
                 'skip_mall' => $skipMall,
+                'store_name' => $storeName,
             ];
 
             // Run the validation
@@ -261,11 +263,11 @@ class CouponLocationAPIController extends PubControllerAPI
                 }
             }
 
-            if (! empty($groupBy)) {
-                $couponLocations->groupBy('name_orig');
-            } else {
-                $couponLocations->groupBy('merchants.merchant_id');
-            }
+            OrbitInput::get('store_name', function($storeName) use ($couponLocations) {
+                $couponLocations->havingRaw("name_orig = '{$storeName}'");
+            });
+
+            $couponLocations->groupBy('merchants.merchant_id');
 
             $_couponLocations = clone($couponLocations);
 
