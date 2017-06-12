@@ -72,6 +72,7 @@ class LoginAPIController extends IntermediateBaseController
             $rewardId = OrbitInput::get('reward_id', null);
             $rewardType = OrbitInput::get('reward_type', null);
             $language = OrbitInput::get('language', 'id');
+            $redirect_to_url = OrbitInput::post('to_url', null);
             // $mode = OrbitInput::post('mode', 'login');
 
             if (trim($email) === '') {
@@ -232,6 +233,8 @@ class LoginAPIController extends IntermediateBaseController
                 // set \MobileCI\MobileCIAPIController->session using $this->session
                 $CIsession = \MobileCI\MobileCIAPIController::create()->setSession($this->session);
             }
+
+            $user->redirect_to_url = $redirect_to_url;
 
             $this->response->data = $user;
             $this->response->code = 0;
