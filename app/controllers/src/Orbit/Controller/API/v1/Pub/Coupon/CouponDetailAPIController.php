@@ -114,6 +114,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                 "),
                             'promotions.end_date',
                             'promotions.is_exclusive',
+                            'promotions.available',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -237,8 +238,6 @@ class CouponDetailAPIController extends PubControllerAPI
             $coupon->facebook_share_url = SocMedAPIController::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name, $country, $cities);
             // remove mall_id from result
             unset($coupon->mall_id);
-
-            $coupon->available = IssuedCoupon::totalAvailable($couponId);
 
             $this->response->data = $coupon;
             $this->response->code = 0;
