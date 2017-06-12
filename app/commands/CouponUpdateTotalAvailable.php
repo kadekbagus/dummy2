@@ -4,7 +4,6 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\Helper\Util\JobBurier;
-use Exception;
 use Log;
 
 class CouponUpdateTotalAvailable extends Command {
