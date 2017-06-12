@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Config;
 use Coupon;
+use IssuedCoupon;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
@@ -172,7 +173,6 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->addSelect('keyword', 'object_id');
                             }])
                         ->where('promotions.promotion_id', $couponId)
-                        ->where('promotions.available', '>=', 1)
                         ->where('promotions.is_visible', 'Y');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
@@ -237,6 +237,8 @@ class CouponDetailAPIController extends PubControllerAPI
             $coupon->facebook_share_url = SocMedAPIController::getSharedUrl('coupon', $coupon->promotion_id, $coupon->promotion_name, $country, $cities);
             // remove mall_id from result
             unset($coupon->mall_id);
+
+            $coupon->available = IssuedCoupon::totalAvailable($couponId);
 
             $this->response->data = $coupon;
             $this->response->code = 0;
