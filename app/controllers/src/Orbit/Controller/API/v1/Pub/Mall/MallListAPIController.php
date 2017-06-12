@@ -207,24 +207,27 @@ class MallListAPIController extends PubControllerAPI
             });
 
             // sort by name or location
-            $sort = array('name.raw' => array('order' => 'asc'));
+            $sort = array('name.raw' => array('order' => $sort_mode));
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withCache = FALSE;
                 $sort = array('_geo_distance' => array('position' => array('lon' => $longitude, 'lat' => $latitude), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'updated_date') {
-                $sort = array('updated_at' => array('order' => 'desc'));
+                $sort = array('updated_at' => array('order' => $sort_mode));
+            } elseif ($sort_by === 'created_date') {
+                $sort = array('name.raw' => array('order' => 'asc'));
             }
 
             // put featured mall id in highest priority
             if (OrbitInput::get('by_pass_mall_order', 'n') === 'n') {
                 $mallFeaturedIds =  Config::get('orbit.featured.mall_ids.all', []);
-                $withScore = true;
+
                 if (! empty($countryFilter)) {
                     $countryFilter = strtolower($countryFilter);
                     $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
 
                     if (! empty($cityFilters)) {
+                        $withScore = true;
                         $mallFeaturedIds = [];
                         foreach ($cityFilters as $key => $cityName) {
                             $cityName = str_replace(' ', '_', strtolower($cityName));

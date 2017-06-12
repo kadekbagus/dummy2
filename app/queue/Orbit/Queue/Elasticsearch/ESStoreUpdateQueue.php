@@ -229,30 +229,28 @@ class ESStoreUpdateQueue
             }
 
             // Query for get total page view per location id
+            $mallPageViews = array();
+            $gtmPageViews = 0;
+
             $baseMerchant = BaseMerchant::join('countries', 'countries.country_id', '=', 'base_merchants.country_id')
                                 ->where('base_merchants.name' , $storeName)
                                 ->where('countries.name', $countryName)
                                 ->first();
 
-            $mallPageViews = array();
-            $gtmPageViews = 0;
-
             if (! empty($baseMerchant)) {
                 $totalObjectPageViews = TotalObjectPageView::where('object_id', $baseMerchant->base_merchant_id)
-                                            ->where('object_type', 'store')
+                                            ->where('object_type', 'tenant')
                                             ->get();
 
                 foreach($totalObjectPageViews as $pageView) {
                     if ($pageView->location_id != '0') {
-                        $mallPageView = array(
+                        $mallPageViews[] = array(
                             "total_views" => $pageView->total_view,
                             "location_id" => $pageView->location_id
                         );
                     } else {
                         $gtmPageViews = $pageView->total_view;
                     }
-
-                    $mallPageViews[] = $mallPageView;
                 }
             }
 

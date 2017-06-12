@@ -75,28 +75,90 @@ class PromotionStoreAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $merchantLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as merchant_logo";
+            if ($usingCdn) {
+                $merchantLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as merchant_logo";
+            }
+
             $prefix = DB::getTablePrefix();
             $promotionLocation = NewsMerchant::select(
                                         "merchants.merchant_id",
                                         DB::raw("{$prefix}merchants.name as name"),
-                                        "merchants.object_type"
+                                        "merchants.object_type",
+                                        DB::raw("{$merchantLogo}"),
+                                        DB::raw("oms.merchant_id as parent_id"),
+                                        DB::raw("oms.object_type as parent_type"),
+                                        DB::raw("oms.name as parent_name")
                                     )
                                     ->join('news', function ($q) {
                                         $q->on('news_merchant.news_id', '=', 'news.news_id')
                                           ->on('news.object_type', '=', DB::raw("'promotion'"));
                                     })
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                    ->where('news_merchant.news_id', '=', $promotionId)
-                                    ->where('merchants.object_type', 'tenant')
-                                    ->groupBy("name")
-                                    ->orderBy($sort_by, $sort_mode);
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    // Logo
+                                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
+                                        $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                                          ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
+                                    })
+                                    ->where('news_merchant.news_id', '=', $promotionId);
+
+            OrbitInput::get('cities', function($cities) use ($promotionLocation, $prefix) {
+                foreach ($cities as $key => $value) {
+                    if (empty($value)) {
+                       unset($cities[$key]);
+                    }
+                }
+                if (! empty($cities)) {
+                    $promotionLocation->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
+                }
+            });
+
+            OrbitInput::get('country', function($country) use ($promotionLocation, $prefix) {
+                if (! empty($country)) {
+                    $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
+                }
+            });
+
+            // get all record with mall id
+            $numberOfMall = 0;
+            $numberOfStore = 0;
+            $numberOfStoreRelatedMall = 0;
+
+            // get number of store and number of mall
+            $_numberOfLocation = clone($promotionLocation);
+            $_numberOfLocation = $_numberOfLocation->groupBy('merchants.name');
+
+            $numberOfLocationSql = $_numberOfLocation->toSql();
+            $_numberOfLocation = DB::table(DB::Raw("({$numberOfLocationSql}) as sub_query"))->mergeBindings($_numberOfLocation->getQuery())
+                            ->select(
+                                    DB::raw("object_type, count(merchant_id) as total")
+                                )
+                            ->groupBy(DB::Raw("sub_query.parent_id"))
+                            ->get();
+
+            foreach ($_numberOfLocation as $_data) {
+                if ($_data->object_type === 'tenant') {
+                    $numberOfStore += $_data->total;
+                    $numberOfStoreRelatedMall++;
+                } else {
+                    $numberOfMall += $_data->total;
+                }
+            }
 
             // filter news by mall id
             OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
                 if ($is_detail != 'y') {
-                    $promotionLocation->where('merchants.parent_id', '=', $mallid);
+                    $promotionLocation->where('merchants.parent_id', '=', $mallid)
+                                      ->where('merchants.object_type', 'tenant');
                 }
             });
+
+            $promotionLocation = $promotionLocation->groupBy('merchants.name');
 
             $_promotionLocation = clone($promotionLocation);
 
@@ -106,7 +168,7 @@ class PromotionStoreAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $promotionLocation->skip($skip);
 
-            $promotionLocation->orderBy($sort_by, $sort_mode);
+            $promotionLocation->orderBy('name', 'asc');
 
             $listOfRec = $promotionLocation->get();
 
@@ -131,6 +193,9 @@ class PromotionStoreAPIController extends PubControllerAPI
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
             $data->total_records = RecordCounter::create($_promotionLocation)->count();
+            $data->numberOfMall = $numberOfMall;
+            $data->numberOfStore = $numberOfStore;
+            $data->numberOfStoreRelatedMall = $numberOfStoreRelatedMall;
             $data->records = $listOfRec;
 
             $this->response->data = $data;
@@ -178,5 +243,10 @@ class PromotionStoreAPIController extends PubControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

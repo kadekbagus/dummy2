@@ -78,6 +78,11 @@ class NewsLocationAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
+            $skipMall = OrbitInput::get('skip_mall', 'N');
+            $storeName = OrbitInput::get('store_name');
+
+            // need to handle request for grouping by name_orig and order by name_orig and city
+            $sortBy = OrbitInput::get('sort_by');
 
             $newsHelper = NewsHelper::create();
             $newsHelper->registerCustomValidation();
@@ -85,10 +90,14 @@ class NewsLocationAPIController extends PubControllerAPI
                 array(
                     'news_id' => $news_id,
                     'language' => $language,
+                    'sort_by' => $sortBy,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'news_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
+                    'sort_by' => 'in:name_orig',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'News ID is required',
@@ -109,6 +118,9 @@ class NewsLocationAPIController extends PubControllerAPI
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
+                'sort_by' => $sortBy,
+                'skip_mall' => $skipMall,
+                'store_name' => $storeName,
             ];
 
             // Run the validation
@@ -130,9 +142,11 @@ class NewsLocationAPIController extends PubControllerAPI
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
             $mallLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as location_logo";
+            $locationLogo = "CONCAT({$this->quote($urlPrefix)}, img_loc.path) as location_logo_orig";
             $mallMap = "CONCAT({$this->quote($urlPrefix)}, map.path) as map_image";
             if ($usingCdn) {
                 $mallLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as location_logo";
+                $locationLogo = "CASE WHEN (img_loc.cdn_url is null or img_loc.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img_loc.path) ELSE img_loc.cdn_url END as location_logo_orig";
                 $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
             }
 
@@ -149,8 +163,10 @@ class NewsLocationAPIController extends PubControllerAPI
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.is_subscribed ELSE {$prefix}merchants.is_subscribed END as is_subscribed"),
                                         DB::raw("{$prefix}merchants.object_type as location_type"),
                                         DB::raw("{$mallLogo}"),
+                                        DB::raw("{$locationLogo}"),
                                         DB::raw("{$mallMap}"),
                                         DB::raw("{$prefix}merchants.phone as phone"),
+                                        DB::raw("{$prefix}merchants.name as name_orig"),
                                         DB::raw("x(position) as latitude"),
                                         DB::raw("y(position) as longitude")
                                     )
@@ -161,9 +177,9 @@ class NewsLocationAPIController extends PubControllerAPI
                                     // Map
                                     ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
                                         $q->on(DB::raw('map.object_id'), '=', "merchants.merchant_id")
-                                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig')"));
+                                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig', 'retailer_storemap_orig')"));
                                     })
-                                    // Logo
+                                    // Mall Logo
                                     ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
                                         $q->on(DB::raw('img.object_id'), '=', DB::Raw("
                                                         (select CASE WHEN t.object_type = 'tenant'
@@ -177,21 +193,37 @@ class NewsLocationAPIController extends PubControllerAPI
                                             "))
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
+                                    // Location Logo
+                                    ->leftJoin(DB::raw("{$prefix}media as img_loc"), function($q) use ($prefix){
+                                        $q->on(DB::raw('img_loc.object_id'), '=', 'merchants.merchant_id')
+                                          ->on(DB::raw('img_loc.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
+                                    })
                                     ->where('news_merchant.news_id', '=', $news_id)
                                     ->where('merchants.status', '=', 'active');
 
-            // filter news by mall id
-            OrbitInput::get('mall_id', function($mallid) use ($newsLocations, &$group_by) {
-                $newsLocations->where(function($q) use ($mallid){
-                                    $q->where('merchants.parent_id', '=', $mallid)
-                                      ->orWhere('merchants.merchant_id', '=', $mallid);
-                                });
-            });
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($newsLocations, &$group_by) {
+                    $newsLocations->havingRaw("mall_id != '{$mallid}'");
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($newsLocations, &$group_by) {
+                    $newsLocations->where(function($q) use ($mallid){
+                                        $q->where('merchants.parent_id', '=', $mallid)
+                                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                                    });
+                });
+            }
 
             // Get user location
             $position = isset($ul)?explode("|", $ul):null;
             $lon = isset($position[0])?$position[0]:null;
             $lat = isset($position[1])?$position[1]:null;
+
+            OrbitInput::get('country', function($country) use ($newsLocations, $prefix) {
+                    $newsLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.country ELSE {$prefix}merchants.country END)"), $country);
+            });
 
             // Filter by location
             if (! empty($location)) {
@@ -218,9 +250,17 @@ class NewsLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $newsLocations->orderBy('distance', 'asc');
             } else {
-                $newsLocations->orderBy('city', 'asc');
-                $newsLocations->orderBy('name', 'asc');
+                if (! empty($sortBy)) {
+                    $newsLocations->orderBy('name_orig', 'asc')
+                        ->orderBy('city', 'asc');
+                } else {
+                    $newsLocations->orderBy('name', 'asc');
+                }
             }
+
+            OrbitInput::get('store_name', function($storeName) use ($newsLocations) {
+                $newsLocations->havingRaw("name_orig = '{$storeName}'");
+            });
 
             $newsLocations->groupBy('merchants.merchant_id');
 
@@ -253,8 +293,28 @@ class NewsLocationAPIController extends PubControllerAPI
                 $listOfRec = $newsLocations->get();
             }
 
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+            if ($usingCdn) {
+                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+            }
+
             $newsName = News::select(DB::Raw("
-                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name
+                                CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as news_name,
+                                CASE WHEN (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id) is null
+                                THEN
+                                    (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = default_translation.news_translation_id)
+                                ELSE
+                                    (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'news_translation_image_orig'
+                                    AND m.object_id = {$prefix}news_translations.news_translation_id)
+                                END AS original_media_path
                             "))
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -293,6 +353,7 @@ class NewsLocationAPIController extends PubControllerAPI
             $data->total_records = $totalRec;
             if (is_object($newsName)) {
                 $data->news_name = $newsName->news_name;
+                $data->original_media_path = $newsName->original_media_path;
             }
             $data->records = $listOfRec;
 

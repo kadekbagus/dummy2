@@ -78,25 +78,86 @@ class CouponStoreAPIController extends PubControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $merchantLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as merchant_logo";
+            if ($usingCdn) {
+                $merchantLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as merchant_logo";
+            }
 
             $couponLocations = PromotionRetailer::select(
                                             "merchants.merchant_id",
                                             DB::raw("{$prefix}merchants.name as name"),
-                                            "merchants.object_type"
+                                            "merchants.object_type",
+                                            DB::raw("{$merchantLogo}"),
+                                            DB::raw("oms.merchant_id as parent_id"),
+                                            DB::raw("oms.object_type as parent_type"),
+                                            DB::raw("oms.name as parent_name")
                                         )
                                     ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                                    ->where('promotions.promotion_id', $couponId)
-                                    ->where('merchants.object_type', 'tenant')
-                                    ->groupBy("name")
-                                    ->orderBy($sort_by, $sort_mode);
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    // Logo
+                                    ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix){
+                                        $q->on(DB::raw('img.object_id'), '=', 'merchants.merchant_id')
+                                          ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
+                                    })
+                                    ->where('promotions.promotion_id', $couponId);
+
+            OrbitInput::get('cities', function($cities) use ($couponLocations, $prefix) {
+                foreach ($cities as $key => $value) {
+                    if (empty($value)) {
+                       unset($cities[$key]);
+                    }
+                }
+                if (! empty($cities)) {
+                    $couponLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
+                }
+            });
+
+            OrbitInput::get('country', function($country) use ($couponLocations, $prefix) {
+                if (! empty($country)) {
+                    $couponLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
+                }
+            });
+
+            // get all record with mall id
+            $numberOfMall = 0;
+            $numberOfStore = 0;
+            $numberOfStoreRelatedMall = 0;
+
+            // get number of store and number of mall
+            $_numberOfLocation = clone($couponLocations);
+            $_numberOfLocation = $_numberOfLocation->groupBy('merchants.name');
+
+            $numberOfLocationSql = $_numberOfLocation->toSql();
+            $_numberOfLocation = DB::table(DB::Raw("({$numberOfLocationSql}) as sub_query"))->mergeBindings($_numberOfLocation->getQuery())
+                            ->select(
+                                    DB::raw("object_type, count(merchant_id) as total")
+                                )
+                            ->groupBy(DB::Raw("sub_query.parent_id"))
+                            ->get();
+
+            foreach ($_numberOfLocation as $_data) {
+                if ($_data->object_type === 'tenant') {
+                    $numberOfStore += $_data->total;
+                    $numberOfStoreRelatedMall++;
+                } else {
+                    $numberOfMall += $_data->total;
+                }
+            }
 
             // filter news by mall id
             OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
                 if ($is_detail != 'y') {
-                    $couponLocations->where('merchants.parent_id', '=', $mallid);
+                    $couponLocations->where('merchants.parent_id', '=', $mallid)
+                                    ->where('merchants.object_type', 'tenant');
                 }
             });
+
+            $couponLocations = $couponLocations->groupBy('merchants.name');
 
             $_couponLocations = clone($couponLocations);
 
@@ -106,7 +167,7 @@ class CouponStoreAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $couponLocations->skip($skip);
 
-            $couponLocations->orderBy($sort_by, $sort_mode);
+            $couponLocations->orderBy('name', 'asc');
 
             $listOfRec = $couponLocations->get();
 
@@ -131,6 +192,9 @@ class CouponStoreAPIController extends PubControllerAPI
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
             $data->total_records = RecordCounter::create($_couponLocations)->count();
+            $data->numberOfMall = $numberOfMall;
+            $data->numberOfStore = $numberOfStore;
+            $data->numberOfStoreRelatedMall = $numberOfStoreRelatedMall;
             $data->records = $listOfRec;
 
             $this->response->data = $data;
@@ -178,5 +242,10 @@ class CouponStoreAPIController extends PubControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 }

@@ -21,8 +21,6 @@ use CampaignGroupName;
 use Orbit\Helper\Util\FilterParser;
 use Orbit\Helper\Util\CampaignSourceParser;
 use ExtendedActivity;
-use Orbit\FakeJob;
-use Orbit\Queue\Activity\ObjectPageViewActivityQueue;
 
 class AdditionalActivityQueue
 {
@@ -69,26 +67,22 @@ class AdditionalActivityQueue
             $this->saveToWidgetClick($activity);
             $this->saveToConnectionTime($activity);
             $this->saveExtendedData($activity);
-            // update total view
-            $job = new FakeJob();
-            $data = [
-                'activity_id' => $activity->activity_id
-            ];
 
-            $esQueue = new ObjectPageViewActivityQueue();
-            $response = $esQueue->fire($job, $data);
+            $job->delete();
 
             $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
                     $job->getJobId(),
                     $activity->activity_id,
                     $activity->activity_name_long);
 
+            Log::info($message);
+
             return [
                 'status' => 'ok',
                 'message' => $message
             ];
         } catch (Exception $e) {
-            Log::error(sprintf('[Job ID: `%s`] Additional Activity Queue ERROR: %s', $activityId, $e->getMessage()));
+            Log::error(sprintf('[Job ID: `%s`] Activity ID: %s. Additional Activity Queue ERROR: %s', $job->getJobId(), $activityId, $e->getMessage()));
             return [
                 'status' => 'fail',
                 'message' => $e->getMessage()

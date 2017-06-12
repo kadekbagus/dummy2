@@ -82,6 +82,11 @@ class PromotionDetailAPIController extends PubControllerAPI
                 $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
             }
 
+            $location = $mallId;
+            if (empty($location)) {
+                $location = 0;
+            }
+
             $promotion = News::select(
                             'news.news_id as news_id',
                             DB::Raw("
@@ -106,6 +111,7 @@ class PromotionDetailAPIController extends PubControllerAPI
                             'news.object_type',
                             'news.end_date',
                             'news.is_exclusive',
+                            'total_object_page_views.total_view',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -151,6 +157,12 @@ class PromotionDetailAPIController extends PubControllerAPI
                               ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                        ->leftJoin('total_object_page_views', function ($q) use ($location){
+                            $q->on('total_object_page_views.object_id', '=', 'news.news_id')
+                                ->on('total_object_page_views.object_type', '=', DB::raw("'promotion'"))
+                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
+                        })
+                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $promotionId)
                         ->where('news.object_type', '=', 'promotion')
                         ->with(['keywords' => function ($q) {
@@ -160,7 +172,7 @@ class PromotionDetailAPIController extends PubControllerAPI
 
             $message = 'Request Ok';
             if (! is_object($promotion)) {
-                OrbitShopAPI::throwInvalidArgument('Promotion that you specify is not found');
+                throw new OrbitCustomException('Promotion that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
             }
 
             if ($promotion->is_exclusive === 'Y') {

@@ -120,8 +120,20 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
             }
 
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path) as path";
+            if ($usingCdn) {
+                $image = "CASE WHEN (m.cdn_url is null or m.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END as path";
+            }
+
             // Get store name base in merchant_id
-            $store = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('oms.country_id'))
+            $store = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('oms.country_id'),
+                            DB::Raw("
+                                    (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'retailer_logo_orig'
+                                    AND m.object_id = {$prefix}merchants.merchant_id) AS original_media_path
+                            ")
+                        )
                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                         ->where('merchants.merchant_id', $merchantId)
                         ->where('merchants.status', '=', 'active')
@@ -143,6 +155,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                     DB::raw("mall.address_line1 as address"),
                                     'merchants.floor',
                                     'merchants.unit',
+                                    DB::raw("mall.phone"),
                                     DB::raw("mall.operating_hours"),
                                     DB::raw("mall.is_subscribed"),
                                     DB::raw("mall.object_type as location_type"),
@@ -237,10 +250,19 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 }
             }
 
-            $this->response->data = new stdClass();
-            $this->response->data->total_records = $totalRec;
-            $this->response->data->returned_records = count($listOfRec);
-            $this->response->data->records = $listOfRec;
+            $data = new \stdClass();
+            $data->returned_records = count($listOfRec);
+            $data->total_records = $totalRec;
+            if (is_object($store)) {
+                $data->store_name = $store->name;
+                $data->original_media_path = $store->original_media_path;
+            }
+            $data->records = $listOfRec;
+
+            $this->response->data = $data;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request Ok';
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();

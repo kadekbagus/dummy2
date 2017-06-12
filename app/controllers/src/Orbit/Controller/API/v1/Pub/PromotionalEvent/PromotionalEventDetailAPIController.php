@@ -98,9 +98,15 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
             }
 
+            $location = $mallId;
+            if (empty($location)) {
+                $location = 0;
+            }
+
             $promotionalEvent = News::select(
                             'news.news_id as news_id',
                             'reward_details.is_new_user_only',
+                            'reward_details.reward_type',
                             DB::Raw("
                                 CASE WHEN ({$prefix}reward_detail_translations.guest_button_label = '' or {$prefix}reward_detail_translations.guest_button_label is null) THEN default_translation_button.guest_button_label ELSE {$prefix}reward_detail_translations.guest_button_label END as guest_button_label,
                                 CASE WHEN ({$prefix}reward_detail_translations.logged_in_button_label = '' or {$prefix}reward_detail_translations.logged_in_button_label is null) THEN default_translation_button.logged_in_button_label ELSE {$prefix}reward_detail_translations.logged_in_button_label END as logged_in_button_label,
@@ -125,6 +131,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                             'news.object_type',
                             'news.end_date',
                             'news.is_exclusive',
+                            'total_object_page_views.total_view',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -180,6 +187,12 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                             $q->on(DB::raw("default_translation_button.reward_detail_id"), '=', 'reward_details.reward_detail_id')
                               ->on(DB::raw("default_translation_button.language_id"), '=', 'languages.language_id');
                         })
+                        ->leftJoin('total_object_page_views', function ($q) use ($location){
+                            $q->on('total_object_page_views.object_id', '=', 'news.news_id')
+                                ->on('total_object_page_views.object_type', '=', DB::raw("'news'"))
+                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
+                        })
+                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news.is_having_reward', '=', 'Y')
@@ -245,7 +258,9 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                         break;
 
                     case 'reward_ok':
+                        DB::beginTransaction();
                         $updateReward = $pe->insertRewardCode($user->user_id, $newsId, 'news', $language);
+                        DB::commit();
                         break;
 
                     case 'inactive_user':
@@ -263,7 +278,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View Promotional Event');
                 $activity->setUser($user)
-                    ->setActivityName('view_promotional_event_detail')
+                    ->setActivityName('view_mall_promotional_event_detail')
                     ->setActivityNameLong('View Promotional Event Detail')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)
@@ -275,7 +290,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             } else {
                 $activityNotes = sprintf('Page viewed: View Promotional Event Detail');
                 $activity->setUser($user)
-                    ->setActivityName('view_promotional_event_detail')
+                    ->setActivityName('view_landing_page_promotional_event_detail')
                     ->setActivityNameLong('View Promotional Event Detail')
                     ->setObject($promotionalEvent)
                     ->setNews($promotionalEvent)

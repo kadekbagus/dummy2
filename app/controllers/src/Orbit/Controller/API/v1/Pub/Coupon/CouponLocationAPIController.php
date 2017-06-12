@@ -82,6 +82,10 @@ class CouponLocationAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('promotions');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
+            $skipMall = OrbitInput::get('skip_mall', 'N');
+
+            // need to handle request for grouping by name_orig and order by name_orig and city
+            $sortBy = OrbitInput::get('sort_by');
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -89,10 +93,14 @@ class CouponLocationAPIController extends PubControllerAPI
                 array(
                     'coupon_id' => $coupon_id,
                     'language' => $language,
+                    'sort_by' => $sortBy,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'coupon_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
+                    'sort_by' => 'in:name_orig',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -113,6 +121,8 @@ class CouponLocationAPIController extends PubControllerAPI
                 'mall' => $mall,
                 'take' => $take,
                 'skip' => $skip,
+                'sort_by' => $sortBy,
+                'skip_mall' => $skipMall,
             ];
 
             // Run the validation
@@ -134,9 +144,11 @@ class CouponLocationAPIController extends PubControllerAPI
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
             $mallLogo = "CONCAT({$this->quote($urlPrefix)}, img.path) as location_logo";
+            $locationLogo = "CONCAT({$this->quote($urlPrefix)}, img_loc.path) as location_logo_orig";
             $mallMap = "CONCAT({$this->quote($urlPrefix)}, map.path) as map_image";
             if ($usingCdn) {
                 $mallLogo = "CASE WHEN (img.cdn_url is null or img.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img.path) ELSE img.cdn_url END as location_logo";
+                $locationLogo = "CASE WHEN (img_loc.cdn_url is null or img_loc.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, img_loc.path) ELSE img_loc.cdn_url END as location_logo_orig";
                 $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
             }
 
@@ -153,8 +165,10 @@ class CouponLocationAPIController extends PubControllerAPI
                                             DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.is_subscribed ELSE {$prefix}merchants.is_subscribed END as is_subscribed"),
                                             DB::raw("{$prefix}merchants.object_type as location_type"),
                                             DB::raw("{$mallLogo}"),
+                                            DB::raw("{$locationLogo}"),
                                             DB::raw("{$mallMap}"),
                                             DB::raw("{$prefix}merchants.phone as phone"),
+                                            DB::raw("{$prefix}merchants.name as name_orig"),
                                             DB::raw("x(position) as latitude"),
                                             DB::raw("y(position) as longitude")
                                         )
@@ -166,9 +180,9 @@ class CouponLocationAPIController extends PubControllerAPI
                                     // Map
                                     ->leftJoin(DB::raw("{$prefix}media as map"), function($q) use ($prefix){
                                         $q->on(DB::raw('map.object_id'), '=', "merchants.merchant_id")
-                                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig')"));
+                                          ->on(DB::raw('map.media_name_long'), 'IN', DB::raw("('mall_map_orig', 'retailer_map_orig', 'retailer_storemap_orig')"));
                                     })
-                                    // Logo
+                                    // Mall Logo
                                     ->leftJoin(DB::raw("{$prefix}media as img"), function($q) use ($prefix) {
                                         $q->on(DB::raw('img.object_id'), '=', DB::Raw("
                                                         (select CASE WHEN t.object_type = 'tenant'
@@ -182,21 +196,37 @@ class CouponLocationAPIController extends PubControllerAPI
                                             "))
                                             ->on(DB::raw('img.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
                                     })
+                                     // Location Logo
+                                    ->leftJoin(DB::raw("{$prefix}media as img_loc"), function($q) use ($prefix){
+                                        $q->on(DB::raw('img_loc.object_id'), '=', 'merchants.merchant_id')
+                                          ->on(DB::raw('img_loc.media_name_long'), 'IN', DB::raw("('mall_logo_orig', 'retailer_logo_orig')"));
+                                    })
                                     ->where('promotions.promotion_id', $coupon_id)
                                     ->where('merchants.status', '=', 'active');
 
-            // filter news by mall id
-            OrbitInput::get('mall_id', function($mallid) use ($couponLocations, &$group_by) {
-                $couponLocations->where(function($q) use ($mallid){
-                                    $q->where('merchants.parent_id', '=', $mallid)
-                                      ->orWhere('merchants.merchant_id', '=', $mallid);
-                                });
-            });
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($couponLocations, &$group_by) {
+                    $couponLocations->havingRaw("mall_id != '{$mallid}'");
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($couponLocations, &$group_by) {
+                    $couponLocations->where(function($q) use ($mallid){
+                                        $q->where('merchants.parent_id', '=', $mallid)
+                                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                                    });
+                });
+            }
 
             // Get user location
             $position = isset($ul)?explode("|", $ul):null;
             $lon = isset($position[0])?$position[0]:null;
             $lat = isset($position[1])?$position[1]:null;
+
+            OrbitInput::get('country', function($country) use ($couponLocations, $prefix) {
+                    $couponLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.country ELSE {$prefix}merchants.country END)"), $country);
+            });
 
             // Filter by location
             if (! empty($location)) {
@@ -223,11 +253,19 @@ class CouponLocationAPIController extends PubControllerAPI
                 $withCache = FALSE;
                 $couponLocations->orderBy('distance', 'asc');
             } else {
-                $couponLocations->orderBy('city', 'asc');
-                $couponLocations->orderBy('name', 'asc');
+                if (! empty($sortBy)) {
+                    $couponLocations->orderBy('name_orig', 'asc')
+                        ->orderBy('city', 'asc');
+                } else {
+                    $couponLocations->orderBy('name', 'asc');
+                }
             }
 
-            $couponLocations->groupBy('merchants.merchant_id');
+            if (! empty($groupBy)) {
+                $couponLocations->groupBy('name_orig');
+            } else {
+                $couponLocations->groupBy('merchants.merchant_id');
+            }
 
             $_couponLocations = clone($couponLocations);
 
@@ -257,8 +295,28 @@ class CouponLocationAPIController extends PubControllerAPI
                 $listOfRec = $couponLocations->get();
             }
 
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+            if ($usingCdn) {
+                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+            }
+
             $couponName = Coupon::select(DB::Raw("
-                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name
+                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                    CASE WHEN (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
+                                    THEN
+                                        (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = default_translation.coupon_translation_id)
+                                    ELSE
+                                        (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
+                                    END AS original_media_path
                                 "))
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -296,6 +354,7 @@ class CouponLocationAPIController extends PubControllerAPI
             $data->total_records = $totalRec;
             if (is_object($couponName)) {
                 $data->coupon_name = $couponName->coupon_name;
+                $data->original_media_path = $couponName->original_media_path;
             }
             $data->records = $listOfRec;
 

@@ -446,6 +446,7 @@ class NewsListAPIController extends PubControllerAPI
             if (! empty($advertData)) {
                 unset($jsonQuery['sort']);
                 $withScore = true;
+                $advertIds = array();
                 foreach ($advertData as $dt) {
                     if ($list_type === 'featured') {
                         if ($dt->placement_type_orig === 'featured_list') {
@@ -533,6 +534,7 @@ class NewsListAPIController extends PubControllerAPI
                 $data = array();
                 $default_lang = '';
                 $partnerTokens = isset($record['_source']['partner_tokens']) ? $record['_source']['partner_tokens'] : [];
+                $pageView = 0;
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
                         $key = "news_name";
@@ -609,7 +611,21 @@ class NewsListAPIController extends PubControllerAPI
                             $data[$key] = 'N';
                         }
                     }
+
+                    if (empty($mallId)) {
+                        if ($key === 'gtm_page_views') {
+                            $pageView = $value;
+                        }
+                    } else {
+                        foreach ($record['_source']['mall_page_views'] as $dt) {
+                            if ($dt['location_id'] === $mallId) {
+                                $pageView = $dt['total_views'];
+                            }
+                        }
+                    }
                 }
+
+                $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
