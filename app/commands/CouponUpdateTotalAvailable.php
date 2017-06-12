@@ -36,7 +36,7 @@ class CouponUpdateTotalAvailable extends Command {
 	 *
 	 * @return mixed
 	 */
-	public function fire()
+	public function fire($job, $data)
 	{
 		try {
 			$input = ! empty($this->option('id')) ? $this->option('id') : file_get_contents("php://stdin");
