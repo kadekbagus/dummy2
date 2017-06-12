@@ -260,7 +260,7 @@ class PromotionLocationAPIController extends PubControllerAPI
             }
 
             OrbitInput::get('store_name', function($storeName) use ($promotionLocation) {
-                $promotionLocation->havingRaw("name_orig = '{$storeName}'");
+                $promotionLocation->having('name_orig', '=', $storeName);
             });
 
             $promotionLocation->groupBy('merchants.merchant_id');
