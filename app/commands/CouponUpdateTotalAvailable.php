@@ -4,7 +4,6 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\Helper\Util\JobBurier;
-use Log;
 
 class CouponUpdateTotalAvailable extends Command {
 
@@ -66,7 +65,7 @@ class CouponUpdateTotalAvailable extends Command {
                                 $job->getJobId(),
                                 $input,
                                 $coupon->promotion_name);
-            Log::info($message);
+            \Log::info($message);
 
             return [
                 'status' => 'ok',
@@ -77,7 +76,7 @@ class CouponUpdateTotalAvailable extends Command {
                                 $job->getJobId(),
                                 $input,
                                 $coupon->promotion_name);
-            Log::info($message);
+            \Log::info($message);
         }
 
         // Bury the job for later inspection
