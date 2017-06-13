@@ -77,12 +77,16 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
 
+            $skipMall = OrbitInput::get('skip_mall', 'N');
+
             $validator = Validator::make(
                 array(
                     'merchant_id' => $merchantId,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'merchant_id' => 'required',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'Merchant id is required',
@@ -99,6 +103,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 'cities' => $cities,
                 'take' => $take,
                 'skip' => $skip,
+                'skip_mall' => $skipMall,
             ];
 
             // Run the validation
@@ -203,8 +208,14 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 }
             }
 
-            if (! empty($mallId)) {
-                $mall->where(DB::raw("mall.merchant_id"), '=', $mallId);
+            if ($skipMall === 'Y') {
+                if (! empty($mallId)) {
+                    $mall->where(DB::raw("mall.merchant_id"), '!=', $mallId);
+                }
+            } else {
+                if (! empty($mallId)) {
+                    $mall->where(DB::raw("mall.merchant_id"), '=', $mallId);
+                }
             }
 
             // Order data city alphabetical

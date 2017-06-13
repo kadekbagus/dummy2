@@ -259,7 +259,7 @@ class NewsLocationAPIController extends PubControllerAPI
             }
 
             OrbitInput::get('store_name', function($storeName) use ($newsLocations) {
-                $newsLocations->havingRaw("name_orig = '{$storeName}'");
+                $newsLocations->having('name_orig', '=', $storeName);
             });
 
             $newsLocations->groupBy('merchants.merchant_id');

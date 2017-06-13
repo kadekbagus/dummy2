@@ -264,7 +264,7 @@ class CouponLocationAPIController extends PubControllerAPI
             }
 
             OrbitInput::get('store_name', function($storeName) use ($couponLocations) {
-                $couponLocations->havingRaw("name_orig = '{$storeName}'");
+                $couponLocations->having('name_orig', '=', $storeName);
             });
 
             $couponLocations->groupBy('merchants.merchant_id');
