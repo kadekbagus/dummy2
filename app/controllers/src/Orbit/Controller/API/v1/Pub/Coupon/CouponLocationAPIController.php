@@ -82,6 +82,8 @@ class CouponLocationAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('promotions');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
+            $skipMall = OrbitInput::get('skip_mall', 'N');
+            $storeName = OrbitInput::get('store_name');
 
             // need to handle request for grouping by name_orig and order by name_orig and city
             $sortBy = OrbitInput::get('sort_by');
@@ -93,11 +95,13 @@ class CouponLocationAPIController extends PubControllerAPI
                     'coupon_id' => $coupon_id,
                     'language' => $language,
                     'sort_by' => $sortBy,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'coupon_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
                     'sort_by' => 'in:name_orig',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -119,6 +123,8 @@ class CouponLocationAPIController extends PubControllerAPI
                 'take' => $take,
                 'skip' => $skip,
                 'sort_by' => $sortBy,
+                'skip_mall' => $skipMall,
+                'store_name' => $storeName,
             ];
 
             // Run the validation
@@ -200,13 +206,20 @@ class CouponLocationAPIController extends PubControllerAPI
                                     ->where('promotions.promotion_id', $coupon_id)
                                     ->where('merchants.status', '=', 'active');
 
-            // filter news by mall id
-            OrbitInput::get('mall_id', function($mallid) use ($couponLocations, &$group_by) {
-                $couponLocations->where(function($q) use ($mallid){
-                                    $q->where('merchants.parent_id', '=', $mallid)
-                                      ->orWhere('merchants.merchant_id', '=', $mallid);
-                                });
-            });
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($couponLocations, &$group_by) {
+                    $couponLocations->havingRaw("mall_id != '{$mallid}'");
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($couponLocations, &$group_by) {
+                    $couponLocations->where(function($q) use ($mallid){
+                                        $q->where('merchants.parent_id', '=', $mallid)
+                                          ->orWhere('merchants.merchant_id', '=', $mallid);
+                                    });
+                });
+            }
 
             // Get user location
             $position = isset($ul)?explode("|", $ul):null;
@@ -250,11 +263,11 @@ class CouponLocationAPIController extends PubControllerAPI
                 }
             }
 
-            if (! empty($groupBy)) {
-                $couponLocations->groupBy('name_orig');
-            } else {
-                $couponLocations->groupBy('merchants.merchant_id');
-            }
+            OrbitInput::get('store_name', function($storeName) use ($couponLocations) {
+                $couponLocations->having('name_orig', '=', $storeName);
+            });
+
+            $couponLocations->groupBy('merchants.merchant_id');
 
             $_couponLocations = clone($couponLocations);
 
