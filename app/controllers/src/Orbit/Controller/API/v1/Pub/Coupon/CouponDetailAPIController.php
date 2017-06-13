@@ -76,11 +76,16 @@ class CouponDetailAPIController extends PubControllerAPI
             // This condition only for guest can issued multiple coupon with multiple email
             if ($role == 'Guest') {
                 $getCouponStatusSql = " 'false' as get_coupon_status ";
+                $issuedCouponId = " NULL as issued_coupon_id ";
             } else {
                 $getCouponStatusSql = " CASE WHEN {$prefix}issued_coupons.user_id is NULL
                                             THEN 'false'
                                             ELSE 'true'
                                         END as get_coupon_status ";
+                $issuedCouponId = " CASE WHEN {$prefix}issued_coupons.user_id = " . $this->quote($user->user_id) . "
+                                            THEN {$prefix}issued_coupons.issued_coupon_id
+                                            ELSE NULL
+                                        END as issued_coupon_id ";
             }
 
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
@@ -121,9 +126,11 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.end_date',
                             'promotions.is_exclusive',
                             'total_object_page_views.total_view',
+							'promotions.available',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
+                            DB::Raw($issuedCouponId),
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -135,6 +142,13 @@ class CouponDetailAPIController extends PubControllerAPI
                                                                                             LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
                                                                                         WHERE opr.promotion_id = {$prefix}promotions.promotion_id)
                                     THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status,
+                                    CASE WHEN {$prefix}promotions.coupon_validity_in_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                        FROM {$prefix}promotion_retailer opr
+                                                                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
+                                                                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                        WHERE opr.promotion_id = {$prefix}promotions.promotion_id)
+                                    THEN 'true' ELSE 'false' END as is_exceeding_validity_date,
                                     CASE WHEN (SELECT count(opr.retailer_id)
                                                 FROM {$prefix}promotion_retailer opr
                                                     LEFT JOIN {$prefix}merchants om ON om.merchant_id = opr.retailer_id
@@ -201,20 +215,6 @@ class CouponDetailAPIController extends PubControllerAPI
             if (! is_object($coupon)) {
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
-
-            $availableCoupon = IssuedCoupon::select(DB::raw("COUNT(issued_coupon_id) as available_coupon"))
-                                            ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
-                                            ->where('issued_coupons.status', 'available')
-                                            ->where('promotions.promotion_id', $couponId)
-                                            ->groupBy('promotions.promotion_id')
-                                            ->first();
-
-            $totalAvailable = 0;
-            if (is_object($availableCoupon)) {
-                $totalAvailable = $availableCoupon->available_coupon;
-            }
-
-            $coupon->available_coupon = $totalAvailable;
 
             if ($coupon->is_exclusive === 'Y') {
                 // check token

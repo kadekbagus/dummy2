@@ -124,7 +124,7 @@ class RegistrationMail
         // URL Activation link
         $tokenUrl = sprintf($baseUrl, $token->token_value, $user->user_email, $data['languageId']);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
-        $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['languageId'];
+        $baseLinkUrl = Config::get('app.url') . '/%s?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink&lang=' . $data['languageId'];
 
         $dataCopy = $data;
         $data = array(

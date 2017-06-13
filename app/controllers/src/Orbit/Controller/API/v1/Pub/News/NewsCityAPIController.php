@@ -15,6 +15,7 @@ use NewsMerchant;
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
+use Mall;
 
 class NewsCityAPIController extends PubControllerAPI
 {
@@ -48,13 +49,18 @@ class NewsCityAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'city');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $mall = null;
+            $storeName = OrbitInput::get('store_name');
+            $mallId = OrbitInput::get('mall_id');
+            $skipMall = OrbitInput::get('skip_mall', 'N');
 
             $validator = Validator::make(
                 array(
                     'news_id' => $newsId,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'news_id' => 'required',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'News ID is required',
@@ -80,8 +86,30 @@ class NewsCityAPIController extends PubControllerAPI
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('news_merchant.news_id', '=', $newsId)
-                                    ->where('merchants.status', '=', 'active')
-                                    ->groupBy('city');
+                                    ->where('merchants.status', '=', 'active');
+
+            // filter by store name
+            OrbitInput::get('store_name', function($storeName) use ($newsLocation) {
+                $newsLocation->where('merchants.name', $storeName);
+            });
+
+            if ($skipMall === 'Y') {
+                OrbitInput::get('mall_id', function($mallId) use ($newsLocation) {
+                    $newsLocation->where(function($q) use ($mallId) {
+                                        $q->where('merchants.parent_id', '!=', $mallId)
+                                          ->where('merchants.merchant_id', '!=', $mallId);
+                                    });
+                    });
+            } else {
+                OrbitInput::get('mall_id', function($mallId) use ($newsLocation) {
+                    $newsLocation->where(function($q) use ($mallId) {
+                                        $q->where('merchants.parent_id', '=', $mallId)
+                                          ->orWhere('merchants.merchant_id', '=', $mallId);
+                                    });
+                    });
+            }
+
+            $newsLocation = $newsLocation->groupBy('city');
 
             $_newsLocation = clone($newsLocation);
 
