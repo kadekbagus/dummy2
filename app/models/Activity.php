@@ -815,6 +815,11 @@ class Activity extends Eloquent
             return;
         }
 
+        $recordActivity = strtolower(OrbitInput::get('record_activity', 'y'));
+        if ($recordActivity !== 'y') {
+            return;
+        }
+
         if (empty($this->module_name)) {
             $this->module_name = $this->object_name;
 
