@@ -299,6 +299,13 @@ Event::listen('orbit.coupon.after.image1.translation.save', function($controller
  */
 Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $coupon)
 {
+    // update total available coupon
+    $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
+
+    $coupon = Coupon::find($coupon->promotion_id);
+    $coupon->available = $availableCoupons;
+    $coupon->save();
+
     $timestamp = new DateTime($coupon->created_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
 
@@ -312,7 +319,6 @@ Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $
         'campaignId'         => $coupon->promotion_id,
         'mode'               => 'create'
     ]);
-
 });
 
 
@@ -342,6 +348,13 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
         'temporaryContentId' => $temporaryContentId,
         'mode'               => 'update'
     ]);
+
+    // update total available coupon
+    $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
+
+    $coupon = Coupon::find($coupon->promotion_id);
+    $coupon->available = $availableCoupons;
+    $coupon->save();
 
     // check coupon before update elasticsearch
     $prefix = DB::getTablePrefix();
