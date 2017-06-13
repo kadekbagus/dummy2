@@ -777,7 +777,7 @@ return array(
         ),
 
         // URL for password reset (frontend URL)
-        'reset_base_url' => 'http://gotomalls.com/#/password/reset/%s?email=%s&lang=%s',
+        'reset_base_url' => 'https://v35.gotomalls.cool/auth/resetpassword/%s?email=%s&lang=%s',
 
         // Number of days before token in reset link expires
         'reset_expire' => 7,
@@ -808,7 +808,7 @@ return array(
             'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
 
             // GotoMalls URL (The New Mobile)
-            'gotomalls_activation_base_url' => 'http://gotomalls.here/#/account/activate/%s?email=%s&lang=%s',
+            'gotomalls_activation_base_url' => 'https://v35.gotomalls.cool/auth/activate/%s?email=%s&lang=%s',
 
             // Setup Password URL
             // This should be frontend URL not backend
@@ -5759,15 +5759,15 @@ return array(
         ],
 
         // base url of the campaign detail, needed for showing link on the email
-        'news_detail_base_url' => 'https://v33.gotomalls.cool/#!/events/%s/%s',
+        'news_detail_base_url' => 'https://v33.gotomalls.cool/events/%s/%s',
 
-        'promotion_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotions/%s/%s?%s',
+        'promotion_detail_base_url' => 'https://v33.gotomalls.cool/promotions/%s/%s?%s',
 
-        'coupon_detail_base_url' => 'https://v33.gotomalls.cool/#!/coupons/%s/%s?%s',
+        'coupon_detail_base_url' => 'https://v33.gotomalls.cool/coupons/%s/%s?%s',
 
-        'store_detail_base_url' => 'https://v33.gotomalls.cool/#!/stores/%s/%s',
+        'store_detail_base_url' => 'https://v33.gotomalls.cool/stores/%s/%s',
 
-        'promotional_event_detail_base_url' => 'https://v33.gotomalls.cool/#!/promotional-events/%s/%s?%s',
+        'promotional_event_detail_base_url' => 'https://v33.gotomalls.cool/promotional-events/%s/%s?%s',
     ),
 
     /**
