@@ -5643,6 +5643,97 @@ return array(
                 'object_type_parameter_name' => 'object_type',
                 'parameter_name' => 'object_id'
             ),
+            // User views promotion detail in gtm level
+            '119' => array(
+                'name' => 'view_landing_page_promotion_detail',
+                'name_long' => 'View GoToMalls Promotion Detail',
+                'module_name' => 'Promotion',
+                'type' => 'view',
+                'object_type' => 'News',
+                'parameter_name' => 'object_id'
+            ),
+            // User views promotion detail in mall level
+            '120' => array(
+                'name' => 'view_mall_promotion_detail',
+                'name_long' => 'View mall promotion detail',
+                'module_name' => 'Promotion',
+                'type' => 'view',
+                'object_type' => 'News',
+                'parameter_name' => 'object_id'
+            ),
+            // User views event detail in gtm level
+            '121' => array(
+                'name' => 'view_landing_page_news_detail',
+                'name_long' => 'View GoToMalls News Detail',
+                'module_name' => 'News',
+                'type' => 'view',
+                'object_type' => 'News',
+                'parameter_name' => 'object_id'
+            ),
+            // User views event detail in mall level
+            '122' => array(
+                'name' => 'view_mall_event_detail',
+                'name_long' => 'View mall event detail',
+                'module_name' => 'News',
+                'type' => 'view',
+                'object_type' => 'News',
+                'parameter_name' => 'object_id'
+            ),
+            // User views coupon detail in gtm level
+            '121' => array(
+                'name' => 'view_landing_page_coupon_detail',
+                'name_long' => 'View GoToMalls Coupon Detail',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // User views coupon detail in mall level
+            '122' => array(
+                'name' => 'view_mall_coupon_detail',
+                'name_long' => 'View mall coupon detail',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // User views promotional event detail in gtm level
+            '123' => array(
+                'name' => 'view_landing_page_promotional_event_detail',
+                'name_long' => 'View GoToMalls Promotional Event Detail',
+                'module_name' => 'News',
+                'type' => 'view',
+                'object_type' => 'News',
+                'parameter_name' => 'object_id'
+            ),
+            // User views promotional event detail in mall level
+            '124' => array(
+                'name' => 'view_mall_promotional_event_detail',
+                'name_long' => 'View mall promotional event detail',
+                'module_name' => 'News',
+                'type' => 'view',
+                'object_type' => 'News',
+                'parameter_name' => 'object_id'
+            ),
+            // User views store detail in gtm level
+            '125' => array(
+                'name' => 'view_landing_page_store_detail',
+                'name_long' => 'View GoToMalls Store Detail',
+                'module_name' => 'Store',
+                'type' => 'view',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'object_id'
+            ),
+            // User views mall detail
+            '126' => array(
+                'name' => 'view_mall',
+                'name_long' => 'View Mall Page',
+                'module_name' => 'Mall',
+                'type' => 'view',
+                'object_type' => 'Mall',
+                'parameter_name' => 'object_id'
+            ),
+
         ),
     ),
 
