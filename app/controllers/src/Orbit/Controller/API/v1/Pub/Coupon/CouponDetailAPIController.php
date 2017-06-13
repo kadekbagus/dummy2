@@ -126,6 +126,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.end_date',
                             'promotions.is_exclusive',
                             'total_object_page_views.total_view',
+							'promotions.available',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -214,20 +215,6 @@ class CouponDetailAPIController extends PubControllerAPI
             if (! is_object($coupon)) {
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
-
-            $availableCoupon = IssuedCoupon::select(DB::raw("COUNT(issued_coupon_id) as available_coupon"))
-                                            ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
-                                            ->where('issued_coupons.status', 'available')
-                                            ->where('promotions.promotion_id', $couponId)
-                                            ->groupBy('promotions.promotion_id')
-                                            ->first();
-
-            $totalAvailable = 0;
-            if (is_object($availableCoupon)) {
-                $totalAvailable = $availableCoupon->available_coupon;
-            }
-
-            $coupon->available_coupon = $totalAvailable;
 
             if ($coupon->is_exclusive === 'Y') {
                 // check token
