@@ -67,6 +67,11 @@ class IssuedCoupon extends Eloquent
         return $query->where('issued_coupons.status', 'redeemed');
     }
 
+    public static function totalAvailable($promotionId) {
+        $available = static::where('status', 'available')->where('promotion_id', $promotionId)->count();
+        return $available;
+    }
+
     /**
      * Save issued coupon based on promotion object.
      *
