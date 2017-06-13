@@ -215,20 +215,6 @@ class CouponDetailAPIController extends PubControllerAPI
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
 
-            $availableCoupon = IssuedCoupon::select(DB::raw("COUNT(issued_coupon_id) as available_coupon"))
-                                            ->join('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
-                                            ->where('issued_coupons.status', 'available')
-                                            ->where('promotions.promotion_id', $couponId)
-                                            ->groupBy('promotions.promotion_id')
-                                            ->first();
-
-            $totalAvailable = 0;
-            if (is_object($availableCoupon)) {
-                $totalAvailable = $availableCoupon->available_coupon;
-            }
-
-            $coupon->available_coupon = $totalAvailable;
-
             if ($coupon->is_exclusive === 'Y') {
                 // check token
                 $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
