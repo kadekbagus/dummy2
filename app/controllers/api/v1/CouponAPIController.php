@@ -11,7 +11,6 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
-use \Queue;
 use \Orbit\Helper\Exception\OrbitCustomException;
 
 class CouponAPIController extends ControllerAPI
@@ -992,7 +991,7 @@ class CouponAPIController extends ControllerAPI
             $this->commit();
 
             // queue for campaign spending coupon
-            Queue::push('Orbit\\Queue\\SpendingCalculation', [
+            \Queue::push('Orbit\\Queue\\SpendingCalculation', [
                 'campaign_id' => $newcoupon->promotion_id,
                 'campaign_type' => 'coupon',
             ]);
@@ -2324,7 +2323,7 @@ class CouponAPIController extends ControllerAPI
             $this->commit();
 
             // queue for campaign spending coupon
-            Queue::push('Orbit\\Queue\\SpendingCalculation', [
+            \Queue::push('Orbit\\Queue\\SpendingCalculation', [
                 'campaign_id' => $promotion_id,
                 'campaign_type' => 'coupon',
             ]);
