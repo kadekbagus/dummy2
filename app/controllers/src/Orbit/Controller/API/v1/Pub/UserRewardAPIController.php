@@ -50,8 +50,8 @@ class UserRewardAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $sort_by = OrbitInput::get('sortby', 'redeemed_date');
-            $sort_mode = OrbitInput::get('sortmode','asc');
+            $sortBy = OrbitInput::get('sortby', 'reward_detail_codes.redeemed_date');
+            $sortMode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
 
             $this->registerCustomValidation();
@@ -146,7 +146,6 @@ class UserRewardAPIController extends PubControllerAPI
                         ->whereIn('user_rewards.status', array('redeemed', 'pending'))
                         //Default Order by
                         ->orderBy('campaign_status', 'desc')
-                        ->orderBy('reward_detail_codes.redeemed_date', 'desc')
                         ->groupBy('user_reward_id');
 
             $_coupon = clone $userReward;
@@ -156,6 +155,25 @@ class UserRewardAPIController extends PubControllerAPI
 
             $skip = PaginationNumber::parseSkipFromGet();
             $userReward->skip($skip);
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'get_reward_date'        => 'user_rewards.created_at'
+                );
+
+                $sortBy = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+
+            $userReward->orderBy($sortBy, $sortMode);
 
             $listUserReward = $userReward->get();
             $count = RecordCounter::create($_coupon)->count();
