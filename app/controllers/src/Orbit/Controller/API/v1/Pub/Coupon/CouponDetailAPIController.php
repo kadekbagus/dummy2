@@ -126,6 +126,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.end_date',
                             'promotions.is_exclusive',
                             'total_object_page_views.total_view',
+							'promotions.available',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
