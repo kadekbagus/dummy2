@@ -160,8 +160,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                             AND m.media_name_long = 'coupon_translation_image_orig'
                                         GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
                             ->where('issued_coupons.user_id', $user->user_id)
-                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->groupBy('promotion_id');
+                            ->havingRaw("is_started = 'true'");
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
