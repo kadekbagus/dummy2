@@ -65,9 +65,11 @@ class RegistrationMail
         $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
 
         $metadata = NULL;
+        $toUrl = '';
         // fill metadata if any
         if (isset($data['redirect_to_url']) && ! is_null($data['redirect_to_url'])) {
             $metadata['redirect_to_url'] = $data['redirect_to_url'];
+            $toUrl = $data['redirect_to_url'];
         }
         // json encode metadata if any
         if (! empty($metadata)) {
@@ -102,7 +104,7 @@ class RegistrationMail
                 $baseUrl = Config::get('orbit.registration.mobile.gotomalls_activation_base_url');
         }
 
-        $this->sendActivationEmail($user, $token, $data, $mallName, $baseUrl);
+        $this->sendActivationEmail($user, $token, $data, $mallName, $baseUrl, $toUrl);
 
         // Don't care if the job success or not we will provide user
         // another link to resend the activation
@@ -119,10 +121,10 @@ class RegistrationMail
      * @param string $baseUrl URL for activation email
      * @return void
      */
-    protected function sendActivationEmail($user, $token, $data, $mallName, $baseUrl)
+    protected function sendActivationEmail($user, $token, $data, $mallName, $baseUrl, $toUrl)
     {
         // URL Activation link
-        $tokenUrl = sprintf($baseUrl, $token->token_value, $user->user_email, $data['languageId']);
+        $tokenUrl = sprintf($baseUrl, $token->token_value, $user->user_email, $data['languageId'], $toUrl);
         $contactInfo = Config::get('orbit.contact_information.customer_service');
         $baseLinkUrl = Config::get('app.url') . '/%s?utm_source=gtm-activation-email&utm_medium=email&utm_content=menulink&lang=' . $data['languageId'];
 
