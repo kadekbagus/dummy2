@@ -54,13 +54,16 @@ class NewsStoreAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
             $mall = null;
+            $skipMall = OrbitInput::get('skip_mall', 'N');
 
             $validator = Validator::make(
                 array(
                     'news_id' => $newsId,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'news_id' => 'required',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'News ID is required',
@@ -92,6 +95,7 @@ class NewsStoreAPIController extends PubControllerAPI
                                             DB::raw("{$prefix}merchants.name as name"),
                                             "merchants.object_type",
                                             DB::raw("{$merchantLogo}"),
+                                            DB::raw("CASE WHEN oms.object_type = 'mall' THEN oms.merchant_id ELSE {$prefix}merchants.merchant_id END as mall_id"),
                                             DB::raw("oms.merchant_id as parent_id"),
                                             DB::raw("oms.object_type as parent_type"),
                                             DB::raw("oms.name as parent_name")
@@ -126,6 +130,23 @@ class NewsStoreAPIController extends PubControllerAPI
                 }
             });
 
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $newsLocations->where(DB::raw('oms.merchant_id'), '!=', $mallid);
+                    }
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $newsLocations->where('merchants.parent_id', '=', $mallid)
+                                      ->where('merchants.object_type', 'tenant');
+                    }
+                });
+            }
+
             // get all record with mall id
             $numberOfMall = 0;
             $numberOfStore = 0;
@@ -148,17 +169,9 @@ class NewsStoreAPIController extends PubControllerAPI
                     $numberOfStore += $_data->total;
                     $numberOfStoreRelatedMall++;
                 } else {
-                    $numberOfMall = $_data->total;
+                    $numberOfMall += $_data->total;
                 }
             }
-
-            // filter news by mall id
-            OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
-                if ($is_detail != 'y') {
-                    $newsLocations->where('merchants.parent_id', '=', $mallid)
-                                  ->where('merchants.object_type', 'tenant');
-                }
-            });
 
             $newsLocations = $newsLocations->groupBy('merchants.name');
 
