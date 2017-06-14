@@ -113,23 +113,6 @@ class NewsStoreAPIController extends PubControllerAPI
                                     })
                                     ->where('news_merchant.news_id', '=', $newsId);
 
-            OrbitInput::get('cities', function($cities) use ($newsLocations, $prefix) {
-                foreach ($cities as $key => $value) {
-                    if (empty($value)) {
-                       unset($cities[$key]);
-                    }
-                }
-                if (! empty($cities)) {
-                    $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
-                }
-            });
-
-            OrbitInput::get('country', function($country) use ($newsLocations, $prefix) {
-                if (! empty($country)) {
-                    $newsLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
-                }
-            });
-
             // get all record with mall id
             $numberOfMall = 0;
             $numberOfStore = 0;
@@ -155,6 +138,23 @@ class NewsStoreAPIController extends PubControllerAPI
                     $numberOfMall += $_data->total;
                 }
             }
+
+            OrbitInput::get('cities', function($cities) use ($newsLocations, $prefix) {
+                foreach ($cities as $key => $value) {
+                    if (empty($value)) {
+                       unset($cities[$key]);
+                    }
+                }
+                if (! empty($cities)) {
+                    $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
+                }
+            });
+
+            OrbitInput::get('country', function($country) use ($newsLocations, $prefix) {
+                if (! empty($country)) {
+                    $newsLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
+                }
+            });
 
             if ($skipMall === 'Y') {
                 // filter news skip by mall id
