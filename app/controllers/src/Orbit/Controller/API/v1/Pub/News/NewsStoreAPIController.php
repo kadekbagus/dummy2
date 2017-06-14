@@ -130,23 +130,6 @@ class NewsStoreAPIController extends PubControllerAPI
                 }
             });
 
-            if ($skipMall === 'Y') {
-                // filter news skip by mall id
-                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
-                    if ($is_detail != 'y') {
-                        $newsLocations->where(DB::raw('oms.merchant_id'), '!=', $mallid);
-                    }
-                });
-            } else {
-                // filter news by mall id
-                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
-                    if ($is_detail != 'y') {
-                        $newsLocations->where('merchants.parent_id', '=', $mallid)
-                                      ->where('merchants.object_type', 'tenant');
-                    }
-                });
-            }
-
             // get all record with mall id
             $numberOfMall = 0;
             $numberOfStore = 0;
@@ -159,18 +142,37 @@ class NewsStoreAPIController extends PubControllerAPI
             $numberOfLocationSql = $_numberOfLocation->toSql();
             $_numberOfLocation = DB::table(DB::Raw("({$numberOfLocationSql}) as sub_query"))->mergeBindings($_numberOfLocation->getQuery())
                             ->select(
-                                    DB::raw("object_type, count(merchant_id) as total")
+                                    DB::raw("object_type, count(merchant_id) as total, sub_query.parent_id")
                                 )
                             ->groupBy(DB::Raw("sub_query.parent_id"))
                             ->get();
 
             foreach ($_numberOfLocation as $_data) {
                 if ($_data->object_type === 'tenant') {
-                    $numberOfStore += $_data->total;
+                    if ($_data->parent_id === $mallId) {
+                        $numberOfStore += $_data->total;
+                    }
                     $numberOfStoreRelatedMall++;
                 } else {
                     $numberOfMall += $_data->total;
                 }
+            }
+
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $newsLocations->where(DB::raw('oms.merchant_id'), '!=', $mallid);
+                    }
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $newsLocations->where('merchants.parent_id', $mallid)
+                                    ->where('merchants.object_type', 'tenant');
+                    }
+                });
             }
 
             $newsLocations = $newsLocations->groupBy('merchants.name');
