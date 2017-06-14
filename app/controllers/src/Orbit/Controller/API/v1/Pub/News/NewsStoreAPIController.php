@@ -130,6 +130,23 @@ class NewsStoreAPIController extends PubControllerAPI
                 }
             });
 
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $newsLocations->where(DB::raw('oms.merchant_id'), '!=', $mallid);
+                    }
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $newsLocations->where('merchants.parent_id', '=', $mallid)
+                                      ->where('merchants.object_type', 'tenant');
+                    }
+                });
+            }
+
             // get all record with mall id
             $numberOfMall = 0;
             $numberOfStore = 0;
@@ -154,23 +171,6 @@ class NewsStoreAPIController extends PubControllerAPI
                 } else {
                     $numberOfMall += $_data->total;
                 }
-            }
-
-            if ($skipMall === 'Y') {
-                // filter news skip by mall id
-                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
-                    if ($is_detail != 'y') {
-                        $newsLocations->havingRaw("mall_id != '{$mallid}'");
-                    }
-                });
-            } else {
-                // filter news by mall id
-                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
-                    if ($is_detail != 'y') {
-                        $newsLocations->where('merchants.parent_id', '=', $mallid)
-                                      ->where('merchants.object_type', 'tenant');
-                    }
-                });
             }
 
             $newsLocations = $newsLocations->groupBy('merchants.name');
