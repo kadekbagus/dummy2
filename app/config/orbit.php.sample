@@ -808,7 +808,7 @@ return array(
             'activation_base_url' => 'http://customer.orbit-mall.here/#/activate-account?token=%s',
 
             // GotoMalls URL (The New Mobile)
-            'gotomalls_activation_base_url' => 'https://v35.gotomalls.cool/auth/activate/%s?email=%s&lang=%s',
+            'gotomalls_activation_base_url' => 'https://v35.gotomalls.cool/auth/activate/%s?email=%s&lang=%s&to_url=%s',
 
             // Setup Password URL
             // This should be frontend URL not backend
@@ -5724,8 +5724,17 @@ return array(
                 'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
-            // User views mall detail
+            // User views store detail in mall level
             '126' => array(
+                'name' => 'view_mall_store_detail',
+                'name_long' => 'View mall store detail',
+                'module_name' => 'Store',
+                'type' => 'view',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'object_id'
+            ),
+            // User views mall detail
+            '127' => array(
                 'name' => 'view_mall',
                 'name_long' => 'View Mall Page',
                 'module_name' => 'Mall',
