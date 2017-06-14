@@ -139,14 +139,16 @@ class PromotionStoreAPIController extends PubControllerAPI
             $numberOfLocationSql = $_numberOfLocation->toSql();
             $_numberOfLocation = DB::table(DB::Raw("({$numberOfLocationSql}) as sub_query"))->mergeBindings($_numberOfLocation->getQuery())
                             ->select(
-                                    DB::raw("object_type, count(merchant_id) as total")
+                                    DB::raw("object_type, count(merchant_id) as total, sub_query.parent_id")
                                 )
                             ->groupBy(DB::Raw("sub_query.parent_id"))
                             ->get();
 
             foreach ($_numberOfLocation as $_data) {
                 if ($_data->object_type === 'tenant') {
-                    $numberOfStore += $_data->total;
+                    if ($_data->parent_id === $mallId) {
+                        $numberOfStore += $_data->total;
+                    }
                     $numberOfStoreRelatedMall++;
                 } else {
                     $numberOfMall += $_data->total;
@@ -157,7 +159,7 @@ class PromotionStoreAPIController extends PubControllerAPI
                 // filter news skip by mall id
                 OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
                     if ($is_detail != 'y') {
-                        $promotionLocation->havingRaw("mall_id != '{$mallid}'");
+                        $promotionLocation->where(DB::raw('oms.merchant_id'), '!=', $mallid);
                     }
                 });
             } else {
