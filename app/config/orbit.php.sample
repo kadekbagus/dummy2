@@ -5724,8 +5724,17 @@ return array(
                 'object_type' => 'Tenant',
                 'parameter_name' => 'object_id'
             ),
-            // User views mall detail
+            // User views store detail in mall level
             '126' => array(
+                'name' => 'view_mall_store_detail',
+                'name_long' => 'View mall store detail',
+                'module_name' => 'Store',
+                'type' => 'view',
+                'object_type' => 'Tenant',
+                'parameter_name' => 'object_id'
+            ),
+            // User views mall detail
+            '127' => array(
                 'name' => 'view_mall',
                 'name_long' => 'View Mall Page',
                 'module_name' => 'Mall',
