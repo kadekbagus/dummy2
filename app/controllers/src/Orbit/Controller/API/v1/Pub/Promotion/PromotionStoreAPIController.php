@@ -139,16 +139,14 @@ class PromotionStoreAPIController extends PubControllerAPI
             $numberOfLocationSql = $_numberOfLocation->toSql();
             $_numberOfLocation = DB::table(DB::Raw("({$numberOfLocationSql}) as sub_query"))->mergeBindings($_numberOfLocation->getQuery())
                             ->select(
-                                    DB::raw("object_type, count(merchant_id) as total, sub_query.parent_id")
+                                    DB::raw("object_type, count(merchant_id) as total")
                                 )
                             ->groupBy(DB::Raw("sub_query.parent_id"))
                             ->get();
 
             foreach ($_numberOfLocation as $_data) {
                 if ($_data->object_type === 'tenant') {
-                    if ($_data->parent_id === $mallId) {
-                        $numberOfStore += $_data->total;
-                    }
+                    $numberOfStore += $_data->total;
                     $numberOfStoreRelatedMall++;
                 } else {
                     $numberOfMall += $_data->total;
