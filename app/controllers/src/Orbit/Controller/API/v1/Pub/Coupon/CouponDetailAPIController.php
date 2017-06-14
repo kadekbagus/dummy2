@@ -115,6 +115,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.end_date',
                             'promotions.is_exclusive',
                             'promotions.available',
+                            'promotions.is_unique_redeem',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -204,6 +205,18 @@ class CouponDetailAPIController extends PubControllerAPI
                 }
 
                 $coupon->is_exclusive = 'N';
+            }
+
+            if ($coupon->is_unique_redeem === 'Y') {
+                $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
+                                           ->where('user_id', $user->user_id)
+                                           ->where('status', '!=', 'deleted')
+                                           ->first();
+
+                $coupon->get_unique_coupon = 'true';
+                if (is_object($checkIssued)) {
+                    $coupon->get_unique_coupon = 'false';
+                }
             }
 
             if (is_object($mall)) {
