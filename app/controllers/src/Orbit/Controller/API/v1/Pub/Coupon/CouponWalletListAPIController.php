@@ -93,7 +93,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                         THEN {$prefix}campaign_status.campaign_status_name
                                         ELSE (
-                                            CASE WHEN {$prefix}promotions.coupon_validity_in_date < (
+                                            CASE WHEN {$prefix}promotions.end_date < (
                                                 SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                 FROM {$prefix}promotion_retailer opt
                                                     LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
@@ -106,6 +106,17 @@ class CouponWalletListAPIController extends PubControllerAPI
                                             END
                                         )
                                     END AS campaign_status,
+                                    CASE WHEN {$prefix}promotions.coupon_validity_in_date < (
+                                            SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                            FROM {$prefix}promotion_retailer opt
+                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                            WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                        )
+                                        THEN 'true'
+                                        ELSE 'false'
+                                    END AS is_exceeding_validity_date,
                                     CASE WHEN (
                                         SELECT count(opt.promotion_retailer_id)
                                         FROM {$prefix}promotion_retailer opt
