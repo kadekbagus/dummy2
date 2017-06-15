@@ -109,6 +109,32 @@ class CouponStoreAPIController extends PubControllerAPI
                                     })
                                     ->where('promotions.promotion_id', $couponId);
 
+            // get all record with mall id
+            $numberOfMall = 0;
+            $numberOfStore = 0;
+            $numberOfStoreRelatedMall = 0;
+
+            // get number of store and number of mall
+            $_numberOfLocation = clone($couponLocations);
+            $_numberOfLocation = $_numberOfLocation->groupBy('merchants.name');
+
+            $numberOfLocationSql = $_numberOfLocation->toSql();
+            $_numberOfLocation = DB::table(DB::Raw("({$numberOfLocationSql}) as sub_query"))->mergeBindings($_numberOfLocation->getQuery())
+                            ->select(
+                                    DB::raw("object_type, count(merchant_id) as total")
+                                )
+                            ->groupBy(DB::Raw("sub_query.parent_id"))
+                            ->get();
+
+            foreach ($_numberOfLocation as $_data) {
+                if ($_data->object_type === 'tenant') {
+                    $numberOfStore += $_data->total;
+                    $numberOfStoreRelatedMall++;
+                } else {
+                    $numberOfMall += $_data->total;
+                }
+            }
+
             OrbitInput::get('cities', function($cities) use ($couponLocations, $prefix) {
                 foreach ($cities as $key => $value) {
                     if (empty($value)) {
@@ -125,34 +151,6 @@ class CouponStoreAPIController extends PubControllerAPI
                     $couponLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
                 }
             });
-
-            // get all record with mall id
-            $numberOfMall = 0;
-            $numberOfStore = 0;
-            $numberOfStoreRelatedMall = 0;
-
-            // get number of store and number of mall
-            $_numberOfLocation = clone($couponLocations);
-            $_numberOfLocation = $_numberOfLocation->groupBy('merchants.name');
-
-            $numberOfLocationSql = $_numberOfLocation->toSql();
-            $_numberOfLocation = DB::table(DB::Raw("({$numberOfLocationSql}) as sub_query"))->mergeBindings($_numberOfLocation->getQuery())
-                            ->select(
-                                    DB::raw("object_type, count(merchant_id) as total, sub_query.parent_id")
-                                )
-                            ->groupBy(DB::Raw("sub_query.parent_id"))
-                            ->get();
-
-            foreach ($_numberOfLocation as $_data) {
-                if ($_data->object_type === 'tenant') {
-                    if ($_data->parent_id === $mallId) {
-                        $numberOfStore += $_data->total;
-                    }
-                    $numberOfStoreRelatedMall++;
-                } else {
-                    $numberOfMall += $_data->total;
-                }
-            }
 
             if ($skipMall === 'Y') {
                 // filter news skip by mall id
