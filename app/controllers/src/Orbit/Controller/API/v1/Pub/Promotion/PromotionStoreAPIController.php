@@ -110,23 +110,6 @@ class PromotionStoreAPIController extends PubControllerAPI
                                     })
                                     ->where('news_merchant.news_id', '=', $promotionId);
 
-            OrbitInput::get('cities', function($cities) use ($promotionLocation, $prefix) {
-                foreach ($cities as $key => $value) {
-                    if (empty($value)) {
-                       unset($cities[$key]);
-                    }
-                }
-                if (! empty($cities)) {
-                    $promotionLocation->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
-                }
-            });
-
-            OrbitInput::get('country', function($country) use ($promotionLocation, $prefix) {
-                if (! empty($country)) {
-                    $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
-                }
-            });
-
             // get all record with mall id
             $numberOfMall = 0;
             $numberOfStore = 0;
@@ -152,6 +135,23 @@ class PromotionStoreAPIController extends PubControllerAPI
                     $numberOfMall += $_data->total;
                 }
             }
+
+            OrbitInput::get('cities', function($cities) use ($promotionLocation, $prefix) {
+                foreach ($cities as $key => $value) {
+                    if (empty($value)) {
+                       unset($cities[$key]);
+                    }
+                }
+                if (! empty($cities)) {
+                    $promotionLocation->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
+                }
+            });
+
+            OrbitInput::get('country', function($country) use ($promotionLocation, $prefix) {
+                if (! empty($country)) {
+                    $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
+                }
+            });
 
             if ($skipMall === 'Y') {
                 // filter news skip by mall id
