@@ -137,7 +137,6 @@ class CouponRedeemAPIController extends PubControllerAPI
             $redeem_retailer_id = NULL;
             $redeem_user_id = NULL;
             if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
-                // @Todo replace with language
                 $errorMessage = Lang::get('mobileci.coupon.wrong_verification_number');
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             } else {
@@ -146,6 +145,7 @@ class CouponRedeemAPIController extends PubControllerAPI
                 }
                 if (is_object($csVerificationNumber)) {
                     $redeem_user_id = $csVerificationNumber->user_id;
+                    $redeem_retailer_id = $mallId;
                 }
             }
 
