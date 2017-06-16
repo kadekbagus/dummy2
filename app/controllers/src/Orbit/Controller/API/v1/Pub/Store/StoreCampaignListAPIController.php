@@ -122,6 +122,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         DB::Raw(" CASE WHEN {$prefix}partners.partner_id is null THEN {$prefix}news.is_exclusive ELSE 'N' END as is_exclusive "),
                         DB::Raw(" CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name "),
                         'news.object_type as campaign_type',
+                        'news.is_having_reward',
                         // query for get status active based on timezone
                         DB::raw("
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -252,6 +253,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                         DB::Raw(" CASE WHEN {$prefix}partners.partner_id is null THEN {$prefix}news.is_exclusive ELSE 'N' END as is_exclusive "),
                         DB::Raw(" CASE WHEN ({$prefix}news_translations.news_name = '' or {$prefix}news_translations.news_name is null) THEN default_translation.news_name ELSE {$prefix}news_translations.news_name END as campaign_name "),
                         'news.object_type as campaign_type',
+                        'is_having_reward',
                         // query for get status active based on timezone
                         DB::raw("
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -383,6 +385,7 @@ class StoreCampaignListAPIController extends PubControllerAPI
                                 CASE WHEN {$prefix}partners.partner_id is null THEN {$prefix}promotions.is_exclusive ELSE 'N' END as is_exclusive,
                                 CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as campaign_name,
                                 'coupon' as campaign_type,
+                                'N' as is_having_reward,
                                 CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                 THEN {$prefix}campaign_status.campaign_status_name
                                 ELSE (
