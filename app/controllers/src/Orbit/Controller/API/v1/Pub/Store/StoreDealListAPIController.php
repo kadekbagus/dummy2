@@ -223,10 +223,18 @@ class StoreDealListAPIController extends PubControllerAPI
             $records = $response['hits'];
             $totalRec = $records['total'];
 
+            foreach ($records['hits'] as $record) {
+                $data = array();
+                foreach ($record['_source'] as $key => $value) {
+                    $data[$key] = $value;
+                }
+                $listOfRec[] = $data;
+            }
+
             $this->response->data = new stdClass();
             $this->response->data->total_records = $totalRec;
             $this->response->data->returned_records = count($response['hits']['hits']);
-            $this->response->data->records = $response['hits']['hits'];
+            $this->response->data->records = $listOfRec;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
