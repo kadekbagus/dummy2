@@ -170,10 +170,10 @@ Route::get('/app/v1/pub/mall-detail-store', ['as' => 'pub-mall-detail-store', 'u
  */
 Route::get('/api/v1/pub/campaign-store-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\Store\StoreCampaignListAPIController::create()->getCampaignStoreList();
+    return Orbit\Controller\API\v1\Pub\Store\StoreDealListAPIController::create()->getCampaignStoreDeal();
 });
 
-Route::get('/app/v1/pub/campaign-store-list', ['as' => 'pub-campaign-store-list', 'uses' => 'IntermediatePubAuthController@Store\StoreCampaignList_getCampaignStoreList']);
+Route::get('/app/v1/pub/campaign-store-list', ['as' => 'pub-campaign-store-list', 'uses' => 'IntermediatePubAuthController@Store\StoreDealList_getCampaignStoreDeal']);
 
 /**
  * List city for store
