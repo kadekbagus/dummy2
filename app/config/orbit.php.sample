@@ -4879,7 +4879,7 @@ return array(
                 'name_long' => 'View Promotion Location Page',
                 'module_name' => 'Promotion',
                 'type' => 'view',
-                'object_type' => 'Promotion',
+                'object_type' => 'News',
                 'parameter_name' => 'promotion_id'
             ),
             // - Clicking on a promotion location
@@ -4888,7 +4888,7 @@ return array(
                 'name_long' => 'Click Promotion Location',
                 'module_name' => 'Promotion',
                 'type' => 'click',
-                'object_type' => 'Promotion',
+                'object_type' => 'News',
                 'parameter_name' => 'promotion_id'
             ),
 
@@ -5016,7 +5016,7 @@ return array(
                 'name_long' => 'Click promotion from mall promotion list',
                 'module_name' => 'Promotion',
                 'type' => 'click',
-                'object_type' => 'Promotion',
+                'object_type' => 'News',
                 'parameter_name' => 'promotion_id'
             ),
 
@@ -5026,7 +5026,7 @@ return array(
                 'name_long' => 'Click mall featured promotion',
                 'module_name' => 'Promotion',
                 'type' => 'click',
-                'object_type' => 'Promotion',
+                'object_type' => 'News',
                 'parameter_name' => 'promotion_id'
             ),
 
