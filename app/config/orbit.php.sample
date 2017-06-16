@@ -5680,7 +5680,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // User views coupon detail in gtm level
-            '121' => array(
+            '123' => array(
                 'name' => 'view_landing_page_coupon_detail',
                 'name_long' => 'View GoToMalls Coupon Detail',
                 'module_name' => 'Coupon',
@@ -5689,7 +5689,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // User views coupon detail in mall level
-            '122' => array(
+            '124' => array(
                 'name' => 'view_mall_coupon_detail',
                 'name_long' => 'View mall coupon detail',
                 'module_name' => 'Coupon',
@@ -5698,7 +5698,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // User views promotional event detail in gtm level
-            '123' => array(
+            '125' => array(
                 'name' => 'view_landing_page_promotional_event_detail',
                 'name_long' => 'View GoToMalls Promotional Event Detail',
                 'module_name' => 'News',
@@ -5707,7 +5707,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // User views promotional event detail in mall level
-            '124' => array(
+            '126' => array(
                 'name' => 'view_mall_promotional_event_detail',
                 'name_long' => 'View mall promotional event detail',
                 'module_name' => 'News',
@@ -5716,7 +5716,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // User views store detail in gtm level
-            '125' => array(
+            '127' => array(
                 'name' => 'view_landing_page_store_detail',
                 'name_long' => 'View GoToMalls Store Detail',
                 'module_name' => 'Store',
@@ -5725,7 +5725,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // User views store detail in mall level
-            '126' => array(
+            '128' => array(
                 'name' => 'view_mall_store_detail',
                 'name_long' => 'View mall store detail',
                 'module_name' => 'Store',
@@ -5734,7 +5734,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // User views mall detail
-            '127' => array(
+            '129' => array(
                 'name' => 'view_mall',
                 'name_long' => 'View Mall Page',
                 'module_name' => 'Mall',
