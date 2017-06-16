@@ -231,6 +231,10 @@ class StoreDealListAPIController extends PubControllerAPI
                 $data = array();
                 $default_lang = '';
                 foreach ($record['_source'] as $key => $value) {
+                    if ($key === 'promotion_id' || $key === 'news_id') {
+                        $key = 'campaign_id';
+                    }
+
                     $data[$key] = $value;
                     $default_lang = (empty($record['_source']['default_lang']))? '' : $record['_source']['default_lang'];
 
