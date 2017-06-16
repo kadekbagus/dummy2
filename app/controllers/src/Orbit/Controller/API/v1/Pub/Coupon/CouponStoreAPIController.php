@@ -54,13 +54,16 @@ class CouponStoreAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
             $mall = null;
+            $skipMall = OrbitInput::get('skip_mall', 'N');
 
             $validator = Validator::make(
                 array(
                     'coupon_id' => $couponId,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'coupon_id' => 'required',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -106,23 +109,6 @@ class CouponStoreAPIController extends PubControllerAPI
                                     })
                                     ->where('promotions.promotion_id', $couponId);
 
-            OrbitInput::get('cities', function($cities) use ($couponLocations, $prefix) {
-                foreach ($cities as $key => $value) {
-                    if (empty($value)) {
-                       unset($cities[$key]);
-                    }
-                }
-                if (! empty($cities)) {
-                    $couponLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
-                }
-            });
-
-            OrbitInput::get('country', function($country) use ($couponLocations, $prefix) {
-                if (! empty($country)) {
-                    $couponLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
-                }
-            });
-
             // get all record with mall id
             $numberOfMall = 0;
             $numberOfStore = 0;
@@ -149,13 +135,39 @@ class CouponStoreAPIController extends PubControllerAPI
                 }
             }
 
-            // filter news by mall id
-            OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
-                if ($is_detail != 'y') {
-                    $couponLocations->where('merchants.parent_id', '=', $mallid)
-                                    ->where('merchants.object_type', 'tenant');
+            OrbitInput::get('cities', function($cities) use ($couponLocations, $prefix) {
+                foreach ($cities as $key => $value) {
+                    if (empty($value)) {
+                       unset($cities[$key]);
+                    }
+                }
+                if (! empty($cities)) {
+                    $couponLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
                 }
             });
+
+            OrbitInput::get('country', function($country) use ($couponLocations, $prefix) {
+                if (! empty($country)) {
+                    $couponLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
+                }
+            });
+
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $couponLocations->where(DB::raw('oms.merchant_id'), '!=', $mallid);
+                    }
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $couponLocations, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $couponLocations->where('merchants.parent_id', '=', $mallid)
+                                        ->where('merchants.object_type', 'tenant');
+                    }
+                });
+            }
 
             $couponLocations = $couponLocations->groupBy('merchants.name');
 

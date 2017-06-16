@@ -113,23 +113,6 @@ class NewsStoreAPIController extends PubControllerAPI
                                     })
                                     ->where('news_merchant.news_id', '=', $newsId);
 
-            OrbitInput::get('cities', function($cities) use ($newsLocations, $prefix) {
-                foreach ($cities as $key => $value) {
-                    if (empty($value)) {
-                       unset($cities[$key]);
-                    }
-                }
-                if (! empty($cities)) {
-                    $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
-                }
-            });
-
-            OrbitInput::get('country', function($country) use ($newsLocations, $prefix) {
-                if (! empty($country)) {
-                    $newsLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
-                }
-            });
-
             // get all record with mall id
             $numberOfMall = 0;
             $numberOfStore = 0;
@@ -156,19 +139,36 @@ class NewsStoreAPIController extends PubControllerAPI
                 }
             }
 
+            OrbitInput::get('cities', function($cities) use ($newsLocations, $prefix) {
+                foreach ($cities as $key => $value) {
+                    if (empty($value)) {
+                       unset($cities[$key]);
+                    }
+                }
+                if (! empty($cities)) {
+                    $newsLocations->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
+                }
+            });
+
+            OrbitInput::get('country', function($country) use ($newsLocations, $prefix) {
+                if (! empty($country)) {
+                    $newsLocations->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
+                }
+            });
+
             if ($skipMall === 'Y') {
                 // filter news skip by mall id
                 OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
                     if ($is_detail != 'y') {
-                        $newsLocations->havingRaw("mall_id != '{$mallid}'");
+                        $newsLocations->where(DB::raw('oms.merchant_id'), '!=', $mallid);
                     }
                 });
             } else {
                 // filter news by mall id
                 OrbitInput::get('mall_id', function($mallid) use ($is_detail, $newsLocations, &$group_by) {
                     if ($is_detail != 'y') {
-                        $newsLocations->where('merchants.parent_id', '=', $mallid)
-                                      ->Orwhere('merchants.merchant_id', '=', $mallid);
+                        $newsLocations->where('merchants.parent_id', $mallid)
+                                    ->where('merchants.object_type', 'tenant');
                     }
                 });
             }

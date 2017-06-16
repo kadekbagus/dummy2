@@ -299,6 +299,13 @@ Event::listen('orbit.coupon.after.image1.translation.save', function($controller
  */
 Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $coupon)
 {
+    // update total available coupon
+    $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
+
+    $coupon = Coupon::find($coupon->promotion_id);
+    $coupon->available = $availableCoupons;
+    $coupon->save();
+
     $timestamp = new DateTime($coupon->created_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
 
@@ -312,7 +319,6 @@ Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $
         'campaignId'         => $coupon->promotion_id,
         'mode'               => 'create'
     ]);
-
 });
 
 
@@ -342,6 +348,13 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
         'temporaryContentId' => $temporaryContentId,
         'mode'               => 'update'
     ]);
+
+    // update total available coupon
+    $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
+
+    $coupon = Coupon::find($coupon->promotion_id);
+    $coupon->available = $availableCoupons;
+    $coupon->save();
 
     // check coupon before update elasticsearch
     $prefix = DB::getTablePrefix();
@@ -405,12 +418,13 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
     ]);
 
     // Delete coupon suggestion in index es when available coupon is empty
-    $availableCoupons = IssuedCoupon:: select('issued_coupon_id')
-        ->where('status', 'available')
-        ->where('promotion_id', $coupon_id)
-        ->first();
+    $availableCoupons = IssuedCoupon::totalAvailable($coupon_id);
 
-    if (empty($availableCoupons)) {
+    $coupon = Coupon::find($coupon_id);
+    $coupon->available = $availableCoupons;
+    $coupon->save();
+
+    if ($availableCoupons === 0) {
         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
             'coupon_id' => $coupon_id
         ]);

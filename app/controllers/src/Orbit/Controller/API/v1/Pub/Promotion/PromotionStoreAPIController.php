@@ -52,13 +52,16 @@ class PromotionStoreAPIController extends PubControllerAPI
             $mallId = OrbitInput::get('mall_id', null);
             $is_detail = OrbitInput::get('is_detail', 'n');
             $mall = null;
+            $skipMall = OrbitInput::get('skip_mall', 'N');
 
             $validator = Validator::make(
                 array(
                     'promotion_id' => $promotionId,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'promotion_id' => 'required',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'Promotion ID is required',
@@ -107,23 +110,6 @@ class PromotionStoreAPIController extends PubControllerAPI
                                     })
                                     ->where('news_merchant.news_id', '=', $promotionId);
 
-            OrbitInput::get('cities', function($cities) use ($promotionLocation, $prefix) {
-                foreach ($cities as $key => $value) {
-                    if (empty($value)) {
-                       unset($cities[$key]);
-                    }
-                }
-                if (! empty($cities)) {
-                    $promotionLocation->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
-                }
-            });
-
-            OrbitInput::get('country', function($country) use ($promotionLocation, $prefix) {
-                if (! empty($country)) {
-                    $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
-                }
-            });
-
             // get all record with mall id
             $numberOfMall = 0;
             $numberOfStore = 0;
@@ -150,13 +136,39 @@ class PromotionStoreAPIController extends PubControllerAPI
                 }
             }
 
-            // filter news by mall id
-            OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
-                if ($is_detail != 'y') {
-                    $promotionLocation->where('merchants.parent_id', '=', $mallid)
-                                      ->where('merchants.object_type', 'tenant');
+            OrbitInput::get('cities', function($cities) use ($promotionLocation, $prefix) {
+                foreach ($cities as $key => $value) {
+                    if (empty($value)) {
+                       unset($cities[$key]);
+                    }
+                }
+                if (! empty($cities)) {
+                    $promotionLocation->whereIn(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city ELSE oms.city END)"), $cities);
                 }
             });
+
+            OrbitInput::get('country', function($country) use ($promotionLocation, $prefix) {
+                if (! empty($country)) {
+                    $promotionLocation->where(DB::raw("(CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country ELSE oms.country END)"), $country);
+                }
+            });
+
+            if ($skipMall === 'Y') {
+                // filter news skip by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $promotionLocation->where(DB::raw('oms.merchant_id'), '!=', $mallid);
+                    }
+                });
+            } else {
+                // filter news by mall id
+                OrbitInput::get('mall_id', function($mallid) use ($is_detail, $promotionLocation, &$group_by) {
+                    if ($is_detail != 'y') {
+                        $promotionLocation->where('merchants.parent_id', '=', $mallid)
+                                          ->where('merchants.object_type', 'tenant');
+                    }
+                });
+            }
 
             $promotionLocation = $promotionLocation->groupBy('merchants.name');
 
