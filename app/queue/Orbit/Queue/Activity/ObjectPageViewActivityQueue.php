@@ -14,6 +14,7 @@ use TotalObjectPageView;
 use BaseMerchant;
 use Exception;
 use Tenant;
+use DB;
 use Orbit\FakeJob;
 use Orbit\Queue\Elasticsearch\ESCouponUpdateQueue;
 use Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue;
@@ -119,10 +120,11 @@ class ObjectPageViewActivityQueue
                     $object_page_view->activity_id = $activity->activity_id;
                     $object_page_view->save();
 
+                    DB::beginTransaction();
+
                     $total_object_page_view = TotalObjectPageView::where('object_type', strtolower($activity->object_name))
                                                 ->where('object_id', $object_id)
                                                 ->where('location_id', $activity->location_id)
-                                                ->lockForUpdate()
                                                 ->first();
 
                     if (! is_object($total_object_page_view)) {
@@ -135,6 +137,8 @@ class ObjectPageViewActivityQueue
                     $total_object_page_view->location_id = $activity->location_id;
                     $total_object_page_view->total_view = $total_object_page_view->total_view + 1;
                     $total_object_page_view->save();
+
+                    DB::commit();
 
                     // update elastic search
                     $fakeJob = new FakeJob();
