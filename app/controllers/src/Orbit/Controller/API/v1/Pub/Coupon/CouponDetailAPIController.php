@@ -115,6 +115,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.end_date',
                             'promotions.is_exclusive',
                             'promotions.available',
+                            'promotions.maximum_redeem',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -205,6 +206,22 @@ class CouponDetailAPIController extends PubControllerAPI
 
                 $coupon->is_exclusive = 'N';
             }
+
+            $availableForRedeem = $coupon->available;
+            if ($coupon->maximum_redeem > 0) {
+                $notAvailable = IssuedCoupon::where(function ($q) {
+                                                $q->where('status', '=', 'issued')
+                                                  ->orWhere('status', '=', 'redeemed');
+                                            })
+                                            ->where('promotion_id', $coupon->promotion_id)
+                                            ->count();
+
+                if ($notAvailable >= $coupon->maximum_redeem) {
+                    $availableForRedeem = 0;
+                }
+            }
+
+            $coupon->available_for_redeem = $availableForRedeem;
 
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View mall coupon detail');

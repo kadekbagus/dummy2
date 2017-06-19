@@ -182,6 +182,20 @@ class ESCouponUpdateQueue
                 $translations[] = $translation;
             }
 
+            $available = IssuedCoupon::totalAvailable($coupon->promotion_id);
+            if ($coupon->maximum_redeem > 0) {
+                $notAvailable = IssuedCoupon::where(function ($q) {
+                                                $q->where('status', '=', 'issued')
+                                                  ->orWhere('status', '=', 'redeemed');
+                                            })
+                                            ->where('promotion_id', $coupon->promotion_id)
+                                            ->count();
+
+                if ($notAvailable >= $coupon->maximum_redeem) {
+                    $available = 0;
+                }
+            }
+
             $body = [
                 'promotion_id'    => $coupon->promotion_id,
                 'name'            => $coupon->promotion_name,
@@ -191,7 +205,7 @@ class ESCouponUpdateQueue
                 'end_date'        => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
                 'updated_at'      => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
                 'status'          => $coupon->status,
-                'available'       => IssuedCoupon::totalAvailable($coupon->promotion_id),
+                'available'       => $available,
                 'campaign_status' => $coupon->campaign_status,
                 'is_all_gender'   => $coupon->is_all_gender,
                 'is_all_age'      => $coupon->is_all_age,
