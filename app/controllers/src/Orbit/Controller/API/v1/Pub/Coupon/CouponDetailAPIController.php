@@ -207,13 +207,13 @@ class CouponDetailAPIController extends PubControllerAPI
                 $coupon->is_exclusive = 'N';
             }
 
+            $coupon->get_unique_coupon = 'true';
             if ($coupon->is_unique_redeem === 'Y' && $role != 'Guest') {
                 $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
                                            ->where('user_id', $user->user_id)
                                            ->where('status', '!=', 'deleted')
                                            ->first();
 
-                $coupon->get_unique_coupon = 'true';
                 if (is_object($checkIssued)) {
                     $coupon->get_unique_coupon = 'false';
                 }
