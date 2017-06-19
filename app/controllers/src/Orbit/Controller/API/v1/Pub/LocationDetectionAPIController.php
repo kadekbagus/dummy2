@@ -167,7 +167,7 @@ class LocationDetectionAPIController extends PubControllerAPI
 
         // get the client IP
         $clientIpAddress = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : $_SERVER['REMOTE_ADDR'];
-        $clientIpAddress = isset($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_REAL_IP'] : $_SERVER['REMOTE_ADDR'];
+        $clientIpAddress = isset($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_REAL_IP'] : $clientIpAddress;
 
         // override ip address for testing purpose
         if (Config::get('app.debug')) {
