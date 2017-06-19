@@ -117,7 +117,9 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     THEN 'true'
                                     ELSE 'false'
                                     END AS is_started,
-                                    {$prefix}issued_coupons.issued_coupon_id
+                                    {$prefix}issued_coupons.issued_coupon_id,
+                                    {$prefix}promotions.maximum_redeem,
+                                    {$prefix}promotions.is_unique_redeem
                                 ")
                             )
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -213,6 +215,22 @@ class CouponWalletListAPIController extends PubControllerAPI
 
             $listcoupon = $coupon->get();
             $count = RecordCounter::create($_coupon)->count();
+
+            $availableForRedeem = $listcoupon->available;
+            if ($listcoupon->maximum_redeem > 0) {
+                $notAvailable = IssuedCoupon::where(function ($q) {
+                                                $q->where('status', '=', 'issued')
+                                                  ->orWhere('status', '=', 'redeemed');
+                                            })
+                                            ->where('promotion_id', $listcoupon->promotion_id)
+                                            ->count();
+
+                if ($notAvailable >= $listcoupon->maximum_redeem) {
+                    $availableForRedeem = 0;
+                }
+            }
+
+            $listcoupon->available_for_redeem = $availableForRedeem;
 
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
