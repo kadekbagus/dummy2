@@ -182,6 +182,9 @@ class ObjectPageViewActivityQueue
                     break;
             }
 
+            // Safely delete the object
+            $job->delete();
+
             return [
                 'status' => 'ok',
                 'message' => $message
@@ -193,5 +196,16 @@ class ObjectPageViewActivityQueue
                 'message' => $e->getMessage()
             ];
         }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
+                'status' => 'fail',
+                'message' => $message
+            ];
     }
 }
