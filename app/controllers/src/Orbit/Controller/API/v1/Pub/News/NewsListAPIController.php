@@ -617,9 +617,11 @@ class NewsListAPIController extends PubControllerAPI
                             $pageView = $value;
                         }
                     } else {
-                        foreach ($record['_source']['mall_page_views'] as $dt) {
-                            if ($dt['location_id'] === $mallId) {
-                                $pageView = $dt['total_views'];
+                        if (isset($record['_source']['mall_page_views'])) {
+                            foreach ($record['_source']['mall_page_views'] as $dt) {
+                                if ($dt['location_id'] === $mallId) {
+                                    $pageView = $dt['total_views'];
+                                }
                             }
                         }
                     }
