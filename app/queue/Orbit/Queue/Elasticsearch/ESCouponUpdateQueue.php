@@ -235,6 +235,7 @@ class ESCouponUpdateQueue
                 'begin_date'      => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
                 'end_date'        => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
                 'updated_at'      => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
+                'coupon_validity_in_date'      => date('Y-m-d', strtotime($coupon->coupon_validity_in_date)) . 'T' . date('H:i:s', strtotime($coupon->coupon_validity_in_date)) . 'Z',
                 'status'          => $coupon->status,
                 'available'       => IssuedCoupon::totalAvailable($coupon->promotion_id),
                 'campaign_status' => $coupon->campaign_status,
