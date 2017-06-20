@@ -223,10 +223,72 @@ class StoreDealListAPIController extends PubControllerAPI
             $records = $response['hits'];
             $totalRec = $records['total'];
 
+            $listOfRec = array();
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
+            foreach ($records['hits'] as $record) {
+                $data = array();
+                $default_lang = '';
+                foreach ($record['_source'] as $key => $value) {
+                    if ($key === 'promotion_id' || $key === 'news_id') {
+                        $key = 'campaign_id';
+                    }
+
+                    $data[$key] = $value;
+                    $default_lang = (empty($record['_source']['default_lang']))? '' : $record['_source']['default_lang'];
+
+                    // translation, to get name, desc and image
+                    if ($key === "translation") {
+                        $data['image_url'] = '';
+
+                        foreach ($record['_source']['translation'] as $dt) {
+                            $localPath = (! empty($dt['image_url'])) ? $dt['image_url'] : '';
+                            $cdnPath = (! empty($dt['image_cdn_url'])) ? $dt['image_cdn_url'] : '';
+
+                            if ($dt['language_code'] === $language) {
+                                // name
+                                if (! empty($dt['name'])) {
+                                    $data['name'] = $dt['name'];
+                                }
+
+                                // desc
+                                if (! empty($dt['description'])) {
+                                    $data['description'] = $dt['description'];
+                                }
+
+                                // image
+                                if (! empty($dt['image_url'])) {
+                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                }
+                            } elseif ($dt['language_code'] === $default_lang) {
+                                // name
+                                if (! empty($dt['name']) && empty($data['name'])) {
+                                    $data['name'] = $dt['name'];
+                                }
+
+                                // description
+                                if (! empty($dt['description']) && empty($data['description'])) {
+                                    $data['description'] = $dt['description'];
+                                }
+
+                                // image
+                                if (empty($data['image_url'])) {
+                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                unset($data['category_ids'], $data['translation'], $data['link_to_tenant'], $data['keywords'], $data['partner_ids'], $data['partner_tokens'], $data['advert_ids'], $data['mall_page_views'], $data['gtm_page_views']);
+                $listOfRec[] = $data;
+            }
+
             $this->response->data = new stdClass();
             $this->response->data->total_records = $totalRec;
             $this->response->data->returned_records = count($response['hits']['hits']);
-            $this->response->data->records = $response['hits']['hits'];
+            $this->response->data->records = $listOfRec;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();

@@ -14,6 +14,7 @@ use TotalObjectPageView;
 use BaseMerchant;
 use Exception;
 use Tenant;
+use DB;
 use Orbit\FakeJob;
 use Orbit\Queue\Elasticsearch\ESCouponUpdateQueue;
 use Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue;
@@ -73,8 +74,11 @@ class ObjectPageViewActivityQueue
                 case 'view_mall_coupon_detail':
                 case 'view_mall_promotional_event_detail';
                 case 'view_landing_page_promotional_event_detail';
+
+                    DB::beginTransaction();
+
                     // insert to object_page_views
-                    $object_page_view = ObjectPageView::where('activity_id', $activity->activity_id)->lockForUpdate()->first();
+                    $object_page_view = ObjectPageView::where('activity_id', $activity->activity_id)->first();
 
                     if (is_object($object_page_view)) {
                         $message = sprintf('[Job ID: `%s`] Activity ID %s already exists.', $job->getJobId(), $activityId);
@@ -111,6 +115,11 @@ class ObjectPageViewActivityQueue
                         }
                     }
 
+                    if (empty($object_id)) {
+                        $message = sprintf('[Job ID: `%s`] Object id is emtpy in activity id `%s`.', $job->getJobId(), $object_id);
+                        break;
+                    }
+
                     $object_page_view = new ObjectPageView();
                     $object_page_view->object_type = strtolower($activity->object_name);
                     $object_page_view->object_id = $object_id;
@@ -122,7 +131,6 @@ class ObjectPageViewActivityQueue
                     $total_object_page_view = TotalObjectPageView::where('object_type', strtolower($activity->object_name))
                                                 ->where('object_id', $object_id)
                                                 ->where('location_id', $activity->location_id)
-                                                ->lockForUpdate()
                                                 ->first();
 
                     if (! is_object($total_object_page_view)) {
@@ -135,6 +143,8 @@ class ObjectPageViewActivityQueue
                     $total_object_page_view->location_id = $activity->location_id;
                     $total_object_page_view->total_view = $total_object_page_view->total_view + 1;
                     $total_object_page_view->save();
+
+                    DB::commit();
 
                     // update elastic search
                     $fakeJob = new FakeJob();
@@ -177,6 +187,9 @@ class ObjectPageViewActivityQueue
                     break;
             }
 
+            // Safely delete the object
+            $job->delete();
+
             return [
                 'status' => 'ok',
                 'message' => $message
@@ -187,6 +200,18 @@ class ObjectPageViewActivityQueue
                 'status' => 'fail',
                 'message' => $e->getMessage()
             ];
+            DB::rollBack();
         }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
+                'status' => 'fail',
+                'message' => $message
+            ];
     }
 }
