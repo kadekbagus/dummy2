@@ -79,6 +79,7 @@ class NewsLocationAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
             $skipMall = OrbitInput::get('skip_mall', 'N');
+            $storeName = OrbitInput::get('store_name');
 
             // need to handle request for grouping by name_orig and order by name_orig and city
             $sortBy = OrbitInput::get('sort_by');
@@ -119,6 +120,7 @@ class NewsLocationAPIController extends PubControllerAPI
                 'skip' => $skip,
                 'sort_by' => $sortBy,
                 'skip_mall' => $skipMall,
+                'store_name' => $storeName,
             ];
 
             // Run the validation
@@ -255,6 +257,10 @@ class NewsLocationAPIController extends PubControllerAPI
                     $newsLocations->orderBy('name', 'asc');
                 }
             }
+
+            OrbitInput::get('store_name', function($storeName) use ($newsLocations) {
+                $newsLocations->having('name_orig', '=', $storeName);
+            });
 
             $newsLocations->groupBy('merchants.merchant_id');
 

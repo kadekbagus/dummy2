@@ -63,6 +63,9 @@ class StoreMallDetailAPIController extends PubControllerAPI
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
         $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-total-rec');
+        $numberOfMallRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-total-mall');
+
 
         try {
             $user = $this->getUser();
@@ -77,12 +80,16 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
 
+            $skipMall = OrbitInput::get('skip_mall', 'N');
+
             $validator = Validator::make(
                 array(
                     'merchant_id' => $merchantId,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'merchant_id' => 'required',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'Merchant id is required',
@@ -99,6 +106,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 'cities' => $cities,
                 'take' => $take,
                 'skip' => $skip,
+                'skip_mall' => $skipMall,
             ];
 
             // Run the validation
@@ -190,6 +198,11 @@ class StoreMallDetailAPIController extends PubControllerAPI
                               ->where(DB::raw("mall.country_id"), '=', $countryId)
                               ->where(DB::raw("mall.status"), 'active');
 
+            // get number of mall without filter
+            $numberOfMall = 0;
+            $_numberOfMall = clone $mall;
+            $_numberOfMall->groupBy('merchants.merchant_id')->get();
+
             if (! empty($location)) {
                 if (! in_array('0', $location)) {
                     $mall->whereIn(DB::raw('mall.city'), $location);
@@ -203,8 +216,14 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 }
             }
 
-            if (! empty($mallId)) {
-                $mall->where(DB::raw("mall.merchant_id"), '=', $mallId);
+            if ($skipMall === 'Y') {
+                if (! empty($mallId)) {
+                    $mall->where(DB::raw("mall.merchant_id"), '!=', $mallId);
+                }
+            } else {
+                if (! empty($mallId)) {
+                    $mall->where(DB::raw("mall.merchant_id"), '=', $mallId);
+                }
             }
 
             // Order data city alphabetical
@@ -224,6 +243,15 @@ class StoreMallDetailAPIController extends PubControllerAPI
 
             // Put the result in cache if it is applicable
             $totalRecordCache->put($serializedCacheKey, $totalRec);
+
+            $numberOfMallRecordCounter = RecordCounter::create($_numberOfMall);
+            // Try to get the result from cache
+            $numberOfMall = $numberOfMallRecordCache->get($serializedCacheKey, function() use ($numberOfMallRecordCounter) {
+                return $numberOfMallRecordCounter->count();
+            });
+
+            // Put the result in cache if it is applicable
+            $numberOfMallRecordCache->put($serializedCacheKey, $numberOfMall);
 
             $mall->take($take);
             $mall->skip($skip);
@@ -253,6 +281,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $data = new \stdClass();
             $data->returned_records = count($listOfRec);
             $data->total_records = $totalRec;
+            $data->total_malls = $numberOfMall;
             if (is_object($store)) {
                 $data->store_name = $store->name;
                 $data->original_media_path = $store->original_media_path;

@@ -113,7 +113,7 @@ class RewardUniqueRedemptionCodeReportPrinterController
 
                             DB::commit();
                         }
-                    } while (! is_object($couponData));
+                    } while (count($couponData) > 0);
 
                     $csv_handler = fopen($dir . $filePath, 'w');
 

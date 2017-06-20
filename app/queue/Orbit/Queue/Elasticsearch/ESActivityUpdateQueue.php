@@ -59,10 +59,7 @@ class ESActivityUpdateQueue
     public function fire($job, $data)
     {
         $activityId = $data['activity_id'];
-        $activity = Activity::excludeDeleted()
-                    ->where('activity_id', $activityId)
-                    ->where('group', 'mobile-ci')
-                    ->first();
+        $activity = Activity::findOnWriteConnection($activityId);
 
         Log::info('ES Queue Update HTTP_REFERER value: ' . $data['referer']);
         Log::info('ES Queue Update HTTP_X_ORBIT_REFERER value: ' . $data['orbit_referer']);

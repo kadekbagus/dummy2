@@ -45,19 +45,7 @@ class RewardMessagingReportPrinterController
                 $image = "CASE WHEN cdn_url IS NULL THEN CONCAT('{$urlPrefix}', path) ELSE cdn_url END";
             }
 
-            $export = Coupon::select('promotions.promotion_id as sku',
-                                    'campaign_account.mobile_default_language as locale',
-                                    'coupon_translations.short_description',
-                                    'coupon_translations.promotion_name',
-                                    'coupon_translations.description',
-                                    'pre_exports.file_path'
-                                    )
-                            ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
-                            ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
-                            ->leftJoin('coupon_translations', function ($q) {
-                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
-                                  ->on('coupon_translations.merchant_language_id', '=', 'languages.language_id');
-                            })
+            $export = Coupon::select('promotions.promotion_id as sku', 'pre_exports.file_path')
                             ->leftJoin('pre_exports', function ($q){
                                     $q->on('pre_exports.object_id', '=', 'promotions.promotion_id')
                                       ->on('pre_exports.object_type', '=', DB::raw("'coupon'"));
@@ -80,18 +68,41 @@ class RewardMessagingReportPrinterController
                         $hashbang = '/#!/';
                     }
 
-                    $url = Config::get('app.url') . $hashbang . 'coupons/' . $dtExport->sku . '/' . Str::slug($dtExport->promotion_name);
-                    $content = array(
-                                    $dtExport->sku,
-                                    $dtExport->locale,
-                                    $dtExport->short_description,
+                    $prefix = DB::getTablePrefix();
+
+                    $translation = Coupon::select('promotions.promotion_id as sku',
+                                            'languages.name as locale',
+                                            DB::raw("CASE WHEN ({$prefix}coupon_translations.short_description = '' OR {$prefix}coupon_translations.short_description IS NULL) THEN default_translation.short_description ELSE {$prefix}coupon_translations.short_description END as short_description"),
+                                            DB::raw("CASE WHEN ({$prefix}coupon_translations.promotion_name = '' OR {$prefix}coupon_translations.promotion_name IS NULL) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name"),
+                                            DB::raw("CASE WHEN ({$prefix}coupon_translations.description = '' OR {$prefix}coupon_translations.description IS NULL) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description")
+                                            )
+                                    ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                                    ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                    ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+                                    ->leftJoin('languages as default_language', DB::raw("default_language.name"), '=', 'campaign_account.mobile_default_language')
+                                    ->leftJoin('coupon_translations as default_translation', function ($q) {
+                                        $q->on(DB::raw("default_translation.promotion_id"), '=', 'promotions.promotion_id')
+                                          ->on(DB::raw("default_translation.merchant_language_id"), '=', DB::raw("default_language.language_id"));
+                                    })
+                                    ->where('promotions.promotion_id', $dtExport->sku)
+                                    ->where('languages.status', 'active')
+                                    ->orderBy('promotions.promotion_name', 'asc')
+                                    ->get();
+
+                    $content = array();
+                    foreach ($translation as $dtTranslation) {
+                        $url = Config::get('app.url') . $hashbang . 'coupons/' . $dtExport->sku . '/' . Str::slug($dtTranslation->promotion_name);
+                        $content[] = array(
+                                    $dtTranslation->sku,
+                                    $dtTranslation->locale,
+                                    $dtTranslation->short_description,
                                     '',
                                     '',
                                     $url,
-                                    $dtExport->promotion_name,
+                                    $dtTranslation->promotion_name,
                                     '',
                                     '',
-                                    $dtExport->description,
+                                    $dtTranslation->description,
                                     '',
                                     '',
                                     '',
@@ -100,9 +111,12 @@ class RewardMessagingReportPrinterController
                                     '',
                                     ''
                                 );
+                    }
 
                     $csv_handler = fopen($dir . $filePath, 'w');
-                    fputcsv($csv_handler, $content);
+                    foreach ($content as $fields) {
+                        fputcsv($csv_handler, $fields);
+                    }
                     fclose($csv_handler);
 
                     DB::beginTransaction();

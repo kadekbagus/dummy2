@@ -58,13 +58,18 @@ class CouponCityAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'city');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $mall = null;
+            $storeName = OrbitInput::get('store_name');
+            $mallId = OrbitInput::get('mall_id');
+            $skipMall = OrbitInput::get('skip_mall', 'N');
 
             $validator = Validator::make(
                 array(
                     'coupon_id' => $couponId,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'coupon_id' => 'required',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'Coupon ID is required',
@@ -90,8 +95,30 @@ class CouponCityAPIController extends PubControllerAPI
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('promotions.promotion_id', $couponId)
-                                    ->where('merchants.status', '=', 'active')
-                                    ->groupBy('city');
+                                    ->where('merchants.status', '=', 'active');
+
+            // filter by store name
+            OrbitInput::get('store_name', function($storeName) use ($couponLocations) {
+                $couponLocations->where('merchants.name', $storeName);
+            });
+
+            if ($skipMall === 'Y') {
+                OrbitInput::get('mall_id', function($mallId) use ($couponLocations) {
+                    $couponLocations->where(function($q) use ($mallId) {
+                                        $q->where('merchants.parent_id', '!=', $mallId)
+                                          ->where('merchants.merchant_id', '!=', $mallId);
+                                    });
+                    });
+            } else {
+                OrbitInput::get('mall_id', function($mallId) use ($couponLocations) {
+                    $couponLocations->where(function($q) use ($mallId) {
+                                        $q->where('merchants.parent_id', '=', $mallId)
+                                          ->orWhere('merchants.merchant_id', '=', $mallId);
+                                    });
+                    });
+            }
+
+            $couponLocations = $couponLocations->groupBy('city');
 
             $_couponLocations = clone($couponLocations);
 
