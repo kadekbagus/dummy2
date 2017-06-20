@@ -191,6 +191,7 @@ class ESCouponUpdateQueue
                                             ->where('promotion_id', $coupon->promotion_id)
                                             ->count();
 
+                $available = $coupon->maximum_redeem - $notAvailable;
                 if ($notAvailable >= $coupon->maximum_redeem) {
                     $available = 0;
                 }

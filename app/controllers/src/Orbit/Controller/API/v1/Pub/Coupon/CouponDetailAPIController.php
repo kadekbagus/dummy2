@@ -216,6 +216,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                             ->where('promotion_id', $coupon->promotion_id)
                                             ->count();
 
+                $availableForRedeem = $coupon->maximum_redeem - $notAvailable;
                 if ($notAvailable >= $coupon->maximum_redeem) {
                     $availableForRedeem = 0;
                 }
