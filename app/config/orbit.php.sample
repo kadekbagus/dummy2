@@ -4574,7 +4574,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Mall',
-                'parameter_name' => 'mall_id'
+                'parameter_name' => 'object_id'
             ),
             // - Visiting a mall
             '4' => array(
@@ -4592,7 +4592,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'view',
                 'object_type' => 'Mall',
-                'parameter_name' => 'mall_id'
+                'parameter_name' => 'object_id'
             ),
             // - Switching user
             '6' => array(
@@ -5575,7 +5575,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Mall',
-                'parameter_name' => 'visited_mall_id'
+                'parameter_name' => 'object_id'
             ),
             // User clicks on "More->Language" and change the langauge
             '112' => array(
