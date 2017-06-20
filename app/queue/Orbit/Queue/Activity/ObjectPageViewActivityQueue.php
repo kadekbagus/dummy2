@@ -115,6 +115,11 @@ class ObjectPageViewActivityQueue
                         }
                     }
 
+                    if (empty($object_id)) {
+                        $message = sprintf('[Job ID: `%s`] Object id is emtpy in activity id `%s`.', $job->getJobId(), $object_id);
+                        break;
+                    }
+
                     $object_page_view = new ObjectPageView();
                     $object_page_view->object_type = strtolower($activity->object_name);
                     $object_page_view->object_id = $object_id;
@@ -195,6 +200,7 @@ class ObjectPageViewActivityQueue
                 'status' => 'fail',
                 'message' => $e->getMessage()
             ];
+            DB::rollBack();
         }
 
         // Bury the job for later inspection
