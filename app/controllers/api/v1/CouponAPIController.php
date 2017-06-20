@@ -193,6 +193,7 @@ class CouponAPIController extends ControllerAPI
             $shortDescription = OrbitInput::post('short_description', NULL);
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
             $thirdPartyName = OrbitInput::post('third_party_name', NULL);
+            $maximumRedeem = OrbitInput::post('maximum_redeem', 0);
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -231,7 +232,7 @@ class CouponAPIController extends ControllerAPI
                 'promotion_type'          => 'required|orbit.empty.coupon_type',
                 'begin_date'              => 'required|date_format:Y-m-d H:i:s',
                 'end_date'                => 'required|date_format:Y-m-d H:i:s',
-                'rule_type'               => 'required|orbit.empty.coupon_rule_type',
+                'rule_type'               => 'orbit.empty.coupon_rule_type',
                 'status'                  => 'required|orbit.empty.coupon_status',
                 'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
                 'rule_value'              => 'required|numeric|min:0',
@@ -600,6 +601,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->sticky_order = $sticky_order;
             $newcoupon->is_exclusive = $is_exclusive;
             $newcoupon->is_visible = $isVisible;
+            $newcoupon->maximum_redeem = $maximumRedeem;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
@@ -614,6 +616,10 @@ class CouponAPIController extends ControllerAPI
                 $newcoupon->is_3rd_party_promotion = $is3rdPartyPromotion;
                 $newcoupon->third_party_name = $thirdPartyName;
                 $newcoupon->is_3rd_party_field_complete = 'Y';
+            }
+
+            if ($rule_type === 'unique_coupon_per_user') {
+                $newcoupon->is_unique_redeem = 'Y';
             }
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
@@ -1266,6 +1272,7 @@ class CouponAPIController extends ControllerAPI
             $redemption_verification_code = OrbitInput::post('redemption_verification_code', NULL);
             $short_description = OrbitInput::post('short_description', NULL);
             $third_party_name = OrbitInput::post('third_party_name', NULL) === '' ? 'grab' : OrbitInput::post('third_party_name');
+            $maximumRedeem = OrbitInput::post('maximum_redeem', 0);
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -1828,6 +1835,11 @@ class CouponAPIController extends ControllerAPI
             }
 
             $updatedcoupon->is_visible = $is_visible;
+            $updatedcoupon->maximum_redeem = $maximumRedeem;
+
+            if ($rule_type === 'unique_coupon_per_user') {
+                $updatedcoupon->is_unique_redeem = 'Y';
+            }
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
@@ -4201,7 +4213,8 @@ class CouponAPIController extends ControllerAPI
                             'auto_issue_on_signup',
                             'auto_issue_on_first_signin',
                             'auto_issue_on_every_signin',
-                            'blast_via_sms'
+                            'blast_via_sms',
+                            'unique_coupon_per_user'
                         );
             foreach ($statuses as $status) {
                 if($value === $status) $valid = $valid || TRUE;
