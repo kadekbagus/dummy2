@@ -74,8 +74,11 @@ class ObjectPageViewActivityQueue
                 case 'view_mall_coupon_detail':
                 case 'view_mall_promotional_event_detail';
                 case 'view_landing_page_promotional_event_detail';
+
+                    DB::beginTransaction();
+
                     // insert to object_page_views
-                    $object_page_view = ObjectPageView::where('activity_id', $activity->activity_id)->lockForUpdate()->first();
+                    $object_page_view = ObjectPageView::where('activity_id', $activity->activity_id)->first();
 
                     if (is_object($object_page_view)) {
                         $message = sprintf('[Job ID: `%s`] Activity ID %s already exists.', $job->getJobId(), $activityId);
@@ -119,8 +122,6 @@ class ObjectPageViewActivityQueue
                     $object_page_view->location_id = $activity->location_id;
                     $object_page_view->activity_id = $activity->activity_id;
                     $object_page_view->save();
-
-                    DB::beginTransaction();
 
                     $total_object_page_view = TotalObjectPageView::where('object_type', strtolower($activity->object_name))
                                                 ->where('object_id', $object_id)
