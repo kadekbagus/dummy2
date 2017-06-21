@@ -407,7 +407,8 @@ class StoreListAPIController extends PubControllerAPI
                                 $q->whereRaw(DB::raw("{$prefix}advert_locations.location_type = '{$advert_location_type}'"))
                                   ->orWhereRaw(DB::raw("{$prefix}adverts.is_all_location = 'Y'"));
                             })
-                            ->orderBy(DB::raw("with_preferred"));
+                            ->orderBy(DB::raw("with_preferred"))
+                            ->orderBy('advert_placements.placement_order', 'desc');
 
             $advertList = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
                          ->mergeBindings($adverts->getQuery())
