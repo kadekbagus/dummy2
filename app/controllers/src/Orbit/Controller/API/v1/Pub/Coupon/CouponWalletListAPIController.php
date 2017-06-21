@@ -117,7 +117,18 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     THEN 'true'
                                     ELSE 'false'
                                     END AS is_started,
-                                    {$prefix}issued_coupons.issued_coupon_id
+                                    {$prefix}issued_coupons.issued_coupon_id,
+                                    {$prefix}promotions.maximum_redeem,
+                                    {$prefix}promotions.available,
+                                    {$prefix}promotions.is_unique_redeem,
+                                    CASE WHEN {$prefix}promotions.maximum_redeem > 0
+                                    THEN
+                                        CASE WHEN (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE (oic.status = 'issued' OR oic.status = 'redeemed') AND oic.promotion_id = {$prefix}promotions.promotion_id) >= {$prefix}promotions.maximum_redeem
+                                        THEN 0
+                                        ELSE ({$prefix}promotions.maximum_redeem - (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE (oic.status = 'issued' OR oic.status = 'redeemed') AND oic.promotion_id = {$prefix}promotions.promotion_id))
+                                        END
+                                    ELSE {$prefix}promotions.available
+                                    END AS available_for_redeem
                                 ")
                             )
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
