@@ -448,7 +448,7 @@ class CouponAPIController extends ControllerAPI
                 }
 
                 if ($maximumRedeem < 1) {
-                    $errorMessage = 'Minimum maximum redeemd coupon is 1';
+                    $errorMessage = 'Minimum amount of maximum redeemed coupon is 1';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
@@ -1855,7 +1855,7 @@ class CouponAPIController extends ControllerAPI
 
             OrbitInput::post('maximum_redeem', function($maximumRedeem) use ($updatedcoupon) {
                 if ($maximumRedeem < 1) {
-                    $errorMessage = 'Minimum maximum redeemd coupon is 1';
+                    $errorMessage = 'Minimum amount of maximum redeemed coupon is 1';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
