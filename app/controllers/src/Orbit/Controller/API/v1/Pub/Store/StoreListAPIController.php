@@ -368,7 +368,7 @@ class StoreListAPIController extends PubControllerAPI
 
             $withPreferred = "0 AS with_preferred";
             if ($list_type === "featured") {
-                $withPreferred = "CASE WHEN placement_type = 'featured_list' THEN 0 ELSE 1 END AS with_preferred";
+                $withPreferred = "CASE WHEN placement_type = 'featured_list' THEN 1 ELSE 0 END AS with_preferred";
             }
 
             $adverts = Advert::select('adverts.advert_id',
@@ -407,7 +407,7 @@ class StoreListAPIController extends PubControllerAPI
                                 $q->whereRaw(DB::raw("{$prefix}advert_locations.location_type = '{$advert_location_type}'"))
                                   ->orWhereRaw(DB::raw("{$prefix}adverts.is_all_location = 'Y'"));
                             })
-                            ->orderBy('advert_placements.placement_order', 'desc');
+                            ->orderBy(DB::raw("with_preferred"));
 
             $advertList = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
                          ->mergeBindings($adverts->getQuery())
@@ -415,9 +415,10 @@ class StoreListAPIController extends PubControllerAPI
                                     adv.link_object_id,
                                     adv.placement_order,
                                     adv.path,
-                                    adv.placement_type as placement_type_orig,
-                                    CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
+                                    adv.placement_type,
+                                    CASE WHEN SUM(adv.with_preferred) > 0 THEN 'featured_list' ELSE adv.placement_type END AS placement_type_orig"))
                          ->groupBy(DB::raw("adv.link_object_id"))
+                         ->orderBy(DB::raw("adv.placement_order"), 'desc')
                          ->take(100);
 
             if ($withCache) {
