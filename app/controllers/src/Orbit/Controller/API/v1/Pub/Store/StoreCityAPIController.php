@@ -54,13 +54,16 @@ class StoreCityAPIController extends PubControllerAPI
             $merchant_id = OrbitInput::get('merchant_id');
             $store_name = null;
             $country_id = null;
+            $skipMall = OrbitInput::get('skip_mall', 'N');
 
             $validator = Validator::make(
                 array(
                     'merchant_id' => $merchant_id,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'merchant_id' => 'required',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'Merchant id is required',
@@ -93,6 +96,12 @@ class StoreCityAPIController extends PubControllerAPI
                         ->join(DB::raw("(select merchant_id, `name`, parent_id from {$prefix}merchants where name = {$this->quote($store_name)} and status = 'active') as oms"), DB::raw('oms.parent_id'), '=', 'merchants.merchant_id')
                         ->where('merchants.country_id', $country_id)
                         ->active();
+
+            if ($skipMall === 'Y'){
+                OrbitInput::get('mall_id', function($mallId) use ($mall) {
+                    $mall->where('merchants.merchant_id', '!=', $mallId);
+                });
+            }
 
             $mall = $mall->groupBy('merchants.city')->orderBy($sort_by, $sort_mode);
 

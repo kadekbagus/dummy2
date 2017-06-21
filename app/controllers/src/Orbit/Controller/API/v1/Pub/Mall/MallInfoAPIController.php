@@ -149,6 +149,10 @@ class MallInfoAPIController extends PubControllerAPI
                         $areadata['maps_url'] = $val;
                     }
 
+                    if ($source === 'gtm_page_views') {
+                        $areadata['total_view'] = $val;
+                    }
+
                     $areadata[$source] = $val;
                     $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
 
@@ -166,7 +170,7 @@ class MallInfoAPIController extends PubControllerAPI
                 $activity->setUser($user)
                     ->setActivityName('view_mall')
                     ->setActivityNameLong('View Mall Page')
-                    ->setObject(null)
+                    ->setObject($mall)
                     ->setLocation($mall)
                     ->setModuleName('Mall')
                     ->setNotes($activityNotes)
@@ -177,7 +181,7 @@ class MallInfoAPIController extends PubControllerAPI
                 $activity->setUser($user)
                     ->setActivityName('view_mall_info')
                     ->setActivityNameLong('View Mall Info')
-                    ->setObject(null)
+                    ->setObject($mall)
                     ->setLocation($mall)
                     ->setModuleName('Mall')
                     ->setNotes($activityNotes)

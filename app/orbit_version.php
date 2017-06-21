@@ -23,9 +23,9 @@ if (! defined('ORBIT_APP_BUILD_NUMBER')) {
  */
 if (! defined('ORBIT_APP_VERSION')) {
     if (Config::get('app.debug')) {
-        define('ORBIT_APP_VERSION', '3.4.4-dev b' . ORBIT_APP_BUILD_NUMBER);
+        define('ORBIT_APP_VERSION', '4.0-dev b' . ORBIT_APP_BUILD_NUMBER);
     } else {
-        define('ORBIT_APP_VERSION', '3.4.4');
+        define('ORBIT_APP_VERSION', '4.0');
     }
 }
 
@@ -33,7 +33,7 @@ if (! defined('ORBIT_APP_VERSION')) {
  * Constant storing codename.
  */
 if (! defined('ORBIT_APP_CODENAME')) {
-    define('ORBIT_APP_CODENAME', 'Bergelmir');
+    define('ORBIT_APP_CODENAME', 'Hyperion');
 }
 
 /**

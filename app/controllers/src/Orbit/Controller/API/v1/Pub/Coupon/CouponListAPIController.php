@@ -316,7 +316,8 @@ class CouponListAPIController extends PubControllerAPI
             } elseif ($sort_by === 'updated_date') {
                 $sort = array('updated_at' => array('order' => $sort_mode));
             } else {
-                $sort = array('name.raw' => array('order' => $sort_mode));
+                $sortScript = "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
+                $sort = array('_script' => array('script' => $sortScript, 'type' => 'string', 'order' => $sort_mode));
             }
 
             $sortby = $sort;
@@ -420,11 +421,26 @@ class CouponListAPIController extends PubControllerAPI
                 // and second, call es data combine with advert
                 $_jsonQuery['query']['bool']['must'][] = $filterKeyword;
 
+                //unset take and skip to get all match data
+                unset($_jsonQuery['from'], $_jsonQuery['size']);
+
+                $_jsonQueryGetTotal = $_jsonQuery;
+                $_jsonQueryGetTotal['size'] = 1;
+                $_jsonQueryGetTotal['_source'] = 'promotion_id';
+                $_jsonQuery['_source'] = 'promotion_id';
+
                 $_esParam = [
                     'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
-                    'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),
-                    'body' => json_encode($_jsonQuery)
+                    'type'   => Config::get('orbit.elasticsearch.indices.coupons.type')
                 ];
+
+                // get total data for 'take' parameter
+                $_esParam['body'] = json_encode($_jsonQueryGetTotal);
+                $getSearchTotal = $client->search($_esParam);
+                $searchTake = $getSearchTotal['hits']['total'];
+
+                $_jsonQuery['size'] = $searchTake;
+                $_esParam['body'] = json_encode($_jsonQuery);
 
                 if ($withCache) {
                     $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
@@ -528,6 +544,7 @@ class CouponListAPIController extends PubControllerAPI
                 $isOwned = false;
                 $default_lang = '';
                 $partnerTokens = isset($record['_source']['partner_tokens']) ? $record['_source']['partner_tokens'] : [];
+                $pageView = 0;
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
                         $key = "coupon_name";
@@ -607,7 +624,23 @@ class CouponListAPIController extends PubControllerAPI
                             $data[$key] = 'N';
                         }
                     }
+
+                    if (empty($mallId)) {
+                        if ($key === 'gtm_page_views') {
+                            $pageView = $value;
+                        }
+                    } else {
+                        if (isset($record['_source']['mall_page_views'])) {
+                            foreach ($record['_source']['mall_page_views'] as $dt) {
+                                if ($dt['location_id'] === $mallId) {
+                                    $pageView = $dt['total_views'];
+                                }
+                            }
+                        }
+                    }
                 }
+
+                $data['page_view'] = $pageView;
                 $data['owned'] = $isOwned;
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);

@@ -78,6 +78,7 @@ class CampaignExclusivePopupAPIController extends PubControllerAPI
             // get the first exclusive partner linked to the camapaign
             $partner = Partner::select(
                     'partners.partner_id',
+                    'partners.partner_name',
                     'deeplinks.deeplink_url',
                     DB::raw("{$logo}"),
                     DB::Raw("

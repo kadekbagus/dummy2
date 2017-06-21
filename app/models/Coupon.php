@@ -30,6 +30,7 @@ class Coupon extends Eloquent
     const NO_AVAILABLE_COUPON_ERROR_CODE = 1211;
     const THIRD_PARTY_COUPON_TENANT_VALIDATION_ERROR = 1212;
     const IS_EXCLUSIVE_ERROR_CODE = 9001;
+    const NOT_FOUND_ERROR_CODE = 404;
 
     protected $table = 'promotions';
 
@@ -101,6 +102,11 @@ class Coupon extends Eloquent
     public function campaign_status()
     {
         return $this->belongsTo('CampaignStatus', 'campaign_status_id', 'campaign_status_id');
+    }
+
+    public function total_page_views()
+    {
+        return $this->hasMany('TotalObjectPageView', 'object_id', 'promotion_id');
     }
 
     public function adverts()

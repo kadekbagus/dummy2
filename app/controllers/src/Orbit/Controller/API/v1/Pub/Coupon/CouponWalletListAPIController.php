@@ -93,7 +93,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                         THEN {$prefix}campaign_status.campaign_status_name
                                         ELSE (
-                                            CASE WHEN {$prefix}promotions.coupon_validity_in_date < (
+                                            CASE WHEN {$prefix}promotions.end_date < (
                                                 SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                 FROM {$prefix}promotion_retailer opt
                                                     LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
@@ -106,6 +106,17 @@ class CouponWalletListAPIController extends PubControllerAPI
                                             END
                                         )
                                     END AS campaign_status,
+                                    CASE WHEN {$prefix}promotions.coupon_validity_in_date < (
+                                            SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                            FROM {$prefix}promotion_retailer opt
+                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                            WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                        )
+                                        THEN 'true'
+                                        ELSE 'false'
+                                    END AS is_exceeding_validity_date,
                                     CASE WHEN (
                                         SELECT count(opt.promotion_retailer_id)
                                         FROM {$prefix}promotion_retailer opt
@@ -117,7 +128,11 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     THEN 'true'
                                     ELSE 'false'
                                     END AS is_started,
-                                    {$prefix}issued_coupons.issued_coupon_id
+                                    {$prefix}issued_coupons.issued_coupon_id,
+                                    CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 'redeemable' ELSE 'redeemed' END as issued_coupon_status,
+                                    {$prefix}merchants.name as store_name,
+                                    CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN malls.name ELSE NULL END as mall_name,
+                                    CONVERT_TZ({$prefix}issued_coupons.redeemed_date, '+00:00', {$prefix}timezones.timezone_name) as redeemed_date
                                 ")
                             )
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
@@ -138,7 +153,16 @@ class CouponWalletListAPIController extends PubControllerAPI
                             })
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '=', 'issued');
+                                $join->where('issued_coupons.status', '!=', 'deleted');
+                            })
+                            ->leftJoin('merchants', function ($q) {
+                                $q->on('merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id');
+                            })
+                            ->leftJoin('merchants as malls', function ($q) {
+                                $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
+                            })
+                            ->leftJoin('timezones', function ($q) {
+                                $q->on('timezones.timezone_id', '=', DB::raw("malls.timezone_id"));
                             })
                             ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
                                         FROM {$prefix}coupon_translations ct
@@ -147,8 +171,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                             AND m.media_name_long = 'coupon_translation_image_orig'
                                         GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
                             ->where('issued_coupons.user_id', $user->user_id)
-                            ->havingRaw("campaign_status = 'ongoing' AND is_started = 'true'")
-                            ->groupBy('promotion_id');
+                            ->havingRaw("(campaign_status = 'ongoing' OR campaign_status = 'expired')");
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
@@ -201,7 +224,9 @@ class CouponWalletListAPIController extends PubControllerAPI
                 }
             });
 
-            $coupon = $coupon->orderBy($sort_by, $sort_mode);
+            $coupon = $coupon->orderBy('campaign_status', 'desc');
+            $coupon = $coupon->orderBy('issued_coupon_status', 'asc');
+            $coupon = $coupon->orderBy('issued_coupons.issued_date', 'desc');
 
             $_coupon = clone $coupon;
 

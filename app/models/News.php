@@ -16,6 +16,7 @@ class News extends Eloquent
     use CampaignAccessTrait;
 
     const IS_EXCLUSIVE_ERROR_CODE = 9001;
+    const NOT_FOUND_ERROR_CODE = 404;
 
     protected $table = 'news';
 
@@ -168,6 +169,11 @@ class News extends Eloquent
     public function campaign_status()
     {
         return $this->belongsTo('CampaignStatus', 'campaign_status_id', 'campaign_status_id');
+    }
+
+    public function total_page_views()
+    {
+        return $this->hasMany('TotalObjectPageView', 'object_id', 'news_id');
     }
 
     public function scopeIsNews($query)

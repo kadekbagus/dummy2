@@ -63,6 +63,9 @@ class StoreMallDetailAPIController extends PubControllerAPI
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
         $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-total-rec');
+        $numberOfMallRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-total-mall');
+
 
         try {
             $user = $this->getUser();
@@ -77,12 +80,16 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
 
+            $skipMall = OrbitInput::get('skip_mall', 'N');
+
             $validator = Validator::make(
                 array(
                     'merchant_id' => $merchantId,
+                    'skip_mall' => $skipMall,
                 ),
                 array(
                     'merchant_id' => 'required',
+                    'skip_mall' => 'in:Y,N',
                 ),
                 array(
                     'required' => 'Merchant id is required',
@@ -99,6 +106,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 'cities' => $cities,
                 'take' => $take,
                 'skip' => $skip,
+                'skip_mall' => $skipMall,
             ];
 
             // Run the validation
@@ -120,8 +128,20 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 $mallMap = "CASE WHEN (map.cdn_url is null or map.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, map.path) ELSE map.cdn_url END as map_image";
             }
 
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path) as path";
+            if ($usingCdn) {
+                $image = "CASE WHEN (m.cdn_url is null or m.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END as path";
+            }
+
             // Get store name base in merchant_id
-            $store = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('oms.country_id'))
+            $store = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('oms.country_id'),
+                            DB::Raw("
+                                    (SELECT {$image}
+                                    FROM orb_media m
+                                    WHERE m.media_name_long = 'retailer_logo_orig'
+                                    AND m.object_id = {$prefix}merchants.merchant_id) AS original_media_path
+                            ")
+                        )
                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                         ->where('merchants.merchant_id', $merchantId)
                         ->where('merchants.status', '=', 'active')
@@ -143,6 +163,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                     DB::raw("mall.address_line1 as address"),
                                     'merchants.floor',
                                     'merchants.unit',
+                                    DB::raw("mall.phone"),
                                     DB::raw("mall.operating_hours"),
                                     DB::raw("mall.is_subscribed"),
                                     DB::raw("mall.object_type as location_type"),
@@ -177,6 +198,11 @@ class StoreMallDetailAPIController extends PubControllerAPI
                               ->where(DB::raw("mall.country_id"), '=', $countryId)
                               ->where(DB::raw("mall.status"), 'active');
 
+            // get number of mall without filter
+            $numberOfMall = 0;
+            $_numberOfMall = clone $mall;
+            $_numberOfMall->groupBy('merchants.merchant_id')->get();
+
             if (! empty($location)) {
                 if (! in_array('0', $location)) {
                     $mall->whereIn(DB::raw('mall.city'), $location);
@@ -190,8 +216,14 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 }
             }
 
-            if (! empty($mallId)) {
-                $mall->where(DB::raw("mall.merchant_id"), '=', $mallId);
+            if ($skipMall === 'Y') {
+                if (! empty($mallId)) {
+                    $mall->where(DB::raw("mall.merchant_id"), '!=', $mallId);
+                }
+            } else {
+                if (! empty($mallId)) {
+                    $mall->where(DB::raw("mall.merchant_id"), '=', $mallId);
+                }
             }
 
             // Order data city alphabetical
@@ -211,6 +243,15 @@ class StoreMallDetailAPIController extends PubControllerAPI
 
             // Put the result in cache if it is applicable
             $totalRecordCache->put($serializedCacheKey, $totalRec);
+
+            $numberOfMallRecordCounter = RecordCounter::create($_numberOfMall);
+            // Try to get the result from cache
+            $numberOfMall = $numberOfMallRecordCache->get($serializedCacheKey, function() use ($numberOfMallRecordCounter) {
+                return $numberOfMallRecordCounter->count();
+            });
+
+            // Put the result in cache if it is applicable
+            $numberOfMallRecordCache->put($serializedCacheKey, $numberOfMall);
 
             $mall->take($take);
             $mall->skip($skip);
@@ -237,10 +278,20 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 }
             }
 
-            $this->response->data = new stdClass();
-            $this->response->data->total_records = $totalRec;
-            $this->response->data->returned_records = count($listOfRec);
-            $this->response->data->records = $listOfRec;
+            $data = new \stdClass();
+            $data->returned_records = count($listOfRec);
+            $data->total_records = $totalRec;
+            $data->total_malls = $numberOfMall;
+            if (is_object($store)) {
+                $data->store_name = $store->name;
+                $data->original_media_path = $store->original_media_path;
+            }
+            $data->records = $listOfRec;
+
+            $this->response->data = $data;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request Ok';
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
