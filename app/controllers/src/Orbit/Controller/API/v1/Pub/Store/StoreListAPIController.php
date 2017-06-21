@@ -438,11 +438,26 @@ class StoreListAPIController extends PubControllerAPI
                 // and second, call es data combine with advert
                 $_jsonQuery['query']['bool']['must'][] = $filterKeyword;
 
+                //unset take and skip to get all match data
+                unset($_jsonQuery['from'], $_jsonQuery['size']);
+
+                $_jsonQueryGetTotal = $_jsonQuery;
+                $_jsonQueryGetTotal['size'] = 1;
+                $_jsonQueryGetTotal['_source'] = 'merchant_id';
+                $_jsonQuery['_source'] = 'merchant_id';
+
                 $_esParam = [
                     'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
-                    'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
-                    'body' => json_encode($_jsonQuery)
+                    'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic')
                 ];
+
+                // get total data for 'take' parameter
+                $_esParam['body'] = json_encode($_jsonQueryGetTotal);
+                $getSearchTotal = $client->search($_esParam);
+                $searchTake = $getSearchTotal['hits']['total'];
+
+                $_jsonQuery['size'] = $searchTake;
+                $_esParam['body'] = json_encode($_jsonQuery);
 
                 if ($withCache) {
                     $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
