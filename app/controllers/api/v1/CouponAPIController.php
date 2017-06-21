@@ -193,7 +193,7 @@ class CouponAPIController extends ControllerAPI
             $shortDescription = OrbitInput::post('short_description', NULL);
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
             $thirdPartyName = OrbitInput::post('third_party_name', NULL);
-            $maximumRedeem = OrbitInput::post('maximum_redeem', 0);
+            $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -226,6 +226,7 @@ class CouponAPIController extends ControllerAPI
                 'coupon_codes'            => $couponCodes,
                 'is_visible'              => $isVisible,
                 'is_3rd_party_promotion'  => $is3rdPartyPromotion,
+                'maximum_redeem'          => $maximumRedeem,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -249,6 +250,7 @@ class CouponAPIController extends ControllerAPI
                 'coupon_codes'            => 'required',
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
+                'maximum_redeem'          => 'numeric'
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -435,6 +437,14 @@ class CouponAPIController extends ControllerAPI
                     $stringDupes = implode(',', $dupes);
                     $errorMessage = 'The coupon codes you supplied have duplicates: %s';
                     OrbitShopAPI::throwInvalidArgument(sprintf($errorMessage, $stringDupes));
+                }
+            }
+
+            // maximum redeem validation
+            if (! empty($maximumRedeem)) {
+                if ($maximumRedeem > count($arrayCouponCode)) {
+                    $errorMessage = 'The total maximum redeemed coupon can not be more than amount of coupon code';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             }
 
@@ -1272,7 +1282,7 @@ class CouponAPIController extends ControllerAPI
             $redemption_verification_code = OrbitInput::post('redemption_verification_code', NULL);
             $short_description = OrbitInput::post('short_description', NULL);
             $third_party_name = OrbitInput::post('third_party_name', NULL) === '' ? 'grab' : OrbitInput::post('third_party_name');
-            $maximumRedeem = OrbitInput::post('maximum_redeem', 0);
+            $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -1300,6 +1310,7 @@ class CouponAPIController extends ControllerAPI
                 'partner_exclusive'       => $is_exclusive,
                 'is_visible'              => $is_visible,
                 'is_3rd_party_promotion'  => $is_3rd_party_promotion,
+                'maximum_redeem'          => $maximumRedeem,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -1330,6 +1341,7 @@ class CouponAPIController extends ControllerAPI
                     'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
                     'is_visible'              => 'in:Y,N',
                     'is_3rd_party_promotion'  => 'in:Y,N',
+                    'maximum_redeem'          => 'numeric'
                 ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
@@ -1835,7 +1847,27 @@ class CouponAPIController extends ControllerAPI
             }
 
             $updatedcoupon->is_visible = $is_visible;
-            $updatedcoupon->maximum_redeem = $maximumRedeem;
+
+            OrbitInput::post('maximum_redeem', function($maximumRedeem) use ($updatedcoupon) {
+                // maximum redeem validation
+                $couponCode = IssuedCoupon::where('promotion_id', $updatedcoupon->promotion_id)->count();
+
+                if ($maximumRedeem > count($couponCode)) {
+                    $errorMessage = 'The total maximum redeemed coupon can not be more than amount of coupon code';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $redeemed = IssuedCoupon::where('status', '=', 'redeemed')
+                                            ->where('promotion_id', $updatedcoupon->promotion_id)
+                                            ->count();
+
+                if ($maximumRedeem < $redeemed) {
+                    $errorMessage = 'The total maximum redeemed coupon can not be less than amount of redeemed coupon';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $updatedcoupon->maximum_redeem = $maximumRedeem;
+            });
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $updatedcoupon->is_unique_redeem = 'Y';
