@@ -225,10 +225,7 @@ class CouponDetailAPIController extends PubControllerAPI
 
 			$availableForRedeem = $coupon->available;
             if ($coupon->maximum_redeem > 0) {
-                $notAvailable = IssuedCoupon::where(function ($q) {
-                                                $q->where('status', '=', 'issued')
-                                                  ->orWhere('status', '=', 'redeemed');
-                                            })
+                $notAvailable = IssuedCoupon::where('status', '=', 'redeemed')
                                             ->where('promotion_id', $coupon->promotion_id)
                                             ->count();
 

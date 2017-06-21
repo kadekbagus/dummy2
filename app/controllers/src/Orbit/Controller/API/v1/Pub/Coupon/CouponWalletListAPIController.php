@@ -123,9 +123,9 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}promotions.is_unique_redeem,
                                     CASE WHEN {$prefix}promotions.maximum_redeem > 0
                                     THEN
-                                        CASE WHEN (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE (oic.status = 'issued' OR oic.status = 'redeemed') AND oic.promotion_id = {$prefix}promotions.promotion_id) >= {$prefix}promotions.maximum_redeem
+                                        CASE WHEN (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id) >= {$prefix}promotions.maximum_redeem
                                         THEN 0
-                                        ELSE ({$prefix}promotions.maximum_redeem - (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE (oic.status = 'issued' OR oic.status = 'redeemed') AND oic.promotion_id = {$prefix}promotions.promotion_id))
+                                        ELSE ({$prefix}promotions.maximum_redeem - (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id))
                                         END
                                     ELSE {$prefix}promotions.available
                                     END AS available_for_redeem
