@@ -438,6 +438,9 @@ class StoreListAPIController extends PubControllerAPI
                 // and second, call es data combine with advert
                 $_jsonQuery['query']['bool']['must'][] = $filterKeyword;
 
+                //unset take and skip to get all match data
+                unset($_jsonQuery['from'], $_jsonQuery['size']);
+
                 $_esParam = [
                     'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
                     'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
