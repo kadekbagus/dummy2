@@ -76,13 +76,11 @@ class ESCouponUpdateQueue
                             THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
                         END AS campaign_status
                     "))
-                    ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                     ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                     ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                     ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
-                    ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                     ->orderBy('promotions.promotion_id', 'asc')
                     ->first();
 
