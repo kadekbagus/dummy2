@@ -1862,7 +1862,7 @@ class CouponAPIController extends ControllerAPI
                 // maximum redeem validation
                 $couponCode = IssuedCoupon::where('promotion_id', $updatedcoupon->promotion_id)->count();
 
-                if ($maximumRedeem > count($couponCode)) {
+                if ($maximumRedeem > $couponCode) {
                     $errorMessage = 'The total maximum redeemed coupon can not be more than amount of coupon code';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
