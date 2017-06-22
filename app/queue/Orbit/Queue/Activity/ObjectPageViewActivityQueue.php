@@ -195,11 +195,8 @@ class ObjectPageViewActivityQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            Log::error(sprintf('[Job ID: `%s`] Object Page View Activity Queue ERROR: %s', $activityId, $e->getMessage()));
-            return [
-                'status' => 'fail',
-                'message' => $e->getMessage()
-            ];
+            $message = sprintf('[activity_id: `%s`] Object Page View Activity Queue ERROR: %s', $activityId, $e->getMessage());
+            Log::error($message);
             DB::rollBack();
         }
 
