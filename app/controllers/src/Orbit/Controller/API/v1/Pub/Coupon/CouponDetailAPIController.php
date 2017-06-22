@@ -73,7 +73,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             // This condition only for guest can issued multiple coupon with multiple email
-            if ($role == 'Guest') {
+            if ($role === 'Guest') {
                 $getCouponStatusSql = " 'false' as get_coupon_status ";
             } else {
                 $getCouponStatusSql = " CASE WHEN {$prefix}issued_coupons.user_id is NULL
