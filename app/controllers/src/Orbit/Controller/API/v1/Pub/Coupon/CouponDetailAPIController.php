@@ -212,10 +212,7 @@ class CouponDetailAPIController extends PubControllerAPI
             if ($coupon->is_unique_redeem === 'Y' && $role != 'Guest') {
                 $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
                                            ->where('user_id', $user->user_id)
-                                           ->where(function ($q) {
-                                                $q->where('status', '!=', 'deleted')
-                                                  ->orWhere('status', '=', 'redeemed');
-                                            })
+                                           ->whereNotIn('status', ['issued', 'deleted'])
                                            ->first();
 
                 if (is_object($checkIssued)) {
