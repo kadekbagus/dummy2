@@ -451,6 +451,8 @@ class CouponAPIController extends ControllerAPI
                     $errorMessage = 'Minimum amount of maximum redeemed coupon is 1';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
+            } else {
+                $maximumRedeem = 0;
             }
 
             // 3rd party coupon validation
@@ -1878,6 +1880,10 @@ class CouponAPIController extends ControllerAPI
 
                 $updatedcoupon->maximum_redeem = $maximumRedeem;
             });
+
+            if (empty($maximumRedeem)) {
+               $updatedcoupon->maximum_redeem = 0; 
+            }
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $updatedcoupon->is_unique_redeem = 'Y';
