@@ -335,7 +335,7 @@ class PromotionListAPIController extends PubControllerAPI
 
             $withPreferred = "0 AS with_preferred";
             if ($list_type === "featured") {
-                $withPreferred = "CASE WHEN placement_type = 'featured_list' THEN 0 ELSE 1 END AS with_preferred";
+                $withPreferred = "CASE WHEN placement_type = 'featured_list' THEN 1 ELSE 0 END AS with_preferred";
             }
 
             $adverts = Advert::select('adverts.advert_id',
@@ -374,6 +374,7 @@ class PromotionListAPIController extends PubControllerAPI
                                   ->orWhereRaw(DB::raw("{$prefix}adverts.is_all_location = 'Y'"));
                             })
                             ->where('adverts.status', '=', DB::raw("'active'"))
+                            ->orderBy(DB::raw("with_preferred"))
                             ->orderBy('advert_placements.placement_order', 'desc');
 
             $advertList = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
@@ -382,9 +383,10 @@ class PromotionListAPIController extends PubControllerAPI
                                     adv.link_object_id,
                                     adv.placement_order,
                                     adv.path,
-                                    adv.placement_type as placement_type_orig,
-                                    CASE WHEN SUM(with_preferred) > 0 THEN 'preferred_list_large' ELSE placement_type END AS placement_type"))
+                                    adv.placement_type,
+                                    CASE WHEN SUM(adv.with_preferred) > 0 THEN 'featured_list' ELSE adv.placement_type END AS placement_type_orig"))
                          ->groupBy(DB::raw("adv.link_object_id"))
+                         ->orderBy(DB::raw("adv.placement_order"), 'desc')
                          ->take(100);
 
             if ($withCache) {
@@ -405,11 +407,26 @@ class PromotionListAPIController extends PubControllerAPI
                 // and second, call es data combine with advert
                 $_jsonQuery['query']['bool']['must'][] = $filterKeyword;
 
+                //unset take and skip to get all match data
+                unset($_jsonQuery['from'], $_jsonQuery['size']);
+
+                $_jsonQueryGetTotal = $_jsonQuery;
+
+                $_jsonQueryGetTotal['_source'] = 'news_id';
+                $_jsonQuery['_source'] = 'news_id';
+
                 $_esParam = [
                     'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
-                    'type'   => Config::get('orbit.elasticsearch.indices.promotions.type'),
-                    'body' => json_encode($_jsonQuery)
+                    'type'   => Config::get('orbit.elasticsearch.indices.promotions.type')
                 ];
+
+                // get total data for 'take' parameter
+                $_esParam['body'] = json_encode($_jsonQueryGetTotal);
+                $getSearchTotal = $client->search($_esParam);
+                $searchTake = $getSearchTotal['hits']['total'];
+
+                $_jsonQuery['size'] = $searchTake;
+                $_esParam['body'] = json_encode($_jsonQuery);
 
                 if ($withCache) {
                     $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
