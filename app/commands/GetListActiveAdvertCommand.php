@@ -49,9 +49,9 @@ class GetListActiveAdvertCommand extends Command
 
         do {
             $promotions = DB::select("SELECT {$fields}
-                FROM {$prefix}advert
-                WHERE  {$prefix}advert.status='active' AND
-                {$prefix}advert.end_date > '{$now}'
+                FROM {$prefix}adverts
+                WHERE  {$prefix}adverts.status='active' AND
+                {$prefix}adverts.end_date > '{$now}'
                 {$raw}
                 LIMIT $skip, $take");
 
