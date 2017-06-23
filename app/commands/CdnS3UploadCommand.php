@@ -121,6 +121,17 @@ class CdnS3UploadCommand extends Command
                 $this->genericObjectUpload($object, $objectType, $options);
                 break;
 
+            case 'advert':
+                $object = Advert::with('media')->where('advert_id', $objectId)->first();
+                $options = [
+                    'primary_key' => 'advert_id',
+                    'translation_primary_key' => '',
+                    'using_translation' => FALSE,
+                    'bucket_name' => $bucketName
+                ];
+                $this->genericObjectUpload($object, $objectType, $options);
+                break;
+
             default:
                 throw new Exception('Unknown object-type value');
         }
