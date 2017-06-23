@@ -73,7 +73,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             // This condition only for guest can issued multiple coupon with multiple email
-            if ($role == 'Guest') {
+            if ($role === 'Guest') {
                 $getCouponStatusSql = " 'false' as get_coupon_status ";
             } else {
                 $getCouponStatusSql = " CASE WHEN {$prefix}issued_coupons.user_id is NULL
@@ -212,10 +212,7 @@ class CouponDetailAPIController extends PubControllerAPI
             if ($coupon->is_unique_redeem === 'Y' && $role != 'Guest') {
                 $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
                                            ->where('user_id', $user->user_id)
-                                           ->where(function ($q) {
-                                                $q->where('status', '!=', 'deleted')
-                                                  ->orWhere('status', '=', 'redeemed');
-                                            })
+                                           ->whereNotIn('status', ['issued', 'deleted'])
                                            ->first();
 
                 if (is_object($checkIssued)) {

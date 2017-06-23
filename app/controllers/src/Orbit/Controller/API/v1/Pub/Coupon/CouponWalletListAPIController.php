@@ -127,7 +127,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         THEN 0
                                         ELSE ({$prefix}promotions.maximum_redeem - (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id))
                                         END
-                                    ELSE {$prefix}promotions.available
+                                    ELSE (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status not in ('redeemed', 'deleted') AND oic.promotion_id = {$prefix}promotions.promotion_id)
                                     END AS available_for_redeem
                                 ")
                             )
