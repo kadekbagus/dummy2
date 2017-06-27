@@ -1856,29 +1856,31 @@ class CouponAPIController extends ControllerAPI
             $updatedcoupon->is_visible = $is_visible;
 
             OrbitInput::post('maximum_redeem', function($maximumRedeem) use ($updatedcoupon) {
-                if ($maximumRedeem < 1) {
-                    $errorMessage = 'Minimum amount of maximum redeemed coupon is 1';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                if (! empty($maximumRedeem)) {
+                    if ($maximumRedeem < 1) {
+                        $errorMessage = 'Minimum amount of maximum redeemed coupon is 1';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    // maximum redeem validation
+                    $couponCode = IssuedCoupon::where('promotion_id', $updatedcoupon->promotion_id)->count();
+
+                    if ($maximumRedeem > $couponCode) {
+                        $errorMessage = 'The total maximum redeemed coupon can not be more than amount of coupon code';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $redeemed = IssuedCoupon::where('status', '=', 'redeemed')
+                                                ->where('promotion_id', $updatedcoupon->promotion_id)
+                                                ->count();
+
+                    if ($maximumRedeem < $redeemed) {
+                        $errorMessage = 'The total maximum redeemed coupon can not be less than amount of redeemed coupon';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $updatedcoupon->maximum_redeem = $maximumRedeem;
                 }
-
-                // maximum redeem validation
-                $couponCode = IssuedCoupon::where('promotion_id', $updatedcoupon->promotion_id)->count();
-
-                if ($maximumRedeem > $couponCode) {
-                    $errorMessage = 'The total maximum redeemed coupon can not be more than amount of coupon code';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                $redeemed = IssuedCoupon::where('status', '=', 'redeemed')
-                                            ->where('promotion_id', $updatedcoupon->promotion_id)
-                                            ->count();
-
-                if ($maximumRedeem < $redeemed) {
-                    $errorMessage = 'The total maximum redeemed coupon can not be less than amount of redeemed coupon';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                $updatedcoupon->maximum_redeem = $maximumRedeem;
             });
 
             if (empty($maximumRedeem)) {
