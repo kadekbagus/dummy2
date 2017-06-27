@@ -129,7 +129,8 @@ class CouponDetailAPIController extends PubControllerAPI
                             'total_object_page_views.total_view',
                             'promotions.available',
                             'promotions.is_unique_redeem',
-							'promotions.maximum_redeem',
+                            'promotions.maximum_redeem',
+                            'promotions.maximum_issued_coupon',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -233,6 +234,7 @@ class CouponDetailAPIController extends PubControllerAPI
                 }
             }
 
+            // unique coupon
             $coupon->get_unique_coupon = 'true';
             if ($coupon->is_unique_redeem === 'Y' && $role != 'Guest') {
                 $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
@@ -245,19 +247,31 @@ class CouponDetailAPIController extends PubControllerAPI
                 }
             }
 
-			$availableForRedeem = $coupon->available;
-            if ($coupon->maximum_redeem > 0) {
-                $notAvailable = IssuedCoupon::where('status', '=', 'redeemed')
-                                            ->where('promotion_id', $coupon->promotion_id)
-                                            ->count();
+            $availableForRedeem = $coupon->available;
+            // get total redeemed
+            $totalRedeemed = IssuedCoupon::where('status', '=', 'redeemed')
+                                        ->where('promotion_id', $coupon->promotion_id)
+                                        ->count();
+            $coupon->total_redeemed = $totalRedeemed;
 
-                $availableForRedeem = $coupon->maximum_redeem - $notAvailable;
-                if ($notAvailable >= $coupon->maximum_redeem) {
+            if ($coupon->maximum_redeem > 0) {
+                $availableForRedeem = $coupon->maximum_redeem - $totalRedeemed;
+                if ($totalRedeemed >= $coupon->maximum_redeem) {
                     $availableForRedeem = 0;
                 }
             }
-
             $coupon->available_for_redeem = $availableForRedeem;
+
+            // get total issued
+            $totalIssued = IssuedCoupon::where('status', '=', 'issued')
+                                        ->where('promotion_id', $coupon->promotion_id)
+                                        ->count();
+            $coupon->total_issued = $totalIssued;
+
+            // set maximum redeemed to maximum issued when empty
+            if ($coupon->maximum_redeem === '0') {
+                $coupon->maximum_redeem = $coupon->maximum_issued_coupon;
+            }
 
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View mall coupon detail');
