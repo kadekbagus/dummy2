@@ -133,7 +133,10 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}merchants.name as store_name,
                                     CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN malls.name ELSE NULL END as mall_name,
                                     CONVERT_TZ({$prefix}issued_coupons.redeemed_date, '+00:00', {$prefix}timezones.timezone_name) as redeemed_date,
-									{$prefix}promotions.maximum_redeem,
+                                    (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status = 'redeemed') as total_redeemed,
+                                    (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status = 'issued') as total_issued,
+                                    CASE WHEN {$prefix}promotions.maximum_redeem = '0' THEN {$prefix}promotions.maximum_issued_coupon ELSE {$prefix}promotions.maximum_redeem END maximum_redeem,
+                                    {$prefix}promotions.maximum_issued_coupon,
                                     {$prefix}promotions.available,
                                     {$prefix}promotions.is_unique_redeem,
                                     CASE WHEN {$prefix}promotions.maximum_redeem > 0
