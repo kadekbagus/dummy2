@@ -175,8 +175,8 @@ class CouponWalletListAPIController extends PubControllerAPI
                             ->leftJoin('merchants as malls', function ($q) {
                                 $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
                             })
-                            ->leftJoin('timezones', function ($q) {
-                                $q->on('timezones.timezone_id', '=', DB::raw("malls.timezone_id"));
+                            ->leftJoin('timezones', function ($q) use($prefix) {
+                                $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
                             })
                             ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
                                         FROM {$prefix}coupon_translations ct
