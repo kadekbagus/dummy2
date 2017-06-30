@@ -309,7 +309,6 @@ class RegistrationAPIController extends IntermediateBaseController
                 }
                 $new_user->user_firstname = $firstname;
                 $new_user->user_lastname = $lastname;
-                $new_user->phone = $phone;
                 $new_user->status = isset($userStatus) ? $userStatus : 'pending';
                 $new_user->user_role_id = $customerRole->role_id;
                 $new_user->user_ip = $_SERVER['REMOTE_ADDR'];
