@@ -329,6 +329,7 @@ class RegistrationAPIController extends IntermediateBaseController
                     $user_detail->birthdate = date('Y-m-d', strtotime($birthdate));
                 }
 
+                // Add phone for signup
                 $user_detail->phone = $phone;
 
                 // Save the user details
