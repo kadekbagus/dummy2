@@ -100,7 +100,7 @@ class CouponLocationAPIController extends PubControllerAPI
                 array(
                     'coupon_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
-                    'sort_by' => 'in:name_orig',
+                    'sort_by' => 'in:city',
                     'skip_mall' => 'in:Y,N',
                 ),
                 array(
@@ -256,8 +256,10 @@ class CouponLocationAPIController extends PubControllerAPI
                 $couponLocations->orderBy('distance', 'asc');
             } else {
                 if (! empty($sortBy)) {
-                    $couponLocations->orderBy('name_orig', 'asc')
-                        ->orderBy('city', 'asc');
+                    if ($sortBy === 'city') {
+                        $couponLocations->orderBy('city', 'asc')
+                            ->orderBy('name_orig', 'asc');
+                    }
                 } else {
                     $couponLocations->orderBy('name', 'asc');
                 }

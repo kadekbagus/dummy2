@@ -96,7 +96,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                 array(
                     'promotion_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
-                    'sort_by' => 'in:name_orig',
+                    'sort_by' => 'in:city',
                     'skip_mall' => 'in:Y,N',
                 ),
                 array(
@@ -252,8 +252,10 @@ class PromotionLocationAPIController extends PubControllerAPI
                 $promotionLocation->orderBy('distance', 'asc');
             } else {
                 if (! empty($sortBy)) {
-                    $promotionLocation->orderBy('name_orig', 'asc')
-                        ->orderBy('city', 'asc');
+                    if ($sortBy === 'city') {
+                        $promotionLocation->orderBy('city', 'asc')
+                            ->orderBy('name_orig', 'asc');
+                    }
                 } else {
                     $promotionLocation->orderBy('name', 'asc');
                 }
