@@ -6421,4 +6421,8 @@ return array(
             ]
         ]
     ],
+
+    'about_us' => [
+        'counter_file' => storage_path() . '/about_us_counter.json'
+    ],
 );
