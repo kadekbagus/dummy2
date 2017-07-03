@@ -139,7 +139,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                     (SELECT {$image}
                                     FROM orb_media m
                                     WHERE m.media_name_long = 'retailer_logo_orig'
-                                    AND m.object_id = {$prefix}merchants.merchant_id) AS original_media_path
+                                    AND m.object_id = {$prefix}merchants.merchant_id limit 1) AS original_media_path
                             ")
                         )
                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
