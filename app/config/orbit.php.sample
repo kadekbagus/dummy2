@@ -5742,8 +5742,15 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'object_id'
             ),
-
-
+            // User views filter page
+            '130' => array(
+                'name' => 'view_filter_page',
+                'name_long' => 'View Filter Page',
+                'module_name' => 'Filter',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
