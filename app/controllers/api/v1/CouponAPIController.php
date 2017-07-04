@@ -3575,7 +3575,6 @@ class CouponAPIController extends ControllerAPI
                 }
                 if (is_object($csVerificationNumber)) {
                     $redeem_user_id = $csVerificationNumber->user_id;
-                    $redeem_retailer_id = $csVerificationNumber->merchant_id;
                 }
             }
 

@@ -234,7 +234,7 @@ class CouponDetailAPIController extends PubControllerAPI
                 }
             }
 
-            // unique coupon
+			// unique coupon
             $coupon->get_unique_coupon = 'true';
             if ($coupon->is_unique_redeem === 'Y' && $role != 'Guest') {
                 $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
