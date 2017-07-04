@@ -38,6 +38,11 @@ class UserCIAPIController extends BaseAPIController
             $this->checkAuth();
             $user = $this->api->user;
 
+            // Get user detail for provide the phone data
+            $userDetail = User::with('userdetail')
+                               ->excludeDeleted()
+                               ->find($user->user_id);
+
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->validRoles;
@@ -69,6 +74,7 @@ class UserCIAPIController extends BaseAPIController
             $data->phone = $user->phone;
             $data->role = $role->role_name;
             $data->image = $image;
+            $data->phone = $userDetail->userdetail->phone;
 
             $this->response->data = $data;
             $this->response->code = 0;

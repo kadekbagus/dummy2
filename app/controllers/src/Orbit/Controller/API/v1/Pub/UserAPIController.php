@@ -11,6 +11,7 @@ use OrbitShop\API\v1\OrbitShopAPI;
 use Activity;
 use Validator;
 use User;
+use UserDetail;
 use Lang;
 use Config;
 use stdclass;
@@ -81,6 +82,22 @@ class UserAPIController extends PubControllerAPI
 
             $updateUser->save();
 
+            $updateUserDetail = UserDetail::where('user_id', $user->user_id)
+                                            ->first();
+
+            OrbitInput::post('phone', function($phone) use ($updateUserDetail) {
+                $validator = Validator::make(
+                    array('phone' => $phone),
+                    array('phone' => 'required')
+                );
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                $updateUserDetail->phone = $phone;
+            });
+            $updateUserDetail->save();
+
             // Update session fullname and email
             $sessionData = $session->read(NULL);
             $sessionData['fullname'] = $updateUser->user_firstname. ' ' . $updateUser->user_lastname;
@@ -118,6 +135,7 @@ class UserAPIController extends PubControllerAPI
             $data->email = $updateUser->user_email;
             $data->firstname = $updateUser->user_firstname;
             $data->lastname = $updateUser->user_lastname;
+            $data->phone = $updateUserDetail->phone;
             $data->image = $image;
 
             $activityNote = sprintf('Update User Account, user Id: %s', $updateUser->user_id);

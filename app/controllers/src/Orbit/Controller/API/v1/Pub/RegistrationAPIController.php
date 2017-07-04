@@ -286,7 +286,7 @@ class RegistrationAPIController extends IntermediateBaseController
         $validation = TRUE;
         if ($from === 'form') {
             // if coming from form then validate password and birthdate
-            $validation = $this->validateRegistrationData($email, $firstname, $lastname, $gender, $birthdate, $password, $password_confirmation);
+            $validation = $this->validateRegistrationData($email, $firstname, $lastname, $phone, $gender, $birthdate, $password, $password_confirmation);
         }
         if ($validation) {
             try {
@@ -328,6 +328,9 @@ class RegistrationAPIController extends IntermediateBaseController
                 if (! empty($birthdate)) {
                     $user_detail->birthdate = date('Y-m-d', strtotime($birthdate));
                 }
+
+                // Add phone for signup
+                $user_detail->phone = $phone;
 
                 // Save the user details
                 $user_detail = $new_user->userdetail()->save($user_detail);
@@ -372,7 +375,7 @@ class RegistrationAPIController extends IntermediateBaseController
      * @return array|string
      * @throws Exception
      */
-    protected function validateRegistrationData($email, $firstname, $lastname, $gender, $birthdate, $password, $password_confirmation)
+    protected function validateRegistrationData($email, $firstname, $lastname, $phone, $gender, $birthdate, $password, $password_confirmation)
     {
         $me = $this;
         Validator::extend('orbit_email_exists', function ($attribute, $value, $parameters) use ($me) {
