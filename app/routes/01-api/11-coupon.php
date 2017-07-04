@@ -255,6 +255,16 @@ Route::get('/api/v1/pub/store-coupon/list', function()
 Route::get('/app/v1/pub/store-coupon/list', ['as' => 'pub-store-coupon-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponStore_getCouponStore']);
 
 /**
+ * Get number of coupon location
+ */
+Route::get('/api/v1/pub/coupon-location/total', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\NumberOfCouponLocationAPIController::create()->getNumberOfCouponLocation();
+});
+
+Route::get('/app/v1/pub/coupon-location/total', ['as' => 'pub-coupon-location-total', 'uses' => 'IntermediatePubAuthController@Coupon\NumberOfCouponLocation_getNumberOfCouponLocation']);
+
+/**
  * List city for coupon
  */
 Route::get('/api/v1/pub/coupon-city/list', function()
