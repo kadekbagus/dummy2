@@ -132,8 +132,23 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 'redeemable' ELSE 'redeemed' END as issued_coupon_status,
                                     {$prefix}merchants.name as store_name,
                                     CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN malls.name ELSE NULL END as mall_name,
-                                    CONVERT_TZ({$prefix}issued_coupons.redeemed_date, '+00:00', {$prefix}timezones.timezone_name) as redeemed_date
-                                ")
+                                    CONVERT_TZ({$prefix}issued_coupons.redeemed_date, '+00:00', {$prefix}timezones.timezone_name) as redeemed_date,
+                                    (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status = 'redeemed') as total_redeemed,
+                                    (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status in ('issued','redeemed')) as total_issued,
+                                    CASE WHEN {$prefix}promotions.maximum_redeem = '0' THEN {$prefix}promotions.maximum_issued_coupon ELSE {$prefix}promotions.maximum_redeem END maximum_redeem,
+                                    {$prefix}promotions.maximum_issued_coupon,
+                                    {$prefix}promotions.available,
+                                    {$prefix}promotions.is_unique_redeem,
+                                    CASE WHEN {$prefix}promotions.maximum_redeem > 0
+                                    THEN
+                                        CASE WHEN (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id) >= {$prefix}promotions.maximum_redeem
+                                        THEN 0
+                                        ELSE ({$prefix}promotions.maximum_redeem - (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id))
+                                        END
+                                    ELSE (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status not in ('redeemed', 'deleted') AND oic.promotion_id = {$prefix}promotions.promotion_id)
+                                    END AS available_for_redeem
+                                "),
+                                'issued_coupons.issued_date'
                             )
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
@@ -161,8 +176,8 @@ class CouponWalletListAPIController extends PubControllerAPI
                             ->leftJoin('merchants as malls', function ($q) {
                                 $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
                             })
-                            ->leftJoin('timezones', function ($q) {
-                                $q->on('timezones.timezone_id', '=', DB::raw("malls.timezone_id"));
+                            ->leftJoin('timezones', function ($q) use($prefix) {
+                                $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
                             })
                             ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
                                         FROM {$prefix}coupon_translations ct
@@ -224,9 +239,22 @@ class CouponWalletListAPIController extends PubControllerAPI
                 }
             });
 
-            $coupon = $coupon->orderBy('campaign_status', 'desc');
-            $coupon = $coupon->orderBy('issued_coupon_status', 'asc');
-            $coupon = $coupon->orderBy('issued_coupons.issued_date', 'desc');
+            // need subquery to order my coupon
+            $querySql = $coupon->toSql();
+            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupon->getQuery())
+                            ->select(
+                                DB::raw("sub_query.*"),
+                                DB::raw("CASE WHEN issued_coupon_status = 'redeemed' THEN 2
+                                            ELSE CASE WHEN available_for_redeem = 0 THEN 3
+                                                ELSE CASE WHEN is_exceeding_validity_date = 'true' THEN 3
+                                                    ELSE 1
+                                                    END
+                                                END
+                                        END as redeem_order")
+                            );
+
+            $coupon = $coupon->orderBy(DB::raw("redeem_order"), 'asc');
+            $coupon = $coupon->orderBy(DB::raw("issued_date"), 'desc');
 
             $_coupon = clone $coupon;
 

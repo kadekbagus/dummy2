@@ -119,6 +119,17 @@ class CouponAddToWalletAPIController extends PubControllerAPI
                 }
             }
 
+            if ($coupon->is_unique_redeem === 'Y') {
+                $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
+                                           ->where('user_id', $user->user_id)
+                                           ->where('status', '!=', 'deleted')
+                                           ->first();
+
+                if (is_object($checkIssued)) {
+                    OrbitShopAPI::throwInvalidArgument('Sorry, you can only get one coupon at a time.');
+                }
+            }
+
             $isAvailable = Coupon::leftJoin('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
                 ->where('issued_coupons.status', 'available')
                 ->where('promotions.status', 'active')

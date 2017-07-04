@@ -51,6 +51,7 @@ class RegistrationAPIController extends IntermediateBaseController
             $from_mall = OrbitInput::post('from_mall', 'no');
             $firstname = OrbitInput::post('first_name');
             $lastname = OrbitInput::post('last_name');
+            $phone = OrbitInput::post('phone');
             $gender = OrbitInput::post('gender');
             $birthdate = OrbitInput::post('birthdate');
             $password_confirmation = OrbitInput::post('password_confirmation');
@@ -78,7 +79,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 DB::beginTransaction();
             }
 
-            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $this->mallId, FALSE);
+            $user = $this->createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $phone, $gender, $birthdate, $this->mallId, FALSE);
 
             // let mobileci handle it's own session
             if ($this->appOrigin !== 'mobile_ci') {
@@ -279,7 +280,7 @@ class RegistrationAPIController extends IntermediateBaseController
      * @return array [User, UserDetail, ApiKey]
      * @throws Exception
      */
-    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $gender, $birthdate, $mall_id = NULL,
+    public function createCustomerUser($email, $password, $password_confirmation, $firstname, $lastname, $phone, $gender, $birthdate, $mall_id = NULL,
         $useTransaction = TRUE, $userId = null, $userDetailId = null, $apiKeyId = null, $userStatus = null, $from = 'form')
     {
         $validation = TRUE;
