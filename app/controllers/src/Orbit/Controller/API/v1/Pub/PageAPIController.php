@@ -172,7 +172,7 @@ class PageAPIController extends PubControllerAPI
     protected function readJSON($file)
     {
         if (! file_exists($file) ) {
-           throw new Exception('Could not found json file.');
+           OrbitShopAPI::throwInvalidArgument('Could not found json file.');
         }
 
         $json = file_get_contents($file);
@@ -189,7 +189,7 @@ class PageAPIController extends PubControllerAPI
         $conf = @json_decode($json, TRUE);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception( sprintf('Error parsing JSON: %s', json_last_error_msg()) );
+            OrbitShopAPI::throwInvalidArgument( sprintf('Error parsing JSON: %s', json_last_error_msg()) );
         }
 
         return $conf;
