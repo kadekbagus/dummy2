@@ -6300,6 +6300,14 @@ return array(
                     'social_media_name' => 'Instagram',
                     'url' => 'https://www.instagram.com/gotomalls/',
                 ],
+                [
+                    'social_media_name' => 'Youtube',
+                    'url' => 'https://www.youtube.com/gotomallscom',
+                ],
+                [
+                    'social_media_name' => 'Linkedin',
+                    'url' => 'https://id.linkedin.com/company/gotomalls',
+                ],
             ],
             'singapore' => [
                 [
@@ -6313,6 +6321,14 @@ return array(
                 [
                     'social_media_name' => 'Instagram',
                     'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+                [
+                    'social_media_name' => 'Youtube',
+                    'url' => 'https://www.youtube.com/gotomallscom',
+                ],
+                [
+                    'social_media_name' => 'Linkedin',
+                    'url' => 'https://id.linkedin.com/company/gotomalls',
                 ],
             ],
         ]
