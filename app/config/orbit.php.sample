@@ -5994,6 +5994,8 @@ return array(
                 // Number of posts to take
                 'take' => 6,
 
+                'categories' => NULL,
+
                 // Default image used when the post does not have image URL
                 'default_image_url' => NULL,
 
@@ -6018,6 +6020,8 @@ return array(
 
                 // Number of posts to take
                 'take' => 6,
+
+                'categories' => NULL,
 
                 // Default image used when the post does not have image URL
                 'default_image_url' => NULL,
