@@ -73,6 +73,16 @@ class PageAPIController extends PubControllerAPI
                         ->where('pages.language' , $language)
                         ->get();
 
+            if ($object_type === 'about_us') {
+                $fileName = Config::get('about_us.counter_file', storage_path() . '/about_us_counter.json');
+
+                $data = $this->readJSON($fileName);
+                $page[0]->users = empty($data['users']) ? 0 : $data['users'];
+                $page[0]->page_views = empty($data['page_views']) ? 0 : $data['page_views'];
+                $page[0]->stores = empty($data['stores']) ? 0 : $data['stores'];
+                $page[0]->merchants = empty($data['merchants']) ? 0 : $data['merchants'];
+            }
+
             switch ($object_type) {
                 case 'advertise_with_us' :
                         $notes = 'Page viewed: View Advertise With Us';
@@ -154,6 +164,35 @@ class PageAPIController extends PubControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    /**
+     * Read the json file.
+     */
+    protected function readJSON($file)
+    {
+        if (! file_exists($file) ) {
+           OrbitShopAPI::throwInvalidArgument('Could not found json file.');
+        }
+
+        $json = file_get_contents($file);
+        return $this->readJSONString($json);
+    }
+
+    /**
+     * Read JSON from string
+     *
+     * @return string|mixed
+     */
+    protected function readJSONString($json)
+    {
+        $conf = @json_decode($json, TRUE);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument( sprintf('Error parsing JSON: %s', json_last_error_msg()) );
+        }
+
+        return $conf;
     }
 
 }

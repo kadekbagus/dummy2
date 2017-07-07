@@ -96,7 +96,7 @@ class NewsLocationAPIController extends PubControllerAPI
                 array(
                     'news_id' => 'required',
                     'language' => 'required|orbit.empty.language_default',
-                    'sort_by' => 'in:name_orig',
+                    'sort_by' => 'in:city',
                     'skip_mall' => 'in:Y,N',
                 ),
                 array(
@@ -251,8 +251,10 @@ class NewsLocationAPIController extends PubControllerAPI
                 $newsLocations->orderBy('distance', 'asc');
             } else {
                 if (! empty($sortBy)) {
-                    $newsLocations->orderBy('name_orig', 'asc')
-                        ->orderBy('city', 'asc');
+                    if ($sortBy === 'city') {
+                        $newsLocations->orderBy('city', 'asc')
+                            ->orderBy('name_orig', 'asc');
+                    }
                 } else {
                     $newsLocations->orderBy('name', 'asc');
                 }

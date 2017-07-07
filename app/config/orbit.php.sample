@@ -5742,8 +5742,15 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'object_id'
             ),
-
-
+            // User views filter page
+            '130' => array(
+                'name' => 'view_filter_page',
+                'name_long' => 'View Filter Page',
+                'module_name' => 'Filter',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
@@ -6293,6 +6300,14 @@ return array(
                     'social_media_name' => 'Instagram',
                     'url' => 'https://www.instagram.com/gotomalls/',
                 ],
+                [
+                    'social_media_name' => 'Youtube',
+                    'url' => 'https://www.youtube.com/gotomallscom',
+                ],
+                [
+                    'social_media_name' => 'Linkedin',
+                    'url' => 'https://id.linkedin.com/company/gotomalls',
+                ],
             ],
             'singapore' => [
                 [
@@ -6306,6 +6321,14 @@ return array(
                 [
                     'social_media_name' => 'Instagram',
                     'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+                [
+                    'social_media_name' => 'Youtube',
+                    'url' => 'https://www.youtube.com/gotomallscom',
+                ],
+                [
+                    'social_media_name' => 'Linkedin',
+                    'url' => 'https://id.linkedin.com/company/gotomalls',
                 ],
             ],
         ]
@@ -6420,5 +6443,9 @@ return array(
                 'post_export_subject' => 'Gotomalls Grab CSV File for Reward is Completed'
             ]
         ]
+    ],
+
+    'about_us' => [
+        'counter_file' => storage_path() . '/about_us_counter.json'
     ],
 );

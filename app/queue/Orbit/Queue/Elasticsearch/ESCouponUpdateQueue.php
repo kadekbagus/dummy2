@@ -77,13 +77,11 @@ class ESCouponUpdateQueue
                             THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
                         END AS campaign_status
                     "))
-                    ->leftJoin('promotion_rules', 'promotion_rules.promotion_id', '=', 'promotions.promotion_id')
                     ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                     ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                     ->where('promotions.promotion_id', $couponId)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                     ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
-                    ->whereRaw("{$prefix}promotion_rules.rule_type != 'blast_via_sms'")
                     ->orderBy('promotions.promotion_id', 'asc')
                     ->first();
 
@@ -227,6 +225,60 @@ class ESCouponUpdateQueue
                 }
             }
 
+            $emptyRedeem = FALSE;
+            $emptyIssued = FALSE;
+            $available = IssuedCoupon::totalAvailable($coupon->promotion_id);
+
+            if ($coupon->maximum_redeem > 0) {
+                $notAvailable = IssuedCoupon::where('status', '=', 'redeemed')
+                                            ->where('promotion_id', $coupon->promotion_id)
+                                            ->count();
+
+                $available = $coupon->maximum_redeem - $notAvailable;
+                if ($notAvailable >= $coupon->maximum_redeem) {
+                    $emptyRedeem = TRUE;
+                }
+            }
+            if ($coupon->maximum_issued_coupon > 0) {
+                $notAvailable = IssuedCoupon::where('status', '=', 'issued')
+                                            ->where('promotion_id', $coupon->promotion_id)
+                                            ->count();
+
+                if ($notAvailable >= $coupon->maximum_issued_coupon) {
+                    $emptyIssued = TRUE;
+                }
+            }
+            if($emptyRedeem || $emptyIssued) {
+                $available = 0;
+            }
+
+            $emptyRedeem = FALSE;
+            $emptyIssued = FALSE;
+            $available = IssuedCoupon::totalAvailable($coupon->promotion_id);
+
+            if ($coupon->maximum_redeem > 0) {
+                $notAvailable = IssuedCoupon::where('status', '=', 'redeemed')
+                                            ->where('promotion_id', $coupon->promotion_id)
+                                            ->count();
+
+                $available = $coupon->maximum_redeem - $notAvailable;
+                if ($notAvailable >= $coupon->maximum_redeem) {
+                    $emptyRedeem = TRUE;
+                }
+            }
+            if ($coupon->maximum_issued_coupon > 0) {
+                $notAvailable = IssuedCoupon::where('status', '=', 'issued')
+                                            ->where('promotion_id', $coupon->promotion_id)
+                                            ->count();
+
+                if ($notAvailable >= $coupon->maximum_issued_coupon) {
+                    $emptyIssued = TRUE;
+                }
+            }
+            if($emptyRedeem || $emptyIssued) {
+                $available = 0;
+            }
+
             $body = [
                 'promotion_id'    => $coupon->promotion_id,
                 'name'            => $coupon->promotion_name,
@@ -237,7 +289,7 @@ class ESCouponUpdateQueue
                 'updated_at'      => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
                 'coupon_validity_in_date'      => date('Y-m-d', strtotime($coupon->coupon_validity_in_date)) . 'T' . date('H:i:s', strtotime($coupon->coupon_validity_in_date)) . 'Z',
                 'status'          => $coupon->status,
-                'available'       => IssuedCoupon::totalAvailable($coupon->promotion_id),
+                'available'       => $available,
                 'campaign_status' => $coupon->campaign_status,
                 'is_all_gender'   => $coupon->is_all_gender,
                 'is_all_age'      => $coupon->is_all_age,
