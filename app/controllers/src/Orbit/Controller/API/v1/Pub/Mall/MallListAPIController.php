@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
+use Activity;
 use Mall;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
@@ -44,6 +45,8 @@ class MallListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
+            $activity = Activity::mobileci()->setActivityType('view');
+
             $this->checkAuth();
             $user = $this->api->user;
 
@@ -353,6 +356,20 @@ class MallListAPIController extends PubControllerAPI
                     }
 
                     $listmall[] = $areadata;
+                }
+            }
+
+            if (OrbitInput::get('from_homepage', '') !== 'y') {
+                if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
+                    $activityNotes = sprintf('Page viewed: View mall list');
+                    $activity->setUser($user)
+                        ->setActivityName('view_mall_list')
+                        ->setActivityNameLong('View mall list')
+                        ->setObject(null)
+                        ->setModuleName('Mall')
+                        ->setNotes($activityNotes)
+                        ->responseOK()
+                        ->save();
                 }
             }
 
