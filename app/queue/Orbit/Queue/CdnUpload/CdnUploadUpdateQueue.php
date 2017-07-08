@@ -2,6 +2,8 @@
 /**
  * Process queue for upload new image to Amazon s3
  *
+ * @author shelgi prasetyo <shelgi@dominopos.com>
+ * @author Rio Astamal <rio@dominopos.com>
  */
 use Sync;
 use Mail;
@@ -13,13 +15,13 @@ use Log;
 use Queue;
 use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class CdnUploadUpdateQueue
 {
     /**
      * Laravel main method to fire a job on a queue.
      *
-     * @author shelgi prasetyo <shelgi@dominopos.com>
      * @param Job $job
      * @param array $data [
      *    'object_id' => The object Id in the media
@@ -136,19 +138,31 @@ class CdnUploadUpdateQueue
             ];
 
         } catch (Aws\S3\Exception\S3Exception $e) {
-            $message = sprintf('Update file to S3; Status: FAIL; Object_id: %s; Message: %s',
+            $message = sprintf('Update file to S3; Status: FAIL; Object_id: %s; S3Exception Message: %s',
                                 $objectId,
                                 $e->getMessage());
 
             if (! empty($mediaNameId)) {
-                $message = sprintf('Update file to S3; Status: FAIL; Media name: %s, Object_id: %s; Message: %s',
+                $message = sprintf('Update file to S3; Status: FAIL; Media name: %s, Object_id: %s; S3Exception Message: %s',
                             $mediaNameId,
                             $objectId,
                             $e->getMessage());
             }
 
-            Log::info($message);
+        } catch (Exception $e) {
+            $message = sprintf('Update file to S3; Status: FAIL; Object_id: %s; Exception Message: %s',
+                                $objectId,
+                                $e->getMessage());
+
+            if (! empty($mediaNameId)) {
+                $message = sprintf('Update file to S3; Status: FAIL; Media name: %s, Object_id: %s; Exception Message: %s',
+                            $mediaNameId,
+                            $objectId,
+                            $e->getMessage());
+            }
         }
+
+        Log::info($message);
 
         // Bury the job for later inspection
         JobBurier::create($job, function($theJob) {
