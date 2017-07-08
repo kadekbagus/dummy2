@@ -74,7 +74,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             // This condition only for guest can issued multiple coupon with multiple email
-            if ($role == 'Guest') {
+            if ($role === 'Guest') {
                 $getCouponStatusSql = " 'false' as get_coupon_status ";
                 $issuedCouponId = " NULL as issued_coupon_id ";
             } else {
@@ -124,9 +124,13 @@ class CouponDetailAPIController extends PubControllerAPI
                                     END AS original_media_path
                                 "),
                             'promotions.end_date',
+                            'promotions.coupon_validity_in_date',
                             'promotions.is_exclusive',
                             'total_object_page_views.total_view',
-							'promotions.available',
+                            'promotions.available',
+                            'promotions.is_unique_redeem',
+                            'promotions.maximum_redeem',
+                            'promotions.maximum_issued_coupon',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -228,6 +232,45 @@ class CouponDetailAPIController extends PubControllerAPI
                 if (is_object($partnerTokens)) {
                     $coupon->is_exclusive = 'N';
                 }
+            }
+
+			// unique coupon
+            $coupon->get_unique_coupon = 'true';
+            if ($coupon->is_unique_redeem === 'Y' && $role != 'Guest') {
+                $checkIssued = IssuedCoupon::where('promotion_id', $coupon->promotion_id)
+                                           ->where('user_id', $user->user_id)
+                                           ->whereNotIn('status', ['issued', 'deleted'])
+                                           ->first();
+
+                if (is_object($checkIssued)) {
+                    $coupon->get_unique_coupon = 'false';
+                }
+            }
+
+            $availableForRedeem = $coupon->available;
+            // get total redeemed
+            $totalRedeemed = IssuedCoupon::where('status', '=', 'redeemed')
+                                        ->where('promotion_id', $coupon->promotion_id)
+                                        ->count();
+            $coupon->total_redeemed = $totalRedeemed;
+
+            if ($coupon->maximum_redeem > 0) {
+                $availableForRedeem = $coupon->maximum_redeem - $totalRedeemed;
+                if ($totalRedeemed >= $coupon->maximum_redeem) {
+                    $availableForRedeem = 0;
+                }
+            }
+            $coupon->available_for_redeem = $availableForRedeem;
+
+            // get total issued
+            $totalIssued = IssuedCoupon::whereIn('status', ['issued', 'redeemed'])
+                                        ->where('promotion_id', $coupon->promotion_id)
+                                        ->count();
+            $coupon->total_issued = $totalIssued;
+
+            // set maximum redeemed to maximum issued when empty
+            if ($coupon->maximum_redeem === '0') {
+                $coupon->maximum_redeem = $coupon->maximum_issued_coupon;
             }
 
             if (is_object($mall)) {

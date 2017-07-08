@@ -112,6 +112,17 @@ Route::get('/app/v1/pub/store-promotion/list', ['as' => 'pub-store-promotion-lis
 
 
 /**
+ * Get number of promotion location
+ */
+Route::get('/api/v1/pub/promotion-location/total', function()
+{
+    return Orbit\Controller\API\v1\Pub\Promotion\NumberOfPromotionLocationAPIController::create()->getNumberOfPromotionLocation();
+});
+
+Route::get('/app/v1/pub/promotion-location/total', ['as' => 'pub-promotion-location-total', 'uses' => 'IntermediatePubAuthController@Promotion\NumberOfPromotionLocation_getNumberOfPromotionLocation']);
+
+
+/**
  * List city for promotion
  */
 Route::get('/api/v1/pub/promotion-city/list', function()

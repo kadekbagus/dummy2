@@ -111,6 +111,16 @@ Route::get('/api/v1/pub/store-news/list', function()
 Route::get('/app/v1/pub/store-news/list', ['as' => 'pub-store-news-list', 'uses' => 'IntermediatePubAuthController@News\NewsStore_getNewsStore']);
 
 /**
+ * Get number of news location
+ */
+Route::get('/api/v1/pub/news-location/total', function()
+{
+    return Orbit\Controller\API\v1\Pub\News\NumberOfNewsLocationAPIController::create()->getNumberOfNewsLocation();
+});
+
+Route::get('/app/v1/pub/news-location/total', ['as' => 'pub-news-location-total', 'uses' => 'IntermediatePubAuthController@News\NumberOfNewsLocation_getNumberOfNewsLocation']);
+
+/**
  * List city for news
  */
 Route::get('/api/v1/pub/news-city/list', function()

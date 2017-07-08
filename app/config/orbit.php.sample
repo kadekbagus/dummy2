@@ -4565,7 +4565,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Mall',
-                'parameter_name' => 'mall_id'
+                'parameter_name' => 'object_id'
             ),
             // - Clicking on a mall pin on the map
             '3' => array(
@@ -4574,7 +4574,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Mall',
-                'parameter_name' => 'mall_id'
+                'parameter_name' => 'object_id'
             ),
             // - Visiting a mall
             '4' => array(
@@ -4592,7 +4592,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'view',
                 'object_type' => 'Mall',
-                'parameter_name' => 'mall_id'
+                'parameter_name' => 'object_id'
             ),
             // - Switching user
             '6' => array(
@@ -4731,7 +4731,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Tenant',
-                'parameter_name' => 'store_id'
+                'parameter_name' => 'object_id'
             ),
             // - Clicking on a lucky draw in list
             '21' => array(
@@ -4794,7 +4794,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'news_id'
+                'parameter_name' => 'object_id'
             ),
             // - Promotion Click
             '28' => array(
@@ -4821,7 +4821,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'promotion_id'
+                'parameter_name' => 'object_id'
             ),
             // - Coupon Click
             '31' => array(
@@ -4849,7 +4849,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Coupon',
-                'parameter_name' => 'coupon_id'
+                'parameter_name' => 'object_id'
             ),
 
             // - News Location View
@@ -4860,7 +4860,7 @@ return array(
                 'module_name' => 'News',
                 'type' => 'view',
                 'object_type' => 'News',
-                'parameter_name' => 'news_id'
+                'parameter_name' => 'object_id'
             ),
             // - Clicking on a news location
             '35' => array(
@@ -4869,7 +4869,7 @@ return array(
                 'module_name' => 'News',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'news_id'
+                'parameter_name' => 'object_id'
             ),
 
             // - Promotion Location View
@@ -4880,7 +4880,7 @@ return array(
                 'module_name' => 'Promotion',
                 'type' => 'view',
                 'object_type' => 'News',
-                'parameter_name' => 'promotion_id'
+                'parameter_name' => 'object_id'
             ),
             // - Clicking on a promotion location
             '37' => array(
@@ -4889,7 +4889,7 @@ return array(
                 'module_name' => 'Promotion',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'promotion_id'
+                'parameter_name' => 'object_id'
             ),
 
             // - Coupon Location View
@@ -4900,7 +4900,7 @@ return array(
                 'module_name' => 'Coupon',
                 'type' => 'view',
                 'object_type' => 'Coupon',
-                'parameter_name' => 'coupon_id'
+                'parameter_name' => 'object_id'
             ),
             // - Clicking on a coupon location
             '39' => array(
@@ -4909,7 +4909,7 @@ return array(
                 'module_name' => 'Coupon',
                 'type' => 'click',
                 'object_type' => 'Coupon',
-                'parameter_name' => 'coupon_id'
+                'parameter_name' => 'object_id'
             ),
 
             // - Store Location View
@@ -4920,7 +4920,7 @@ return array(
                 'module_name' => 'Store',
                 'type' => 'view',
                 'object_type' => 'Tenant',
-                'parameter_name' => 'store_id'
+                'parameter_name' => 'object_id'
             ),
             // - Clicking on a store location
             '41' => array(
@@ -4929,7 +4929,7 @@ return array(
                 'module_name' => 'Store',
                 'type' => 'click',
                 'object_type' => 'Tenant',
-                'parameter_name' => 'store_id'
+                'parameter_name' => 'object_id'
             ),
             // - View send coupon to email page
             '42' => array(
@@ -4967,7 +4967,7 @@ return array(
                 'module_name' => 'News',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'news_id'
+                'parameter_name' => null
             ),
 
             // - User clicks an event from mall event list page
@@ -4977,7 +4977,7 @@ return array(
                 'module_name' => 'News',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'news_id'
+                'parameter_name' => 'object_id'
             ),
 
             // - User clicks on one of the events featured in event carousel (mall page)
@@ -4987,7 +4987,7 @@ return array(
                 'module_name' => 'News',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'news_id'
+                'parameter_name' => 'object_id'
             ),
 
             // - User clicks on "Promotions" from mall sidebar menu
@@ -5017,7 +5017,7 @@ return array(
                 'module_name' => 'Promotion',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'promotion_id'
+                'parameter_name' => 'object_id'
             ),
 
             // - User clicks on one of the promotions featured in promotion carousel (mall page)
@@ -5027,7 +5027,7 @@ return array(
                 'module_name' => 'Promotion',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'promotion_id'
+                'parameter_name' => 'object_id'
             ),
 
             // - User clicks on "Lucky draws" from mall sidebar menu Gotomalls
@@ -5055,7 +5055,7 @@ return array(
                 'module_name' => 'LuckyDraw',
                 'type' => 'click',
                 'object_type' => 'LuckyDraw',
-                'parameter_name' => 'lucky_draw_id'
+                'parameter_name' => 'object_id'
             ),
             // - User clicks on one of the lucky draw featured in lucky draw carousel (mall page)
             '55' => array(
@@ -5145,7 +5145,7 @@ return array(
                 'module_name' => 'Coupon',
                 'type' => 'click',
                 'object_type' => 'Coupon',
-                'parameter_name' => 'coupon_id'
+                'parameter_name' => 'object_id'
             ),
             // - User clicks on one of the coupons featured in coupon carousel (mall page)
             '65' => array(
@@ -5154,7 +5154,7 @@ return array(
                 'module_name' => 'Coupon',
                 'type' => 'click',
                 'object_type' => 'Coupon',
-                'parameter_name' => 'coupon_id'
+                'parameter_name' => 'object_id'
             ),
             // - User clicks on "Stores" from mall sidebar menu
             '66' => array(
@@ -5181,7 +5181,7 @@ return array(
                 'module_name' => 'Store',
                 'type' => 'click',
                 'object_type' => 'Tenant',
-                'parameter_name' => 'store_id'
+                'parameter_name' => 'object_id'
             ),
             // - User clicks on one of the stores featured in store carousel (mall page)
             '69' => array(
@@ -5190,7 +5190,7 @@ return array(
                 'module_name' => 'Store',
                 'type' => 'click',
                 'object_type' => 'Tenant',
-                'parameter_name' => 'store_id'
+                'parameter_name' => 'object_id'
             ),
             // - User clicks on mall sidebar menu
             '70' => array(
@@ -5208,7 +5208,7 @@ return array(
                 'module_name' => 'News',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'news_id'
+                'parameter_name' => 'object_id'
             ),
 
             // - User clicks on one of the promotion featured in mall carousel (top of mall page)
@@ -5218,7 +5218,7 @@ return array(
                 'module_name' => 'Promotion',
                 'type' => 'click',
                 'object_type' => 'News',
-                'parameter_name' => 'promotion_id'
+                'parameter_name' => 'object_id'
             ),
 
             // - User clicks on one of the coupon featured in mall carousel (top of mall page)
@@ -5228,7 +5228,7 @@ return array(
                 'module_name' => 'Coupon',
                 'type' => 'click',
                 'object_type' => 'Coupon',
-                'parameter_name' => 'coupon_id'
+                'parameter_name' => 'object_id'
             ),
             // - Click share button in detail page
             '74' => array(
@@ -5367,7 +5367,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'view',
                 'object_type' => 'Advert',
-                'parameter_name' => 'advert_id'
+                'parameter_name' => 'object_id'
             ),
             // - Click advertisement on banner.
             '89' => array(
@@ -5376,7 +5376,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Advert',
-                'parameter_name' => 'advert_id'
+                'parameter_name' => 'object_id'
             ),
             // - Click blog item on homepage Gotomalls
             '90' => array(
@@ -5430,7 +5430,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Partner',
-                'parameter_name' => 'partner_id'
+                'parameter_name' => 'object_id'
             ),
             // - User clicks on deeplink button (Get App) on partner info page.
             '96' => array(
@@ -5439,7 +5439,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Partner',
-                'parameter_name' => 'partner_id'
+                'parameter_name' => 'object_id'
             ),
             // - User clicks on button that redirect to our partner pre-filtered lists from partner info page.
             '97' => array(
@@ -5475,7 +5475,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Coupon',
-                'parameter_name' => 'coupon_id'
+                'parameter_name' => 'object_id'
             ),
             // - User click cancel on choose location popup after clicking use
             '101' => array(
@@ -5575,7 +5575,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Mall',
-                'parameter_name' => 'visited_mall_id'
+                'parameter_name' => 'object_id'
             ),
             // User clicks on "More->Language" and change the langauge
             '112' => array(
@@ -5584,7 +5584,7 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => 'Language',
-                'parameter_name' => null
+                'parameter_name' => 'object_id'
             ),
             // User clicks submit button on advertise form
             '113' => array(
@@ -5742,7 +5742,15 @@ return array(
                 'object_type' => 'Mall',
                 'parameter_name' => 'object_id'
             ),
-
+            // User views filter page
+            '130' => array(
+                'name' => 'view_filter_page',
+                'name_long' => 'View Filter Page',
+                'module_name' => 'Filter',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
@@ -6292,6 +6300,14 @@ return array(
                     'social_media_name' => 'Instagram',
                     'url' => 'https://www.instagram.com/gotomalls/',
                 ],
+                [
+                    'social_media_name' => 'Youtube',
+                    'url' => 'https://www.youtube.com/gotomallscom',
+                ],
+                [
+                    'social_media_name' => 'Linkedin',
+                    'url' => 'https://id.linkedin.com/company/gotomalls',
+                ],
             ],
             'singapore' => [
                 [
@@ -6305,6 +6321,14 @@ return array(
                 [
                     'social_media_name' => 'Instagram',
                     'url' => 'https://www.instagram.com/gotomalls/',
+                ],
+                [
+                    'social_media_name' => 'Youtube',
+                    'url' => 'https://www.youtube.com/gotomallscom',
+                ],
+                [
+                    'social_media_name' => 'Linkedin',
+                    'url' => 'https://id.linkedin.com/company/gotomalls',
                 ],
             ],
         ]
@@ -6419,5 +6443,9 @@ return array(
                 'post_export_subject' => 'Gotomalls Grab CSV File for Reward is Completed'
             ]
         ]
+    ],
+
+    'about_us' => [
+        'counter_file' => storage_path() . '/about_us_counter.json'
     ],
 );
