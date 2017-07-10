@@ -271,7 +271,7 @@ class CampaignShareMail
             // another link to resend the activation
             $job->delete();
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] Advertise with us mail; Status: FAIL; Code: %s; Message: %s',
+            $message = sprintf('[Job ID: `%s`] Campaign Share Mail; Status: FAIL; Code: %s; Message: %s',
                     $job->getJobId(),
                     $e->getCode(),
                     $e->getMessage());

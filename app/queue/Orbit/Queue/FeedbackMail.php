@@ -7,6 +7,7 @@
 use User;
 use Mail;
 use Config;
+use Orbit\Helper\Util\JobBurier;
 
 class FeedbackMail
 {
@@ -23,16 +24,30 @@ class FeedbackMail
      */
     public function fire($job, $data)
     {
-        // Get data information from the queue
-        $cs_email   = $data['cs_email'];
-        $user_email = $data['user_email'];
-        $feedback   = $data['feedback'];
-        $name       = $data['name'];
-        $email      = $data['email'];
+        try {
+            // Get data information from the queue
+            $cs_email   = $data['cs_email'];
+            $user_email = $data['user_email'];
+            $feedback   = $data['feedback'];
+            $name       = $data['name'];
+            $email      = $data['email'];
 
-        $this->sendFeedbackEmail($cs_email, $user_email, $feedback, $name, $email);
+            $this->sendFeedbackEmail($cs_email, $user_email, $feedback, $name, $email);
 
-        $job->delete();
+            $job->delete();
+        } catch (Exception $e) {
+            $message = sprintf('[Job ID: `%s`] Feedback Mail; Status: FAIL; Code: %s; Message: %s',
+                    $job->getJobId(),
+                    $e->getCode(),
+                    $e->getMessage());
+            Log::info($message);
+        }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
     }
 
     /**
