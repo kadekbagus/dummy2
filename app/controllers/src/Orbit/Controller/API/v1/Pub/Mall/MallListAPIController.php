@@ -361,10 +361,10 @@ class MallListAPIController extends PubControllerAPI
 
             if (OrbitInput::get('from_homepage', '') !== 'y') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                    $activityNotes = sprintf('Page viewed: View mall list');
+                    $activityNotes = sprintf('Page viewed: Mall list');
                     $activity->setUser($user)
-                        ->setActivityName('view_mall_list')
-                        ->setActivityNameLong('View mall list')
+                        ->setActivityName('view_malls_main_page')
+                        ->setActivityNameLong('View Malls Main Page')
                         ->setObject(null)
                         ->setModuleName('Mall')
                         ->setNotes($activityNotes)
