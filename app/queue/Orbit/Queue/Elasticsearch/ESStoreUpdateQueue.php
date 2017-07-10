@@ -8,6 +8,7 @@ use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use DB;
 use Tenant;
+use Advert;
 use BaseMerchant;
 use TotalObjectPageView;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
@@ -16,6 +17,7 @@ use Exception;
 use Log;
 use Queue;
 use Orbit\FakeJob;
+use Carbon\Carbon as Carbon;
 
 class ESStoreUpdateQueue
 {
@@ -196,8 +198,66 @@ class ESStoreUpdateQueue
                 $translations[] = $trans;
             }
 
+            //Get now time
+            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+
+            $featuredGtmScore = 0;
+            $preferredGtmScore = 0;
+            $featuredGtmType = '';
+            $preferredGtmType = '';
+
             $tenantDetails = array();
             foreach ($store as $_store) {
+
+                $advertData = Advert::select('adverts.advert_id', 'advert_placements.placement_type', 'advert_placements.placement_order', 'advert_locations.location_id')
+                                    ->join('advert_link_types', 'adverts.advert_link_type_id', '=', 'advert_link_types.advert_link_type_id')
+                                    ->join('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
+                                    ->leftJoin('advert_locations', 'advert_locations.advert_id', '=', 'adverts.advert_id')
+                                    ->whereIn('advert_placements.placement_type', ['preferred_list_regular', 'preferred_list_large', 'featured_list'])
+                                    ->where('advert_link_types.advert_type', 'store')
+                                    ->where('adverts.status', 'active')
+                                    ->where('adverts.end_date', '>=', $dateTime)
+                                    ->where('adverts.link_object_id', $_store->merchant_id)
+                                    ->get();
+
+
+                $featuredMallScore = 0;
+                $preferredMallScore = 0;
+                $featuredMallType = '';
+                $preferredMallType = '';
+
+                foreach ($advertData as $adverts) {
+                    if ($adverts->location_id === '0') {
+                        // gtm
+                        if ($adverts->placement_type === 'featured_list') {
+                            if ($adverts->placement_order > $featuredGtmScore) {
+                                $featuredGtmScore = $adverts->placement_order;
+                                $featuredGtmType = $adverts->placement_type;
+                            }
+                        } else {
+                            if ($adverts->placement_order > $preferredGtmScore) {
+                                $preferredGtmScore = $adverts->placement_order;
+                                $preferredGtmType = $adverts->placement_type;
+                            }
+                        }
+                    } else {
+                        // mall
+                        if ($adverts->placement_type === 'featured_list') {
+                            if ($adverts->placement_order > $featuredGtmScore) {
+                                $featuredGtmScore = $adverts->placement_order;
+                                $featuredMallType = $adverts->placement_type;
+                            }
+                        } else {
+                            if ($adverts->placement_order > $preferredMallScore) {
+                                $preferredMallScore = $adverts->placement_order;
+                                $preferredMallType = $adverts->placement_type;
+                            }
+                        }
+                    }
+                }
 
                 $advertIds = array();
                 foreach ($_store->adverts as $advert) {
@@ -206,23 +266,27 @@ class ESStoreUpdateQueue
 
                $tenantDetail = array(
                     "merchant_id" => $_store->merchant_id,
-                    "mall_id" => $_store->mall_id,
-                    "mall_name" => $_store->mall_name,
-                    "city" => $_store->city,
-                    "province" => $_store->province,
-                    "country" => $_store->country,
-                    "advert_ids" => $advertIds,
-                    "address" => $_store->address,
-                    "position" => [
+                    "mall_id"     => $_store->mall_id,
+                    "mall_name"   => $_store->mall_name,
+                    "city"        => $_store->city,
+                    "province"    => $_store->province,
+                    "country"     => $_store->country,
+                    "advert_ids"  => $advertIds,
+                    "address"     => $_store->address,
+                    "position"    => [
                         'lon' => $_store->longitude,
                         'lat' => $_store->latitude
                     ],
-                    "floor" => $_store->floor,
-                    "unit"  => $_store->unit,
-                    "operating_hours" => $_store->operating_hours,
-                    "logo" => $_store->path,
-                    "logo_cdn" => $_store->cdn_url,
-                    "url" => $_store->url
+                    "floor"                => $_store->floor,
+                    "unit"                 => $_store->unit,
+                    "operating_hours"      => $_store->operating_hours,
+                    "logo"                 => $_store->path,
+                    "logo_cdn"             => $_store->cdn_url,
+                    "url"                  => $_store->url,
+                    'featured_mall_score'  => $featuredMallScore,
+                    'preffered_mall_score' => $preferredMallScore,
+                    'featured_mall_type'   => $featuredMallType,
+                    'preffered_mall_type'  => $preferredMallType,
                 );
 
                 $tenantDetails[] = $tenantDetail;
@@ -255,24 +319,28 @@ class ESStoreUpdateQueue
             }
 
             $body = [
-                'merchant_id' => $store[0]->merchant_id,
-                'name' => $store[0]->name,
-                'description' => $store[0]->description,
-                'phone' => $store[0]->phone,
-                'logo' => $store[0]->path,
-                'logo_cdn' => $store[0]->cdn_url,
-                'object_type' => $store[0]->object_type,
-                'default_lang' => $store[0]->mobile_default_language,
-                'category' => $categoryIds,
-                'keywords' => $keywords,
-                'partner_ids' => $partnerIds,
-                'created_at' => date('Y-m-d', strtotime($store[0]->created_at)) . 'T' . date('H:i:s', strtotime($store[0]->created_at)) . 'Z',
-                'updated_at' => date('Y-m-d', strtotime($store[0]->updated_at)) . 'T' . date('H:i:s', strtotime($store[0]->updated_at)) . 'Z',
+                'merchant_id'         => $store[0]->merchant_id,
+                'name'                => $store[0]->name,
+                'description'         => $store[0]->description,
+                'phone'               => $store[0]->phone,
+                'logo'                => $store[0]->path,
+                'logo_cdn'            => $store[0]->cdn_url,
+                'object_type'         => $store[0]->object_type,
+                'default_lang'        => $store[0]->mobile_default_language,
+                'category'            => $categoryIds,
+                'keywords'            => $keywords,
+                'partner_ids'         => $partnerIds,
+                'created_at'          => date('Y-m-d', strtotime($store[0]->created_at)) . 'T' . date('H:i:s', strtotime($store[0]->created_at)) . 'Z',
+                'updated_at'          => date('Y-m-d', strtotime($store[0]->updated_at)) . 'T' . date('H:i:s', strtotime($store[0]->updated_at)) . 'Z',
                 'tenant_detail_count' => count($store),
-                'translation' => $translations,
-                'tenant_detail' => $tenantDetails,
-                'gtm_page_views' => $gtmPageViews,
-                'mall_page_views' => $mallPageViews
+                'translation'         => $translations,
+                'tenant_detail'       => $tenantDetails,
+                'gtm_page_views'      => $gtmPageViews,
+                'mall_page_views'     => $mallPageViews,
+                'featured_gtm_score'  => $featuredGtmScore,
+                'preferred_gtm_score' => $preferredGtmScore,
+                'featured_gtm_type'   => $featuredGtmType,
+                'preferred_gtm_type'  => $preferredGtmType,
             ];
 
             $params['body'] = $body;

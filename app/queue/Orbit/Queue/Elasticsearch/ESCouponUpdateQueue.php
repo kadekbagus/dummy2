@@ -8,12 +8,14 @@ use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use DB;
 use Coupon;
+use Advert;
 use IssuedCoupon;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 use Orbit\FakeJob;
 use Log;
+use Carbon\Carbon as Carbon;
 
 class ESCouponUpdateQueue
 {
@@ -117,6 +119,63 @@ class ESCouponUpdateQueue
                 'id' => $coupon->promotion_id,
                 'body' => []
             ];
+
+            //Get now time
+            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+
+            $advertData = Advert::select('adverts.advert_id', 'advert_placements.placement_type', 'advert_placements.placement_order', 'advert_locations.location_id')
+                                ->join('advert_link_types', 'adverts.advert_link_type_id', '=', 'advert_link_types.advert_link_type_id')
+                                ->join('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
+                                ->leftJoin('advert_locations', 'advert_locations.advert_id', '=', 'adverts.advert_id')
+                                ->whereIn('advert_placements.placement_type', ['preferred_list_regular', 'preferred_list_large', 'featured_list'])
+                                ->where('advert_link_types.advert_type', 'coupon')
+                                ->where('adverts.status', 'active')
+                                ->where('adverts.end_date', '>=', $dateTime)
+                                ->where('adverts.link_object_id', $couponId)
+                                ->get();
+
+            $featuredGtmScore = 0;
+            $featuredMallScore = 0;
+            $preferredGtmScore = 0;
+            $preferredMallScore = 0;
+
+            $featuredGtmType = '';
+            $featuredMallType = '';
+            $preferredGtmType = '';
+            $preferredMallType = '';
+
+            foreach ($advertData as $adverts) {
+                if ($adverts->location_id === '0') {
+                    // gtm
+                    if ($adverts->placement_type === 'featured_list') {
+                        if ($adverts->placement_order > $featuredGtmScore) {
+                            $featuredGtmScore = $adverts->placement_order;
+                            $featuredGtmType = $adverts->placement_type;
+                        }
+                    } else {
+                        if ($adverts->placement_order > $preferredGtmScore) {
+                            $preferredGtmScore = $adverts->placement_order;
+                            $preferredGtmType = $adverts->placement_type;
+                        }
+                    }
+                } else {
+                    // mall
+                    if ($adverts->placement_type === 'featured_list') {
+                        if ($adverts->placement_order > $featuredGtmScore) {
+                            $featuredGtmScore = $adverts->placement_order;
+                            $featuredMallType = $adverts->placement_type;
+                        }
+                    } else {
+                        if ($adverts->placement_order > $preferredMallScore) {
+                            $preferredMallScore = $adverts->placement_order;
+                            $preferredMallType = $adverts->placement_type;
+                        }
+                    }
+                }
+            }
 
             $categoryIds = array();
             foreach ($coupon->campaignLocations as $campaignLocation) {
@@ -280,30 +339,38 @@ class ESCouponUpdateQueue
             }
 
             $body = [
-                'promotion_id'    => $coupon->promotion_id,
-                'name'            => $coupon->promotion_name,
-                'description'     => $coupon->description,
-                'object_type'     => 'coupon',
-                'begin_date'      => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
-                'end_date'        => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
-                'updated_at'      => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
-                'coupon_validity_in_date'      => date('Y-m-d', strtotime($coupon->coupon_validity_in_date)) . 'T' . date('H:i:s', strtotime($coupon->coupon_validity_in_date)) . 'Z',
-                'status'          => $coupon->status,
-                'available'       => $available,
-                'campaign_status' => $coupon->campaign_status,
-                'is_all_gender'   => $coupon->is_all_gender,
-                'is_all_age'      => $coupon->is_all_age,
-                'default_lang'    => $coupon->mobile_default_language,
-                'category_ids'    => $categoryIds,
-                'translation'     => $translations,
-                'keywords'        => $keywords,
-                'partner_ids'     => $partnerIds,
-                'partner_tokens'  => $partnerTokens,
-                'advert_ids'      => $advertIds,
-                'link_to_tenant'  => $linkToTenants,
-                'is_exclusive'    => ! empty($coupon->is_exclusive) ? $coupon->is_exclusive : 'N',
-                'gtm_page_views'   => $total_view_on_gtm,
-                'mall_page_views'  => $total_view_on_mall,
+                'promotion_id'            => $coupon->promotion_id,
+                'name'                    => $coupon->promotion_name,
+                'description'             => $coupon->description,
+                'object_type'             => 'coupon',
+                'begin_date'              => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
+                'end_date'                => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
+                'updated_at'              => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
+                'coupon_validity_in_date' => date('Y-m-d', strtotime($coupon->coupon_validity_in_date)) . 'T' . date('H:i:s', strtotime($coupon->coupon_validity_in_date)) . 'Z',
+                'status'                  => $coupon->status,
+                'available'               => $available,
+                'campaign_status'         => $coupon->campaign_status,
+                'is_all_gender'           => $coupon->is_all_gender,
+                'is_all_age'              => $coupon->is_all_age,
+                'default_lang'            => $coupon->mobile_default_language,
+                'category_ids'            => $categoryIds,
+                'translation'             => $translations,
+                'keywords'                => $keywords,
+                'partner_ids'             => $partnerIds,
+                'partner_tokens'          => $partnerTokens,
+                'advert_ids'              => $advertIds,
+                'link_to_tenant'          => $linkToTenants,
+                'is_exclusive'            => ! empty($coupon->is_exclusive) ? $coupon->is_exclusive : 'N',
+                'gtm_page_views'          => $total_view_on_gtm,
+                'mall_page_views'         => $total_view_on_mall,
+                'featured_gtm_score'      => $featuredGtmScore,
+                'featured_mall_score'     => $featuredMallScore,
+                'preferred_gtm_score'     => $preferredGtmScore,
+                'preffered_mall_score'    => $preferredMallScore,
+                'featured_gtm_type'       => $featuredGtmType,
+                'featured_mall_type'      => $featuredMallType,
+                'preferred_gtm_type'      => $preferredGtmType,
+                'preffered_mall_type'     => $preferredMallType,
             ];
 
             $body = array_merge($body, $translationBody);
