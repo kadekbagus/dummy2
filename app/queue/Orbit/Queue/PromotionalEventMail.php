@@ -16,6 +16,9 @@ use App;
 use Lang;
 use UserReward;
 use Orbit\Helper\Util\Parsedown;
+use Log;
+use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class PromotionalEventMail
 {
@@ -28,95 +31,109 @@ class PromotionalEventMail
      */
     public function fire($job, $data)
     {
-        $prefix = DB::getTablePrefix();
+        try {
+            $prefix = DB::getTablePrefix();
 
-        $valid_language = Language::where('status', '=', 'active')
-                            ->where('name', $data['languageId'])
-                            ->first();
-
-        $langParam = '';
-        if (! empty($data['languageId'])) {
-            App::setLocale($data['languageId']);
-            $langParam = '&lang=' . $data['languageId'];
-        }
-
-        $user = User::where('user_id','=', $data['userId'])
-                    ->first();
-
-        $campaign =  News::select('reward_details.reward_detail_id',
-                            DB::raw("
-                            CASE WHEN ({$prefix}news_translations.news_name = ''
-                                    or {$prefix}news_translations.news_name is null)
-                                THEN default_translation.news_name
-                                ELSE {$prefix}news_translations.news_name END as news_name,
-                            CASE WHEN ({$prefix}reward_detail_translations.email_content = ''
-                                    or {$prefix}reward_detail_translations.email_content is null)
-                                THEN reward_default_translation.email_content
-                                ELSE {$prefix}reward_detail_translations.email_content
-                                END as email_content"))
-                    ->join('reward_details', 'reward_details.object_id', '=', 'news.news_id')
-                    ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
-                    ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
-                    ->leftJoin('news_translations', function ($q) use ($valid_language) {
-                        $q->on('news_translations.news_id', '=', 'news.news_id')
-                          ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
-                    })
-                    ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
-                        $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
-                          ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
-                    })
-                    ->leftJoin('reward_detail_translations', function ($q) use ($valid_language) {
-                        $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
-                          ->on('reward_detail_translations.language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
-                    })
-                    ->leftJoin('reward_detail_translations as reward_default_translation', function ($q) use ($valid_language) {
-                        $q->on(DB::raw("reward_default_translation.reward_detail_id"), '=', 'reward_details.reward_detail_id')
-                          ->on(DB::raw("reward_default_translation.language_id"), '=', 'languages.language_id');
-                    })
-                    ->where('news.news_id', $data['campaignId'])
-                    ->where('news.is_having_reward', '=', 'Y')
-                    ->first();
-
-        $userReward = UserReward::where('user_id', $data['userId'])
-                                ->where('reward_detail_id', $campaign->reward_detail_id)
-                                ->where('status', '!=', 'expired')
+            $valid_language = Language::where('status', '=', 'active')
+                                ->where('name', $data['languageId'])
                                 ->first();
 
-        $user_full_name = $user->getFullName();
+            $langParam = '';
+            if (! empty($data['languageId'])) {
+                App::setLocale($data['languageId']);
+                $langParam = '&lang=' . $data['languageId'];
+            }
 
-        $arr_search = ['{{USER_FULL_NAME}}', '{{USER_EMAIL}}', '{{USER_CODE}}'];
-        $arr_replace = [$user_full_name, $user->user_email, $userReward->reward_code];
-        $message_content = str_replace($arr_search, $arr_replace, $campaign->email_content);
+            $user = User::where('user_id','=', $data['userId'])
+                        ->first();
 
-        $parsedown = new Parsedown(); //markdown
-        $message = $parsedown->text($message_content);
+            $campaign =  News::select('reward_details.reward_detail_id',
+                                DB::raw("
+                                CASE WHEN ({$prefix}news_translations.news_name = ''
+                                        or {$prefix}news_translations.news_name is null)
+                                    THEN default_translation.news_name
+                                    ELSE {$prefix}news_translations.news_name END as news_name,
+                                CASE WHEN ({$prefix}reward_detail_translations.email_content = ''
+                                        or {$prefix}reward_detail_translations.email_content is null)
+                                    THEN reward_default_translation.email_content
+                                    ELSE {$prefix}reward_detail_translations.email_content
+                                    END as email_content"))
+                        ->join('reward_details', 'reward_details.object_id', '=', 'news.news_id')
+                        ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                        ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+                        ->leftJoin('news_translations', function ($q) use ($valid_language) {
+                            $q->on('news_translations.news_id', '=', 'news.news_id')
+                              ->on('news_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
+                        ->leftJoin('news_translations as default_translation', function ($q) use ($prefix){
+                            $q->on(DB::raw("default_translation.news_id"), '=', 'news.news_id')
+                              ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
+                        })
+                        ->leftJoin('reward_detail_translations', function ($q) use ($valid_language) {
+                            $q->on('reward_detail_translations.reward_detail_id', '=', 'reward_details.reward_detail_id')
+                              ->on('reward_detail_translations.language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                        })
+                        ->leftJoin('reward_detail_translations as reward_default_translation', function ($q) use ($valid_language) {
+                            $q->on(DB::raw("reward_default_translation.reward_detail_id"), '=', 'reward_details.reward_detail_id')
+                              ->on(DB::raw("reward_default_translation.language_id"), '=', 'languages.language_id');
+                        })
+                        ->where('news.news_id', $data['campaignId'])
+                        ->where('news.is_having_reward', '=', 'Y')
+                        ->first();
 
-        $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['languageId'];
+            $userReward = UserReward::where('user_id', $data['userId'])
+                                    ->where('reward_detail_id', $campaign->reward_detail_id)
+                                    ->where('status', '!=', 'expired')
+                                    ->first();
 
-        $dataView['message1'] = $message;
-        $dataView['email'] = $user->user_email;
-        $dataView['campaignName'] = $campaign->news_name;
-        $dataView['linkMalls']      = sprintf($baseLinkUrl, 'malls');
-        $dataView['linkStores']     = sprintf($baseLinkUrl, 'stores');
-        $dataView['linkPromotions'] = sprintf($baseLinkUrl, 'promotions');
-        $dataView['linkCoupons']    = sprintf($baseLinkUrl, 'coupons');
-        $dataView['linkEvents']     = sprintf($baseLinkUrl, 'events');
-        $dataView['labelMalls'] = Lang::get('email.campaign_share.label_malls');
-        $dataView['labelStores'] = Lang::get('email.campaign_share.label_stores');
-        $dataView['labelPromotions'] = Lang::get('email.campaign_share.label_promotions');
-        $dataView['labelCoupons'] = Lang::get('email.campaign_share.label_coupons');
-        $dataView['labelEvents'] = Lang::get('email.campaign_share.label_events');
+            $user_full_name = $user->getFullName();
 
-        $mailViews = array(
-                    'html' => 'emails.promotional-event.promotional-event-html',
-                    'text' => 'emails.promotional-event.promotional-event-text'
-        );
+            $arr_search = ['{{USER_FULL_NAME}}', '{{USER_EMAIL}}', '{{USER_CODE}}'];
+            $arr_replace = [$user_full_name, $user->user_email, $userReward->reward_code];
+            $message_content = str_replace($arr_search, $arr_replace, $campaign->email_content);
 
-        $this->sendPromotionalEventEmail($mailViews, $dataView);
+            $parsedown = new Parsedown(); //markdown
+            $message = $parsedown->text($message_content);
 
-        // Don't care if the job success or not we will provide user
-        // another link to resend the activation
-        $job->delete();
+            $baseLinkUrl = Config::get('app.url') . '/?utm_source=gtm-share&utm_medium=email&utm_content=menulink#!/%s?lang=' . $data['languageId'];
+
+            $dataView['message1'] = $message;
+            $dataView['email'] = $user->user_email;
+            $dataView['campaignName'] = $campaign->news_name;
+            $dataView['linkMalls']      = sprintf($baseLinkUrl, 'malls');
+            $dataView['linkStores']     = sprintf($baseLinkUrl, 'stores');
+            $dataView['linkPromotions'] = sprintf($baseLinkUrl, 'promotions');
+            $dataView['linkCoupons']    = sprintf($baseLinkUrl, 'coupons');
+            $dataView['linkEvents']     = sprintf($baseLinkUrl, 'events');
+            $dataView['labelMalls'] = Lang::get('email.campaign_share.label_malls');
+            $dataView['labelStores'] = Lang::get('email.campaign_share.label_stores');
+            $dataView['labelPromotions'] = Lang::get('email.campaign_share.label_promotions');
+            $dataView['labelCoupons'] = Lang::get('email.campaign_share.label_coupons');
+            $dataView['labelEvents'] = Lang::get('email.campaign_share.label_events');
+
+            $mailViews = array(
+                        'html' => 'emails.promotional-event.promotional-event-html',
+                        'text' => 'emails.promotional-event.promotional-event-text'
+            );
+
+            $this->sendPromotionalEventEmail($mailViews, $dataView);
+
+            // Don't care if the job success or not we will provide user
+            // another link to resend the activation
+            $job->delete();
+        } catch (Exception $e) {
+            $message = sprintf('[Job ID: `%s`] Promotional Event Mail; Status: FAIL; Code: %s; Message: %s',
+                    $job->getJobId(),
+                    $e->getCode(),
+                    $e->getMessage());
+            Log::info($message);
+        }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
     }
 
     /**
