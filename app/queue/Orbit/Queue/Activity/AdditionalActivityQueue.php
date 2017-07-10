@@ -88,6 +88,12 @@ class AdditionalActivityQueue
                 'message' => $e->getMessage()
             ];
         }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
     }
 
     /**
