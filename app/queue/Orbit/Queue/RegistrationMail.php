@@ -15,6 +15,8 @@ use Language;
 use App;
 use Lang;
 use Orbit\Helper\Util\JobBurier;
+use Exception;
+use Log;
 
 class RegistrationMail
 {
@@ -59,56 +61,87 @@ class RegistrationMail
             ];
         }
 
-        $email = $user->user_email;
+        try {
+            $email = $user->user_email;
 
-        // Token expiration, fallback to 30 days
-        $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
+            // Token expiration, fallback to 30 days
+            $expireInDays = Config::get('orbit.registration.mobile.activation_expire', 30);
 
-        $metadata = NULL;
-        $toUrl = '';
-        // fill metadata if any
-        if (isset($data['redirect_to_url']) && ! is_null($data['redirect_to_url'])) {
-            $metadata['redirect_to_url'] = $data['redirect_to_url'];
-            $toUrl = $data['redirect_to_url'];
+            $metadata = NULL;
+            $toUrl = '';
+            // fill metadata if any
+            if (isset($data['redirect_to_url']) && ! is_null($data['redirect_to_url'])) {
+                $metadata['redirect_to_url'] = $data['redirect_to_url'];
+                $toUrl = $data['redirect_to_url'];
+            }
+            // json encode metadata if any
+            if (! empty($metadata)) {
+                $metadata = json_encode($metadata);
+            }
+
+            // Token Settings
+            $token = new Token();
+            $token->token_name = 'user_registration_mobile';
+            $token->token_value = $token->generateToken($user->user_email);
+            $token->status = 'active';
+            $token->email = $user->user_email;
+            $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
+            $token->ip_address = $user->user_ip;
+            $token->user_id = $userId;
+            $token->metadata = $metadata;
+            $token->save();
+
+            switch ($data['mode']) {
+                case 'customer_portal':
+                    $mallName = '-Unknown-';
+                    $retailer = Mall::find($data['merchant_id']);
+                    if (is_object($retailer)) {
+                        $mallName = $retailer->name;
+                    }
+                    Config::get('orbit.registration.mobile.activation_base_url');
+                    break;
+
+                case 'gotomalls':
+                default:
+                    $mallName = 'GotoMalls.com';
+                    $baseUrl = Config::get('orbit.registration.mobile.gotomalls_activation_base_url');
+            }
+
+            $this->sendActivationEmail($user, $token, $data, $mallName, $baseUrl, $toUrl);
+
+            $message = sprintf('[Job ID: `%s`] Registration Email; Status: OK; Type: Activation Email; User ID: %s; User Email: %s; Token: %s',
+                                $job->getJobId(),
+                                $user->user_id,
+                                $user->user_email,
+                                $token->token_value);
+            Log::info($message);
+
+            // Don't care if the job success or not we will provide user
+            // another link to resend the activation
+            $job->delete();
+
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
+        } catch (Exception $e) {
+            $message = sprintf('[Job ID: `%s`] Registration Email; Status: OK; Type: Activation Email; User ID: %s',
+                                $job->getJobId(),
+                                $data['user_id']);
+
+            Log::info($message);
         }
-        // json encode metadata if any
-        if (! empty($metadata)) {
-            $metadata = json_encode($metadata);
-        }
 
-        // Token Settings
-        $token = new Token();
-        $token->token_name = 'user_registration_mobile';
-        $token->token_value = $token->generateToken($user->user_email);
-        $token->status = 'active';
-        $token->email = $user->user_email;
-        $token->expire = date('Y-m-d H:i:s', strtotime('+' . $expireInDays . ' days'));
-        $token->ip_address = $user->user_ip;
-        $token->user_id = $userId;
-        $token->metadata = $metadata;
-        $token->save();
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
 
-        switch ($data['mode']) {
-            case 'customer_portal':
-                $mallName = '-Unknown-';
-                $retailer = Mall::find($data['merchant_id']);
-                if (is_object($retailer)) {
-                    $mallName = $retailer->name;
-                }
-                Config::get('orbit.registration.mobile.activation_base_url');
-                break;
-
-            case 'gotomalls':
-            default:
-                $mallName = 'GotoMalls.com';
-                $baseUrl = Config::get('orbit.registration.mobile.gotomalls_activation_base_url');
-        }
-
-        $this->sendActivationEmail($user, $token, $data, $mallName, $baseUrl, $toUrl);
-
-        // Don't care if the job success or not we will provide user
-        // another link to resend the activation
-        $job->delete();
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     /**
