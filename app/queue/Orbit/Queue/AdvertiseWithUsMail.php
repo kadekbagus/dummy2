@@ -8,6 +8,7 @@ use Mail;
 use Config;
 use Token;
 use DB;
+use Orbit\Helper\Util\JobBurier;
 
 class AdvertiseWithUsMail
 {
@@ -20,16 +21,30 @@ class AdvertiseWithUsMail
      */
     public function fire($job, $data)
     {
-        $mailviews = array(
-            'html' => 'emails.advertise-with-us-email.advertise-with-us-html',
-            'text' => 'emails.advertise-with-us-email.advertise-with-us-text'
-        );
+        try {
+            $mailviews = array(
+                'html' => 'emails.advertise-with-us-email.advertise-with-us-html',
+                'text' => 'emails.advertise-with-us-email.advertise-with-us-text'
+            );
 
-        $this->sendAdvertiseWithUsEmail($mailviews, $data);
+            $this->sendAdvertiseWithUsEmail($mailviews, $data);
 
-        // Don't care if the job success or not we will provide user
-        // another link to resend the activation
-        $job->delete();
+            // Don't care if the job success or not we will provide user
+            // another link to resend the activation
+            $job->delete();
+        } catch (Exception $e) {
+            $message = sprintf('[Job ID: `%s`] Advertise with us mail; Status: FAIL; Code: %s; Message: %s',
+                    $job->getJobId(),
+                    $e->getCode(),
+                    $e->getMessage());
+            Log::info($message);
+        }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
     }
 
     /**
