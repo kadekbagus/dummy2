@@ -7,7 +7,9 @@
 use User;
 use Mail;
 use Config;
+use Log;
 use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class FeedbackMail
 {

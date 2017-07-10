@@ -8,7 +8,9 @@ use Mail;
 use Config;
 use Token;
 use DB;
+use Log;
 use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class AdvertiseWithUsMail
 {

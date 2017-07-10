@@ -16,7 +16,9 @@ use DB;
 use Language;
 use Lang;
 use App;
+use Log;
 use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class LandingPageShareMail
 {

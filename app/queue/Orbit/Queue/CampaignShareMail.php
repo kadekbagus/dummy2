@@ -19,7 +19,9 @@ use Language;
 use Str;
 use App;
 use Lang;
+use Log;
 use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class CampaignShareMail
 {
