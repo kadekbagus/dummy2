@@ -31,9 +31,15 @@ class AdvertiseWithUsMail
 
             $this->sendAdvertiseWithUsEmail($mailviews, $data);
 
-            // Don't care if the job success or not we will provide user
-            // another link to resend the activation
+            $message = sprintf('[Job ID: `%s`] Advertise with us mail; Status: Success;', $job->getJobId());
+            Log::info($message);
+
             $job->delete();
+
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Advertise with us mail; Status: FAIL; Code: %s; Message: %s',
                     $job->getJobId(),
@@ -47,6 +53,11 @@ class AdvertiseWithUsMail
             // The queue driver does not support bury.
             $theJob->delete();
         })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     /**

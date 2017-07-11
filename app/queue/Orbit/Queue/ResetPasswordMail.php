@@ -73,9 +73,15 @@ class ResetPasswordMail
 
             $this->sendResetPasswordEmail($mailViews, $dataView);
 
-            // Don't care if the job success or not we will provide user
-            // another link to resend the activation
+            $message = sprintf('[Job ID: `%s`] Reset Password Mail; Status: Success;', $job->getJobId());
+            Log::info($message);
+
             $job->delete();
+
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Reset Password Mail; Status: FAIL; Code: %s; Message: %s',
                     $job->getJobId(),
@@ -89,6 +95,11 @@ class ResetPasswordMail
             // The queue driver does not support bury.
             $theJob->delete();
         })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     /**

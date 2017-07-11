@@ -94,6 +94,11 @@ class AdditionalActivityQueue
             // The queue driver does not support bury.
             $theJob->delete();
         })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     /**

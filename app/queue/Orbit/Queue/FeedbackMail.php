@@ -36,7 +36,15 @@ class FeedbackMail
 
             $this->sendFeedbackEmail($cs_email, $user_email, $feedback, $name, $email);
 
+            $message = sprintf('[Job ID: `%s`] Feedback Mail; Status: Success;', $job->getJobId());
+            Log::info($message);
+
             $job->delete();
+
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Feedback Mail; Status: FAIL; Code: %s; Message: %s',
                     $job->getJobId(),
@@ -50,6 +58,11 @@ class FeedbackMail
             // The queue driver does not support bury.
             $theJob->delete();
         })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     /**

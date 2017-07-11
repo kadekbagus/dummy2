@@ -29,7 +29,9 @@ use Event;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Queue;
 use Orbit\FakeJob;
+use Log;
 use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class StoreSynchronization
 {
@@ -57,10 +59,6 @@ class StoreSynchronization
                 $this->syncStore($data, 'merchant', $job);
                 break;
         }
-
-        // Don't care if the job success or not we will provide user
-        // another link to resend the activation
-        $job->delete();
     }
 
     protected function quote($arg)
@@ -395,6 +393,16 @@ class StoreSynchronization
             }
 
             Event::fire('orbit.basestore.sync.complete', $newSync);
+
+            $message = sprintf('[Job ID: `%s`] Store synchronization; Status: Success;', $job->getJobId());
+            Log::info($message);
+
+            $job->delete();
+
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
         } catch (InvalidArgsException $e) {
             \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
             DB::rollBack();
@@ -411,6 +419,11 @@ class StoreSynchronization
             // The queue driver does not support bury.
             $theJob->delete();
         })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     protected function updateMedia($type, $data, $store_id) {
