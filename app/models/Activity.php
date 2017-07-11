@@ -9,6 +9,7 @@ use DominoPOS\OrbitSession\SessionConfig;
 use DominoPOS\OrbitSession\Session;
 use Orbit\Helper\Session\AppOriginProcessor;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Orbit\Helper\Util\UserAgent;
 
 class Activity extends Eloquent
 {
@@ -811,6 +812,15 @@ class Activity extends Eloquent
      */
     public function save(array $options = array())
     {
+        // skip activity save for crawler bots
+        $fallbackUARules = ['browser' => [], 'platform' => [], 'device_model' => [], 'bot_crawler' => []];
+        $detectUA = new UserAgent();
+        $detectUA->setRules(Config::get('orbit.user_agent_rules', $fallbackUARules));
+        $detectUA->setUserAgent($this->user_agent);
+        if ($detectUA->isBotCrawler()) {
+            return;
+        }
+
         if (Config::get('memory:do_not_save_activity', FALSE)) {
             return;
         }

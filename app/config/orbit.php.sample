@@ -5951,6 +5951,20 @@ return array(
         // Returning the device model
         'device_model' => [
             'Bot' => '\bSogou\b|Baiduspider|DuckDuckBot|Googlebot|facebookexternalhit|AdsBot-Google|Google Keyword Suggestion|Facebot|YandexBot|bingbot|ia_archiver|AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|YandexImages|TurnitinBot|Pingdom|Googlebot-Mobile|AdsBot-Google-Mobile|YahooSeeker/M1A1-R2D2',
+        ],
+
+        'bot_crawler' => [
+            'GoogleBot' => 'GoogleBot/.*bot\.html|Google Keyword Suggestion|AdsBot-Google',
+            'BingBot' => 'bingbot',
+            'Slurp (Yahoo Bot)' => 'Slurp',
+            'DuckDuckBot' => 'DuckDuckBot',
+            'Baiduspider' => 'Baiduspider',
+            'YandexBot' => 'YandexBot',
+            'SogouBot' => '\bSogou\b',
+            'Exabot' => '\bExabot\b',
+            'FacebookBot' => 'facebot|facebookexternalhit',
+            'AlexaBot' => 'ia_archiver',
+            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2',
         ]
     ],
 

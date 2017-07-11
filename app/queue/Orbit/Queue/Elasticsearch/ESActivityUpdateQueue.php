@@ -75,7 +75,7 @@ class ESActivityUpdateQueue
 
         // This one used if the config is empty so the comparison
         // of user agent is not fail
-        $fallbackUARules = ['browser' => [], 'platform' => [], 'device_model' => []];
+        $fallbackUARules = ['browser' => [], 'platform' => [], 'device_model' => [], 'bot_crawler' => []];
 
         $detect = new UserAgent();
         $detect->setRules(Config::get('orbit.user_agent_rules', $fallbackUARules));
