@@ -116,6 +116,23 @@ class UserAgent extends MobileDetect
     }
 
     /**
+     * Check if it is crawler bot, return true if it is bot
+     *
+     * @param  string $userAgent
+     * @return boolean
+     */
+    public function isBotCrawler($userAgent = null)
+    {
+        $isBot = $this->findDetectionRulesAgainstUA($this->rules['bot_crawler'], $userAgent);
+
+        if ($isBot !== false) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Add new custom rules to the object.
      *
      * @string $ruleType One of 'browser', 'platform', 'device_model'
