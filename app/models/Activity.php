@@ -9,6 +9,7 @@ use DominoPOS\OrbitSession\SessionConfig;
 use DominoPOS\OrbitSession\Session;
 use Orbit\Helper\Session\AppOriginProcessor;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Orbit\Helper\Util\UserAgent;
 
 class Activity extends Eloquent
 {
