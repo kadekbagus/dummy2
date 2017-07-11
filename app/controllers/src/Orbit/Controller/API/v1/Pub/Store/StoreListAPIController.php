@@ -382,6 +382,7 @@ class StoreListAPIController extends PubControllerAPI
             ];
 
             if ($withCache) {
+                $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
                 $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
                     return $client->search($esParam);
                 });
