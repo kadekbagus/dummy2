@@ -25,7 +25,9 @@ use Report\RewardPOIReportPrinterController;
 use Report\RewardPostIntegrationReportPrinterController;
 use Report\RewardUniqueRedemptionCodeReportPrinterController;
 use Mail;
+use Log;
 use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class RewardExportQueue
 {
@@ -291,25 +293,37 @@ class RewardExportQueue
             $this->debug($message . "\n");
             \Log::info($message);
 
+            $job->delete();
+
             return [
                 'status' => 'ok',
                 'message' => $message
             ];
 
         } catch (InvalidArgsException $e) {
-            \Log::error('*** Reward export error, messge: ' . $e->getMessage() . '***');
+            $message = '*** Reward export error, messge: ' . $e->getMessage() . '***';
+            \Log::error($message);
             DB::rollBack();
         } catch (QueryException $e) {
-            \Log::error('*** Reward export error, messge: ' . $e->getMessage() . '***');
+            $message = '*** Reward export error, messge: ' . $e->getMessage() . '***';
+            \Log::error($message);
             DB::rollBack();
         } catch (Exception $e) {
-            \Log::error('*** Reward export error, messge: ' . $e->getMessage() . '***');
+            $message = '*** Reward export error, messge: ' . $e->getMessage() . '***';
+            \Log::error($message);
             DB::rollBack();
         }
 
-        // Don't care if the job success or not we will provide user
-        // another link to resend the activation
-        $job->delete();
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     protected function quote($arg)
