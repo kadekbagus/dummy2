@@ -21,7 +21,6 @@ use DB;
 use Validator;
 use Language;
 use Activity;
-use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
@@ -627,20 +626,6 @@ class StoreListAPIController extends PubControllerAPI
                 $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];
                 $listOfRec[] = $data;
-            }
-
-            // record GTM search activity
-            if ($searchFlag) {
-                $parameters = [
-                    'displayName' => 'Store',
-                    'keywords' => OrbitInput::get('keyword', NULL),
-                    'categories' => OrbitInput::get('category_id', NULL),
-                    'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => $sort_by,
-                    'partner' => OrbitInput::get('partner_id', NULL)
-                ];
-
-                GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
             // frontend need the mall name

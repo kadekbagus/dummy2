@@ -26,7 +26,6 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 use stdClass;
-use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use \Carbon\Carbon as Carbon;
@@ -642,20 +641,6 @@ class PromotionListAPIController extends PubControllerAPI
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
-            }
-
-            // record GTM search activity
-            if ($searchFlag) {
-                $parameters = [
-                    'displayName' => 'Coupon',
-                    'keywords' => OrbitInput::get('keyword', NULL),
-                    'categories' => OrbitInput::get('category_id', NULL),
-                    'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name'),
-                    'partner' => OrbitInput::get('partner_id', NULL)
-                ];
-
-                GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
             // frontend need the mall name

@@ -26,7 +26,6 @@ use Mall;
 use Advert;
 use Lang;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
-use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Database\Cache as OrbitDBCache;

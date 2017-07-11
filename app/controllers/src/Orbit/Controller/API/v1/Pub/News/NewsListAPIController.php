@@ -26,7 +26,6 @@ use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
-use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\SimpleCache;
@@ -648,20 +647,6 @@ class NewsListAPIController extends PubControllerAPI
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
-            }
-
-            // record GTM search activity
-            if ($searchFlag) {
-                $parameters = [
-                    'displayName' => 'News',
-                    'keywords' => OrbitInput::get('keyword', NULL),
-                    'categories' => OrbitInput::get('category_id', NULL),
-                    'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name'),
-                    'partner' => OrbitInput::get('partner_id', NULL)
-                ];
-
-                GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
             // frontend need the mall name
