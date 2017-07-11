@@ -29,6 +29,9 @@ use Event;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Queue;
 use Orbit\FakeJob;
+use Log;
+use Orbit\Helper\Util\JobBurier;
+use Exception;
 
 class StoreSynchronization
 {
@@ -49,17 +52,13 @@ class StoreSynchronization
         switch ($type) {
             default:
             case 'store':
-                $this->syncStore($data, 'store');
+                $this->syncStore($data, 'store', $job);
                 break;
 
             case 'merchant':
-                $this->syncStore($data, 'merchant');
+                $this->syncStore($data, 'merchant', $job);
                 break;
         }
-
-        // Don't care if the job success or not we will provide user
-        // another link to resend the activation
-        $job->delete();
     }
 
     protected function quote($arg)
@@ -67,7 +66,7 @@ class StoreSynchronization
         return DB::connection()->getPdo()->quote($arg);
     }
 
-    protected function syncStore($data, $type) {
+    protected function syncStore($data, $type, $job) {
         try {
             $prefix = DB::getTablePrefix();
             $sync_data = $data['sync_data'];
@@ -394,16 +393,40 @@ class StoreSynchronization
             }
 
             Event::fire('orbit.basestore.sync.complete', $newSync);
+
+            $message = sprintf('[Job ID: `%s`] Store synchronization; Status: Success;', $job->getJobId());
+            Log::info($message);
+
+            $job->delete();
+
+            return [
+                'status' => 'ok',
+                'message' => $message
+            ];
         } catch (InvalidArgsException $e) {
-            \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
+            $message = '*** Store synchronization error, messge: ' . $e->getMessage() . '***';
+            \Log::error($message);
             DB::rollBack();
         } catch (QueryException $e) {
-            \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
+            $message = '*** Store synchronization error, messge: ' . $e->getMessage() . '***';
+            \Log::error($message);
             DB::rollBack();
         } catch (Exception $e) {
-            \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
+            $message = '*** Store synchronization error, messge: ' . $e->getMessage() . '***';
+            \Log::error($message);
             DB::rollBack();
         }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     protected function updateMedia($type, $data, $store_id) {
