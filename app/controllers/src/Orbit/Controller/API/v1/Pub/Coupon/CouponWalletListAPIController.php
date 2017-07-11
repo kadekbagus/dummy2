@@ -146,7 +146,21 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         ELSE ({$prefix}promotions.maximum_redeem - (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id))
                                         END
                                     ELSE (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status not in ('redeemed', 'deleted') AND oic.promotion_id = {$prefix}promotions.promotion_id)
-                                    END AS available_for_redeem
+                                    END AS available_for_redeem,
+                                    (SELECT substring_index(group_concat(distinct om.name SEPARATOR ', '), ', ', 2)
+                                        FROM {$prefix}promotion_retailer opr
+                                        JOIN {$prefix}merchants om
+                                            ON om.merchant_id = opr.retailer_id
+                                        WHERE opr.promotion_id = {$prefix}promotions.promotion_id
+                                        GROUP BY opr.promotion_id
+                                        ORDER BY om.name
+                                    ) as link_to_tenant,
+                                    (SELECT count(distinct om.name) - 2
+                                        FROM {$prefix}promotion_retailer opr
+                                        JOIN {$prefix}merchants om
+                                            ON om.merchant_id = opr.retailer_id
+                                        WHERE opr.promotion_id = {$prefix}promotions.promotion_id
+                                    ) as total_link_to_tenant
                                 "),
                                 'issued_coupons.issued_date'
                             )
