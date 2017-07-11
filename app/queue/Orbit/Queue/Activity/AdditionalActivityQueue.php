@@ -84,10 +84,6 @@ class AdditionalActivityQueue
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Activity ID: %s. Additional Activity Queue ERROR: %s', $job->getJobId(), $activityId, $e->getMessage());
             Log::error($message);
-            return [
-                'status' => 'fail',
-                'message' => $message
-            ];
         }
 
         // Bury the job for later inspection
