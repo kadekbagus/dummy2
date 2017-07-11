@@ -404,13 +404,16 @@ class StoreSynchronization
                 'message' => $message
             ];
         } catch (InvalidArgsException $e) {
-            \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
+            $message = '*** Store synchronization error, messge: ' . $e->getMessage() . '***';
+            \Log::error($message);
             DB::rollBack();
         } catch (QueryException $e) {
-            \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
+            $message = '*** Store synchronization error, messge: ' . $e->getMessage() . '***';
+            \Log::error($message);
             DB::rollBack();
         } catch (Exception $e) {
-            \Log::error('*** Store synchronization error, messge: ' . $e->getMessage() . '***');
+            $message = '*** Store synchronization error, messge: ' . $e->getMessage() . '***';
+            \Log::error($message);
             DB::rollBack();
         }
 

@@ -82,10 +82,11 @@ class AdditionalActivityQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            Log::error(sprintf('[Job ID: `%s`] Activity ID: %s. Additional Activity Queue ERROR: %s', $job->getJobId(), $activityId, $e->getMessage()));
+            $message = sprintf('[Job ID: `%s`] Activity ID: %s. Additional Activity Queue ERROR: %s', $job->getJobId(), $activityId, $e->getMessage());
+            Log::error($message);
             return [
                 'status' => 'fail',
-                'message' => $e->getMessage()
+                'message' => $message
             ];
         }
 
