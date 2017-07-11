@@ -5751,6 +5751,33 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // User tap enter after typing keyword in search bar (keyword searched on notes)
+            '131' => array(
+                'name' => 'search',
+                'name_long' => 'Search',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User click apply after selecting Filters (Categories, Sort By and Partner details on notes)
+            '132' => array(
+                'name' => 'filter',
+                'name_long' => 'Filter',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User click apply after selecting Location (location detail on notes)
+            '133' => array(
+                'name' => 'location',
+                'name_long' => 'Location',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 

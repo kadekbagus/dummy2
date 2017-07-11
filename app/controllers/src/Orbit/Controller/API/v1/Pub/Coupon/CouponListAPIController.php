@@ -21,7 +21,6 @@ use Role;
 use IssuedCoupon;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
-use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -664,20 +663,6 @@ class CouponListAPIController extends PubControllerAPI
                         $couponData['owned'] = true;
                     }
                 }
-            }
-
-            // record GTM search activity
-            if ($searchFlag) {
-                $parameters = [
-                    'displayName' => 'Coupon',
-                    'keywords' => OrbitInput::get('keyword', NULL),
-                    'categories' => OrbitInput::get('category_id', NULL),
-                    'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name'),
-                    'partner' => OrbitInput::get('partner_id', NULL)
-                ];
-
-                GTMSearchRecorder::create($parameters)->saveActivity($user);
             }
 
             // frontend need the mall name
