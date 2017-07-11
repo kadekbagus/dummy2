@@ -404,6 +404,8 @@ class StoreListAPIController extends PubControllerAPI
                 $cdnPath = '';
                 $default_lang = '';
                 $pageView = 0;
+                $data['placement_type'] = null;
+                $data['placement_type_orig'] = null;
                 foreach ($record['_source'] as $key => $value) {
 
                     $localPath = ($key == 'logo') ? $value : $localPath;
