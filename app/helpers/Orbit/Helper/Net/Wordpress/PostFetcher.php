@@ -59,6 +59,10 @@ class PostFetcher
             'per_page' => $this->config['take']
         ];
 
+        if (isset($this->config['categories']) && (! is_null($this->config['categories']))) {
+            $args['categories'] = $this->config['categories'];
+        }
+
         $wpApiUrl = rtrim($this->config['base_blog_url'], '/');
         $wpApiUrl .= $this->wpApipath . '/posts';
         $fetchResult = $this->fetcher->getUrl($wpApiUrl, $args);
