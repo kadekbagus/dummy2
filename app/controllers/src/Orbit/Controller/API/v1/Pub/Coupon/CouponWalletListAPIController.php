@@ -229,30 +229,6 @@ class CouponWalletListAPIController extends PubControllerAPI
                         ->first();
             });
 
-            OrbitInput::get('keyword', function ($keyword) use ($coupon, $prefix) {
-                if (! empty($keyword)) {
-                    $coupon = $coupon->leftJoin('keyword_object', 'promotions.promotion_id', '=', 'keyword_object.object_id')
-                                ->leftJoin('keywords', 'keyword_object.keyword_id', '=', 'keywords.keyword_id')
-                                ->where(function($query) use ($keyword, $prefix)
-                                {
-                                    $word = explode(" ", $keyword);
-                                    foreach ($word as $key => $value) {
-                                        if (strlen($value) === 1 && $value === '%') {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->whereRaw("{$prefix}coupon_translations.promotion_name like '%|{$value}%' escape '|'")
-                                                  ->orWhereRaw("{$prefix}keywords.keyword = '|{$value}' escape '|'");
-                                            });
-                                        } else {
-                                            $query->orWhere(function($q) use ($value, $prefix){
-                                                $q->where('coupon_translations.promotion_name', 'like', '%' . $value . '%')
-                                                  ->orWhere('keywords.keyword', '=', $value);
-                                            });
-                                        }
-                                    }
-                                });
-                }
-            });
-
             // need subquery to order my coupon
             $querySql = $coupon->toSql();
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupon->getQuery())
