@@ -5778,6 +5778,33 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // User view email sign in page
+            '134' => array(
+                'name' => 'view_sign_in_email_page',
+                'name_long' => 'View Sign In Email Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User view email sign up page
+            '135' => array(
+                'name' => 'view_sign_up_email_page',
+                'name_long' => 'View Sign Up Email Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User view forgot password page
+            '136' => array(
+                'name' => 'view_forgot_password_page',
+                'name_long' => 'View Forgot Password Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
