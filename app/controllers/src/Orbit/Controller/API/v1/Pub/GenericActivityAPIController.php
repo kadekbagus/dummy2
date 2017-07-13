@@ -153,6 +153,18 @@ class GenericActivityAPIController extends PubControllerAPI
                         ->first();
             }
 
+            // set object_display_name
+            $object_display_name = OrbitInput::post('display_name', null);
+            if(! empty($object_display_name)) {
+                $activity->setObjectDisplayName($object_display_name);
+            }
+
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()
+                        ->where('merchant_id', $mallId)
+                        ->first();
+            }
+
             // Get notes
             $notes = OrbitInput::post('notes', null);
 

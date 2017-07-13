@@ -5805,6 +5805,15 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // User view sign in page from promotional event
+            '137' => array(
+                'name' => 'view_sign_in_page_with_reward',
+                'name_long' => 'View Sign In Page With Reward',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
