@@ -373,7 +373,7 @@ class PromotionListAPIController extends PubControllerAPI
 
             // call advert before call main query
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs)))), 'must_not' => array(array('match' => array($pageTypeScore => 0))))), 'sort' => $sortByPageType);
+            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs)))))), 'sort' => $sortByPageType);
 
             $esAdvertParam = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_promotions.index'),
@@ -399,8 +399,6 @@ class PromotionListAPIController extends PubControllerAPI
 
                 $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
             }
-
-            $jsonQuery['query']['bool']['must_not'][] = array('match' => array($pageTypeScore => 0));
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $esParam = [
