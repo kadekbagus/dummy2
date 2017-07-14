@@ -327,15 +327,20 @@ class NewsListAPIController extends PubControllerAPI
             }
 
             $sortByPageType = array();
+            $pageTypeScore = '';
             if ($list_type === 'featured') {
+                $pageTypeScore = 'featured_gtm_score';
                 $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
                 if (! empty($mallId)) {
+                    $pageTypeScore = 'featured_mall_score';
                     $sortByPageType = array('featured_mall_score' => array('order' => 'desc'));
                 }
             } else {
+                $pageTypeScore = 'preferred_gtm_score';
                 $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
                 if (! empty($mallId)) {
-                    $sortByPageType = array('preffered_mall_score' => array('order' => 'desc'));
+                    $pageTypeScore = 'preferred_mall_score';
+                    $sortByPageType = array('preferred_mall_score' => array('order' => 'desc'));
                 }
             }
 
@@ -372,9 +377,37 @@ class NewsListAPIController extends PubControllerAPI
             }
             $jsonQuery['sort'] = $sortby;
 
+            // call advert before call main query
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs)))), 'must_not' => array(array('match' => array($pageTypeScore => 0))))), 'sort' => $sortByPageType);
+
+            $esAdvertParam = [
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_news.index'),
+                'type'  => Config::get('orbit.elasticsearch.indices.advert_news.type'),
+                'body'  => json_encode($esAdvertQuery)
+            ];
+
+            $advertResponse = $client->search($esAdvertParam);
+            if ($advertResponse['hits']['total'] > 0) {
+                $advertList = $advertResponse['hits']['hits'];
+                $excludeId = array();
+                foreach ($advertList as $adverts) {
+                    foreach ($adverts['_source'] as $key => $value) {
+                        if ($key === 'news_id') {
+                            if(! in_array($value, $excludeId)) {
+                                $excludeId[] = $value;
+                            } else {
+                                $excludeId[] = $adverts['_id'];
+                            }
+                        }
+                    }
+                }
+
+                $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
+            }
+
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_news.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.news.type'),
                 'body' => json_encode($jsonQuery)
             ];

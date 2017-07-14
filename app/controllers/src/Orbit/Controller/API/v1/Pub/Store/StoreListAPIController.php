@@ -339,15 +339,20 @@ class StoreListAPIController extends PubControllerAPI
             }
 
             $sortByPageType = array();
+            $pageTypeScore = '';
             if ($list_type === 'featured') {
+                $pageTypeScore = 'featured_gtm_score';
                 $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
                 if (! empty($mallId)) {
-                    $sortByPageType = array('tenant_detail.featured_mall_score' => array('order' => 'desc'));
+                    $pageTypeScore = 'tenant_detail.featured_mall_score';
+                    $sortByPageType = array('tenant_detail.featured_mall_score' => array('order' => 'desc', 'nested_path' => 'tenant_detail'));
                 }
             } else {
+                $pageTypeScore = 'preferred_gtm_score';
                 $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
                 if (! empty($mallId)) {
-                    $sortByPageType = array('tenant_detail.preffered_mall_score' => array('order' => 'desc'));
+                    $pageTypeScore = 'tenant_detail.preferred_mall_score';
+                    $sortByPageType = array('tenant_detail.preferred_mall_score' => array('order' => 'desc', 'nested_path' => 'tenant_detail'));
                 }
             }
 
@@ -374,9 +379,37 @@ class StoreListAPIController extends PubControllerAPI
             }
             $jsonQuery['sort'] = $sortby;
 
+            // call advert before call main query
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs)))), 'must_not' => array(array('nested' => array('path' => 'tenant_detail', 'query' => array('match' => array($pageTypeScore => 0))))))), 'sort' => $sortByPageType);
+
+            $esAdvertParam = [
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index'),
+                'type'  => Config::get('orbit.elasticsearch.indices.advert_stores.type'),
+                'body'  => json_encode($esAdvertQuery)
+            ];
+
+            $advertResponse = $client->search($esAdvertParam);
+            if ($advertResponse['hits']['total'] > 0) {
+                $advertList = $advertResponse['hits']['hits'];
+                $excludeId = array();
+                foreach ($advertList as $adverts) {
+                    foreach ($adverts['_source'] as $key => $value) {
+                        if ($key === 'merchant_id') {
+                            if(! in_array($value, $excludeId)) {
+                                $excludeId[] = $value;
+                            } else {
+                                $excludeId[] = $adverts['_id'];
+                            }
+                        }
+                    }
+                }
+
+                $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
+            }
+
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
                 'body' => json_encode($jsonQuery)
             ];
@@ -436,19 +469,29 @@ class StoreListAPIController extends PubControllerAPI
                     }
 
                     // advert type
+                    if (! empty($mallId) && $key === "tenant_detail") {
+                        foreach ($record['_source']['tenant_detail'] as $tenantDetail) {
+                            if ($list_type === 'featured') {
+                                if (! empty($tenantDetail['featured_mall_type'])) {
+                                    $data['placement_type'] = $value;
+                                    $data['placement_type_orig'] = $value;
+                                }
+                            } elseif ($list_type === 'preferred') {
+                                if (! empty($tenantDetail['preferred_mall_type'])) {
+                                    $data['placement_type'] = $value;
+                                    $data['placement_type_orig'] = $value;
+                                }
+                            }
+                        }
+                    }
+
                     if ($list_type === 'featured') {
-                        if (! empty($mallId) && $key === 'featured_mall_type') {
-                            $data['placement_type'] = $value;
-                            $data['placement_type_orig'] = $value;
-                        } elseif ($key === 'featured_gtm_type') {
+                        if ($key === 'featured_gtm_type') {
                             $data['placement_type'] = $value;
                             $data['placement_type_orig'] = $value;
                         }
                     } elseif ($list_type === 'preferred') {
-                        if (! empty($mallId) && $key === 'preferred_mall_type') {
-                            $data['placement_type'] = $value;
-                            $data['placement_type_orig'] = $value;
-                        } elseif ($key === 'preferred_gtm_type') {
+                        if ($key === 'preferred_gtm_type') {
                             $data['placement_type'] = $value;
                             $data['placement_type_orig'] = $value;
                         }
