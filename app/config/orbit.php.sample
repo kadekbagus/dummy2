@@ -5751,6 +5751,69 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // User tap enter after typing keyword in search bar (keyword searched on notes)
+            '131' => array(
+                'name' => 'search',
+                'name_long' => 'Search',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User click apply after selecting Filters (Categories, Sort By and Partner details on notes)
+            '132' => array(
+                'name' => 'filter',
+                'name_long' => 'Filter',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User click apply after selecting Location (location detail on notes)
+            '133' => array(
+                'name' => 'location',
+                'name_long' => 'Location',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User view email sign in page
+            '134' => array(
+                'name' => 'view_sign_in_email_page',
+                'name_long' => 'View Sign In Email Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User view email sign up page
+            '135' => array(
+                'name' => 'view_sign_up_email_page',
+                'name_long' => 'View Sign Up Email Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User view forgot password page
+            '136' => array(
+                'name' => 'view_forgot_password_page',
+                'name_long' => 'View Forgot Password Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User view sign in page from promotional event
+            '137' => array(
+                'name' => 'view_sign_in_page_with_reward',
+                'name_long' => 'View Sign In Page With Reward',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
@@ -5938,7 +6001,8 @@ return array(
             'Exabot' => '\bExabot\b',
             'FacebookBot' => 'facebot|facebookexternalhit',
             'AlexaBot' => 'ia_archiver',
-            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2',
+            'Whatsapp' => 'Whatsapp',
+            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2|rogerbot|linkedinbot|showyoubot|outbrain',
 
             'IE' => 'IEMobile|MSIEMobile|MSIE',
         ],
@@ -5964,7 +6028,8 @@ return array(
             'Exabot' => '\bExabot\b',
             'FacebookBot' => 'facebot|facebookexternalhit',
             'AlexaBot' => 'ia_archiver',
-            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2',
+            'Whatsapp' => 'Whatsapp',
+            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2|rogerbot|linkedinbot|showyoubot|outbrain',
         ]
     ],
 
@@ -6008,6 +6073,8 @@ return array(
                 // Number of posts to take
                 'take' => 6,
 
+                'categories' => NULL,
+
                 // Default image used when the post does not have image URL
                 'default_image_url' => NULL,
 
@@ -6032,6 +6099,8 @@ return array(
 
                 // Number of posts to take
                 'take' => 6,
+
+                'categories' => NULL,
 
                 // Default image used when the post does not have image URL
                 'default_image_url' => NULL,

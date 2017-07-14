@@ -82,12 +82,20 @@ class AdditionalActivityQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            Log::error(sprintf('[Job ID: `%s`] Activity ID: %s. Additional Activity Queue ERROR: %s', $job->getJobId(), $activityId, $e->getMessage()));
-            return [
-                'status' => 'fail',
-                'message' => $e->getMessage()
-            ];
+            $message = sprintf('[Job ID: `%s`] Activity ID: %s. Additional Activity Queue ERROR: %s', $job->getJobId(), $activityId, $e->getMessage());
+            Log::error($message);
         }
+
+        // Bury the job for later inspection
+        JobBurier::create($job, function($theJob) {
+            // The queue driver does not support bury.
+            $theJob->delete();
+        })->bury();
+
+        return [
+            'status' => 'fail',
+            'message' => $message
+        ];
     }
 
     /**

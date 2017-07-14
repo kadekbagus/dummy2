@@ -25,7 +25,6 @@ use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
-use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
 use Orbit\Helper\Util\ObjectPartnerBuilder;

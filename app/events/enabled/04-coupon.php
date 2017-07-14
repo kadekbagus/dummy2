@@ -302,7 +302,7 @@ Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $
     // update total available coupon
     $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
 
-    $coupon = Coupon::find($coupon->promotion_id);
+    $coupon = Coupon::findOnWriteConnection($coupon->promotion_id);
     $coupon->available = $availableCoupons;
     $coupon->save();
 
@@ -352,7 +352,7 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
     // update total available coupon
     $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
 
-    $coupon = Coupon::find($coupon->promotion_id);
+    $coupon = Coupon::findOnWriteConnection($coupon->promotion_id);
     $coupon->available = $availableCoupons;
     $coupon->save();
 
@@ -420,7 +420,7 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
     // Delete coupon suggestion in index es when available coupon is empty
     $availableCoupons = IssuedCoupon::totalAvailable($coupon_id);
 
-    $coupon = Coupon::find($coupon_id);
+    $coupon = Coupon::findOnWriteConnection($coupon_id);
     $coupon->available = $availableCoupons;
     $coupon->save();
 

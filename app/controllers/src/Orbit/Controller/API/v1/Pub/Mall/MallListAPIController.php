@@ -20,7 +20,6 @@ use stdClass;
 use DB;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
-use Orbit\Helper\Util\GTMSearchRecorder;
 use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use MallCountry;
@@ -278,20 +277,6 @@ class MallListAPIController extends PubControllerAPI
                 'type'   => Config::get('orbit.elasticsearch.indices.malldata.type'),
                 'body' => json_encode($jsonArea)
             ];
-
-            // record GTM search activity
-            if ($searchFlag) {
-                $parameters = [
-                    'displayName' => 'Mall',
-                    'keywords' => OrbitInput::get('keyword', NULL),
-                    'categories' => NULL,
-                    'location' => OrbitInput::get('location', NULL),
-                    'sortBy' => OrbitInput::get('sortby', 'name'),
-                    'partner' => OrbitInput::get('partner_id', NULL)
-                ];
-
-                GTMSearchRecorder::create($parameters)->saveActivity($user);
-            }
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($jsonArea);
