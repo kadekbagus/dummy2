@@ -400,6 +400,8 @@ class CouponListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
             }
 
+            $jsonQuery['query']['bool']['must_not'][] = array('match' => array($pageTypeScore => 0));
+
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),

@@ -405,6 +405,8 @@ class NewsListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
             }
 
+            $jsonQuery['query']['bool']['must_not'][] = array('match' => array($pageTypeScore => 0));
+
             $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_news.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.news.type'),

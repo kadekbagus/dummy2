@@ -378,9 +378,14 @@ class StoreListAPIController extends PubControllerAPI
             }
             $jsonQuery['sort'] = $sortby;
 
+            $excludeAdvertQuery = array('match' => array($pageTypeScore => 0));
+            if (! empty($mallId)) {
+                $excludeAdvertQuery = array('nested' => array('path' => 'tenant_detail', 'query' => array('match' => array($pageTypeScore => 0))));
+            }
+
             // call advert before call main query
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs)))), 'must_not' => array(array('nested' => array('path' => 'tenant_detail', 'query' => array('match' => array($pageTypeScore => 0))))))), 'sort' => $sortByPageType);
+            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs)))), 'must_not' => array($excludeAdvertQuery))), 'sort' => $sortByPageType);
 
             $esAdvertParam = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index'),
@@ -406,6 +411,8 @@ class StoreListAPIController extends PubControllerAPI
 
                 $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
             }
+
+            $jsonQuery['query']['bool']['must_not'][] = $excludeAdvertQuery;
 
             $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index'),
