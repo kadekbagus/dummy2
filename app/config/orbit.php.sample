@@ -6001,7 +6001,8 @@ return array(
             'Exabot' => '\bExabot\b',
             'FacebookBot' => 'facebot|facebookexternalhit',
             'AlexaBot' => 'ia_archiver',
-            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2',
+            'Whatsapp' => 'Whatsapp',
+            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2|rogerbot|linkedinbot|showyoubot|outbrain',
 
             'IE' => 'IEMobile|MSIEMobile|MSIE',
         ],
@@ -6027,7 +6028,8 @@ return array(
             'Exabot' => '\bExabot\b',
             'FacebookBot' => 'facebot|facebookexternalhit',
             'AlexaBot' => 'ia_archiver',
-            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2',
+            'Whatsapp' => 'Whatsapp',
+            'Bot' => 'AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor|Exabot|MJ12bot|TurnitinBot|Pingdom|YahooSeeker/M1A1-R2D2|rogerbot|linkedinbot|showyoubot|outbrain',
         ]
     ],
 
