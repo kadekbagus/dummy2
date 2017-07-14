@@ -15,7 +15,6 @@ use Orbit\Helper\Util\JobBurier;
 use Exception;
 use Orbit\FakeJob;
 use Log;
-use Carbon\Carbon as Carbon;
 
 class ESCouponUpdateQueue
 {
@@ -120,23 +119,6 @@ class ESCouponUpdateQueue
                 'body' => []
             ];
 
-            //Get now time
-            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
-            $timestamp = date("Y-m-d H:i:s");
-            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
-            $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
-
-            $advertData = Advert::select('adverts.advert_id', 'advert_placements.placement_type', 'advert_placements.placement_order', 'advert_locations.location_id')
-                                ->join('advert_link_types', 'adverts.advert_link_type_id', '=', 'advert_link_types.advert_link_type_id')
-                                ->join('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
-                                ->leftJoin('advert_locations', 'advert_locations.advert_id', '=', 'adverts.advert_id')
-                                ->whereIn('advert_placements.placement_type', ['preferred_list_regular', 'preferred_list_large', 'featured_list'])
-                                ->where('advert_link_types.advert_type', 'coupon')
-                                ->where('adverts.status', 'active')
-                                ->where('adverts.end_date', '>=', $dateTime)
-                                ->where('adverts.link_object_id', $couponId)
-                                ->get();
-
             $featuredGtmScore = 0;
             $featuredMallScore = 0;
             $preferredGtmScore = 0;
@@ -146,36 +128,6 @@ class ESCouponUpdateQueue
             $featuredMallType = '';
             $preferredGtmType = '';
             $preferredMallType = '';
-
-            foreach ($advertData as $adverts) {
-                if ($adverts->location_id === '0') {
-                    // gtm
-                    if ($adverts->placement_type === 'featured_list') {
-                        if ($adverts->placement_order > $featuredGtmScore) {
-                            $featuredGtmScore = $adverts->placement_order;
-                            $featuredGtmType = $adverts->placement_type;
-                        }
-                    } else {
-                        if ($adverts->placement_order > $preferredGtmScore) {
-                            $preferredGtmScore = $adverts->placement_order;
-                            $preferredGtmType = $adverts->placement_type;
-                        }
-                    }
-                } else {
-                    // mall
-                    if ($adverts->placement_type === 'featured_list') {
-                        if ($adverts->placement_order > $featuredGtmScore) {
-                            $featuredGtmScore = $adverts->placement_order;
-                            $featuredMallType = $adverts->placement_type;
-                        }
-                    } else {
-                        if ($adverts->placement_order > $preferredMallScore) {
-                            $preferredMallScore = $adverts->placement_order;
-                            $preferredMallType = $adverts->placement_type;
-                        }
-                    }
-                }
-            }
 
             $categoryIds = array();
             foreach ($coupon->campaignLocations as $campaignLocation) {
@@ -366,11 +318,11 @@ class ESCouponUpdateQueue
                 'featured_gtm_score'      => $featuredGtmScore,
                 'featured_mall_score'     => $featuredMallScore,
                 'preferred_gtm_score'     => $preferredGtmScore,
-                'preffered_mall_score'    => $preferredMallScore,
+                'preferred_mall_score'    => $preferredMallScore,
                 'featured_gtm_type'       => $featuredGtmType,
                 'featured_mall_type'      => $featuredMallType,
                 'preferred_gtm_type'      => $preferredGtmType,
-                'preffered_mall_type'     => $preferredMallType,
+                'preferred_mall_type'     => $preferredMallType,
             ];
 
             $body = array_merge($body, $translationBody);
@@ -394,6 +346,9 @@ class ESCouponUpdateQueue
             $fakeJob = new FakeJob();
             $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionUpdateQueue();
             $suggestion = $esQueue->fire($fakeJob, ['coupon_id' => $couponId]);
+
+            $esAdvertQueue = new \Orbit\Queue\Elasticsearch\ESAdvertCouponUpdateQueue();
+            $advertUpdate = $esAdvertQueue->fire($fakeJob, ['coupon_id' => $couponId]);
 
             // Safely delete the object
             $job->delete();
