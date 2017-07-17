@@ -65,7 +65,7 @@ class ESAdvertCouponUpdateQueue
                             ->join('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
                             ->whereIn('advert_placements.placement_type', ['preferred_list_regular', 'preferred_list_large', 'featured_list'])
                             ->where('advert_link_types.advert_type', 'coupon')
-                            ->where('adverts.end_date', '>=', $dateTime)
+                            ->where('adverts.end_date', '>=', date("Y-m-d", strtotime($dateTime)))
                             ->where('adverts.link_object_id', $couponId)
                             ->groupBy('adverts.advert_id')
                             ->orderBy('adverts.advert_id')
@@ -161,6 +161,7 @@ class ESAdvertCouponUpdateQueue
 
                 //advert location
                 $advertLocation = AdvertLocation::where('advert_id', $adverts->advert_id)->get();
+                $advertLocationIds = array();
                 foreach ($advertLocation as $location) {
                     if ($location->location_id === '0') {
                         // gtm
@@ -189,6 +190,8 @@ class ESAdvertCouponUpdateQueue
                             }
                         }
                     }
+
+                    $advertLocationIds[] = $location->location_id;
                 }
 
                 $categoryIds = array();
@@ -388,6 +391,8 @@ class ESAdvertCouponUpdateQueue
                     'featured_mall_type'      => $featuredMallType,
                     'preferred_gtm_type'      => $preferredGtmType,
                     'preferred_mall_type'     => $preferredMallType,
+                    'advert_location_ids'  => $advertLocationIds,
+                    'advert_type'          => $adverts->placement_type
                 ];
 
                 $body = array_merge($body, $translationBody);

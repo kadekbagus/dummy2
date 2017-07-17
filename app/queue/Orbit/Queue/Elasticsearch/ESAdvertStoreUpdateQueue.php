@@ -202,47 +202,48 @@ class ESAdvertStoreUpdateQueue
                 $featuredGtmType = '';
                 $preferredGtmType = '';
 
+                $featuredMallScore = 0;
+                $preferredMallScore = 0;
+                $featuredMallType = '';
+                $preferredMallType = '';
+
                 $advertLocation = AdvertLocation::where('advert_id', $adverts->advert_id)->get();
                 $tenantDetails = array();
-                foreach ($store as $_store) {
+                $advertLocationIds = array();
 
-                    $featuredMallScore = 0;
-                    $preferredMallScore = 0;
-                    $featuredMallType = '';
-                    $preferredMallType = '';
-
-                    if ($_store->merchant_id === $adverts->link_object_id) {
-                        foreach ($advertLocation as $location) {
-                            if ($location->location_id === '0') {
-                                // gtm
-                                if ($adverts->placement_type === 'featured_list') {
-                                    if ($adverts->placement_order > $featuredGtmScore) {
-                                        $featuredGtmScore = $adverts->placement_order;
-                                        $featuredGtmType = $adverts->placement_type;
-                                    }
-                                } else {
-                                    if ($adverts->placement_order > $preferredGtmScore) {
-                                        $preferredGtmScore = $adverts->placement_order;
-                                        $preferredGtmType = $adverts->placement_type;
-                                    }
-                                }
-                            } else {
-                                // mall
-                                if ($adverts->placement_type === 'featured_list') {
-                                    if ($adverts->placement_order > $featuredGtmScore) {
-                                        $featuredGtmScore = $adverts->placement_order;
-                                        $featuredMallType = $adverts->placement_type;
-                                    }
-                                } else {
-                                    if ($adverts->placement_order > $preferredMallScore) {
-                                        $preferredMallScore = $adverts->placement_order;
-                                        $preferredMallType = $adverts->placement_type;
-                                    }
-                                }
+                foreach ($advertLocation as $location) {
+                    if ($location->location_id === '0') {
+                        // gtm
+                        if ($adverts->placement_type === 'featured_list') {
+                            if ($adverts->placement_order > $featuredGtmScore) {
+                                $featuredGtmScore = $adverts->placement_order;
+                                $featuredGtmType = $adverts->placement_type;
+                            }
+                        } else {
+                            if ($adverts->placement_order > $preferredGtmScore) {
+                                $preferredGtmScore = $adverts->placement_order;
+                                $preferredGtmType = $adverts->placement_type;
+                            }
+                        }
+                    } else {
+                        // mall
+                        if ($adverts->placement_type === 'featured_list') {
+                            if ($adverts->placement_order > $featuredGtmScore) {
+                                $featuredGtmScore = $adverts->placement_order;
+                                $featuredMallType = $adverts->placement_type;
+                            }
+                        } else {
+                            if ($adverts->placement_order > $preferredMallScore) {
+                                $preferredMallScore = $adverts->placement_order;
+                                $preferredMallType = $adverts->placement_type;
                             }
                         }
                     }
 
+                    $advertLocationIds[] = $location->location_id;
+                }
+
+                foreach ($store as $_store) {
                     $advertIds = array();
                     foreach ($_store->adverts as $advert) {
                          $advertIds[] = $advert->advert_id;
@@ -266,11 +267,7 @@ class ESAdvertStoreUpdateQueue
                         "operating_hours"      => $_store->operating_hours,
                         "logo"                 => $_store->path,
                         "logo_cdn"             => $_store->cdn_url,
-                        "url"                  => $_store->url,
-                        'featured_mall_score'  => $featuredMallScore,
-                        'preferred_mall_score' => $preferredMallScore,
-                        'featured_mall_type'   => $featuredMallType,
-                        'preferred_mall_type'  => $preferredMallType,
+                        "url"                  => $_store->url
                     );
 
                     $tenantDetails[] = $tenantDetail;
@@ -328,6 +325,12 @@ class ESAdvertStoreUpdateQueue
                     'preferred_gtm_score' => $preferredGtmScore,
                     'featured_gtm_type'   => $featuredGtmType,
                     'preferred_gtm_type'  => $preferredGtmType,
+                    'featured_mall_score'  => $featuredMallScore,
+                    'preferred_mall_score' => $preferredMallScore,
+                    'featured_mall_type'   => $featuredMallType,
+                    'preferred_mall_type'  => $preferredMallType,
+                    'advert_location_ids'  => $advertLocationIds,
+                    'advert_type'          => $adverts->placement_type
                 ];
 
                 if ($response_search['hits']['total'] > 0) {

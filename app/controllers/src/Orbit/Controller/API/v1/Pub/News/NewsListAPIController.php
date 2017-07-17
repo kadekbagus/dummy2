@@ -156,6 +156,7 @@ class NewsListAPIController extends PubControllerAPI
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+            $dateNow = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
@@ -376,9 +377,15 @@ class NewsListAPIController extends PubControllerAPI
             }
             $jsonQuery['sort'] = $sortby;
 
-            // call advert before call main query
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs)))))), 'sort' => $sortByPageType);
+            $esIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.news.index');
+            $locationId = ! empty($mallId) ? $locationId : 0;
+            $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_reguler', 'preferred_list_large'] : ['preferred_list_reguler', 'preferred_list_large'];
+
+            // call advert before call main query
+            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs))), array('match' => array('advert_location_ids' => $locationId)), array('terms' => array('advert_type' => $advertType))))), 'sort' => $sortByPageType);
+
+            $jsonQuery['query']['bool']['must'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
 
             $esAdvertParam = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_news.index'),
@@ -388,15 +395,28 @@ class NewsListAPIController extends PubControllerAPI
 
             $advertResponse = $client->search($esAdvertParam);
             if ($advertResponse['hits']['total'] > 0) {
+                $esIndex = $esIndex . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_news.index');
                 $advertList = $advertResponse['hits']['hits'];
                 $excludeId = array();
+                $withPreferred = array();
+
                 foreach ($advertList as $adverts) {
-                    foreach ($adverts['_source'] as $key => $value) {
-                        if ($key === 'news_id') {
-                            if(! in_array($value, $excludeId)) {
-                                $excludeId[] = $value;
-                            } else {
-                                $excludeId[] = $adverts['_id'];
+                    $advertId = $adverts['_id'];
+                    $newsId = $adverts['_source']['news_id'];
+                    if(! in_array($newsId, $excludeId)) {
+                        $excludeId[] = $newsId;
+                    } else {
+                        $excludeId[] = $advertId;
+                    }
+
+                    // if featured list_type check preferred too
+                    if ($list_type === 'featured') {
+                        if ($adverts['_source']['advert_type'] === 'preferred_list_reguler' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
+                            if (empty($withPreferred[$newsId]) || $withPreferred[$newsId] != 'preferred_list_large') {
+                                $withPreferred[$newsId] = 'preferred_list_reguler';
+                                if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
+                                    $withPreferred[$newsId] = 'preferred_list_large';
+                                }
                             }
                         }
                     }
@@ -406,7 +426,7 @@ class NewsListAPIController extends PubControllerAPI
             }
 
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_news.index'),
+                'index'  => $esIndex,
                 'type'   => Config::get('orbit.elasticsearch.indices.news.type'),
                 'body' => json_encode($jsonQuery)
             ];
@@ -486,12 +506,21 @@ class NewsListAPIController extends PubControllerAPI
 
                     // advert type
                     if ($list_type === 'featured') {
+                        if ($key === 'news_id') {
+                            $campaignId = $value;
+                        }
+
                         if (! empty($mallId) && $key === 'featured_mall_type') {
                             $data['placement_type'] = $value;
                             $data['placement_type_orig'] = $value;
                         } elseif ($key === 'featured_gtm_type') {
                             $data['placement_type'] = $value;
                             $data['placement_type_orig'] = $value;
+                        }
+
+                        if (! empty($withPreferred[$campaignId])) {
+                            $data['placement_type'] = $withPreferred[$campaignId];
+                            $data['placement_type_orig'] = $withPreferred[$campaignId];
                         }
                     } elseif ($list_type === 'preferred') {
                         if (! empty($mallId) && $key === 'preferred_mall_type') {

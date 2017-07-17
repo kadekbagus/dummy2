@@ -159,6 +159,7 @@ class ESAdvertPromotionUpdateQueue
 
                 //advert location
                 $advertLocation = AdvertLocation::where('advert_id', $adverts->advert_id)->get();
+                $advertLocationIds = array();
                 foreach ($advertLocation as $location) {
                     if ($location->location_id === '0') {
                         // gtm
@@ -187,6 +188,8 @@ class ESAdvertPromotionUpdateQueue
                             }
                         }
                     }
+
+                    $advertLocationIds[] = $location->location_id;
                 }
 
                 $categoryIds = array();
@@ -332,6 +335,8 @@ class ESAdvertPromotionUpdateQueue
                     'featured_mall_type'   => $featuredMallType,
                     'preferred_gtm_type'   => $preferredGtmType,
                     'preferred_mall_type'  => $preferredMallType,
+                    'advert_location_ids'  => $advertLocationIds,
+                    'advert_type'          => $adverts->placement_type
                 ];
 
                 $body = array_merge($body, $translationBody);

@@ -148,6 +148,7 @@ class CouponListAPIController extends PubControllerAPI
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+            $dateNow = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
@@ -371,9 +372,15 @@ class CouponListAPIController extends PubControllerAPI
             }
             $jsonQuery['sort'] = $sortby;
 
-            // call advert before call main query
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs)))))), 'sort' => $sortByPageType);
+            $esIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index');
+            $locationId = ! empty($mallId) ? $locationId : 0;
+            $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_reguler', 'preferred_list_large'] : ['preferred_list_reguler', 'preferred_list_large'];
+
+            // call advert before call main query
+            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs))), array('match' => array('advert_location_ids' => $locationId)), array('terms' => array('advert_type' => $advertType))))), 'sort' => $sortByPageType);
+
+            $jsonQuery['query']['bool']['must'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
 
             $esAdvertParam = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
@@ -383,15 +390,28 @@ class CouponListAPIController extends PubControllerAPI
 
             $advertResponse = $client->search($esAdvertParam);
             if ($advertResponse['hits']['total'] > 0) {
+                $esIndex = $esIndex . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index');
                 $advertList = $advertResponse['hits']['hits'];
                 $excludeId = array();
+                $withPreferred = array();
+
                 foreach ($advertList as $adverts) {
-                    foreach ($adverts['_source'] as $key => $value) {
-                        if ($key === 'promotion_id') {
-                            if(! in_array($value, $excludeId)) {
-                                $excludeId[] = $value;
-                            } else {
-                                $excludeId[] = $adverts['_id'];
+                    $advertId = $adverts['_id'];
+                    $couponId = $adverts['_source']['promotion_id'];
+                    if(! in_array($couponId, $excludeId)) {
+                        $excludeId[] = $couponId;
+                    } else {
+                        $excludeId[] = $advertId;
+                    }
+
+                    // if featured list_type check preferred too
+                    if ($list_type === 'featured') {
+                        if ($adverts['_source']['advert_type'] === 'preferred_list_reguler' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
+                            if (empty($withPreferred[$couponId]) || $withPreferred[$couponId] != 'preferred_list_large') {
+                                $withPreferred[$couponId] = 'preferred_list_reguler';
+                                if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
+                                    $withPreferred[$couponId] = 'preferred_list_large';
+                                }
                             }
                         }
                     }
@@ -400,9 +420,8 @@ class CouponListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
             }
 
-            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
+                'index'  => $esIndex,
                 'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),
                 'body' => json_encode($jsonQuery)
             ];
@@ -438,6 +457,7 @@ class CouponListAPIController extends PubControllerAPI
                     } elseif ($key === "promotion_id") {
                         $key = "coupon_id";
                         $promotionIds[] = $value;
+                        $campaignId = $value;
                     }
 
                     $default_lang = (empty($record['_source']['default_lang']))? '' : $record['_source']['default_lang'];
@@ -493,6 +513,11 @@ class CouponListAPIController extends PubControllerAPI
                         } elseif ($key === 'featured_gtm_type') {
                             $data['placement_type'] = $value;
                             $data['placement_type_orig'] = $value;
+                        }
+
+                        if (! empty($withPreferred[$campaignId])) {
+                            $data['placement_type'] = $withPreferred[$campaignId];
+                            $data['placement_type_orig'] = $withPreferred[$campaignId];
                         }
                     } elseif ($list_type === 'preferred') {
                         if (! empty($mallId) && $key === 'preferred_mall_type') {
