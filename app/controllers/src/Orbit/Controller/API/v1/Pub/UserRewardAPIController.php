@@ -50,6 +50,17 @@ class UserRewardAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
+            if ($user->status !== 'active') {
+                $this->response->data = new stdClass();
+                $this->response->data->total_records = 0;
+                $this->response->data->returned_records = 0;
+                $this->response->data->records = null;
+
+                $output = $this->render($httpCode);
+
+                return $output;
+            }
+
             $sortBy = OrbitInput::get('sortby', 'reward_detail_codes.redeemed_date');
             $sortMode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
@@ -143,6 +154,7 @@ class UserRewardAPIController extends PubControllerAPI
                               ->on(DB::raw("{$prefix}reward_detail_codes.user_id"), '=', DB::raw("{$this->quote($user->user_id)}"));
                         })
                         ->where('user_rewards.user_id', $user->user_id)
+                        ->where('user_rewards.user_id', $user->user_id)
                         ->whereIn('user_rewards.status', array('redeemed', 'pending'))
                         //Default Order by
                         ->orderBy('campaign_status', 'desc')
@@ -226,7 +238,7 @@ class UserRewardAPIController extends PubControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
