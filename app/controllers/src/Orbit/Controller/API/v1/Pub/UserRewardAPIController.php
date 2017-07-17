@@ -51,7 +51,14 @@ class UserRewardAPIController extends PubControllerAPI
             }
 
             if ($user->status !== 'active') {
-                throw new \Exception("User status is not active.", 1);
+                $this->response->data = new stdClass();
+                $this->response->data->total_records = 0;
+                $this->response->data->returned_records = 0;
+                $this->response->data->records = null;
+
+                $output = $this->render($httpCode);
+
+                return $output;
             }
 
             $sortBy = OrbitInput::get('sortby', 'reward_detail_codes.redeemed_date');
