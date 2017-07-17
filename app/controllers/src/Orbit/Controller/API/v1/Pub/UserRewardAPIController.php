@@ -51,7 +51,7 @@ class UserRewardAPIController extends PubControllerAPI
             }
 
             if ($user->status !== 'active') {
-                throw new Exception("User status is not active.", 1);
+                throw new \Exception("User status is not active.", 1);
             }
 
             $sortBy = OrbitInput::get('sortby', 'reward_detail_codes.redeemed_date');
@@ -231,7 +231,7 @@ class UserRewardAPIController extends PubControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
