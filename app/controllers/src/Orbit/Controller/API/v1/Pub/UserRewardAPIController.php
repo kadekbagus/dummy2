@@ -50,6 +50,10 @@ class UserRewardAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
+            if ($user->status !== 'active') {
+                throw new Exception("User status is not active.", 1);
+            }
+
             $sortBy = OrbitInput::get('sortby', 'reward_detail_codes.redeemed_date');
             $sortMode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
@@ -142,6 +146,7 @@ class UserRewardAPIController extends PubControllerAPI
                             $q->on(DB::raw("{$prefix}reward_detail_codes.reward_detail_id"), '=', 'reward_details.reward_detail_id')
                               ->on(DB::raw("{$prefix}reward_detail_codes.user_id"), '=', DB::raw("{$this->quote($user->user_id)}"));
                         })
+                        ->where('user_rewards.user_id', $user->user_id)
                         ->where('user_rewards.user_id', $user->user_id)
                         ->whereIn('user_rewards.status', array('redeemed', 'pending'))
                         //Default Order by
