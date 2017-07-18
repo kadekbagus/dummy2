@@ -191,8 +191,8 @@ class ESAdvertPromotionUpdateQueue
                     } else {
                         // mall
                         if ($adverts->placement_type === 'featured_list') {
-                            if ($adverts->placement_order > $featuredGtmScore) {
-                                $featuredGtmScore = $adverts->placement_order;
+                            if ($adverts->placement_order > $featuredMallScore) {
+                                $featuredMallScore = $adverts->placement_order;
                                 $featuredMallType = $adverts->placement_type;
                             }
                         } else {
