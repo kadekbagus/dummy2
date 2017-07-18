@@ -374,7 +374,7 @@ class CouponListAPIController extends PubControllerAPI
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $esIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index');
-            $locationId = ! empty($mallId) ? $locationId : 0;
+            $locationId = ! empty($mallId) ? $mallId : 0;
             $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_reguler', 'preferred_list_large'] : ['preferred_list_reguler', 'preferred_list_large'];
 
             // call advert before call main query
