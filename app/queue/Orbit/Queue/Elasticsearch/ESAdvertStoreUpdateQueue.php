@@ -12,6 +12,7 @@ use Advert;
 use AdvertLocation;
 use BaseMerchant;
 use TotalObjectPageView;
+use CampaignLocation;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
@@ -66,7 +67,7 @@ class ESAdvertStoreUpdateQueue
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
 
-            $advertData = Advert::select('adverts.advert_id', 'advert_placements.placement_type', 'advert_placements.placement_order', 'adverts.link_object_id', 'adverts.start_date', 'adverts.end_date', 'adverts.status')
+            $advertData = Advert::select('adverts.advert_id', 'advert_placements.placement_type', 'advert_placements.placement_order', 'adverts.link_object_id', 'adverts.start_date', 'adverts.end_date', 'adverts.status', 'adverts.is_all_location')
                                     ->join('advert_link_types', 'adverts.advert_link_type_id', '=', 'advert_link_types.advert_link_type_id')
                                     ->join('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
                                     ->whereIn('advert_placements.placement_type', ['preferred_list_regular', 'preferred_list_large', 'featured_list'])
@@ -207,7 +208,22 @@ class ESAdvertStoreUpdateQueue
                 $featuredMallType = '';
                 $preferredMallType = '';
 
-                $advertLocation = AdvertLocation::where('advert_id', $adverts->advert_id)->get();
+                //advert location
+                if ($adverts->is_all_location === 'Y') {
+                    $advertLocation = CampaignLocation::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as location_id"))
+                                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
+                                               ->where('merchants.object_type', 'tenant')
+                                               ->where('merchants.status', '!=', 'deleted')
+                                               ->where('merchants.name', '=', $storeName)
+                                               ->union(DB::table()->selectRaw("0"))
+                                               ->groupBy('location_id')
+                                               ->get();
+                } else {
+                    $advertLocation = AdvertLocation::select('location_id')
+                                                ->where('advert_id', $adverts->advert_id)
+                                                ->get();
+                }
+
                 $tenantDetails = array();
                 $advertLocationIds = array();
 

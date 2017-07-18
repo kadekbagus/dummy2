@@ -10,6 +10,7 @@ use DB;
 use News;
 use Advert;
 use AdvertLocation;
+use NewsMerchant;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
@@ -59,7 +60,7 @@ class ESAdvertPromotionUpdateQueue
         $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
         $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
 
-        $advertData = Advert::select('adverts.advert_id', 'advert_placements.placement_type', 'advert_placements.placement_order', 'adverts.start_date', 'adverts.end_date', 'adverts.status')
+        $advertData = Advert::select('adverts.advert_id', 'advert_placements.placement_type', 'advert_placements.placement_order', 'adverts.start_date', 'adverts.end_date', 'adverts.status', 'adverts.is_all_location')
                             ->join('advert_link_types', 'adverts.advert_link_type_id', '=', 'advert_link_types.advert_link_type_id')
                             ->join('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
                             ->whereIn('advert_placements.placement_type', ['preferred_list_regular', 'preferred_list_large', 'featured_list'])
@@ -158,7 +159,20 @@ class ESAdvertPromotionUpdateQueue
                 $preferredMallType = '';
 
                 //advert location
-                $advertLocation = AdvertLocation::where('advert_id', $adverts->advert_id)->get();
+                if ($adverts->is_all_location === 'Y') {
+                    $advertLocation = NewsMerchant::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as location_id"))
+                                                ->leftjoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull({$prefix}merchants.parent_id), {$prefix}merchants.merchant_id, {$prefix}merchants.parent_id) "))
+                                                ->where('news_id', $news->news_id)
+                                                ->union(DB::table()->selectRaw("0"))
+                                                ->groupBy('location_id')
+                                                ->get();
+                } else {
+                    $advertLocation = AdvertLocation::select('location_id')
+                                                ->where('advert_id', $adverts->advert_id)
+                                                ->get();
+                }
+
                 $advertLocationIds = array();
                 foreach ($advertLocation as $location) {
                     if ($location->location_id === '0') {
