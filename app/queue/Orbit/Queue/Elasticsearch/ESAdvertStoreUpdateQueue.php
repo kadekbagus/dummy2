@@ -209,15 +209,29 @@ class ESAdvertStoreUpdateQueue
                 $preferredMallType = '';
 
                 //advert location
+                $advertLocationIds = array();
                 if ($adverts->is_all_location === 'Y') {
                     $advertLocation = CampaignLocation::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as location_id"))
                                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
                                                ->where('merchants.object_type', 'tenant')
                                                ->where('merchants.status', '!=', 'deleted')
                                                ->where('merchants.name', '=', $storeName)
-                                               ->union(DB::table()->selectRaw("0"))
                                                ->groupBy('location_id')
                                                ->get();
+
+                    // add gtm location manually
+                    $advertLocationIds[] = '0';
+                    if ($adverts->placement_type === 'featured_list') {
+                        if ($adverts->placement_order > $featuredGtmScore) {
+                            $featuredGtmScore = $adverts->placement_order;
+                            $featuredGtmType = $adverts->placement_type;
+                        }
+                    } else {
+                        if ($adverts->placement_order > $preferredGtmScore) {
+                            $preferredGtmScore = $adverts->placement_order;
+                            $preferredGtmType = $adverts->placement_type;
+                        }
+                    }
                 } else {
                     $advertLocation = AdvertLocation::select('location_id')
                                                 ->where('advert_id', $adverts->advert_id)
@@ -225,8 +239,6 @@ class ESAdvertStoreUpdateQueue
                 }
 
                 $tenantDetails = array();
-                $advertLocationIds = array();
-
                 foreach ($advertLocation as $location) {
                     if ($location->location_id === '0') {
                         // gtm
