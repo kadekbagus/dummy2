@@ -218,7 +218,7 @@ class AdvertUpdateQueue
                             where status = 'active'
                                 and object_type = 'mall'
                             ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                        ->where('adverts.advert_id', '=', $advert_id)
+                        ->where('adverts.advert_id', '=', $advert->advert_id)
                         ->first();
 
         if (is_object($store)) {
