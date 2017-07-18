@@ -344,15 +344,15 @@ class StoreListAPIController extends PubControllerAPI
                 $pageTypeScore = 'featured_gtm_score';
                 $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
                 if (! empty($mallId)) {
-                    $pageTypeScore = 'tenant_detail.featured_mall_score';
-                    $sortByPageType = array('tenant_detail.featured_mall_score' => array('order' => 'desc', 'nested_path' => 'tenant_detail'));
+                    $pageTypeScore = 'featured_mall_score';
+                    $sortByPageType = array('featured_mall_score' => array('order' => 'desc'));
                 }
             } else {
                 $pageTypeScore = 'preferred_gtm_score';
                 $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
                 if (! empty($mallId)) {
-                    $pageTypeScore = 'tenant_detail.preferred_mall_score';
-                    $sortByPageType = array('tenant_detail.preferred_mall_score' => array('order' => 'desc', 'nested_path' => 'tenant_detail'));
+                    $pageTypeScore = 'preferred_mall_score';
+                    $sortByPageType = array('preferred_mall_score' => array('order' => 'desc'));
                 }
             }
 

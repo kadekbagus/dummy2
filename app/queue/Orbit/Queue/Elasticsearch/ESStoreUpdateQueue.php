@@ -202,13 +202,13 @@ class ESStoreUpdateQueue
             $featuredGtmType = '';
             $preferredGtmType = '';
 
+            $featuredMallScore = 0;
+            $preferredMallScore = 0;
+            $featuredMallType = '';
+            $preferredMallType = '';
+
             $tenantDetails = array();
             foreach ($store as $_store) {
-
-                $featuredMallScore = 0;
-                $preferredMallScore = 0;
-                $featuredMallType = '';
-                $preferredMallType = '';
 
                 $advertIds = array();
                 foreach ($_store->adverts as $advert) {
@@ -233,11 +233,7 @@ class ESStoreUpdateQueue
                     "operating_hours"      => $_store->operating_hours,
                     "logo"                 => $_store->path,
                     "logo_cdn"             => $_store->cdn_url,
-                    "url"                  => $_store->url,
-                    'featured_mall_score'  => $featuredMallScore,
-                    'preferred_mall_score' => $preferredMallScore,
-                    'featured_mall_type'   => $featuredMallType,
-                    'preferred_mall_type'  => $preferredMallType,
+                    "url"                  => $_store->url
                 );
 
                 $tenantDetails[] = $tenantDetail;
@@ -288,10 +284,14 @@ class ESStoreUpdateQueue
                 'tenant_detail'       => $tenantDetails,
                 'gtm_page_views'      => $gtmPageViews,
                 'mall_page_views'     => $mallPageViews,
-                'featured_gtm_score'  => $featuredGtmScore,
-                'preferred_gtm_score' => $preferredGtmScore,
-                'featured_gtm_type'   => $featuredGtmType,
-                'preferred_gtm_type'  => $preferredGtmType,
+                'featured_gtm_score'   => $featuredGtmScore,
+                'featured_mall_score'  => $featuredMallScore,
+                'preferred_gtm_score'  => $preferredGtmScore,
+                'preferred_mall_score' => $preferredMallScore,
+                'featured_gtm_type'    => $featuredGtmType,
+                'featured_mall_type'   => $featuredMallType,
+                'preferred_gtm_type'   => $preferredGtmType,
+                'preferred_mall_type'  => $preferredMallType,
             ];
 
             $params['body'] = $body;
