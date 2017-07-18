@@ -387,7 +387,7 @@ class StoreListAPIController extends PubControllerAPI
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $esIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index');
             $locationId = ! empty($mallId) ? $mallId : 0;
-            $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_reguler', 'preferred_list_large'] : ['preferred_list_reguler', 'preferred_list_large'];
+            $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
             // call advert before call main query
             $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs))), array('match' => array('advert_location_ids' => $locationId)), array('terms' => array('advert_type' => $advertType))))), 'sort' => $sortByPageType);
@@ -418,9 +418,9 @@ class StoreListAPIController extends PubControllerAPI
 
                     // if featured list_type check preferred too
                     if ($list_type === 'featured') {
-                        if ($adverts['_source']['advert_type'] === 'preferred_list_reguler' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
+                        if ($adverts['_source']['advert_type'] === 'preferred_list_regular' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
                             if (empty($withPreferred[$merchantId]) || $withPreferred[$merchantId] != 'preferred_list_large') {
-                                $withPreferred[$merchantId] = 'preferred_list_reguler';
+                                $withPreferred[$merchantId] = 'preferred_list_regular';
                                 if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
                                     $withPreferred[$merchantId] = 'preferred_list_large';
                                 }
