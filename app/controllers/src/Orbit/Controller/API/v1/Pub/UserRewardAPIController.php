@@ -120,7 +120,7 @@ class UserRewardAPIController extends PubControllerAPI
                             DB::raw("
                                     CASE
                                         WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name
-                                        WHEN {$prefix}campaign_status.campaign_status_name = 'stopped' THEN 'expired'
+                                        WHEN {$prefix}campaign_status.campaign_status_name = 'stopped' THEN 'stopped'
                                         ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
                                                                                         FROM {$prefix}news_merchant onm
                                                                                             LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
@@ -156,6 +156,7 @@ class UserRewardAPIController extends PubControllerAPI
                         ->where('user_rewards.user_id', $user->user_id)
                         ->where('user_rewards.user_id', $user->user_id)
                         ->whereIn('user_rewards.status', array('redeemed', 'pending'))
+                        ->havingRaw("(campaign_status = 'ongoing' OR campaign_status = 'expired')")
                         //Default Order by
                         ->orderBy('campaign_status', 'desc')
                         ->groupBy('user_reward_id');
