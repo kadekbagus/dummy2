@@ -139,3 +139,13 @@ Route::get('/api/v1/pub/news/suggestion/list', function()
 });
 
 Route::get('/app/v1/pub/news/suggestion/list', ['as' => 'pub-news-suggestion-list', 'uses' => 'IntermediatePubAuthController@News\NewsAlsoLikeList_getSearchNews']);
+
+/**
+ * List news location for rating form
+ */
+Route::get('/api/v1/pub/news-rating-location/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\News\NewsRatingLocationAPIController::create()->getNewsRatingLocation();
+});
+
+Route::get('/app/v1/pub/news-rating-location/list', ['as' => 'news-rating-location-list', 'uses' => 'IntermediatePubAuthController@News\NewsRatingLocation_getNewsRatingLocation']);
