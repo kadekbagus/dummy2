@@ -149,6 +149,7 @@ class PromotionListAPIController extends PubControllerAPI
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+            $dateNow = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
@@ -183,7 +184,6 @@ class PromotionListAPIController extends PubControllerAPI
                 $cacheKey['keyword'] = $keyword;
                 if ($keyword != '') {
                     $searchFlag = $searchFlag || TRUE;
-                    $withScore = true;
                     $withKeywordSearch = true;
                     $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.keyword', '');
 
@@ -205,6 +205,8 @@ class PromotionListAPIController extends PubControllerAPI
                     if ($shouldMatch != '') {
                         $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
                     }
+
+                    $jsonQuery['query']['bool']['must'][] = $filterKeyword;
                 }
             });
 
@@ -319,172 +321,29 @@ class PromotionListAPIController extends PubControllerAPI
                 $sort = array('_script' => array('script' => $sortScript, 'type' => 'string', 'order' => $sort_mode));
             }
 
-            $sortby = $sort;
+            $sortByPageType = array();
+            $pageTypeScore = '';
+            if ($list_type === 'featured') {
+                $pageTypeScore = 'featured_gtm_score';
+                $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
+                if (! empty($mallId)) {
+                    $pageTypeScore = 'featured_mall_score';
+                    $sortByPageType = array('featured_mall_score' => array('order' => 'desc'));
+                }
+            } else {
+                $pageTypeScore = 'preferred_gtm_score';
+                $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
+                if (! empty($mallId)) {
+                    $pageTypeScore = 'preferred_mall_score';
+                    $sortByPageType = array('preferred_mall_score' => array('order' => 'desc'));
+                }
+            }
+
+            $sortby = array($sortByPageType, $sort);
             if ($withScore) {
-                $sortby = array("_score", $sort);
+                $sortby = array($sortByPageType, "_score", $sort);
             }
             $jsonQuery["sort"] = $sortby;
-
-            $advert_location_type = 'gtm';
-            $advert_location_id = '0';
-            if (! empty($mallId)) {
-                $advert_location_type = 'mall';
-                $advert_location_id = $mallId;
-            }
-
-            $withPreferred = "0 AS with_preferred";
-            if ($list_type === "featured") {
-                $withPreferred = "CASE WHEN placement_type = 'featured_list' THEN 1 ELSE 0 END AS with_preferred";
-            }
-
-            $adverts = Advert::select('adverts.advert_id',
-                                    'adverts.link_object_id',
-                                    'advert_placements.placement_type',
-                                    'advert_placements.placement_order',
-                                    'media.path',
-                                    DB::raw("{$withPreferred}"))
-                            ->join('advert_link_types', function ($q) {
-                                $q->on('advert_link_types.advert_link_name', '=', DB::raw("'Promotion'"));
-                                $q->on('advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id');
-                            })
-                            ->leftJoin('advert_locations', function ($q) use ($advert_location_id, $advert_location_type) {
-                                $q->on('advert_locations.advert_id', '=', 'adverts.advert_id');
-                            })
-                            ->join('advert_placements', function ($q) use ($list_type) {
-                                $q->on('advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id');
-                                if ($list_type === 'featured') {
-                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('featured_list', 'preferred_list_regular', 'preferred_list_large')"));
-                                } else {
-                                    $q->on('advert_placements.placement_type', 'in', DB::raw("('preferred_list_regular', 'preferred_list_large')"));
-                                }
-                            })
-                            ->leftJoin('media', function ($q) {
-                                $q->on("object_id", '=', "adverts.advert_id");
-                                $q->on("media_name_long", '=', DB::raw("'advert_image_orig'"));
-                            })
-                            ->where('adverts.start_date', '<=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
-                            ->where('adverts.end_date', '>=', DB::raw("CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '{$timezone}')"))
-                            ->where(function($q) use ($advert_location_id, $prefix) {
-                                $q->whereRaw(DB::raw("{$prefix}advert_locations.location_id = '{$advert_location_id}'"))
-                                  ->orWhereRaw(DB::raw("{$prefix}adverts.is_all_location = 'Y'"));
-                            })
-                            ->where(function($q) use ($advert_location_type, $prefix){
-                                $q->whereRaw(DB::raw("{$prefix}advert_locations.location_type = '{$advert_location_type}'"))
-                                  ->orWhereRaw(DB::raw("{$prefix}adverts.is_all_location = 'Y'"));
-                            })
-                            ->where('adverts.status', '=', DB::raw("'active'"))
-                            ->orderBy(DB::raw("with_preferred"))
-                            ->orderBy('advert_placements.placement_order', 'desc');
-
-            $advertList = DB::table(DB::raw("({$adverts->toSql()}) as adv"))
-                         ->mergeBindings($adverts->getQuery())
-                         ->select(DB::raw("adv.advert_id,
-                                    adv.link_object_id,
-                                    adv.placement_order,
-                                    adv.path,
-                                    adv.placement_type,
-                                    CASE WHEN SUM(adv.with_preferred) > 0 THEN 'featured_list' ELSE adv.placement_type END AS placement_type_orig"))
-                         ->groupBy(DB::raw("adv.link_object_id"))
-                         ->orderBy(DB::raw("adv.placement_order"), 'desc')
-                         ->take(100);
-
-            if ($withCache) {
-                $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $advertData = $advertCache->get($serializedCacheKey, function() use ($advertList) {
-                    return $advertList->get();
-                });
-                $advertCache->put($serializedCacheKey, $advertData);
-            } else {
-                $advertData = $advertList->get();
-            }
-
-            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $_jsonQuery = $jsonQuery;
-
-            if ($withKeywordSearch) {
-                // if user searching, we call es twice, first for get coupon data that match with keyword and then get the id,
-                // and second, call es data combine with advert
-                $_jsonQuery['query']['bool']['must'][] = $filterKeyword;
-
-                //unset take and skip to get all match data
-                unset($_jsonQuery['from'], $_jsonQuery['size']);
-
-                $_jsonQueryGetTotal = $_jsonQuery;
-
-                $_jsonQueryGetTotal['_source'] = 'news_id';
-                $_jsonQuery['_source'] = 'news_id';
-
-                $_esParam = [
-                    'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
-                    'type'   => Config::get('orbit.elasticsearch.indices.promotions.type')
-                ];
-
-                // get total data for 'take' parameter
-                $_esParam['body'] = json_encode($_jsonQueryGetTotal);
-                $getSearchTotal = $client->search($_esParam);
-                $searchTake = $getSearchTotal['hits']['total'];
-
-                $_jsonQuery['size'] = $searchTake;
-                $_esParam['body'] = json_encode($_jsonQuery);
-
-                if ($withCache) {
-                    $searchResponse = $keywordSearchCache->get($serializedCacheKey, function() use ($client, &$_esParam) {
-                        return $client->search($_esParam);
-                    });
-                    $keywordSearchCache->put($serializedCacheKey, $searchResponse);
-                } else {
-                    $searchResponse = $client->search($_esParam);
-                }
-
-                $searchData = $searchResponse['hits'];
-
-                $promotionIds = array();
-                foreach ($searchData['hits'] as $content) {
-                    foreach ($content as $key => $val) {
-                        if ($key === "_id") {
-                            $promotionIds[] = $val;
-                            $promId = $val;
-                        }
-                        if ($key === "_score") {
-                            $promotionScore[$promId] = $val;
-                        }
-                    }
-                }
-                $jsonQuery['query']['bool']['must'][] = array('terms' => array('_id' => $promotionIds));
-            }
-
-            // call es
-            if (! empty($advertData)) {
-                unset($jsonQuery['sort']);
-                $withScore = true;
-                $advertIds = array();
-                foreach ($advertData as $dt) {
-                    if ($list_type === 'featured') {
-                        if ($dt->placement_type_orig === 'featured_list') {
-                            $advertIds[] = $dt->advert_id;
-                            $boost = $dt->placement_order * 3;
-                            $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
-                            $jsonQuery['query']['bool']['should'][] = $esAdvert;
-                        }
-                    } else {
-                        $advertIds[] = $dt->advert_id;
-                        $boost = $dt->placement_order * 3;
-                        $esAdvert = array('match' => array('_id' => array('query' => $dt->link_object_id, 'boost' => $boost)));
-                        $jsonQuery['query']['bool']['should'][] = $esAdvert;
-                    }
-                }
-
-                if ($withKeywordSearch) {
-                    $withoutAdv = array_diff($promotionIds, $advertIds);
-                    foreach ($withoutAdv as $wa) {
-                        $esWithoutAdvert = array('match' => array('_id' => array('query' => $wa, 'boost' => $promotionScore[$wa])));
-                        $jsonQuery['query']['bool']['should'][] = $esWithoutAdvert;
-                    }
-                } else {
-                    $jsonQuery['query']['bool']['should'][] = array('match_all' => new stdclass());
-                }
-
-            }
 
             // Exclude specific document Ids, useful for some cases e.g You May Also Like
             // @todo rewrite deprected 'filtered' query to bool only
@@ -495,11 +354,6 @@ class PromotionListAPIController extends PubControllerAPI
                 }
                 $jsonQuery['query']['bool']['must_not'] = $jsonExcludedIds;
             });
-
-            $sortby = $sort;
-            if ($withScore) {
-                $sortby = array('_score', $sort);
-            }
 
             if ($this->withoutScore) {
                 // remove _score sort
@@ -518,13 +372,62 @@ class PromotionListAPIController extends PubControllerAPI
             }
             $jsonQuery['sort'] = $sortby;
 
+            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+            $esIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index');
+            $locationId = ! empty($mallId) ? $mallId : 0;
+            $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
+
+            // call advert before call main query
+            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs))), array('match' => array('advert_location_ids' => $locationId)), array('terms' => array('advert_type' => $advertType))))), 'sort' => $sortByPageType);
+
+            $jsonQuery['query']['bool']['must'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
+
+            $esAdvertParam = [
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_promotions.index'),
+                'type'  => Config::get('orbit.elasticsearch.indices.advert_promotions.type'),
+                'body'  => json_encode($esAdvertQuery)
+            ];
+
+            $advertResponse = $client->search($esAdvertParam);
+            if ($advertResponse['hits']['total'] > 0) {
+                $esIndex = $esIndex . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_promotions.index');
+                $advertList = $advertResponse['hits']['hits'];
+                $excludeId = array();
+                $withPreferred = array();
+
+                foreach ($advertList as $adverts) {
+                    $advertId = $adverts['_id'];
+                    $newsId = $adverts['_source']['news_id'];
+                    if(! in_array($newsId, $excludeId)) {
+                        $excludeId[] = $newsId;
+                    } else {
+                        $excludeId[] = $advertId;
+                    }
+
+                    // if featured list_type check preferred too
+                    if ($list_type === 'featured') {
+                        if ($adverts['_source']['advert_type'] === 'preferred_list_regular' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
+                            if (empty($withPreferred[$newsId]) || $withPreferred[$newsId] != 'preferred_list_large') {
+                                $withPreferred[$newsId] = 'preferred_list_regular';
+                                if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
+                                    $withPreferred[$newsId] = 'preferred_list_large';
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
+            }
+
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
+                'index'  => $esIndex,
                 'type'   => Config::get('orbit.elasticsearch.indices.promotions.type'),
                 'body' => json_encode($jsonQuery)
             ];
 
             if ($withCache) {
+                $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
                 $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
                     return $client->search($esParam);
                 });
@@ -545,6 +448,8 @@ class PromotionListAPIController extends PubControllerAPI
                 $default_lang = '';
                 $partnerTokens = isset($record['_source']['partner_tokens']) ? $record['_source']['partner_tokens'] : [];
                 $pageView = 0;
+                $data['placement_type'] = null;
+                $data['placement_type_orig'] = null;
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
                         $key = "news_name";
@@ -595,22 +500,31 @@ class PromotionListAPIController extends PubControllerAPI
                         }
                     }
 
-                    // advert
-                    if ($key === "news_id") {
-                        $data['placement_type'] = null;
-                        $data['placement_type_orig'] = null;
-                        foreach ($advertData as $advData) {
+                    // advert type
+                    if ($list_type === 'featured') {
+                        if ($key === 'news_id') {
+                            $campaignId = $value;
+                        }
 
-                            if ($advData->link_object_id === $value) {
-                                $data['placement_type'] = $advData->placement_type;
-                                $data['placement_type_orig'] = $advData->placement_type_orig;
+                        if (! empty($mallId) && $key === 'featured_mall_type') {
+                            $data['placement_type'] = $value;
+                            $data['placement_type_orig'] = $value;
+                        } elseif ($key === 'featured_gtm_type') {
+                            $data['placement_type'] = $value;
+                            $data['placement_type_orig'] = $value;
+                        }
 
-                                // image
-                                if (! empty($advData->path)) {
-                                    $data['image_url'] = $advData->path;
-                                }
-                                break;
-                            }
+                        if (! empty($withPreferred[$campaignId])) {
+                            $data['placement_type'] = $withPreferred[$campaignId];
+                            $data['placement_type_orig'] = $withPreferred[$campaignId];
+                        }
+                    } elseif ($list_type === 'preferred') {
+                        if (! empty($mallId) && $key === 'preferred_mall_type') {
+                            $data['placement_type'] = $value;
+                            $data['placement_type_orig'] = $value;
+                        } elseif ($key === 'preferred_gtm_type') {
+                            $data['placement_type'] = $value;
+                            $data['placement_type_orig'] = $value;
                         }
                     }
 
