@@ -47,6 +47,7 @@ class AdvertUpdateQueue
             $this->updateESCoupon($advert);
             $this->updateESPromotion($advert);
             $this->updateESStore($advert);
+            $this->updateESNews($advert);
 
             // Safely delete the object
             $job->delete();
@@ -164,6 +165,44 @@ class AdvertUpdateQueue
         }
     }
 
+    protected function updateESNews($advert) {
+        $fakeJob = new FakeJob();
+        // find promotion relate with advert to update ESpromotion
+        // check promotion before update elasticsearch
+        $prefix = DB::getTablePrefix();
+        $news = News::excludeDeleted('news')
+                ->select(DB::raw("
+                    {$prefix}news.news_id,
+                    CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                    THEN {$prefix}campaign_status.campaign_status_name
+                    ELSE (CASE WHEN {$prefix}news.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                    FROM {$prefix}news_merchant onm
+                                        LEFT JOIN {$prefix}merchants om ON om.merchant_id = onm.merchant_id
+                                        LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                        LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                    WHERE onm.news_id = {$prefix}news.news_id)
+                   THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status
+                "))
+                ->join('adverts', 'adverts.link_object_id', '=', 'news.news_id')
+                ->where('adverts.advert_id', '=', $advert->advert_id)
+                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                ->where('news.object_type', '=', 'news')
+                ->groupBy('news.news_id')
+                ->first();
+
+        if (is_object($news)) {
+            if ($news->campaign_status === 'stopped' || $news->campaign_status === 'expired') {
+                // Notify the queueing system to delete Elasticsearch document
+                $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsDeleteQueue();
+                $response = $esQueue->fire($fakeJob, ['news_id' => $news->news_id]);
+            } else {
+                // Notify the queueing system to delete Elasticsearch document
+                $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsUpdateQueue();
+                $response = $esQueue->fire($fakeJob, ['news_id' => $news->news_id]);
+            }
+        }
+    }
+
     protected function updateESStore($advert) {
         $fakeJob = new FakeJob();
         // find store relate with advert to update ESstore
@@ -179,7 +218,7 @@ class AdvertUpdateQueue
                             where status = 'active'
                                 and object_type = 'mall'
                             ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                        ->where('adverts.advert_id', '=', $advert_id)
+                        ->where('adverts.advert_id', '=', $advert->advert_id)
                         ->first();
 
         if (is_object($store)) {

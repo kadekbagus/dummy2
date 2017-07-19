@@ -8,6 +8,7 @@ use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use DB;
 use Coupon;
+use Advert;
 use IssuedCoupon;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
@@ -117,6 +118,16 @@ class ESCouponUpdateQueue
                 'id' => $coupon->promotion_id,
                 'body' => []
             ];
+
+            $featuredGtmScore = 0;
+            $featuredMallScore = 0;
+            $preferredGtmScore = 0;
+            $preferredMallScore = 0;
+
+            $featuredGtmType = '';
+            $featuredMallType = '';
+            $preferredGtmType = '';
+            $preferredMallType = '';
 
             $categoryIds = array();
             foreach ($coupon->campaignLocations as $campaignLocation) {
@@ -280,30 +291,38 @@ class ESCouponUpdateQueue
             }
 
             $body = [
-                'promotion_id'    => $coupon->promotion_id,
-                'name'            => $coupon->promotion_name,
-                'description'     => $coupon->description,
-                'object_type'     => 'coupon',
-                'begin_date'      => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
-                'end_date'        => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
-                'updated_at'      => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
-                'coupon_validity_in_date'      => date('Y-m-d', strtotime($coupon->coupon_validity_in_date)) . 'T' . date('H:i:s', strtotime($coupon->coupon_validity_in_date)) . 'Z',
-                'status'          => $coupon->status,
-                'available'       => $available,
-                'campaign_status' => $coupon->campaign_status,
-                'is_all_gender'   => $coupon->is_all_gender,
-                'is_all_age'      => $coupon->is_all_age,
-                'default_lang'    => $coupon->mobile_default_language,
-                'category_ids'    => $categoryIds,
-                'translation'     => $translations,
-                'keywords'        => $keywords,
-                'partner_ids'     => $partnerIds,
-                'partner_tokens'  => $partnerTokens,
-                'advert_ids'      => $advertIds,
-                'link_to_tenant'  => $linkToTenants,
-                'is_exclusive'    => ! empty($coupon->is_exclusive) ? $coupon->is_exclusive : 'N',
-                'gtm_page_views'   => $total_view_on_gtm,
-                'mall_page_views'  => $total_view_on_mall,
+                'promotion_id'            => $coupon->promotion_id,
+                'name'                    => $coupon->promotion_name,
+                'description'             => $coupon->description,
+                'object_type'             => 'coupon',
+                'begin_date'              => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
+                'end_date'                => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z',
+                'updated_at'              => date('Y-m-d', strtotime($coupon->updated_at)) . 'T' . date('H:i:s', strtotime($coupon->updated_at)) . 'Z',
+                'coupon_validity_in_date' => date('Y-m-d', strtotime($coupon->coupon_validity_in_date)) . 'T' . date('H:i:s', strtotime($coupon->coupon_validity_in_date)) . 'Z',
+                'status'                  => $coupon->status,
+                'available'               => $available,
+                'campaign_status'         => $coupon->campaign_status,
+                'is_all_gender'           => $coupon->is_all_gender,
+                'is_all_age'              => $coupon->is_all_age,
+                'default_lang'            => $coupon->mobile_default_language,
+                'category_ids'            => $categoryIds,
+                'translation'             => $translations,
+                'keywords'                => $keywords,
+                'partner_ids'             => $partnerIds,
+                'partner_tokens'          => $partnerTokens,
+                'advert_ids'              => $advertIds,
+                'link_to_tenant'          => $linkToTenants,
+                'is_exclusive'            => ! empty($coupon->is_exclusive) ? $coupon->is_exclusive : 'N',
+                'gtm_page_views'          => $total_view_on_gtm,
+                'mall_page_views'         => $total_view_on_mall,
+                'featured_gtm_score'      => $featuredGtmScore,
+                'featured_mall_score'     => $featuredMallScore,
+                'preferred_gtm_score'     => $preferredGtmScore,
+                'preferred_mall_score'    => $preferredMallScore,
+                'featured_gtm_type'       => $featuredGtmType,
+                'featured_mall_type'      => $featuredMallType,
+                'preferred_gtm_type'      => $preferredGtmType,
+                'preferred_mall_type'     => $preferredMallType,
             ];
 
             $body = array_merge($body, $translationBody);
@@ -327,6 +346,9 @@ class ESCouponUpdateQueue
             $fakeJob = new FakeJob();
             $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionUpdateQueue();
             $suggestion = $esQueue->fire($fakeJob, ['coupon_id' => $couponId]);
+
+            $esAdvertQueue = new \Orbit\Queue\Elasticsearch\ESAdvertCouponUpdateQueue();
+            $advertUpdate = $esAdvertQueue->fire($fakeJob, ['coupon_id' => $couponId]);
 
             // Safely delete the object
             $job->delete();

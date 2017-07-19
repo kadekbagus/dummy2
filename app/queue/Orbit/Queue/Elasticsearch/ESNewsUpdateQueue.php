@@ -8,6 +8,7 @@ use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use DB;
 use News;
+use Advert;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
@@ -117,6 +118,16 @@ class ESNewsUpdateQueue
                 'body' => []
             ];
 
+            $featuredGtmScore = 0;
+            $featuredMallScore = 0;
+            $preferredGtmScore = 0;
+            $preferredMallScore = 0;
+
+            $featuredGtmType = '';
+            $featuredMallType = '';
+            $preferredGtmType = '';
+            $preferredMallType = '';
+
             $categoryIds = array();
             foreach ($news->campaignLocations as $campaignLocation) {
                 foreach ($campaignLocation->categories as $category) {
@@ -225,31 +236,39 @@ class ESNewsUpdateQueue
             }
 
             $body = [
-                'news_id'          => $news->news_id,
-                'name'             => $news->news_name,
-                'description'      => $news->description,
-                'object_type'      => $news->object_type,
-                'begin_date'       => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
-                'end_date'         => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z',
-                'updated_at'       => date('Y-m-d', strtotime($news->updated_at)) . 'T' . date('H:i:s', strtotime($news->updated_at)) . 'Z',
-                'status'           => $news->status,
-                'campaign_status'  => $news->campaign_status,
-                'is_all_gender'    => $news->is_all_gender,
-                'is_all_age'       => $news->is_all_age,
-                'category_ids'     => $categoryIds,
-                'created_by'       => $news->user_id,
-                'creator_email'    => $news->user_email,
-                'default_lang'     => $news->mobile_default_language,
-                'translation'      => $translations,
-                'keywords'         => $keywords,
-                'partner_ids'      => $partnerIds,
-                'partner_tokens'   => $partnerTokens,
-                'advert_ids'       => $advertIds,
-                'link_to_tenant'   => $linkToTenants,
-                'is_exclusive'     => ! empty($news->is_exclusive) ? $news->is_exclusive : 'N',
-                'is_having_reward' => $news->is_having_reward,
-                'gtm_page_views'   => $total_view_on_gtm,
-                'mall_page_views'  => $total_view_on_mall,
+                'news_id'              => $news->news_id,
+                'name'                 => $news->news_name,
+                'description'          => $news->description,
+                'object_type'          => $news->object_type,
+                'begin_date'           => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
+                'end_date'             => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z',
+                'updated_at'           => date('Y-m-d', strtotime($news->updated_at)) . 'T' . date('H:i:s', strtotime($news->updated_at)) . 'Z',
+                'status'               => $news->status,
+                'campaign_status'      => $news->campaign_status,
+                'is_all_gender'        => $news->is_all_gender,
+                'is_all_age'           => $news->is_all_age,
+                'category_ids'         => $categoryIds,
+                'created_by'           => $news->user_id,
+                'creator_email'        => $news->user_email,
+                'default_lang'         => $news->mobile_default_language,
+                'translation'          => $translations,
+                'keywords'             => $keywords,
+                'partner_ids'          => $partnerIds,
+                'partner_tokens'       => $partnerTokens,
+                'advert_ids'           => $advertIds,
+                'link_to_tenant'       => $linkToTenants,
+                'is_exclusive'         => ! empty($news->is_exclusive) ? $news->is_exclusive : 'N',
+                'is_having_reward'     => $news->is_having_reward,
+                'gtm_page_views'       => $total_view_on_gtm,
+                'mall_page_views'      => $total_view_on_mall,
+                'featured_gtm_score'   => $featuredGtmScore,
+                'featured_mall_score'  => $featuredMallScore,
+                'preferred_gtm_score'  => $preferredGtmScore,
+                'preferred_mall_score' => $preferredMallScore,
+                'featured_gtm_type'    => $featuredGtmType,
+                'featured_mall_type'   => $featuredMallType,
+                'preferred_gtm_type'   => $preferredGtmType,
+                'preferred_mall_type'  => $preferredMallType,
             ];
 
             $body = array_merge($body, $translationBody);
@@ -274,6 +293,9 @@ class ESNewsUpdateQueue
             $fakeJob = new FakeJob();
             $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsSuggestionUpdateQueue();
             $suggestion = $esQueue->fire($fakeJob, ['news_id' => $newsId]);
+
+            $esAdvertQueue = new \Orbit\Queue\Elasticsearch\ESAdvertNewsUpdateQueue();
+            $advertUpdate = $esAdvertQueue->fire($fakeJob, ['news_id' => $newsId]);
 
             // Safely delete the object
             $job->delete();

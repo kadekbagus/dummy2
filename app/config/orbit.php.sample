@@ -117,7 +117,27 @@ return array(
             'mall_suggestions' => [
                  'index' => 'mall_suggestions',
                  'type'  => 'basic'
-            ]
+            ],
+
+            'advert_coupons' => [
+                'index' => 'advert_coupons',
+                'type'  => 'basic'
+            ],
+
+            'advert_news' => [
+                 'index' => 'advert_news',
+                 'type'  => 'basic'
+            ],
+
+            'advert_promotions' => [
+                 'index' => 'advert_promotions',
+                 'type'  => 'basic'
+            ],
+
+            'advert_stores' => [
+                 'index' => 'advert_stores',
+                 'type'  => 'basic'
+            ],
         ],
 
         // index list will be include in suggestion

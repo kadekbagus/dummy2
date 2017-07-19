@@ -8,6 +8,7 @@ use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use DB;
 use Tenant;
+use Advert;
 use BaseMerchant;
 use TotalObjectPageView;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
@@ -196,6 +197,16 @@ class ESStoreUpdateQueue
                 $translations[] = $trans;
             }
 
+            $featuredGtmScore = 0;
+            $preferredGtmScore = 0;
+            $featuredGtmType = '';
+            $preferredGtmType = '';
+
+            $featuredMallScore = 0;
+            $preferredMallScore = 0;
+            $featuredMallType = '';
+            $preferredMallType = '';
+
             $tenantDetails = array();
             foreach ($store as $_store) {
 
@@ -206,23 +217,23 @@ class ESStoreUpdateQueue
 
                $tenantDetail = array(
                     "merchant_id" => $_store->merchant_id,
-                    "mall_id" => $_store->mall_id,
-                    "mall_name" => $_store->mall_name,
-                    "city" => $_store->city,
-                    "province" => $_store->province,
-                    "country" => $_store->country,
-                    "advert_ids" => $advertIds,
-                    "address" => $_store->address,
-                    "position" => [
+                    "mall_id"     => $_store->mall_id,
+                    "mall_name"   => $_store->mall_name,
+                    "city"        => $_store->city,
+                    "province"    => $_store->province,
+                    "country"     => $_store->country,
+                    "advert_ids"  => $advertIds,
+                    "address"     => $_store->address,
+                    "position"    => [
                         'lon' => $_store->longitude,
                         'lat' => $_store->latitude
                     ],
-                    "floor" => $_store->floor,
-                    "unit"  => $_store->unit,
-                    "operating_hours" => $_store->operating_hours,
-                    "logo" => $_store->path,
-                    "logo_cdn" => $_store->cdn_url,
-                    "url" => $_store->url
+                    "floor"                => $_store->floor,
+                    "unit"                 => $_store->unit,
+                    "operating_hours"      => $_store->operating_hours,
+                    "logo"                 => $_store->path,
+                    "logo_cdn"             => $_store->cdn_url,
+                    "url"                  => $_store->url
                 );
 
                 $tenantDetails[] = $tenantDetail;
@@ -255,24 +266,32 @@ class ESStoreUpdateQueue
             }
 
             $body = [
-                'merchant_id' => $store[0]->merchant_id,
-                'name' => $store[0]->name,
-                'description' => $store[0]->description,
-                'phone' => $store[0]->phone,
-                'logo' => $store[0]->path,
-                'logo_cdn' => $store[0]->cdn_url,
-                'object_type' => $store[0]->object_type,
-                'default_lang' => $store[0]->mobile_default_language,
-                'category' => $categoryIds,
-                'keywords' => $keywords,
-                'partner_ids' => $partnerIds,
-                'created_at' => date('Y-m-d', strtotime($store[0]->created_at)) . 'T' . date('H:i:s', strtotime($store[0]->created_at)) . 'Z',
-                'updated_at' => date('Y-m-d', strtotime($store[0]->updated_at)) . 'T' . date('H:i:s', strtotime($store[0]->updated_at)) . 'Z',
+                'merchant_id'         => $store[0]->merchant_id,
+                'name'                => $store[0]->name,
+                'description'         => $store[0]->description,
+                'phone'               => $store[0]->phone,
+                'logo'                => $store[0]->path,
+                'logo_cdn'            => $store[0]->cdn_url,
+                'object_type'         => $store[0]->object_type,
+                'default_lang'        => $store[0]->mobile_default_language,
+                'category'            => $categoryIds,
+                'keywords'            => $keywords,
+                'partner_ids'         => $partnerIds,
+                'created_at'          => date('Y-m-d', strtotime($store[0]->created_at)) . 'T' . date('H:i:s', strtotime($store[0]->created_at)) . 'Z',
+                'updated_at'          => date('Y-m-d', strtotime($store[0]->updated_at)) . 'T' . date('H:i:s', strtotime($store[0]->updated_at)) . 'Z',
                 'tenant_detail_count' => count($store),
-                'translation' => $translations,
-                'tenant_detail' => $tenantDetails,
-                'gtm_page_views' => $gtmPageViews,
-                'mall_page_views' => $mallPageViews
+                'translation'         => $translations,
+                'tenant_detail'       => $tenantDetails,
+                'gtm_page_views'      => $gtmPageViews,
+                'mall_page_views'     => $mallPageViews,
+                'featured_gtm_score'   => $featuredGtmScore,
+                'featured_mall_score'  => $featuredMallScore,
+                'preferred_gtm_score'  => $preferredGtmScore,
+                'preferred_mall_score' => $preferredMallScore,
+                'featured_gtm_type'    => $featuredGtmType,
+                'featured_mall_type'   => $featuredMallType,
+                'preferred_gtm_type'   => $preferredGtmType,
+                'preferred_mall_type'  => $preferredMallType,
             ];
 
             $params['body'] = $body;
@@ -289,6 +308,9 @@ class ESStoreUpdateQueue
             // update detail
             $esDetail = new \Orbit\Queue\Elasticsearch\ESStoreDetailUpdateQueue();
             $detail = $esDetail->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
+
+            $esAdvertQueue = new \Orbit\Queue\Elasticsearch\ESAdvertStoreUpdateQueue();
+            $advertUpdate = $esAdvertQueue->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
 
             if ($updateRelated) {
                 // update es coupon, news, and promotion
