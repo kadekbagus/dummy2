@@ -6308,7 +6308,15 @@ return array(
             'region' => 'ap-southeast-1',
 
             // Version for S3
-            'version' => '2006-03-01'
+            'version' => '2006-03-01',
+
+            // Upload metadata for uploaded file, useful to setup
+            // HTTP header such as Cache-Control
+            'upload-metadata' => [
+                // Cache-Control header to tells browser to cache
+                // the object for 1 month 2592000 seconds
+                'CacheControl' => 'public, max-age=2592000'
+            ],
         ]
     ],
 

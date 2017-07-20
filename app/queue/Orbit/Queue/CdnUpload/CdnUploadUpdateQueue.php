@@ -59,16 +59,25 @@ class CdnUploadUpdateQueue
             $message = array();
             $publicPath = public_path();
 
+            $genericUploadConfig = [
+                'Bucket' => $bucketName
+            ];
+            // Merge with the one from config file
+            // Set the default cache-control to 1 month or 2592000 seconds
+            $genericUploadConfig = $genericUploadConfig + Config::get('orbit.aws-sdk.upload-metadata', [
+                'CacheControl' => 'public, max-age=2592000']);
+
             foreach ($media as $file) {
                 $sourceFile = $useRelativePath ? $publicPath . '/' . $file->path : $file->realpath;
 
                 // insert new
-                $response = $s3->putObject([
-                    'Bucket' => $bucketName,
+                $uploadConfig = [
                     'Key' => $file->path,
                     'SourceFile' => $sourceFile,
                     'ContentType' => $file->mime_type
-                ]);
+                ];
+                $uploadConfig = $uploadConfig + $genericUploadConfig;
+                $response = $s3->putObject($uploadConfig);
 
                 $s3Media = Media::find($file->media_id);
                 $s3Media->cdn_url = $response['ObjectURL'];
