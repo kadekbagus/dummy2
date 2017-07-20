@@ -42,30 +42,32 @@ class CdnCouponMissingFile extends Command {
      */
     public function fire()
     {
-        $date = $this->option('more-than');
+        $take = 50;
+        $skip = 0;
+        $now = date('Y-m-d H:i:s', strtotime($this->option('more-than')));    // no TZ calculation
+        $prefix = DB::getTablePrefix();
 
-        if (DateTime::createFromFormat('Y-m-d H:i:s', $date) == false) {
-           throw new Exception('Format date is invalid, format date must be Y-m-d H:i:s ie (2017-12-20 16:55:28)');
-        }
+        do {
+            $coupons = DB::select("SELECT c.promotion_id
+                FROM {$prefix}media m
+                JOIN {$prefix}coupon_translations ct ON ct.coupon_translation_id = m.object_id
+                JOIN {$prefix}promotions c ON c.promotion_id = ct.promotion_id
+                WHERE m.object_name = 'coupon_translation' AND
+                c.is_coupon = 'Y' AND
+                m.cdn_url IS NULL AND
+                m.path IS NOT NULL AND
+                m.created_at > '{$now}'
+                GROUP BY c.promotion_id
+                LIMIT $skip, $take");
 
-        $coupons = Media::select('promotions.promotion_id')
-                    ->join('coupon_translations', 'coupon_translations.coupon_translation_id', '=', 'media.object_id')
-                    ->join('promotions', 'promotions.promotion_id', '=', 'coupon_translations.promotion_id')
-                    ->where('media.object_name', '=', 'coupon_translation')
-                    ->where('promotions.is_coupon', '=', 'Y')
-                    ->whereNull('media.cdn_url')
-                    ->whereNotNull('media.path')
-                    ->where('media.created_at', '>=', $date)
-                    ->groupBy('promotions.promotion_id')
-                    ->get();
+            $skip = $take + $skip;
 
-        if (count($coupons)) {
-            foreach($coupons as $coupon) {
-                printf("%s,%s\n", $coupon->promotion_id, 'coupon');
+            foreach ($coupons as $coupon) {
+                $values = get_object_vars($coupon);
+                printf("%s,%s\n", implode($values), 'coupon');
             }
-        } else {
-            $this->info('no missing cdn found');
-        }
+
+        } while (! empty($coupons));
     }
 
     /**

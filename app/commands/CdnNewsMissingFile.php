@@ -42,30 +42,32 @@ class CdnNewsMissingFile extends Command {
      */
     public function fire()
     {
-        $date = $this->option('more-than');
+        $take = 50;
+        $skip = 0;
+        $now = date('Y-m-d H:i:s', strtotime($this->option('more-than')));    // no TZ calculation
+        $prefix = DB::getTablePrefix();
 
-        if (DateTime::createFromFormat('Y-m-d H:i:s', $date) == false) {
-           throw new Exception('Format date is invalid, format date must be Y-m-d H:i:s ie (2017-12-20 16:55:28)');
-        }
+        do {
+            $news = DB::select("SELECT n.news_id
+                FROM {$prefix}media m
+                JOIN {$prefix}news_translations nt ON nt.news_translation_id = m.object_id
+                JOIN {$prefix}news n ON n.news_id = nt.news_id
+                WHERE m.object_name = 'news_translation' AND
+                n.object_type = 'news' AND
+                m.cdn_url IS NULL AND
+                m.path IS NOT NULL AND
+                m.created_at > '{$now}'
+                GROUP BY n.news_id
+                LIMIT $skip, $take");
 
-        $news = Media::select('news.news_id')
-                    ->join('news_translations', 'news_translations.news_translation_id', '=', 'media.object_id')
-                    ->join('news', 'news.news_id', '=', 'news_translations.news_id')
-                    ->where('media.object_name', '=', 'news_translation')
-                    ->where('news.object_type', '=', 'news')
-                    ->whereNull('media.cdn_url')
-                    ->whereNotNull('media.path')
-                    ->where('media.created_at', '>=', $date)
-                    ->groupBy('news.news_id')
-                    ->get();
+            $skip = $take + $skip;
 
-        if (count($news)) {
-            foreach($news as $promo) {
-                printf("%s,%s\n", $promo->news_id, 'news');
+            foreach ($news as $event) {
+                $values = get_object_vars($event);
+                printf("%s,%s\n", implode($values), 'news');
             }
-        } else {
-            $this->info('no missing cdn found');
-        }
+
+        } while (! empty($news));
     }
 
     /**
