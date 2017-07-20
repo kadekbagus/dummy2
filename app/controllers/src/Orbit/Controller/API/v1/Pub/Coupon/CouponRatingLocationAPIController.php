@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Pub\News;
+<?php namespace Orbit\Controller\API\v1\Pub\Coupon;
 
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -10,8 +10,8 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
-use News;
-use NewsMerchant;
+use Promotion;
+use PromotionRetailer;
 use Language;
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
@@ -20,7 +20,7 @@ use Mall;
 use App;
 use Lang;
 
-class NewsRatingLocationAPIController extends PubControllerAPI
+class CouponRatingLocationAPIController extends PubControllerAPI
 {
     /**
      * GET - get store list inside news/events detil
@@ -38,7 +38,7 @@ class NewsRatingLocationAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getNewsRatingLocation()
+    public function getCouponRatingLocation()
     {
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
@@ -81,14 +81,11 @@ class NewsRatingLocationAPIController extends PubControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
-            $ratingLocation = NewsMerchant::select('merchants.merchant_id as location_id', DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', CONCAT({$prefix}merchants.name,' {$at} ', oms.name), CONCAT('Mall {$at} ', {$prefix}merchants.name)) as location_name"))
-                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+            $ratingLocation = PromotionRetailer::select('merchants.merchant_id as location_id', DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' {$at} ', oms.name), CONCAT('Mall {$at} ', {$prefix}merchants.name)) as location_name"))
+                                        ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                        ->join('news', function ($q) {
-                                            $q->on('news_merchant.news_id', '=', 'news.news_id')
-                                              ->on('news.object_type', '=', DB::raw("'news'"));
-                                        })
-                                        ->where('news_merchant.news_id', '=', $objectId);
+                                        ->where('promotions.promotion_id', '=', $objectId);
 
             OrbitInput::get('cities', function($cities) use ($ratingLocation, $prefix) {
                 foreach ($cities as $key => $value) {
@@ -123,7 +120,7 @@ class NewsRatingLocationAPIController extends PubControllerAPI
 
             $ratingLocation = clone($ratingLocation);
 
-            $take = PaginationNumber::parseTakeFromGet('news');
+            $take = PaginationNumber::parseTakeFromGet('promotions');
             $ratingLocation->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();

@@ -16,9 +16,9 @@ use Language;
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
-use Orbit\Controller\API\v1\Pub\SocMedAPIController;
-use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
+use App;
+use Lang;
 
 class PromotionRatingLocationAPIController extends PubControllerAPI
 {
@@ -51,6 +51,12 @@ class PromotionRatingLocationAPIController extends PubControllerAPI
             $sortBy = OrbitInput::get('sortby', 'name');
             $sortMode = OrbitInput::get('sortmode','asc');
             $mallId = OrbitInput::get('mall_id', null);
+            $language = OrbitInput::get('language', 'id');
+
+            // set language
+            App::setLocale($language);
+
+            $at = Lang::get('label.conjunction.at');
 
             $validator = Validator::make(
                 array(
@@ -75,7 +81,7 @@ class PromotionRatingLocationAPIController extends PubControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
-            $ratingLocation = NewsMerchant::select('merchants.merchant_id as location_id', DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', CONCAT({$prefix}merchants.name,' at ', oms.name), CONCAT('Mall at ', {$prefix}merchants.name)) as location_name"))
+            $ratingLocation = NewsMerchant::select('merchants.merchant_id as location_id', DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', CONCAT({$prefix}merchants.name,' {$at} ', oms.name), CONCAT('Mall {$at} ', {$prefix}merchants.name)) as location_name"))
                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                         ->join('news', function ($q) {

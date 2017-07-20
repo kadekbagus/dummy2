@@ -294,3 +294,13 @@ Route::post('/api/v1/coupon/coupon-export', function()
 });
 
 Route::post('/app/v1/coupon/coupon-export', ['as' => 'coupon-export', 'uses' => 'IntermediateAuthController@CouponExport_postCouponExport']);
+
+/**
+ * List promotion location for rating form
+ */
+Route::get('/api/v1/pub/coupon-rating-location/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponRatingLocationAPIController::create()->getCouponRatingLocation();
+});
+
+Route::get('/app/v1/pub/coupon-rating-location/list', ['as' => 'coupon-rating-location-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponRatingLocation_getCouponRatingLocation']);
