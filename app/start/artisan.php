@@ -248,3 +248,12 @@ Artisan::add(new CdnPartnerMissingFile);
 
 // Find missing cdn file in Store
 Artisan::add(new CdnStoreMissingFile);
+
+// Find missing cdn file in promotion
+Artisan::add(new CdnPromotionMissingFile);
+
+// Find missing cdn file in news
+Artisan::add(new CdnNewsMissingFile);
+
+// Find missing cdn file in coupon
+Artisan::add(new CdnCouponMissingFile);
