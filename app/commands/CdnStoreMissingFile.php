@@ -37,29 +37,34 @@ class CdnStoreMissingFile extends Command {
      */
     public function fire()
     {
+        $take = 5;
+        $skip = 0;
         $moreThanDate = $this->option('more-than');
 
         if (DateTime::createFromFormat('Y-m-d H:i:s', $moreThanDate) == false) {
            throw new Exception('Format date is invalid, format date must be Y-m-d H:i:s ie (2017-12-20 16:55:28)');
         }
 
-        $store = Tenant::select('merchant_id')
-                            ->leftJoin('media', 'media.object_id', '=', 'merchant_id')
-                            ->where('object_name', 'retailer')
-                            ->whereNotNull('path')
-                            ->whereNull('cdn_url')
-                            ->where('merchants.created_at', '>=', $moreThanDate)
-                            ->groupBy('merchant_id')
-                            ->excludeDeleted()
-                            ->get();
+        do {
+            $store = Tenant::select('merchant_id')
+                                ->leftJoin('media', 'media.object_id', '=', 'merchant_id')
+                                ->where('object_name', 'retailer')
+                                ->whereNotNull('path')
+                                ->whereNull('cdn_url')
+                                ->where('merchants.created_at', '>=', $moreThanDate)
+                                ->groupBy('merchant_id')
+                                ->excludeDeleted()
+                                ->skip($skip)
+                                ->take($take)
+                                ->get();
 
-        if (count($store) > 0) {
+            $skip = $take + $skip;
+
             foreach ($store as $key => $val) {
                 $this->info($val->merchant_id  . ',store');
             }
-        } else {
-                $this->info('Data not found.');
-        }
+        } while (count($store) > 0);
+
     }
 
     /**

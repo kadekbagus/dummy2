@@ -37,29 +37,34 @@ class CdnAdvertMissingFile extends Command {
      */
     public function fire()
     {
+        $take = 50;
+        $skip = 0;
         $moreThanDate = $this->option('more-than');
 
         if (DateTime::createFromFormat('Y-m-d H:i:s', $moreThanDate) == false) {
            throw new Exception('Format date is invalid, format date must be Y-m-d H:i:s ie (2017-12-20 16:55:28)');
         }
 
-        $advert = Advert::select('advert_id')
-                            ->leftJoin('media', 'media.object_id', '=', 'advert_id')
-                            ->where('object_name', 'advert')
-                            ->whereNotNull('path')
-                            ->whereNull('cdn_url')
-                            ->where('adverts.created_at', '>=', $moreThanDate)
-                            ->groupBy('advert_id')
-                            ->excludeDeleted()
-                            ->get();
+        do {
+            $advert = Advert::select('advert_id')
+                                ->leftJoin('media', 'media.object_id', '=', 'advert_id')
+                                ->where('object_name', 'advert')
+                                ->whereNotNull('path')
+                                ->whereNull('cdn_url')
+                                ->where('adverts.created_at', '>=', $moreThanDate)
+                                ->groupBy('advert_id')
+                                ->excludeDeleted()
+                                ->skip($skip)
+                                ->take($take)
+                                ->get();
 
-        if (count($advert) > 0) {
+            $skip = $take + $skip;
+
             foreach ($advert as $key => $val) {
                 $this->info($val->advert_id . ',advert');
             }
-        } else {
-                $this->info('Data not found.');
-        }
+        } while (count($advert) > 0);
+
     }
 
     /**
@@ -80,7 +85,7 @@ class CdnAdvertMissingFile extends Command {
     protected function getOptions()
     {
         return array(
-            array('more-than', NULL, InputOption::VALUE_REQUIRED, 'More than equal date, format : Y-m-d H:i:s ie (2017-12-20 16:55:28)')
+            array('more-than', null, InputOption::VALUE_REQUIRED, 'More than equal date, format : Y-m-d H:i:s ie (2017-12-20 16:55:28)')
         );
     }
 

@@ -37,13 +37,16 @@ class CdnPartnerMissingFile extends Command {
      */
     public function fire()
     {
+        $take = 50;
+        $skip = 0;
         $moreThanDate = $this->option('more-than');
 
         if (DateTime::createFromFormat('Y-m-d H:i:s', $moreThanDate) == false) {
            throw new Exception('Format date is invalid, format date must be Y-m-d H:i:s ie (2017-12-20 16:55:28)');
         }
 
-        $partner = Partner::select('partner_id')
+        do {
+            $partner = Partner::select('partner_id')
                             ->leftJoin('media', 'media.object_id', '=', 'partner_id')
                             ->where('object_name', 'partner')
                             ->whereNotNull('path')
@@ -51,15 +54,17 @@ class CdnPartnerMissingFile extends Command {
                             ->where('partners.created_at', '>=', $moreThanDate)
                             ->groupBy('partner_id')
                             ->excludeDeleted()
+                            ->skip($skip)
+                            ->take($take)
                             ->get();
 
-        if (count($partner) > 0) {
+            $skip = $take + $skip;
+
             foreach ($partner as $key => $val) {
                 $this->info($val->partner_id . ',partner');
             }
-        } else {
-                $this->info('Data not found.');
-        }
+
+        } while (count($partner) > 0);
     }
 
     /**
@@ -70,11 +75,6 @@ class CdnPartnerMissingFile extends Command {
     protected function getArguments()
     {
         return array();
-    }
-
-    protected function quote($arg)
-    {
-        return DB::connection()->getPdo()->quote($arg);
     }
 
     /**
