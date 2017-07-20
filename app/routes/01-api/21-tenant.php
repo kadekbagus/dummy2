@@ -184,3 +184,14 @@ Route::get('/api/v1/pub/store-city/list', function()
 });
 
 Route::get('/app/v1/pub/store-city/list', ['as' => 'pub-store-city', 'uses' => 'IntermediatePubAuthController@Store\StoreCity_getStoreCity']);
+
+
+/**
+ * List promotion location for rating form
+ */
+Route::get('/api/v1/pub/store-rating-location/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Store\StoreRatingLocationAPIController::create()->getStoreRatingLocation();
+});
+
+Route::get('/app/v1/pub/store-rating-location/list', ['as' => 'store-rating-location-list', 'uses' => 'IntermediatePubAuthController@Store\StoreRatingLocation_getStoreRatingLocation']);
