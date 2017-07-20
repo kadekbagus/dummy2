@@ -55,7 +55,7 @@ class CdnAdvertMissingFile extends Command {
 
         if (count($advert) > 0) {
             foreach ($advert as $key => $val) {
-                $this->info($val->advert_id);
+                $this->info($val->advert_id . ',advert');
             }
         } else {
                 $this->info('Data not found.');

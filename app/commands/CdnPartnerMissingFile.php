@@ -55,7 +55,7 @@ class CdnPartnerMissingFile extends Command {
 
         if (count($partner) > 0) {
             foreach ($partner as $key => $val) {
-                $this->info($val->partner_id);
+                $this->info($val->partner_id . ',partner');
             }
         } else {
                 $this->info('Data not found.');
