@@ -55,7 +55,7 @@ class CdnMallMissingFile extends Command {
 
         if (count($mall) > 0) {
             foreach ($mall as $key => $val) {
-                $this->info($val->merchant_id);
+                $this->info($val->merchant_id . ',mall');
             }
         } else {
                 $this->info('Data not found.');
