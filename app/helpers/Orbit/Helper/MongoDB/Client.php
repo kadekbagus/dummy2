@@ -31,6 +31,11 @@ class Client
     protected $body = '';
 
     /**
+     * @var array post multipart data
+     */
+    protected $multipart = '';
+
+    /**
      * @var array queryString
      */
     protected $queryString = '';
@@ -79,6 +84,19 @@ class Client
     }
 
     /**
+     * Set the multipart
+     *
+     * @param array $multipart
+     * @return MongoDB\Client
+     */
+    public function setMultipart(array $multipart=[])
+    {
+        $this->multipart = $multipart;
+
+        return $this;
+    }
+
+    /**
      * Set the queryString
      *
      * @param array $queryString
@@ -117,7 +135,8 @@ class Client
 
         $response = $this->client->request($method, $this->endpoint, [
             'query' => $this->queryString,
-            'body' => $this->body
+            'body' => $this->body,
+            'multipart' => $this->multipart
         ]);
 
         return json_decode($response->getBody()->getContents());
