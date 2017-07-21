@@ -136,7 +136,7 @@ class Client
         $response = $this->client->request($method, $this->endpoint, [
             'query' => $this->queryString,
             'body' => $this->body,
-            'form_param' => $this->formParam
+            'form_params' => $this->formParam
         ]);
 
         return json_decode($response->getBody()->getContents());
