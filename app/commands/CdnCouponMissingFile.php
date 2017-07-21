@@ -54,7 +54,7 @@ class CdnCouponMissingFile extends Command {
                 JOIN {$prefix}promotions c ON c.promotion_id = ct.promotion_id
                 WHERE m.object_name = 'coupon_translation' AND
                 c.is_coupon = 'Y' AND
-                m.cdn_url IS NULL AND
+                (m.cdn_url IS NULL or m.cdn_url = '') AND
                 m.path IS NOT NULL AND
                 m.created_at > '{$now}'
                 GROUP BY c.promotion_id

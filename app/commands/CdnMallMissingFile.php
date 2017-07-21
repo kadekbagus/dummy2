@@ -50,7 +50,10 @@ class CdnMallMissingFile extends Command {
                                 ->leftJoin('media', 'media.object_id', '=', 'merchant_id')
                                 ->where('object_name', 'mall')
                                 ->whereNotNull('path')
-                                ->whereNull('cdn_url')
+                                ->where(function ($q) {
+                                     $q->whereNull('cdn_url');
+                                     $q->orWhere('cdn_url', '=', '');
+                                  })
                                 ->where('merchants.created_at', '>=', $moreThanDate)
                                 ->groupBy('merchant_id')
                                 ->excludeDeleted()

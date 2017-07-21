@@ -50,7 +50,10 @@ class CdnPartnerMissingFile extends Command {
                             ->leftJoin('media', 'media.object_id', '=', 'partner_id')
                             ->where('object_name', 'partner')
                             ->whereNotNull('path')
-                            ->whereNull('cdn_url')
+                            ->where(function ($q) {
+                                 $q->whereNull('cdn_url');
+                                 $q->orWhere('cdn_url', '=', '');
+                              })
                             ->where('partners.created_at', '>=', $moreThanDate)
                             ->groupBy('partner_id')
                             ->excludeDeleted()

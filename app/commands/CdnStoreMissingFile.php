@@ -37,7 +37,7 @@ class CdnStoreMissingFile extends Command {
      */
     public function fire()
     {
-        $take = 5;
+        $take = 50;
         $skip = 0;
         $moreThanDate = $this->option('more-than');
 
@@ -50,7 +50,10 @@ class CdnStoreMissingFile extends Command {
                                 ->leftJoin('media', 'media.object_id', '=', 'merchant_id')
                                 ->where('object_name', 'retailer')
                                 ->whereNotNull('path')
-                                ->whereNull('cdn_url')
+                                ->where(function ($q) {
+                                     $q->whereNull('cdn_url');
+                                     $q->orWhere('cdn_url', '=', '');
+                                  })
                                 ->where('merchants.created_at', '>=', $moreThanDate)
                                 ->groupBy('merchant_id')
                                 ->excludeDeleted()
