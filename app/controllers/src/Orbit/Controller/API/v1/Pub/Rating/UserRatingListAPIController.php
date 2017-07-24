@@ -21,8 +21,9 @@ use Activity;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use stdClass;
+use Orbit\Helper\Net\SessionPreparer;
 
-class RatingListAPIController extends PubControllerAPI
+class UserRatingListAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
     protected $withoutScore = FALSE;
@@ -43,7 +44,7 @@ class RatingListAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getRatingList()
+    public function getUserRatingList()
     {
         $httpCode = 200;
 
@@ -55,36 +56,32 @@ class RatingListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $mongoConfig = Config::get('database.mongodb');
 
-            // search by key word or filter or sort by flag
-            $searchFlag = FALSE;
+            $session = SessionPreparer::prepareSession();
 
-            $validator = Validator::make(
-                array(
-                    'object_id'   => $objectId,
-                    'object_type' => $objectType,
-                ),
-                array(
-                    'object_id' => 'required',
-                    'object_type' => 'required'
-                )
-            );
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // should always check the role
+            $role = $user->role->role_name;
+            if (strtolower($role) !== 'consumer') {
+                $message = 'You must login to access this.';
+                ACL::throwAccessForbidden($message);
             }
 
             $prefix = DB::getTablePrefix();
 
             $queryString = [
-                'object_id'   => $objectId,
-                'object_type' => $objectType,
                 'take'        => $take,
                 'skip'        => $skip,
                 'sortBy'      => 'updated_at',
-                'sortMode'    => 'desc'
+                'sortMode'    => 'desc',
+                'user_id'     => $user->user_id
             ];
+
+            OrbitInput::get('object_id', function($objectId) use (&$queryString) {
+                $queryString['object_id'] = $objectId;
+            });
+
+            OrbitInput::get('object_type', function($objectType) use (&$queryString) {
+                $queryString['object_type'] = $objectType;
+            });
 
             $mongoClient = MongoClient::create($mongoConfig);
             $endPoint = "reviews";
