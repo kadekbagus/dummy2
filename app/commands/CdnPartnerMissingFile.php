@@ -64,7 +64,7 @@ class CdnPartnerMissingFile extends Command {
             $skip = $take + $skip;
 
             foreach ($partner as $key => $val) {
-                $this->info($val->partner_id . ',partner');
+                printf("%s,%s\n", $val->partner_id, 'partner');
             }
 
         } while (count($partner) > 0);
