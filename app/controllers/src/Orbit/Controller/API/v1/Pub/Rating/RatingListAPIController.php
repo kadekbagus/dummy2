@@ -95,10 +95,12 @@ class RatingListAPIController extends PubControllerAPI
                                     ->setEndPoint($endPoint)
                                     ->request('GET');
 
+            $listOfRec = $response->data;
+
             $data = new \stdclass();
-            $data->returned_records = count($response->data);
-            $data->total_records = count($response->data);
-            $data->records = $response->data;
+            $data->returned_records = count($listOfRec->returned_records);
+            $data->total_records = count($listOfRec->total_records);
+            $data->records = $listOfRec->records;
             $data->user_rating = [];
 
             // if user login get user review
@@ -114,7 +116,7 @@ class RatingListAPIController extends PubControllerAPI
                                         ->request('GET');
 
                 if (! empty($userRating->data)) {
-                    $data->user_rating = $userRating->data;
+                    $data->user_rating = $userRating->data->records;
                 }
             }
 

@@ -91,7 +91,7 @@ class RatingUpdateAPIController extends PubControllerAPI
             $oldRating = $mongoClient->setEndPoint("reviews/$ratingId")->request('GET');
 
             if (empty($oldRating)) {
-                $errorMessage = 'Rating ID not found';
+                $errorMessage = 'Rating or Review ID not found';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
