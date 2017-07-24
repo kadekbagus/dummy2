@@ -82,15 +82,30 @@ class RatingListAPIController extends PubControllerAPI
                 'object_type' => $objectType
             ];
 
-            $mongoClient = MongoClient::create($mongoConfig)->setQueryString($queryString);
+            $mongoClient = MongoClient::create($mongoConfig);
             $endPoint = "reviews/$skip/$take";
-            $response = $mongoClient->setEndPoint($endPoint)
+            $response = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint($endPoint)
                                     ->request('GET');
 
             $data = new \stdclass();
             $data->returned_records = count($response->data);
             $data->total_records = count($response->data);
             $data->records = $response->data;
+            $data->user_rating = [];
+
+            // if user login get user review
+            $role = $user->role->role_name;
+            if (strtolower($role) === 'consumer') {
+                $queryString['user_id'] = $user->user_id;
+                $userRating = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                if (! empty($userRating->data)) {
+                    $data->user_rating = $userRating->data;
+                }
+            }
 
             $this->response->data = $data;
             $this->response->code = 0;
