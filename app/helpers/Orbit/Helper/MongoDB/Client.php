@@ -136,7 +136,6 @@ class Client
         $options = [];
         $options['query'] = $this->queryString;
         if ($method !== 'GET') {
-            $options['query'] = $this->queryString;
             $options['body'] = $this->body;
             $options['form_params'] = $this->formParam;
         }
