@@ -64,7 +64,7 @@ class CdnAdvertMissingFile extends Command {
             $skip = $take + $skip;
 
             foreach ($advert as $key => $val) {
-                $this->info($val->advert_id . ',advert');
+                printf("%s,%s\n", $val->advert_id, 'advert');
             }
         } while (count($advert) > 0);
 
