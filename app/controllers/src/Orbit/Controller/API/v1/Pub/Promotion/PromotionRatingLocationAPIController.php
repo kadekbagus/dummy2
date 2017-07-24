@@ -19,6 +19,7 @@ use Activity;
 use Mall;
 use App;
 use Lang;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class PromotionRatingLocationAPIController extends PubControllerAPI
 {
@@ -52,6 +53,7 @@ class PromotionRatingLocationAPIController extends PubControllerAPI
             $sortMode = OrbitInput::get('sortmode','asc');
             $mallId = OrbitInput::get('mall_id', null);
             $language = OrbitInput::get('language', 'id');
+            $mongoConfig = Config::get('database.mongodb');
 
             // set language
             App::setLocale($language);
@@ -118,6 +120,32 @@ class PromotionRatingLocationAPIController extends PubControllerAPI
                 $nameLike = substr($this->quote($nameLike), 1, -1);
                 $ratingLocation->havingRaw("location_name like '%{$nameLike}%'");
             });
+
+            $role = $user->role->role_name;
+            if (strtolower($role) === 'consumer') {
+                $queryString = [
+                    'object_id'   => $objectId,
+                    'object_type' => 'promotion',
+                    'user_id'     => $user->user_id
+                ];
+
+                $mongoClient = MongoClient::create($mongoConfig);
+                $endPoint = "reviews";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRec = $response->data;
+
+                $locationIds = array();
+                foreach ($listOfRec->records as $location) {
+                    $locationIds[] = $location->location_id;
+                }
+
+                if (! empty($locationIds)) {
+                    $ratingLocation->whereNotIn('news_merchant.merchant_id', $locationIds);
+                }
+            }
 
             $ratingLocation = $ratingLocation->groupBy('location_name');
 
