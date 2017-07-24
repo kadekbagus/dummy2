@@ -236,3 +236,24 @@ Artisan::add(new CouponUpdateTotalAvailable);
 // Insert or update data on settings table
 // @Todo investigate why its error
 // Artisan::add(new MerchantSetting);
+
+// Find missing cdn file in advert
+Artisan::add(new CdnAdvertMissingFile);
+
+// Find missing cdn file in mall
+Artisan::add(new CdnMallMissingFile);
+
+// Find missing cdn file in advert
+Artisan::add(new CdnPartnerMissingFile);
+
+// Find missing cdn file in Store
+Artisan::add(new CdnStoreMissingFile);
+
+// Find missing cdn file in promotion
+Artisan::add(new CdnPromotionMissingFile);
+
+// Find missing cdn file in news
+Artisan::add(new CdnNewsMissingFile);
+
+// Find missing cdn file in coupon
+Artisan::add(new CdnCouponMissingFile);
