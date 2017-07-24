@@ -50,6 +50,8 @@ class RatingUpdateAPIController extends PubControllerAPI
         $rating = OrbitInput::post('rating', NULL);
         $review = OrbitInput::post('review', NULL);
         $ratingId = OrbitInput::post('rating_id', NULL);
+        $status = OrbitInput::post('status', 'active');
+        $approvalStatus = OrbitInput::post('approval_status', 'approved');
         $mongoConfig = Config::get('database.mongodb');
 
         try {
@@ -115,8 +117,8 @@ class RatingUpdateAPIController extends PubControllerAPI
             $body = [
                 'rating'          => $rating,
                 'review'          => $review,
-                'status'          => 'active',
-                'approval_status' => 'approved',
+                'status'          => $status,
+                'approval_status' => $approvalStatus,
                 'created_at'      => $dateTime,
                 'updated_at'      => $dateTime,
                 '_id'             => $ratingId,

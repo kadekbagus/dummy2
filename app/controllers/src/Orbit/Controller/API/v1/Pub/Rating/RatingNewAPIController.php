@@ -49,6 +49,8 @@ class RatingNewAPIController extends PubControllerAPI
         $locationId = OrbitInput::post('location_id', NULL);
         $rating = OrbitInput::post('rating', NULL);
         $review = OrbitInput::post('review', NULL);
+        $status = OrbitInput::post('status', 'active');
+        $approvalStatus = OrbitInput::post('approval_status', 'approved');
         $mongoConfig = Config::get('database.mongodb');
 
         try {
@@ -95,8 +97,7 @@ class RatingNewAPIController extends PubControllerAPI
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->toDateTimeString();
 
-            $location = CampaignLocation::select('merchants.name', 'merchants.country', DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city,
-                IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
+            $location = CampaignLocation::select('merchants.name', 'merchants.country', 'merchants.object_type', DB::raw("IF({$prefix}merchants.object_type = 'tenant', {$prefix}merchants.name, '') as store_name, IF({$prefix}merchants.object_type = 'tenant', oms.name, {$prefix}merchants.name) as mall_name, IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city, IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
                                       ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                       ->where('merchants.merchant_id', '=', $locationId)
                                       ->first();
@@ -106,10 +107,12 @@ class RatingNewAPIController extends PubControllerAPI
                 'object_type'     => $objectType,
                 'user_id'         => $user->user_id,
                 'location_id'     => $locationId,
+                'store_name'      => $location->store_name,
+                'mall_name'       => $location->mall_name,
                 'rating'          => $rating,
                 'review'          => $review,
-                'status'          => 'active',
-                'approval_status' => 'approved',
+                'status'          => $status,
+                'approval_status' => $approvalStatus,
                 'created_at'      => $dateTime,
                 'updated_at'      => $dateTime,
                 'city'            => $location->city,
