@@ -16,6 +16,7 @@ use \DB;
 use \URL;
 use Language;
 use Validator;
+use User;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Carbon\Carbon as Carbon;
@@ -75,8 +76,6 @@ class RatingListAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $prefix = DB::getTablePrefix();
-
             $queryString = [
                 'object_id'   => $objectId,
                 'object_type' => $objectType,
@@ -93,6 +92,49 @@ class RatingListAPIController extends PubControllerAPI
                                     ->request('GET');
 
             $listOfRec = $response->data;
+
+            $userIds = array();
+            foreach ($listOfRec->records as $rating) {
+                $userIds[] = $rating->user_id;
+            }
+
+            // get user name and photo
+            $prefix = DB::getTablePrefix();
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "(CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)) as user_picture";
+            if ($usingCdn) {
+                $image = "(CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END) as user_picture";
+            }
+
+            $userList = User::select('users.user_id', DB::raw("(CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname)) as user_name"), DB::raw($image))
+                              ->leftJoin('media', function ($q) {
+                                    $q->on('media.object_id', '=', 'users.user_id')
+                                      ->on('media.media_name_long', '=', DB::raw("'user_user_picture_orig'"));
+                                })
+                              ->whereIn('users.user_id', $userIds)
+                              ->groupBy('users.user_id')
+                              ->get();
+
+            $userRating = array();
+            foreach ($userList as $list) {
+                $userRating[$list->user_id]['user_name'] = $list->user_name;
+                $userRating[$list->user_id]['user_picture'] = $list->user_picture;
+            }
+
+            foreach ($listOfRec->records as $rating) {
+                $rating->user_name = '';
+                if (! empty($userRating[$rating->user_id]['user_name'])) {
+                    $rating->user_name = $userRating[$rating->user_id]['user_name'];
+                }
+
+                $rating->user_picture = '';
+                if (! empty($userRating[$rating->user_id]['user_picture'])) {
+                    $rating->user_picture = $userRating[$rating->user_id]['user_picture'];
+                }
+            }
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec->returned_records);
