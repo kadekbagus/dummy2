@@ -82,11 +82,15 @@ class RatingListAPIController extends PubControllerAPI
 
             $queryString = [
                 'object_id'   => $objectId,
-                'object_type' => $objectType
+                'object_type' => $objectType,
+                'take'        => $take,
+                'skip'        => $skip,
+                'sortBy'      => 'updated_at',
+                'sortMode'    => 'desc'
             ];
 
             $mongoClient = MongoClient::create($mongoConfig);
-            $endPoint = "reviews/$skip/$take";
+            $endPoint = "reviews";
             $response = $mongoClient->setQueryString($queryString)
                                     ->setEndPoint($endPoint)
                                     ->request('GET');
@@ -101,7 +105,10 @@ class RatingListAPIController extends PubControllerAPI
             $role = $user->role->role_name;
             if (strtolower($role) === 'consumer') {
                 $queryString['user_id'] = $user->user_id;
-                $userEndPoint = "reviews/$userSkip/$userTake";
+                $queryString['take'] = $userTake;
+                $queryString['skip'] = $userSkip;
+                $userEndPoint = "reviews";
+
                 $userRating = $mongoClient->setQueryString($queryString)
                                         ->setEndPoint($userEndPoint)
                                         ->request('GET');
