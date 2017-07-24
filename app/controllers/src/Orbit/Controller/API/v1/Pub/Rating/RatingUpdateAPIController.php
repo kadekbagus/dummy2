@@ -95,6 +95,11 @@ class RatingUpdateAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            if ($user->user_id != $oldRating->data->user_id) {
+                $errorMessage = 'Different user_id, cannot update Rating/Review';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             // insert to mongo
             $prefix = DB::getTablePrefix();
             $timestamp = date("Y-m-d H:i:s");

@@ -95,6 +95,7 @@ class UserRatingListAPIController extends PubControllerAPI
             $data->returned_records = count($listOfRec->returned_records);
             $data->total_records = count($listOfRec->total_records);
             $data->records = $listOfRec->records;
+            $data->user = $user;
 
             $this->response->data = $data;
             $this->response->code = 0;
