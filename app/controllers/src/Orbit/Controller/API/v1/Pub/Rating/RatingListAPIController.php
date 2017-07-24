@@ -55,6 +55,9 @@ class RatingListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $mongoConfig = Config::get('database.mongodb');
 
+            $userTake = OrbitInput::get('user_take', $take);
+            $userSkip = OrbitInput::get('user_skip', $skip);
+
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
 
@@ -98,8 +101,9 @@ class RatingListAPIController extends PubControllerAPI
             $role = $user->role->role_name;
             if (strtolower($role) === 'consumer') {
                 $queryString['user_id'] = $user->user_id;
+                $userEndPoint = "reviews/$userSkip/$userTake";
                 $userRating = $mongoClient->setQueryString($queryString)
-                                        ->setEndPoint($endPoint)
+                                        ->setEndPoint($userEndPoint)
                                         ->request('GET');
 
                 if (! empty($userRating->data)) {
