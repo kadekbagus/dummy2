@@ -141,3 +141,13 @@ Route::get('/api/v1/pub/promotion/suggestion/list', function()
 });
 
 Route::get('/app/v1/pub/promotion/suggestion/list', ['as' => 'pub-promotion-suggestion-list', 'uses' => 'IntermediatePubAuthController@Promotion\PromotionAlsoLikeList_getSearchPromotion']);
+
+/**
+ * List promotion location for rating form
+ */
+Route::get('/api/v1/pub/promotion/rating/location', function()
+{
+    return Orbit\Controller\API\v1\Pub\Promotion\PromotionRatingLocationAPIController::create()->getPromotionRatingLocation();
+});
+
+Route::get('/app/v1/pub/promotion/rating/location', ['as' => 'promotion-rating-location', 'uses' => 'IntermediatePubAuthController@Promotion\PromotionRatingLocation_getPromotionRatingLocation']);
