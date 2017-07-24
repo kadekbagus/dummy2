@@ -134,16 +134,11 @@ class Client
         }
 
         $options = [];
-        switch ($method) {
-            case 'GET':
-                $options['query'] = $this->queryString;
-                break;
-
-            default:
-                $options['query'] = $this->queryString;
-                $options['body'] = $this->body;
-                $options['form_params'] = $this->formParam;
-                break;
+        $options['query'] = $this->queryString;
+        if ($method !== 'GET') {
+            $options['query'] = $this->queryString;
+            $options['body'] = $this->body;
+            $options['form_params'] = $this->formParam;
         }
 
         $response = $this->client->request($method, $this->endpoint, $options);
