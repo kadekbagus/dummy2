@@ -50,7 +50,10 @@ class CdnAdvertMissingFile extends Command {
                                 ->leftJoin('media', 'media.object_id', '=', 'advert_id')
                                 ->where('object_name', 'advert')
                                 ->whereNotNull('path')
-                                ->whereNull('cdn_url')
+                                ->where(function ($q) {
+                                     $q->whereNull('cdn_url');
+                                     $q->orWhere('cdn_url', '=', '');
+                                  })
                                 ->where('adverts.created_at', '>=', $moreThanDate)
                                 ->groupBy('advert_id')
                                 ->excludeDeleted()

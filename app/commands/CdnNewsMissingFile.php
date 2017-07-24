@@ -54,7 +54,7 @@ class CdnNewsMissingFile extends Command {
                 JOIN {$prefix}news n ON n.news_id = nt.news_id
                 WHERE m.object_name = 'news_translation' AND
                 n.object_type = 'news' AND
-                m.cdn_url IS NULL AND
+                (m.cdn_url IS NULL or m.cdn_url = '') AND
                 m.path IS NOT NULL AND
                 m.created_at > '{$now}'
                 GROUP BY n.news_id
