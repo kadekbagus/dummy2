@@ -67,16 +67,10 @@ class RatingUpdateAPIController extends PubControllerAPI
             $validator = Validator::make(
                 array(
                     'rating_id' => $ratingId,
-                    'object_id' => $objectId,
-                    'object_type' => $objectType,
-                    'rating' => $rating,
-                    'location_id' => $locationId
+                    'rating' => $rating
                 ),
                 array(
-                    'object_id' => 'required',
-                    'object_type' => 'required',
                     'rating' => 'required',
-                    'location_id' => 'required',
                     'rating_id' => 'required',
                 )
             );
@@ -92,6 +86,15 @@ class RatingUpdateAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // get review by id
+            $mongoClient = MongoClient::create($mongoConfig);
+            $oldRating = $mongoClient->setEndPoint("reviews/$ratingId")->request('GET');
+
+            if (empty($oldRating)) {
+                $errorMessage = 'Rating ID not found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             // insert to mongo
             $prefix = DB::getTablePrefix();
             $timestamp = date("Y-m-d H:i:s");
@@ -101,22 +104,16 @@ class RatingUpdateAPIController extends PubControllerAPI
             $location = CampaignLocation::select('merchants.name', 'merchants.country', DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city,
                 IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
                                       ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                      ->where('merchants.merchant_id', '=', $locationId)
+                                      ->where('merchants.merchant_id', '=', $oldRating->data->location_id)
                                       ->first();
 
             $body = [
-                'object_id'       => $objectId,
-                'object_type'     => $objectType,
-                'user_id'         => $user->user_id,
-                'location_id'     => $locationId,
                 'rating'          => $rating,
                 'review'          => $review,
                 'status'          => 'active',
                 'approval_status' => 'approved',
                 'created_at'      => $dateTime,
                 'updated_at'      => $dateTime,
-                'city'            => $location->city,
-                'country_id'      => $location->country_id,
                 '_id'             => $ratingId,
             ];
 
