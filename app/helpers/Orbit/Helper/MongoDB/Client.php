@@ -133,11 +133,16 @@ class Client
             throw new Exception("Invalid HTTP method.", 1);
         }
 
-        $response = $this->client->request($method, $this->endpoint, [
+        $data = [
             'query' => $this->queryString,
-            'body' => $this->body,
-            'form_params' => $this->formParam
-        ]);
+            'body' => $this->body
+        ];
+
+        if ($method != 'GET') {
+            $data['form_params'] = $this->formParam;
+        }
+
+        $response = $this->client->request($method, $this->endpoint, $data);
 
         return json_decode($response->getBody()->getContents());
     }
