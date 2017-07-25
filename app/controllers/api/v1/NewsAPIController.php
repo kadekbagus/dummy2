@@ -1677,10 +1677,7 @@ class NewsAPIController extends ControllerAPI
             $object_type = OrbitInput::get('object_type');
 
             // optimize orb_media query greatly
-            $mediaObjectName = " AND (object_name = 'news' OR object_name = 'promotion')";
-            if (! empty($object_type)) {
-                $mediaObjectName = " AND (object_name = {$this->quote($object_type[0])})";
-            }
+            $mediaObjectName = " AND (object_name = 'news_translation')";
 
             $filterName = OrbitInput::get('news_name_like', '');
 
