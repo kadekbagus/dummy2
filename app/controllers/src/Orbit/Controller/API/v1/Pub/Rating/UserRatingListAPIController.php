@@ -91,9 +91,43 @@ class UserRatingListAPIController extends PubControllerAPI
 
             $listOfRec = $response->data;
 
+            if (! empty($listOfRec->records)) {
+                // get user name and photo
+                $prefix = DB::getTablePrefix();
+                $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+                $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+                $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+                $image = "(CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)) as user_picture";
+                if ($usingCdn) {
+                    $image = "(CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END) as user_picture";
+                }
+
+                $userList = User::select('users.user_id', DB::raw("(CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname)) as user_name"), DB::raw($image))
+                                  ->leftJoin('media', function ($q) {
+                                        $q->on('media.object_id', '=', 'users.user_id')
+                                          ->on('media.media_name_long', '=', DB::raw("'user_user_picture_orig'"));
+                                    })
+                                  ->where('users.user_id', $user->user_id)
+                                  ->groupBy('users.user_id')
+                                  ->first();
+
+                foreach ($listOfRec->records as $rating) {
+                    $rating->user_name = '';
+                    if (! empty($userList->user_name)) {
+                        $rating->user_name = $userList->user_name;
+                    }
+
+                    $rating->user_picture = '';
+                    if (! empty($userList->user_picture)) {
+                        $rating->user_picture = $userList->user_picture;
+                    }
+                }
+            }
+
             $data = new \stdclass();
-            $data->returned_records = count($listOfRec->returned_records);
-            $data->total_records = count($listOfRec->total_records);
+            $data->returned_records = $listOfRec->returned_records;
+            $data->total_records = $listOfRec->total_records;
             $data->records = $listOfRec->records;
 
             $this->response->data = $data;

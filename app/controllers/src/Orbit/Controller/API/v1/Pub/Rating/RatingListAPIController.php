@@ -139,8 +139,8 @@ class RatingListAPIController extends PubControllerAPI
             }
 
             $data = new \stdclass();
-            $data->returned_records = count($listOfRec->returned_records);
-            $data->total_records = count($listOfRec->total_records);
+            $data->returned_records = $listOfRec->returned_records;
+            $data->total_records = $listOfRec->total_records;
             $data->records = $listOfRec->records;
 
             $this->response->data = $data;
