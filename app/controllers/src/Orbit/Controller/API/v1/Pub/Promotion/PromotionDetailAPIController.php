@@ -196,6 +196,17 @@ class PromotionDetailAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
+            // ---- START RATING ----
+            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
+                ->setObjectId($promotion->news_id)
+                ->setObjectType('promotion')
+                ->setMall($mall)
+                ->request();
+
+            $promotion->rating_average = $reviewCounter->getAverage();
+            $promotion->review_counter = $reviewCounter->getCounter();
+            // ---- END OF RATING ----
+
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View mall promotion detail');
                 $activity->setUser($user)

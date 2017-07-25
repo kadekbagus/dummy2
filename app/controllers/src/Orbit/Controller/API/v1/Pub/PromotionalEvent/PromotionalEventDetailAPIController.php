@@ -210,6 +210,17 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
+            // ---- START RATING ----
+            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
+                ->setObjectId($promotionalEvent->news_id)
+                ->setObjectType('promotional_event')
+                ->setMall($mall)
+                ->request();
+
+            $promotionalEvent->rating_average = $reviewCounter->getAverage();
+            $promotionalEvent->review_counter = $reviewCounter->getCounter();
+            // ---- END OF RATING ----
+
             // check promotional event access and get lucky_draw/promotion code
             $promotionalEvent->code = null;
             $promotionalEvent->message_title = null;

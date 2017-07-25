@@ -220,47 +220,15 @@ class CouponDetailAPIController extends PubControllerAPI
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
 
-            // ---- START RATING
-            $reviewQueryParams = [
-                'object_id' => $coupon->promotion_id,
-                'object_type' => 'coupon',
-            ];
+            // ---- START RATING ----
+            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
+                ->setObjectId($coupon->promotion_id)
+                ->setObjectType('coupon')
+                ->setMall($mall)
+                ->request();
 
-            $mongoConfig = Config::get('database.mongodb');
-            if (is_object($mall)) {
-                $counterEndpoint = 'mall-review-counters';
-                $reviewQueryParams['location_id'] = $mall->merchant_id;
-            } else {
-                $counterEndpoint = 'review-counters';
-                $cityFilters = OrbitInput::get('cities', null);
-                $countryFilter = OrbitInput::get('country', null);
-
-                if (! empty($cityFilters)) $reviewQueryParams['cities'] = $cityFilters;
-                if (! empty($countryFilter)) $reviewQueryParams['country_id'] = $countryFilter;
-            }
-
-            $reviewCounterResponse = \Orbit\Helper\MongoDB\Client::create($mongoConfig)
-                ->setQueryString($reviewQueryParams)
-                ->setEndPoint($counterEndpoint)
-                ->request('GET');
-
-            $reviewAverage = null;
-            $reviewCounter = null;
-            if ($reviewCounterResponse->data->total_records > 0) {
-                $sumAverage = 0;
-                $sumCounter = 0;
-                foreach ($reviewCounterResponse->data->records as $record) {
-                    $sumAverage = $sumAverage + ($record->average * $record->counter);
-                    $sumCounter = $sumCounter + $record->counter;
-                }
-                if ($sumCounter > 0) {
-                    $reviewAverage = $sumAverage / $sumCounter;
-                    $reviewCounter = $sumCounter;
-                }
-            }
-
-            $coupon->rating_average = $reviewAverage;
-            $coupon->review_counter = $reviewCounter;
+            $coupon->rating_average = $reviewCounter->getAverage();
+            $coupon->review_counter = $reviewCounter->getCounter();
             // ---- END OF RATING ----
 
             if ($coupon->is_exclusive === 'Y') {
