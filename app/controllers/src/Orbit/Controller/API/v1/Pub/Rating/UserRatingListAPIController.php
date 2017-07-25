@@ -15,6 +15,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
 use Language;
+use User;
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
