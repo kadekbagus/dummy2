@@ -1676,10 +1676,22 @@ class NewsAPIController extends ControllerAPI
 
             $object_type = OrbitInput::get('object_type');
 
+            $prefix = DB::getTablePrefix();
+
+            // optimize orb_media query greatly when news_id is present
+            $mediaJoin = "";
+            $mediaOptimize = " AND (object_name = 'news_translation') ";
+            $mediaObjectIds = (array) OrbitInput::get('news_id', []);
+            if (! empty ($mediaObjectIds)) {
+                $mediaObjectIds = "'" . implode("', '", $mediaObjectIds) . "'";
+                $mediaJoin = " LEFT JOIN {$prefix}news_translations mont ON mont.news_translation_id = {$prefix}media.object_id ";
+                $mediaOptimize = " AND object_name = 'news_translation' AND mont.news_id IN ({$mediaObjectIds}) ";
+            }
+
+
             $filterName = OrbitInput::get('news_name_like', '');
 
             // Builder object
-            $prefix = DB::getTablePrefix();
             $news = News::allowedForPMPUser($user, $object_type[0])
                         ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as display_name', DB::raw('media.path as image_path'),
                             DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
@@ -1701,7 +1713,12 @@ class NewsAPIController extends ControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
-                        ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'news_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
+                        ->leftJoin(DB::raw("(
+                                SELECT {$prefix}media.* FROM {$prefix}media
+                                {$mediaJoin}
+                                WHERE media_name_long = 'news_translation_image_resized_default'
+                                {$mediaOptimize} ) as media
+                            "), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
                         ->excludeDeleted('news')
                         ->groupBy('news.news_id');
 

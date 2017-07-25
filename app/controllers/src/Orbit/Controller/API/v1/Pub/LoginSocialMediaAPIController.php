@@ -66,6 +66,7 @@ class LoginSocialMediaAPIController extends IntermediateBaseController
             $firstName = OrbitInput::post('firstName', '');
             $lastName = OrbitInput::post('lastName', '');
             $gender = OrbitInput::post('gender', '');
+            $phone = OrbitInput::post('phone', NULL);
             $socialid = OrbitInput::post('socialId', '');
 
             if (trim($userEmail) === '') {
@@ -82,7 +83,7 @@ class LoginSocialMediaAPIController extends IntermediateBaseController
             if (! is_object($loggedInUser)) {
                 // register user without password and birthdate
                 $status = 'active';
-                $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $gender, NULL, NULL, TRUE, NULL, NULL, NULL, $status, ucfirst($type));
+                $response = (new Regs())->createCustomerUser($userEmail, NULL, NULL, $firstName, $lastName, $phone, $gender, NULL, NULL, TRUE, NULL, NULL, NULL, $status, ucfirst($type));
                 if (get_class($response) !== 'User') {
                     throw new Exception($response->message, $response->code);
                 }
