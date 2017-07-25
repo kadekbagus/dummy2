@@ -55,8 +55,8 @@ class CdnMallMissingFile extends Command {
                                      $q->orWhere('cdn_url', '=', '');
                                   })
                                 ->where('merchants.created_at', '>=', $moreThanDate)
+                                ->where('merchants.status', 'active')
                                 ->groupBy('merchant_id')
-                                ->excludeDeleted()
                                 ->skip($skip)
                                 ->take($take)
                                 ->get();
@@ -64,7 +64,7 @@ class CdnMallMissingFile extends Command {
             $skip = $take + $skip;
 
             foreach ($mall as $key => $val) {
-                $this->info($val->merchant_id . ',mall');
+                printf("%s,%s\n", $val->merchant_id, 'mall');
             }
 
         } while (count($mall) > 0);
