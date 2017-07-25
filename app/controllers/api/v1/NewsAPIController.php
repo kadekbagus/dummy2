@@ -1676,6 +1676,12 @@ class NewsAPIController extends ControllerAPI
 
             $object_type = OrbitInput::get('object_type');
 
+            // optimize orb_media query greatly
+            $mediaObjectName = " AND (object_name = 'news' OR object_name = 'promotion')";
+            if (! empty($object_type)) {
+                $mediaObjectName = " AND (object_name = {$this->quote($object_type[0])})";
+            }
+
             $filterName = OrbitInput::get('news_name_like', '');
 
             // Builder object
@@ -1701,7 +1707,7 @@ class NewsAPIController extends ControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
-                        ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'news_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
+                        ->leftJoin(DB::raw("( SELECT * FROM {$prefix}media WHERE media_name_long = 'news_translation_image_resized_default' {$mediaObjectName} ) as media"), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
                         ->excludeDeleted('news')
                         ->groupBy('news.news_id');
 
