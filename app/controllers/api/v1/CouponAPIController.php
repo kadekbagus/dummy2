@@ -1884,7 +1884,7 @@ class CouponAPIController extends ControllerAPI
             });
 
             if (empty($maximumRedeem)) {
-               $updatedcoupon->maximum_redeem = 0; 
+               $updatedcoupon->maximum_redeem = 0;
             }
 
             if ($rule_type === 'unique_coupon_per_user') {
@@ -2853,6 +2853,9 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
+            // optimize orb_media query greatly
+            $mediaObjectName = " AND (object_name = 'coupon_translation')";
+
             $table_prefix = DB::getTablePrefix();
             $filterName = OrbitInput::get('promotion_name_like', '');
 
@@ -2929,7 +2932,7 @@ class CouponAPIController extends ControllerAPI
                          $join->on('promotions.promotion_id', '=', 'pre_exports.object_id')
                               ->where('pre_exports.object_type', '=', 'coupon');
                   })
-                ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
+                ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' {$mediaObjectName} ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
 
