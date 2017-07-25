@@ -16,14 +16,14 @@ use \DB;
 use \URL;
 use Language;
 use Validator;
-use User;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use stdClass;
+use Orbit\Helper\Net\SessionPreparer;
 
-class RatingListAPIController extends PubControllerAPI
+class UserRatingListAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
     protected $withoutScore = FALSE;
@@ -44,7 +44,7 @@ class RatingListAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getRatingList()
+    public function getUserRatingList()
     {
         $httpCode = 200;
 
@@ -56,34 +56,32 @@ class RatingListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $mongoConfig = Config::get('database.mongodb');
 
-            // search by key word or filter or sort by flag
-            $searchFlag = FALSE;
+            $session = SessionPreparer::prepareSession();
 
-            $validator = Validator::make(
-                array(
-                    'object_id'   => $objectId,
-                    'object_type' => $objectType,
-                ),
-                array(
-                    'object_id' => 'required',
-                    'object_type' => 'required'
-                )
-            );
-
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // should always check the role
+            $role = $user->role->role_name;
+            if (strtolower($role) !== 'consumer') {
+                $message = 'You must login to access this.';
+                ACL::throwAccessForbidden($message);
             }
 
+            $prefix = DB::getTablePrefix();
+
             $queryString = [
-                'object_id'   => $objectId,
-                'object_type' => $objectType,
                 'take'        => $take,
                 'skip'        => $skip,
                 'sortBy'      => 'updated_at',
-                'sortMode'    => 'desc'
+                'sortMode'    => 'desc',
+                'user_id'     => $user->user_id
             ];
+
+            OrbitInput::get('object_id', function($objectId) use (&$queryString) {
+                $queryString['object_id'] = $objectId;
+            });
+
+            OrbitInput::get('object_type', function($objectType) use (&$queryString) {
+                $queryString['object_type'] = $objectType;
+            });
 
             $mongoClient = MongoClient::create($mongoConfig);
             $endPoint = "reviews";
@@ -94,11 +92,6 @@ class RatingListAPIController extends PubControllerAPI
             $listOfRec = $response->data;
 
             if (! empty($listOfRec->records)) {
-                $userIds = array();
-                foreach ($listOfRec->records as $rating) {
-                    $userIds[] = $rating->user_id;
-                }
-
                 // get user name and photo
                 $prefix = DB::getTablePrefix();
                 $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
@@ -115,25 +108,19 @@ class RatingListAPIController extends PubControllerAPI
                                         $q->on('media.object_id', '=', 'users.user_id')
                                           ->on('media.media_name_long', '=', DB::raw("'user_user_picture_orig'"));
                                     })
-                                  ->whereIn('users.user_id', $userIds)
+                                  ->where('users.user_id', $user->user_id)
                                   ->groupBy('users.user_id')
-                                  ->get();
-
-                $userRating = array();
-                foreach ($userList as $list) {
-                    $userRating[$list->user_id]['user_name'] = $list->user_name;
-                    $userRating[$list->user_id]['user_picture'] = $list->user_picture;
-                }
+                                  ->first();
 
                 foreach ($listOfRec->records as $rating) {
                     $rating->user_name = '';
-                    if (! empty($userRating[$rating->user_id]['user_name'])) {
-                        $rating->user_name = $userRating[$rating->user_id]['user_name'];
+                    if (! empty($userList->user_name)) {
+                        $rating->user_name = $userList->user_name;
                     }
 
                     $rating->user_picture = '';
-                    if (! empty($userRating[$rating->user_id]['user_picture'])) {
-                        $rating->user_picture = $userRating[$rating->user_id]['user_picture'];
+                    if (! empty($userList->user_picture)) {
+                        $rating->user_picture = $userList->user_picture;
                     }
                 }
             }

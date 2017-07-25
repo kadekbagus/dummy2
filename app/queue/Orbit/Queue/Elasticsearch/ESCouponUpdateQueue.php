@@ -245,34 +245,7 @@ class ESCouponUpdateQueue
                                             ->where('promotion_id', $coupon->promotion_id)
                                             ->count();
 
-                $available = $coupon->maximum_redeem - $notAvailable;
-                if ($notAvailable >= $coupon->maximum_redeem) {
-                    $emptyRedeem = TRUE;
-                }
-            }
-            if ($coupon->maximum_issued_coupon > 0) {
-                $notAvailable = IssuedCoupon::where('status', '=', 'issued')
-                                            ->where('promotion_id', $coupon->promotion_id)
-                                            ->count();
-
-                if ($notAvailable >= $coupon->maximum_issued_coupon) {
-                    $emptyIssued = TRUE;
-                }
-            }
-            if($emptyRedeem || $emptyIssued) {
-                $available = 0;
-            }
-
-            $emptyRedeem = FALSE;
-            $emptyIssued = FALSE;
-            $available = IssuedCoupon::totalAvailable($coupon->promotion_id);
-
-            if ($coupon->maximum_redeem > 0) {
-                $notAvailable = IssuedCoupon::where('status', '=', 'redeemed')
-                                            ->where('promotion_id', $coupon->promotion_id)
-                                            ->count();
-
-                $available = $coupon->maximum_redeem - $notAvailable;
+                $tmpAvailable = $coupon->maximum_redeem - $notAvailable;
                 if ($notAvailable >= $coupon->maximum_redeem) {
                     $emptyRedeem = TRUE;
                 }
