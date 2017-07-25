@@ -15,6 +15,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
 use Language;
+use User;
 use Validator;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
@@ -106,7 +107,7 @@ class UserRatingListAPIController extends PubControllerAPI
                 $userList = User::select('users.user_id', DB::raw("(CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname)) as user_name"), DB::raw($image))
                                   ->leftJoin('media', function ($q) {
                                         $q->on('media.object_id', '=', 'users.user_id')
-                                          ->on('media.media_name_long', '=', DB::raw("'user_user_picture_orig'"));
+                                          ->on('media.media_name_long', '=', DB::raw("'user_profile_picture_orig'"));
                                     })
                                   ->where('users.user_id', $user->user_id)
                                   ->groupBy('users.user_id')
