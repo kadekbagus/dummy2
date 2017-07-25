@@ -344,9 +344,12 @@ class NewsListAPIController extends PubControllerAPI
                 }
             }
 
-            $sortby = array($sortByPageType, $sort);
+            $sortPageScript = "if(doc['" . $pageTypeScore . "'].value != null) { return doc['" . $pageTypeScore . "'].value } else { return 0}";
+            $sortPage = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
+
+            $sortby = array($sortPage, $sort);
             if ($withScore) {
-                $sortby = array($sortByPageType, "_score", $sort);
+                $sortby = array($sortPage, "_score", $sort);
             }
             $jsonQuery["sort"] = $sortby;
 
