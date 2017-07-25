@@ -2943,7 +2943,7 @@ class CouponAPIController extends ControllerAPI
                 ->leftJoin(DB::raw("(
                         SELECT {$table_prefix}media.* FROM {$table_prefix}media
                         WHERE media_name_long = 'coupon_translation_image_resized_default'
-                        {$mediaObjectName} ) as media
+                        {$mediaOptimize} ) as media
                     "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
