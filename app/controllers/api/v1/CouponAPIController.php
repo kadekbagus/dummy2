@@ -2941,7 +2941,7 @@ class CouponAPIController extends ControllerAPI
                               ->where('pre_exports.object_type', '=', 'coupon');
                   })
                 ->leftJoin(DB::raw("(
-                        SELECT {$prefix}media.* FROM {$prefix}media
+                        SELECT {$table_prefix}media.* FROM {$table_prefix}media
                         WHERE media_name_long = 'coupon_translation_image_resized_default'
                         {$mediaObjectName} ) as media
                     "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
