@@ -106,6 +106,7 @@ class RatingAndReviewMailQueue
             $dataView['location_detail'] = $location->location_name;
             $dataView['name'] = $user->user_name;
             $dataView['email'] = $user->user_email;
+            $dataView['rating'] = $rating;
             $dataView['review'] = $review;
 
             $mailViews = array(
