@@ -39,6 +39,7 @@ class RatingAndReviewMailQueue
             $objectType = (! empty($data['object_type'])) ? $data['object_type'] : '';
             $locationId = (! empty($data['location_id'])) ? $data['location_id'] : '';
             $reviewDate = (! empty($data['updated_at'])) ? $data['updated_at'] : '';
+            $review = (! empty($data['review'])) ? $data['review'] : '';
 
             if (! empty($data['_id'])) {
                 $mongoClient = MongoClient::create($mongoConfig);
@@ -51,6 +52,7 @@ class RatingAndReviewMailQueue
                 $objectType = $response->data->object_type;
                 $locationId = $response->data->location_id;
                 $reviewDate = $response->data->updated_at;
+                $review = $response->data->review;
             }
 
             // get user name and email
@@ -102,6 +104,7 @@ class RatingAndReviewMailQueue
             $dataView['location_detail'] = $location->location_name;
             $dataView['name'] = $user->user_name;
             $dataView['email'] = $user->user_email;
+            $dataView['review'] = $review;
 
             $mailViews = array(
                         'html' => 'emails.rating.review-rating-html',

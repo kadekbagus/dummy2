@@ -6,6 +6,7 @@ Type: {{ $type }}
 Location: {{ $location_detail }}
 Name: {{ $name }}
 Email: {{ $email }}
+Review: {{ $review }}
 Date: {{ $date }} UTC
 
 Regards,

@@ -10,6 +10,7 @@
         Location: {{ $location_detail }} <br/>
         Name: {{ $name }} <br/>
         Email: {{ $email }} <br/>
+        Review: {{ $review }} <br/>
         Date: {{ $date }} UTC
     </p>
     <p>
