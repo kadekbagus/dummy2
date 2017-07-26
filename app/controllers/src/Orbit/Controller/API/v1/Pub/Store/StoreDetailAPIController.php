@@ -202,6 +202,29 @@ class StoreDetailAPIController extends PubControllerAPI
             $store = $store->orderBy('merchants.created_at', 'asc')
                 ->first();
 
+            // ---- START RATING ----
+            $storeIds = [];
+            $storeIds[] = $store->merchant_id;
+            if (! is_object($mall)) {
+                $baseStore = \BaseStore::where('base_store_id', $merchantid)->first();
+                if (is_object($baseStore)) {
+                    $storeIds = BaseMerchant::leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
+                        ->where('base_merchants.base_merchant_id', $baseStore->base_merchant_id)
+                        ->get()
+                        ->lists('base_store_id');
+                }
+            }
+
+            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
+                ->setObjectId($storeIds)
+                ->setObjectType('store')
+                ->setMall($mall)
+                ->request();
+
+            $store->rating_average = $reviewCounter->getAverage();
+            $store->review_counter = $reviewCounter->getCounter();
+            // ---- END OF RATING ----
+
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View mall store detail page');
                 $activity->setUser($user)
