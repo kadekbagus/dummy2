@@ -126,6 +126,7 @@ class MallInfoAPIController extends PubControllerAPI
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
             $total = $area_data['total'];
+            $mallIds = [];
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
                 $areadata['id'] = $dt['_id'];
@@ -162,8 +163,21 @@ class MallInfoAPIController extends PubControllerAPI
                 }
 
                 $listmall[] = $areadata;
+                $mallIds[] = $areadata['id'];
             }
 
+            // ---- START RATING ----
+            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
+                ->setObjectId($mallIds)
+                ->setObjectType('mall')
+                ->setMall($mall)
+                ->request();
+
+            foreach ($listmall as &$itemMall) {
+                $itemMall['rating_average'] = $reviewCounter->getAverage();
+                $itemMall['review_counter'] = $reviewCounter->getCounter();
+            }
+            // ---- END OF RATING ----
 
             if ($fromMallDetail === 'y') {
                 $activityNotes = sprintf('Page viewed: Mall Detail Page');
