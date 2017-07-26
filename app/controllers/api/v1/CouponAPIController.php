@@ -2386,7 +2386,7 @@ class CouponAPIController extends ControllerAPI
             $this->commit();
 
             // queue for campaign spending coupon
-            Queue::push('Orbit\\Queue\\SpendingCalculation', [
+            \Queue::push('Orbit\\Queue\\SpendingCalculation', [
                 'campaign_id' => $promotion_id,
                 'campaign_type' => 'coupon',
             ]);
@@ -2853,10 +2853,18 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
-            // optimize orb_media query greatly
-            $mediaObjectName = " AND (object_name = 'coupon_translation')";
-
             $table_prefix = DB::getTablePrefix();
+
+            // optimize orb_media query greatly when coupon_id is present
+            $mediaJoin = "";
+            $mediaOptimize = " AND (object_name = 'coupon_translation') ";
+            $mediaObjectIds = (array) OrbitInput::get('promotion_id', []);
+            if (! empty ($mediaObjectIds)) {
+                $mediaObjectIds = "'" . implode("', '", $mediaObjectIds) . "'";
+                $mediaJoin = " LEFT JOIN {$table_prefix}news_translations mont ON mont.coupon_translation_id = {$table_prefix}media.object_id ";
+                $mediaOptimize = " AND object_name = 'coupon_translation' AND mont.promotion_id IN ({$mediaObjectIds}) ";
+            }
+
             $filterName = OrbitInput::get('promotion_name_like', '');
 
             // Builder object
@@ -2932,7 +2940,11 @@ class CouponAPIController extends ControllerAPI
                          $join->on('promotions.promotion_id', '=', 'pre_exports.object_id')
                               ->where('pre_exports.object_type', '=', 'coupon');
                   })
-                ->leftJoin(DB::raw("( SELECT * FROM {$table_prefix}media WHERE media_name_long = 'coupon_translation_image_resized_default' {$mediaObjectName} ) as media"), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
+                ->leftJoin(DB::raw("(
+                        SELECT {$table_prefix}media.* FROM {$table_prefix}media
+                        WHERE media_name_long = 'coupon_translation_image_resized_default'
+                        {$mediaOptimize} ) as media
+                    "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
                 ->groupBy('promotions.promotion_id');
 

@@ -220,6 +220,17 @@ class CouponDetailAPIController extends PubControllerAPI
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
             }
 
+            // ---- START RATING ----
+            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
+                ->setObjectId($coupon->promotion_id)
+                ->setObjectType('coupon')
+                ->setMall($mall)
+                ->request();
+
+            $coupon->rating_average = $reviewCounter->getAverage();
+            $coupon->review_counter = $reviewCounter->getCounter();
+            // ---- END OF RATING ----
+
             if ($coupon->is_exclusive === 'Y') {
                 // check token
                 $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
