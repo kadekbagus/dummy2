@@ -69,15 +69,11 @@ class ResetPasswordLinkAPIController extends PubControllerAPI
             }
 
             // remove all existing reset tokens
-            $existing_tokens = Token::where('user_id', $user->user_id)
+            $existingTokens = Token::where('user_id', $user->user_id)
                                     ->where('token_name', 'reset_password')
                                     ->NotExpire()
                                     ->active()
-                                    ->get();
-
-            foreach ($existing_tokens as $existing_token) {
-                $existing_token->delete(true);
-            }
+                                    ->delete(true);
 
             // Token expiration, fallback to 30 days
             $expireInDays = Config::get('orbit.reset_password.reset_expire', 7);
