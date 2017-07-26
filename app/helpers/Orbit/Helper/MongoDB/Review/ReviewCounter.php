@@ -12,7 +12,7 @@ use Country;
 class ReviewCounter
 {
     /**
-     * @var string object id - required
+     * @var string | array of object id - required
      */
     protected $objectId = null;
 
@@ -105,55 +105,60 @@ class ReviewCounter
      */
     public function request()
     {
-        if (empty($this->objectId)) {
-            throw new Exception("ReviewCounter: Object ID is not set", 1);
-        }
-        if (empty($this->objectType)) {
-            throw new Exception("ReviewCounter: Object Type is not set", 1);
-        }
-        if (empty($this->mongoConfig)) {
-            throw new Exception("ReviewCounter: Mongo Config is not set", 1);
-        }
-
-        $reviewQueryParams = [
-            'object_id' => $this->objectId,
-            'object_type' => $this->objectType,
-        ];
-
-        if (is_object($this->mall)) {
-            if (! is_a($this->mall, 'Mall')) {
-                throw new Exception("ReviewCounter: Mall is not valid", 1);
+        try {
+            if (empty($this->objectId)) {
+                throw new Exception("ReviewCounter: Object ID is not set", 1);
             }
-            $counterEndpoint = $this->mallCounterEndpoint;
-            $reviewQueryParams['location_id'] = $this->mall->merchant_id;
-        } else {
-            $counterEndpoint = $this->counterEndpoint;
-            $cityFilters = OrbitInput::get('cities', null);
-            $countryFilter = OrbitInput::get('country', null);
-
-            if (! empty($cityFilters)) $reviewQueryParams['cities'] = $cityFilters;
-            if (! empty($countryFilter)) {
-                $country = Country::where('name', $countryFilter)->first();
-                if (is_object($country)) $reviewQueryParams['country_id'] = $country->country_id;
+            if (empty($this->objectType)) {
+                throw new Exception("ReviewCounter: Object Type is not set", 1);
             }
-        }
-
-        $reviewCounterResponse = \Orbit\Helper\MongoDB\Client::create($this->mongoConfig)
-            ->setQueryString($reviewQueryParams)
-            ->setEndPoint($counterEndpoint)
-            ->request('GET');
-
-        if ($reviewCounterResponse->data->total_records > 0) {
-            $sumAverage = 0;
-            $sumCounter = 0;
-            foreach ($reviewCounterResponse->data->records as $record) {
-                $sumAverage = $sumAverage + ($record->average * $record->counter);
-                $sumCounter = $sumCounter + $record->counter;
+            if (empty($this->mongoConfig)) {
+                throw new Exception("ReviewCounter: Mongo Config is not set", 1);
             }
-            if ($sumCounter > 0) {
-                $this->average = $sumAverage / $sumCounter;
-                $this->counter = $sumCounter;
+
+            $reviewQueryParams = [
+                'object_id' => $this->objectId,
+                'object_type' => $this->objectType,
+            ];
+
+            if (is_object($this->mall)) {
+                if (! is_a($this->mall, 'Mall')) {
+                    throw new Exception("ReviewCounter: Mall is not valid", 1);
+                }
+                $counterEndpoint = $this->mallCounterEndpoint;
+                $reviewQueryParams['location_id'] = $this->mall->merchant_id;
+            } else {
+                $counterEndpoint = $this->counterEndpoint;
+                $cityFilters = OrbitInput::get('cities', null);
+                $countryFilter = OrbitInput::get('country', null);
+
+                if (! empty($cityFilters)) $reviewQueryParams['cities'] = $cityFilters;
+                if (! empty($countryFilter)) {
+                    $country = Country::where('name', $countryFilter)->first();
+                    if (is_object($country)) $reviewQueryParams['country_id'] = $country->country_id;
+                }
             }
+
+            $reviewCounterResponse = \Orbit\Helper\MongoDB\Client::create($this->mongoConfig)
+                ->setQueryString($reviewQueryParams)
+                ->setEndPoint($counterEndpoint)
+                ->request('GET');
+
+            if ($reviewCounterResponse->data->total_records > 0) {
+                $sumAverage = 0;
+                $sumCounter = 0;
+                foreach ($reviewCounterResponse->data->records as $record) {
+                    $sumAverage = $sumAverage + ($record->average * $record->counter);
+                    $sumCounter = $sumCounter + $record->counter;
+                }
+                if ($sumCounter > 0) {
+                    $this->average = $sumAverage / $sumCounter;
+                    $this->counter = $sumCounter;
+                }
+            }
+
+        } catch (Exception $e) {
+
         }
 
         return $this;
