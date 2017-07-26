@@ -182,17 +182,6 @@ class NewsDetailAPIController extends PubControllerAPI
                 throw new OrbitCustomException('News that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
             }
 
-            // ---- START RATING ----
-            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
-                ->setObjectId($news->news_id)
-                ->setObjectType('event')
-                ->setMall($mall)
-                ->request();
-
-            $news->rating_average = $reviewCounter->getAverage();
-            $news->review_counter = $reviewCounter->getCounter();
-            // ---- END OF RATING ----
-
             if ($news->is_exclusive === 'Y') {
                 // check token
                 $partnerTokens = Partner::leftJoin('object_partner', 'partners.partner_id', '=', 'object_partner.partner_id')
@@ -213,6 +202,17 @@ class NewsDetailAPIController extends PubControllerAPI
             if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
+
+            // ---- START RATING ----
+            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
+                ->setObjectId($news->news_id)
+                ->setObjectType('event')
+                ->setMall($mall)
+                ->request();
+
+            $news->rating_average = $reviewCounter->getAverage();
+            $news->review_counter = $reviewCounter->getCounter();
+            // ---- END OF RATING ----
 
             if (is_object($mall)) {
                 $activityNotes = sprintf('Page viewed: View mall event detail');
