@@ -119,7 +119,6 @@ class RatingUpdateAPIController extends PubControllerAPI
                 'rating'          => $rating,
                 'status'          => $status,
                 'approval_status' => $approvalStatus,
-                'created_at'      => $dateTime,
                 'updated_at'      => $dateTime,
                 '_id'             => $ratingId,
             ];
