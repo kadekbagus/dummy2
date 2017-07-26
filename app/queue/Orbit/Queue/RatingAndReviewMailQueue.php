@@ -39,6 +39,7 @@ class RatingAndReviewMailQueue
             $objectType = (! empty($data['object_type'])) ? $data['object_type'] : '';
             $locationId = (! empty($data['location_id'])) ? $data['location_id'] : '';
             $reviewDate = (! empty($data['updated_at'])) ? $data['updated_at'] : '';
+            $rating = (! empty($data['rating'])) ? $data['rating'] : '';
             $review = (! empty($data['review'])) ? $data['review'] : '';
 
             if (! empty($data['_id'])) {
@@ -52,6 +53,7 @@ class RatingAndReviewMailQueue
                 $objectType = $response->data->object_type;
                 $locationId = $response->data->location_id;
                 $reviewDate = $response->data->updated_at;
+                $rating = $response->data->rating;
                 $review = $response->data->review;
             }
 

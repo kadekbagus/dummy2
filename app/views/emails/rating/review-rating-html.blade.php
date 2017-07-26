@@ -6,12 +6,13 @@
     <p>Hello,</p>
     <p>New rating and review on {{$location}}. The details as follow:</p>
     <p>
+        Date: {{ $date }} UTC <br/>
         Type: {{ $type }} <br/>
         Location: {{ $location_detail }} <br/>
         Name: {{ $name }} <br/>
         Email: {{ $email }} <br/>
-        Review: {{ $review }} <br/>
-        Date: {{ $date }} UTC
+        Rating: {{ $rating }} <br/>
+        Review: {{ $review }}
     </p>
     <p>
        Regards, <br/>
