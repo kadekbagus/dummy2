@@ -20,6 +20,7 @@ use \Orbit\Helper\Exception\OrbitCustomException;
 use CampaignLocation;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use Event;
 
 class RatingNewAPIController extends PubControllerAPI
 {
