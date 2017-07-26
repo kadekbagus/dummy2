@@ -6276,6 +6276,14 @@ return array(
         ]
     ],
 
+    // rating and review
+    'rating_review' => [
+        'email' => [
+            'to' => ['marketing@dominopos.com'],
+            'subject' => 'Review on {{LOCATION}} from {{USER_EMAIL}}'
+        ]
+    ],
+
     // partner config
     'partner' => [
         // exception behaviour for query in listing (ex: dompetku)

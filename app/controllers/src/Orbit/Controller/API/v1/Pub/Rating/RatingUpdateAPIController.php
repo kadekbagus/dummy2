@@ -20,6 +20,7 @@ use \Orbit\Helper\Exception\OrbitCustomException;
 use CampaignLocation;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use Event;
 
 class RatingUpdateAPIController extends PubControllerAPI
 {
@@ -116,13 +117,16 @@ class RatingUpdateAPIController extends PubControllerAPI
 
             $body = [
                 'rating'          => $rating,
-                'review'          => $review,
                 'status'          => $status,
                 'approval_status' => $approvalStatus,
                 'created_at'      => $dateTime,
                 'updated_at'      => $dateTime,
                 '_id'             => $ratingId,
             ];
+
+            if (! empty($review)) {
+                $body['review'] = $review;
+            }
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
             $response = $mongoClient->setEndPoint('reviews') // express endpoint
@@ -138,7 +142,7 @@ class RatingUpdateAPIController extends PubControllerAPI
 
             $body['merchant_name'] = $location->name;
             $body['country'] = $location->country;
-            // Event::fire('orbit.rating.postrating.after.commit', array($this, $body));
+            Event::fire('orbit.rating.postrating.after.commit', array($this, $body));
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
