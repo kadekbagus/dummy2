@@ -133,7 +133,7 @@ class RatingNewAPIController extends PubControllerAPI
 
             $body['merchant_name'] = $location->name;
             $body['country'] = $location->country;
-            // Event::fire('orbit.rating.postrating.after.commit', array($this, $body));
+            Event::fire('orbit.rating.postrating.after.commit', array($this, $body));
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();

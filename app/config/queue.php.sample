@@ -76,6 +76,13 @@ return array(
 			'ttr'    => 60,
 		),
 
+		'review_email' => array(
+			'driver' => 'beanstalkd',
+			'host'   => 'localhost',
+			'queue'  => 'review_email',
+			'ttr'    => 60,
+		),
+
 		'sqs' => array(
 			'driver' => 'sqs',
 			'key'    => 'your-public-key',
