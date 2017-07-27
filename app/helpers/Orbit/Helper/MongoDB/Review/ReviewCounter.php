@@ -247,6 +247,6 @@ class ReviewCounter
         $roundedNumber = ceil(($number * $multiplier));
         // get the rounded number
         $number = number_format(($roundedNumber/$multiplier), $this->decimalNumber, ".", " ");
-        return (double) $number;
+        return $number;
     }
 }
