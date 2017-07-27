@@ -120,7 +120,10 @@ class RatingUpdateAPIController extends PubControllerAPI
                 'status'          => $status,
                 'approval_status' => $approvalStatus,
                 'updated_at'      => $dateTime,
+                'city'            => $location->city,
+                'country_id'      => $location->country_id,
                 '_id'             => $ratingId,
+                'location_id'     => $oldRating->data->location_id,
             ];
 
             if (! empty($review)) {
