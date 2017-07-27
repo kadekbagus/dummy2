@@ -134,7 +134,8 @@ class Coupon extends Eloquent
                     'merchants.object_type',
                     DB::raw('oms.city,
                     oms.province,
-                    oms.country'),
+                    oms.country,
+                    oms.country_id'),
                     DB::raw("
                         (CASE WHEN {$prefix}merchants.object_type = 'tenant'
                             THEN {$prefix}merchants.parent_id

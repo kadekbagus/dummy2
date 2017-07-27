@@ -33,6 +33,7 @@ use Orbit\Helper\Util\CdnUrlGenerator;
 use Elasticsearch\ClientBuilder;
 use Carbon\Carbon as Carbon;
 use stdClass;
+use Country;
 
 class NewsListAPIController extends PubControllerAPI
 {
@@ -114,7 +115,7 @@ class NewsListAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,created_date,updated_date',
+                    'sortby'   => 'in:name,location,created_date,updated_date,rating',
                 )
             );
 
@@ -160,7 +161,7 @@ class NewsListAPIController extends PubControllerAPI
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
-            $jsonQuery = array('from' => $skip, 'size' => $esTake, 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
+            $jsonQuery = array('from' => $skip, 'size' => $esTake, 'fields' => array("_source"), 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -281,8 +282,11 @@ class NewsListAPIController extends PubControllerAPI
             });
 
             $countryCityFilterArr = [];
+            $countryData = null;
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$countryCityFilterArr) {
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$countryCityFilterArr, &$countryData) {
+                $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
+
                 $countryCityFilterArr = ['nested' => ['path' => 'link_to_tenant', 'query' => ['bool' => []], 'inner_hits' => ['name' => 'country_city_hits']]];
 
                 $countryCityFilterArr['nested']['query']['bool'] = ['must' => ['match' => ['link_to_tenant.country.raw' => $countryFilter]]];
@@ -312,6 +316,30 @@ class NewsListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must'][] = $countryCityFilterArr;
             }
 
+            // calculate rating and review based on location/mall
+            $scriptFieldRating = "double counter = 0; double rating = 0;";
+            $scriptFieldReview = "double review = 0;";
+
+            if (! empty($mallId)) {
+                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('mall_rating.rating_" . $mallId . "')) { if (! doc['mall_rating.rating_" . $mallId . "'].empty) { counter = counter + 1; rating = rating + doc['mall_rating.rating_" . $mallId . "'].value;}}; ";
+                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('mall_rating.review_" . $mallId . "')) { if (! doc['mall_rating.review_" . $mallId . "'].empty) { review = review + doc['mall_rating.review_" . $mallId . "'].value;}}; ";
+            } else if (! empty($cityFilters)) {
+                $countryId = $countryData->country_id;
+                foreach ((array) $cityFilters as $cityFilter) {
+                    $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + 1; rating = rating + doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
+                    $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
+                }
+            } else if (! empty($countryFilter)) {
+                $countryId = $countryData->country_id;
+                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + 1; rating = rating + doc['location_rating.rating_" . $countryId . "'].value;}}; ";
+                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+            }
+
+            $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
+            $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
+
+            $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
+
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
@@ -321,6 +349,8 @@ class NewsListAPIController extends PubControllerAPI
                 $sort = array('begin_date' => array('order' => $sort_mode));
             } elseif ($sort_by === 'updated_date') {
                 $sort = array('updated_at' => array('order' => $sort_mode));
+            } elseif ($sort_by === 'rating') {
+                $sort = array('_script' => array('script' => $scriptFieldRating, 'type' => 'number', 'order' => $sort_mode));
             } else {
                 $sortScript = "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
                 $sort = array('_script' => array('script' => $sortScript, 'type' => 'string', 'order' => $sort_mode));
@@ -557,6 +587,9 @@ class NewsListAPIController extends PubControllerAPI
                         }
                     }
                 }
+
+                $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? round($record['fields']['average_rating'][0], 2) : 0;
+                $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 2) : 0;
 
                 $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];
