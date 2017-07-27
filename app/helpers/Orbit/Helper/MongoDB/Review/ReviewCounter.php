@@ -62,6 +62,11 @@ class ReviewCounter
     protected $response = [];
 
     /**
+     * @var int decimal number
+     */
+    protected $decimalNumber = 1;
+
+    /**
      * @param array mongodb config
      */
     public function __construct($mongoConfig=[])
@@ -199,6 +204,7 @@ class ReviewCounter
      */
     public function get()
     {
+        $this->average = is_null($this->average) ? $this->average : $this->formatNumber($this->average);
         return ['average' => $this->average, 'counter' => $this->counter];
     }
 
@@ -207,6 +213,7 @@ class ReviewCounter
      */
     public function getAverage()
     {
+        $this->average = is_null($this->average) ? $this->average : $this->formatNumber($this->average);
         return $this->average;
     }
 
@@ -223,6 +230,23 @@ class ReviewCounter
      */
     public function getResponse()
     {
+        if (isset($this->response->data->records)) {
+            foreach ($this->response->data->records as &$record) {
+                // format average number
+                $record->average = is_null($record->average) ? $record->average : $this->formatNumber($record->average);
+            }
+        }
         return $this->response;
+    }
+
+    protected function formatNumber($number)
+    {
+        // multiply by decimal number
+        $multiplier = pow(10, $this->decimalNumber);
+        // round them up
+        $roundedNumber = ceil(($number * $multiplier));
+        // get the rounded number
+        $number = number_format(($roundedNumber/$multiplier), $this->decimalNumber, ".", " ");
+        return (double) $number;
     }
 }
