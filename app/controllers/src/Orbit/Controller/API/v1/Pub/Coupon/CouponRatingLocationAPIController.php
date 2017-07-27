@@ -140,10 +140,7 @@ class CouponRatingLocationAPIController extends PubControllerAPI
                 }
 
                 if (! empty($locationIds)) {
-                    $ratingLocation->where( function($q) use ($locationIds){
-                                        $q->whereNotIn('merchants.merchant_id', $locationIds)
-                                          ->orWhereNotIn('merchants.parent_id', $locationIds)
-                                    });
+                    $ratingLocation->whereNotIn(DB::raw("IF({$prefix}merchants.object_type = 'tenant', {$prefix}merchants.parent_id, {$prefix}merchants.merchant_id)"), $locationIds);
                 }
             }
 
