@@ -143,7 +143,10 @@ class PromotionRatingLocationAPIController extends PubControllerAPI
                 }
 
                 if (! empty($locationIds)) {
-                    $ratingLocation->whereNotIn('news_merchant.merchant_id', $locationIds);
+                    $ratingLocation->where( function($q) use ($locationIds){
+                                        $q->whereNotIn('merchants.merchant_id', $locationIds)
+                                          ->orWhereNotIn('merchants.parent_id', $locationIds)
+                                    });
                 }
             }
 

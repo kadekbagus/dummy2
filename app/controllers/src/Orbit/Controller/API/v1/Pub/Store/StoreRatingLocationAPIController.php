@@ -144,7 +144,7 @@ class StoreRatingLocationAPIController extends PubControllerAPI
                 }
 
                 if (! empty($locationIds)) {
-                    $ratingLocation->whereNotIn('merchants.merchant_id', $locationIds);
+                    $ratingLocation->whereNotIn('merchants.parent_id', $locationIds);
                 }
             }
 
