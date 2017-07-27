@@ -17,6 +17,7 @@ use Exception;
 use Log;
 use Queue;
 use Orbit\FakeJob;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class ESMallUpdateQueue
 {
@@ -59,6 +60,7 @@ class ESMallUpdateQueue
     {
         $mallId = $data['mall_id'];
         $prefix = DB::getTablePrefix();
+        $mongoConfig = Config::get('database.mongodb');
         $mall = Mall::with('country', 'mediaMapOrig')
                     ->leftJoin(DB::raw("(select * from {$prefix}media where media_name_long = 'mall_logo_orig') as med"), DB::raw("med.object_id"), '=', 'merchants.merchant_id')
                     ->where('merchants.status', '!=', 'deleted')
@@ -108,6 +110,43 @@ class ESMallUpdateQueue
                 'body' => []
             ];
 
+            // get rating by location
+            $locationRating = array();
+            $queryString = [
+                'object_id'   => $mall->merchant_id,
+                'object_type' => 'mall'
+            ];
+
+            $mongoClient = MongoClient::create($mongoConfig);
+            $endPoint = "review-counters";
+            $response = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint($endPoint)
+                                    ->request('GET');
+
+            $listOfRecLocation = $response->data;
+
+            if (! empty($listOfRecLocation->records)) {
+                $countryRating = array();
+                foreach ($listOfRecLocation->records as $rating) {
+                    // by country
+                    $countryId = $rating->country_id;
+                    $countryRating[$countryId]['total'] = (! empty($countryRating[$countryId]['total'])) ? $countryRating[$countryId]['total'] : 0;
+                    $countryRating[$countryId]['counter'] = (! empty($countryRating[$countryId]['counter'])) ? $countryRating[$countryId]['counter'] : 0;
+                    $countryRating[$countryId]['review'] = (! empty($countryRating[$countryId]['review'])) ? $countryRating[$countryId]['review'] : 0;
+
+                    $countryRating[$countryId]['total'] = $countryRating[$countryId]['total'] + $rating->average;
+                    $countryRating[$countryId]['review'] = $countryRating[$countryId]['review'] + $rating->counter;
+                    $countryRating[$countryId]['counter'] = $countryRating[$countryId]['counter'] + 1;
+
+                    $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['counter']) + 0.00001;
+                    $locationRating['review_' . $countryId] = (double) $countryRating[$countryId]['review'];
+
+                    // by country and city
+                    $locationRating['rating_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->average + 0.00001;
+                    $locationRating['review_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->counter;
+                }
+            }
+
             // Query for get total page view per location id
             $totalObjectPageViews = TotalObjectPageView::where('object_id', $mallId)
                                         ->where('object_type', 'mall')
@@ -141,7 +180,8 @@ class ESMallUpdateQueue
                     'type'        => 'polygon',
                     'coordinates' => $geofence->area
                 ],
-                'gtm_page_views'  => $totalObjectPageViews
+                'gtm_page_views'  => $totalObjectPageViews,
+                'location_rating' => $locationRating
             ];
 
             if (! empty($object_partner)) {
@@ -164,21 +204,6 @@ class ESMallUpdateQueue
                 $response = $this->poster->index($params);
             }
 
-            // Example response when document created:
-            // {
-            //   "_index": "malls",
-            //   "_type": "basic",
-            //   "_id": "abc123",
-            //   "_version": 1,
-            //   "_shards": {
-            //     "total": 2,
-            //     "successful": 1,
-            //     "failed": 0
-            //   },
-            //   "created": false
-            // }
-            //
-            // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
             // update suggestion
