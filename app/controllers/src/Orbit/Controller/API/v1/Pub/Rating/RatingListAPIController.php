@@ -22,6 +22,7 @@ use Activity;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use stdClass;
+use Country;
 
 class RatingListAPIController extends PubControllerAPI
 {
@@ -52,6 +53,8 @@ class RatingListAPIController extends PubControllerAPI
             $user = $this->getUser();
             $objectId = OrbitInput::get('object_id', null);
             $objectType = OrbitInput::get('object_type', null);
+            $cityFilters = OrbitInput::get('cities', null);
+            $countryFilter = OrbitInput::get('country', null);
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
             $mongoConfig = Config::get('database.mongodb');
@@ -84,6 +87,12 @@ class RatingListAPIController extends PubControllerAPI
                 'sortBy'      => 'updated_at',
                 'sortMode'    => 'desc'
             ];
+
+            if (! empty($cityFilters)) $queryString['cities'] = $cityFilters;
+            if (! empty($countryFilter)) {
+                $country = Country::where('name', $countryFilter)->first();
+                if (is_object($country)) $queryString['country_id'] = $country->country_id;
+            }
 
             $mongoClient = MongoClient::create($mongoConfig);
             $endPoint = "reviews";
