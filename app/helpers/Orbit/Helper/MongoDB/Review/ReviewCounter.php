@@ -42,6 +42,11 @@ class ReviewCounter
     protected $mall = null;
 
     /**
+     * @var array of location_id
+     */
+    protected $locationIds = [];
+
+    /**
      * int Returned value of average
      */
     protected $average = null;
@@ -50,6 +55,16 @@ class ReviewCounter
      * int Returned value of counter
      */
     protected $counter = null;
+
+    /**
+     * array Returned value from mongoDB
+     */
+    protected $response = [];
+
+    /**
+     * @var int decimal number
+     */
+    protected $decimalNumber = 1;
 
     /**
      * @param array mongodb config
@@ -99,6 +114,16 @@ class ReviewCounter
     }
 
     /**
+     * @param array
+     * @return Orbit\Helper\MongoDB\Review\ReviewCounter
+     */
+    public function setLocationIds($locationIds)
+    {
+        $this->locationIds = $locationIds;
+        return $this;
+    }
+
+    /**
      * @param array cities - passed from OrbitShop\API\v1\Helper\Input
      * @param array country - passed from OrbitShop\API\v1\Helper\Input
      * @return Orbit\Helper\MongoDB\Review\ReviewCounter
@@ -122,20 +147,28 @@ class ReviewCounter
             ];
 
             if (is_object($this->mall)) {
+                // Mall Level
                 if (! is_a($this->mall, 'Mall')) {
                     throw new Exception("ReviewCounter: Mall is not valid", 1);
                 }
                 $counterEndpoint = $this->mallCounterEndpoint;
                 $reviewQueryParams['location_id'] = $this->mall->merchant_id;
             } else {
-                $counterEndpoint = $this->counterEndpoint;
-                $cityFilters = OrbitInput::get('cities', null);
-                $countryFilter = OrbitInput::get('country', null);
+                if (! empty($this->locationIds)) {
+                    // Location list
+                    $counterEndpoint = $this->mallCounterEndpoint;
+                    $reviewQueryParams['location_id'] = $this->locationIds;
+                } else {
+                    // GTM Level
+                    $counterEndpoint = $this->counterEndpoint;
+                    $cityFilters = OrbitInput::get('cities', null);
+                    $countryFilter = OrbitInput::get('country', null);
 
-                if (! empty($cityFilters)) $reviewQueryParams['cities'] = $cityFilters;
-                if (! empty($countryFilter)) {
-                    $country = Country::where('name', $countryFilter)->first();
-                    if (is_object($country)) $reviewQueryParams['country_id'] = $country->country_id;
+                    if (! empty($cityFilters)) $reviewQueryParams['cities'] = $cityFilters;
+                    if (! empty($countryFilter)) {
+                        $country = Country::where('name', $countryFilter)->first();
+                        if (is_object($country)) $reviewQueryParams['country_id'] = $country->country_id;
+                    }
                 }
             }
 
@@ -143,6 +176,8 @@ class ReviewCounter
                 ->setQueryString($reviewQueryParams)
                 ->setEndPoint($counterEndpoint)
                 ->request('GET');
+
+            $this->response = $reviewCounterResponse;
 
             if ($reviewCounterResponse->data->total_records > 0) {
                 $sumAverage = 0;
@@ -169,6 +204,7 @@ class ReviewCounter
      */
     public function get()
     {
+        $this->average = is_null($this->average) ? $this->average : $this->formatNumber($this->average);
         return ['average' => $this->average, 'counter' => $this->counter];
     }
 
@@ -177,6 +213,7 @@ class ReviewCounter
      */
     public function getAverage()
     {
+        $this->average = is_null($this->average) ? $this->average : $this->formatNumber($this->average);
         return $this->average;
     }
 
@@ -186,5 +223,30 @@ class ReviewCounter
     public function getCounter()
     {
         return $this->counter;
+    }
+
+    /**
+     * @return array
+     */
+    public function getResponse()
+    {
+        if (isset($this->response->data->records)) {
+            foreach ($this->response->data->records as &$record) {
+                // format average number
+                $record->average = is_null($record->average) ? $record->average : $this->formatNumber($record->average);
+            }
+        }
+        return $this->response;
+    }
+
+    protected function formatNumber($number)
+    {
+        // multiply by decimal number
+        $multiplier = pow(10, $this->decimalNumber);
+        // round them up
+        $roundedNumber = ceil(($number * $multiplier));
+        // get the rounded number
+        $number = number_format(($roundedNumber/$multiplier), $this->decimalNumber, ".", " ");
+        return (double) $number;
     }
 }

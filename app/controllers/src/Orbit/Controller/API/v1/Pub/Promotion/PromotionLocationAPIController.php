@@ -296,6 +296,32 @@ class PromotionLocationAPIController extends PubControllerAPI
                 $listOfRec = $promotionLocation->get();
             }
 
+            // ---- START RATING ----
+            $locationIds = [];
+            foreach ($listOfRec as &$itemLocation) {
+                $locationIds[] = $itemLocation->mall_id;
+                $itemLocation->rating_average = null;
+                $itemLocation->review_counter = null;
+            }
+
+            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
+                ->setObjectId($promotion_id)
+                ->setObjectType('promotion')
+                ->setLocationIds($locationIds)
+                ->request();
+
+            if (isset($reviewCounter->getResponse()->data->records)) {
+                foreach ($listOfRec as &$itemLocation) {
+                    foreach ($reviewCounter->getResponse()->data->records as $record) {
+                        if ($itemLocation->mall_id === $record->location_id) {
+                            $itemLocation->rating_average = $record->average;
+                            $itemLocation->review_counter = $record->counter;
+                        }
+                    }
+                }
+            }
+            // ---- END OF RATING ----
+
             $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
             if ($usingCdn) {
                 $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";

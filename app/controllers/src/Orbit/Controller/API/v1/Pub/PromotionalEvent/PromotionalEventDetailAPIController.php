@@ -213,7 +213,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             // ---- START RATING ----
             $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
                 ->setObjectId($promotionalEvent->news_id)
-                ->setObjectType('promotional_event')
+                ->setObjectType('news')
                 ->setMall($mall)
                 ->request();
 

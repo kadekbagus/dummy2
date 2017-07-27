@@ -262,6 +262,31 @@ class StoreMallDetailAPIController extends PubControllerAPI
             });
             $recordCache->put($serializedCacheKey, $listOfRec);
 
+            // ---- START RATING ----
+            $locationIds = [];
+            foreach ($listOfRec as &$itemLocation) {
+                $locationIds[] = $itemLocation->mall_id;
+                $itemLocation->rating_average = null;
+                $itemLocation->review_counter = null;
+            }
+
+            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
+                ->setObjectId($merchantId)
+                ->setObjectType('store')
+                ->setLocationIds($locationIds)
+                ->request();
+
+            if (isset($reviewCounter->getResponse()->data->records)) {
+                foreach ($listOfRec as &$itemLocation) {
+                    foreach ($reviewCounter->getResponse()->data->records as $record) {
+                        if ($itemLocation->mall_id === $record->location_id) {
+                            $itemLocation->rating_average = $record->average;
+                            $itemLocation->review_counter = $record->counter;
+                        }
+                    }
+                }
+            }
+
             // moved from generic activity number 40
             if (strtoupper($noActivity) != 'Y') {
                 if (empty($skip)) {
