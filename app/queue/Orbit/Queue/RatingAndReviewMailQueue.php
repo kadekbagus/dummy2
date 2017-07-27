@@ -63,7 +63,7 @@ class RatingAndReviewMailQueue
                                   ->first();
 
             // get location
-            $location = CampaignLocation::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', oms.name), CONCAT('Mall at ', {$prefix}merchants.name)) as location_name"))
+            $location = CampaignLocation::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', oms.name), {$prefix}merchants.name) as location_name"))
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                         ->where('merchants.merchant_id', $locationId)
                                         ->first();
