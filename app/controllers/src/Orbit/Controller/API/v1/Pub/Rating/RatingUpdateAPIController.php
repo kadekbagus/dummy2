@@ -49,6 +49,7 @@ class RatingUpdateAPIController extends PubControllerAPI
         $objectType = OrbitInput::post('object_type', NULL);
         $locationId = OrbitInput::post('location_id', NULL);
         $rating = OrbitInput::post('rating', NULL);
+        $review = OrbitInput::post('review', '');
         $ratingId = OrbitInput::post('rating_id', NULL);
         $status = OrbitInput::post('status', 'active');
         $approvalStatus = OrbitInput::post('approval_status', 'approved');
@@ -116,6 +117,7 @@ class RatingUpdateAPIController extends PubControllerAPI
 
             $body = [
                 'rating'          => $rating,
+                'review'          => $review,
                 'status'          => $status,
                 'approval_status' => $approvalStatus,
                 'updated_at'      => $dateTime,
@@ -126,11 +128,6 @@ class RatingUpdateAPIController extends PubControllerAPI
                 'object_id'       => $oldRating->data->object_id,
                 'object_type'     => $oldRating->data->object_type,
             ];
-
-            OrbitInput::post('review', function($review) use (&$body) {
-                $review = (empty($review)) ? '' : $review;
-                $body['review'] = $review;
-            });
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
             $response = $mongoClient->setEndPoint('reviews') // express endpoint
