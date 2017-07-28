@@ -597,8 +597,8 @@ class NewsListAPIController extends PubControllerAPI
                     }
                 }
 
-                $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? round($record['fields']['average_rating'][0], 2) : 0;
-                $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 2) : 0;
+                $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? round($record['fields']['average_rating'][0], 1) : 0;
+                $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
                 $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];
