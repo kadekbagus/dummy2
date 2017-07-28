@@ -17,6 +17,7 @@ use Exception;
 use Log;
 use Orbit\FakeJob;
 use Carbon\Carbon as Carbon;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class ESAdvertPromotionUpdateQueue
 {
@@ -53,6 +54,7 @@ class ESAdvertPromotionUpdateQueue
         $esConfig = Config::get('orbit.elasticsearch');
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
         $newsId = $data['news_id'];
+        $mongoConfig = Config::get('database.mongodb');
 
         //Get now time
         $timezone = 'Asia/Jakarta'; // now with jakarta timezone
@@ -246,6 +248,56 @@ class ESAdvertPromotionUpdateQueue
                     $linkToTenants[] = $linkToTenant;
                 }
 
+                // get rating by location
+                $locationRating = array();
+                $queryString = [
+                    'object_id'   => $news->news_id,
+                    'object_type' => 'promotion'
+                ];
+
+                $mongoClient = MongoClient::create($mongoConfig);
+                $endPoint = "review-counters";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRecLocation = $response->data;
+
+                if (! empty($listOfRecLocation->records)) {
+                    $countryRating = array();
+                    foreach ($listOfRecLocation->records as $rating) {
+                        // by country
+                        $countryId = $rating->country_id;
+                        $countryRating[$countryId]['total'] = (! empty($countryRating[$countryId]['total'])) ? $countryRating[$countryId]['total'] : 0;
+                        $countryRating[$countryId]['review'] = (! empty($countryRating[$countryId]['review'])) ? $countryRating[$countryId]['review'] : 0;
+
+                        $countryRating[$countryId]['total'] = $countryRating[$countryId]['total'] + ((double) $rating->average * (double) $rating->counter);
+                        $countryRating[$countryId]['review'] = $countryRating[$countryId]['review'] + $rating->counter;
+
+                        $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['review']) + 0.00001;
+                        $locationRating['review_' . $countryId] = (double) $countryRating[$countryId]['review'];
+
+                        // by country and city
+                        $locationRating['rating_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->average + 0.00001;
+                        $locationRating['review_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->counter;
+                    }
+                }
+
+                // get rating by mall
+                $mallRating = array();
+                $endPoint = "mall-review-counters";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRecMall = $response->data;
+                if(! empty($listOfRecMall->records)) {
+                    foreach ($listOfRecMall->records as $rating) {
+                        $mallRating['rating_' . $rating->location_id] = $rating->average + 0.00001;
+                        $mallRating['review_' . $rating->location_id] = $rating->counter;
+                    }
+                }
+
                 $keywords = array();
                 foreach ($news->keywords as $keyword) {
                     $keywords[] = $keyword->keyword;
@@ -363,7 +415,9 @@ class ESAdvertPromotionUpdateQueue
                     'preferred_gtm_type'   => $preferredGtmType,
                     'preferred_mall_type'  => $preferredMallType,
                     'advert_location_ids'  => $advertLocationIds,
-                    'advert_type'          => $adverts->placement_type
+                    'advert_type'          => $adverts->placement_type,
+                    'location_rating'      => $locationRating,
+                    'mall_rating'          => $mallRating
                 ];
 
                 $body = array_merge($body, $translationBody);
