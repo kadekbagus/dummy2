@@ -31,6 +31,7 @@ use Lang;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Orbit\Controller\API\v1\Pub\Store\StoreHelper;
+use Country;
 
 class StoreListAPIController extends PubControllerAPI
 {
@@ -120,7 +121,7 @@ class StoreListAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,updated_date',
+                    'sortby'   => 'in:name,location,updated_date,rating',
                 )
             );
 
@@ -171,7 +172,7 @@ class StoreListAPIController extends PubControllerAPI
             $innerHitsCountry = false;
             $innerHitsCity = false;
 
-            $jsonQuery = array('from' => $skip, 'size' => $take, 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('bool' => array('must' => array( array('range' => array('tenant_detail_count' => array('gt' => 0)))))));
+            $jsonQuery = array('from' => $skip, 'size' => $take, 'fields' => array("_source"), 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('bool' => array('must' => array( array('range' => array('tenant_detail_count' => array('gt' => 0)))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -292,9 +293,11 @@ class StoreListAPIController extends PubControllerAPI
             });
 
             $countryCityFilterArr = [];
-
+            $countryData = null;
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$withInnerHits, &$innerHitsCity, &$countryCityFilterArr) {
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonQuery, &$withInnerHits, &$innerHitsCity, &$countryCityFilterArr, &$countryData) {
+                $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
+
                 $withInnerHits = true;
                 $innerHitsCity = true;
 
@@ -327,6 +330,39 @@ class StoreListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must'][] = $countryCityFilterArr;
             }
 
+            // calculate rating and review based on location/mall
+            $scriptFieldRating = "double counter = 0; double rating = 0;";
+            $scriptFieldReview = "double review = 0;";
+
+            if (! empty($mallId)) {
+                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('mall_rating.rating_" . $mallId . "')) { if (! doc['mall_rating.rating_" . $mallId . "'].empty) { counter = counter + 1; rating = rating + doc['mall_rating.rating_" . $mallId . "'].value;}}; ";
+                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('mall_rating.review_" . $mallId . "')) { if (! doc['mall_rating.review_" . $mallId . "'].empty) { review = review + doc['mall_rating.review_" . $mallId . "'].value;}}; ";
+            } else if (! empty($cityFilters)) {
+                $countryId = $countryData->country_id;
+                foreach ((array) $cityFilters as $cityFilter) {
+                    $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + 1; rating = rating + doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
+                    $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
+                }
+            } else if (! empty($countryFilter)) {
+                $countryId = $countryData->country_id;
+                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + 1; rating = rating + doc['location_rating.rating_" . $countryId . "'].value;}}; ";
+                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+            } else {
+                $mallCountry = Mall::groupBy('country')->lists('country');
+                $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
+
+                foreach ($countries as $country) {
+                    $countryId = $country->country_id;
+                    $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + 1; rating = rating + doc['location_rating.rating_" . $countryId . "'].value;}}; ";
+                    $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+                }
+            }
+
+            $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
+            $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
+
+            $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
+
             // sort by name or location
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
@@ -334,6 +370,8 @@ class StoreListAPIController extends PubControllerAPI
                 $sort = array('_geo_distance' => array('nested_path' => 'tenant_detail', 'tenant_detail.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
             } elseif ($sort_by === 'updated_date') {
                 $sort = array('updated_at' => array('order' => $sort_mode));
+            } elseif ($sort_by === 'rating') {
+                $sort = array('_script' => array('script' => $scriptFieldRating, 'type' => 'number', 'order' => $sort_mode));
             } else {
                 $sort = array('name.raw' => array('order' => $sort_mode));
             }
@@ -544,6 +582,9 @@ class StoreListAPIController extends PubControllerAPI
                         $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
                     }
                 }
+
+                $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? round($record['fields']['average_rating'][0], 2) : 0;
+                $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 2) : 0;
 
                 $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];

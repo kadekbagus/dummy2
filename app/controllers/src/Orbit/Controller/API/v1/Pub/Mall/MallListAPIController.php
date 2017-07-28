@@ -24,6 +24,7 @@ use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use MallCountry;
 use MallCity;
+use Country;
 
 class MallListAPIController extends PubControllerAPI
 {
@@ -81,7 +82,7 @@ class MallListAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
 
-            $jsonArea = array('from' => $skip, 'size' => $take, 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('is_subscribed' => 'Y')))))));
+            $jsonArea = array('from' => $skip, 'size' => $take, 'fields' => array("_source"), 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('is_subscribed' => 'Y')))))));
 
             $filterStatus = array('query' => array('match' => array('status' => 'active')));
             if ($usingDemo) {
@@ -154,7 +155,9 @@ class MallListAPIController extends PubControllerAPI
             });
 
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$jsonArea, &$searchFlag) {
+            $countryData = null;
+            OrbitInput::get('country', function ($countryFilter) use (&$jsonArea, &$searchFlag, &$countryData) {
+                $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
                 $searchFlag = $searchFlag || TRUE;
                 $countryFilterArr = array('match' => array('country.raw' => array('query' => $countryFilter)));;
 
@@ -208,6 +211,36 @@ class MallListAPIController extends PubControllerAPI
                 }
             });
 
+            // calculate rating and review based on location/mall
+            $scriptFieldRating = "double counter = 0; double rating = 0;";
+            $scriptFieldReview = "double review = 0;";
+
+            if (! empty($cityFilters)) {
+                $countryId = $countryData->country_id;
+                foreach ((array) $cityFilters as $cityFilter) {
+                    $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + 1; rating = rating + doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
+                    $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
+                }
+            } else if (! empty($countryFilter)) {
+                $countryId = $countryData->country_id;
+                $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + 1; rating = rating + doc['location_rating.rating_" . $countryId . "'].value;}}; ";
+                $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+            } else {
+                $mallCountry = Mall::groupBy('country')->lists('country');
+                $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
+
+                foreach ($countries as $country) {
+                    $countryId = $country->country_id;
+                    $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + 1; rating = rating + doc['location_rating.rating_" . $countryId . "'].value;}}; ";
+                    $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
+                }
+            }
+
+            $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
+            $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
+
+            $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
+
             // sort by name or location
             $sort = array('name.raw' => array('order' => $sort_mode));
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
@@ -218,6 +251,8 @@ class MallListAPIController extends PubControllerAPI
                 $sort = array('updated_at' => array('order' => $sort_mode));
             } elseif ($sort_by === 'created_date') {
                 $sort = array('name.raw' => array('order' => 'asc'));
+            } elseif ($sort_by === 'rating') {
+                $sort = array('_script' => array('script' => $scriptFieldRating, 'type' => 'number', 'order' => $sort_mode));
             }
 
             // put featured mall id in highest priority
@@ -298,6 +333,10 @@ class MallListAPIController extends PubControllerAPI
             $total = $area_data['total'];
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
+
+                $areadata['average_rating'] = (! empty($dt['fields']['average_rating'][0])) ? round($dt['fields']['average_rating'][0], 2) : 0;
+                $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? round($dt['fields']['total_review'][0], 2) : 0;
+
                 if ($words === 1) {
                     // handle if user filter location with one word, ex "jakarta", data in city "jakarta selatan", "jakarta barat" etc will be dissapear
                     if (strtolower($dt['_source']['city']) === strtolower($location)) {
