@@ -42,8 +42,9 @@ class RatingAndReviewMailQueue
             $rating = (! empty($data['rating'])) ? $data['rating'] : '';
             $review = (! empty($data['review'])) ? $data['review'] : '';
 
+            $mongoClient = MongoClient::create($mongoConfig);
+            $reviewId = '';
             if (! empty($data['_id'])) {
-                $mongoClient = MongoClient::create($mongoConfig);
                 $endPoint = "reviews/" . $data['_id'];
                 $response = $mongoClient->setEndPoint($endPoint)
                                         ->request('GET');
@@ -55,6 +56,24 @@ class RatingAndReviewMailQueue
                 $reviewDate = $response->data->updated_at;
                 $rating = $response->data->rating;
                 $review = $response->data->review;
+                $reviewId = $data['_id'];
+            } else {
+                $queryString = [
+                    'user_id'     => $userId,
+                    'object_id'   => $objectId,
+                    'object_type' => $objectType,
+                    'location_id' => $locationId
+                ];
+
+                $endPoint = "reviews";
+                $response = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint($endPoint)
+                                    ->request('GET');
+
+                $listOfRec = $response->data;
+                foreach ($listOfRec->records as $rating) {
+                    $reviewId = $rating->_id;
+                }
             }
 
             // get user name and email
@@ -106,6 +125,7 @@ class RatingAndReviewMailQueue
             $dataView['location_detail'] = $location->location_name;
             $dataView['name'] = $user->user_name;
             $dataView['email'] = $user->user_email;
+            $dataView['review_id'] = $reviewId;
             $dataView['rating'] = $rating;
             $dataView['review'] = $review;
 
