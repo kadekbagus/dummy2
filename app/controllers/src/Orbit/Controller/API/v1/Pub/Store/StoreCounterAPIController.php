@@ -94,7 +94,7 @@ class StoreCounterAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,updated_date',
+                    'sortby'   => 'in:name,location,updated_date,rating',
                 )
             );
 
