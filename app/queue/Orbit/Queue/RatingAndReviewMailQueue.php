@@ -71,8 +71,8 @@ class RatingAndReviewMailQueue
                                     ->request('GET');
 
                 $listOfRec = $response->data;
-                foreach ($listOfRec->records as $rating) {
-                    $reviewId = $rating->_id;
+                foreach ($listOfRec->records as $reviewList) {
+                    $reviewId = $reviewList->_id;
                 }
             }
 
