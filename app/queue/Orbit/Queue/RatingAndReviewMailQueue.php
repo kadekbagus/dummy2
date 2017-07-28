@@ -6,7 +6,7 @@
  */
 use User;
 use News;
-use Promotion;
+use Coupon;
 use Tenant;
 use Mall;
 use CampaignLocation;
@@ -98,7 +98,7 @@ class RatingAndReviewMailQueue
                     break;
 
                 case 'coupon':
-                    $object = Promotion::select(DB::raw("{$prefix}promotions.promotion_name as object_name"))->where('promotion_id', $objectId)->first();
+                    $object = Coupon::select(DB::raw("{$prefix}promotions.promotion_name as object_name"))->where('promotion_id', $objectId)->first();
                     break;
 
                 case 'store':
