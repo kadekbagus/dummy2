@@ -58,6 +58,7 @@ class RatingListAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
             $mongoConfig = Config::get('database.mongodb');
+            $mallId = OrbitInput::get('mall_id', null);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -88,6 +89,7 @@ class RatingListAPIController extends PubControllerAPI
                 'sortMode'    => 'desc'
             ];
 
+            if (! empty($mallId)) $queryString['location_id'] = $mallId;
             if (! empty($cityFilters)) $queryString['cities'] = $cityFilters;
             if (! empty($countryFilter)) {
                 $country = Country::where('name', $countryFilter)->first();
