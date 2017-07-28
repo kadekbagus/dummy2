@@ -257,3 +257,6 @@ Artisan::add(new CdnNewsMissingFile);
 
 // Find missing cdn file in coupon
 Artisan::add(new CdnCouponMissingFile);
+
+// Update approval status of review to pending
+Artisan::add(new UpdateStatusReviewCommand);
