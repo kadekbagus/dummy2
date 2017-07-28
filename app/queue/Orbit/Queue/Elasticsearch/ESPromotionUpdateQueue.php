@@ -178,14 +178,12 @@ class ESPromotionUpdateQueue
                     // by country
                     $countryId = $rating->country_id;
                     $countryRating[$countryId]['total'] = (! empty($countryRating[$countryId]['total'])) ? $countryRating[$countryId]['total'] : 0;
-                    $countryRating[$countryId]['counter'] = (! empty($countryRating[$countryId]['counter'])) ? $countryRating[$countryId]['counter'] : 0;
                     $countryRating[$countryId]['review'] = (! empty($countryRating[$countryId]['review'])) ? $countryRating[$countryId]['review'] : 0;
 
-                    $countryRating[$countryId]['total'] = $countryRating[$countryId]['total'] + $rating->average;
+                    $countryRating[$countryId]['total'] = $countryRating[$countryId]['total'] + ((double) $rating->average * (double) $rating->counter);
                     $countryRating[$countryId]['review'] = $countryRating[$countryId]['review'] + $rating->counter;
-                    $countryRating[$countryId]['counter'] = $countryRating[$countryId]['counter'] + 1;
 
-                    $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['counter']) + 0.00001;
+                    $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['review']) + 0.00001;
                     $locationRating['review_' . $countryId] = (double) $countryRating[$countryId]['review'];
 
                     // by country and city

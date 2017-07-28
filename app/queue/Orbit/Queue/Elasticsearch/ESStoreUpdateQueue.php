@@ -17,6 +17,7 @@ use Exception;
 use Log;
 use Queue;
 use Orbit\FakeJob;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class ESStoreUpdateQueue
 {
@@ -54,6 +55,7 @@ class ESStoreUpdateQueue
             $esConfig = Config::get('orbit.elasticsearch');
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $updateRelated = (empty($data['update_related']) ? FALSE : $data['update_related']);
+            $mongoConfig = Config::get('database.mongodb');
 
             $storeName = $data['name'];
             $countryName = $data['country'];
@@ -265,6 +267,65 @@ class ESStoreUpdateQueue
                 }
             }
 
+            $storeIds = [];
+            $storeIds[] = $store[0]->merchant_id;
+            $locationRating = array();
+            $mallRating = array();
+            $baseStore = \BaseStore::where('base_store_id', $store[0]->merchant_id)->first();
+            if (is_object($baseStore)) {
+                $storeIds = BaseMerchant::leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
+                    ->where('base_merchants.base_merchant_id', $baseStore->base_merchant_id)
+                    ->get()
+                    ->lists('base_store_id');
+
+                $queryString = [
+                    'object_id'   => $storeIds,
+                    'object_type' => 'store'
+                ];
+
+                $mongoClient = MongoClient::create($mongoConfig);
+                $endPoint = "review-counters";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRecLocation = $response->data;
+
+                if (! empty($listOfRecLocation->records)) {
+                    $countryRating = array();
+                    foreach ($listOfRecLocation->records as $rating) {
+                        // by country
+                        $countryId = $rating->country_id;
+                        $countryRating[$countryId]['total'] = (! empty($countryRating[$countryId]['total'])) ? $countryRating[$countryId]['total'] : 0;
+                        $countryRating[$countryId]['review'] = (! empty($countryRating[$countryId]['review'])) ? $countryRating[$countryId]['review'] : 0;
+
+                        $countryRating[$countryId]['total'] = $countryRating[$countryId]['total'] + ((double) $rating->average * (double) $rating->counter);
+                        $countryRating[$countryId]['review'] = $countryRating[$countryId]['review'] + $rating->counter;
+
+                        $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['review']) + 0.00001;
+                        $locationRating['review_' . $countryId] = (double) $countryRating[$countryId]['review'];
+
+                        // by country and city
+                        $locationRating['rating_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->average + 0.00001;
+                        $locationRating['review_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->counter;
+                    }
+                }
+
+                // get rating by mall
+                $endPoint = "mall-review-counters";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRecMall = $response->data;
+                if(! empty($listOfRecMall->records)) {
+                    foreach ($listOfRecMall->records as $rating) {
+                        $mallRating['rating_' . $rating->location_id] = $rating->average + 0.00001;
+                        $mallRating['review_' . $rating->location_id] = $rating->counter;
+                    }
+                }
+            }
+
             $body = [
                 'merchant_id'         => $store[0]->merchant_id,
                 'name'                => $store[0]->name,
@@ -292,6 +353,8 @@ class ESStoreUpdateQueue
                 'featured_mall_type'   => $featuredMallType,
                 'preferred_gtm_type'   => $preferredGtmType,
                 'preferred_mall_type'  => $preferredMallType,
+                'location_rating'      => $locationRating,
+                'mall_rating'          => $mallRating
             ];
 
             $params['body'] = $body;

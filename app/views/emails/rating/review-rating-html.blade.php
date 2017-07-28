@@ -11,6 +11,7 @@
         Location: {{ $location_detail }} <br/>
         Name: {{ $name }} <br/>
         Email: {{ $email }} <br/>
+        Review ID: {{ $review_id }} <br/>
         Rating: {{ $rating }} <br/>
         Review: {{ $review }}
     </p>

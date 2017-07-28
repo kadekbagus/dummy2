@@ -7,6 +7,7 @@ Type: {{ $type }}
 Location: {{ $location_detail }}
 Name: {{ $name }}
 Email: {{ $email }}
+Review ID: {{ $review_id }}
 Rating: {{ $rating }}
 Review: {{ $review }}
 

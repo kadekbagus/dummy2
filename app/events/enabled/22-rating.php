@@ -23,37 +23,37 @@ Event::listen('orbit.rating.postrating.after.commit', function($controller, $rat
     }
 
     // update elasticsearch
-    // $objectType = $rating['object_type'];
-    // switch ($objectType) {
-    //     case 'news':
-    //         Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
-    //             'news_id' => $rating['object_id']
-    //         ]);
-    //         break;
+    $objectType = $rating['object_type'];
+    switch ($objectType) {
+        case 'news':
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
+                'news_id' => $rating['object_id']
+            ]);
+            break;
 
-    //     case 'promotion':
-    //         Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
-    //             'news_id' => $rating['object_id']
-    //         ]);
-    //         break;
+        case 'promotion':
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', [
+                'news_id' => $rating['object_id']
+            ]);
+            break;
 
-    //     case 'coupon':
-    //         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-    //             'coupon_id' => $rating['object_id']
-    //         ]);
-    //         break;
+        case 'coupon':
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                'coupon_id' => $rating['object_id']
+            ]);
+            break;
 
-    //     case 'store':
-    //         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-    //             'name' => $rating['merchant_name'],
-    //             'country' => $rating['country']
-    //         ]);
-    //         break;
+        case 'store':
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                'name' => $rating['merchant_name'],
+                'country' => $rating['country']
+            ]);
+            break;
 
-    //     case 'mall':
-    //         Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
-    //             'mall_id' => $rating['object_id']
-    //         ]);
-    //         break;
-    // }
+        case 'mall':
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESMallUpdateQueue', [
+                'mall_id' => $rating['object_id']
+            ]);
+            break;
+    }
 });

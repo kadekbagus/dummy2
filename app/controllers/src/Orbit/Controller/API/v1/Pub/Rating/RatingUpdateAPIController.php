@@ -49,7 +49,6 @@ class RatingUpdateAPIController extends PubControllerAPI
         $objectType = OrbitInput::post('object_type', NULL);
         $locationId = OrbitInput::post('location_id', NULL);
         $rating = OrbitInput::post('rating', NULL);
-        $review = OrbitInput::post('review', NULL);
         $ratingId = OrbitInput::post('rating_id', NULL);
         $status = OrbitInput::post('status', 'active');
         $approvalStatus = OrbitInput::post('approval_status', 'approved');
@@ -128,9 +127,10 @@ class RatingUpdateAPIController extends PubControllerAPI
                 'object_type'     => $oldRating->data->object_type,
             ];
 
-            if (! empty($review)) {
+            OrbitInput::post('review', function($review) use (&$body) {
+                $review = (empty($review)) ? '' : $review;
                 $body['review'] = $review;
-            }
+            });
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
             $response = $mongoClient->setEndPoint('reviews') // express endpoint

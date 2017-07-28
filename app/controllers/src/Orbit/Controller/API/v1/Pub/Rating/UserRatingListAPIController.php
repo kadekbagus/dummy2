@@ -53,9 +53,12 @@ class UserRatingListAPIController extends PubControllerAPI
             $user = $this->getUser();
             $objectId = OrbitInput::get('object_id', null);
             $objectType = OrbitInput::get('object_type', null);
+            $cityFilters = OrbitInput::get('cities', null);
+            $countryFilter = OrbitInput::get('country', null);
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
             $mongoConfig = Config::get('database.mongodb');
+            $mallId = OrbitInput::get('mall_id', null);
 
             $session = SessionPreparer::prepareSession();
 
@@ -83,6 +86,13 @@ class UserRatingListAPIController extends PubControllerAPI
             OrbitInput::get('object_type', function($objectType) use (&$queryString) {
                 $queryString['object_type'] = $objectType;
             });
+
+            if (! empty($mallId)) $queryString['location_id'] = $mallId;
+            if (! empty($cityFilters)) $queryString['cities'] = $cityFilters;
+            if (! empty($countryFilter)) {
+                $country = Country::where('name', $countryFilter)->first();
+                if (is_object($country)) $queryString['country_id'] = $country->country_id;
+            }
 
             $mongoClient = MongoClient::create($mongoConfig);
             $endPoint = "reviews";
