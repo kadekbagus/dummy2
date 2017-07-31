@@ -149,7 +149,7 @@ class NewsRatingLocationAPIController extends PubControllerAPI
 
             $ratingLocation = $ratingLocation->groupBy('location_name');
 
-            $ratingLocation = clone($ratingLocation);
+            $_ratingLocation = clone($ratingLocation);
 
             $take = PaginationNumber::parseTakeFromGet('news');
             $ratingLocation->take($take);
@@ -163,7 +163,7 @@ class NewsRatingLocationAPIController extends PubControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = RecordCounter::create($ratingLocation)->count();
+            $data->total_records = RecordCounter::create($_ratingLocation)->count();
             $data->records = $listOfRec;
 
             $this->response->data = $data;
