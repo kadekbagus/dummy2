@@ -138,13 +138,13 @@ class StoreRatingLocationAPIController extends PubControllerAPI
 
                 $listOfRec = $response->data;
 
-                $locationIds = array();
+                $storeIds = array();
                 foreach ($listOfRec->records as $location) {
-                    $locationIds[] = $location->location_id;
+                    $storeIds[] = $location->store_id;
                 }
 
-                if (! empty($locationIds)) {
-                    $ratingLocation->whereNotIn('merchants.parent_id', $locationIds);
+                if (! empty($storeIds)) {
+                    $ratingLocation->whereNotIn("merchants.merchant_id", $storeIds);
                 }
             }
 
