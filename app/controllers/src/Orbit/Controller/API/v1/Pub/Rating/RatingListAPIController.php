@@ -89,6 +89,11 @@ class RatingListAPIController extends PubControllerAPI
                 'sortMode'    => 'desc'
             ];
 
+            if ($objectType === 'store') {
+                unset($queryString['object_id']);
+                $queryString['store_id'] = $object_id;
+            }
+
             if (empty($mallId)) {
                 if (! empty($cityFilters)) $queryString['cities'] = $cityFilters;
                 if (! empty($countryFilter)) {

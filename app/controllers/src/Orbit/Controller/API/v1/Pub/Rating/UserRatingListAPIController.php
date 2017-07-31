@@ -88,6 +88,11 @@ class UserRatingListAPIController extends PubControllerAPI
                 $queryString['object_type'] = $objectType;
             });
 
+            if ($objectType === 'store') {
+                unset($queryString['object_id']);
+                $queryString['store_id'] = $object_id;
+            }
+
             if (empty($mallId)) {
                 if (! empty($cityFilters)) $queryString['cities'] = $cityFilters;
                 if (! empty($countryFilter)) {
