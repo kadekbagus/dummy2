@@ -91,7 +91,7 @@ class RatingListAPIController extends PubControllerAPI
 
             if ($objectType === 'store') {
                 unset($queryString['object_id']);
-                $queryString['store_id'] = $object_id;
+                $queryString['store_id'] = $objectId;
             }
 
             if (empty($mallId)) {
