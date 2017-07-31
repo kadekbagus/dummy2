@@ -1,3 +1,3 @@
 [submodule "app/database"]
 	path = app/database
-	url = git@github.com:dominopos/orbit-database-migration.git
+	url = ssh://git@gitlab.dominopos.com:21212/dominopos/orbit-database-migration.git
