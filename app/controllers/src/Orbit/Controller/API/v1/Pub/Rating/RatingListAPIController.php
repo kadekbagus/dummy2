@@ -91,6 +91,7 @@ class RatingListAPIController extends PubControllerAPI
             ];
 
             if ($objectType === 'store') {
+                $prefix = DB::getTablePrefix();
                 $storeInfo = Tenant::select('merchants.name', DB::raw("oms.country"))
                             ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                             ->where('merchants.merchant_id', $objectId)
