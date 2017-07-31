@@ -335,7 +335,7 @@ class MallListAPIController extends PubControllerAPI
                 $areadata = array();
 
                 $areadata['average_rating'] = (! empty($dt['fields']['average_rating'][0])) ? number_format(round($dt['fields']['average_rating'][0], 1), 1) : 0;
-                $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? number_format(round($dt['fields']['total_review'][0], 1), 1) : 0;
+                $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? round($dt['fields']['total_review'][0], 1) : 0;
 
                 if ($words === 1) {
                     // handle if user filter location with one word, ex "jakarta", data in city "jakarta selatan", "jakarta barat" etc will be dissapear
