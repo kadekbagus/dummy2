@@ -90,6 +90,8 @@ class StoreRatingLocationAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
             $ratingLocation = Tenant::select('merchants.merchant_id as location_id', DB::raw("CONCAT({$prefix}merchants.name,' {$at} ', oms.name) as location_name"))
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->where('merchants.status', '=', 'active')
+                                    ->where(DB::raw('oms.status'), '=', 'active')
                                     ->where('merchants.name', '=', $tenant->name)
                                     ->where('merchants.country', '=', $tenant->country);
 
