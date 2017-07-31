@@ -93,7 +93,7 @@ class StoreRatingLocationAPIController extends PubControllerAPI
                                     ->where('merchants.status', '=', 'active')
                                     ->where(DB::raw('oms.status'), '=', 'active')
                                     ->where('merchants.name', '=', $tenant->name)
-                                    ->where('merchants.country', '=', $tenant->country);
+                                    ->where(DB::raw("oms.country"), '=', $tenant->country);
 
             OrbitInput::get('cities', function($cities) use ($ratingLocation, $prefix) {
                 foreach ($cities as $key => $value) {
