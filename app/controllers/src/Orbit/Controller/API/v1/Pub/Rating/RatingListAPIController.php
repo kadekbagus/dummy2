@@ -89,11 +89,14 @@ class RatingListAPIController extends PubControllerAPI
                 'sortMode'    => 'desc'
             ];
 
-            if (! empty($mallId)) $queryString['location_id'] = $mallId;
-            if (! empty($cityFilters)) $queryString['cities'] = $cityFilters;
-            if (! empty($countryFilter)) {
-                $country = Country::where('name', $countryFilter)->first();
-                if (is_object($country)) $queryString['country_id'] = $country->country_id;
+            if (empty($mallId)) {
+                if (! empty($cityFilters)) $queryString['cities'] = $cityFilters;
+                if (! empty($countryFilter)) {
+                    $country = Country::where('name', $countryFilter)->first();
+                    if (is_object($country)) $queryString['country_id'] = $country->country_id;
+                }
+            } else {
+                $queryString['location_id'] = $mallId;
             }
 
             $mongoClient = MongoClient::create($mongoConfig);
