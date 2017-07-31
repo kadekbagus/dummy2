@@ -22,6 +22,7 @@ use Activity;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use stdClass;
+use Country;
 use Orbit\Helper\Net\SessionPreparer;
 
 class UserRatingListAPIController extends PubControllerAPI
