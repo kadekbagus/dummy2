@@ -171,9 +171,13 @@ class StoreDetailAPIController extends PubControllerAPI
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'");
 
-            $storeInfo = Tenant::select('merchants.name')
-                            ->where('merchant_id', $merchantid)
+            $storeInfo = Tenant::select('merchants.name', DB::raw("oms.country"))
+                            ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                            ->where('merchants.status', '=', 'active')
+                            ->where(DB::raw('oms.status'), '=', 'active')
+                            ->where('merchants.merchant_id', $merchantid)
                             ->first();
+
             if (! is_object($storeInfo)) {
                 throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
             }
@@ -204,15 +208,16 @@ class StoreDetailAPIController extends PubControllerAPI
 
             // ---- START RATING ----
             $storeIds = [];
-            $storeIds[] = $store->merchant_id;
-            if (! is_object($mall)) {
-                $baseStore = \BaseStore::where('base_store_id', $merchantid)->first();
-                if (is_object($baseStore)) {
-                    $storeIds = BaseMerchant::leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
-                        ->where('base_merchants.base_merchant_id', $baseStore->base_merchant_id)
-                        ->get()
-                        ->lists('base_store_id');
-                }
+            $storeIdList = Tenant::select('merchants.merchant_id')
+                            ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                            ->where('merchants.status', '=', 'active')
+                            ->where(DB::raw('oms.status'), '=', 'active')
+                            ->where('merchants.name', $storeInfo->name)
+                            ->where(DB::raw("oms.country"), $storeInfo->country)
+                            ->get();
+
+            foreach ($storeIdList as $storeId) {
+                $storeIds[] = $storeId->merchant_id;
             }
 
             $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
