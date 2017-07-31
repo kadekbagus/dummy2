@@ -92,8 +92,7 @@ class StoreRatingLocationAPIController extends PubControllerAPI
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('merchants.status', '=', 'active')
                                     ->where(DB::raw('oms.status'), '=', 'active')
-                                    ->where('merchants.name', '=', $tenant->name)
-                                    ->where(DB::raw("oms.country"), '=', $tenant->country);
+                                    ->where('merchants.name', '=', $tenant->name);
 
             OrbitInput::get('cities', function($cities) use ($ratingLocation, $prefix) {
                 foreach ($cities as $key => $value) {
