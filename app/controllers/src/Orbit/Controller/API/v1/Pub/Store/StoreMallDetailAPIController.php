@@ -277,7 +277,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                             ->where('merchants.status', '=', 'active')
                             ->where(DB::raw('oms.status'), '=', 'active')
                             ->where('merchants.name', $storename)
-                            ->where(DB::raw("oms.country_id"), $countryIdy)
+                            ->where(DB::raw("oms.country_id"), $countryId)
                             ->get();
 
             foreach ($storeIdList as $storeId) {
@@ -309,10 +309,10 @@ class StoreMallDetailAPIController extends PubControllerAPI
 
             foreach ($listOfRec as &$itemLocation) {
                 $mallId = $itemLocation->mall_id;
-                $ratingAverage = (! empty($ratings[$mallId]['average'])) ? $ratings[$mallId]['average'] : 0;
-                $reviewCounter = (! empty($ratings[$mallId]['totalReview'])) ? $ratings[$mallId]['totalReview'] : 0;
+                $ratingAverage = (! empty($ratings[$mallId]['average'])) ? number_format(round($ratings[$mallId]['average'], 1), 1) : null;
+                $reviewCounter = (! empty($ratings[$mallId]['totalReview'])) ? $ratings[$mallId]['totalReview'] : null;
 
-                $itemLocation->rating_average = number_format(round($ratingAverage, 1), 1);
+                $itemLocation->rating_average = $ratingAverage;
                 $itemLocation->review_counter = $reviewCounter;
             }
 

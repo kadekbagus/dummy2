@@ -326,10 +326,11 @@ class CouponLocationAPIController extends PubControllerAPI
             $ratings = array();
             foreach ($reviewList->records as $review) {
                 $locationId = $review->location_id;
-                $ratings[$locationId]['rating'] = (! empty($ratings[$locationId]['rating'])) ? $ratings[$locationId]['rating'] + $review->rating : $review->rating;
-                $ratings[$locationId]['totalReview'] = (! empty($ratings[$locationId]['totalReview'])) ? $ratings[$locationId]['totalReview'] + 1 : 1;
+                $ratingAverage = (! empty($ratings[$mallId]['average'])) ? number_format(round($ratings[$mallId]['average'], 1), 1) : null;
+                $reviewCounter = (! empty($ratings[$mallId]['totalReview'])) ? $ratings[$mallId]['totalReview'] : null;
 
-                $ratings[$locationId]['average'] = $ratings[$locationId]['rating'] / $ratings[$locationId]['totalReview'];
+                $itemLocation->rating_average = $ratingAverage;
+                $itemLocation->review_counter = $reviewCounter;
             }
 
             foreach ($listOfRec as &$itemLocation) {
