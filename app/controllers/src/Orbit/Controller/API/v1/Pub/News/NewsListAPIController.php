@@ -350,9 +350,7 @@ class NewsListAPIController extends PubControllerAPI
             $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
 
             // sort by name or location
-            $defaultSortScript =  "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
-            $defaultSort = array('_script' => array('script' => $defaultSortScript, 'type' => 'string', 'order' => 'asc'));
-
+            $defaultSort = $sort = array('updated_at' => array('order' => 'desc'));
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withCache = FALSE;
@@ -364,7 +362,8 @@ class NewsListAPIController extends PubControllerAPI
             } elseif ($sort_by === 'rating') {
                 $sort = array('_script' => array('script' => $scriptFieldRating, 'type' => 'number', 'order' => $sort_mode));
             } else {
-                $sort = $defaultSort;
+                $sortScript =  "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
+                $sort = array('_script' => array('script' => $sortScript, 'type' => 'string', 'order' => $sort_mode));
             }
 
             $sortByPageType = array();

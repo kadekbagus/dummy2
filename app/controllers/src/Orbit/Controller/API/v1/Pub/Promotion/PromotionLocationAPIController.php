@@ -309,7 +309,7 @@ class PromotionLocationAPIController extends PubControllerAPI
                 ->setObjectType('promotion')
                 ->setLocationIds($locationIds)
                 ->request();
-
+print_r($reviewCounter); die();
             if (isset($reviewCounter->getResponse()->data->records)) {
                 foreach ($listOfRec as &$itemLocation) {
                     foreach ($reviewCounter->getResponse()->data->records as $record) {
