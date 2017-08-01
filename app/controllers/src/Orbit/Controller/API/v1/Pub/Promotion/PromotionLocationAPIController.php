@@ -18,6 +18,7 @@ use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
+use Tenant;
 use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 
@@ -300,8 +301,10 @@ class PromotionLocationAPIController extends PubControllerAPI
 
             // ---- START RATING ----
             $locationIds = [];
+            $merchantIds = [];
             foreach ($listOfRec as &$itemLocation) {
                 $locationIds[] = $itemLocation->mall_id;
+                $merchantIds[] = $itemLocation->merchant_id;
                 $itemLocation->rating_average = null;
                 $itemLocation->review_counter = null;
             }
@@ -311,6 +314,10 @@ class PromotionLocationAPIController extends PubControllerAPI
                 'object_type' => 'promotion',
                 'location_id' => $locationIds
             ];
+
+            if (! empty($storeName)) {
+                $queryString['store_id'] = $merchantIds;
+            }
 
             $mongoClient = MongoClient::create($mongoConfig);
             $endPoint = "reviews";

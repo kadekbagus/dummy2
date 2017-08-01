@@ -303,8 +303,10 @@ class CouponLocationAPIController extends PubControllerAPI
 
             // ---- START RATING ----
             $locationIds = [];
+            $merchantIds = [];
             foreach ($listOfRec as &$itemLocation) {
                 $locationIds[] = $itemLocation->mall_id;
+                $merchantIds[] = $itemLocation->merchant_id;
                 $itemLocation->rating_average = null;
                 $itemLocation->review_counter = null;
             }
@@ -314,6 +316,10 @@ class CouponLocationAPIController extends PubControllerAPI
                 'object_type' => 'coupon',
                 'location_id' => $locationIds
             ];
+
+            if (! empty($storeName)) {
+                $queryString['store_id'] = $merchantIds;
+            }
 
             $mongoClient = MongoClient::create($mongoConfig);
             $endPoint = "reviews";

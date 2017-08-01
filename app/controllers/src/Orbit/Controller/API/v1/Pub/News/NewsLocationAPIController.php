@@ -299,8 +299,10 @@ class NewsLocationAPIController extends PubControllerAPI
 
             // ---- START RATING ----
             $locationIds = [];
+            $merchantIds = [];
             foreach ($listOfRec as &$itemLocation) {
                 $locationIds[] = $itemLocation->mall_id;
+                $merchantIds[] = $itemLocation->merchant_id;
                 $itemLocation->rating_average = null;
                 $itemLocation->review_counter = null;
             }
@@ -310,6 +312,10 @@ class NewsLocationAPIController extends PubControllerAPI
                 'object_type' => 'news',
                 'location_id' => $locationIds
             ];
+
+            if (! empty($storeName)) {
+                $queryString['store_id'] = $merchantIds;
+            }
 
             $mongoClient = MongoClient::create($mongoConfig);
             $endPoint = "reviews";
