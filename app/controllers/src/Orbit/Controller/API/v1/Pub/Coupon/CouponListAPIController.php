@@ -346,7 +346,7 @@ class CouponListAPIController extends PubControllerAPI
 
             // sort by name or location
             $defaultSortScript = "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
-            $defaultSort = array('_script' => array('script' => $defaultSortScript, 'type' => 'string', 'order' => $sort_mode));
+            $defaultSort = array('_script' => array('script' => $defaultSortScript, 'type' => 'string', 'order' => 'asc'));
 
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
