@@ -80,8 +80,36 @@ class UserRatingListAPIController extends PubControllerAPI
                 'user_id'     => $user->user_id
             ];
 
-            OrbitInput::get('object_id', function($objectId) use (&$queryString) {
+            $prefix = DB::getTablePrefix();
+
+            OrbitInput::get('object_id', function($objectId) use (&$queryString, $objectType, $prefix) {
                 $queryString['object_id'] = $objectId;
+
+                if ($objectType === 'store') {
+                    $storeInfo = Tenant::select('merchants.name', DB::raw("oms.country"))
+                                ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                ->where('merchants.merchant_id', $objectId)
+                                ->first();
+
+                    if (! is_object($storeInfo)) {
+                        throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
+                    }
+
+                    $storeIds = [];
+                    $storeIdList = Tenant::select('merchants.merchant_id')
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->where('merchants.status', '=', 'active')
+                                    ->where(DB::raw('oms.status'), '=', 'active')
+                                    ->where('merchants.name', $storeInfo->name)
+                                    ->where(DB::raw("oms.country"), $storeInfo->country)
+                                    ->get();
+
+                    foreach ($storeIdList as $storeId) {
+                        $storeIds[] = $storeId->merchant_id;
+                    }
+
+                    $queryString['object_id'] = $storeIds;
+                }
             });
 
             OrbitInput::get('object_type', function($objectType) use (&$queryString) {
