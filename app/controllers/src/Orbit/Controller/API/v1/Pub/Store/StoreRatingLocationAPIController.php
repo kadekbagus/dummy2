@@ -151,7 +151,7 @@ class StoreRatingLocationAPIController extends PubControllerAPI
                 $queryString = [
                     'object_id'   => $objectIds,
                     'object_type' => 'store',
-                    'user_id'     => 'K_QTs_LOVMF0NSWR'
+                    'user_id'     => $user->user_id
                 ];
 
                 $mongoClient = MongoClient::create($mongoConfig);
