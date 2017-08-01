@@ -350,7 +350,7 @@ class NewsListAPIController extends PubControllerAPI
             $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
 
             // sort by name or location
-            $defaultSort = $sort = array('updated_at' => array('order' => 'desc'));
+            $defaultSort = $sort = array('begin_date' => array('order' => 'desc'));
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withCache = FALSE;
