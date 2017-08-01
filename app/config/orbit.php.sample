@@ -5844,20 +5844,20 @@ return array(
                 'object_type_parameter_name' => 'object_type',
                 'parameter_name' => 'object_id'
             ),
-            // User clicks on review sign in button
+            // User clicks on review input area
             '139' => array(
-                'name' => 'click_review_sign_in',
-                'name_long' => 'Click Rating and Review Sign In',
+                'name' => 'click_review_input_area',
+                'name_long' => 'Click Rating and Review Input Area',
                 'module_name' => 'Rating',
                 'type' => 'click',
                 'object_type' => '--SET BY object_type_parameter_name--',
                 'object_type_parameter_name' => 'object_type',
                 'parameter_name' => 'object_id'
             ),
-            // User clicks on review input area
+            // User clicks on review submit button
             '140' => array(
-                'name' => 'click_review_input_area',
-                'name_long' => 'Click Rating and Review Input Area',
+                'name' => 'click_review_submit',
+                'name_long' => 'Click Rating and Review Submit',
                 'module_name' => 'Rating',
                 'type' => 'click',
                 'object_type' => '--SET BY object_type_parameter_name--',
