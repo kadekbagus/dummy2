@@ -108,6 +108,7 @@ class RatingNewAPIController extends PubControllerAPI
                 'object_type'     => $objectType,
                 'user_id'         => $user->user_id,
                 'location_id'     => $location->location_id,
+                'store_id'        => $locationId,
                 'store_name'      => $location->store_name,
                 'mall_name'       => $location->mall_name,
                 'rating'          => $rating,

@@ -364,6 +364,8 @@ class StoreListAPIController extends PubControllerAPI
             $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
 
             // sort by name or location
+            $defaultSort = array('name.raw' => array('order' => 'asc'));
+
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withCache = FALSE;
@@ -373,7 +375,7 @@ class StoreListAPIController extends PubControllerAPI
             } elseif ($sort_by === 'rating') {
                 $sort = array('_script' => array('script' => $scriptFieldRating, 'type' => 'number', 'order' => $sort_mode));
             } else {
-                $sort = array('name.raw' => array('order' => $sort_mode));
+                $sort = $defaultSort;
             }
 
             $sortByPageType = array();
@@ -397,9 +399,9 @@ class StoreListAPIController extends PubControllerAPI
             $sortPageScript = "if(doc['" . $pageTypeScore . "'].value != null) { return doc['" . $pageTypeScore . "'].value } else { return 0}";
             $sortPage = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
 
-            $sortby = array($sortPage, $sort);
+            $sortby = array($sortPage, $sort, $defaultSort);
             if ($withScore) {
-                $sortby = array($sortPage, "_score", $sort);
+                $sortby = array($sortPage, "_score", $sort, $defaultSort);
             }
             $jsonQuery["sort"] = $sortby;
 
@@ -583,7 +585,7 @@ class StoreListAPIController extends PubControllerAPI
                     }
                 }
 
-                $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? round($record['fields']['average_rating'][0], 1) : 0;
+                $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
                 $data['page_view'] = $pageView;

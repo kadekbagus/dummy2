@@ -15,8 +15,10 @@ app/config/testing/app.php
 app/config/testing/orbit.php
 app/config/testing/database.php
 app/config/testing/mail.php
+app/config/testing/cache.php
 app/config/orbit.php
 app/config/mail.php
+app/config/cache.php
 app/config/queue.php
 app/config/orbit-notifier.php
 app/config/dynamic-listing.php

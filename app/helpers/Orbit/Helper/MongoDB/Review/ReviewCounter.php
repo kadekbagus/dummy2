@@ -241,12 +241,8 @@ class ReviewCounter
 
     protected function formatNumber($number)
     {
-        // multiply by decimal number
-        $multiplier = pow(10, $this->decimalNumber);
-        // round them up
-        $roundedNumber = ceil(($number * $multiplier));
         // get the rounded number
-        $number = number_format(($roundedNumber/$multiplier), $this->decimalNumber, ".", " ");
+        $number = number_format(round($number,1), $this->decimalNumber, ".", " ");
         return $number;
     }
 }

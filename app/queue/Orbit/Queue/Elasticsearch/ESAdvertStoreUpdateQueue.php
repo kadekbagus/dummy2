@@ -11,6 +11,7 @@ use Tenant;
 use Advert;
 use AdvertLocation;
 use BaseMerchant;
+use BaseStore;
 use TotalObjectPageView;
 use CampaignLocation;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
@@ -20,6 +21,7 @@ use Log;
 use Queue;
 use Orbit\FakeJob;
 use Carbon\Carbon as Carbon;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class ESAdvertStoreUpdateQueue
 {
@@ -57,6 +59,7 @@ class ESAdvertStoreUpdateQueue
             $esConfig = Config::get('orbit.elasticsearch');
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $updateRelated = (empty($data['update_related']) ? FALSE : $data['update_related']);
+            $mongoConfig = Config::get('database.mongodb');
 
             $storeName = $data['name'];
             $countryName = $data['country'];
@@ -271,6 +274,7 @@ class ESAdvertStoreUpdateQueue
                     $advertLocationIds[] = $location->location_id;
                 }
 
+                $storeIds = [];
                 foreach ($store as $_store) {
                     $advertIds = array();
                     foreach ($_store->adverts as $advert) {
@@ -298,6 +302,10 @@ class ESAdvertStoreUpdateQueue
                         "url"                  => $_store->url
                     );
 
+                    if (! in_array($_store->merchant_id, $storeIds)) {
+                        $storeIds[] = $_store->merchant_id;
+                    }
+
                     $tenantDetails[] = $tenantDetail;
                 }
 
@@ -324,6 +332,56 @@ class ESAdvertStoreUpdateQueue
                         } else {
                             $gtmPageViews = $pageView->total_view;
                         }
+                    }
+                }
+
+                $locationRating = array();
+                $mallRating = array();
+
+                $queryString = [
+                    'object_id'   => $storeIds,
+                    'object_type' => 'store'
+                ];
+
+                $mongoClient = MongoClient::create($mongoConfig);
+                $endPoint = "review-counters";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRecLocation = $response->data;
+
+                if (! empty($listOfRecLocation->records)) {
+                    $countryRating = array();
+                    foreach ($listOfRecLocation->records as $rating) {
+                        // by country
+                        $countryId = $rating->country_id;
+                        $countryRating[$countryId]['total'] = (! empty($countryRating[$countryId]['total'])) ? $countryRating[$countryId]['total'] : 0;
+                        $countryRating[$countryId]['review'] = (! empty($countryRating[$countryId]['review'])) ? $countryRating[$countryId]['review'] : 0;
+
+                        $countryRating[$countryId]['total'] = $countryRating[$countryId]['total'] + ((double) $rating->average * (double) $rating->counter);
+                        $countryRating[$countryId]['review'] = $countryRating[$countryId]['review'] + $rating->counter;
+
+                        $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['review']) + 0.00001;
+                        $locationRating['review_' . $countryId] = (double) $countryRating[$countryId]['review'];
+
+                        // by country and city
+                        $locationRating['rating_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->average + 0.00001;
+                        $locationRating['review_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->counter;
+                    }
+                }
+
+                // get rating by mall
+                $endPoint = "mall-review-counters";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRecMall = $response->data;
+                if(! empty($listOfRecMall->records)) {
+                    foreach ($listOfRecMall->records as $rating) {
+                        $mallRating['rating_' . $rating->location_id] = $rating->average + 0.00001;
+                        $mallRating['review_' . $rating->location_id] = $rating->counter;
                     }
                 }
 
@@ -358,7 +416,9 @@ class ESAdvertStoreUpdateQueue
                     'featured_mall_type'   => $featuredMallType,
                     'preferred_mall_type'  => $preferredMallType,
                     'advert_location_ids'  => $advertLocationIds,
-                    'advert_type'          => $adverts->placement_type
+                    'advert_type'          => $adverts->placement_type,
+                    'location_rating'      => $locationRating,
+                    'mall_rating'          => $mallRating
                 ];
 
                 if ($response_search['hits']['total'] > 0) {

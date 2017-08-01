@@ -210,6 +210,7 @@ class ESStoreUpdateQueue
             $preferredMallType = '';
 
             $tenantDetails = array();
+            $storeIds = [];
             foreach ($store as $_store) {
 
                 $advertIds = array();
@@ -237,6 +238,10 @@ class ESStoreUpdateQueue
                     "logo_cdn"             => $_store->cdn_url,
                     "url"                  => $_store->url
                 );
+
+                if (! in_array($_store->merchant_id, $storeIds)) {
+                    $storeIds[] = $_store->merchant_id;
+                }
 
                 $tenantDetails[] = $tenantDetail;
             }
@@ -267,62 +272,53 @@ class ESStoreUpdateQueue
                 }
             }
 
-            $storeIds = [];
-            $storeIds[] = $store[0]->merchant_id;
             $locationRating = array();
             $mallRating = array();
-            $baseStore = \BaseStore::where('base_store_id', $store[0]->merchant_id)->first();
-            if (is_object($baseStore)) {
-                $storeIds = BaseMerchant::leftJoin('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
-                    ->where('base_merchants.base_merchant_id', $baseStore->base_merchant_id)
-                    ->get()
-                    ->lists('base_store_id');
 
-                $queryString = [
-                    'object_id'   => $storeIds,
-                    'object_type' => 'store'
-                ];
+            $queryString = [
+                'object_id'   => $storeIds,
+                'object_type' => 'store'
+            ];
 
-                $mongoClient = MongoClient::create($mongoConfig);
-                $endPoint = "review-counters";
-                $response = $mongoClient->setQueryString($queryString)
-                                        ->setEndPoint($endPoint)
-                                        ->request('GET');
+            $mongoClient = MongoClient::create($mongoConfig);
+            $endPoint = "review-counters";
+            $response = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint($endPoint)
+                                    ->request('GET');
 
-                $listOfRecLocation = $response->data;
+            $listOfRecLocation = $response->data;
 
-                if (! empty($listOfRecLocation->records)) {
-                    $countryRating = array();
-                    foreach ($listOfRecLocation->records as $rating) {
-                        // by country
-                        $countryId = $rating->country_id;
-                        $countryRating[$countryId]['total'] = (! empty($countryRating[$countryId]['total'])) ? $countryRating[$countryId]['total'] : 0;
-                        $countryRating[$countryId]['review'] = (! empty($countryRating[$countryId]['review'])) ? $countryRating[$countryId]['review'] : 0;
+            if (! empty($listOfRecLocation->records)) {
+                $countryRating = array();
+                foreach ($listOfRecLocation->records as $rating) {
+                    // by country
+                    $countryId = $rating->country_id;
+                    $countryRating[$countryId]['total'] = (! empty($countryRating[$countryId]['total'])) ? $countryRating[$countryId]['total'] : 0;
+                    $countryRating[$countryId]['review'] = (! empty($countryRating[$countryId]['review'])) ? $countryRating[$countryId]['review'] : 0;
 
-                        $countryRating[$countryId]['total'] = $countryRating[$countryId]['total'] + ((double) $rating->average * (double) $rating->counter);
-                        $countryRating[$countryId]['review'] = $countryRating[$countryId]['review'] + $rating->counter;
+                    $countryRating[$countryId]['total'] = $countryRating[$countryId]['total'] + ((double) $rating->average * (double) $rating->counter);
+                    $countryRating[$countryId]['review'] = $countryRating[$countryId]['review'] + $rating->counter;
 
-                        $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['review']) + 0.00001;
-                        $locationRating['review_' . $countryId] = (double) $countryRating[$countryId]['review'];
+                    $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['review']) + 0.00001;
+                    $locationRating['review_' . $countryId] = (double) $countryRating[$countryId]['review'];
 
-                        // by country and city
-                        $locationRating['rating_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->average + 0.00001;
-                        $locationRating['review_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->counter;
-                    }
+                    // by country and city
+                    $locationRating['rating_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->average + 0.00001;
+                    $locationRating['review_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->counter;
                 }
+            }
 
-                // get rating by mall
-                $endPoint = "mall-review-counters";
-                $response = $mongoClient->setQueryString($queryString)
-                                        ->setEndPoint($endPoint)
-                                        ->request('GET');
+            // get rating by mall
+            $endPoint = "mall-review-counters";
+            $response = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint($endPoint)
+                                    ->request('GET');
 
-                $listOfRecMall = $response->data;
-                if(! empty($listOfRecMall->records)) {
-                    foreach ($listOfRecMall->records as $rating) {
-                        $mallRating['rating_' . $rating->location_id] = $rating->average + 0.00001;
-                        $mallRating['review_' . $rating->location_id] = $rating->counter;
-                    }
+            $listOfRecMall = $response->data;
+            if(! empty($listOfRecMall->records)) {
+                foreach ($listOfRecMall->records as $rating) {
+                    $mallRating['rating_' . $rating->location_id] = $rating->average + 0.00001;
+                    $mallRating['review_' . $rating->location_id] = $rating->counter;
                 }
             }
 

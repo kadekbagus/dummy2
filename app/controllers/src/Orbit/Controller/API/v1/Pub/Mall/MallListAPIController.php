@@ -242,7 +242,8 @@ class MallListAPIController extends PubControllerAPI
             $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
 
             // sort by name or location
-            $sort = array('name.raw' => array('order' => $sort_mode));
+            $sort = array('name.raw' => array('order' => 'asc'));
+            $defaultSort = $sort;
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withCache = FALSE;
@@ -286,9 +287,9 @@ class MallListAPIController extends PubControllerAPI
                 }
             }
 
-            $sortby = $sort;
+            $sortby = array($sort, $defaultSort);
             if ($withScore) {
-                $sortby = array('_score', $sort);
+                $sortby = array('_score', $sort, $defaultSort);
             }
 
             if ($this->withoutScore) {
@@ -334,7 +335,7 @@ class MallListAPIController extends PubControllerAPI
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
 
-                $areadata['average_rating'] = (! empty($dt['fields']['average_rating'][0])) ? round($dt['fields']['average_rating'][0], 1) : 0;
+                $areadata['average_rating'] = (! empty($dt['fields']['average_rating'][0])) ? number_format(round($dt['fields']['average_rating'][0], 1), 1) : 0;
                 $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? round($dt['fields']['total_review'][0], 1) : 0;
 
                 if ($words === 1) {

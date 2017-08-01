@@ -279,7 +279,17 @@ class ESActivityUpdateQueue
                                 $esConfig['indices']['activities']['type'],
                                 $e->getCode(),
                                 $e->getMessage());
-            Log::info($message);
+            Log::error($message);
+
+            // @Todo shold be moved to helper
+            $exceptionNoLine = preg_replace('/\s+/', ' ', $e->getMessage());
+
+            // Format -> JOB_ID;ACTIVITY_ID;MESSAGE
+            $dataLogFailed = sprintf("%s;%s;%s\n", $job->getJobId(), $activityId, trim($exceptionNoLine));
+
+            // Write the error log to dedicated file so it is easy to investigate and
+            // easy to replay because the log is structured
+            file_put_contents(storage_path() . '/logs/activity-queue-error.log', $dataLogFailed, FILE_APPEND);
         }
 
         // Bury the job for later inspection

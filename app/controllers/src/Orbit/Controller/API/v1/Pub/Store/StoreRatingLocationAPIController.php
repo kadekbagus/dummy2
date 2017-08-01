@@ -90,8 +90,9 @@ class StoreRatingLocationAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
             $ratingLocation = Tenant::select('merchants.merchant_id as location_id', DB::raw("CONCAT({$prefix}merchants.name,' {$at} ', oms.name) as location_name"))
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->where('merchants.name', '=', $tenant->name)
-                                    ->where('merchants.country', '=', $tenant->country);
+                                    ->where('merchants.status', '=', 'active')
+                                    ->where(DB::raw('oms.status'), '=', 'active')
+                                    ->where('merchants.name', '=', $tenant->name);
 
             OrbitInput::get('cities', function($cities) use ($ratingLocation, $prefix) {
                 foreach ($cities as $key => $value) {
@@ -138,19 +139,19 @@ class StoreRatingLocationAPIController extends PubControllerAPI
 
                 $listOfRec = $response->data;
 
-                $locationIds = array();
+                $storeIds = array();
                 foreach ($listOfRec->records as $location) {
-                    $locationIds[] = $location->location_id;
+                    $storeIds[] = $location->store_id;
                 }
 
-                if (! empty($locationIds)) {
-                    $ratingLocation->whereNotIn('merchants.parent_id', $locationIds);
+                if (! empty($storeIds)) {
+                    $ratingLocation->whereNotIn("merchants.merchant_id", $storeIds);
                 }
             }
 
             $ratingLocation = $ratingLocation->groupBy('location_name');
 
-            $ratingLocation = clone($ratingLocation);
+            $_ratingLocation = clone($ratingLocation);
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $ratingLocation->take($take);
@@ -164,7 +165,7 @@ class StoreRatingLocationAPIController extends PubControllerAPI
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
-            $data->total_records = RecordCounter::create($ratingLocation)->count();
+            $data->total_records = RecordCounter::create($_ratingLocation)->count();
             $data->records = $listOfRec;
 
             $this->response->data = $data;

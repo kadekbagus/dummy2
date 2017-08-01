@@ -23,6 +23,7 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use stdClass;
 use Country;
+use Tenant;
 
 class RatingListAPIController extends PubControllerAPI
 {
@@ -89,11 +90,41 @@ class RatingListAPIController extends PubControllerAPI
                 'sortMode'    => 'desc'
             ];
 
-            if (! empty($mallId)) $queryString['location_id'] = $mallId;
-            if (! empty($cityFilters)) $queryString['cities'] = $cityFilters;
-            if (! empty($countryFilter)) {
-                $country = Country::where('name', $countryFilter)->first();
-                if (is_object($country)) $queryString['country_id'] = $country->country_id;
+            if ($objectType === 'store') {
+                $prefix = DB::getTablePrefix();
+                $storeInfo = Tenant::select('merchants.name', DB::raw("oms.country"))
+                            ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                            ->where('merchants.merchant_id', $objectId)
+                            ->first();
+
+                if (! is_object($storeInfo)) {
+                    throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
+                }
+
+                $storeIds = [];
+                $storeIdList = Tenant::select('merchants.merchant_id')
+                                ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                ->where('merchants.status', '=', 'active')
+                                ->where(DB::raw('oms.status'), '=', 'active')
+                                ->where('merchants.name', $storeInfo->name)
+                                ->where(DB::raw("oms.country"), $storeInfo->country)
+                                ->get();
+
+                foreach ($storeIdList as $storeId) {
+                    $storeIds[] = $storeId->merchant_id;
+                }
+
+                $queryString['object_id'] = $storeIds;
+            }
+
+            if (empty($mallId)) {
+                if (! empty($cityFilters)) $queryString['cities'] = $cityFilters;
+                if (! empty($countryFilter)) {
+                    $country = Country::where('name', $countryFilter)->first();
+                    if (is_object($country)) $queryString['country_id'] = $country->country_id;
+                }
+            } else {
+                $queryString['location_id'] = $mallId;
             }
 
             $mongoClient = MongoClient::create($mongoConfig);
