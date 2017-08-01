@@ -331,11 +331,11 @@ class PromotionLocationAPIController extends PubControllerAPI
 
             foreach ($listOfRec as &$itemLocation) {
                 $mallId = $itemLocation->mall_id;
-                $ratingAverage = (! empty($ratings[$mallId]['average'])) ? number_format(round($ratings[$mallId]['average'], 1), 1) : null;
-                $reviewCounter = (! empty($ratings[$mallId]['totalReview'])) ? $ratings[$mallId]['totalReview'] : null;
+                $ratingAverage = (! empty($ratings[$mallId]['average'])) ? $ratings[$mallId]['average'] : 0;
+                $reviewCounter = (! empty($ratings[$mallId]['totalReview'])) ? $ratings[$mallId]['totalReview'] : 0;
 
-                $itemLocation->rating_average = $ratingAverage;
-                $itemLocation->review_counter = $reviewCounter;
+                $itemLocation->rating_average = ($ratingAverage === 0) ? null : number_format(round($ratingAverage, 1), 1);
+                $itemLocation->review_counter = ($reviewCounter === 0) ? null : $reviewCounter;
             }
             // ---- END OF RATING ----
 
