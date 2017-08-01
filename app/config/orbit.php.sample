@@ -5834,6 +5834,36 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // User clicks on review summary area
+            '138' => array(
+                'name' => 'click_review_summary',
+                'name_long' => 'Click Rating and Review Summary',
+                'module_name' => 'Rating',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // User clicks on review sign in button
+            '139' => array(
+                'name' => 'click_review_sign_in',
+                'name_long' => 'Click Rating and Review Sign In',
+                'module_name' => 'Rating',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // User clicks on review submit button
+            '140' => array(
+                'name' => 'click_review_submit',
+                'name_long' => 'Click Rating and Review Submit',
+                'module_name' => 'Rating',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
