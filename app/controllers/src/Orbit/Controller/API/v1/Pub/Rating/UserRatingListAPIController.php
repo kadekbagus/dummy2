@@ -24,6 +24,7 @@ use Orbit\Helper\MongoDB\Client as MongoClient;
 use stdClass;
 use Country;
 use Orbit\Helper\Net\SessionPreparer;
+use Tenant;
 
 class UserRatingListAPIController extends PubControllerAPI
 {
