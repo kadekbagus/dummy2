@@ -243,6 +243,7 @@ class MallListAPIController extends PubControllerAPI
 
             // sort by name or location
             $sort = array('name.raw' => array('order' => $sort_mode));
+            $defaultSort = $sort;
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
                 $withCache = FALSE;
@@ -286,9 +287,9 @@ class MallListAPIController extends PubControllerAPI
                 }
             }
 
-            $sortby = $sort;
+            $sortby = array($sort, $defaultSort);
             if ($withScore) {
-                $sortby = array('_score', $sort);
+                $sortby = array('_score', $sort, $defaultSort);
             }
 
             if ($this->withoutScore) {
