@@ -125,8 +125,31 @@ class StoreRatingLocationAPIController extends PubControllerAPI
 
             $role = $user->role->role_name;
             if (strtolower($role) === 'consumer') {
+                $prefix = DB::getTablePrefix();
+                $storeInfo = Tenant::select('merchants.name', DB::raw("oms.country"))
+                            ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                            ->where('merchants.merchant_id', $objectId)
+                            ->first();
+
+                if (! is_object($storeInfo)) {
+                    throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
+                }
+
+                $objectIds = [];
+                $storeIdList = Tenant::select('merchants.merchant_id')
+                                ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                ->where('merchants.status', '=', 'active')
+                                ->where(DB::raw('oms.status'), '=', 'active')
+                                ->where('merchants.name', $storeInfo->name)
+                                ->where(DB::raw("oms.country"), $storeInfo->country)
+                                ->get();
+
+                foreach ($storeIdList as $storeId) {
+                    $objectIds[] = $storeId->merchant_id;
+                }
+
                 $queryString = [
-                    'object_id'   => $objectId,
+                    'object_id'   => $objectIds,
                     'object_type' => 'store',
                     'user_id'     => $user->user_id
                 ];

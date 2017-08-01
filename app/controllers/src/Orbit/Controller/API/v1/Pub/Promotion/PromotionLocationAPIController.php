@@ -18,7 +18,9 @@ use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
+use Tenant;
 use Orbit\Helper\Util\SimpleCache;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class PromotionLocationAPIController extends PubControllerAPI
 {
@@ -80,6 +82,7 @@ class PromotionLocationAPIController extends PubControllerAPI
             $withCache = TRUE;
             $skipMall = OrbitInput::get('skip_mall', 'N');
             $storeName = OrbitInput::get('store_name');
+            $mongoConfig = Config::get('database.mongodb');
 
             // need to handle request for grouping by name_orig and order by name_orig and city
             $sortBy = OrbitInput::get('sort_by');
@@ -298,27 +301,48 @@ class PromotionLocationAPIController extends PubControllerAPI
 
             // ---- START RATING ----
             $locationIds = [];
+            $merchantIds = [];
             foreach ($listOfRec as &$itemLocation) {
                 $locationIds[] = $itemLocation->mall_id;
+                $merchantIds[] = $itemLocation->merchant_id;
                 $itemLocation->rating_average = null;
                 $itemLocation->review_counter = null;
             }
 
-            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
-                ->setObjectId($promotion_id)
-                ->setObjectType('promotion')
-                ->setLocationIds($locationIds)
-                ->request();
-print_r($reviewCounter); die();
-            if (isset($reviewCounter->getResponse()->data->records)) {
-                foreach ($listOfRec as &$itemLocation) {
-                    foreach ($reviewCounter->getResponse()->data->records as $record) {
-                        if ($itemLocation->mall_id === $record->location_id) {
-                            $itemLocation->rating_average = $record->average;
-                            $itemLocation->review_counter = $record->counter;
-                        }
-                    }
-                }
+            $queryString = [
+                'object_id'   => $promotion_id,
+                'object_type' => 'promotion',
+                'location_id' => $locationIds
+            ];
+
+            if (! empty($storeName)) {
+                $queryString['store_id'] = $merchantIds;
+            }
+
+            $mongoClient = MongoClient::create($mongoConfig);
+            $endPoint = "reviews";
+            $response = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint($endPoint)
+                                    ->request('GET');
+
+            $reviewList = $response->data;
+
+            $ratings = array();
+            foreach ($reviewList->records as $review) {
+                $locationId = $review->location_id;
+                $ratings[$locationId]['rating'] = (! empty($ratings[$locationId]['rating'])) ? $ratings[$locationId]['rating'] + $review->rating : $review->rating;
+                $ratings[$locationId]['totalReview'] = (! empty($ratings[$locationId]['totalReview'])) ? $ratings[$locationId]['totalReview'] + 1 : 1;
+
+                $ratings[$locationId]['average'] = $ratings[$locationId]['rating'] / $ratings[$locationId]['totalReview'];
+            }
+
+            foreach ($listOfRec as &$itemLocation) {
+                $mallId = $itemLocation->mall_id;
+                $ratingAverage = (! empty($ratings[$mallId]['average'])) ? number_format(round($ratings[$mallId]['average'], 1), 1) : null;
+                $reviewCounter = (! empty($ratings[$mallId]['totalReview'])) ? $ratings[$mallId]['totalReview'] : null;
+
+                $itemLocation->rating_average = $ratingAverage;
+                $itemLocation->review_counter = $reviewCounter;
             }
             // ---- END OF RATING ----
 
