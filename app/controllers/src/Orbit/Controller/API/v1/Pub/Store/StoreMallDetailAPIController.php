@@ -284,7 +284,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                 $objectIds[] = $storeId->merchant_id;
             }
 
-            $arrayQuery = 'object_id[]=' . implode('&object_id[]=', $storeIds);
+            $arrayQuery = 'object_id[]=' . implode('&object_id[]=', $objectIds);
 
             $queryString = [
                 'object_type' => 'store',
