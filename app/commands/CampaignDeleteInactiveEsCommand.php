@@ -11,8 +11,6 @@ use Symfony\Component\Console\Input\InputArgument;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
-use Carbon\Carbon as Carbon;
-use Orbit\FakeJob;
 
 class CampaignDeleteInactiveEsCommand extends Command
 {
@@ -135,7 +133,7 @@ class CampaignDeleteInactiveEsCommand extends Command
                     $counter++,
                     $suggestion['_id'],
                     $status,
-                    $index . '_suggestions',
+                    $params['index'] . '_suggestions',
                     $suggestion['_source']['name'],
                     preg_replace('/\s+/', ' ', $response['message']));
             }
