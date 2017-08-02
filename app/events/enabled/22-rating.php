@@ -44,7 +44,7 @@ Event::listen('orbit.rating.postrating.after.commit', function($controller, $rat
             break;
 
         case 'store':
-            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+            Queue::push('Orbit\\Queue\\Elasticsearch\\ESStoreUpdateQueue', [
                 'name' => $rating['merchant_name'],
                 'country' => $rating['country']
             ]);
