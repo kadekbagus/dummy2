@@ -154,13 +154,13 @@ class Client
             throw new Exception("Invalid HTTP method.", 1);
         }
 
+        $options = [];
         $options['query'] = $this->queryString;
         if ($this->customQuery) {
             $this->endpoint = (! empty($this->queryString)) ? $this->endpoint . '&' . $this->queryString : $this->endpoint;
             unset($options['query']);
         }
 
-        $options = [];
         $options['verify'] = false;
         if ($method !== 'GET') {
             $options['body'] = $this->body;
