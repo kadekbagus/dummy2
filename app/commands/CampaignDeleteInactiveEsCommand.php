@@ -1,5 +1,10 @@
 <?php
-
+/**
+ * Delete inactive ES documents used for auto complete.
+ *
+ * @author Firmansyah <firmansyah@dominopos.com>
+ * @author Rio Astamal <rio@dominopos.com>
+ */
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
@@ -9,15 +14,28 @@ use Orbit\Helper\Util\JobBurier;
 use Carbon\Carbon as Carbon;
 use Orbit\FakeJob;
 
-
-class CampaignDeleteInactiveEsCommand extends Command {
-
+class CampaignDeleteInactiveEsCommand extends Command
+{
     /**
      * The console command name.
      *
      * @var string
      */
     protected $name = 'campaign:campaign-delete-inactive-es';
+
+    /**
+     * ES client object
+     *
+     * @var Elasticsearch\ClientBuilder
+     */
+    protected $client = NULL;
+
+    /**
+     * ES Config
+     *
+     * @var array
+     */
+    protected $esConfig = [];
 
     /**
      * The console command description.
@@ -34,6 +52,11 @@ class CampaignDeleteInactiveEsCommand extends Command {
     public function __construct()
     {
         parent::__construct();
+
+        $this->esConfig = Config::get('orbit.elasticsearch');
+        $this->client = ClientBuilder::create() // Instantiate a new ClientBuilder
+                ->setHosts($this->esConfig['hosts']) // Set the hosts
+                ->build();
     }
 
     /**
@@ -43,64 +66,110 @@ class CampaignDeleteInactiveEsCommand extends Command {
      */
     public function fire()
     {
-        //Es config
-        $host = Config::get('orbit.elasticsearch');
-        $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+        $esPrefix = $this->esConfig['indices_prefix'];
 
-        $client = ClientBuilder::create() // Instantiate a new ClientBuilder
-                ->setHosts($host['hosts']) // Set the hosts
-                ->build();
+        $dt = new DateTime('now', new DateTimezone('Asia/Jakarta'));
+        $nowDateTimeEs = $dt->format('Y-m-d\TH:i:s\Z');
 
-        //Get now time, time must be 2017-01-09T15:30:00Z
-        $timestamp = date("Y-m-d H:i:s");
-        $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
-
-        // @todo: Need to think about the timezone
-        $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
-        $dateTime = explode(' ', $dateTime);
-        $nowDateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
-
-        //Check only campaign suggestion index
         $campaignTypes = array('news', 'promotion', 'coupon');
+        foreach ($campaignTypes as $type) {
+            $index = $esPrefix . $this->esConfig['indices'][$type . '_suggestions']['index'];
+            $this->deleteInactionSuggestionDocuments(['datetime' => $nowDateTimeEs, 'index' => $index, 'index_type' => 'basic']);
+        }
+    }
 
-        $fakeJob = new FakeJob();
+    /**
+     * Delete inactive promotion suggestion
+     *
+     * @param array $params
+     * @return void
+     */
+    protected function deleteInactionSuggestionDocuments($params)
+    {
+        $take = 100;
+        $skip = 0;
 
-        $totalDeleted = 0;
-        foreach ($campaignTypes as $campaignType) {
+        $jsonQuery = [];
+        // Get all suggestions for promotion which ended
+        $jsonQuery['filter']['range']['end_date']['lt'] = $params['datetime'];
+        $jsonQuery['_source'] = ['name'];
+        $dryRun = $this->option('dry-run', FALSE);
 
-            // Get all coupon inactive
-            $jsonQuery['filter']['range']['end_date']['lt'] = $nowDateTimeEs;
+        $counter = 1;
+        while (true) {
+            $jsonQuery['from'] = $skip;
+            $jsonQuery['size'] = $take;
+
             $esParam = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.' . $campaignType . '_suggestions.index'),
+                'index' => $params['index'],
                 'body' => json_encode($jsonQuery)
             ];
 
-            $response = $client->search($esParam);
+            $response = $this->client->search($esParam);
 
-            if ($response['hits']['total'] === 0) {
-                continue;
+            // As soon as we do not find anymore document
+            // exit the loop
+            if (empty($response['hits']['hits'])) {
+                break;
             }
 
-            foreach ($response['hits']['hits'] as $campaign) {
-
-                    // Delete id there is any news inactive
-                    $params = [
-                        'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.' . $campaignType . '_suggestions.index'),
-                        'type' => Config::get('orbit.elasticsearch.indices.' . $campaignType . '_suggestions.type'),
-                        'id' => $campaign['_id']
-                    ];
-
-                    $response = $client->delete($params);
-
-                    // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
-                    ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
-
-                    $this->info("Delete es document index = " . $campaignType . "_suggestions, type = " . $campaignType . ", campaign_id = " . $campaign['_id'] . " successful at time " . date('l j \of F Y h:i:s A'));
-                    $totalDeleted++;
+            // No need to update the skip since we are deleting which
+            // cause the number of document changes in every loop
+            if ($dryRun) {
+                $skip = $take + $skip;
             }
+
+            foreach ($response['hits']['hits'] as $suggestion) {
+                $response = $this->deleteInactionSuggestionDocument([
+                    'index' => $params['index'],
+                    'type' => $params['index_type'],
+                    'doc_id' => $suggestion['_id'],
+                    'index_type' => $params['index_type'],
+                    'dry_run' => $dryRun
+                ]);
+
+                $status = $response['code'] === 0 ? 'OK' : 'FAILED';
+                printf("%s%s - %d; DocumentId: %s; Status: %s; Index: %s; Name: %s; Message: %s\n",
+                    $dryRun ? '[DRY RUN] ' : '',
+                    date('Y-m-d H:i:s'),
+                    $counter++,
+                    $suggestion['_id'],
+                    $status,
+                    $index . '_suggestions',
+                    $suggestion['_source']['name'],
+                    preg_replace('/\s+/', ' ', $response['message']));
+            }
+
+            // Sleep for half a second
+            usleep(500000);
+        }
+    }
+
+    protected function deleteInactionSuggestionDocument($params)
+    {
+        // Delete id there is any news inactive
+        $deleteParams = [
+            'index' => $params['index'],
+            'type' => $params['index_type'],
+            'id' => $params['doc_id']
+        ];
+
+        try {
+            if (! $params['dry_run']) {
+                $response = $this->client->delete($deleteParams);
+
+                // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
+                ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
+            }
+
+            $code = 0;
+            $message = 'Sucessfully deleted';
+        } catch (Exception $e) {
+            $code = $e->getCode();
+            $message = $e->getMessage();
         }
 
-        $this->info(sprintf('Total deleted: %s', $totalDeleted));
+        return ['code' => $code, 'message' => $message];
     }
 
     /**
@@ -120,7 +189,9 @@ class CampaignDeleteInactiveEsCommand extends Command {
      */
     protected function getOptions()
     {
-        return array();
+        return array(
+            array('dry-run', null, InputOption::VALUE_NONE, 'Run in dry run mode, do not delete the data.'),
+        );
     }
 
 }
