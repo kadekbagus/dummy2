@@ -48,56 +48,56 @@ class ESCouponUpdateQueue
      */
     public function fire($job, $data)
     {
-        $prefix = DB::getTablePrefix();
-        $esConfig = Config::get('orbit.elasticsearch');
-        $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-        $mongoConfig = Config::get('database.mongodb');
-
-        $couponId = $data['coupon_id'];
-        $coupon = Coupon::with(
-                            'translations.media_orig',
-                            'campaignLocations.categories',
-                            'esCampaignLocations.geofence',
-                            'campaignObjectPartners',
-                            'adverts.media_orig',
-                            'total_page_views'
-                        )
-                    ->with (['keywords' => function ($q) {
-                                $q->groupBy('keyword');
-                            }])
-                    ->select(DB::raw("
-                        {$prefix}promotions.*,
-                        {$prefix}campaign_account.mobile_default_language,
-                        CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
-                            THEN {$prefix}campaign_status.campaign_status_name
-                            ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
-                                                                            FROM {$prefix}promotion_retailer opt
-                                                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                                            WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                                                        )
-                            THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
-                        END AS campaign_status
-                    "))
-                    ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
-                    ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
-                    ->where('promotions.promotion_id', $couponId)
-                    ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
-                    ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
-                    ->orderBy('promotions.promotion_id', 'asc')
-                    ->first();
-
-        if (! is_object($coupon)) {
-            $job->delete();
-
-            return [
-                'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Coupon ID %s is not found.', $job->getJobId(), $couponId)
-            ];
-        }
-
         try {
+            $prefix = DB::getTablePrefix();
+            $esConfig = Config::get('orbit.elasticsearch');
+            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+            $mongoConfig = Config::get('database.mongodb');
+
+            $couponId = $data['coupon_id'];
+            $coupon = Coupon::with(
+                                'translations.media_orig',
+                                'campaignLocations.categories',
+                                'esCampaignLocations.geofence',
+                                'campaignObjectPartners',
+                                'adverts.media_orig',
+                                'total_page_views'
+                            )
+                        ->with (['keywords' => function ($q) {
+                                    $q->groupBy('keyword');
+                                }])
+                        ->select(DB::raw("
+                            {$prefix}promotions.*,
+                            {$prefix}campaign_account.mobile_default_language,
+                            CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
+                                THEN {$prefix}campaign_status.campaign_status_name
+                                ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
+                                                                                FROM {$prefix}promotion_retailer opt
+                                                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
+                                                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
+                                                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
+                                                                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id
+                                                                            )
+                                THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END)
+                            END AS campaign_status
+                        "))
+                        ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                        ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                        ->where('promotions.promotion_id', $couponId)
+                        ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
+                        ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
+                        ->orderBy('promotions.promotion_id', 'asc')
+                        ->first();
+
+            if (! is_object($coupon)) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] Coupon ID %s is not found.', $job->getJobId(), $couponId)
+                ];
+            }
+
             // check exist elasticsearch index
             $params_search = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
