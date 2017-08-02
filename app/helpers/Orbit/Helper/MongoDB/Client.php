@@ -26,6 +26,11 @@ class Client
     protected $endpoint = '';
 
     /**
+     * @var string customQuery
+     */
+    protected $customQuery = FALSE;
+
+    /**
      * @var array post body data
      */
     protected $body = '';
@@ -97,6 +102,19 @@ class Client
     }
 
     /**
+     * Set the customQuery
+     *
+     * @param bool $customQuery
+     * @return MongoDB\Client
+     */
+    public function setCustomQuery($customQuery=FALSE)
+    {
+        $this->customQuery = $customQuery;
+
+        return $this;
+    }
+
+    /**
      * Set the queryString
      *
      * @param array $queryString
@@ -105,6 +123,9 @@ class Client
     public function setQueryString(array $queryString=[])
     {
         $this->queryString = $queryString;
+        if ($this->customQuery) {
+            $this->queryString = http_build_query($queryString);
+        }
 
         return $this;
     }
@@ -133,8 +154,14 @@ class Client
             throw new Exception("Invalid HTTP method.", 1);
         }
 
-        $options = [];
         $options['query'] = $this->queryString;
+        if ($this->customQuery) {
+            $this->endpoint = (! empty($this->queryString)) ? $this->endpoint . '&' . $this->queryString : $this->endpoint;
+            unset($options['query']);
+        }
+
+        $options = [];
+        $options['verify'] = false;
         if ($method !== 'GET') {
             $options['body'] = $this->body;
             $options['form_params'] = $this->formParam;

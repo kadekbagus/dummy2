@@ -90,6 +90,7 @@ class RatingListAPIController extends PubControllerAPI
                 'sortMode'    => 'desc'
             ];
 
+            $arrayQuery = '';
             if ($objectType === 'store') {
                 $prefix = DB::getTablePrefix();
                 $storeInfo = Tenant::select('merchants.name', DB::raw("oms.country"))
@@ -114,7 +115,8 @@ class RatingListAPIController extends PubControllerAPI
                     $storeIds[] = $storeId->merchant_id;
                 }
 
-                $queryString['object_id'] = $storeIds;
+                $arrayQuery = 'object_id[]=' . implode('&object_id[]=', $storeIds);
+                unset($queryString['object_id']);
             }
 
             if (empty($mallId)) {
@@ -128,7 +130,13 @@ class RatingListAPIController extends PubControllerAPI
             }
 
             $mongoClient = MongoClient::create($mongoConfig);
+
             $endPoint = "reviews";
+            if (! empty($arrayQuery)) {
+                $endPoint = "reviews?" . $arrayQuery;
+                $mongoClient = $mongoClient->setCustomQuery(TRUE);
+            }
+
             $response = $mongoClient->setQueryString($queryString)
                                     ->setEndPoint($endPoint)
                                     ->request('GET');
