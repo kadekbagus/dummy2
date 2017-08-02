@@ -172,10 +172,20 @@ class ReviewCounter
                 }
             }
 
-            $reviewCounterResponse = \Orbit\Helper\MongoDB\Client::create($this->mongoConfig)
-                ->setQueryString($reviewQueryParams)
-                ->setEndPoint($counterEndpoint)
-                ->request('GET');
+            $reviewCounterResponse = \Orbit\Helper\MongoDB\Client::create($this->mongoConfig);
+
+            if ($this->objectType === 'store') {
+                unset($reviewQueryParams['object_id']);
+                $objectIds = (is_array($this->objectId)) ? $this->objectId : (array) $this->objectId;
+                $objectId = '?object_id[]=' . implode('&object_id[]=', $objectIds);
+                $counterEndpoint = $counterEndpoint . $objectId;
+
+                $reviewCounterResponse = $reviewCounterResponse->setCustomQuery(TRUE);
+            }
+
+            $reviewCounterResponse = $reviewCounterResponse->setQueryString($reviewQueryParams)
+                                                           ->setEndPoint($counterEndpoint)
+                                                           ->request('GET');
 
             $this->response = $reviewCounterResponse;
 

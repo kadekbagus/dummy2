@@ -148,15 +148,21 @@ class StoreRatingLocationAPIController extends PubControllerAPI
                     $objectIds[] = $storeId->merchant_id;
                 }
 
+                $arrayQuery = 'object_id[]=' . implode('&object_id[]=', $objectIds);
+
                 $queryString = [
-                    'object_id'   => $objectIds,
                     'object_type' => 'store',
                     'user_id'     => $user->user_id
                 ];
 
                 $mongoClient = MongoClient::create($mongoConfig);
                 $endPoint = "reviews";
-                $response = $mongoClient->setQueryString($queryString)
+                if (! empty($arrayQuery)) {
+                    $endPoint = "reviews?" . $arrayQuery;
+                }
+
+                $response = $mongoClient->setCustomQuery(TRUE)
+                                        ->setQueryString($queryString)
                                         ->setEndPoint($endPoint)
                                         ->request('GET');
 

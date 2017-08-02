@@ -83,7 +83,8 @@ class UserRatingListAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            OrbitInput::get('object_id', function($objectId) use (&$queryString, $objectType, $prefix) {
+            $storeIds = [];
+            OrbitInput::get('object_id', function($objectId) use (&$storeIds, &$queryString, $objectType, $prefix) {
                 $queryString['object_id'] = $objectId;
 
                 if ($objectType === 'store') {
@@ -96,7 +97,6 @@ class UserRatingListAPIController extends PubControllerAPI
                         throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
                     }
 
-                    $storeIds = [];
                     $storeIdList = Tenant::select('merchants.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('merchants.status', '=', 'active')
@@ -108,8 +108,6 @@ class UserRatingListAPIController extends PubControllerAPI
                     foreach ($storeIdList as $storeId) {
                         $storeIds[] = $storeId->merchant_id;
                     }
-
-                    $queryString['object_id'] = $storeIds;
                 }
             });
 
@@ -117,9 +115,10 @@ class UserRatingListAPIController extends PubControllerAPI
                 $queryString['object_type'] = $objectType;
             });
 
+            $arrayQuery = '';
             if ($objectType === 'store') {
                 unset($queryString['object_id']);
-                $queryString['store_id'] = $objectId;
+                $arrayQuery = 'object_id[]=' . implode('&object_id[]=', $storeIds);
             }
 
             if (empty($mallId)) {
@@ -133,7 +132,13 @@ class UserRatingListAPIController extends PubControllerAPI
             }
 
             $mongoClient = MongoClient::create($mongoConfig);
+
             $endPoint = "reviews";
+            if (! empty($arrayQuery)) {
+                $endPoint = "reviews?" . $arrayQuery;
+                $mongoClient = $mongoClient->setCustomQuery(TRUE);
+            }
+
             $response = $mongoClient->setQueryString($queryString)
                                     ->setEndPoint($endPoint)
                                     ->request('GET');
