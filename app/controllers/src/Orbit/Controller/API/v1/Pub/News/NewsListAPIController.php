@@ -616,7 +616,7 @@ class NewsListAPIController extends PubControllerAPI
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
                 if ($isHavingReward === 'Y') {
-                    $data['average_rating'] = if ($avgGeneralRating != 0) ? number_format(round($avgGeneralRating, 1), 1) : 0;
+                    $data['average_rating'] = ($avgGeneralRating != 0) ? number_format(round($avgGeneralRating, 1), 1) : 0;
                     $data['total_review'] = round($totalGeneralReviews, 1);
                 }
 
