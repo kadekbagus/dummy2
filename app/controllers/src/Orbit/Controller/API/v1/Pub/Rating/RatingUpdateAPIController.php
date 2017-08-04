@@ -124,7 +124,6 @@ class RatingUpdateAPIController extends PubControllerAPI
                 'approval_status' => $approvalStatus,
                 'updated_at'      => $dateTime,
                 '_id'             => $ratingId,
-                'location_id'     => $oldRating->data->location_id,
                 'object_id'       => $oldRating->data->object_id,
                 'object_type'     => $oldRating->data->object_type,
             ];
@@ -137,6 +136,7 @@ class RatingUpdateAPIController extends PubControllerAPI
                                       ->first();
 
                 $body = [
+                    'location_id'     => $oldRating->data->location_id,
                     'city'            => $location->city,
                     'country_id'      => $location->country_id
                 ];
