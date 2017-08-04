@@ -21,6 +21,7 @@ use CampaignLocation;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Event;
+use News;
 
 class RatingUpdateAPIController extends PubControllerAPI
 {
@@ -109,11 +110,12 @@ class RatingUpdateAPIController extends PubControllerAPI
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->toDateTimeString();
 
-            $location = CampaignLocation::select('merchants.name', 'merchants.country', DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city,
-                IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
-                                      ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                      ->where('merchants.merchant_id', '=', $oldRating->data->location_id)
-                                      ->first();
+            // check if object_id is promotional event, no nedd to check location_id
+            $isPromotionalEvent = 'N';
+            if ($oldRating->data->object_type === 'news') {
+                $news = News::where('news_id', $oldRating->data->object_id)->first();
+                $isPromotionalEvent = $news->is_having_reward;
+            }
 
             $body = [
                 'rating'          => $rating,
@@ -121,13 +123,24 @@ class RatingUpdateAPIController extends PubControllerAPI
                 'status'          => $status,
                 'approval_status' => $approvalStatus,
                 'updated_at'      => $dateTime,
-                'city'            => $location->city,
-                'country_id'      => $location->country_id,
                 '_id'             => $ratingId,
                 'location_id'     => $oldRating->data->location_id,
                 'object_id'       => $oldRating->data->object_id,
                 'object_type'     => $oldRating->data->object_type,
             ];
+
+            if ($isPromotionalEvent === 'N') {
+                $location = CampaignLocation::select('merchants.name', 'merchants.country', DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city,
+                IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
+                                      ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                      ->where('merchants.merchant_id', '=', $oldRating->data->location_id)
+                                      ->first();
+
+                $body = [
+                    'city'            => $location->city,
+                    'country_id'      => $location->country_id
+                ];
+            }
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
             $response = $mongoClient->setEndPoint('reviews') // express endpoint
@@ -141,8 +154,10 @@ class RatingUpdateAPIController extends PubControllerAPI
                 $this->response->data = NULL;
             }
 
-            $body['merchant_name'] = $location->name;
-            $body['country'] = $location->country;
+            if ($isPromotionalEvent === 'N') {
+                $body['merchant_name'] = $location->name;
+                $body['country'] = $location->country;
+            }
             Event::fire('orbit.rating.postrating.after.commit', array($this, $body));
 
         } catch (ACLForbiddenException $e) {

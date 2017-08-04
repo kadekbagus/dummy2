@@ -497,7 +497,14 @@ class NewsListAPIController extends PubControllerAPI
                 $pageView = 0;
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
+                $isHavingReward = 'N';
+                $avgGeneralRating = 0;
+                $totalGeneralReviews = 0;
                 foreach ($record['_source'] as $key => $value) {
+                    if ($key === 'is_having_reward') {
+                        $isHavingReward = $value;
+                    }
+
                     if ($key === "name") {
                         $key = "news_name";
                     }
@@ -596,10 +603,22 @@ class NewsListAPIController extends PubControllerAPI
                             }
                         }
                     }
+
+                    if ($key === 'avg_general_rating') {
+                        $avgGeneralRating = $value;
+                    }
+
+                    if ($key === 'total_general_reviews') {
+                        $totalGeneralReviews = 0;
+                    }
                 }
 
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
+                if ($isHavingReward === 'Y') {
+                    $data['average_rating'] = if ($avgGeneralRating != 0) ? number_format(round($avgGeneralRating, 1), 1) : 0;
+                    $data['total_review'] = round($totalGeneralReviews, 1);
+                }
 
                 $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];
