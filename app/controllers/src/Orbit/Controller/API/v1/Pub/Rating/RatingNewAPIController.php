@@ -116,18 +116,12 @@ class RatingNewAPIController extends PubControllerAPI
                 'object_id'       => $objectId,
                 'object_type'     => $objectType,
                 'user_id'         => $user->user_id,
-                'location_id'     => '',
-                'store_id'        => '',
-                'store_name'      => '',
-                'mall_name'       => '',
                 'rating'          => $rating,
                 'review'          => $review,
                 'status'          => $status,
                 'approval_status' => $approvalStatus,
                 'created_at'      => $dateTime,
-                'updated_at'      => $dateTime,
-                'city'            => '',
-                'country_id'      => '',
+                'updated_at'      => $dateTime
             ];
 
             if ($isPromotionalEvent === 'N') {
