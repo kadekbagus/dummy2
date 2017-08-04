@@ -238,6 +238,29 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $promotionalEvent->review_counter = round($totalGeneralReviews, 1);
             // ---- END OF RATING ----
 
+            $role = $user->role->role_name;
+            $userRating = FALSE;
+            if (strtolower($role) === 'consumer') {
+                $queryString = [
+                    'object_id'   => $objectId,
+                    'object_type' => 'news',
+                    'user_id'     => $user->user_id
+                ];
+
+                $mongoClient = MongoClient::create($mongoConfig);
+                $endPoint = "reviews";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRec = $response->data;
+
+                if (count($listOfRec->records) > 0) {
+                    $userRating = TRUE;
+                }
+            }
+            $promotionalEvent->user_rating = $userRating;
+
             // check promotional event access and get lucky_draw/promotion code
             $promotionalEvent->code = null;
             $promotionalEvent->message_title = null;
