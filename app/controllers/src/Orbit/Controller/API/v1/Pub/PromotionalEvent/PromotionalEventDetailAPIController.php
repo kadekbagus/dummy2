@@ -21,6 +21,7 @@ use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
 use Lang;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class PromotionalEventDetailAPIController extends PubControllerAPI
 {
@@ -61,6 +62,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $cities = OrbitInput::get('cities', null);
             $partnerToken = OrbitInput::get('token', null);
             $firstTime = OrbitInput::get('first_time', FALSE);
+            $mongoConfig = Config::get('database.mongodb');
 
             $this->registerCustomValidation();
 
@@ -211,14 +213,25 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             }
 
             // ---- START RATING ----
-            $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
-                ->setObjectId($promotionalEvent->news_id)
-                ->setObjectType('news')
-                ->setMall($mall)
-                ->request();
+            $mongoClient = MongoClient::create($mongoConfig);
+            $endPoint = "reviews";
+            $response = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint($endPoint)
+                                    ->request('GET');
 
-            $promotionalEvent->rating_average = $reviewCounter->getAverage();
-            $promotionalEvent->review_counter = $reviewCounter->getCounter();
+            $listOfRecLocation = $response->data;
+            $averageGeneralRating = 0;
+            $totalGeneralReviews = 0;
+            if (! empty($listOfRecLocation->records)) {
+                foreach ($listOfRecLocation->records as $rating) {
+                    $averageGeneralRating = $averageGeneralRating + $rating->rating;
+                    $totalGeneralReviews = $totalGeneralReviews + 1;
+                }
+                $averageGeneralRating = $averageGeneralRating / $totalGeneralReviews;
+            }
+
+            $promotionalEvent->rating_average = if ($averageGeneralRating != 0) ? number_format(round($averageGeneralRating, 1), 1) : 0;
+            $promotionalEvent->review_counter = round($totalGeneralReviews, 1);
             // ---- END OF RATING ----
 
             // check promotional event access and get lucky_draw/promotion code
