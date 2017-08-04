@@ -124,13 +124,14 @@ class RatingNewAPIController extends PubControllerAPI
                 'updated_at'      => $dateTime
             ];
 
+            $bodyLocation = array();
             if ($isPromotionalEvent === 'N') {
                 $location = CampaignLocation::select('merchants.name', 'merchants.country', 'merchants.object_type', DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.merchant_id, {$prefix}merchants.merchant_id) as location_id, IF({$prefix}merchants.object_type = 'tenant', {$prefix}merchants.name, '') as store_name, IF({$prefix}merchants.object_type = 'tenant', oms.name, {$prefix}merchants.name) as mall_name, IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city, IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
                                           ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                           ->where('merchants.merchant_id', '=', $locationId)
                                           ->first();
 
-                $body = [
+                $bodyLocation = [
                     'location_id'     => $location->location_id,
                     'store_id'        => $locationId,
                     'store_name'      => $location->store_name,
@@ -140,7 +141,7 @@ class RatingNewAPIController extends PubControllerAPI
                 ];
             }
 
-            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
+            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body + $bodyLocation);
             $response = $mongoClient->setEndPoint('reviews') // express endpoint
                                     ->request('POST');
 

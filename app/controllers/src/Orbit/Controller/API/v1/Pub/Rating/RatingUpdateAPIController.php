@@ -128,6 +128,7 @@ class RatingUpdateAPIController extends PubControllerAPI
                 'object_type'     => $oldRating->data->object_type,
             ];
 
+            $bodyLocation = array();
             if ($isPromotionalEvent === 'N') {
                 $location = CampaignLocation::select('merchants.name', 'merchants.country', DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city,
                 IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
@@ -135,14 +136,14 @@ class RatingUpdateAPIController extends PubControllerAPI
                                       ->where('merchants.merchant_id', '=', $oldRating->data->location_id)
                                       ->first();
 
-                $body = [
+                $bodyLocation = [
                     'location_id'     => $oldRating->data->location_id,
                     'city'            => $location->city,
                     'country_id'      => $location->country_id
                 ];
             }
 
-            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
+            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body + $bodyLocation);
             $response = $mongoClient->setEndPoint('reviews') // express endpoint
                                     ->request('PUT');
 
