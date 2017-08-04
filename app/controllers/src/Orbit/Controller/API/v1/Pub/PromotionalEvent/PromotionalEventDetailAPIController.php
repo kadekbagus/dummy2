@@ -215,6 +215,10 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             // ---- START RATING ----
             $mongoClient = MongoClient::create($mongoConfig);
             $endPoint = "reviews";
+            $queryString = [
+                'object_id'   => $newsId,
+                'object_type' => 'news'
+            ];
             $response = $mongoClient->setQueryString($queryString)
                                     ->setEndPoint($endPoint)
                                     ->request('GET');
@@ -230,7 +234,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $averageGeneralRating = $averageGeneralRating / $totalGeneralReviews;
             }
 
-            $promotionalEvent->rating_average = if ($averageGeneralRating != 0) ? number_format(round($averageGeneralRating, 1), 1) : 0;
+            $promotionalEvent->rating_average = ($averageGeneralRating != 0) ? number_format(round($averageGeneralRating, 1), 1) : 0;
             $promotionalEvent->review_counter = round($totalGeneralReviews, 1);
             // ---- END OF RATING ----
 
