@@ -242,7 +242,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $userRating = FALSE;
             if (strtolower($role) === 'consumer') {
                 $queryString = [
-                    'object_id'   => $objectId,
+                    'object_id'   => $newsId,
                     'object_type' => 'news',
                     'user_id'     => $user->user_id
                 ];
