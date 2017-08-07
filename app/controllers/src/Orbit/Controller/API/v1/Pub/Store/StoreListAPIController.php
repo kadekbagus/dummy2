@@ -172,7 +172,7 @@ class StoreListAPIController extends PubControllerAPI
             $innerHitsCountry = false;
             $innerHitsCity = false;
 
-            $jsonQuery = array('from' => $skip, 'size' => $take, 'fields' => array("_source"), 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('bool' => array('must' => array( array('range' => array('tenant_detail_count' => array('gt' => 0)))))));
+            $jsonQuery = array('from' => $skip, 'size' => $take, 'fields' => array("_source"), 'aggs' => array('count' => array('nested' => array('path' => 'tenant_detail'), 'aggs' => array('top_reverse_nested' => array('reverse_nested' => new stdclass())))), 'query' => array('bool' => array('filter' => array( array('range' => array('tenant_detail_count' => array('gt' => 0)))))));
 
             // get user lat and lon
             if ($sort_by == 'location' || $location == 'mylocation') {
@@ -220,7 +220,7 @@ class StoreListAPIController extends PubControllerAPI
                         $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
                     }
 
-                    $jsonQuery['query']['bool']['must'][] = $filterKeyword;
+                    $jsonQuery['query']['bool']['filter'][] = $filterKeyword;
                 }
             });
 
@@ -228,7 +228,7 @@ class StoreListAPIController extends PubControllerAPI
                 if (! empty($mallId)) {
                     $withInnerHits = true;
                     $withMallId = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('match' => array('tenant_detail.mall_id' => $mallId)))), 'inner_hits' => new stdclass()));
-                    $jsonQuery['query']['bool']['must'][] = $withMallId;
+                    $jsonQuery['query']['bool']['filter'][] = $withMallId;
                 }
              });
 
@@ -247,7 +247,7 @@ class StoreListAPIController extends PubControllerAPI
                 if ($shouldMatch != '') {
                     $categoryFilter['bool']['minimum_should_match'] = '';
                 }
-                $jsonQuery['query']['bool']['must'][] = $categoryFilter;
+                $jsonQuery['query']['bool']['filter'][] = $categoryFilter;
             });
 
             OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
@@ -270,7 +270,7 @@ class StoreListAPIController extends PubControllerAPI
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
                             $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
-                        $jsonQuery['query']['bool']['must'][]= $partnerFilter;
+                        $jsonQuery['query']['bool']['filter'][]= $partnerFilter;
                     }
                 }
             });
@@ -284,10 +284,10 @@ class StoreListAPIController extends PubControllerAPI
                     if ($location === 'mylocation' && $lat != '' && $lon != '') {
                         $withCache = FALSE;
                         $locationFilter = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'tenant_detail.position' => array('lon' => $lon, 'lat' => $lat))))), 'inner_hits' => new stdclass()));
-                        $jsonQuery['query']['bool']['must'][] = $locationFilter;
+                        $jsonQuery['query']['bool']['filter'][] = $locationFilter;
                     } elseif ($location !== 'mylocation') {
                         $locationFilter = array('nested' => array('path' => 'tenant_detail', 'query' => array('filtered' => array('filter' => array('match' => array('tenant_detail.city.raw' => $location)))), 'inner_hits' => new stdclass()));
-                        $jsonQuery['query']['bool']['must'][] = $locationFilter;
+                        $jsonQuery['query']['bool']['filter'][] = $locationFilter;
                     }
                 }
             });
@@ -327,7 +327,7 @@ class StoreListAPIController extends PubControllerAPI
             });
 
             if (! empty($countryCityFilterArr)) {
-                $jsonQuery['query']['bool']['must'][] = $countryCityFilterArr;
+                $jsonQuery['query']['bool']['filter'][] = $countryCityFilterArr;
             }
 
             // calculate rating and review based on location/mall
@@ -435,7 +435,7 @@ class StoreListAPIController extends PubControllerAPI
             // call advert before call main query
             $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs))), array('match' => array('advert_location_ids' => $locationId)), array('terms' => array('advert_type' => $advertType))))), 'sort' => $sortByPageType);
 
-            $jsonQuery['query']['bool']['must'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
+            $jsonQuery['query']['bool']['filter'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
 
             $esAdvertParam = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index'),

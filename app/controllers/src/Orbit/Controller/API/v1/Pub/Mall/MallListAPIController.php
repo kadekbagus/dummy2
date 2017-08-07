@@ -82,13 +82,13 @@ class MallListAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
 
-            $jsonArea = array('from' => $skip, 'size' => $take, 'fields' => array("_source"), 'query' => array('bool' => array('must' => array( array('query' => array('match' => array('is_subscribed' => 'Y')))))));
+            $jsonArea = array('from' => $skip, 'size' => $take, 'fields' => array("_source"), 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('is_subscribed' => 'Y')))))));
 
             $filterStatus = array('query' => array('match' => array('status' => 'active')));
             if ($usingDemo) {
                 $filterStatus = array('query' => array('not' => array('term' => array('status' => 'deleted'))));
             }
-            $jsonArea['query']['bool']['must'][] = $filterStatus;
+            $jsonArea['query']['bool']['filter'][] = $filterStatus;
 
             // get user location, latitude and longitude. If latitude and longitude doesn't exist in query string, the code will be read cookie to get lat and lon
             if (empty($ul)) {
@@ -127,7 +127,7 @@ class MallListAPIController extends PubControllerAPI
                     if ($shouldMatch != '') {
                         $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
                     }
-                    $jsonArea['query']['bool']['must'][] = $filterKeyword;
+                    $jsonArea['query']['bool']['filter'][] = $filterKeyword;
                 }
             });
 
@@ -146,10 +146,10 @@ class MallListAPIController extends PubControllerAPI
                     if ($location === 'mylocation' && $latitude != '' && $longitude != '') {
                         $withCache = FALSE;
                         $locationFilter = array('geo_distance' => array('distance' => $radius.'km', 'position' => array('lon' => $longitude, 'lat' => $latitude)));
-                        $jsonArea['query']['bool']['must'][] = $locationFilter;
+                        $jsonArea['query']['bool']['filter'][] = $locationFilter;
                     } elseif ($location !== 'mylocation') {
                         $locationFilter = array('match' => array('city' => array('query' => $location, 'operator' => 'and')));
-                        $jsonArea['query']['bool']['must'][] = $locationFilter;
+                        $jsonArea['query']['bool']['filter'][] = $locationFilter;
                     }
                 }
             });
@@ -161,7 +161,7 @@ class MallListAPIController extends PubControllerAPI
                 $searchFlag = $searchFlag || TRUE;
                 $countryFilterArr = array('match' => array('country.raw' => array('query' => $countryFilter)));;
 
-                $jsonArea['query']['bool']['must'][] = $countryFilterArr;
+                $jsonArea['query']['bool']['filter'][] = $countryFilterArr;
             });
 
             // filter by city, only filter when countryFilter is not empty
@@ -181,7 +181,7 @@ class MallListAPIController extends PubControllerAPI
                         }
                         $cityFilterArr['bool']['minimum_should_match'] = $shouldMatch;
                     }
-                    $jsonArea['query']['bool']['must'][] = $cityFilterArr;
+                    $jsonArea['query']['bool']['filter'][] = $cityFilterArr;
                 }
             });
 
@@ -206,7 +206,7 @@ class MallListAPIController extends PubControllerAPI
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
                             $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
                         }
-                        $jsonArea['query']['bool']['must'][] = $partnerFilter;
+                        $jsonArea['query']['bool']['filter'][] = $partnerFilter;
                     }
                 }
             });
