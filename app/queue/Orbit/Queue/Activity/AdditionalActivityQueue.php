@@ -3,6 +3,7 @@
  * Queue to save additional activity to particular tables.
  *
  * @author Ahmad Anshori <ahmad@dominopos.com>
+ * @author Rio AStamal <rio@dominopos.com>
  */
 use Log;
 use Activity;
@@ -21,6 +22,11 @@ use CampaignGroupName;
 use Orbit\Helper\Util\FilterParser;
 use Orbit\Helper\Util\CampaignSourceParser;
 use ExtendedActivity;
+use Merchant;
+use Orbit\FakeJob;
+use Orbit\Queue\Elasticsearch\ESActivityUpdateQueue;
+use DB;
+use Mall;
 
 class AdditionalActivityQueue
 {
@@ -46,10 +52,7 @@ class AdditionalActivityQueue
         try {
             $this->data = $data;
             $activityId = $data['activity_id'];
-            $activity = Activity::excludeDeleted()
-                        ->where('activity_id', $activityId)
-                        ->where('group', 'mobile-ci')
-                        ->first();
+            $activity = Activity::findOnWriteConnection($activityId);
 
             if (! is_object($activity)) {
                 $job->delete();
@@ -66,7 +69,8 @@ class AdditionalActivityQueue
             $this->saveToMerchantPageView($activity);
             $this->saveToWidgetClick($activity);
             $this->saveToConnectionTime($activity);
-            $this->saveExtendedData($activity);
+            $extendedActivity = $this->saveExtendedData($activity);
+            $this->saveToElasticSearch($activity, $extendedActivity);
 
             $job->delete();
 
@@ -313,7 +317,6 @@ class AdditionalActivityQueue
     /**
      * Used to get the campaign group name id.
      *
-     * @author Rio Astamal <rio@dominopos.com>
      * @param string $activityName
      * @return string
      */
@@ -409,8 +412,8 @@ class AdditionalActivityQueue
     /**
      * Save to extended activity table
      *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
-     * @return void
+     * @param Activity $activity
+     * @return ExtendedActivity
      */
     protected function saveExtendedData($activity)
     {
@@ -440,6 +443,127 @@ class AdditionalActivityQueue
         $extendedActivity->filter_keywords = $filterData['filter_keywords'];
         $extendedActivity->filter_categories = $filterData['filter_categories'];
         $extendedActivity->filter_partner = $filterData['filter_partner'];
+
+        $this->reviewSubmitActivity($activity, $extendedActivity);
+        $this->tenantIdActivity($activity, $extendedActivity);
+
         $extendedActivity->save();
+
+        return $extendedActivity;
+    }
+
+    /**
+     * Fill columns which related with review and rating
+     *
+     * @param Object $activity
+     * @param Object $extendedActivity
+     * @return void
+     * @todo Should also check the object_id being commented so we can know whether this particular
+     *       user already made review. It's to prevent possibility of activity spamming.
+     */
+    protected function reviewSubmitActivity($activity, $extendedActivity)
+    {
+        if (! $activity->activity_name === 'click_review_submit') {
+            return FALSE;
+        }
+
+        // Parse the JSON in notes if applicable
+        $jsonNotes = @json_decode($activity->notes);
+
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            return FALSE;
+        }
+
+        if (! is_object($jsonNotes)) {
+            return FALSE;
+        }
+
+        $rating = 0;
+
+        if (isset($jsonNotes->rating)) {
+            $rating = (int)$jsonNotes->rating;
+        }
+
+        $extendedActivity->rating = $rating;
+    }
+
+    /**
+     * Fill columns related with store or mall id
+     *
+     * @param Object $actvitiy
+     * @param Object $extendedActivity
+     * @return void
+     */
+    protected function tenantIdActivity($activity, $extendedActivity)
+    {
+        if (! isset($this->data['merchant_id'])) {
+            return;
+        }
+
+        if (empty($this->data['merchant_id'])) {
+            return;
+        }
+
+        $merchantId = $this->data['merchant_id'];
+        $merchant = DB::table('merchants')
+                        ->where('status', '!=', 'deleted')
+                        ->where('merchant_id', $merchantId)
+                        ->first();
+
+        if (! is_object($merchant)) {
+            return;
+        }
+
+        // Determine the type of merchant, if it is tenant we need to lookup
+        // the parent to get the mall
+        if ($merchant->object_type === 'mall') {
+            $extendedActivity->mall_id = $merchantId;
+            $extendedActivity->mall_name = $merchant->name;
+
+            return;
+        }
+
+        if ($merchant->object_type !== 'tenant') {
+            return;
+        }
+
+        // This is tenant object so get the parent
+        $extendedActivity->tenant_id = $merchantId;
+        $extendedActivity->tenant_name = $merchant->name;
+
+        // Get parent (mall) data
+        $mall = Mall::excludeDeleted()->find($merchant->parent_id);
+        if (! is_object($mall)) {
+            return;
+        }
+
+        $extendedActivity->mall_id = $mall->merchant_id;
+        $extendedActivity->mall_name = $mall->name;
+    }
+
+    /**
+     * Create new document in elasticsearch.
+     *
+     * @param Activity $activity
+     * @param ExtendedActicity $extendedActivity
+     * @return void
+     */
+    protected function saveToElasticSearch($activity, $extendedActivity)
+    {
+        if ($activity->group !== 'mobile-ci') {
+            return;
+        }
+
+        // queue for create/update activity document in elasticsearch
+        $job = new FakeJob();
+
+        $esActivityQueue = new ESActivityUpdateQueue();
+        $esActivityQueue->fire($job, [
+            'activity_id' => $activity->activity_id,
+            'referer' => $this->data['referer'],
+            'orbit_referer' => $this->data['orbit_referer'],
+            'current_url' => $this->data['current_url'],
+            'extended_activity_id' => $extendedActivity->extended_activity_id
+        ]);
     }
 }
