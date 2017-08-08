@@ -41,19 +41,14 @@ class MenuCounterAPIController extends PubControllerAPI
     protected $withoutScore = FALSE;
 
     /**
-     * GET - get active news in all mall, and also provide for searching
+     * GET - Menu counter in homepage
      *
-     * @author Firmansyayh <firmansyah@dominopos.com>
-     * @author Rio Astamal <rio@dominopos.com>
+     * @author Shelgi <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string sortby
-     * @param string sortmode
-     * @param string take
-     * @param string skip
-     * @param string keyword
-     * @param string filter_name
+     * @param string country
+     * @param string cities
      *
      * @return Illuminate\Support\Facades\Response
      */
