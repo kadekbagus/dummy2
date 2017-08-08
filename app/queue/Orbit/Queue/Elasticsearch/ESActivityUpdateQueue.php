@@ -9,6 +9,7 @@ use Config;
 use Mall;
 use DB;
 use Activity;
+use ExtendedActivity;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\UserAgent;
 use Orbit\Helper\Util\JobBurier;
@@ -51,101 +52,104 @@ class ESActivityUpdateQueue
      * @param Job $job
      * @param array $data[
      *                    'activity_id' => NUM, // Activity ID
-     *                    'referer' => HTTP_REFERER
+     *                    'referer' => HTTP_REFERER,
+     *                    'orbit_referer' => APP_REFERER,
+     *                    'current_url' => URL,
+     *                    'extended_activity_id' => NUM
      * ]
      * @return void
      * @todo Make this testable
      */
     public function fire($job, $data)
     {
-        $activityId = $data['activity_id'];
-        $activity = Activity::findOnWriteConnection($activityId);
-
-        Log::info('ES Queue Update HTTP_REFERER value: ' . $data['referer']);
-        Log::info('ES Queue Update HTTP_X_ORBIT_REFERER value: ' . $data['orbit_referer']);
-
-        if (! is_object($activity)) {
-            $job->delete();
-
-            return [
-                'status' => 'fail',
-                'message' => sprintf('[Job ID: `%s`] Activity ID %s is not found.', $job->getJobId(), $activity)
-            ];
-        }
-
-        // This one used if the config is empty so the comparison
-        // of user agent is not fail
-        $fallbackUARules = ['browser' => [], 'platform' => [], 'device_model' => [], 'bot_crawler' => []];
-
-        $detect = new UserAgent();
-        $detect->setRules(Config::get('orbit.user_agent_rules', $fallbackUARules));
-        $detect->setUserAgent($activity->user_agent);
-
-        // device
-        $deviceType = $detect->deviceType();
-        $deviceModel = $detect->deviceModel();
-
-        // os
-        $osName = $detect->platform();
-        $osVersion = $detect->version($osName);
-
-        // browser
-        $browserName = $detect->browser();
-        $browserVersion = $detect->version($browserName);
-
-        $country = Config::get('orbit.activity.elasticsearch.lookup_country_city.default_country_value', 'LOOKUP COUNTRY DISABLED');
-        $city = Config::get('orbit.activity.elasticsearch.lookup_country_city.default_city_value', 'LOOKUP CITY DISABLED');
-
-        $lookupCountryCityEnabled = Config::get('orbit.activity.elasticsearch.lookup_country_city.enable', TRUE);
-        if ($lookupCountryCityEnabled) {
-            // get location based on ip address
-            $addr = $activity->ip_address;
-
-            //get default vendor from config
-            $vendor = Config::get('orbit.vendor_ip_database.default', 'dbip');
-
-            switch ($vendor) {
-                case 'dbip':
-                    $addr_type = 'ipv4';
-                    if (ip2long($addr) !== false) {
-                        $addr_type = 'ipv4';
-                    } else if (preg_match('/^[0-9a-fA-F:]+$/', $addr) && @inet_pton($addr)) {
-                        $addr_type = 'ipv6';
-                    }
-
-                    $ipData = DB::connection(Config::get('orbit.vendor_ip_database.dbip.connection_id'))
-                        ->table(Config::get('orbit.vendor_ip_database.dbip.table'))
-                        ->where('ip_start', '<=', inet_pton($addr))
-                        ->where('addr_type', '=', $addr_type)
-                        ->orderBy('ip_start', 'desc')
-                        ->first();
-                    break;
-
-                case 'ip2location':
-                    $findIp = explode(".", $addr);
-                    $ipNumber = ((int)$findIp[0] * ( 256 * 256 * 256 )) + ((int)$findIp[1] * ( 256 * 256 )) + ((int)$findIp[2] * 256) + $findIp[3];
-
-                    $ipData = DB::connection(Config::get('orbit.vendor_ip_database.ip2location.connection_id'))
-                        ->table(Config::get('orbit.vendor_ip_database.ip2location.table'))
-                        ->select('country_name as country', 'city_name as city')
-                        ->where('ip_to', '>=', $ipNumber)
-                        ->first();
-                    break;
-            }
-
-            $country = '';
-            $city = '';
-            if (is_object($ipData)) {
-                // Override default value
-                $country = $ipData->country;
-                $city = $ipData->city;
-            }
-        }
-
-        $esConfig = Config::get('orbit.elasticsearch');
-        $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-
         try {
+            $activityId = $data['activity_id'];
+            $activity = Activity::findOnWriteConnection($activityId);
+
+            Log::info('ES Queue Update HTTP_REFERER value: ' . $data['referer']);
+            Log::info('ES Queue Update HTTP_X_ORBIT_REFERER value: ' . $data['orbit_referer']);
+
+            if (! is_object($activity)) {
+                $job->delete();
+
+                return [
+                    'status' => 'fail',
+                    'message' => sprintf('[Job ID: `%s`] Activity ID %s is not found.', $job->getJobId(), $activity)
+                ];
+            }
+
+            // This one used if the config is empty so the comparison
+            // of user agent is not fail
+            $fallbackUARules = ['browser' => [], 'platform' => [], 'device_model' => [], 'bot_crawler' => []];
+
+            $detect = new UserAgent();
+            $detect->setRules(Config::get('orbit.user_agent_rules', $fallbackUARules));
+            $detect->setUserAgent($activity->user_agent);
+
+            // device
+            $deviceType = $detect->deviceType();
+            $deviceModel = $detect->deviceModel();
+
+            // os
+            $osName = $detect->platform();
+            $osVersion = $detect->version($osName);
+
+            // browser
+            $browserName = $detect->browser();
+            $browserVersion = $detect->version($browserName);
+
+            $country = Config::get('orbit.activity.elasticsearch.lookup_country_city.default_country_value', 'LOOKUP COUNTRY DISABLED');
+            $city = Config::get('orbit.activity.elasticsearch.lookup_country_city.default_city_value', 'LOOKUP CITY DISABLED');
+
+            $lookupCountryCityEnabled = Config::get('orbit.activity.elasticsearch.lookup_country_city.enable', TRUE);
+            if ($lookupCountryCityEnabled) {
+                // get location based on ip address
+                $addr = $activity->ip_address;
+
+                //get default vendor from config
+                $vendor = Config::get('orbit.vendor_ip_database.default', 'dbip');
+
+                switch ($vendor) {
+                    case 'dbip':
+                        $addr_type = 'ipv4';
+                        if (ip2long($addr) !== false) {
+                            $addr_type = 'ipv4';
+                        } else if (preg_match('/^[0-9a-fA-F:]+$/', $addr) && @inet_pton($addr)) {
+                            $addr_type = 'ipv6';
+                        }
+
+                        $ipData = DB::connection(Config::get('orbit.vendor_ip_database.dbip.connection_id'))
+                            ->table(Config::get('orbit.vendor_ip_database.dbip.table'))
+                            ->where('ip_start', '<=', inet_pton($addr))
+                            ->where('addr_type', '=', $addr_type)
+                            ->orderBy('ip_start', 'desc')
+                            ->first();
+                        break;
+
+                    case 'ip2location':
+                        $findIp = explode(".", $addr);
+                        $ipNumber = ((int)$findIp[0] * ( 256 * 256 * 256 )) + ((int)$findIp[1] * ( 256 * 256 )) + ((int)$findIp[2] * 256) + $findIp[3];
+
+                        $ipData = DB::connection(Config::get('orbit.vendor_ip_database.ip2location.connection_id'))
+                            ->table(Config::get('orbit.vendor_ip_database.ip2location.table'))
+                            ->select('country_name as country', 'city_name as city')
+                            ->where('ip_to', '>=', $ipNumber)
+                            ->first();
+                        break;
+                }
+
+                $country = '';
+                $city = '';
+                if (is_object($ipData)) {
+                    // Override default value
+                    $country = $ipData->country;
+                    $city = $ipData->city;
+                }
+            }
+
+            $esConfig = Config::get('orbit.elasticsearch');
+            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
+
             // check exist elasticsearch index
             $params_search = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.activities.index'),
@@ -230,6 +234,8 @@ class ESActivityUpdateQueue
                 'utm_campaign' => $campaignData['campaign_name']
             ];
 
+            $this->applyEsBodyForRating($data, $esBody);
+
             if ($response_search['hits']['total'] > 0) {
                 $params['body'] = [
                     'doc' => $esBody
@@ -302,5 +308,35 @@ class ESActivityUpdateQueue
             'status' => 'fail',
             'message' => $message
         ];
+    }
+
+    /**
+     * Fields used for rating
+     *
+     * @param array $data
+     * @param array &$esBody
+     * @return void
+     */
+    protected function applyEsBodyForRating($data, &$esBody)
+    {
+        $esBody['tenant_id'] = '[EMPTY]';
+        $esBody['tenant_name'] = '[EMPTY]';
+        $esBody['rating'] = '0';
+
+        $log = [$data, $esBody];
+        file_put_contents('/tmp/extended_activity.log', var_export($log, true));
+
+        if (! isset($data['extended_activity_id'])) {
+            return;
+        }
+
+        $extendedActivity = ExtendedActivity::findOnWriteConnection($data['extended_activity_id']);
+        if (! is_object($extendedActivity)) {
+            return;
+        }
+
+        $esBody['tenant_id'] = $extendedActivity->tenant_id;
+        $esBody['tenant_name'] = $extendedActivity->tenant_name;
+        $esBody['rating'] = $extendedActivity->rating;
     }
 }

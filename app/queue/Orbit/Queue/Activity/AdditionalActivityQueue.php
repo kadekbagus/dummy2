@@ -3,6 +3,7 @@
  * Queue to save additional activity to particular tables.
  *
  * @author Ahmad Anshori <ahmad@dominopos.com>
+ * @author Rio AStamal <rio@dominopos.com>
  */
 use Log;
 use Activity;
@@ -21,6 +22,9 @@ use CampaignGroupName;
 use Orbit\Helper\Util\FilterParser;
 use Orbit\Helper\Util\CampaignSourceParser;
 use ExtendedActivity;
+use Tenant;
+use Orbit\FakeJob;
+use Orbit\Queue\Elasticsearch\ESActivityUpdateQueue;
 
 class AdditionalActivityQueue
 {
@@ -46,10 +50,7 @@ class AdditionalActivityQueue
         try {
             $this->data = $data;
             $activityId = $data['activity_id'];
-            $activity = Activity::excludeDeleted()
-                        ->where('activity_id', $activityId)
-                        ->where('group', 'mobile-ci')
-                        ->first();
+            $activity = Activity::findOnWriteConnection($activityId);
 
             if (! is_object($activity)) {
                 $job->delete();
@@ -66,7 +67,8 @@ class AdditionalActivityQueue
             $this->saveToMerchantPageView($activity);
             $this->saveToWidgetClick($activity);
             $this->saveToConnectionTime($activity);
-            $this->saveExtendedData($activity);
+            $extendedActivity = $this->saveExtendedData($activity);
+            $this->saveToElasticSearch($activity, $extendedActivity);
 
             $job->delete();
 
@@ -313,7 +315,6 @@ class AdditionalActivityQueue
     /**
      * Used to get the campaign group name id.
      *
-     * @author Rio Astamal <rio@dominopos.com>
      * @param string $activityName
      * @return string
      */
@@ -409,8 +410,8 @@ class AdditionalActivityQueue
     /**
      * Save to extended activity table
      *
-     * @author Ahmad Anshori <ahmad@dominopos.com>
-     * @return void
+     * @param Activity $activity
+     * @return ExtendedActivity
      */
     protected function saveExtendedData($activity)
     {
@@ -440,6 +441,86 @@ class AdditionalActivityQueue
         $extendedActivity->filter_keywords = $filterData['filter_keywords'];
         $extendedActivity->filter_categories = $filterData['filter_categories'];
         $extendedActivity->filter_partner = $filterData['filter_partner'];
+
+        $this->reviewSubmitActivity($activity, $extendedActivity);
+
         $extendedActivity->save();
+
+        return $extendedActivity;
+    }
+
+    /**
+     * Fill columns which related with review and rating
+     *
+     * @param Object $activity
+     * @param Object $extendedActivity
+     * @return void
+     * @todo Should also check the object_id being commented so we can know whether this particular
+     *       user already made review. It's to prevent possibility of activity spamming.
+     */
+    protected function reviewSubmitActivity($activity, $extendedActivity)
+    {
+        if (! $activity->activity_name === 'click_review_submit') {
+            return FALSE;
+        }
+
+        // Parse the JSON in notes if applicable
+        $jsonNotes = @json_decode($activity->notes);
+
+        if (JSON_ERROR_NONE !== json_last_error()) {
+            return FALSE;
+        }
+
+        if (! is_object($jsonNotes)) {
+            return FALSE;
+        }
+
+        $tenantId = '[EMPTY]';
+        $tenantName = '[EMPTY]';
+        $rating = 0;
+
+        if (isset($jsonNotes->location_id) && ! empty($jsonNotes->location_id)) {
+            $tenantId = $jsonNotes->location_id;
+
+            // Get the tenant name
+            $tenant = Tenant::excludeDeleted()->find($tenantId);
+            if (is_object($tenant)) {
+                $tenantName = $tenant->name;
+            }
+        }
+
+        if (isset($jsonNotes->rating)) {
+            $rating = (int)$jsonNotes->rating;
+        }
+
+        $extendedActivity->tenant_id = $tenantId;
+        $extendedActivity->tenant_name = $tenantName;
+        $extendedActivity->rating = $rating;
+    }
+
+    /**
+     * Create new document in elasticsearch.
+     *
+     * @param Activity $activity
+     * @param ExtendedActicity $extendedActivity
+     * @return void
+     */
+    protected function saveToElasticSearch($activity, $extendedActivity)
+    {
+        if ($activity->group !== 'mobile-ci') {
+            return;
+        }
+
+        // queue for create/update activity document in elasticsearch
+        $job = new FakeJob();
+
+        $esActivityQueue = new ESActivityUpdateQueue();
+        $esActivityQueue->fire($job, [
+            'activity_id' => $activity->activity_id,
+            'referer' => $this->data['referer'],
+            'orbit_referer' => $this->data['orbit_referer'],
+            'current_url' => $this->data['current_url'],
+            'extended_activity_id' => $extendedActivity->extended_activity_id
+        ]);
     }
 }

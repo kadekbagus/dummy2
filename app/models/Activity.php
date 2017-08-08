@@ -894,10 +894,6 @@ class Activity extends Eloquent
 
         $this->saveEmailToMailchimp();
 
-        if ($this->group === 'mobile-ci') {
-            $this->saveToElasticSearch();
-        }
-
         return $result;
     }
 
@@ -1100,39 +1096,6 @@ class Activity extends Eloquent
     }
 
     /**
-     * Create new document in elasticsearch.
-     *
-     * @author Shelgi Prasetyo <shelgi@dominopos.com>
-     * @author Rio Astamal <rio@dominopos.com>
-     * @return void
-     */
-    protected function saveToElasticSearch()
-    {
-        // Normal referer
-        $referer = NULL;
-        // Orbit Referer (Custom one for AJAX nagivation)
-        $orbitReferer = NULL;
-
-        if (isset($_SERVER['HTTP_REFERER']) && ! empty($_SERVER['HTTP_REFERER'])) {
-            $referer = $_SERVER['HTTP_REFERER'];
-        }
-
-        // Orbit specific referer, this may override above
-        if (isset($_SERVER['HTTP_X_ORBIT_REFERER']) && ! empty($_SERVER['HTTP_X_ORBIT_REFERER'])) {
-            $orbitReferer = $_SERVER['HTTP_X_ORBIT_REFERER'];
-        }
-
-        // queue for create/update activity document in elasticsearch
-        Queue::push('Orbit\\Queue\\Elasticsearch\\ESActivityUpdateQueue', [
-            'activity_id' => $this->activity_id,
-            'referer' => substr($referer, 0, 2048),
-            'orbit_referer' => substr($orbitReferer, 0, 2048),
-            'current_url' => Request::fullUrl()
-        ]);
-    }
-
-
-    /**
      * Add the email to subscriber list in the Mailchimp.
      *
      * @author Rio Astamal <rio@dominopos.com>
@@ -1206,100 +1169,5 @@ class Activity extends Eloquent
 
         $this->longitude = $longitude;
         $this->latitude = $latitude;
-    }
-
-    /**
-     * Used to get the campaign group name id.
-     *
-     * @author Rio Astamal <rio@dominopos.com>
-     * @return string
-     */
-    private function campaignGroupNameIdFromActivityName()
-    {
-        $groupName = 'Unknown';
-
-        switch ($this->activity_name) {
-            case 'view_promotion':
-                $groupName = 'Promotion';
-                break;
-
-            case 'view_coupon':
-                $groupName = 'Coupon';
-                break;
-
-            case 'view_lucky_draw':
-                $groupName = 'Lucky Draw';
-                break;
-
-            case 'view_event':
-                $groupName = 'Event';
-                break;
-
-            case 'view_news':
-                $groupName = 'News';
-                break;
-
-            case 'view_promotion_popup':
-                $groupName = 'Promotion';
-                break;
-
-            case 'view_coupon_popup':
-                $groupName = 'Coupon';
-                break;
-
-            case 'view_news_popup':
-                $groupName = 'News';
-                break;
-
-            case 'click_promotion_popup':
-                $groupName = 'Promotion';
-                break;
-
-            case 'click_coupon_popup':
-                $groupName = 'Coupon';
-                break;
-
-            case 'click_news_popup':
-                $groupName = 'News';
-                break;
-
-            case 'view_landing_page_coupon_detail':
-                $groupName = 'Coupon';
-                break;
-
-            case 'view_landing_page_news_detail':
-                $groupName = 'News';
-                break;
-
-            case 'view_landing_page_promotion_detail':
-                $groupName = 'Promotion';
-                break;
-
-            case 'view_mall_event_detail':
-                $groupName = 'News';
-                break;
-
-            case 'view_mall_promotion_detail':
-                $groupName = 'Promotion';
-                break;
-
-            case 'view_mall_coupon_detail':
-                $groupName = 'Coupon';
-                break;
-
-            case 'click_mall_featured_carousel':
-                if ($this->module_name == 'News') {
-                    $groupName = 'News';
-                } elseif ($this->module_name == 'Promotion') {
-                    $groupName = 'Promotion';
-                } elseif ($this->module_name == 'Coupon') {
-                    $groupName = 'Coupon';
-                }
-                break;
-        }
-
-        $object = CampaignGroupName::get()->keyBy('campaign_group_name')->get($groupName);
-
-        return is_object($object) ? $object->campaign_group_name_id : '0';
     }
 }
