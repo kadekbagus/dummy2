@@ -26,6 +26,7 @@ use Merchant;
 use Orbit\FakeJob;
 use Orbit\Queue\Elasticsearch\ESActivityUpdateQueue;
 use DB;
+use Mall;
 
 class AdditionalActivityQueue
 {
@@ -516,6 +517,9 @@ class AdditionalActivityQueue
         // Determine the type of merchant, if it is tenant we need to lookup
         // the parent to get the mall
         if ($merchant->object_type === 'mall') {
+            $extendedActivity->mall_id = $merchantId;
+            $extendedActivity->mall_name = $merchant->name;
+
             return;
         }
 
@@ -526,6 +530,15 @@ class AdditionalActivityQueue
         // This is tenant object so get the parent
         $extendedActivity->tenant_id = $merchantId;
         $extendedActivity->tenant_name = $merchant->name;
+
+        // Get parent (mall) data
+        $mall = Mall::excludeDeleted()->find($merchant->parent_id);
+        if (! is_object($mall)) {
+            return;
+        }
+
+        $extendedActivity->mall_id = $mall->merchant_id;
+        $extendedActivity->mall_name = $mall->name;
     }
 
     /**

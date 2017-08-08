@@ -234,7 +234,7 @@ class ESActivityUpdateQueue
                 'utm_campaign' => $campaignData['campaign_name']
             ];
 
-            $this->applyEsBodyForRating($data, $esBody);
+            $this->applyExtendedActivity($data, $esBody);
 
             if ($response_search['hits']['total'] > 0) {
                 $params['body'] = [
@@ -317,14 +317,15 @@ class ESActivityUpdateQueue
      * @param array &$esBody
      * @return void
      */
-    protected function applyEsBodyForRating($data, &$esBody)
+    protected function applyExtendedActivity($data, &$esBody)
     {
         $esBody['tenant_id'] = '[EMPTY]';
         $esBody['tenant_name'] = '[EMPTY]';
+        $esBody['mall_id'] = '[EMPTY]';
+        $esBody['mall_name'] = '[EMPTY]';
         $esBody['rating'] = '0';
 
         $log = [$data, $esBody];
-        file_put_contents('/tmp/extended_activity.log', var_export($log, true));
 
         if (! isset($data['extended_activity_id'])) {
             return;
@@ -337,6 +338,8 @@ class ESActivityUpdateQueue
 
         $esBody['tenant_id'] = $extendedActivity->tenant_id;
         $esBody['tenant_name'] = $extendedActivity->tenant_name;
+        $esBody['mall_id'] = $extendedActivity->mall_id;
+        $esBody['mall_name'] = $extendedActivity->mall_name;
         $esBody['rating'] = $extendedActivity->rating;
     }
 }

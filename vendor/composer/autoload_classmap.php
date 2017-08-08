@@ -64,6 +64,7 @@ return array(
     'AlterTableConnectionTimesChangeSessionId' => $baseDir . '/app/database/migrations/2016_04_14_122919_alter_table_connection_times_change_session_id.php',
     'AlterTableCouponTranslationChangeDescriptionType' => $baseDir . '/app/database/migrations/2017_04_12_085327_alter_table_coupon_translation_change_description_type.php',
     'AlterTableCouponTranslationsAddFieldShortDescription' => $baseDir . '/app/database/migrations/2017_04_11_031420_alter_table_coupon_translations_add_field_short_description.php',
+    'AlterTableExtendedActicitiesAddMallName' => $baseDir . '/app/database/migrations/2017_08_08_031753_alter_table_extended_acticities_add_mall_name.php',
     'AlterTableExtendedActivitiesAddStoreId' => $baseDir . '/app/database/migrations/2017_08_04_054747_alter_table_extended_activities_add_store_id.php',
     'AlterTableInboxesAddColumnMerchantId' => $baseDir . '/app/database/migrations/2015_10_30_062500_alter_table_inboxes_add_column_merchant_id.php',
     'AlterTableInboxesAddIsNotifiedColumn' => $baseDir . '/app/database/migrations/2016_02_10_022959_alter_table_inboxes_add_is_notified_column.php',
