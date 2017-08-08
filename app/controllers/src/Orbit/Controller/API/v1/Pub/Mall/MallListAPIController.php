@@ -171,7 +171,7 @@ class MallListAPIController extends PubControllerAPI
                     $cityFilterArr = [];
                     $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.mall.city', '');
                     foreach ((array) $cityFilters as $cityFilter) {
-                        $cityFilterArr['bool']['should'][] = array('match' => array('city.raw' => array('query' => $cityFilter)));;
+                        $cityFilterArr['bool']['should'][] = array('match' => array('city.raw' => array('query' => $cityFilter)));
                     }
 
                     if ($shouldMatch != '') {
