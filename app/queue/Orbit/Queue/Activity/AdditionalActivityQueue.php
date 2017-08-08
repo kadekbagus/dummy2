@@ -22,9 +22,10 @@ use CampaignGroupName;
 use Orbit\Helper\Util\FilterParser;
 use Orbit\Helper\Util\CampaignSourceParser;
 use ExtendedActivity;
-use Tenant;
+use Merchant;
 use Orbit\FakeJob;
 use Orbit\Queue\Elasticsearch\ESActivityUpdateQueue;
+use DB;
 
 class AdditionalActivityQueue
 {
@@ -443,6 +444,7 @@ class AdditionalActivityQueue
         $extendedActivity->filter_partner = $filterData['filter_partner'];
 
         $this->reviewSubmitActivity($activity, $extendedActivity);
+        $this->tenantIdActivity($activity, $extendedActivity);
 
         $extendedActivity->save();
 
@@ -475,27 +477,55 @@ class AdditionalActivityQueue
             return FALSE;
         }
 
-        $tenantId = '[EMPTY]';
-        $tenantName = '[EMPTY]';
         $rating = 0;
-
-        if (isset($jsonNotes->location_id) && ! empty($jsonNotes->location_id)) {
-            $tenantId = $jsonNotes->location_id;
-
-            // Get the tenant name
-            $tenant = Tenant::excludeDeleted()->find($tenantId);
-            if (is_object($tenant)) {
-                $tenantName = $tenant->name;
-            }
-        }
 
         if (isset($jsonNotes->rating)) {
             $rating = (int)$jsonNotes->rating;
         }
 
-        $extendedActivity->tenant_id = $tenantId;
-        $extendedActivity->tenant_name = $tenantName;
         $extendedActivity->rating = $rating;
+    }
+
+    /**
+     * Fill columns related with store or mall id
+     *
+     * @param Object $actvitiy
+     * @param Object $extendedActivity
+     * @return void
+     */
+    protected function tenantIdActivity($activity, $extendedActivity)
+    {
+        if (! isset($this->data['merchant_id'])) {
+            return;
+        }
+
+        if (empty($this->data['merchant_id'])) {
+            return;
+        }
+
+        $merchantId = $this->data['merchant_id'];
+        $merchant = DB::table('merchants')
+                        ->where('status', '!=', 'deleted')
+                        ->where('merchant_id', $merchantId)
+                        ->first();
+
+        if (! is_object($merchant)) {
+            return;
+        }
+
+        // Determine the type of merchant, if it is tenant we need to lookup
+        // the parent to get the mall
+        if ($merchant->object_type === 'mall') {
+            return;
+        }
+
+        if ($merchant->object_type !== 'tenant') {
+            return;
+        }
+
+        // This is tenant object so get the parent
+        $extendedActivity->tenant_id = $merchantId;
+        $extendedActivity->tenant_name = $merchant->name;
     }
 
     /**

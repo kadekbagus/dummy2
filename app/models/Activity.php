@@ -884,7 +884,8 @@ class Activity extends Eloquent
             'datetime' => date('Y-m-d H:i:s'),
             'referer' => substr($referer, 0, 2048),
             'orbit_referer' => substr($orbitReferer, 0, 2048),
-            'current_url' => Request::fullUrl()
+            'current_url' => Request::fullUrl(),
+            'merchant_id' => OrbitInput::post('merchant_id', NULL)
         ]);
 
         // Save to object page views table
