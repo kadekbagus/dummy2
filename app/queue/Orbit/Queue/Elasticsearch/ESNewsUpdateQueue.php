@@ -137,6 +137,81 @@ class ESNewsUpdateQueue
                 }
             }
 
+            $mallRating = array();
+            $locationRating = array();
+            $mongoClient = MongoClient::create($mongoConfig);
+            $totalGeneralReviews = 0;
+            $averageGeneralRating = 0;
+            if ($news->is_having_reward === 'N') {
+
+                // get rating by location
+                $queryString = [
+                    'object_id'   => $news->news_id,
+                    'object_type' => 'news'
+                ];
+
+                $endPoint = "review-counters";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRecLocation = $response->data;
+
+                if (! empty($listOfRecLocation->records)) {
+                    $countryRating = array();
+                    foreach ($listOfRecLocation->records as $rating) {
+                        // by country
+                        $countryId = $rating->country_id;
+                        $countryRating[$countryId]['total'] = (! empty($countryRating[$countryId]['total'])) ? $countryRating[$countryId]['total'] : 0;
+                        $countryRating[$countryId]['review'] = (! empty($countryRating[$countryId]['review'])) ? $countryRating[$countryId]['review'] : 0;
+
+                        $countryRating[$countryId]['total'] = $countryRating[$countryId]['total'] + ((double) $rating->average * (double) $rating->counter);
+                        $countryRating[$countryId]['review'] = $countryRating[$countryId]['review'] + $rating->counter;
+
+                        $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['review']) + 0.00001;
+                        $locationRating['review_' . $countryId] = (double) $countryRating[$countryId]['review'];
+
+                        // by country and city
+                        $locationRating['rating_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->average + 0.00001;
+                        $locationRating['review_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->counter;
+                    }
+                }
+
+                // get rating by mall
+                $endPoint = "mall-review-counters";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRecMall = $response->data;
+                if(! empty($listOfRecMall->records)) {
+                    foreach ($listOfRecMall->records as $rating) {
+                        $mallRating['rating_' . $rating->location_id] = $rating->average + 0.00001;
+                        $mallRating['review_' . $rating->location_id] = $rating->counter;
+                    }
+                }
+            } else {
+                // get rating and review for promotional event
+                $queryString = [
+                    'object_id'   => $news->news_id,
+                    'object_type' => 'news'
+                ];
+
+                $endPoint = "reviews";
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint($endPoint)
+                                        ->request('GET');
+
+                $listOfRecLocation = $response->data;
+                if (! empty($listOfRecLocation->records)) {
+                    foreach ($listOfRecLocation->records as $rating) {
+                        $averageGeneralRating = $averageGeneralRating + $rating->rating;
+                        $totalGeneralReviews = $totalGeneralReviews + 1;
+                    }
+                    $averageGeneralRating = $averageGeneralRating / $totalGeneralReviews;
+                }
+            }
+
             $linkToTenants = array();
             foreach($news->esCampaignLocations as $esCampaignLocation) {
                 $linkToTenant = array(
@@ -155,55 +230,15 @@ class ESNewsUpdateQueue
                 );
 
                 $linkToTenants[] = $linkToTenant;
-            }
 
-            // get rating by location
-            $locationRating = array();
-            $queryString = [
-                'object_id'   => $news->news_id,
-                'object_type' => 'news'
-            ];
+                if ($news->is_having_reward === 'Y') {
+                    $countryId = $esCampaignLocation->country_id;
+                    $locationRating['rating_' . $countryId] = $averageGeneralRating;
+                    $locationRating['review_' . $countryId] = $totalGeneralReviews;
 
-            $mongoClient = MongoClient::create($mongoConfig);
-            $endPoint = "review-counters";
-            $response = $mongoClient->setQueryString($queryString)
-                                    ->setEndPoint($endPoint)
-                                    ->request('GET');
-
-            $listOfRecLocation = $response->data;
-
-            if (! empty($listOfRecLocation->records)) {
-                $countryRating = array();
-                foreach ($listOfRecLocation->records as $rating) {
-                    // by country
-                    $countryId = $rating->country_id;
-                    $countryRating[$countryId]['total'] = (! empty($countryRating[$countryId]['total'])) ? $countryRating[$countryId]['total'] : 0;
-                    $countryRating[$countryId]['review'] = (! empty($countryRating[$countryId]['review'])) ? $countryRating[$countryId]['review'] : 0;
-
-                    $countryRating[$countryId]['total'] = $countryRating[$countryId]['total'] + ((double) $rating->average * (double) $rating->counter);
-                    $countryRating[$countryId]['review'] = $countryRating[$countryId]['review'] + $rating->counter;
-
-                    $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['review']) + 0.00001;
-                    $locationRating['review_' . $countryId] = (double) $countryRating[$countryId]['review'];
-
-                    // by country and city
-                    $locationRating['rating_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->average + 0.00001;
-                    $locationRating['review_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->counter;
-                }
-            }
-
-            // get rating by mall
-            $mallRating = array();
-            $endPoint = "mall-review-counters";
-            $response = $mongoClient->setQueryString($queryString)
-                                    ->setEndPoint($endPoint)
-                                    ->request('GET');
-
-            $listOfRecMall = $response->data;
-            if(! empty($listOfRecMall->records)) {
-                foreach ($listOfRecMall->records as $rating) {
-                    $mallRating['rating_' . $rating->location_id] = $rating->average + 0.00001;
-                    $mallRating['review_' . $rating->location_id] = $rating->counter;
+                    $countryCityKey = $esCampaignLocation->country_id . '_' . str_replace(" ", "_", trim(strtolower($esCampaignLocation->city), " "));
+                    $locationRating['rating_' . $countryCityKey] = $averageGeneralRating;
+                    $locationRating['review_' . $countryCityKey] = $totalGeneralReviews;
                 }
             }
 
@@ -296,33 +331,35 @@ class ESNewsUpdateQueue
                 'end_date'             => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z',
                 'updated_at'           => date('Y-m-d', strtotime($news->updated_at)) . 'T' . date('H:i:s', strtotime($news->updated_at)) . 'Z',
                 'status'               => $news->status,
-                'campaign_status'      => $news->campaign_status,
-                'is_all_gender'        => $news->is_all_gender,
-                'is_all_age'           => $news->is_all_age,
-                'category_ids'         => $categoryIds,
-                'created_by'           => $news->user_id,
-                'creator_email'        => $news->user_email,
-                'default_lang'         => $news->mobile_default_language,
-                'translation'          => $translations,
-                'keywords'             => $keywords,
-                'partner_ids'          => $partnerIds,
-                'partner_tokens'       => $partnerTokens,
-                'advert_ids'           => $advertIds,
-                'link_to_tenant'       => $linkToTenants,
-                'is_exclusive'         => ! empty($news->is_exclusive) ? $news->is_exclusive : 'N',
-                'is_having_reward'     => $news->is_having_reward,
-                'gtm_page_views'       => $total_view_on_gtm,
-                'mall_page_views'      => $total_view_on_mall,
-                'featured_gtm_score'   => $featuredGtmScore,
-                'featured_mall_score'  => $featuredMallScore,
-                'preferred_gtm_score'  => $preferredGtmScore,
-                'preferred_mall_score' => $preferredMallScore,
-                'featured_gtm_type'    => $featuredGtmType,
-                'featured_mall_type'   => $featuredMallType,
-                'preferred_gtm_type'   => $preferredGtmType,
-                'preferred_mall_type'  => $preferredMallType,
-                'location_rating'      => $locationRating,
-                'mall_rating'          => $mallRating
+                'campaign_status'       => $news->campaign_status,
+                'is_all_gender'         => $news->is_all_gender,
+                'is_all_age'            => $news->is_all_age,
+                'category_ids'          => $categoryIds,
+                'created_by'            => $news->user_id,
+                'creator_email'         => $news->user_email,
+                'default_lang'          => $news->mobile_default_language,
+                'translation'           => $translations,
+                'keywords'              => $keywords,
+                'partner_ids'           => $partnerIds,
+                'partner_tokens'        => $partnerTokens,
+                'advert_ids'            => $advertIds,
+                'link_to_tenant'        => $linkToTenants,
+                'is_exclusive'          => ! empty($news->is_exclusive) ? $news->is_exclusive : 'N',
+                'is_having_reward'      => $news->is_having_reward,
+                'gtm_page_views'        => $total_view_on_gtm,
+                'mall_page_views'       => $total_view_on_mall,
+                'featured_gtm_score'    => $featuredGtmScore,
+                'featured_mall_score'   => $featuredMallScore,
+                'preferred_gtm_score'   => $preferredGtmScore,
+                'preferred_mall_score'  => $preferredMallScore,
+                'featured_gtm_type'     => $featuredGtmType,
+                'featured_mall_type'    => $featuredMallType,
+                'preferred_gtm_type'    => $preferredGtmType,
+                'preferred_mall_type'   => $preferredMallType,
+                'location_rating'       => $locationRating,
+                'mall_rating'           => $mallRating,
+                'avg_general_rating'    => $averageGeneralRating,
+                'total_general_reviews' => $totalGeneralReviews
             ];
 
             $body = array_merge($body, $translationBody);

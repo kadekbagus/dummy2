@@ -21,6 +21,7 @@ use CampaignLocation;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Event;
+use News;
 
 class RatingNewAPIController extends PubControllerAPI
 {
@@ -66,20 +67,33 @@ class RatingNewAPIController extends PubControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $validator = Validator::make(
-                array(
-                    'object_id' => $objectId,
-                    'object_type' => $objectType,
-                    'rating' => $rating,
-                    'location_id' => $locationId
-                ),
-                array(
-                    'object_id' => 'required',
-                    'object_type' => 'required',
-                    'rating' => 'required',
-                    'location_id' => 'required'
-                )
-            );
+            $validatorColumn = array(
+                                'object_id'   => $objectId,
+                                'object_type' => $objectType,
+                                'rating'      => $rating,
+                                'location_id' => $locationId
+                            );
+
+            $validation = array(
+                            'object_id'   => 'required',
+                            'object_type' => 'required',
+                            'rating'      => 'required',
+                            'location_id' => 'required'
+                        );
+
+            // check if object_id is promotional event, no nedd to check location_id
+            $isPromotionalEvent = 'N';
+            if ($objectType === 'news') {
+                $news = News::where('news_id', $objectId)->first();
+                $isPromotionalEvent = $news->is_having_reward;
+
+                if ($isPromotionalEvent === 'Y') {
+                    unset($validatorColumnp['location_id']);
+                    unset($validation['location_id']);
+                }
+            }
+
+            $validator = Validator::make($validatorColumn, $validation);
 
             // Run the validation
             if ($validator->fails()) {
@@ -98,30 +112,36 @@ class RatingNewAPIController extends PubControllerAPI
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->toDateTimeString();
 
-            $location = CampaignLocation::select('merchants.name', 'merchants.country', 'merchants.object_type', DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.merchant_id, {$prefix}merchants.merchant_id) as location_id, IF({$prefix}merchants.object_type = 'tenant', {$prefix}merchants.name, '') as store_name, IF({$prefix}merchants.object_type = 'tenant', oms.name, {$prefix}merchants.name) as mall_name, IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city, IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
-                                      ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                      ->where('merchants.merchant_id', '=', $locationId)
-                                      ->first();
-
             $body = [
                 'object_id'       => $objectId,
                 'object_type'     => $objectType,
                 'user_id'         => $user->user_id,
-                'location_id'     => $location->location_id,
-                'store_id'        => $locationId,
-                'store_name'      => $location->store_name,
-                'mall_name'       => $location->mall_name,
                 'rating'          => $rating,
                 'review'          => $review,
                 'status'          => $status,
                 'approval_status' => $approvalStatus,
                 'created_at'      => $dateTime,
-                'updated_at'      => $dateTime,
-                'city'            => $location->city,
-                'country_id'      => $location->country_id,
+                'updated_at'      => $dateTime
             ];
 
-            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
+            $bodyLocation = array();
+            if ($isPromotionalEvent === 'N') {
+                $location = CampaignLocation::select('merchants.name', 'merchants.country', 'merchants.object_type', DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.merchant_id, {$prefix}merchants.merchant_id) as location_id, IF({$prefix}merchants.object_type = 'tenant', {$prefix}merchants.name, '') as store_name, IF({$prefix}merchants.object_type = 'tenant', oms.name, {$prefix}merchants.name) as mall_name, IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city, IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
+                                          ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                          ->where('merchants.merchant_id', '=', $locationId)
+                                          ->first();
+
+                $bodyLocation = [
+                    'location_id'     => $location->location_id,
+                    'store_id'        => $locationId,
+                    'store_name'      => $location->store_name,
+                    'mall_name'       => $location->mall_name,
+                    'city'            => $location->city,
+                    'country_id'      => $location->country_id,
+                ];
+            }
+
+            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body + $bodyLocation);
             $response = $mongoClient->setEndPoint('reviews') // express endpoint
                                     ->request('POST');
 
@@ -133,8 +153,10 @@ class RatingNewAPIController extends PubControllerAPI
                 $this->response->data = NULL;
             }
 
-            $body['merchant_name'] = $location->name;
-            $body['country'] = $location->country;
+            if ($isPromotionalEvent === 'N') {
+                $body['merchant_name'] = $location->name;
+                $body['country'] = $location->country;
+            }
             Event::fire('orbit.rating.postrating.after.commit', array($this, $body));
 
         } catch (ACLForbiddenException $e) {
