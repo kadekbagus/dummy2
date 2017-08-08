@@ -253,14 +253,18 @@ class MenuCounterAPIController extends PubControllerAPI
 
             $campaignRecords = $campaignResponse['aggregations']['campaign_index']['buckets'];
             $listOfRec = array();
+            $listOfRec['promotions'] = 0;
+            $listOfRec['coupons'] = 0;
+            $listOfRec['news'] = 0;
+
             foreach ($campaignRecords as $campaign) {
                 $key = str_replace($esPrefix, '', $campaign['key']);
                 $listOfRec[$key] = $campaign['doc_count'];
             }
 
-            $listOfRec['mall'] = $mallResponse['hits']['total'];
-            $listOfRec['merchants'] = $merchantResponse['hits']['total'];
-            $listOfRec['stores'] = $storeResponse['hits']['total'];
+            $listOfRec['mall'] = empty($mallResponse['hits']['total']) ? 0 : $mallResponse['hits']['total'];
+            $listOfRec['merchants'] = empty($merchantResponse['hits']['total']) ? 0 : $merchantResponse['hits']['total'];
+            $listOfRec['stores'] = empty($storeResponse['hits']['total']) ? 0 : $storeResponse['hits']['total'];
 
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
