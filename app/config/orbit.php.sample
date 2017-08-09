@@ -5864,6 +5864,15 @@ return array(
                 'object_type_parameter_name' => 'object_type',
                 'parameter_name' => 'object_id'
             ),
+            // - User clicks menu on mobile home page (Put News Icon, Promotions Icon, Coupons Icon, etc in notes)
+            '141' => array(
+                'name' => 'click_menu',
+                'name_long' => 'Click Menu',
+                'module_name' => 'Mobile Homepage',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
