@@ -89,6 +89,8 @@ class MenuCounterAPIController extends PubControllerAPI
 
             $campaignJsonQuery = array('from' => 0, 'size' => 1, 'aggs' => array('campaign_index' => array('terms' => array('field' => '_index'))), 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
+            $couponJsonQuery = array('from' => 0, 'size' => 1, 'aggs' => array('campaign_index' => array('terms' => array('field' => '_index'))), 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('available' => array('gt' => 0))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
+
             $mallJsonQuery = array('from' => 0, 'size' => 1, 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('is_subscribed' => 'Y')))))));
 
             $merchantJsonQuery = array('from' => 0, 'size' => 1);
@@ -111,7 +113,7 @@ class MenuCounterAPIController extends PubControllerAPI
             }
 
             // filter by location (city or user location)
-            OrbitInput::get('location', function($location) use (&$campaignJsonQuery, &$mallJsonQuery, $lat, $lon, $distance)
+            OrbitInput::get('location', function($location) use (&$campaignJsonQuery, &$couponJsonQuery, &$mallJsonQuery, $lat, $lon, $distance)
             {
                 if (! empty($location)) {
 
@@ -121,6 +123,7 @@ class MenuCounterAPIController extends PubControllerAPI
                         // campaign
                         $campaignLocationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('geo_distance' => array('distance' => $distance.'km', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat)))))));
                         $campaignJsonQuery['query']['bool']['filter'][] = $campaignLocationFilter;
+                        $couponJsonQuery['query']['bool']['filter'][] = $campaignLocationFilter;
 
                         // mall
                         $mallLocationFilter = array('geo_distance' => array('distance' => $radius.'km', 'position' => array('lon' => $lon, 'lat' => $lat)));
@@ -130,6 +133,7 @@ class MenuCounterAPIController extends PubControllerAPI
                         // campaign
                         $campaignLocationFilter = array('nested' => array('path' => 'link_to_tenant', 'query' => array('filtered' => array('filter' => array('match' => array('link_to_tenant.city.raw' => $location))))));
                         $campaignJsonQuery['query']['bool']['filter'][] = $campaignLocationFilter;
+                        $couponJsonQuery['query']['bool']['filter'][] = $campaignLocationFilter;
 
                         // mall
                         $mallLocationFilter = array('match' => array('city' => array('query' => $location, 'operator' => 'and')));
@@ -196,6 +200,7 @@ class MenuCounterAPIController extends PubControllerAPI
 
             if (! empty($campaignCountryCityFilterArr)) {
                 $campaignJsonQuery['query']['bool']['filter'][] = $campaignCountryCityFilterArr;
+                $couponJsonQuery['query']['bool']['filter'][] = $campaignCountryCityFilterArr;
             }
 
             if (! empty($merchantCountryCityFilterArr)) {
@@ -216,11 +221,18 @@ class MenuCounterAPIController extends PubControllerAPI
 
             // call es campaign
             $campaignParam = [
-                'index'  => $newsIndex . ',' . $promotionIndex . ',' . $couponIndex,
+                'index'  => $newsIndex . ',' . $promotionIndex,
                 'type'   => Config::get('orbit.elasticsearch.indices.news.type'),
                 'body' => json_encode($campaignJsonQuery)
             ];
             $campaignResponse = $client->search($campaignParam);
+
+            $couponParam = [
+                'index'  => $couponIndex,
+                'type'   => Config::get('orbit.elasticsearch.indices.news.type'),
+                'body' => json_encode($couponJsonQuery)
+            ];
+            $couponResponse = $client->search($couponParam);
 
             // call es mall
             $mallParam = [
@@ -247,6 +259,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $storeResponse = $client->search($storeParam);
 
             $campaignRecords = $campaignResponse['aggregations']['campaign_index']['buckets'];
+            $couponRecords = $couponResponse['aggregations']['campaign_index']['buckets'];
             $listOfRec = array();
             $listOfRec['promotions'] = 0;
             $listOfRec['coupons'] = 0;
@@ -255,6 +268,11 @@ class MenuCounterAPIController extends PubControllerAPI
             foreach ($campaignRecords as $campaign) {
                 $key = str_replace($esPrefix, '', $campaign['key']);
                 $listOfRec[$key] = $campaign['doc_count'];
+            }
+
+            foreach ($couponRecords as $coupon) {
+                $key = str_replace($esPrefix, '', $coupon['key']);
+                $listOfRec[$key] = $coupon['doc_count'];
             }
 
             $listOfRec['mall'] = empty($mallResponse['hits']['total']) ? 0 : $mallResponse['hits']['total'];
