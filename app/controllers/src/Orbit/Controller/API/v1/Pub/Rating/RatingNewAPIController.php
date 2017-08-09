@@ -88,7 +88,7 @@ class RatingNewAPIController extends PubControllerAPI
                 $isPromotionalEvent = $news->is_having_reward;
 
                 if ($isPromotionalEvent === 'Y') {
-                    unset($validatorColumnp['location_id']);
+                    unset($validatorColumn['location_id']);
                     unset($validation['location_id']);
                 }
             }
