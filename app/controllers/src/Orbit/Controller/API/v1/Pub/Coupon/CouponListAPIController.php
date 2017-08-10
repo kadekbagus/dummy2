@@ -379,7 +379,7 @@ class CouponListAPIController extends PubControllerAPI
                 }
             }
 
-            $sortPageScript = "if(doc['" . $pageTypeScore . "'].value != null) { return doc['" . $pageTypeScore . "'].value } else { return 0}";
+            $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
             $sortPage = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
 
             $sortby = array($sortPage, $sort, $defaultSort);
