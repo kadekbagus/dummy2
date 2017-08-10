@@ -74,10 +74,11 @@ class AdditionalActivityQueue
 
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
+            $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s; Extended Activity ID: %s',
                     $job->getJobId(),
                     $activity->activity_id,
-                    $activity->activity_name_long);
+                    $activity->activity_name_long,
+                    $extendedActivity->extended_activity_id);
 
             Log::info($message);
 
@@ -88,6 +89,16 @@ class AdditionalActivityQueue
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Activity ID: %s. Additional Activity Queue ERROR: %s', $job->getJobId(), $activityId, $e->getMessage());
             Log::error($message);
+
+            // @Todo shold be moved to helper
+            $exceptionNoLine = preg_replace('/\s+/', ' ', $e->getMessage());
+
+            // Format -> JOB_ID;EXTENDED_ACTIVITY_ID;ACTIVITY_ID;MESSAGE
+            $dataLogFailed = sprintf("%s;%s;%s\n", $job->getJobId(), $activityId, trim($exceptionNoLine));
+
+            // Write the error log to dedicated file so it is easy to investigate and
+            // easy to replay because the log is structured
+            file_put_contents(storage_path() . '/logs/additional-activity-queue-error.log', $dataLogFailed, FILE_APPEND);
         }
 
         // Bury the job for later inspection
