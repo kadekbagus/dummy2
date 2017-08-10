@@ -74,10 +74,11 @@ class AdditionalActivityQueue
 
             $job->delete();
 
-            $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
+            $message = sprintf('[Job ID: `%s`] Additional Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s; Extended Activity ID: %s',
                     $job->getJobId(),
                     $activity->activity_id,
-                    $activity->activity_name_long);
+                    $activity->activity_name_long,
+                    $extendedActivity->extended_activity_id);
 
             Log::info($message);
 
