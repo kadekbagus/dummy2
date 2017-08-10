@@ -609,7 +609,7 @@ class NewsListAPIController extends PubControllerAPI
                     }
 
                     if ($key === 'total_general_reviews') {
-                        $totalGeneralReviews = 0;
+                        $totalGeneralReviews = $value;
                     }
                 }
 
