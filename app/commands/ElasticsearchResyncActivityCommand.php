@@ -42,15 +42,25 @@ class ElasticsearchResyncActivityCommand extends Command
     {
         $input = ! empty($this->option('activity-id')) ? $this->option('activity-id') : file_get_contents("php://stdin");
 
-        $job = new FakeJob();
-        $data = [
-            'activity_id' => trim($input),
-            'referer' => $this->option('referer'),
-            'orbit_referer' => $this->option('orbit-referer'),
-            'current_url' => $this->option('current-url'),
-        ];
+        // Get the activity object
+        $activityId = trim($input);
 
         try {
+            $activity = Activity::where('activity_id', $activityId)->firstOrFail();
+            $extendedActivity = ExtendedActivity::where('activity_id', $activityId)->first();
+
+            $job = new FakeJob();
+            $data = [
+                'activity_id' => trim($input),
+                'referer' => $this->option('referer'),
+                'orbit_referer' => $this->option('orbit-referer'),
+                'current_url' => $this->option('current-url'),
+            ];
+
+            if (is_object($extendedActivity)) {
+                $data['extended_activity_id'] = $extendedActivity->extended_activity_id;
+            }
+
             $esQueue = new ESActivityUpdateQueue();
             $response = $esQueue->fire($job, $data);
 
@@ -60,7 +70,7 @@ class ElasticsearchResyncActivityCommand extends Command
 
             $this->info(sprintf('Activity id "%s" has been successfully synced to Elasticsearch server', $data['activity_id']));
         } catch (Exception $e) {
-            $this->error(sprintf('Failed to sync activity id "%s", message: %s', $data['activity_id'], $e->getMessage()));
+            $this->error(sprintf('Failed to sync activity id "%s", message: %s', $activityId, $e->getMessage()));
         }
     }
 
