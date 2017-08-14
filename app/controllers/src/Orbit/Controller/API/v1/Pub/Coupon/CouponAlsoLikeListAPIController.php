@@ -62,7 +62,7 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
             $show_total_record = OrbitInput::get('show_total_record', null);
 
             $exceptId = OrbitInput::get('except_id');
-            $categoryId = OrbitInput::get('category_id');
+            $categoryId = OrbitInput::get('category_id', null);
             $partnerId = OrbitInput::get('partner_id');
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', []);
@@ -84,29 +84,9 @@ class CouponAlsoLikeListAPIController extends PubControllerAPI
                 'id' => $exceptId
             ];
 
-
-            $doLookupForCampaign = empty($country) || empty($cities) || empty($categoryId);
-
-            $elasticClient = NULL;
-            if ($doLookupForCampaign) {
-                $elasticClient = ClientBuilder::create()
+            $elasticClient = ClientBuilder::create()
                         ->setHosts($esConfig['hosts'])
                         ->build();
-
-                $campaignDocument = $elasticClient->get($esCurrentCampaignParams);
-
-                if (empty($country)) {
-                    $country = $this->getCountryFromDocument($campaignDocument);
-                }
-
-                if (empty($cities)) {
-                    $cities = $this->getCitiesFromDocument($campaignDocument);
-                }
-
-                if (empty($category)) {
-                    $categoryId = $this->getCategoryFromDocument($campaignDocument);
-                }
-            }
 
             $params = [
                 'except_id'   => $exceptId,
