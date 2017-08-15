@@ -127,7 +127,7 @@ class RatingNewAPIController extends PubControllerAPI
 
             if ($response->status === 'success') {
                 $this->response->message = 'Request Ok';
-                $this->response->data = NULL;
+                $this->response->data = $response->data;
             } else {
                 $this->response->message = 'Add rating failed';
                 $this->response->data = NULL;
