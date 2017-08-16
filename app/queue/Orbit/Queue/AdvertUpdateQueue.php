@@ -6,7 +6,9 @@
  */
 
 use Advert;
+use AdvertLocation;
 use Coupon;
+use Mall;
 use News;
 use Tenant;
 use Config;
@@ -209,22 +211,36 @@ class AdvertUpdateQueue
         // check store before update elasticsearch
         $prefix = DB::getTablePrefix();
         // checking store/tenant data for updating elasticsearch data
-        $store = Tenant::select('merchants.name', DB::raw('oms.country'))
+        $store = Tenant::select('merchants.name')
                         ->excludeDeleted('merchants')
                         ->join('adverts', 'adverts.link_object_id', '=', 'merchants.merchant_id')
-                        ->join(DB::raw("(
-                            select merchant_id, name, country
-                            from {$prefix}merchants
-                            where status = 'active'
-                                and object_type = 'mall'
-                            ) as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                         ->where('adverts.advert_id', '=', $advert->advert_id)
                         ->first();
 
         if (is_object($store)) {
-            // Notify the queueing system to delete Elasticsearch document
-            $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreUpdateQueue();
-            $response = $esQueue->fire($fakeJob, ['name' => $store->name, 'country' => $store->country]);
+            $advertLocation = AdvertLocation::where('advert_id', $advert->advert_id)->get();
+            $mallCountry = Mall::select('country');
+            $mallIds = array();
+            $allLocation = FALSE;
+            foreach ($advertLocation as $location) {
+                if ($location === '0') {
+                    $allLocation = TRUE;
+                    break;
+                } else {
+                    $mallIds[] = $location->location_id;
+                }
+            }
+
+            if (! $allLocation) {
+                $mallCountry = $mallCountry->whereIn('merchant_id'. $mallIds)->groupBy('country');
+            }
+            $mallCountry =  $mallCountry->groupBy('country')->get();
+
+            foreach ($mallCountry as $countries) {
+                // Notify the queueing system to delete Elasticsearch document
+                $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreUpdateQueue();
+                $response = $esQueue->fire($fakeJob, ['name' => $store->name, 'country' => $countries->country]);
+            }
         }
     }
 }
