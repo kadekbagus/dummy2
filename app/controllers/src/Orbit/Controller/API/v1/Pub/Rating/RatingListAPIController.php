@@ -24,6 +24,7 @@ use Orbit\Helper\MongoDB\Client as MongoClient;
 use stdClass;
 use Country;
 use Tenant;
+use News;
 
 class RatingListAPIController extends PubControllerAPI
 {
@@ -135,6 +136,18 @@ class RatingListAPIController extends PubControllerAPI
             if (! empty($arrayQuery)) {
                 $endPoint = "reviews?" . $arrayQuery;
                 $mongoClient = $mongoClient->setCustomQuery(TRUE);
+            }
+
+            // check if promotional event, remove filter location
+            if ($objectType === 'news') {
+                $news = News::where('news_id', $objectId)->first();
+                $isPromotionalEvent = $news->is_having_reward;
+
+                if ($isPromotionalEvent === 'Y') {
+                    unset($queryString['cities']);
+                    unset($queryString['country_id']);
+                    unset($queryString['location_id']);
+                }
             }
 
             $response = $mongoClient->setQueryString($queryString)
