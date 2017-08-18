@@ -325,8 +325,6 @@ class ESActivityUpdateQueue
         $esBody['mall_name'] = '[EMPTY]';
         $esBody['rating'] = '0';
 
-        $log = [$data, $esBody];
-
         if (! isset($data['extended_activity_id'])) {
             return;
         }
@@ -336,10 +334,10 @@ class ESActivityUpdateQueue
             return;
         }
 
-        $esBody['tenant_id'] = $extendedActivity->tenant_id;
-        $esBody['tenant_name'] = $extendedActivity->tenant_name;
-        $esBody['mall_id'] = $extendedActivity->mall_id;
-        $esBody['mall_name'] = $extendedActivity->mall_name;
-        $esBody['rating'] = $extendedActivity->rating;
+        $esBody['tenant_id'] = $extendedActivity->tenant_id ? $extendedActivity->tenant_id : '[EMPTY]';
+        $esBody['tenant_name'] = $extendedActivity->tenant_name ? $extendedActivity->tenant_name : '[EMPTY]';
+        $esBody['mall_id'] = $extendedActivity->mall_id ? $extendedActivity->mall_id : '[EMPTY]';
+        $esBody['mall_name'] = $extendedActivity->mall_name ? $extendedActivity->mall_name : '[EMPTY]';
+        $esBody['rating'] = trim($extendedActivity->rating) !== '' ? $extendedActivity->rating : '0';
     }
 }

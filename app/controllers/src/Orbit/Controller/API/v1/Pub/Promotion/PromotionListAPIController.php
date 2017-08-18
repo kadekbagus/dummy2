@@ -391,12 +391,15 @@ class PromotionListAPIController extends PubControllerAPI
 
             // Exclude specific document Ids, useful for some cases e.g You May Also Like
             // @todo rewrite deprected 'filtered' query to bool only
-            OrbitInput::get('excluded_ids', function($excludedIds) use (&$jsonQuery) {
+            $withAdvert = TRUE;
+            OrbitInput::get('excluded_ids', function($excludedIds) use (&$jsonQuery, &$withAdvert) {
                 $jsonExcludedIds = [];
                 foreach ($excludedIds as $excludedId) {
                     $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
                 }
                 $jsonQuery['query']['bool']['must_not'] = $jsonExcludedIds;
+
+                $withAdvert = FALSE;
             });
 
             if ($this->withoutScore) {
@@ -419,50 +422,53 @@ class PromotionListAPIController extends PubControllerAPI
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $esIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index');
             $locationId = ! empty($mallId) ? $mallId : 0;
-            $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-            // call advert before call main query
-            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs))), array('match' => array('advert_location_ids' => $locationId)), array('terms' => array('advert_type' => $advertType))))), 'sort' => $sortPage);
+			if ($withAdvert) {
+		        $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-            $jsonQuery['query']['bool']['filter'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
+		        // call advert before call main query
+		        $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs))), array('match' => array('advert_location_ids' => $locationId)), array('terms' => array('advert_type' => $advertType))))), 'sort' => $sortByPageType);
 
-            $esAdvertParam = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_promotions.index'),
-                'type'  => Config::get('orbit.elasticsearch.indices.advert_promotions.type'),
-                'body'  => json_encode($esAdvertQuery)
-            ];
+		        $jsonQuery['query']['bool']['filter'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
 
-            $advertResponse = $client->search($esAdvertParam);
-            if ($advertResponse['hits']['total'] > 0) {
-                $esIndex = $esIndex . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_promotions.index');
-                $advertList = $advertResponse['hits']['hits'];
-                $excludeId = array();
-                $withPreferred = array();
+		        $esAdvertParam = [
+		            'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_promotions.index'),
+		            'type'  => Config::get('orbit.elasticsearch.indices.advert_promotions.type'),
+		            'body'  => json_encode($esAdvertQuery)
+		        ];
 
-                foreach ($advertList as $adverts) {
-                    $advertId = $adverts['_id'];
-                    $newsId = $adverts['_source']['news_id'];
-                    if(! in_array($newsId, $excludeId)) {
-                        $excludeId[] = $newsId;
-                    } else {
-                        $excludeId[] = $advertId;
-                    }
+		        $advertResponse = $client->search($esAdvertParam);
+		        if ($advertResponse['hits']['total'] > 0) {
+		            $esIndex = $esIndex . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_promotions.index');
+		            $advertList = $advertResponse['hits']['hits'];
+		            $excludeId = array();
+		            $withPreferred = array();
 
-                    // if featured list_type check preferred too
-                    if ($list_type === 'featured') {
-                        if ($adverts['_source']['advert_type'] === 'preferred_list_regular' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
-                            if (empty($withPreferred[$newsId]) || $withPreferred[$newsId] != 'preferred_list_large') {
-                                $withPreferred[$newsId] = 'preferred_list_regular';
-                                if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
-                                    $withPreferred[$newsId] = 'preferred_list_large';
-                                }
-                            }
-                        }
-                    }
-                }
+		            foreach ($advertList as $adverts) {
+		                $advertId = $adverts['_id'];
+		                $newsId = $adverts['_source']['news_id'];
+		                if(! in_array($newsId, $excludeId)) {
+		                    $excludeId[] = $newsId;
+		                } else {
+		                    $excludeId[] = $advertId;
+		                }
 
-                $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
-            }
+		                // if featured list_type check preferred too
+		                if ($list_type === 'featured') {
+		                    if ($adverts['_source']['advert_type'] === 'preferred_list_regular' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
+		                        if (empty($withPreferred[$newsId]) || $withPreferred[$newsId] != 'preferred_list_large') {
+		                            $withPreferred[$newsId] = 'preferred_list_regular';
+		                            if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
+		                                $withPreferred[$newsId] = 'preferred_list_large';
+		                            }
+		                        }
+		                    }
+		                }
+		            }
+
+		            $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
+		        }
+			}
 
             $esParam = [
                 'index'  => $esIndex,
