@@ -95,6 +95,7 @@ class CouponListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
             $partnerToken = OrbitInput::get('token', null);
+            $viewType = OrbitInput::get('view_type', 'grid');
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -683,6 +684,7 @@ class CouponListAPIController extends PubControllerAPI
                             ->setLocation($mall)
                             ->setModuleName('Coupon')
                             ->setNotes($activityNotes)
+                            ->setObjectDisplayName($viewType)
                             ->responseOK()
                             ->save();
                     } else {
@@ -694,6 +696,7 @@ class CouponListAPIController extends PubControllerAPI
                             ->setLocation($mall)
                             ->setModuleName('Coupon')
                             ->setNotes($activityNotes)
+                            ->setObjectDisplayName($viewType)
                             ->responseOK()
                             ->save();
                     }

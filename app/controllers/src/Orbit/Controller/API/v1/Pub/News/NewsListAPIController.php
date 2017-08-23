@@ -102,6 +102,7 @@ class NewsListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
             $partnerToken = OrbitInput::get('token', null);
+            $viewType = OrbitInput::get('view_type', 'grid');
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -685,6 +686,7 @@ class NewsListAPIController extends PubControllerAPI
                             ->setLocation($mall)
                             ->setModuleName('News')
                             ->setNotes($activityNotes)
+                            ->setObjectDisplayName($viewType)
                             ->responseOK()
                             ->save();
                     } else {
@@ -696,6 +698,7 @@ class NewsListAPIController extends PubControllerAPI
                             ->setLocation($mall)
                             ->setModuleName('News')
                             ->setNotes($activityNotes)
+                            ->setObjectDisplayName($viewType)
                             ->responseOK()
                             ->save();
                     }

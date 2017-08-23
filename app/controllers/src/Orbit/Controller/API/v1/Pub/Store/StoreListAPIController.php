@@ -99,6 +99,7 @@ class StoreListAPIController extends PubControllerAPI
             $no_total_records = OrbitInput::get('no_total_records', null);
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
+            $viewType = OrbitInput::get('view_type', 'grid');
             $withCache = TRUE;
 
             // search by key word or filter or sort by flag
@@ -650,6 +651,7 @@ class StoreListAPIController extends PubControllerAPI
                             ->setLocation($mall)
                             ->setModuleName('Store')
                             ->setNotes($activityNotes)
+                            ->setObjectDisplayName($viewType)
                             ->responseOK()
                             ->save();
                     } else {
@@ -661,6 +663,7 @@ class StoreListAPIController extends PubControllerAPI
                             ->setLocation($mall)
                             ->setModuleName('Store')
                             ->setNotes($activityNotes)
+                            ->setObjectDisplayName($viewType)
                             ->responseOK()
                             ->save();
                     }

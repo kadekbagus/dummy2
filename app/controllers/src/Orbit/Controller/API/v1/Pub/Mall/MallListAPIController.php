@@ -67,6 +67,7 @@ class MallListAPIController extends PubControllerAPI
             $ul = OrbitInput::get('ul', null);
             $radius = Config::get('orbit.geo_location.distance', 10);
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
+            $viewType = OrbitInput::get('view_type', 'grid');
             $latitude = '';
             $longitude = '';
             $locationFilter = '';
@@ -395,6 +396,7 @@ class MallListAPIController extends PubControllerAPI
                         ->setObject(null)
                         ->setModuleName('Mall')
                         ->setNotes($activityNotes)
+                        ->setObjectDisplayName($viewType)
                         ->responseOK()
                         ->save();
                 }
