@@ -95,3 +95,11 @@ Route::get('/api/v1/advert-city/{search}', function()
 {
     return AdvertLocationAPIController::create()->getAdvertCities();
 })->where('search', '(list|search)');
+
+/**
+ * List/Search advert city
+ */
+Route::get('/api/v1/featured-location/{search}', function()
+{
+    return FeaturedLocationAPIController::create()->getFeaturedLocation();
+})->where('search', '(list|search)');
