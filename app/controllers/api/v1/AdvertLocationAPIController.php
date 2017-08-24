@@ -16,7 +16,7 @@ class AdvertLocationAPIController extends ControllerAPI
     protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'mall customer service', 'campaign admin'];
 
     /**
-     * GET - Get Mall (Locations) based on Advert
+     * GET - Get advert location
      *
      * @author kadek<kadek@dominopos.com>
      *

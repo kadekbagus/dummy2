@@ -31,6 +31,7 @@ return array(
     'AgeRangeAPIController' => $baseDir . '/app/controllers/api/v1/AgeRangeAPIController.php',
     'AgeRangesTableSeeder' => $baseDir . '/app/database/seeds/AgeRangesTableSeeder.php',
     'AlterActivitiesAddOsLoginTime' => $baseDir . '/app/database/migrations/2015_11_23_032746_alter_activities_add_os_login_time.php',
+    'AlterAdvertSlotLocationsAddBeginAndEndDate' => $baseDir . '/app/database/migrations/2017_08_24_082012_alter_advert_slot_locations_add_begin_and_end_date.php',
     'AlterIndexesUserSignin' => $baseDir . '/app/database/migrations/2016_01_21_230428_alter_indexes_user_signin.php',
     'AlterIssuedCouponsAddRecordExists' => $baseDir . '/app/database/migrations/2016_10_19_041235_alter_issued_coupons_add_record_exists.php',
     'AlterSessionsAddApplicationId' => $baseDir . '/app/database/migrations/2015_10_30_112636_alter_sessions_add_application_id.php',

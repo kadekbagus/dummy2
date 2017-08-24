@@ -99,7 +99,7 @@ Route::get('/api/v1/advert-city/{search}', function()
 /**
  * List/Search advert city
  */
-Route::get('/api/v1/featured-location/{search}', function()
+Route::get('/api/v1/featured/{search}', function()
 {
-    return FeaturedLocationAPIController::create()->getFeaturedLocation();
+    return FeaturedAdvertAPIController::create()->getFeaturedList();
 })->where('search', '(list|search)');
