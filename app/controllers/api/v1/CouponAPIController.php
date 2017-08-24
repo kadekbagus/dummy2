@@ -2861,7 +2861,7 @@ class CouponAPIController extends ControllerAPI
             $mediaObjectIds = (array) OrbitInput::get('promotion_id', []);
             if (! empty ($mediaObjectIds)) {
                 $mediaObjectIds = "'" . implode("', '", $mediaObjectIds) . "'";
-                $mediaJoin = " LEFT JOIN {$table_prefix}news_translations mont ON mont.coupon_translation_id = {$table_prefix}media.object_id ";
+                $mediaJoin = " LEFT JOIN {$table_prefix}coupon_translations mont ON mont.coupon_translation_id = {$table_prefix}media.object_id ";
                 $mediaOptimize = " AND object_name = 'coupon_translation' AND mont.promotion_id IN ({$mediaObjectIds}) ";
             }
 
@@ -2942,6 +2942,7 @@ class CouponAPIController extends ControllerAPI
                   })
                 ->leftJoin(DB::raw("(
                         SELECT {$table_prefix}media.* FROM {$table_prefix}media
+                        {$mediaJoin}
                         WHERE media_name_long = 'coupon_translation_image_resized_default'
                         {$mediaOptimize} ) as media
                     "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
