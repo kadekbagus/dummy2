@@ -11,6 +11,7 @@ use News;
 use Advert;
 use AdvertLocation;
 use NewsMerchant;
+use AdvertSlotLocation;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
@@ -159,6 +160,20 @@ class ESAdvertPromotionUpdateQueue
                 $featuredMallType = '';
                 $preferredGtmType = '';
                 $preferredMallType = '';
+
+                //advert slot for featured advert
+                $featuredSlot = array();
+                if ($adverts->placement_type === 'featured_list') {
+                    $slots = AdvertSlotLocation::where('advert_id', $adverts->advert_id)->where('status', 'active')->get();
+                    foreach ($slots as $slot) {
+                        $slotName = 'slot_' . $slot->location_id
+                        if ($slot->location_id === '0') {
+                            $slotName = 'slot_gtm_' . str_replace(" ", "_", trim(strtolower($slot->city), " "));
+                        }
+
+                        $featuredSlot[$slotName] = $slot->slot_number
+                    }
+                }
 
                 //advert location
                 $advertLocationIds = array();
@@ -417,7 +432,8 @@ class ESAdvertPromotionUpdateQueue
                     'advert_location_ids'  => $advertLocationIds,
                     'advert_type'          => $adverts->placement_type,
                     'location_rating'      => $locationRating,
-                    'mall_rating'          => $mallRating
+                    'mall_rating'          => $mallRating,
+                    'featured_slot'        => $featuredSlot
                 ];
 
                 $body = array_merge($body, $translationBody);
