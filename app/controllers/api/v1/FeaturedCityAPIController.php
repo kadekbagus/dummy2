@@ -23,9 +23,10 @@ class FeaturedCityAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string            `mall_country_id`               (optional) - mall country id
-     * @param string            `country_id`                    (optional) - country id
-     * @param string            `country_like`                  (optional) - country
+     * @param string            `advert_id`
+     * @param string            `featured_location`
+     * @param string            `name_like`                     (optional) - search by name
+     * @param string            `exclude_cities`                (optional) - exclude city
      * @param string            `sort_by`                       (optional) - column order by
      * @param string            `sort_mode`                     (optional) - asc or desc
      * @param integer           `take`                          (optional) - limit

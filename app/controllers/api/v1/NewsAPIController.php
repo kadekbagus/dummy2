@@ -87,7 +87,7 @@ class NewsAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-            $mall_id = OrbitInput::post('current_mall');;
+            $mall_id = OrbitInput::post('current_mall');
             $news_name = OrbitInput::post('news_name');
             $object_type = OrbitInput::post('object_type');
             $campaignStatus = OrbitInput::post('campaign_status');

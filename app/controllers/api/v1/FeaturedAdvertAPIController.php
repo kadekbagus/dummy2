@@ -23,9 +23,10 @@ class FeaturedAdvertAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string            `mall_country_id`               (optional) - mall country id
-     * @param string            `country_id`                    (optional) - country id
-     * @param string            `country_like`                  (optional) - country
+     * @param string            `featured_location`
+     * @param string            `section`
+     * @param string            `name_like`                     (optional) - search by name
+     * @param string            `advert_id`                     (optional) - advert_id
      * @param string            `sort_by`                       (optional) - column order by
      * @param string            `sort_mode`                     (optional) - asc or desc
      * @param integer           `take`                          (optional) - limit
@@ -102,12 +103,11 @@ class FeaturedAdvertAPIController extends ControllerAPI
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateNow = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
 
-            $advert = Advert::select('adverts.advert_id', 'adverts.advert_name')
+            $advert = Advert::select('adverts.advert_id', 'adverts.advert_name', 'adverts.start_date', 'adverts.end_date')
                             ->join('advert_link_types', 'advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id')
                             ->join('advert_placements', 'advert_placements.advert_placement_id', '=', 'adverts.advert_placement_id')
                             ->leftJoin('advert_locations', 'advert_locations.advert_id', '=', 'adverts.advert_id')
                             ->where('adverts.status', 'active')
-                            ->where('adverts.start_date', '<=', $dateNow)
                             ->where('adverts.end_date', '>=', $dateNow)
                             ->where('advert_placements.placement_type', 'featured_list')
                             ->where('advert_link_types.advert_type', $section)
