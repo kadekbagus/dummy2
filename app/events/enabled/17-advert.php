@@ -138,3 +138,11 @@ Event::listen('orbit.advert.postupdateadvert.after.commit', function($controller
         'advert_id' => $advert->advert_id
     ]);
 });
+
+Event::listen('orbit.advert.postupdateslot.after.commit', function($controller, $advertId)
+{
+    // Notify the queueing system to update related Elasticsearch document
+    Queue::push('Orbit\\Queue\\AdvertUpdateQueue', [
+        'advert_id' => $advertId
+    ]);
+});

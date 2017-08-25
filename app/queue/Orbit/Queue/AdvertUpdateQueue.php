@@ -223,7 +223,7 @@ class AdvertUpdateQueue
             $mallIds = array();
             $allLocation = FALSE;
             foreach ($advertLocation as $location) {
-                if ($location === '0') {
+                if ($location->location_id === '0') {
                     $allLocation = TRUE;
                     break;
                 } else {
