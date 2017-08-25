@@ -69,3 +69,9 @@ Route::get('/app/v1/featured-location/{search}', 'IntermediateAuthController@Fea
  */
 Route::get('/app/v1/featured/{search}', 'IntermediateAuthController@FeaturedAdvert_getFeaturedList')
      ->where('search', '(list|search)');
+
+/**
+ * List and/or city from advert (featured)
+ */
+Route::get('/app/v1/featured-city/{search}', 'IntermediateAuthController@FeaturedCity_getFeaturedCity')
+     ->where('search', '(list|search)');

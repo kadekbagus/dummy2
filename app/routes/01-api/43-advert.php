@@ -97,9 +97,25 @@ Route::get('/api/v1/advert-city/{search}', function()
 })->where('search', '(list|search)');
 
 /**
- * List/Search advert city
+ * List/Search featured location
+ */
+Route::get('/api/v1/featured-location/{search}', function()
+{
+    return FeaturedLocationAPIController::create()->getFeaturedLocation();
+})->where('search', '(list|search)');
+
+/**
+ * List/Search featured advert
  */
 Route::get('/api/v1/featured/{search}', function()
 {
     return FeaturedAdvertAPIController::create()->getFeaturedList();
+})->where('search', '(list|search)');
+
+/**
+ * List/Search featured advert city
+ */
+Route::get('/api/v1/featured-city/{search}', function()
+{
+    return FeaturedCityAPIController::create()->getFeaturedCity();
 })->where('search', '(list|search)');
