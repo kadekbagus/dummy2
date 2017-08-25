@@ -154,12 +154,12 @@ class FeaturedCityAPIController extends ControllerAPI
             });
 
             // exclude city
-            OrbitInput::get('cities', function ($city) use ($cities) {
-                if (! is_array($city)) {
-                    $city = (array)$city;
+            OrbitInput::get('exclude_cities', function ($excludeCities) use ($cities) {
+                if (! is_array($excludeCities)) {
+                    $excludeCities = (array)$excludeCities;
                 }
 
-                $cityName = implode("','", $city);
+                $cityName = implode("','", $excludeCities);
                 $cities->havingRaw("city not in ('{$cityName}')");
             });
 
