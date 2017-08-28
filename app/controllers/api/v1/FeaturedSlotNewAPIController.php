@@ -102,24 +102,25 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                 $totalCity = count($city);
                 for ($i = 0; $i < $totalCity; $i++) {
                     // update if row exists
-                    $newSlot = AdvertLocation::where('advert_locations.slot_type', $section)
-                                            ->where('advert_locations.location_id', $featuredLocation)
-                                            ->where('advert_locations.city', $city[$i])
-                                            ->where('advert_locations.slot_number', $slot[$i])
-                                            ->where('adverts.end_date', '>=', $dateNow)
-                                            ->fist();
+                    $newSlot = AdvertSlotLocation::where('advert_slot_locations.slot_type', $section)
+                                            ->where('advert_slot_locations.location_id', $featuredLocation)
+                                            ->where('advert_slot_locations.city', $city[$i])
+                                            ->where('advert_slot_locations.slot_number', $slot[$i])
+                                            ->where('advert_slot_locations.end_date', '>=', $dateNow)
+                                            ->first();
 
                     if (is_object($newSlot)) {
                         // check advert slot was taken or not
-                        $checkSlot = AdvertLocation::select('adverts.advert_id', 'adverts.advert_name')
-                                            ->join('adverts', 'adverts.advert_id', '=', 'advert_locations.advert_id')
+                        $checkSlot = AdvertSlotLocation::select('adverts.advert_id', 'adverts.advert_name')
+                                            ->join('adverts', 'adverts.advert_id', '=', 'advert_slot_locations.advert_id')
                                             ->where('adverts.status', 'active')
-                                            ->where('advert_locations.status', 'active')
-                                            ->where('advert_locations.slot_type', $section)
-                                            ->where('advert_locations.location_id', $featuredLocation)
-                                            ->where('advert_locations.city', $city[$i])
-                                            ->where('advert_locations.slot_number', $slot[$i])
+                                            ->where('advert_slot_locations.status', 'active')
+                                            ->where('advert_slot_locations.slot_type', $section)
+                                            ->where('advert_slot_locations.location_id', $featuredLocation)
+                                            ->where('advert_slot_locations.city', $city[$i])
+                                            ->where('advert_slot_locations.slot_number', $slot[$i])
                                             ->where('adverts.end_date', '>=', $dateNow)
+                                            ->where('advert_slot_locations.end_date', '>=', $dateNow)
                                             ->where('adverts.advert_id', '!=', $advertId)
                                             ->first();
 
@@ -146,17 +147,17 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                     $newSlot->end_date = $endDate;
                     $newSlot->status = $status;
                     $newSlot->save();
+
+                    $listNewSlot[] = $newSlot;
                 }
             }
-
-            $this->response->data = $newnews;
 
             // Commit the changes
             $this->commit();
 
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->data = null;
+            $this->response->data = $listNewSlot;
 
             Event::fire('orbit.advert.postupdateslot.after.commit', array($this, $advertId));
         } catch (ACLForbiddenException $e) {
