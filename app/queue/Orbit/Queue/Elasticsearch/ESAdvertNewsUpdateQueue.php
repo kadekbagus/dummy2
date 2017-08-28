@@ -163,16 +163,17 @@ class ESAdvertNewsUpdateQueue
                 $preferredMallType = '';
 
                 //advert slot for featured advert
-                $featuredSlot = array();
+                $featuredSlotGTM = array();
+                $featuredSlotMall = array();
                 if ($adverts->placement_type === 'featured_list') {
                     $slots = AdvertSlotLocation::where('advert_id', $adverts->advert_id)->where('status', 'active')->get();
                     foreach ($slots as $slot) {
-                        $slotName = 'slot_' . $slot->location_id;
                         if ($slot->location_id === '0') {
-                            $slotName = 'slot_gtm_' . str_replace(" ", "_", trim(strtolower($slot->city), " "));
+                            $cityName = str_replace(" ", "_", trim(strtolower($slot->city), " "));
+                            $featuredSlotGTM[$cityName] = $slot->slot_number;
+                        } else {
+                            $featuredSlotMall[$slot->location_id] = $slot->slot_number;
                         }
-
-                        $featuredSlot[$slotName] = $slot->slot_number;
                     }
                 }
 
@@ -472,7 +473,8 @@ class ESAdvertNewsUpdateQueue
                     'mall_rating'           => $mallRating,
                     'avg_general_rating'    => $averageGeneralRating,
                     'total_general_reviews' => $totalGeneralReviews,
-                    'featured_slot'         => $featuredSlot
+                    'featured_slot_gtm'     => $featuredSlotGTM,
+                    'featured_slot_mall'    => $featuredSlotMall
                 ];
 
                 $body = array_merge($body, $translationBody);
