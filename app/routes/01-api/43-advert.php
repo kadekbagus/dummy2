@@ -119,3 +119,11 @@ Route::get('/api/v1/featured-city/{search}', function()
 {
     return FeaturedCityAPIController::create()->getFeaturedCity();
 })->where('search', '(list|search)');
+
+/**
+ * Create featured advert slot
+ */
+Route::post('/api/v1/featured-slot/new', function()
+{
+    return FeaturedSlotNewAPIController::create()->postNewFeaturedSlot();
+});

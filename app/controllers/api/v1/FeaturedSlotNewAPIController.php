@@ -13,7 +13,6 @@ use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
 use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 use Carbon\Carbon as Carbon;
-use Carbon\Carbon as Carbon;
 
 class FeaturedSlotNewAPIController extends ControllerAPI
 {
@@ -35,7 +34,7 @@ class FeaturedSlotNewAPIController extends ControllerAPI
      * @return Illuminate\Support\Facades\Response
      *
      */
-    public function getFeaturedCity()
+    public function postNewFeaturedSlot()
     {
         try {
             $httpCode = 200;
