@@ -13,6 +13,7 @@ use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
 use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 use Carbon\Carbon as Carbon;
+use Carbon\Carbon as Carbon;
 
 class FeaturedSlotNewAPIController extends ControllerAPI
 {
@@ -90,13 +91,53 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateNow = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+
             // Begin database transaction
             $this->beginTransaction();
 
             if (! empty($city)) {
                 $totalCity = count($city);
                 for ($i = 0; $i < $totalCity; $i++) {
-                    $newSlot = new AdvertSlotLocation();
+                    // update if row exists
+                    $newSlot = AdvertLocation::where('advert_locations.slot_type', $section)
+                                            ->where('advert_locations.location_id', $featuredLocation)
+                                            ->where('advert_locations.city', $city[$i])
+                                            ->where('advert_locations.slot_number', $slot[$i])
+                                            ->where('adverts.end_date', '>=', $dateNow)
+                                            ->fist();
+
+                    if (is_object($newSlot)) {
+                        // check advert slot was taken or not
+                        $checkSlot = AdvertLocation::select('adverts.advert_id', 'adverts.advert_name')
+                                            ->join('adverts', 'adverts.advert_id', '=', 'advert_locations.advert_id')
+                                            ->where('adverts.status', 'active')
+                                            ->where('advert_locations.status', 'active')
+                                            ->where('advert_locations.slot_type', $section)
+                                            ->where('advert_locations.location_id', $featuredLocation)
+                                            ->where('advert_locations.city', $city[$i])
+                                            ->where('advert_locations.slot_number', $slot[$i])
+                                            ->where('adverts.end_date', '>=', $dateNow)
+                                            ->where('adverts.advert_id', '!=', $advertId)
+                                            ->first();
+
+                        if (is_object($checkSlot)) {
+                            $locationName = 'GTM';
+                            if ($featuredLocation != '0') {
+                                $mall = Mall::where('merchant_id', $featuredLocation)->first();
+                                $locationName = $mall->name;
+                            }
+
+                            $errorMessage = $section . " slot number " . $slot[$i] . " in " . $locationName . " is already taken by advert '" . $checkSlot->advert_name . "'";
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+                    } else {
+                        $newSlot = new AdvertSlotLocation();
+                    }
+
                     $newSlot->advert_id = $advertId;
                     $newSlot->location_id = $featuredLocation;
                     $newSlot->city = $city[$i];
