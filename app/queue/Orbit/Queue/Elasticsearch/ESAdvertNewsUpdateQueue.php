@@ -169,7 +169,7 @@ class ESAdvertNewsUpdateQueue
                     $slots = AdvertSlotLocation::where('advert_id', $adverts->advert_id)->where('status', 'active')->get();
                     foreach ($slots as $slot) {
                         if ($slot->location_id === '0') {
-                            $cityName = str_replace(" ", "_", trim(strtolower($slot->city), " "));
+                            $cityName = $slot->country_id . '_' . str_replace(" ", "_", trim(strtolower($slot->city), " "));
                             $featuredSlotGTM[$cityName] = $slot->slot_number;
                         } else {
                             $featuredSlotMall[$slot->location_id] = $slot->slot_number;
