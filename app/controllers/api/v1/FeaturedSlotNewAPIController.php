@@ -57,8 +57,7 @@ class FeaturedSlotNewAPIController extends ControllerAPI
             $featuredLocation = OrbitInput::post('featured_location');
             $advertId = OrbitInput::post('advert_id');
             $section = OrbitInput::post('section');
-            $city = OrbitInput::post('city', []);
-            $slot = OrbitInput::post('slot', []);
+            $slots = OrbitInput::post('slot', []);
             $startDate = OrbitInput::post('start_date');
             $endDate = OrbitInput::post('end_date');
             $status = OrbitInput::post('status', 'active');
@@ -68,7 +67,6 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                     'advert_id' => $advertId,
                     'featured_location' => $featuredLocation,
                     'section' => $section,
-                    'city' => $city,
                     'slot' => $slot,
                     'start_date' => $startDate,
                     'end_date' => $endDate
@@ -77,7 +75,6 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                     'advert_id' => 'required',
                     'featured_location' => 'required',
                     'section' => 'required',
-                    'city' => 'required',
                     'slot' => 'required',
                     'start_date' => 'required|date',
                     'end_date' => 'required|date'
@@ -98,14 +95,17 @@ class FeaturedSlotNewAPIController extends ControllerAPI
             // Begin database transaction
             $this->beginTransaction();
 
-            if (! empty($city)) {
-                $totalCity = count($city);
-                for ($i = 0; $i < $totalCity; $i++) {
-                    // update if row exists
+            if (! empty($slots)) {
+                foreach ($slots as $slot) {
+                    $data = @json_decode($slot);
+                    if (json_last_error() != JSON_ERROR_NONE) {
+                        OrbitShopAPI::throwInvalidArgument('JSON not valid');
+                    }
+
                     $newSlot = AdvertSlotLocation::where('advert_slot_locations.slot_type', $section)
                                             ->where('advert_slot_locations.location_id', $featuredLocation)
-                                            ->where('advert_slot_locations.city', $city[$i])
-                                            ->where('advert_slot_locations.slot_number', $slot[$i])
+                                            ->where('advert_slot_locations.city', $data->city)
+                                            ->where('advert_slot_locations.slot_number', $data->slot)
                                             ->where('advert_slot_locations.end_date', '>=', $dateNow)
                                             ->first();
 
@@ -117,8 +117,8 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                                             ->where('advert_slot_locations.status', 'active')
                                             ->where('advert_slot_locations.slot_type', $section)
                                             ->where('advert_slot_locations.location_id', $featuredLocation)
-                                            ->where('advert_slot_locations.city', $city[$i])
-                                            ->where('advert_slot_locations.slot_number', $slot[$i])
+                                            ->where('advert_slot_locations.city', $data->city)
+                                            ->where('advert_slot_locations.slot_number', $data->slot)
                                             ->where('adverts.end_date', '>=', $dateNow)
                                             ->where('advert_slot_locations.end_date', '>=', $dateNow)
                                             ->where('adverts.advert_id', '!=', $advertId)
@@ -131,7 +131,7 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                                 $locationName = $mall->name;
                             }
 
-                            $errorMessage = $section . " slot number " . $slot[$i] . " in " . $locationName . " is already taken by advert '" . $checkSlot->advert_name . "'";
+                            $errorMessage = $section . " slot number " . $data->slot . " in " . $locationName . " is already taken by advert '" . $checkSlot->advert_name . "'";
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
                     } else {
@@ -140,9 +140,9 @@ class FeaturedSlotNewAPIController extends ControllerAPI
 
                     $newSlot->advert_id = $advertId;
                     $newSlot->location_id = $featuredLocation;
-                    $newSlot->city = $city[$i];
+                    $newSlot->city = $data->city;
                     $newSlot->slot_type = $section;
-                    $newSlot->slot_number = $slot[$i];
+                    $newSlot->slot_number = $data->slot;
                     $newSlot->start_date = $startDate;
                     $newSlot->end_date = $endDate;
                     $newSlot->status = $status;

@@ -102,7 +102,7 @@ class FeaturedCityAPIController extends ControllerAPI
             if ($featuredLocation === '0') {
                 switch ($advert->advert_type) {
                     case 'news':
-                        $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.city, {$prefix}merchants.city) as city"))
+                        $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.city, {$prefix}merchants.city) as city, IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                         ->join('news', function ($q) {
@@ -114,7 +114,7 @@ class FeaturedCityAPIController extends ControllerAPI
                         break;
 
                     case 'promotion':
-                        $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.city, {$prefix}merchants.city) as city"))
+                        $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.city, {$prefix}merchants.city) as city, IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                         ->join('news', function ($q) {
@@ -126,7 +126,7 @@ class FeaturedCityAPIController extends ControllerAPI
                         break;
 
                     case 'coupon':
-                        $cities = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city"))
+                        $cities = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city, IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
                                         ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
@@ -136,7 +136,7 @@ class FeaturedCityAPIController extends ControllerAPI
 
                     case 'store':
                         $tenant = Tenant::select('name', 'country')->where('merchant_id', $advert->link_object_id)->first();
-                        $cities = Tenant::select(DB::raw("oms.city"))
+                        $cities = Tenant::select(DB::raw("oms.city, oms.country_id, oms.country"))
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('merchants.status', '=', 'active')
                                     ->where(DB::raw('oms.status'), '=', 'active')
@@ -145,7 +145,7 @@ class FeaturedCityAPIController extends ControllerAPI
                         break;
                 }
             } else {
-                $cities = Mall::select('city')->where('merchants.merchant_id', '=', $featuredLocation);
+                $cities = Mall::select('city', 'country_id', 'country')->where('merchants.merchant_id', '=', $featuredLocation);
             }
 
             // Filter advert by name
