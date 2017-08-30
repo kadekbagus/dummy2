@@ -55,7 +55,7 @@ class FeaturedAdvertAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $featuredLocation = OrbitInput::get('featured_location');
+            $featuredLocation = OrbitInput::get('featured_location', 'gtm');
             $section = OrbitInput::get('section');
 
             $validator = Validator::make(
@@ -111,7 +111,7 @@ class FeaturedAdvertAPIController extends ControllerAPI
                             ->where('adverts.end_date', '>=', $dateNow)
                             ->where('advert_placements.placement_type', 'featured_list')
                             ->where('advert_link_types.advert_type', $section)
-                            ->where('advert_locations.location_id', $featuredLocation)
+                            ->where('advert_locations.location_type', $featuredLocation)
                             ->groupBy('adverts.advert_id');
 
             // Filter advert by name
