@@ -149,3 +149,13 @@ Route::get('/api/v1/pub/news/rating/location', function()
 });
 
 Route::get('/app/v1/pub/news/rating/location', ['as' => 'news-rating-location', 'uses' => 'IntermediatePubAuthController@News\NewsRatingLocation_getNewsRatingLocation']);
+
+/**
+ * List of featured news
+ */
+Route::get('/api/v1/pub/news-featured/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\News\NewsFeaturedListAPIController::create()->getFeaturedNews();
+});
+
+Route::get('/app/v1/pub/news-featured/list', ['as' => 'pub-news-featured-list', 'uses' => 'IntermediatePubAuthController@News\NewsFeaturedList_getFeaturedNews']);
