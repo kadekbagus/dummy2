@@ -99,9 +99,9 @@ Route::get('/api/v1/advert-city/{search}', function()
 /**
  * List/Search featured location
  */
-Route::get('/api/v1/featured-location/{search}', function()
+Route::get('/api/v1/featured-mall/{search}', function()
 {
-    return FeaturedLocationAPIController::create()->getFeaturedLocation();
+    return FeaturedLocationMallAPIController::create()->getFeaturedLocationMall();
 })->where('search', '(list|search)');
 
 /**

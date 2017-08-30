@@ -13,7 +13,7 @@ use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
 use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 
-class FeaturedLocationAPIController extends ControllerAPI
+class FeaturedLocationMallAPIController extends ControllerAPI
 {
     protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
     /**
@@ -32,7 +32,7 @@ class FeaturedLocationAPIController extends ControllerAPI
      * @return Illuminate\Support\Facades\Response
      *
      */
-    public function getFeaturedLocation()
+    public function getFeaturedLocationMall()
     {
         try {
             $httpCode = 200;
@@ -51,6 +51,17 @@ class FeaturedLocationAPIController extends ControllerAPI
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);
             }
+
+            $advertId = OrbitInput::get('advert_id');
+
+            $validator = Validator::make(
+                array(
+                    'advert_id' => $advertId
+                ),
+                array(
+                    'advert_id' => 'required'
+                )
+            );
 
             // Get the maximum record
             $maxRecord = (int) Config::get('orbit.pagination.mall_country.max_record');
@@ -71,21 +82,59 @@ class FeaturedLocationAPIController extends ControllerAPI
                 }
             }
 
-            $mallActive = Mall::select('merchant_id', 'name')
-                            ->where('status', 'active')
-                            ->where('is_subscribed', 'Y');
+            $advert = Advert::join('advert_link_types', 'advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id')
+                            ->where('advert_id', $advertId)
+                            ->first();
 
-            $featuredLocation = DB::table(DB::raw("(({$mallActive->toSql()}) union (select '0', 'GTM')) as a"))
-                                  ->mergeBindings($mallActive->getQuery());
+            switch ($advert->advert_type) {
+                case 'news':
+                    $featuredLocation = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
+                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->join('news', function ($q) {
+                                        $q->on('news_merchant.news_id', '=', 'news.news_id')
+                                          ->on('news.object_type', '=', DB::raw("'news'"));
+                                    })
+                                    ->where('news_merchant.news_id', '=', $advert->link_object_id)
+                                    ->groupBy('mall_id');
+                    break;
 
-            // Filter mall by name
+                case 'promotion':
+                    $featuredLocation = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
+                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->join('news', function ($q) {
+                                        $q->on('news_merchant.news_id', '=', 'news.news_id')
+                                          ->on('news.object_type', '=', DB::raw("'promotion'"));
+                                    })
+                                    ->where('news_merchant.news_id', '=', $advert->link_object_id)
+                                    ->groupBy('mall_id');
+                    break;
+
+                case 'coupon':
+                    $featuredLocation = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
+                                    ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->where('promotions.promotion_id', '=', $advert->link_object_id)
+                                    ->groupBy('mall_id');
+                    break;
+
+                case 'store':
+                    $tenant = Tenant::select('name', 'country')->where('merchant_id', $advert->link_object_id)->first();
+                    $featuredLocation = Tenant::select(DB::raw("oms.merchant_id as mall_id, oms.name as mall_name"))
+                                ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                ->where('merchants.status', '=', 'active')
+                                ->where(DB::raw('oms.status'), '=', 'active')
+                                ->where('merchants.name', '=', $tenant->name)
+                                ->groupBy('mall_id');
+                    break;
+            }
+
+            // Filter advert by name
             OrbitInput::get('name_like', function ($nameLike) use ($featuredLocation) {
-                $featuredLocation->where('name', 'like', "%$nameLike%");
-            });
-
-            // Filter Mall Country by country_id
-            OrbitInput::get('merchant_id', function ($merchantId) use ($featuredLocation) {
-                $featuredLocation->where('merchant_id', $merchantId);
+                $nameLike = substr($this->quote($nameLike), 1, -1);
+                $featuredLocation->havingRaw("mall_name like '%{$nameLike}%'");
             });
 
             // Clone the query builder which still does not include the take,
