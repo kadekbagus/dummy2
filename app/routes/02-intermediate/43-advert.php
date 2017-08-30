@@ -71,6 +71,12 @@ Route::get('/app/v1/featured/{search}', 'IntermediateAuthController@FeaturedAdve
      ->where('search', '(list|search)');
 
 /**
+ * List and/or country from advert (featured)
+ */
+Route::get('/app/v1/featured-country/{search}', 'IntermediateAuthController@FeaturedCountry_getFeaturedCountry')
+     ->where('search', '(list|search)');
+
+/**
  * List and/or city from advert (featured)
  */
 Route::get('/app/v1/featured-city/{search}', 'IntermediateAuthController@FeaturedCity_getFeaturedCity')

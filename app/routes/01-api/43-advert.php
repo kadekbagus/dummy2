@@ -113,6 +113,14 @@ Route::get('/api/v1/featured/{search}', function()
 })->where('search', '(list|search)');
 
 /**
+ * List/Search featured advert country
+ */
+Route::get('/api/v1/featured-country/{search}', function()
+{
+    return FeaturedCountryAPIController::create()->getFeaturedCountry();
+})->where('search', '(list|search)');
+
+/**
  * List/Search featured advert city
  */
 Route::get('/api/v1/featured-city/{search}', function()

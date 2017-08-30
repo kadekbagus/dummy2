@@ -14,7 +14,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 use Carbon\Carbon as Carbon;
 
-class FeaturedCityAPIController extends ControllerAPI
+class FeaturedCountryAPIController extends ControllerAPI
 {
     protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
     /**
@@ -35,7 +35,7 @@ class FeaturedCityAPIController extends ControllerAPI
      * @return Illuminate\Support\Facades\Response
      *
      */
-    public function getFeaturedCity()
+    public function getFeaturedCountry()
     {
         try {
             $httpCode = 200;
@@ -57,17 +57,14 @@ class FeaturedCityAPIController extends ControllerAPI
 
             $advertId = OrbitInput::get('advert_id');
             $featuredLocation = OrbitInput::get('featured_location');
-            $countryId = OrbitInput::get('country_id');
 
             $validator = Validator::make(
                 array(
                     'advert_id' => $advertId,
-                    'country_id' => $countryId,
                     'featured_location' => $featuredLocation
                 ),
                 array(
                     'advert_id' => 'required',
-                    'country_id' => 'required',
                     'featured_location' => 'required'
                 )
             );
@@ -105,7 +102,7 @@ class FeaturedCityAPIController extends ControllerAPI
             if ($featuredLocation === '0') {
                 switch ($advert->advert_type) {
                     case 'news':
-                        $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.city, {$prefix}merchants.city) as city, IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
+                        $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                         ->join('news', function ($q) {
@@ -113,12 +110,11 @@ class FeaturedCityAPIController extends ControllerAPI
                                               ->on('news.object_type', '=', DB::raw("'news'"));
                                         })
                                         ->where('news_merchant.news_id', '=', $advert->link_object_id)
-                                        ->having('country_id', $countryId)
-                                        ->groupBy('city');
+                                        ->groupBy('country_id');
                         break;
 
                     case 'promotion':
-                        $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.city, {$prefix}merchants.city) as city, IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
+                        $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                         ->join('news', function ($q) {
@@ -126,49 +122,36 @@ class FeaturedCityAPIController extends ControllerAPI
                                               ->on('news.object_type', '=', DB::raw("'promotion'"));
                                         })
                                         ->where('news_merchant.news_id', '=', $advert->link_object_id)
-                                        ->having('country_id', $countryId)
-                                        ->groupBy('city');
+                                        ->groupBy('country_id');
                         break;
 
                     case 'coupon':
-                        $cities = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city, IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
+                        $cities = PromotionRetailer::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
                                         ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                         ->where('promotions.promotion_id', '=', $advert->link_object_id)
-                                        ->having('country_id', $countryId)
-                                        ->groupBy('city');
+                                        ->groupBy('country_id');
                         break;
 
                     case 'store':
                         $tenant = Tenant::select('name', 'country')->where('merchant_id', $advert->link_object_id)->first();
-                        $cities = Tenant::select(DB::raw("oms.city, oms.country_id, oms.country"))
+                        $cities = Tenant::select(DB::raw("oms.country_id, oms.country"))
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('merchants.status', '=', 'active')
                                     ->where(DB::raw('oms.status'), '=', 'active')
                                     ->where('merchants.name', '=', $tenant->name)
-                                    ->having('country_id', $countryId)
-                                    ->groupBy('city');
+                                    ->groupBy('country_id');
                         break;
                 }
             } else {
-                $cities = Mall::select('city', 'country_id', 'country')->where('merchants.merchant_id', '=', $featuredLocation)->where('country_id', $countryId)->groupBy('city');
+                $cities = Mall::select('country_id', 'country')->where('merchants.merchant_id', '=', $featuredLocation)->groupBy('country_id');
             }
 
-            // Filter advert by name
+            // Filter country by name
             OrbitInput::get('name_like', function ($nameLike) use ($cities) {
                 $nameLike = substr($this->quote($nameLike), 1, -1);
-                $cities->havingRaw("city like '%{$nameLike}%'");
-            });
-
-            // exclude city
-            OrbitInput::get('exclude_cities', function ($excludeCities) use ($cities) {
-                if (! is_array($excludeCities)) {
-                    $excludeCities = (array)$excludeCities;
-                }
-
-                $cityName = implode("','", $excludeCities);
-                $cities->havingRaw("city not in ('{$cityName}')");
+                $cities->havingRaw("country like '%{$nameLike}%'");
             });
 
             // Clone the query builder which still does not include the take,
