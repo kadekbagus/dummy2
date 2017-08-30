@@ -67,7 +67,7 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                     'advert_id' => $advertId,
                     'featured_location' => $featuredLocation,
                     'section' => $section,
-                    'slot' => $slot,
+                    'slot' => $slots,
                     'start_date' => $startDate,
                     'end_date' => $endDate
                 ),
@@ -96,12 +96,12 @@ class FeaturedSlotNewAPIController extends ControllerAPI
             $this->beginTransaction();
 
             if (! empty($slots)) {
-                foreach ($slots as $slot) {
-                    $data = @json_decode($slot);
-                    if (json_last_error() != JSON_ERROR_NONE) {
-                        OrbitShopAPI::throwInvalidArgument('JSON not valid');
-                    }
+                $slot = @json_decode($slots);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('JSON not valid');
+                }
 
+                foreach ($slot as $data) {
                     $newSlot = AdvertSlotLocation::where('advert_slot_locations.slot_type', $section)
                                             ->where('advert_slot_locations.location_id', $featuredLocation)
                                             ->where('advert_slot_locations.city', $data->city)
@@ -140,6 +140,7 @@ class FeaturedSlotNewAPIController extends ControllerAPI
 
                     $newSlot->advert_id = $advertId;
                     $newSlot->location_id = $featuredLocation;
+                    $newSlot->country_id = $data->country_id;
                     $newSlot->city = $data->city;
                     $newSlot->slot_type = $section;
                     $newSlot->slot_number = $data->slot;
