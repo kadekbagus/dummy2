@@ -554,6 +554,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                 $pageView = 0;
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
+                $data['is_featured'] = false;
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
                         $key = "coupon_name";
@@ -616,6 +617,10 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                         } elseif ($key === 'featured_gtm_type') {
                             $data['placement_type'] = $value;
                             $data['placement_type_orig'] = $value;
+                        }
+
+                        if ($value === 'featured_list') {
+                            $data['is_featured'] = true;
                         }
 
                         if (! empty($withPreferred[$campaignId])) {
