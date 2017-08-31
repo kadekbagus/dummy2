@@ -69,7 +69,7 @@ class NewsFeaturedListAPIController extends PubControllerAPI
 
         // Cache result of all possible calls to backend storage
         $cacheConfig = Config::get('orbit.cache.context');
-        $cacheContext = 'event-list';
+        $cacheContext = 'featured-event-list';
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
         $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-total-rec');
@@ -378,19 +378,19 @@ class NewsFeaturedListAPIController extends PubControllerAPI
             ];
             $featuredResponse = $client->search($esFeaturedParam);
 
-            $slotKey = ! empty($mallId) ? 'featured_slot_mall' : 'featured_slot_gtm';
-            $slot = array();
-            
-            $filterCity = [];
-            if (empty($mallId)) {
-                if (! empty($countryData)) {
-                    foreach ($cityFilters as $key => $value) {
-                        $filterCity[] = $countryData->country_id . "_" . str_replace(" ", "_", trim(strtolower($value), " "));
-                    }    
-                }
-            }
-
             if ($featuredResponse['hits']['total'] > 0) {
+                $slotKey = ! empty($mallId) ? 'featured_slot_mall' : 'featured_slot_gtm';
+                $slot = array();
+                
+                $filterCity = [];
+                if (empty($mallId)) {
+                    if (! empty($countryData)) {
+                        foreach ($cityFilters as $key => $value) {
+                            $filterCity[] = $countryData->country_id . "_" . str_replace(" ", "_", trim(strtolower($value), " "));
+                        }    
+                    }
+                }
+
                 $featuredlists = $featuredResponse['hits']['hits'];
                 foreach ($featuredlists as $featured) {
                     $newsAdvertId = $featured['_source']['news_id'] . "|" . $featured['_id'];
@@ -528,27 +528,12 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
             }
 
-            // sort by name or location (for featured only sort by default, because we have slot order)
             $defaultSort = $sort = array('begin_date' => array('order' => 'desc'));
-            if ($sort_by === 'location' && $lat != '' && $lon != '') {
-                $searchFlag = $searchFlag || TRUE;
-                $withCache = FALSE;
-                $sort = array('_geo_distance' => array('nested_path' => 'link_to_tenant', 'link_to_tenant.position' => array('lon' => $lon, 'lat' => $lat), 'order' => $sort_mode, 'unit' => 'km', 'distance_type' => 'plane'));
-            } elseif ($sort_by === 'created_date') {
-                $sort = array('begin_date' => array('order' => $sort_mode));
-            } elseif ($sort_by === 'updated_date') {
-                $sort = array('updated_at' => array('order' => $sort_mode));
-            } elseif ($sort_by === 'rating') {
-                $sort = array('_script' => array('script' => $scriptFieldRating, 'type' => 'number', 'order' => $sort_mode));
-            } else {
-                $sortScript =  "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
-                $sort = array('_script' => array('script' => $sortScript, 'type' => 'string', 'order' => $sort_mode));
-            }
 
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
             $sortPage = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
             
-            $sortby = array("_score", $sortPage, $sort, $defaultSort);
+            $sortby = array("_score", $sortPage, $defaultSort);
             $jsonQuery['sort'] = $sortby;
             $jsonQuery['size'] = 4;
 
@@ -732,33 +717,6 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                 $data->mall_city = $mall->city;
             }
             $data->records = $listOfRec;
-
-            // random featured adv
-            // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
-            if ($list_type === 'featured') {
-                $advertedCampaigns = array_filter($listOfRec, function($v) {
-                    return ($v['placement_type_orig'] === 'featured_list');
-                });
-
-                if (count($advertedCampaigns) > $take) {
-                    $output = array();
-                    $listSlide = array_rand($advertedCampaigns, $take);
-                    if (count($listSlide) > 1) {
-                        foreach ($listSlide as $key => $value) {
-                            $output[] = $advertedCampaigns[$value];
-                        }
-                    } else {
-                        $output = $advertedCampaigns[$listSlide];
-                    }
-                } else {
-                    $output = array_slice($listOfRec, 0, $take);
-                }
-
-                $data->returned_records = count($output);
-                $data->total_records = $records['total'];
-                $data->records = $output;
-            }
-
 
             if (OrbitInput::get('from_homepage', '') !== 'y') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
