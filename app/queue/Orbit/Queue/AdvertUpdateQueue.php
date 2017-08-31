@@ -31,8 +31,9 @@ class AdvertUpdateQueue
     public function fire($job, $data)
     {
         $advert_id = $data['advert_id'];
-        $advert = Advert::where('status', '!=', 'deleted')
-                    ->where('advert_id', $advert_id)
+        $advert = Advert::join('advert_link_types', 'advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id')
+                    ->where('adverts.status', '!=', 'deleted')
+                    ->where('adverts.advert_id', $advert_id)
                     ->first();
 
         if (! is_object($advert)) {
@@ -46,10 +47,23 @@ class AdvertUpdateQueue
 
         try {
             // update es coupon, news, and promotion
-            $this->updateESCoupon($advert);
-            $this->updateESPromotion($advert);
-            $this->updateESStore($advert);
-            $this->updateESNews($advert);
+            switch ($advert->advert_type) {
+                case 'coupon':
+                    $this->updateESCoupon($advert);
+                    break;
+
+                case 'promotion':
+                    $this->updateESPromotion($advert);
+                    break;
+
+                case 'store':
+                    $this->updateESStore($advert);
+                    break;
+
+                case 'news':
+                    $this->updateESNews($advert);
+                    break;
+            }
 
             // Safely delete the object
             $job->delete();
