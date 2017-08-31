@@ -570,6 +570,7 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                 $isHavingReward = 'N';
                 $avgGeneralRating = 0;
                 $totalGeneralReviews = 0;
+                $data['is_featured'] = false;
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === 'is_having_reward') {
                         $isHavingReward = $value;
@@ -636,6 +637,10 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                         } elseif ($key === 'featured_gtm_type') {
                             $data['placement_type'] = $value;
                             $data['placement_type_orig'] = $value;
+                        }
+
+                        if ($value === 'featured_list') {
+                            $data['is_featured'] = true;
                         }
 
                         if (! empty($withPreferred[$campaignId])) {
