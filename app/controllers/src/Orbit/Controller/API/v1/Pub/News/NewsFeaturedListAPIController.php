@@ -381,13 +381,13 @@ class NewsFeaturedListAPIController extends PubControllerAPI
             if ($featuredResponse['hits']['total'] > 0) {
                 $slotKey = ! empty($mallId) ? 'featured_slot_mall' : 'featured_slot_gtm';
                 $slot = array();
-                
+
                 $filterCity = [];
                 if (empty($mallId)) {
                     if (! empty($countryData)) {
                         foreach ($cityFilters as $key => $value) {
                             $filterCity[] = $countryData->country_id . "_" . str_replace(" ", "_", trim(strtolower($value), " "));
-                        }    
+                        }
                     }
                 }
 
@@ -399,7 +399,7 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                         if (! empty($mallId)) { // featured in mall page
                             if (! empty($featured['_source'][$slotKey][$mallId])) {
                                 $slotNumber = (int) $featured['_source'][$slotKey][$mallId];
-                                $slot[$slotNumber][] = $newsAdvertId;    
+                                $slot[$slotNumber][] = $newsAdvertId;
                             }
                         } else { // featured in gtm page
                             // looping by city
@@ -441,7 +441,7 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                     }
                 }
             }
-            
+
             // random per slot
             // slot 1
             $slotAdvertId = array();
@@ -477,20 +477,14 @@ class NewsFeaturedListAPIController extends PubControllerAPI
             $advertOnly = (count($slotNewsId) >= 4) ? TRUE : FALSE;
 
             // get preferred reguler and large and other featured
-            $esAdvertQuery = $jsonQuery;
-            $esAdvertQuery['query']['bool']['filter'][] = array('query' => array('match' => array('advert_status' => 'active')));
-            $esAdvertQuery['query']['bool']['filter'][] = array('range' => array('advert_start_date' => array('lte' => $dateTimeEs)));
-            $esAdvertQuery['query']['bool']['filter'][] = array('range' => array('advert_end_date' => array('gte' => $dateTimeEs)));
-            $esAdvertQuery['query']['bool']['filter'][] = array('match' => array('advert_location_ids' => $locationId));
-
             $advertTypeQuery = ['featured_list', 'preferred_list_regular', 'preferred_list_large'];
-            $esAdvertQuery['query']['bool']['filter'][] = array('terms' => array('advert_type' => $advertTypeQuery));
+            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs))), array('match' => array('advert_location_ids' => $locationId)), array('terms' => array('advert_type' => $advertTypeQuery))))), 'sort' => $sortByPageType);
 
             if ($advertOnly) {
                 $esAdvertQuery['query']['bool']['filter'][] = array('terms' => ['news_id' => $slotNewsId]);
             }
 
-            $esAdvertQuery["sort"] = $sortByPageType;
+            $jsonQuery['query']['bool']['filter'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
 
             $esAdvertParam = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_news.index'),
@@ -529,10 +523,9 @@ class NewsFeaturedListAPIController extends PubControllerAPI
             }
 
             $defaultSort = $sort = array('begin_date' => array('order' => 'desc'));
-
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
             $sortPage = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
-            
+
             $sortby = array("_score", $sortPage, $defaultSort);
             $jsonQuery['sort'] = $sortby;
             $jsonQuery['size'] = 4;
