@@ -478,7 +478,7 @@ class NewsFeaturedListAPIController extends PubControllerAPI
 
             // get preferred reguler and large and other featured
             $advertTypeQuery = ['featured_list', 'preferred_list_regular', 'preferred_list_large'];
-            $esAdvertQuery = array('query' => array('bool' => array('must' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs))), array('match' => array('advert_location_ids' => $locationId)), array('terms' => array('advert_type' => $advertTypeQuery))))), 'sort' => $sortByPageType);
+            $esAdvertQuery = array('query' => array('bool' => array('filter' => array( array('query' => array('match' => array('advert_status' => 'active'))), array('range' => array('advert_start_date' => array('lte' => $dateTimeEs))), array('range' => array('advert_end_date' => array('gte' => $dateTimeEs))), array('match' => array('advert_location_ids' => $locationId)), array('terms' => array('advert_type' => $advertTypeQuery))))), 'sort' => $sortByPageType);
 
             if ($advertOnly) {
                 $esAdvertQuery['query']['bool']['filter'][] = array('terms' => ['news_id' => $slotNewsId]);
