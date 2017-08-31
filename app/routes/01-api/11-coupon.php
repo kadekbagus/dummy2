@@ -304,3 +304,13 @@ Route::get('/api/v1/pub/coupon/rating/location', function()
 });
 
 Route::get('/app/v1/pub/coupon/rating/location', ['as' => 'coupon-rating-location', 'uses' => 'IntermediatePubAuthController@Coupon\CouponRatingLocation_getCouponRatingLocation']);
+
+/**
+ * List featured advert of a coupon
+ */
+Route::get('/api/v1/pub/coupon-featured/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponFeaturedListAPIController::create()->getCouponFeaturedList();
+});
+
+Route::get('/app/v1/pub/coupon-featured/list', ['as' => 'pub-coupon-featured-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponFeaturedList_getCouponFeaturedList']);
