@@ -179,36 +179,36 @@ class CouponFeaturedListAPIController extends PubControllerAPI
             }
 
             $withKeywordSearch = false;
-            OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey, &$filterKeyword)
-            {
-                $cacheKey['keyword'] = $keyword;
-                if ($keyword != '') {
-                    $searchFlag = $searchFlag || TRUE;
-                    $withKeywordSearch = true;
-                    $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.keyword', '');
+            // OrbitInput::get('keyword', function($keyword) use (&$jsonQuery, &$searchFlag, &$withScore, &$withKeywordSearch, &$cacheKey, &$filterKeyword)
+            // {
+            //     $cacheKey['keyword'] = $keyword;
+            //     if ($keyword != '') {
+            //         $searchFlag = $searchFlag || TRUE;
+            //         $withKeywordSearch = true;
+            //         $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.keyword', '');
 
-                    $priority['name'] = Config::get('orbit.elasticsearch.priority.coupons.name', '^6');
-                    $priority['object_type'] = Config::get('orbit.elasticsearch.priority.coupons.object_type', '^5');
-                    $priority['keywords'] = Config::get('orbit.elasticsearch.priority.coupons.keywords', '^4');
-                    $priority['description'] = Config::get('orbit.elasticsearch.priority.coupons.description', '^3');
-                    $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.coupons.mall_name', '^3');
-                    $priority['city'] = Config::get('orbit.elasticsearch.priority.coupons.city', '^2');
-                    $priority['province'] = Config::get('orbit.elasticsearch.priority.coupons.province', '^2');
-                    $priority['country'] = Config::get('orbit.elasticsearch.priority.coupons.country', '^2');
+            //         $priority['name'] = Config::get('orbit.elasticsearch.priority.coupons.name', '^6');
+            //         $priority['object_type'] = Config::get('orbit.elasticsearch.priority.coupons.object_type', '^5');
+            //         $priority['keywords'] = Config::get('orbit.elasticsearch.priority.coupons.keywords', '^4');
+            //         $priority['description'] = Config::get('orbit.elasticsearch.priority.coupons.description', '^3');
+            //         $priority['mall_name'] = Config::get('orbit.elasticsearch.priority.coupons.mall_name', '^3');
+            //         $priority['city'] = Config::get('orbit.elasticsearch.priority.coupons.city', '^2');
+            //         $priority['province'] = Config::get('orbit.elasticsearch.priority.coupons.province', '^2');
+            //         $priority['country'] = Config::get('orbit.elasticsearch.priority.coupons.country', '^2');
 
-                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.name'.$priority['name'], 'translation.description'.$priority['description'])))));
+            //         $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'translation', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('translation.name'.$priority['name'], 'translation.description'.$priority['description'])))));
 
-                    $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('link_to_tenant.city'.$priority['city'], 'link_to_tenant.province'.$priority['province'], 'link_to_tenant.country'.$priority['country'], 'link_to_tenant.mall_name'.$priority['mall_name'])))));
+            //         $filterKeyword['bool']['should'][] = array('nested' => array('path' => 'link_to_tenant', 'query' => array('multi_match' => array('query' => $keyword, 'fields' => array('link_to_tenant.city'.$priority['city'], 'link_to_tenant.province'.$priority['province'], 'link_to_tenant.country'.$priority['country'], 'link_to_tenant.mall_name'.$priority['mall_name'])))));
 
-                    $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
+            //         $filterKeyword['bool']['should'][] = array('multi_match' => array('query' => $keyword, 'fields' => array('object_type'.$priority['object_type'], 'keywords'.$priority['keywords'])));
 
-                    if ($shouldMatch != '') {
-                        $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
-                    }
+            //         if ($shouldMatch != '') {
+            //             $filterKeyword['bool']['minimum_should_match'] = $shouldMatch;
+            //         }
 
-                    $jsonQuery['query']['bool']['filter'][] = $filterKeyword;
-                }
-            });
+            //         $jsonQuery['query']['bool']['filter'][] = $filterKeyword;
+            //     }
+            // });
 
             OrbitInput::get('mall_id', function($mallId) use (&$jsonQuery) {
                 if (! empty($mallId)) {
@@ -218,47 +218,47 @@ class CouponFeaturedListAPIController extends PubControllerAPI
              });
 
             // filter by category_id
-            OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
-                $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.category', '');
-                $searchFlag = $searchFlag || TRUE;
-                if (! is_array($categoryIds)) {
-                    $categoryIds = (array)$categoryIds;
-                }
+            // OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
+            //     $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.coupon.category', '');
+            //     $searchFlag = $searchFlag || TRUE;
+            //     if (! is_array($categoryIds)) {
+            //         $categoryIds = (array)$categoryIds;
+            //     }
 
-                foreach ($categoryIds as $key => $value) {
-                    $categoryFilter['bool']['should'][] = array('match' => array('category_ids' => $value));
-                }
+            //     foreach ($categoryIds as $key => $value) {
+            //         $categoryFilter['bool']['should'][] = array('match' => array('category_ids' => $value));
+            //     }
 
-                if ($shouldMatch != '') {
-                    $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
-                }
-                $jsonQuery['query']['bool']['filter'][] = $categoryFilter;
-            });
+            //     if ($shouldMatch != '') {
+            //         $categoryFilter['bool']['minimum_should_match'] = $shouldMatch;
+            //     }
+            //     $jsonQuery['query']['bool']['filter'][] = $categoryFilter;
+            // });
 
-            OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
-                $cacheKey['partner_id'] = $partnerId;
-                $partnerFilter = '';
-                if (! empty($partnerId)) {
-                    $searchFlag = $searchFlag || TRUE;
-                    $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
-                                                                $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                                                                     ->where('affected_group_names.group_type', '=', 'coupon');
-                                                            })
-                                                            ->where('partner_id', $partnerId)
-                                                            ->first();
+            // OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
+            //     $cacheKey['partner_id'] = $partnerId;
+            //     $partnerFilter = '';
+            //     if (! empty($partnerId)) {
+            //         $searchFlag = $searchFlag || TRUE;
+            //         $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
+            //                                                     $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+            //                                                          ->where('affected_group_names.group_type', '=', 'coupon');
+            //                                                 })
+            //                                                 ->where('partner_id', $partnerId)
+            //                                                 ->first();
 
-                    if (is_object($partnerAffected)) {
-                        $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
-                        $partnerFilter = array('query' => array('match' => array('partner_ids' => $partnerId)));
+            //         if (is_object($partnerAffected)) {
+            //             $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
+            //             $partnerFilter = array('query' => array('match' => array('partner_ids' => $partnerId)));
 
-                        if (in_array($partnerId, $exception)) {
-                            $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
-                            $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
-                        }
-                        $jsonQuery['query']['bool']['filter'][] = $partnerFilter;
-                    }
-                }
-            });
+            //             if (in_array($partnerId, $exception)) {
+            //                 $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
+            //                 $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
+            //             }
+            //             $jsonQuery['query']['bool']['filter'][] = $partnerFilter;
+            //         }
+            //     }
+            // });
 
             // filter by location (city or user location)
             OrbitInput::get('location', function($location) use (&$jsonQuery, &$searchFlag, &$withScore, $lat, $lon, $distance, &$withCache)
