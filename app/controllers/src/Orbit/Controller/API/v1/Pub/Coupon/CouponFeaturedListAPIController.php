@@ -77,7 +77,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
             $sort_mode = OrbitInput::get('sortmode','desc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $location = OrbitInput::get('location', null);
-            $cityFilters = OrbitInput::get('cities', null);
+            $cityFilters = OrbitInput::get('cities', []);
             $countryFilter = OrbitInput::get('country', null);
             $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');

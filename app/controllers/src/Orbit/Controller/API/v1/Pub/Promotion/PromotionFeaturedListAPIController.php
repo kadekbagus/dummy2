@@ -83,7 +83,7 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
             $sort_mode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
-            $cityFilters = OrbitInput::get('cities', null);
+            $cityFilters = OrbitInput::get('cities', []);
             $countryFilter = OrbitInput::get('country', null);
             $ul = OrbitInput::get('ul', null);
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
@@ -383,6 +383,7 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
                         foreach ($cityFilters as $key => $value) {
                             $filterCity[] = $countryData->country_id . "_" . str_replace(" ", "_", trim(strtolower($value), " "));
                         }
+
                     }
                 }
 
