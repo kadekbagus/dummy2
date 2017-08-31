@@ -195,3 +195,13 @@ Route::get('/api/v1/pub/store/rating/location', function()
 });
 
 Route::get('/app/v1/pub/store/rating/location', ['as' => 'store-rating-location', 'uses' => 'IntermediatePubAuthController@Store\StoreRatingLocation_getStoreRatingLocation']);
+
+/**
+ * List featured for store
+ */
+Route::get('/api/v1/pub/store-featured/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Store\StoreFeaturedListAPIController::create()->getStoreFeaturedList();
+});
+
+Route::get('/app/v1/pub/store-featured/list', ['as' => 'pub-store-featured', 'uses' => 'IntermediatePubAuthController@Store\StoreFeaturedList_getStoreFeaturedList']);
