@@ -151,3 +151,13 @@ Route::get('/api/v1/pub/promotion/rating/location', function()
 });
 
 Route::get('/app/v1/pub/promotion/rating/location', ['as' => 'promotion-rating-location', 'uses' => 'IntermediatePubAuthController@Promotion\PromotionRatingLocation_getPromotionRatingLocation']);
+
+/**
+ * List featured advert in promotion
+ */
+Route::get('/api/v1/pub/promotion-featured/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Promotion\PromotionFeaturedListAPIController::create()->getSearchFeaturedPromotion();
+});
+
+Route::get('/app/v1/pub/promotion-featured/list', ['as' => 'pub-promotion-featured', 'uses' => 'IntermediatePubAuthController@Promotion\PromotionFeaturedList_getSearchFeaturedPromotion']);
