@@ -109,7 +109,7 @@ class FeaturedCityAPIController extends ControllerAPI
                                           ->on('news.object_type', '=', DB::raw("'news'"));
                                     })
                                     ->where('news_merchant.news_id', '=', $advert->link_object_id)
-                                    ->having('country_id', $countryId)
+                                    ->having('country_id', '=', $countryId)
                                     ->groupBy('city');
                     break;
 
@@ -122,7 +122,7 @@ class FeaturedCityAPIController extends ControllerAPI
                                           ->on('news.object_type', '=', DB::raw("'promotion'"));
                                     })
                                     ->where('news_merchant.news_id', '=', $advert->link_object_id)
-                                    ->having('country_id', $countryId)
+                                    ->having('country_id', '=', $countryId)
                                     ->groupBy('city');
                     break;
 
@@ -132,7 +132,7 @@ class FeaturedCityAPIController extends ControllerAPI
                                     ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->where('promotions.promotion_id', '=', $advert->link_object_id)
-                                    ->having('country_id', $countryId)
+                                    ->having('country_id', '=', $countryId)
                                     ->groupBy('city');
                     break;
 
@@ -143,7 +143,7 @@ class FeaturedCityAPIController extends ControllerAPI
                                 ->where('merchants.status', '=', 'active')
                                 ->where(DB::raw('oms.status'), '=', 'active')
                                 ->where('merchants.name', '=', $tenant->name)
-                                ->having('country_id', $countryId)
+                                ->having('country_id', '=', $countryId)
                                 ->groupBy('city');
                     break;
             }
