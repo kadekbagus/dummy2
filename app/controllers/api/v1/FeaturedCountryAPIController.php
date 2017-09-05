@@ -176,13 +176,13 @@ class FeaturedCountryAPIController extends ControllerAPI
             $cities->skip($skip);
 
             // Default sort by
-            $sortBy = 'city';
+            $sortBy = 'country';
             // Default sort mode
             $sortMode = 'asc';
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'city' => 'city'
+                    'country' => 'country'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
