@@ -173,7 +173,7 @@ class FeaturedLocationMallAPIController extends ControllerAPI
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'name' => 'name'
+                    'name' => 'mall_name'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
