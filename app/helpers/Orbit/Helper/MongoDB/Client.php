@@ -5,9 +5,12 @@
  * @author Ahmad <ahmad@dominopos.com>
  */
 use \GuzzleHttp\Client as Guzzle;
+use Orbit\Helper\Exception\OrbitCustomException;
 
 class Client
 {
+    const CURL_CONNECT_ERROR_CODE = 8701;
+
     /**
      * The main config
      *
@@ -149,26 +152,30 @@ class Client
      */
     public function request($method='GET')
     {
-        $acceptedMethods = ['GET', 'POST', 'DELETE', 'PUT'];
-        if (! in_array($method, $acceptedMethods)) {
-            throw new Exception("Invalid HTTP method.", 1);
+        try {
+            $acceptedMethods = ['GET', 'POST', 'DELETE', 'PUT'];
+            if (! in_array($method, $acceptedMethods)) {
+                throw new Exception("Invalid HTTP method.", 1);
+            }
+
+            $options = [];
+            $options['query'] = $this->queryString;
+            if ($this->customQuery) {
+                $this->endpoint = (! empty($this->queryString)) ? $this->endpoint . '&' . $this->queryString : $this->endpoint;
+                unset($options['query']);
+            }
+
+            $options['verify'] = false;
+            if ($method !== 'GET') {
+                $options['body'] = $this->body;
+                $options['form_params'] = $this->formParam;
+            }
+
+            $response = $this->client->request($method, $this->endpoint, $options);
+
+            return json_decode($response->getBody()->getContents());
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            throw new OrbitCustomException('cURL connection failed', Client::CURL_CONNECT_ERROR_CODE, NULL);
         }
-
-        $options = [];
-        $options['query'] = $this->queryString;
-        if ($this->customQuery) {
-            $this->endpoint = (! empty($this->queryString)) ? $this->endpoint . '&' . $this->queryString : $this->endpoint;
-            unset($options['query']);
-        }
-
-        $options['verify'] = false;
-        if ($method !== 'GET') {
-            $options['body'] = $this->body;
-            $options['form_params'] = $this->formParam;
-        }
-
-        $response = $this->client->request($method, $this->endpoint, $options);
-
-        return json_decode($response->getBody()->getContents());
     }
 }
