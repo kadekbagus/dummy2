@@ -134,8 +134,10 @@ class FeaturedLocationMallAPIController extends ControllerAPI
 
             // Filter advert by name
             OrbitInput::get('name_like', function ($nameLike) use ($featuredLocation) {
-                $nameLike = substr($this->quote($nameLike), 1, -1);
-                $featuredLocation->havingRaw("mall_name like '%{$nameLike}%'");
+                if (! empty($nameLike)) {
+                    $nameLike = substr($this->quote($nameLike), 1, -1);
+                    $featuredLocation->havingRaw("mall_name like '%{$nameLike}%'");
+                }
             });
 
             // Clone the query builder which still does not include the take,
@@ -167,7 +169,7 @@ class FeaturedLocationMallAPIController extends ControllerAPI
             $featuredLocation->skip($skip);
 
             // Default sort by
-            $sortBy = 'name';
+            $sortBy = 'mall_name';
             // Default sort mode
             $sortMode = 'asc';
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {

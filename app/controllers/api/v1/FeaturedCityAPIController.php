@@ -150,8 +150,10 @@ class FeaturedCityAPIController extends ControllerAPI
 
             // Filter advert by name
             OrbitInput::get('name_like', function ($nameLike) use ($cities) {
-                $nameLike = substr($this->quote($nameLike), 1, -1);
-                $cities->havingRaw("city like '%{$nameLike}%'");
+                if (! empty($nameLike)) {
+                    $nameLike = substr($this->quote($nameLike), 1, -1);
+                    $cities->havingRaw("city like '%{$nameLike}%'");
+                }
             });
 
             // exclude city
