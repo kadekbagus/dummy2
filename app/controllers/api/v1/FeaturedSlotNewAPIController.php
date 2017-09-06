@@ -101,6 +101,8 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument('JSON not valid');
                 }
 
+                $cityList = array();
+
                 foreach ($slot as $data) {
                     $location = '0';
                     $locationName = 'GTM';
@@ -121,6 +123,13 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                         $city = $data->city;
                         $country = $data->country_id;
                     }
+
+                    if (in_array($city, $cityList)) {
+                        $cityErrorMessage = "Duplicate city " . $city
+                        OrbitShopAPI::throwInvalidArgument($cityErrorMessage);
+                    }
+
+                    $cityList[] = $city;
 
                     $newSlot = AdvertSlotLocation::where('advert_slot_locations.slot_type', $section)
                                             ->where('advert_slot_locations.location_id', $location)
