@@ -102,9 +102,29 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                 }
 
                 foreach ($slot as $data) {
+                    $location = '0';
+                    $locationName = 'GTM';
+                    $city = '';
+                    $country = '';
+
+                    if ($featuredLocation === 'mall') {
+                        $location = $data->mall_id;
+                        $mall = Mall::where('merchant_id', $location)->first();
+                        if (! is_object($mall)) {
+                            OrbitShopAPI::throwInvalidArgument('mall not found');
+                        }
+
+                        $locationName = $mall->name;
+                        $city = $mall->city;
+                        $country = $mall->country_id;
+                    } else {
+                        $city = $data->city;
+                        $country = $data->country_id;
+                    }
+
                     $newSlot = AdvertSlotLocation::where('advert_slot_locations.slot_type', $section)
-                                            ->where('advert_slot_locations.location_id', $featuredLocation)
-                                            ->where('advert_slot_locations.city', $data->city)
+                                            ->where('advert_slot_locations.location_id', $location)
+                                            ->where('advert_slot_locations.city', $city)
                                             ->where('advert_slot_locations.slot_number', $data->slot)
                                             ->where('advert_slot_locations.end_date', '>=', $dateNow)
                                             ->first();
@@ -116,8 +136,8 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                                             ->where('adverts.status', 'active')
                                             ->where('advert_slot_locations.status', 'active')
                                             ->where('advert_slot_locations.slot_type', $section)
-                                            ->where('advert_slot_locations.location_id', $featuredLocation)
-                                            ->where('advert_slot_locations.city', $data->city)
+                                            ->where('advert_slot_locations.location_id', $location)
+                                            ->where('advert_slot_locations.city', $city)
                                             ->where('advert_slot_locations.slot_number', $data->slot)
                                             ->where('adverts.end_date', '>=', $dateNow)
                                             ->where('advert_slot_locations.end_date', '>=', $dateNow)
@@ -125,12 +145,6 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                                             ->first();
 
                         if (is_object($checkSlot)) {
-                            $locationName = 'GTM';
-                            if ($featuredLocation != '0') {
-                                $mall = Mall::where('merchant_id', $featuredLocation)->first();
-                                $locationName = $mall->name;
-                            }
-
                             $errorMessage = $section . " slot number " . $data->slot . " in " . $locationName . " is already taken by advert '" . $checkSlot->advert_name . "'";
                             OrbitShopAPI::throwInvalidArgument($errorMessage);
                         }
@@ -139,9 +153,9 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                     }
 
                     $newSlot->advert_id = $advertId;
-                    $newSlot->location_id = $featuredLocation;
-                    $newSlot->country_id = $data->country_id;
-                    $newSlot->city = $data->city;
+                    $newSlot->location_id = $location;
+                    $newSlot->country_id = $country;
+                    $newSlot->city = $city;
                     $newSlot->slot_type = $section;
                     $newSlot->slot_number = $data->slot;
                     $newSlot->start_date = $startDate;

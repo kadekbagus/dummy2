@@ -82,6 +82,7 @@ class FeaturedLocationMallAPIController extends ControllerAPI
                 }
             }
 
+            $prefix = DB::getTablePrefix();
             $advert = Advert::join('advert_link_types', 'advert_link_types.advert_link_type_id', '=', 'adverts.advert_link_type_id')
                             ->where('advert_id', $advertId)
                             ->first();
