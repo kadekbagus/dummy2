@@ -496,7 +496,7 @@ class NewsFeaturedListAPIController extends PubControllerAPI
 
             if ($advertResponse['hits']['total'] > 0) {
                 $advertList = $advertResponse['hits']['hits'];
-                $excludeId = array_merge($slotNewsId);
+                $excludeId = array();
                 $withPreferred = array();
 
                 foreach ($advertList as $adverts) {
