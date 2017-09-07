@@ -111,7 +111,7 @@ class FeaturedAdvertAPIController extends ControllerAPI
                             ->where('adverts.end_date', '>=', $dateNow)
                             ->where('advert_placements.placement_type', 'featured_list')
                             ->where('advert_link_types.advert_type', $section)
-                            ->where(function ($query) {
+                            ->where(function ($query) use ($featuredLocation) {
                                 $query->where('advert_locations.location_type', $featuredLocation)
                                       ->orWhere('adverts.is_all_location', '=', 'Y');
                             })
