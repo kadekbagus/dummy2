@@ -134,7 +134,7 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                     $newSlot = AdvertSlotLocation::where('advert_slot_locations.slot_type', $section)
                                             ->where('advert_slot_locations.location_id', $location)
                                             ->where('advert_slot_locations.city', $city)
-                                            ->where('advert_slot_locations.slot_number', $data->slot)
+                                            ->where('advert_slot_locations.advert_id', $advertId)
                                             ->where('advert_slot_locations.end_date', '>=', $dateNow)
                                             ->first();
 
