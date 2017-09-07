@@ -125,7 +125,7 @@ class FeaturedSlotNewAPIController extends ControllerAPI
                     }
 
                     if (in_array($city, $cityList)) {
-                        $cityErrorMessage = "Duplicate city " . $city
+                        $cityErrorMessage = "Duplicate city " . $city;
                         OrbitShopAPI::throwInvalidArgument($cityErrorMessage);
                     }
 
