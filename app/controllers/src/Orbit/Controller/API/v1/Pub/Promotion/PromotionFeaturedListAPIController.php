@@ -525,6 +525,14 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
             $jsonQuery['sort'] = $sortby;
             $jsonQuery['size'] = 4;
 
+            // boost slot
+            $boost = [100, 90, 80, 70];
+            $i = 0;
+            foreach ($slotNewsId as $newsIdBoost) {
+                $jsonQuery['query']['bool']['should'][] = array('match' => array('news_id' => array('query' => $newsIdBoost, 'boost' => $boost[$i])));
+                $i += 1;
+            }
+
             $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_promotions.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.promotions.type'),

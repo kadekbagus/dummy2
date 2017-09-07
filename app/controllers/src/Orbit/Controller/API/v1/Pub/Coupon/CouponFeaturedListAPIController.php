@@ -523,6 +523,14 @@ class CouponFeaturedListAPIController extends PubControllerAPI
             $jsonQuery['sort'] = $sortby;
             $jsonQuery['size'] = 4;
 
+            // boost slot
+            $boost = [100, 90, 80, 70];
+            $i = 0;
+            foreach ($slotCouponId as $couponIdBoost) {
+                $jsonQuery['query']['bool']['should'][] = array('match' => array('promotion_id' => array('query' => $couponIdBoost, 'boost' => $boost[$i])));
+                $i += 1;
+            }
+
             $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),

@@ -542,6 +542,14 @@ class StoreFeaturedListAPIController extends PubControllerAPI
             $jsonQuery['sort'] = $sortby;
             $jsonQuery['size'] = 4;
 
+            // boost slot
+            $boost = [100, 90, 80, 70];
+            $i = 0;
+            foreach ($slotStoreId as $storeIdBoost) {
+                $jsonQuery['query']['bool']['should'][] = array('match' => array('merchant_id' => array('query' => $storeIdBoost, 'boost' => $boost[$i])));
+                $i += 1;
+            }
+
             $esParam = [
                 'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
