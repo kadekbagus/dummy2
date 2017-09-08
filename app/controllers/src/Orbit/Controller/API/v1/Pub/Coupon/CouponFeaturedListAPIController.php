@@ -429,7 +429,26 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                             }
 
                             if (! empty($minimSlot)) {
-                                $slot[$minimSlot][] = $minimSlotCouponId;
+                                $idCampaign = explode('|', $minimSlotCouponId);
+                                $isFound = false;
+                                for ($i = 1; $i <= 4; $i++) {
+                                    if (! empty($slot[$i])) {
+                                        foreach ($slot[$i] as $key => $value) {
+                                            $idCampaignInSlot = explode('|', $value);
+                                            if ($idCampaignInSlot[0] === $idCampaign[0]) {
+                                                $isFound = true;
+                                                if ($i > $minimSlot) {
+                                                    unset($slot[$i][$key]);
+                                                    $slot[$minimSlot][] = $minimSlotCouponId;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (! $isFound) {
+                                    $slot[$minimSlot][] = $minimSlotCouponId;
+                                }
                             }
                         }
                     }

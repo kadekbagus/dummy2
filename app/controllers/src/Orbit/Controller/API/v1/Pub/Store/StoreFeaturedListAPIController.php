@@ -448,7 +448,26 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                             }
 
                             if (! empty($minimSlot)) {
-                                $slot[$minimSlot][] = $minimSlotStoreId;
+                                $idCampaign = explode('|', $minimSlotStoreId);
+                                $isFound = false;
+                                for ($i = 1; $i <= 4; $i++) {
+                                    if (! empty($slot[$i])) {
+                                        foreach ($slot[$i] as $key => $value) {
+                                            $idCampaignInSlot = explode('|', $value);
+                                            if ($idCampaignInSlot[0] === $idCampaign[0]) {
+                                                $isFound = true;
+                                                if ($i > $minimSlot) {
+                                                    unset($slot[$i][$key]);
+                                                    $slot[$minimSlot][] = $minimSlotStoreId;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (! $isFound) {
+                                    $slot[$minimSlot][] = $minimSlotStoreId;
+                                }
                             }
                         }
                     }

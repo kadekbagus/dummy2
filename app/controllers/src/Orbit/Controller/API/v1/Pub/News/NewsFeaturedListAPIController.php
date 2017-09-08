@@ -435,7 +435,26 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                             }
 
                             if (! empty($minimSlot)) {
-                                $slot[$minimSlot][] = $minimSlotNewsId;
+                                $idCampaign = explode('|', $minimSlotNewsId);
+                                $isFound = false;
+                                for ($i = 1; $i <= 4; $i++) {
+                                    if (! empty($slot[$i])) {
+                                        foreach ($slot[$i] as $key => $value) {
+                                            $idCampaignInSlot = explode('|', $value);
+                                            if ($idCampaignInSlot[0] === $idCampaign[0]) {
+                                                $isFound = true;
+                                                if ($i > $minimSlot) {
+                                                    unset($slot[$i][$key]);
+                                                    $slot[$minimSlot][] = $minimSlotNewsId;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (! $isFound) {
+                                    $slot[$minimSlot][] = $minimSlotNewsId;
+                                }
                             }
                         }
                     }
