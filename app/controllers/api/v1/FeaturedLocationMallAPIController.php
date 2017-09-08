@@ -135,9 +135,9 @@ class FeaturedLocationMallAPIController extends ControllerAPI
                 }
             } else {
                 $featuredLocation = AdvertLocation::select(DB::raw("{$prefix}merchants.merchant_id as mall_id, {$prefix}merchants.name as mall_name"))
-                                                        ->join('merchants', 'merchants.merchant_id', '=', 'advert_locations.location_id')
-                                                        ->where('advert_locations.location_id', '!=', '0')
-                                                        ->where('advert_locations.location_id', $advertId)
+                                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'advert_locations.location_id')
+                                                        ->where('advert_locations.location_type', 'mall')
+                                                        ->where('advert_locations.advert_id', $advertId)
                                                         ->groupBy('mall_id');
             }
 
