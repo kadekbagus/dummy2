@@ -545,7 +545,7 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
             $jsonQuery['size'] = 4;
 
             // boost slot
-            $boost = [100, 90, 80, 70];
+            $boost = [100, 75, 50, 25];
             $i = 0;
             foreach ($slotNewsId as $newsIdBoost) {
                 $jsonQuery['query']['bool']['should'][] = array('match' => array('news_id' => array('query' => $newsIdBoost, 'boost' => $boost[$i])));
