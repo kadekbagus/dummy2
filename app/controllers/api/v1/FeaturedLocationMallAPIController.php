@@ -87,49 +87,58 @@ class FeaturedLocationMallAPIController extends ControllerAPI
                             ->where('advert_id', $advertId)
                             ->first();
 
-            switch ($advert->advert_type) {
-                case 'news':
-                    $featuredLocation = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->join('news', function ($q) {
-                                        $q->on('news_merchant.news_id', '=', 'news.news_id')
-                                          ->on('news.object_type', '=', DB::raw("'news'"));
-                                    })
-                                    ->where('news_merchant.news_id', '=', $advert->link_object_id)
-                                    ->groupBy('mall_id');
-                    break;
+            if ($advert->is_all_location === 'Y') {
+                switch ($advert->advert_type) {
+                    case 'news':
+                        $featuredLocation = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
+                                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                                        ->join('news', function ($q) {
+                                                            $q->on('news_merchant.news_id', '=', 'news.news_id')
+                                                              ->on('news.object_type', '=', DB::raw("'news'"));
+                                                        })
+                                                        ->where('news_merchant.news_id', '=', $advert->link_object_id)
+                                                        ->groupBy('mall_id');
 
-                case 'promotion':
-                    $featuredLocation = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->join('news', function ($q) {
-                                        $q->on('news_merchant.news_id', '=', 'news.news_id')
-                                          ->on('news.object_type', '=', DB::raw("'promotion'"));
-                                    })
-                                    ->where('news_merchant.news_id', '=', $advert->link_object_id)
-                                    ->groupBy('mall_id');
-                    break;
+                        break;
 
-                case 'coupon':
-                    $featuredLocation = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
-                                    ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->where('promotions.promotion_id', '=', $advert->link_object_id)
-                                    ->groupBy('mall_id');
-                    break;
+                    case 'promotion':
+                        $featuredLocation = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
+                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                        ->join('news', function ($q) {
+                                            $q->on('news_merchant.news_id', '=', 'news.news_id')
+                                              ->on('news.object_type', '=', DB::raw("'promotion'"));
+                                        })
+                                        ->where('news_merchant.news_id', '=', $advert->link_object_id)
+                                        ->groupBy('mall_id');
+                        break;
 
-                case 'store':
-                    $tenant = Tenant::select('name', 'country')->where('merchant_id', $advert->link_object_id)->first();
-                    $featuredLocation = Tenant::select(DB::raw("oms.merchant_id as mall_id, oms.name as mall_name"))
-                                ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                ->where('merchants.status', '=', 'active')
-                                ->where(DB::raw('oms.status'), '=', 'active')
-                                ->where('merchants.name', '=', $tenant->name)
-                                ->groupBy('mall_id');
-                    break;
+                    case 'coupon':
+                        $featuredLocation = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
+                                        ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                        ->where('promotions.promotion_id', '=', $advert->link_object_id)
+                                        ->groupBy('mall_id');
+                        break;
+
+                    case 'store':
+                        $tenant = Tenant::select('name', 'country')->where('merchant_id', $advert->link_object_id)->first();
+                        $featuredLocation = Tenant::select(DB::raw("oms.merchant_id as mall_id, oms.name as mall_name"))
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->where('merchants.status', '=', 'active')
+                                    ->where(DB::raw('oms.status'), '=', 'active')
+                                    ->where('merchants.name', '=', $tenant->name)
+                                    ->groupBy('mall_id');
+                        break;
+                }
+            } else {
+                $featuredLocation = AdvertLocation::select(DB::raw("{$prefix}merchants.merchant_id as mall_id, {$prefix}merchants.name as mall_name"))
+                                                        ->join('merchants', 'merchants.merchant_id', '=', 'advert_locations.location_id')
+                                                        ->where('advert_locations.location_id', '!=', '0')
+                                                        ->where('advert_locations.location_id', $advertId)
+                                                        ->groupBy('mall_id');
             }
 
             // Filter advert by name
