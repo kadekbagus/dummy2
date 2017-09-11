@@ -652,6 +652,8 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                     if ($list_type === 'featured') {
                         if (in_array($campaignId, $slotNewsId) || in_array($campaignId, $featuredId)) {
                             $data['is_featured'] = true;
+                            $data['placement_type'] = 'featured_list';
+                            $data['placement_type_orig'] = 'featured_list';
                         }
 
                         if (! empty($withPreferred[$campaignId])) {

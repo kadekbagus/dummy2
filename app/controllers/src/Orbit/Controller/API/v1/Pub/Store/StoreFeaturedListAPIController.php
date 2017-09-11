@@ -640,6 +640,8 @@ class StoreFeaturedListAPIController extends PubControllerAPI
 
                         if (in_array($storeId, $slotStoreId) || in_array($storeId, $featuredId)) {
                             $data['is_featured'] = true;
+                            $data['placement_type'] = 'featured_list';
+                            $data['placement_type_orig'] = 'featured_list';
                         }
 
                         if (! empty($withPreferred[$storeId])) {
