@@ -115,7 +115,7 @@ class FeaturedLocationMallAPIController extends ControllerAPI
                         break;
 
                     case 'coupon':
-                        $featuredLocation = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
+                        $featuredLocation = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}merchants.object_type = 'tenant', oms.name, {$prefix}merchants.name) as mall_name"))
                                         ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
