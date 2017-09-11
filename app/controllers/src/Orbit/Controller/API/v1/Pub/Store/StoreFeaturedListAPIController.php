@@ -524,12 +524,12 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 'body'  => json_encode($esAdvertQuery)
             ];
 
+            $featuredId = array();
             $advertResponse = $client->search($esAdvertParam);
             if ($advertResponse['hits']['total'] > 0) {
                 $advertList = $advertResponse['hits']['hits'];
                 $excludeId = array();
                 $withPreferred = array();
-                $featuredId = array();
 
                 foreach ($advertList as $adverts) {
                     $advertId = $adverts['_id'];

@@ -512,12 +512,11 @@ class NewsFeaturedListAPIController extends PubControllerAPI
             ];
 
             $advertResponse = $client->search($esAdvertParam);
-
+            $featuredId = array();
             if ($advertResponse['hits']['total'] > 0) {
                 $advertList = $advertResponse['hits']['hits'];
                 $excludeId = array();
                 $withPreferred = array();
-                $featuredId = array();
 
                 foreach ($advertList as $adverts) {
                     $advertId = $adverts['_id'];
