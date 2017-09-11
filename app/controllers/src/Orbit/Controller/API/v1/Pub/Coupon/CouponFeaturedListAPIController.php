@@ -554,7 +554,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
             }
 
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),
                 'body' => json_encode($jsonQuery)
             ];

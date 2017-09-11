@@ -555,7 +555,7 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
             }
 
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_promotions.index'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.promotions.type'),
                 'body' => json_encode($jsonQuery)
             ];

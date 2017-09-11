@@ -560,7 +560,7 @@ class NewsFeaturedListAPIController extends PubControllerAPI
             }
 
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_news.index'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.news.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.news.type'),
                 'body' => json_encode($jsonQuery)
             ];

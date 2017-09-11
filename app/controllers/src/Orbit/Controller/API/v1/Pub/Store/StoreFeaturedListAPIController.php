@@ -572,7 +572,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
             }
 
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.stores.type', 'basic'),
                 'body' => json_encode($jsonQuery)
             ];
