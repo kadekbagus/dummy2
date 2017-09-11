@@ -499,7 +499,7 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
                 $esAdvertQuery['query']['bool']['filter'][] = array('terms' => ['news_id' => $slotNewsId]);
             }
 
-            $jsonQuery['query']['bool']['filter'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
+            // $jsonQuery['query']['bool']['filter'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
 
             $esAdvertParam = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_promotions.index'),
@@ -512,14 +512,16 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
                 $advertList = $advertResponse['hits']['hits'];
                 $excludeId = array();
                 $withPreferred = array();
+                $featuredId = array();
 
                 foreach ($advertList as $adverts) {
                     $advertId = $adverts['_id'];
                     $newsId = $adverts['_source']['news_id'];
-                    if(! in_array($newsId, $excludeId)) {
-                        $excludeId[] = $newsId;
-                    } elseif (! in_array($advertId, $excludeId)) {
-                        $excludeId[] = $advertId;
+                    if ($adverts['_source']['advert_type'] === 'featured_list') {
+                        if (! in_array($newsId, $slotNewsId)) {
+                            $featuredId[] = $newsId;
+                            $jsonQuery['query']['bool']['should'][] = array('match' => array('news_id' => array('query' => $newsId, 'boost' => 100)));
+                        }
                     }
 
                     // if featured list_type check preferred too
@@ -545,7 +547,7 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
             $jsonQuery['size'] = 4;
 
             // boost slot
-            $boost = [400, 300, 200, 100];
+            $boost = [500, 400, 300, 200];
             $i = 0;
             foreach ($slotNewsId as $newsIdBoost) {
                 $jsonQuery['query']['bool']['should'][] = array('match' => array('news_id' => array('query' => $newsIdBoost, 'boost' => $boost[$i])));
@@ -584,6 +586,8 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
                 $data['placement_type_orig'] = null;
                 $data['is_featured'] = false;
                 foreach ($record['_source'] as $key => $value) {
+                    $campaignId = $record['_source']['news_id'];
+
                     if ($key === "name") {
                         $key = "news_name";
                     }
@@ -635,33 +639,13 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
 
                     // advert type
                     if ($list_type === 'featured') {
-                        if ($key === 'news_id') {
-                            $campaignId = $value;
-                        }
-
-                        if (! empty($mallId) && $key === 'featured_mall_type') {
-                            $data['placement_type'] = $value;
-                            $data['placement_type_orig'] = $value;
-                        } elseif ($key === 'featured_gtm_type') {
-                            $data['placement_type'] = $value;
-                            $data['placement_type_orig'] = $value;
-                        }
-
-                        if ($value === 'featured_list') {
+                        if (in_array($campaignId, $slotNewsId) || in_array($campaignId, $featuredId)) {
                             $data['is_featured'] = true;
                         }
 
                         if (! empty($withPreferred[$campaignId])) {
                             $data['placement_type'] = $withPreferred[$campaignId];
                             $data['placement_type_orig'] = $withPreferred[$campaignId];
-                        }
-                    } elseif ($list_type === 'preferred') {
-                        if (! empty($mallId) && $key === 'preferred_mall_type') {
-                            $data['placement_type'] = $value;
-                            $data['placement_type_orig'] = $value;
-                        } elseif ($key === 'preferred_gtm_type') {
-                            $data['placement_type'] = $value;
-                            $data['placement_type_orig'] = $value;
                         }
                     }
 
