@@ -586,7 +586,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                 $data['placement_type_orig'] = null;
                 $data['is_featured'] = false;
                 foreach ($record['_source'] as $key => $value) {
-                    $campaignId = $record['_source']['news_id'];
+                    $campaignId = $record['_source']['promotion_id'];
 
                     if ($key === "name") {
                         $key = "coupon_name";
