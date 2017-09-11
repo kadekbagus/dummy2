@@ -562,7 +562,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
             $jsonQuery['size'] = 4;
 
             // boost slot
-            $boost = [100, 75, 50, 25];
+            $boost = [400, 300, 200, 100];
             $i = 0;
             foreach ($slotStoreId as $storeIdBoost) {
                 $jsonQuery['query']['bool']['should'][] = array('match' => array('merchant_id' => array('query' => $storeIdBoost, 'boost' => $boost[$i])));

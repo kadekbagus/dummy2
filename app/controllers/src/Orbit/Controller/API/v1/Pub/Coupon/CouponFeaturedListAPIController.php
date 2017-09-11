@@ -543,7 +543,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
             $jsonQuery['size'] = 4;
 
             // boost slot
-            $boost = [100, 75, 50, 25];
+            $boost = [400, 300, 200, 100];
             $i = 0;
             foreach ($slotCouponId as $couponIdBoost) {
                 $jsonQuery['query']['bool']['should'][] = array('match' => array('promotion_id' => array('query' => $couponIdBoost, 'boost' => $boost[$i])));
