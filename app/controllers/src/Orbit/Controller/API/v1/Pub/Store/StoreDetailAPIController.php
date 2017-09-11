@@ -20,7 +20,7 @@ use Language;
 use Activity;
 use Lang;
 use Tenant;
-use Orbit\Helper\Exception\OrbitCustomException;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class StoreDetailAPIController extends PubControllerAPI
 {
