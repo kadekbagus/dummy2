@@ -400,7 +400,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                             $minimSlot = null;
                             $minimSlotCouponId = null;
                             foreach ($featured['_source'][$slotKey] as $city => $value) {
-                                if (! empty($filterCIty)) { // if filter by city
+                                if (! empty($filterCity)) { // if filter by city
                                     if (in_array($city, $filterCity)) {
                                         $slotNumber = (int) $featured['_source'][$slotKey][$city];
                                         if (empty($minimSlot) || $slotNumber <= $minimSlot) {
