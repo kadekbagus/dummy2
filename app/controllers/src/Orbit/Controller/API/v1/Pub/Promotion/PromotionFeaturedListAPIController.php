@@ -519,8 +519,10 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
                     $newsId = $adverts['_source']['news_id'];
                     if ($adverts['_source']['advert_type'] === 'featured_list') {
                         if (! in_array($newsId, $slotNewsId)) {
-                            $featuredId[] = $newsId;
-                            $jsonQuery['query']['bool']['should'][] = array('match' => array('news_id' => array('query' => $newsId, 'boost' => 100)));
+                            if (! in_array($newsId, $featuredId)) {
+                                $featuredId[] = $newsId;
+                                $jsonQuery['query']['bool']['should'][] = array('match' => array('news_id' => array('query' => $newsId, 'boost' => 100)));
+                            }
                         }
                     }
 

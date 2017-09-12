@@ -518,8 +518,10 @@ class CouponFeaturedListAPIController extends PubControllerAPI
 
                     if ($adverts['_source']['advert_type'] === 'featured_list') {
                         if (! in_array($couponId, $slotCouponId)) {
-                            $featuredId[] = $couponId;
-                            $jsonQuery['query']['bool']['should'][] = array('match' => array('promotion_id' => array('query' => $couponId, 'boost' => 100)));
+                            if (! in_array($couponId, $featuredId)) {
+                                $featuredId[] = $couponId;
+                                $jsonQuery['query']['bool']['should'][] = array('match' => array('promotion_id' => array('query' => $couponId, 'boost' => 100)));
+                            }
                         }
                     }
 

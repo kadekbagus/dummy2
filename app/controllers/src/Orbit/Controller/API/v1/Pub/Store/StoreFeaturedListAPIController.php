@@ -536,8 +536,10 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                     $merchantId = $adverts['_source']['merchant_id'];
                     if ($adverts['_source']['advert_type'] === 'featured_list') {
                         if (! in_array($merchantId, $slotStoreId)) {
-                            $featuredId[] = $merchantId;
-                            $jsonQuery['query']['bool']['should'][] = array('match' => array('merchant_id' => array('query' => $merchantId, 'boost' => 100)));
+                            if (! in_array($merchantId, $featuredId)) {
+                                $featuredId[] = $merchantId;
+                                $jsonQuery['query']['bool']['should'][] = array('match' => array('merchant_id' => array('query' => $merchantId, 'boost' => 100)));
+                            }
                         }
                     }
 
