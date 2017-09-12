@@ -93,10 +93,6 @@ class FeaturedLocationMallAPIController extends ControllerAPI
                         $featuredLocation = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
                                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                                        ->join('news', function ($q) {
-                                                            $q->on('news_merchant.news_id', '=', 'news.news_id')
-                                                              ->on('news.object_type', '=', DB::raw("'news'"));
-                                                        })
                                                         ->where('news_merchant.news_id', '=', $advert->link_object_id)
                                                         ->groupBy('mall_id');
 
@@ -106,10 +102,6 @@ class FeaturedLocationMallAPIController extends ControllerAPI
                         $featuredLocation = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.merchant_id, {$prefix}merchants.merchant_id) as mall_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.name, {$prefix}merchants.name) as mall_name"))
                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                        ->join('news', function ($q) {
-                                            $q->on('news_merchant.news_id', '=', 'news.news_id')
-                                              ->on('news.object_type', '=', DB::raw("'promotion'"));
-                                        })
                                         ->where('news_merchant.news_id', '=', $advert->link_object_id)
                                         ->groupBy('mall_id');
                         break;
