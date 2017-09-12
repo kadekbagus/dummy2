@@ -245,7 +245,7 @@ class AdvertUpdateQueue
             }
 
             if (! $allLocation) {
-                $mallCountry = $mallCountry->whereIn('merchant_id'. $mallIds)->groupBy('country');
+                $mallCountry = $mallCountry->whereIn('merchant_id', $mallIds);
             }
             $mallCountry =  $mallCountry->groupBy('country')->get();
 
