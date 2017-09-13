@@ -668,6 +668,7 @@ return array(
     'CreateTableUserCampaign' => $baseDir . '/app/database/migrations/2016_03_16_084422_create_table_user_campaign.php',
     'CreateTableUserGuests' => $baseDir . '/app/database/migrations/2016_04_05_103609_create_table_user_guests.php',
     'CreateTableUserMerchant' => $baseDir . '/app/database/migrations/2016_03_16_083656_create_table_user_merchant.php',
+    'CreateTableUserNotifications' => $baseDir . '/app/database/migrations/2017_09_13_055507_create_table_user_notifications.php',
     'CreateTableUserRewards' => $baseDir . '/app/database/migrations/2017_03_27_054324_create_table_user_rewards.php',
     'CreateTableUserSignin' => $baseDir . '/app/database/migrations/2015_12_21_044542_create_table_user_signin.php',
     'CreateTableVendorGtmCategories' => $baseDir . '/app/database/migrations/2017_04_07_063614_create_table_vendor_gtm_categories.php',
