@@ -56,16 +56,13 @@ class FeaturedCountryAPIController extends ControllerAPI
             }
 
             $advertId = OrbitInput::get('advert_id');
-            $featuredLocation = OrbitInput::get('featured_location');
 
             $validator = Validator::make(
                 array(
-                    'advert_id' => $advertId,
-                    'featured_location' => $featuredLocation
+                    'advert_id' => $advertId
                 ),
                 array(
-                    'advert_id' => 'required',
-                    'featured_location' => 'required'
+                    'advert_id' => 'required'
                 )
             );
 
@@ -99,53 +96,49 @@ class FeaturedCountryAPIController extends ControllerAPI
                             ->where('advert_id', $advertId)
                             ->first();
 
-            if ($featuredLocation === '0') {
-                switch ($advert->advert_type) {
-                    case 'news':
-                        $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
-                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                        ->join('news', function ($q) {
-                                            $q->on('news_merchant.news_id', '=', 'news.news_id')
-                                              ->on('news.object_type', '=', DB::raw("'news'"));
-                                        })
-                                        ->where('news_merchant.news_id', '=', $advert->link_object_id)
-                                        ->groupBy('country_id');
-                        break;
-
-                    case 'promotion':
-                        $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
-                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                        ->join('news', function ($q) {
-                                            $q->on('news_merchant.news_id', '=', 'news.news_id')
-                                              ->on('news.object_type', '=', DB::raw("'promotion'"));
-                                        })
-                                        ->where('news_merchant.news_id', '=', $advert->link_object_id)
-                                        ->groupBy('country_id');
-                        break;
-
-                    case 'coupon':
-                        $cities = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({{$prefix}merchants.object_type = 'tenant', oms.country, {$prefix}merchants.country) as country"))
-                                        ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
-                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                        ->where('promotions.promotion_id', '=', $advert->link_object_id)
-                                        ->groupBy('country_id');
-                        break;
-
-                    case 'store':
-                        $tenant = Tenant::select('name', 'country')->where('merchant_id', $advert->link_object_id)->first();
-                        $cities = Tenant::select(DB::raw("oms.country_id, oms.country"))
+            switch ($advert->advert_type) {
+                case 'news':
+                    $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
+                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->where('merchants.status', '=', 'active')
-                                    ->where(DB::raw('oms.status'), '=', 'active')
-                                    ->where('merchants.name', '=', $tenant->name)
+                                    ->join('news', function ($q) {
+                                        $q->on('news_merchant.news_id', '=', 'news.news_id')
+                                          ->on('news.object_type', '=', DB::raw("'news'"));
+                                    })
+                                    ->where('news_merchant.news_id', '=', $advert->link_object_id)
                                     ->groupBy('country_id');
-                        break;
-                }
-            } else {
-                $cities = Mall::select('country_id', 'country')->where('merchants.merchant_id', '=', $featuredLocation)->groupBy('country_id');
+                    break;
+
+                case 'promotion':
+                    $cities = NewsMerchant::select(DB::raw("IF({$prefix}news_merchant.object_type = 'retailer', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}news_merchant.object_type = 'retailer', oms.country, {$prefix}merchants.country) as country"))
+                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->join('news', function ($q) {
+                                        $q->on('news_merchant.news_id', '=', 'news.news_id')
+                                          ->on('news.object_type', '=', DB::raw("'promotion'"));
+                                    })
+                                    ->where('news_merchant.news_id', '=', $advert->link_object_id)
+                                    ->groupBy('country_id');
+                    break;
+
+                case 'coupon':
+                    $cities = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id, IF({$prefix}merchants.object_type = 'tenant', oms.country, {$prefix}merchants.country) as country"))
+                                    ->join('promotions', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->where('promotions.promotion_id', '=', $advert->link_object_id)
+                                    ->groupBy('country_id');
+                    break;
+
+                case 'store':
+                    $tenant = Tenant::select('name', 'country')->where('merchant_id', $advert->link_object_id)->first();
+                    $cities = Tenant::select(DB::raw("oms.country_id, oms.country"))
+                                ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                ->where('merchants.status', '=', 'active')
+                                ->where(DB::raw('oms.status'), '=', 'active')
+                                ->where('merchants.name', '=', $tenant->name)
+                                ->groupBy('country_id');
+                    break;
             }
 
             // Filter country by name
@@ -183,13 +176,13 @@ class FeaturedCountryAPIController extends ControllerAPI
             $cities->skip($skip);
 
             // Default sort by
-            $sortBy = 'city';
+            $sortBy = 'country';
             // Default sort mode
             $sortMode = 'asc';
             OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'city' => 'city'
+                    'country' => 'country'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];

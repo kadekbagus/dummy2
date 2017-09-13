@@ -400,7 +400,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                             $minimSlot = null;
                             $minimSlotCouponId = null;
                             foreach ($featured['_source'][$slotKey] as $city => $value) {
-                                if (! empty($filterCIty)) { // if filter by city
+                                if (! empty($filterCity)) { // if filter by city
                                     if (in_array($city, $filterCity)) {
                                         $slotNumber = (int) $featured['_source'][$slotKey][$city];
                                         if (empty($minimSlot) || $slotNumber <= $minimSlot) {
@@ -429,7 +429,26 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                             }
 
                             if (! empty($minimSlot)) {
-                                $slot[$minimSlot][] = $minimSlotCouponId;
+                                $idCampaign = explode('|', $minimSlotCouponId);
+                                $isFound = false;
+                                for ($i = 1; $i <= 4; $i++) {
+                                    if (! empty($slot[$i])) {
+                                        foreach ($slot[$i] as $key => $value) {
+                                            $idCampaignInSlot = explode('|', $value);
+                                            if ($idCampaignInSlot[0] === $idCampaign[0]) {
+                                                $isFound = true;
+                                                if ($i > $minimSlot) {
+                                                    unset($slot[$i][$key]);
+                                                    $slot[$minimSlot][] = $minimSlotCouponId;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (! $isFound) {
+                                    $slot[$minimSlot][] = $minimSlotCouponId;
+                                }
                             }
                         }
                     }
@@ -478,7 +497,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                 $esAdvertQuery['query']['bool']['filter'][] = array('terms' => ['promotion_id' => $slotCouponId]);
             }
 
-            $jsonQuery['query']['bool']['filter'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
+            // $jsonQuery['query']['bool']['filter'][] = array('bool' => array('should' => array($esAdvertQuery['query'], array('bool' => array('must_not' => array(array('exists' => array('field' => 'advert_status'))))))));
 
             $esAdvertParam = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
@@ -486,19 +505,24 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                 'body'  => json_encode($esAdvertQuery)
             ];
 
+            $featuredId = array();
             $advertResponse = $client->search($esAdvertParam);
             if ($advertResponse['hits']['total'] > 0) {
                 $advertList = $advertResponse['hits']['hits'];
-                $excludeId = array_merge($slotCouponId);
+                $excludeId = array();
                 $withPreferred = array();
 
                 foreach ($advertList as $adverts) {
                     $advertId = $adverts['_id'];
                     $couponId = $adverts['_source']['promotion_id'];
-                    if(! in_array($couponId, $excludeId)) {
-                        $excludeId[] = $couponId;
-                    } elseif (! in_array($advertId, $excludeId)) {
-                        $excludeId[] = $advertId;
+
+                    if ($adverts['_source']['advert_type'] === 'featured_list') {
+                        if (! in_array($couponId, $slotCouponId)) {
+                            if (! in_array($couponId, $featuredId)) {
+                                $featuredId[] = $couponId;
+                                $jsonQuery['query']['bool']['should'][] = array('match' => array('promotion_id' => array('query' => $couponId, 'boost' => 100)));
+                            }
+                        }
                     }
 
                     // if featured list_type check preferred too
@@ -523,8 +547,16 @@ class CouponFeaturedListAPIController extends PubControllerAPI
             $jsonQuery['sort'] = $sortby;
             $jsonQuery['size'] = 4;
 
+            // boost slot
+            $boost = [500, 400, 300, 200];
+            $i = 0;
+            foreach ($slotCouponId as $couponIdBoost) {
+                $jsonQuery['query']['bool']['should'][] = array('match' => array('promotion_id' => array('query' => $couponIdBoost, 'boost' => $boost[$i])));
+                $i += 1;
+            }
+
             $esParam = [
-                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index') . ',' . $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
+                'index'  => $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index'),
                 'type'   => Config::get('orbit.elasticsearch.indices.coupons.type'),
                 'body' => json_encode($jsonQuery)
             ];
@@ -556,6 +588,8 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                 $data['placement_type_orig'] = null;
                 $data['is_featured'] = false;
                 foreach ($record['_source'] as $key => $value) {
+                    $campaignId = $record['_source']['promotion_id'];
+
                     if ($key === "name") {
                         $key = "coupon_name";
                     } elseif ($key === "promotion_id") {
@@ -611,29 +645,15 @@ class CouponFeaturedListAPIController extends PubControllerAPI
 
                     // advert
                     if ($list_type === 'featured') {
-                        if (! empty($mallId) && $key === 'featured_mall_type') {
-                            $data['placement_type'] = $value;
-                            $data['placement_type_orig'] = $value;
-                        } elseif ($key === 'featured_gtm_type') {
-                            $data['placement_type'] = $value;
-                            $data['placement_type_orig'] = $value;
-                        }
-
-                        if ($value === 'featured_list') {
+                        if (in_array($campaignId, $slotCouponId) || in_array($campaignId, $featuredId)) {
                             $data['is_featured'] = true;
+                            $data['placement_type'] = 'featured_list';
+                            $data['placement_type_orig'] = 'featured_list';
                         }
 
                         if (! empty($withPreferred[$campaignId])) {
                             $data['placement_type'] = $withPreferred[$campaignId];
                             $data['placement_type_orig'] = $withPreferred[$campaignId];
-                        }
-                    } elseif ($list_type === 'preferred') {
-                        if (! empty($mallId) && $key === 'preferred_mall_type') {
-                            $data['placement_type'] = $value;
-                            $data['placement_type_orig'] = $value;
-                        } elseif ($key === 'preferred_gtm_type') {
-                            $data['placement_type'] = $value;
-                            $data['placement_type_orig'] = $value;
                         }
                     }
 
