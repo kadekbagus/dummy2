@@ -20,15 +20,13 @@ use UserNotification;
 class UserNotificationNewAPIController extends PubControllerAPI
 {
     /**
-     * post - share gotomalls campaign via email
+     * post - create user notificatin
      *
-     * @author kadek <kadek@dominopos.com>
+     * @author shelgi <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string email
-     * @param string campaign_id
-     * @param string campaign_type
+     * @param string notification_token
      *
      * @return Illuminate\Support\Facades\Response
      */
