@@ -237,6 +237,11 @@ return array(
         ],
     ],
 
+    // vendor push notification
+    'vendor_push_notification' => [
+        'default' => 'onesignal'
+    ],
+
     // Demo environtment
     'is_demo' => FALSE,
 
