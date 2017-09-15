@@ -458,6 +458,8 @@ class AdditionalActivityQueue
         $this->reviewSubmitActivity($activity, $extendedActivity);
         $this->tenantIdActivity($activity, $extendedActivity);
 
+        $this->notificationTokenActivity($activity, $extendedActivity);
+
         $extendedActivity->save();
 
         return $extendedActivity;
@@ -496,6 +498,29 @@ class AdditionalActivityQueue
         }
 
         $extendedActivity->rating = $rating;
+    }
+
+    /**
+     * Fill columns notification_token
+     *
+     * @param Object $actvitiy
+     * @param Object $extendedActivity
+     * @return void
+     */
+    protected function notificationTokenActivity($activity, $extendedActivity)
+    {
+        if (! isset($this->data['notification_token'])) {
+            return;
+        }
+
+        if (empty($this->data['notification_token'])) {
+            return;
+        }
+
+        $notificationToken = $this->data['notification_token'];
+
+        // This is tenant object so get the parent
+        $extendedActivity->notification_token = $notificationToken;
     }
 
     /**

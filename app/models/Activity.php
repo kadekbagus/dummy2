@@ -885,7 +885,8 @@ class Activity extends Eloquent
             'referer' => substr($referer, 0, 2048),
             'orbit_referer' => substr($orbitReferer, 0, 2048),
             'current_url' => Request::fullUrl(),
-            'merchant_id' => OrbitInput::post('merchant_id', NULL)
+            'merchant_id' => OrbitInput::post('merchant_id', NULL),
+            'notification_token' => OrbitInput::post('notification_token', NULL)
         ]);
 
         // Save to object page views table
