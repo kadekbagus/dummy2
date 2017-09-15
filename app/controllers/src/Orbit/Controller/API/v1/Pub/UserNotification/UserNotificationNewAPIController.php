@@ -72,7 +72,7 @@ class UserNotificationNewAPIController extends PubControllerAPI
             ];
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
-            $response = $mongoClient->setEndPoint('reviews') // express endpoint
+            $response = $mongoClient->setEndPoint('user-notification/register') // express endpoint
                                     ->request('POST');
 
             $this->response->code = 0;
