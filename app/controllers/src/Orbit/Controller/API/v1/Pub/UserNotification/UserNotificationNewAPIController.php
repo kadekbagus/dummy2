@@ -15,7 +15,8 @@ use Config;
 use stdClass;
 use DB;
 use Validator;
-use UserNotification;
+use Carbon\Carbon as Carbon;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class UserNotificationNewAPIController extends PubControllerAPI
 {
@@ -37,6 +38,7 @@ class UserNotificationNewAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
 
+            $mongoConfig = Config::get('database.mongodb');
             $notificationToken = OrbitInput::post('notification_token');
 
             $validator = Validator::make(
@@ -56,16 +58,22 @@ class UserNotificationNewAPIController extends PubControllerAPI
 
             $provider = Config::get('orbit.vendor_push_notification.default', 'onesignal');
 
-            DB::beginTransaction();
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateTime = $date->toDateTimeString();
 
-            $userNotification = new UserNotification();
-            $userNotification->user_id = $user->user_id;
-            $userNotification->user_role_id = $user->user_role_id;
-            $userNotification->notification_token = $notificationToken;
-            $userNotification->notification_provider = $provider;
-            $userNotification->save();
+            $body = [
+                'user_id'               => $user->user_id,
+                'user_role_id'          => $user->user_role_id,
+                'user_role'             => $user->role()->first()->role_name,
+                'notification_token'    => $notificationToken,
+                'notification_provider' => $provider,
+                'created_at'            => $dateTime
+            ];
 
-            DB::commit();
+            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
+            $response = $mongoClient->setEndPoint('reviews') // express endpoint
+                                    ->request('POST');
 
             $this->response->code = 0;
             $this->response->status = 'success';
