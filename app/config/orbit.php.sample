@@ -5878,6 +5878,15 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // User clicks on notification permission popup (object_display_name: allow, block, dismiss)
+            '142' => array(
+                'name' => 'click_notification_permission',
+                'name_long' => 'Click Notification Permission',
+                'module_name' => 'Notification',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
