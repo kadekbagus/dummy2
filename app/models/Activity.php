@@ -878,6 +878,8 @@ class Activity extends Eloquent
             $orbitReferer = $_SERVER['HTTP_X_ORBIT_REFERER'];
         }
 
+        $notificationToken = OrbitInput::post('notification_token', OrbitInput::get('notification_token', NULL));
+
         // Save to additional activities table
         Queue::push('Orbit\\Queue\\Activity\\AdditionalActivityQueue', [
             'activity_id' => $this->activity_id,
@@ -886,7 +888,7 @@ class Activity extends Eloquent
             'orbit_referer' => substr($orbitReferer, 0, 2048),
             'current_url' => Request::fullUrl(),
             'merchant_id' => OrbitInput::post('merchant_id', NULL),
-            'notification_token' => OrbitInput::post('notification_token', NULL)
+            'notification_token' => $notificationToken
         ]);
 
         // Save to object page views table
