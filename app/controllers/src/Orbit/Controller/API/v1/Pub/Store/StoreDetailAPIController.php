@@ -287,6 +287,13 @@ class StoreDetailAPIController extends PubControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+
         } catch (Exception $e) {
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
