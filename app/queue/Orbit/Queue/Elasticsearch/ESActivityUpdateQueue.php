@@ -324,7 +324,7 @@ class ESActivityUpdateQueue
         $esBody['mall_id'] = '[EMPTY]';
         $esBody['mall_name'] = '[EMPTY]';
         $esBody['rating'] = '0';
-        $esBody['notification_token'] = '[EMPTY]';
+        $esBody['notifications_token'] = '[EMPTY]';
 
         if (! isset($data['extended_activity_id'])) {
             return;
@@ -340,6 +340,6 @@ class ESActivityUpdateQueue
         $esBody['mall_id'] = $extendedActivity->mall_id ? $extendedActivity->mall_id : '[EMPTY]';
         $esBody['mall_name'] = $extendedActivity->mall_name ? $extendedActivity->mall_name : '[EMPTY]';
         $esBody['rating'] = trim($extendedActivity->rating) !== '' ? $extendedActivity->rating : '0';
-        $esBody['notification_token'] = trim($extendedActivity->notification_token) !== '' ? $extendedActivity->notification_token : '[EMPTY]';
+        $esBody['notifications_token'] = trim($extendedActivity->notification_token) !== '' ? $extendedActivity->notification_token : '[EMPTY]';
     }
 }
