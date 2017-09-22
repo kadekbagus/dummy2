@@ -12,3 +12,11 @@ Route::post('/api/v1/pub/user-notification/new', function()
 });
 
 Route::post('/app/v1/pub/user-notification/new', ['as' => 'user-notification-new', 'uses' => 'IntermediatePubAuthController@UserNotification\UserNotificationNew_postUserNotification']);
+
+/**
+ * List/Search notification
+ */
+Route::get('/api/v1/notification-list/{search}', function()
+{
+    return NotificationListAPIController::create()->getNotificationList();
+})->where('search', '(list|search)');
