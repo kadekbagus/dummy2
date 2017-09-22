@@ -239,7 +239,12 @@ return array(
 
     // vendor push notification
     'vendor_push_notification' => [
-        'default' => 'onesignal'
+        'default' => 'onesignal',
+
+        'onesignal' => [
+            'api_key' => '',
+            'app_id' => ''
+        ],
     ],
 
     // Demo environtment
