@@ -1745,6 +1745,7 @@ return array(
     'NewsletterSenderCommand' => $baseDir . '/app/commands/NewsletterSenderCommand.php',
     'Normalizer' => $vendorDir . '/patchwork/utf8/class/Normalizer.php',
     'NotificationListAPIController' => $baseDir . '/app/controllers/api/v1/NotificationListAPIController.php',
+    'NotificationNewAPIController' => $baseDir . '/app/controllers/api/v1/NotificationNewAPIController.php',
     'OAuth\\Common\\AutoLoader' => $vendorDir . '/lusitanian/oauth/src/OAuth/Common/AutoLoader.php',
     'OAuth\\Common\\Consumer\\Credentials' => $vendorDir . '/lusitanian/oauth/src/OAuth/Common/Consumer/Credentials.php',
     'OAuth\\Common\\Consumer\\CredentialsInterface' => $vendorDir . '/lusitanian/oauth/src/OAuth/Common/Consumer/CredentialsInterface.php',

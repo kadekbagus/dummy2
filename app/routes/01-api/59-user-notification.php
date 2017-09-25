@@ -16,7 +16,15 @@ Route::post('/app/v1/pub/user-notification/new', ['as' => 'user-notification-new
 /**
  * List/Search notification
  */
-Route::get('/api/v1/notification-list/{search}', function()
+Route::get('/api/v1/notification/{search}', function()
 {
     return NotificationListAPIController::create()->getNotificationList();
 })->where('search', '(list|search)');
+
+/**
+ * post new notifications
+ */
+Route::post('/api/v1/notification/new', function()
+{
+    return NotificationNewAPIController::create()->postNewNotification();
+});

@@ -68,6 +68,7 @@ class Notifications
      */
     public function add(array $data)
     {
+        $data['app_id'] = $this->api->getConfig('app_id');
         return $this->api->request('POST', '/notifications', [
             'Authorization' => 'Basic '.$this->api->getConfig('api_key'),
         ], $data);

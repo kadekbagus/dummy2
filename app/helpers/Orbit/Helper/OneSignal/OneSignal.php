@@ -93,7 +93,7 @@ class OneSignal
             ]);
 
             if (! empty($body)) {
-                $param['body'] = $body;
+                $param['json'] = $body;
             }
 
             $response = $this->client->request($method, self::API_URL.$uri, $param);
