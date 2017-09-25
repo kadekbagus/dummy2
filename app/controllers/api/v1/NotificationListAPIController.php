@@ -14,6 +14,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use DominoPOS\OrbitUploader\Uploader as OrbitUploader;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\OneSignal\OneSignal;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class NotificationListAPIController extends ControllerAPI
 {
@@ -98,19 +99,53 @@ class NotificationListAPIController extends ControllerAPI
                 $skip = $_skip;
             });
 
-            $oneSignalConfig = array('app_id' => '76115d05-7cee-4a6d-877f-f982049c4ba2', 'api_key' => 'ZDgwZDdmOTctMGMzYS00Y2U3LThmMjYtNmI0ODEyZjYzYmM5');
+            // Default sort by
+            $sortBy = 'created_at';
+            // Default sort mode
+            $sortMode = 'desc';
 
-            $oneSignal = new OneSignal($oneSignalConfig);
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'created_at' => 'created_at',
+                    'heading'    => 'title',
+                    'status'     => 'status'
+                );
 
-            $all = $oneSignal->notifications->getAll($take, $skip);
-            print_r($all); die();
+                $sortBy = $sortByMapping[$_sortBy];
+            });
 
-            // $data = new stdclass();
-            // $data->total_records = $totalCities;
-            // $data->returned_records = count($listCities);
-            // $data->records = $listCities;
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
 
-            // $this->response->data = $data;
+            $queryString = [
+                'take'        => $take,
+                'skip'        => $skip,
+                'sortBy'      => $sortBy,
+                'sortMode'    => $sortMode
+            ];
+
+            $mongoConfig = Config::get('database.mongodb');
+            $mongoClient = MongoClient::create($mongoConfig);
+            $response = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint('notifications')
+                                    ->request('GET');
+            $listOfRec = $response->data;
+
+            $data = new \stdclass();
+            $data->returned_records = $listOfRec->returned_records;
+            $data->total_records = $listOfRec->total_records;
+            $data->records = $listOfRec->records;
+
+            $this->response->data = $data;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request Ok';
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.mall.getsearchmallcountry.access.forbidden', array($this, $e));
 
