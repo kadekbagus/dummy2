@@ -63,7 +63,6 @@ class NotificationNewAPIController extends ControllerAPI
             $notificationTokens = OrbitInput::post('notification_tokens');
             $userIds = OrbitInput::post('user_ids');
             $mongoConfig = Config::get('database.mongodb');
-            // $vendorNotificationId = OrbitInput::post('vendor_notification_id');
 
             $validator = Validator::make(
                 array(
@@ -82,7 +81,7 @@ class NotificationNewAPIController extends ControllerAPI
                     'contents'            => 'required',
                     'type'                => 'required',
                     'status'              => 'required',
-                    'notification_tokens' => 'required',
+                    'notification_tokens' => 'required|array',
                 )
             );
 
