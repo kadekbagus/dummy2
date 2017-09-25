@@ -17,18 +17,20 @@ class NotificationNewAPIController extends ControllerAPI
 {
     protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
     /**
-     * POST - post new featured slot
+     * POST - post new notification
      * @author shelgi <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string            `mall_country_id`               (optional) - mall country id
-     * @param string            `country_id`                    (optional) - country id
-     * @param string            `country_like`                  (optional) - country
-     * @param string            `sort_by`                       (optional) - column order by
-     * @param string            `sort_mode`                     (optional) - asc or desc
-     * @param integer           `take`                          (optional) - limit
-     * @param integer           `skip`                          (optional) - limit
+     * @param string        `launch_url`
+     * @param string        `attachment_url`
+     * @param string        `default_language`
+     * @param object        `headings`
+     * @param object        `contents`
+     * @param string        `type`
+     * @param string        `status`
+     * @param array         `notification_tokens`
+     * @param array         `user_ids`
      *
      * @return Illuminate\Support\Facades\Response
      *

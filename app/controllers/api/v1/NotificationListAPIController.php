@@ -20,15 +20,11 @@ class NotificationListAPIController extends ControllerAPI
 {
     protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
     /**
-     * GET - featured advert city
+     * GET - notification list
      * @author shelgi <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string            `advert_id`
-     * @param string            `featured_location`
-     * @param string            `name_like`                     (optional) - search by name
-     * @param string            `exclude_cities`                (optional) - exclude city
      * @param string            `sort_by`                       (optional) - column order by
      * @param string            `sort_mode`                     (optional) - asc or desc
      * @param integer           `take`                          (optional) - limit
