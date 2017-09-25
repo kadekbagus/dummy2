@@ -13,7 +13,7 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\OneSignal\OneSignal;
 
-class NotificationNewAPIController extends ControllerAPI
+class NotificationUpdateAPIController extends ControllerAPI
 {
     protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
     /**
@@ -33,7 +33,7 @@ class NotificationNewAPIController extends ControllerAPI
      * @return Illuminate\Support\Facades\Response
      *
      */
-    public function postNewNotification()
+    public function postUpdateNotification()
     {
         try {
             $httpCode = 200;
@@ -53,6 +53,7 @@ class NotificationNewAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $notificationId = OrbitInput::post('notification_id');
             $launchUrl = OrbitInput::post('launch_url');
             $attachmentUrl = OrbitInput::post('attachment_url');
             $defaultLanguage = OrbitInput::post('default_language', 'en');
@@ -66,7 +67,7 @@ class NotificationNewAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'launch_url'          => $launchUrl,
+                    'notification_id'     => $notificationId,
                     'default_language'    => $defaultLanguage,
                     'headings'            => $headings,
                     'contents'            => $contents,
@@ -75,7 +76,7 @@ class NotificationNewAPIController extends ControllerAPI
                     'notification_tokens' => $notificationTokens,
                 ),
                 array(
-                    'launch_url'          => 'required',
+                    'notification_id'     => 'required',
                     'default_language'    => 'required',
                     'headings'            => 'required',
                     'contents'            => 'required',
@@ -88,6 +89,19 @@ class NotificationNewAPIController extends ControllerAPI
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $mongoClient = MongoClient::create($mongoConfig);
+            $oldNotification = $mongoClient->setEndPoint("notifications/$notificationId")->request('GET');
+
+            if (empty($oldNotification)) {
+                $errorMessage = 'Notification ID is not found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($oldNotification->data->status === 'send') {
+                $errorMessage = 'Can not update notification that has been sent';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -106,6 +120,7 @@ class NotificationNewAPIController extends ControllerAPI
             }
 
             $body = [
+                '_id'                 => $notificationId,
                 'title'               => $headings->$defaultLanguage,
                 'launch_url'          => $launchUrl,
                 'attachment_url'      => $attachmentUrl,
@@ -114,7 +129,6 @@ class NotificationNewAPIController extends ControllerAPI
                 'contents'            => $contents,
                 'type'                => $type,
                 'status'              => $status,
-                'created_at'          => $dateTime,
                 'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
                 'notification_tokens' => $notificationTokens,
                 'user_ids'            => $userIds,
@@ -143,7 +157,7 @@ class NotificationNewAPIController extends ControllerAPI
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
             $response = $mongoClient->setEndPoint('notifications') // express endpoint
-                                    ->request('POST');
+                                    ->request('PUT');
 
             $this->response->code = 0;
             $this->response->status = 'success';
