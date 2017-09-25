@@ -36,3 +36,11 @@ Route::post('/api/v1/notification/update', function()
 {
     return NotificationUpdateAPIController::create()->postUpdateNotification();
 });
+
+/**
+ * notifications detail
+ */
+Route::post('/api/v1/notification/detail', function()
+{
+    return NotificationDetailAPIController::create()->getNotificationDetail();
+});

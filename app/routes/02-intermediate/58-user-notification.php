@@ -18,3 +18,8 @@ Route::post('/app/v1/notification/new', 'IntermediateAuthController@Notification
  * update notification
  */
 Route::post('/app/v1/notification/update', 'IntermediateAuthController@NotificationUpdate_postUpdateNotification');
+
+/**
+ * notification detail
+ */
+Route::get('/app/v1/notification/detail', 'IntermediateAuthController@NotificationDetail_getNotificationDetail');
