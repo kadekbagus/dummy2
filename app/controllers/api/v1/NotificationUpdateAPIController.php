@@ -123,6 +123,14 @@ class NotificationUpdateAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Contents JSON not valid');
             }
 
+            if (empty($headings->$defaultLanguage)) {
+                OrbitShopAPI::throwInvalidArgument('Heading in default language is empty');
+            }
+
+            if (empty($contents->$defaultLanguage)) {
+                OrbitShopAPI::throwInvalidArgument('Content in default language is empty');
+            }
+
             $body = [
                 '_id'                 => $notificationId,
                 'title'               => $headings->$defaultLanguage,
