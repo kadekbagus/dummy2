@@ -173,7 +173,7 @@ class NotificationUpdateAPIController extends ControllerAPI
 
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->data = null;
+            $this->response->data = $response->data;;
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.mall.getsearchmallcountry.access.forbidden', array($this, $e));
 
