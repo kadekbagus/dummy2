@@ -70,10 +70,11 @@ class NotificationDetailAPIController extends ControllerAPI
             $mongoClient = MongoClient::create($mongoConfig);
             $notif = $mongoClient->setEndPoint("notifications/$notificationId")->request('GET');
 
-            $successful = null;
-            $failed = null;
-            $converted = null;
-            $remaining = null;
+            $successful = 0;
+            $failed = 0;
+            $converted = 0;
+            $remaining = 0;
+            $totalRecipients = count($notif->notification_tokens);
 
             if (! empty($notif->data->vendor_notification_id)) {
                 $oneSignalId = $notif->data->vendor_notification_id;
@@ -81,10 +82,12 @@ class NotificationDetailAPIController extends ControllerAPI
                 $oneSignal = new OneSignal($oneSignalConfig);
                 $oneSignalNotif = $oneSignal->notifications->getOne($oneSignalId);
 
-                $successful = $oneSignalNotif->successful;
-                $failed = $oneSignalNotif->failed;
-                $converted = $oneSignalNotif->converted;
-                $remaining = $oneSignalNotif->remaining;
+                if (! empty($oneSignalNotif)) {
+                    $successful = $oneSignalNotif->successful;
+                    $failed = $oneSignalNotif->failed;
+                    $converted = $oneSignalNotif->converted;
+                    $remaining = $oneSignalNotif->remaining;
+                }
             }
 
             $listOfRec = $notif->data;
@@ -92,6 +95,7 @@ class NotificationDetailAPIController extends ControllerAPI
             $listOfRec->failed = $failed;
             $listOfRec->converted = $converted;
             $listOfRec->remaining = $remaining;
+            $listOfRec->total_recipients = $totalRecipients;
 
             $data = new \stdclass();
             $this->response->data = $listOfRec;
@@ -104,7 +108,7 @@ class NotificationDetailAPIController extends ControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = 0;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
             Event::fire('orbit.mall.getsearchmallcountry.invalid.arguments', array($this, $e));
