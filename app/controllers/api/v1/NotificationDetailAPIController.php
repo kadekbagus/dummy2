@@ -74,7 +74,7 @@ class NotificationDetailAPIController extends ControllerAPI
             $failed = 0;
             $converted = 0;
             $remaining = 0;
-            $totalRecipients = count($notif->notification_tokens);
+            $totalRecipients = (! empty($notif->data->notification_tokens)) ? count($notif->data->notification_tokens) : 0;
 
             if (! empty($notif->data->vendor_notification_id)) {
                 $oneSignalId = $notif->data->vendor_notification_id;
