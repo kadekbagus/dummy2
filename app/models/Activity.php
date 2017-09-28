@@ -349,6 +349,17 @@ class Activity extends Eloquent
     }
 
     /**
+     * Set the value of object_name manually
+     * @author Shelgi <shelgi@dominopos.com>
+     */
+    public function setObjectId($value = NULL)
+    {
+        $this->object_id = $value;
+
+        return $this;
+    }
+
+    /**
      * Set the value of `object_id`, `object_name`, and `metadata_object`.
      *
      * @author Rio Astamal <me@rioastamal.net>
@@ -865,7 +876,7 @@ class Activity extends Eloquent
 
         $this->setUserLocation();
 
-        $this->setClickPushNotification($notificationToken);
+        $this->setClickPushNotification();
 
         $result = parent::save($options);
 
@@ -1184,7 +1195,7 @@ class Activity extends Eloquent
      * @author Shelgi <shelgi@dominopos.com>
      * @return void
      */
-    protected function setClickPushNotification($token)
+    protected function setClickPushNotification()
     {
         if ($this->activity_name !== 'click_push_notification') {
             return;
@@ -1203,7 +1214,7 @@ class Activity extends Eloquent
             return;
         }
 
-        $this->object_display_name = $oldNotification->data->title;
+        $this->object_display_name = $notification->data->title;
         $this->object_name = 'Notification';
     }
 }
