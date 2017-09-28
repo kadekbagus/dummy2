@@ -2,7 +2,7 @@
 
 class PaymentProvider extends Eloquent
 {
-	use ModelStatusTrait;
+    use ModelStatusTrait;
 
     protected $primaryKey = 'payment_provider_id';
 

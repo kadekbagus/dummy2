@@ -110,6 +110,8 @@ class WalletOperatorAPIController extends ControllerAPI
             $newContactPerson->email = $contact_person_email;
             $newContactPerson->save();
 
+            Event::fire('orbit.walletoperator.postnewwalletoperator.after.save', array($this, $newWalletOperator));
+
             // Commit the changes
             $this->commit();
 
