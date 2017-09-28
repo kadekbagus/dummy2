@@ -96,6 +96,10 @@ class NotificationUpdateAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
+                OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+            }
+
             $mongoClient = MongoClient::create($mongoConfig);
             $oldNotification = $mongoClient->setEndPoint("notifications/$notificationId")->request('GET');
 
@@ -149,10 +153,16 @@ class NotificationUpdateAPIController extends ControllerAPI
             if ($status !== 'draft') {
                 $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
 
+                // add query string for activity recording
+                $newUrl =  $launchUrl . '?notif_heading=' . urlencode($headings->$defaultLanguage) . '&notif_id=' . urlencode($mongoNotifId);
+                if (parse_url($launchUrl, PHP_URL_QUERY)) { // if launch url containts query string
+                    $newUrl =  $launchUrl . '&notif_heading=' . urlencode($headings->$defaultLanguage) . '&notif_id=' . urlencode($mongoNotifId);
+                }
+
                 $data = [
                     'headings'           => $headings,
                     'contents'           => $contents,
-                    'url'                => $launchUrl,
+                    'url'                => $newUrl,
                     'include_player_ids' => $notificationTokens,
                     'ios_attachments'    => $attachmentUrl,
                     'big_picture'        => $attachmentUrl,

@@ -93,6 +93,10 @@ class NotificationNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
+                OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+            }
+
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->toDateTimeString();
@@ -130,13 +134,25 @@ class NotificationNewAPIController extends ControllerAPI
                 'user_ids'            => $userIds,
             ];
 
-            if ($status !== 'draft') {
+            $mongoClient = MongoClient::create($mongoConfig);
+            $response = $mongoClient->setFormParam($body)
+                                    ->setEndPoint('notifications') // express endpoint
+                                    ->request('POST');
+
+            if ($status !== 'draft') { // send
                 $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
+                $mongoNotifId = $response->data->_id;
+
+                // add query string for activity recording
+                $newUrl =  $launchUrl . '?notif_heading=' . urlencode($headings->$defaultLanguage) . '&notif_id=' . urlencode($mongoNotifId);
+                if (parse_url($launchUrl, PHP_URL_QUERY)) { // if launch url containts query string
+                    $newUrl =  $launchUrl . '&notif_heading=' . urlencode($headings->$defaultLanguage) . '&notif_id=' . urlencode($mongoNotifId);
+                }
 
                 $data = [
                     'headings'           => $headings,
                     'contents'           => $contents,
-                    'url'                => $launchUrl,
+                    'url'                => $newUrl,
                     'include_player_ids' => $notificationTokens,
                     'ios_attachments'    => $attachmentUrl,
                     'big_picture'        => $attachmentUrl,
@@ -149,11 +165,12 @@ class NotificationNewAPIController extends ControllerAPI
 
                 $body['sent_at'] = $dateTime;
                 $body['vendor_notification_id'] = $newNotif->id;
-            }
+                $body['_id'] = $mongoNotifId;
 
-            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
-            $response = $mongoClient->setEndPoint('notifications') // express endpoint
-                                    ->request('POST');
+                $response = $mongoClient->setFormParam($body)
+                                    ->setEndPoint('notifications') // express endpoint
+                                    ->request('PUT');
+            }
 
             $this->response->code = 0;
             $this->response->status = 'success';
