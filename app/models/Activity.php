@@ -10,6 +10,7 @@ use DominoPOS\OrbitSession\Session;
 use Orbit\Helper\Session\AppOriginProcessor;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Helper\Util\UserAgent;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class Activity extends Eloquent
 {
@@ -860,7 +861,11 @@ class Activity extends Eloquent
             }
         }
 
+        $notificationToken = OrbitInput::post('notification_token', OrbitInput::get('notification_token', NULL));
+
         $this->setUserLocation();
+
+        $this->setClickPushNotification($notificationToken);
 
         $result = parent::save($options);
 
@@ -877,8 +882,6 @@ class Activity extends Eloquent
         if (isset($_SERVER['HTTP_X_ORBIT_REFERER']) && ! empty($_SERVER['HTTP_X_ORBIT_REFERER'])) {
             $orbitReferer = $_SERVER['HTTP_X_ORBIT_REFERER'];
         }
-
-        $notificationToken = OrbitInput::post('notification_token', OrbitInput::get('notification_token', NULL));
 
         // Save to additional activities table
         Queue::push('Orbit\\Queue\\Activity\\AdditionalActivityQueue', [
@@ -1173,5 +1176,31 @@ class Activity extends Eloquent
 
         $this->longitude = $longitude;
         $this->latitude = $latitude;
+    }
+
+    /**
+     * set click from push notification
+     *
+     * @author Shelgi <shelgi@dominopos.com>
+     * @return void
+     */
+    protected function setClickPushNotification($token)
+    {
+        $notifId = OrbitInput::get('notif_id', NULL);
+        if (empty($notifId)) {
+            return;
+        }
+
+        $mongoConfig = Config::get('database.mongodb');
+        $mongoClient = MongoClient::create($mongoConfig);
+        $notification = $mongoClient->setEndPoint("notifications/$notifId")->request('GET');
+
+        if (empty($notification->data)) {
+            return;
+        }
+
+        $this->object_id = $notifId;
+        $this->object_display_name = $oldNotification->data->title;
+        $this->object_name = 'Notification';
     }
 }
