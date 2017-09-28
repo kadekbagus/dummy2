@@ -1201,7 +1201,7 @@ class Activity extends Eloquent
             return;
         }
 
-        $notifId = $this->object_id;
+        $notifId = $this->notes;
         if (empty($notifId)) {
             return;
         }

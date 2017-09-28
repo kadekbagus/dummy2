@@ -254,14 +254,7 @@ class GenericActivityAPIController extends PubControllerAPI
                     $notes = 'Guest user';
                 }
             } elseif ($activityName === 'click_push_notification') {
-                $unusualObject = true;
-            }
-
-            if (! isset($unusualObject) || $unusualObject === false) {
-                $activity->setObject($object);
-            } else {
-                $objectId = OrbitInput::post('object_id', null);
-                $activity->setObjectId($objectId);
+                $notes = OrbitInput::post('object_id', null);
             }
 
             $activity->setUser($user)
@@ -269,6 +262,7 @@ class GenericActivityAPIController extends PubControllerAPI
                     ->setActivityNameLong($activityNameLong)
                     ->setModuleName($activityModuleName)
                     ->setLocation($mall)
+                    ->setObject($object);
                     ->setNotes($notes)
                     ->responseOK()
                     ->save();
