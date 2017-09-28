@@ -1186,7 +1186,7 @@ class Activity extends Eloquent
      */
     protected function setClickPushNotification($token)
     {
-        $notifId = OrbitInput::get('notif_id', NULL);
+        $notifId = $this->object_id;
         if (empty($notifId)) {
             return;
         }
@@ -1199,7 +1199,6 @@ class Activity extends Eloquent
             return;
         }
 
-        $this->object_id = $notifId;
         $this->object_display_name = $oldNotification->data->title;
         $this->object_name = 'Notification';
     }
