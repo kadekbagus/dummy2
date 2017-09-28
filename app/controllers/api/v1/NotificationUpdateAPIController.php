@@ -154,9 +154,9 @@ class NotificationUpdateAPIController extends ControllerAPI
                 $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
 
                 // add query string for activity recording
-                $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
+                $newUrl =  $launchUrl . '?notif_id=' . $notificationId;
                 if (parse_url($launchUrl, PHP_URL_QUERY)) { // if launch url containts query string
-                    $newUrl =  $launchUrl . '&notif_id=' . $mongoNotifId;
+                    $newUrl =  $launchUrl . '&notif_id=' . $notificationId;
                 }
 
                 $data = [
