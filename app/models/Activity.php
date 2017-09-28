@@ -1186,6 +1186,10 @@ class Activity extends Eloquent
      */
     protected function setClickPushNotification($token)
     {
+        if ($this->activity_name !== 'click_push_notification') {
+            return;
+        }
+
         $notifId = $this->object_id;
         if (empty($notifId)) {
             return;
