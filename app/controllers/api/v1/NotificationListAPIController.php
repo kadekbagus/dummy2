@@ -106,7 +106,9 @@ class NotificationListAPIController extends ControllerAPI
                 $sortByMapping = array(
                     'created_at' => 'created_at',
                     'heading'    => 'title',
-                    'status'     => 'status'
+                    'status'     => 'status',
+                    'sent_at'    => 'sent_at',
+                    'type'       => 'type',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -114,8 +116,8 @@ class NotificationListAPIController extends ControllerAPI
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sortMode = 'desc';
+                if (strtolower($_sortMode) === 'asc') {
+                    $sortMode = 'asc';
                 }
             });
 
