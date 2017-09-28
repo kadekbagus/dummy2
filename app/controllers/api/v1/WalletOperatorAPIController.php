@@ -46,6 +46,8 @@ class WalletOperatorAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $this->registerCustomValidation();
+
             $payment_name = OrbitInput::post('payment_name');
             $description = OrbitInput::post('description');
             $status = OrbitInput::post('status', 'active');
@@ -58,6 +60,8 @@ class WalletOperatorAPIController extends ControllerAPI
             $contact_person_phone_number_for_sms = OrbitInput::post('contact_person_phone_number_for_sms');
             $contact_person_email = OrbitInput::post('contact_person_email');
             $contact_person_address = OrbitInput::post('contact_person_address');
+            $bank_ids = OrbitInput::post('bank_ids');
+            $bank_ids = (array) $bank_ids;
 
             $validator = Validator::make(
                 array(
@@ -95,6 +99,24 @@ class WalletOperatorAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // validate bank_id
+            foreach ($bank_ids as $bank_id_check) {
+                $validator = Validator::make(
+                    array(
+                        'bank_id' => $bank_id_check,
+                    ),
+                    array(
+                        'bank_id' => 'orbit.empty.link_object_id:'.'bank',
+                    )
+                );
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
             $newWalletOperator = new PaymentProvider();
             $newWalletOperator->payment_name = $payment_name;
             $newWalletOperator->descriptions = $description;
@@ -114,9 +136,20 @@ class WalletOperatorAPIController extends ControllerAPI
             $newContactPerson->email = $contact_person_email;
             $newContactPerson->save();
 
+            // save banks
+            $walletOperatorBanks = array();
+            foreach ($bank_ids as $bank_id) {
+                $newWalletBank = new BankPaymentProvider();
+                $newWalletBank->bank_id = $bank_id;
+                $newWalletBank->payment_provider_id = $newWalletOperator->payment_provider_id;
+                $newWalletBank->save();
+                $walletOperatorBanks[] = $newWalletBank;
+            }
+
             Event::fire('orbit.walletoperator.postnewwalletoperator.after.save', array($this, $newWalletOperator));
 
             $newWalletOperator->contact = $newContactPerson;
+            $newWalletOperator->banks = $walletOperatorBanks;
 
             // Commit the changes
             $this->commit();
@@ -200,6 +233,8 @@ class WalletOperatorAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $this->registerCustomValidation();
+
             $payment_provider_id = OrbitInput::post('payment_provider_id');
             $status = OrbitInput::post('status');
 
@@ -223,7 +258,11 @@ class WalletOperatorAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $updateWalletOperator = PaymentProvider::where('payment_provider_id', '=', $payment_provider_id)->first();
+            $updateWalletOperator = PaymentProvider::where('payment_provider_id', '=', $payment_provider_id)
+                                                   ->first();
+            $updateContactWalletOperator = ObjectContact::where('object_id', '=', $payment_provider_id)
+                                                        ->where('object_type', '=', 'wallet_operator')
+                                                        ->first();
 
             OrbitInput::post('payment_name', function($payment_name) use ($updateWalletOperator) {
                 $updateWalletOperator->payment_name = $payment_name;
@@ -251,7 +290,68 @@ class WalletOperatorAPIController extends ControllerAPI
 
             $updateWalletOperator->save();
 
+            OrbitInput::post('contact_person_name', function($contact_name) use ($updateContactWalletOperator) {
+                $updateContactWalletOperator->contact_name = $contact_name;
+            });
+
+            OrbitInput::post('contact_person_position', function($position) use ($updateContactWalletOperator) {
+                $updateContactWalletOperator->position = $position;
+            });
+
+            OrbitInput::post('contact_person_phone_number', function($phone_number) use ($updateContactWalletOperator) {
+                $updateContactWalletOperator->phone_number = $phone_number;
+            });
+
+            OrbitInput::post('contact_person_phone_number_for_sms', function($phone_number_for_sms) use ($updateContactWalletOperator) {
+                $updateContactWalletOperator->phone_number_for_sms = $phone_number_for_sms;
+            });
+
+            OrbitInput::post('contact_person_email', function($email) use ($updateContactWalletOperator) {
+                $updateContactWalletOperator->email = $email;
+            });
+
+            $updateContactWalletOperator->save();
+
+            OrbitInput::post('bank_ids', function($bank_ids) use ($updateWalletOperator) {
+
+                // validate bank_id
+                foreach ($bank_ids as $bank_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'bank_id' => $bank_id_check,
+                        ),
+                        array(
+                            'bank_id' => 'orbit.empty.link_object_id:'.'bank',
+                        )
+                    );
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
+
+                // delete old data
+                $deleteBanks = BankPaymentProvider::where('payment_provider_id', $updateWalletOperator->payment_provider_id);
+                $deleteBanks->delete();
+
+                // save banks
+                $walletOperatorBanks = array();
+                foreach ($bank_ids as $bank_id) {
+                    $newWalletBank = new BankPaymentProvider();
+                    $newWalletBank->bank_id = $bank_id;
+                    $newWalletBank->payment_provider_id = $updateWalletOperator->payment_provider_id;
+                    $newWalletBank->save();
+                    $walletOperatorBanks[] = $newWalletBank;
+                }
+
+                $updateWalletOperator->banks = $walletOperatorBanks;
+            });
+
             Event::fire('orbit.walletoperator.postupdatewalletoperator.after.save', array($this, $updateWalletOperator));
+
+            $updateWalletOperator->contact = $updateContactWalletOperator;
 
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -372,6 +472,10 @@ class WalletOperatorAPIController extends ControllerAPI
 
             $wallOperator = PaymentProvider::excludeDeleted();
 
+            OrbitInput::get('payment_provider_id', function($payment_provider_id) use ($wallOperator) {
+                $wallOperator->where('payment_provider_id', '=', $payment_provider_id);
+            });
+
             OrbitInput::get('payment_name', function($payment_name) use ($wallOperator) {
                 $wallOperator->where('payment_name', '=', $payment_name);
             });
@@ -397,18 +501,14 @@ class WalletOperatorAPIController extends ControllerAPI
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
-                    if ($relation === 'retailers') {
-                        $wallOperator->with('retailers');
-                    } elseif ($relation === 'retailer_categories') {
-                        $wallOperator->with('retailerCategories');
-                    } elseif ($relation === 'promotion') {
-                        $wallOperator->with('promotion');
-                    } elseif ($relation === 'news') {
-                        $wallOperator->with('news');
-                    } elseif ($relation === 'translations') {
-                        $wallOperator->with('translations');
-                    } elseif ($relation === 'translations.media') {
-                        $wallOperator->with('translations.media');
+                    if ($relation === 'media') {
+                        $wallOperator->with('media');
+                    } elseif ($relation === 'media_logo') {
+                        $wallOperator->with('mediaLogo');
+                    } elseif ($relation === 'contact') {
+                        $wallOperator->with('contact');
+                    } elseif ($relation === 'banks') {
+                        $wallOperator->with('banks');
                     }
                 }
             });
@@ -515,5 +615,25 @@ class WalletOperatorAPIController extends ControllerAPI
         return $this->render($httpCode);
     }
 
+    protected function registerCustomValidation()
+    {
+        // Check the existance of link_object_id
+        Validator::extend('orbit.empty.link_object_id', function ($attribute, $value, $parameters) {
+            $link_object_type = trim($parameters[0]);
 
+            if ($link_object_type === 'bank') {
+                $linkObject = Bank::excludeDeleted()
+                            ->where('bank_id', $value)
+                            ->first();
+            }
+
+            if (empty($linkObject)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.link_object_id', $linkObject);
+
+            return TRUE;
+        });
+    }
 }
