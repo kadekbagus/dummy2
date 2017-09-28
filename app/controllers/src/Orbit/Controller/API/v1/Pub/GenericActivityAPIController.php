@@ -262,7 +262,7 @@ class GenericActivityAPIController extends PubControllerAPI
                     ->setActivityNameLong($activityNameLong)
                     ->setModuleName($activityModuleName)
                     ->setLocation($mall)
-                    ->setObject($object);
+                    ->setObject($object)
                     ->setNotes($notes)
                     ->responseOK()
                     ->save();
