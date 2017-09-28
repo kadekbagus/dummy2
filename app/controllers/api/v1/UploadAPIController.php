@@ -10632,15 +10632,14 @@ class UploadAPIController extends ControllerAPI
     }
 
     /**
-     * Upload logo for Merchant.
+     * Upload logo for Wallet Operator.
      *
-     * @author Rio Astamal <me@rioastamal.net>
-     * @author Firmansyah <firmansyah@myorbit.com>
+     * @author kadek <kadek@myorbit.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param integer    `merchant_id`                 (required) - ID of the merchant
-     * @param file|array `images`                      (required) - Images of the logo
+     * @param integer    `payment_provider_id`       (required) - ID of the wallet operator
+     * @param file|array `logo`                      (required) - Images of the logo
      * @return Illuminate\Support\Facades\Response
      */
     public function postUploadWalletOperatorLogo()
@@ -10688,8 +10687,8 @@ class UploadAPIController extends ControllerAPI
                     'logo'                => $logo,
                 ),
                 array(
-                    'payment_provider_id'   => 'required|orbit.empty.walletoperator',
-                    'logo'                  => 'required|nomore.than.one',
+                    'payment_provider_id' => 'required|orbit.empty.walletoperator',
+                    'logo'                => 'required|nomore.than.one',
                 ),
                 $messages
             );
