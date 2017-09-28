@@ -5892,6 +5892,15 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // User clicks on push notification pop up
+            '143' => array(
+                'name' => 'click_push_notification',
+                'name_long' => 'Click Push Notification',
+                'module_name' => 'Notification',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
