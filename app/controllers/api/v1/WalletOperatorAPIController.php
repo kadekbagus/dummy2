@@ -110,13 +110,13 @@ class WalletOperatorAPIController extends ControllerAPI
             $newContactPerson->email = $contact_person_email;
             $newContactPerson->save();
 
+            // Commit the changes
+            $this->commit();
+
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
             $this->response->data = $newWalletOperator;
-
-            // Commit the changes
-            $this->commit();
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -192,20 +192,16 @@ class WalletOperatorAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $country_id = OrbitInput::post('country_id', '0');
-            $object_type = OrbitInput::post('object_type');
-            $status = OrbitInput::post('status', 'active');
-            $translations = OrbitInput::post('translations');
+            $payment_provider_id = OrbitInput::post('payment_provider_id');
+            $status = OrbitInput::post('status');
 
             $validator = Validator::make(
                 array(
-                    'object_type' => $object_type,
-                    'translations' => $translations,
+                    'payment_provider_id' => $payment_provider_id,
                     'status' => $status,
                 ),
                 array(
-                    'object_type' => 'required|in:seo_promotion_list,seo_coupon_list,seo_event_list,seo_store_list,seo_mall_list,seo_homepage',
-                    'translations' => 'required',
+                    'payment_provider_id' => 'required',
                     'status' => 'in:active,inactive',
                 )
             );
@@ -219,12 +215,34 @@ class WalletOperatorAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $result = $this->validateAndSaveTranslations($country_id, $object_type, $translations, $status, 'update');
+            $updateWalletOperator = PaymentProvider::where('payment_provider_id', '=', $payment_provider_id)->first();
+
+            OrbitInput::post('payment_name', function($payment_name) use ($updateWalletOperator) {
+                $updateWalletOperator->payment_name = $payment_name;
+            });
+
+            OrbitInput::post('description', function($description) use ($updateWalletOperator) {
+                $updateWalletOperator->descriptions = $description;
+            });
+
+            OrbitInput::post('mdr', function($mdr) use ($updateWalletOperator) {
+                $updateWalletOperator->mdr = $mdr;
+            });
+
+            OrbitInput::post('mdr_commission', function($mdr_commission) use ($updateWalletOperator) {
+                $updateWalletOperator->mdr_commission = $mdr_commission;
+            });
+
+            OrbitInput::post('status', function($status) use ($updateWalletOperator) {
+                $updateWalletOperator->status = $status;
+            });
+
+            $updateWalletOperator->save();
 
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
-            $this->response->data = $result;
+            $this->response->data = $updateWalletOperator;
 
             // Commit the changes
             $this->commit();
@@ -303,14 +321,13 @@ class WalletOperatorAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $object_type = OrbitInput::get('object_type');
-
+            $sort_by = OrbitInput::get('sortby');
             $validator = Validator::make(
                 array(
-                    'object_type' => $object_type,
+                    'sort_by' => $sort_by,
                 ),
                 array(
-                    'object_type' => 'in:seo_promotion_list,seo_coupon_list,seo_event_list,seo_store_list,seo_mall_list,seo_homepage',
+                    'sort_by' => 'in:payment_name,description,status,created_at,updated_at',
                 )
             );
 
@@ -320,32 +337,135 @@ class WalletOperatorAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $seo_texts = Page::select('pages.pages_id', 'pages.title', 'pages.content as description',
-                                      'pages.object_type', 'pages.language', 'pages.status', 'languages.language_id')
-                                ->leftJoin('languages', 'languages.name', '=', 'pages.language')
-                                ->where('object_type', 'like', '%seo_%');
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.event.max_record');
+            if ($maxRecord <= 0) {
+                // Fallback
+                $maxRecord = (int) Config::get('orbit.pagination.max_record');
+                if ($maxRecord <= 0) {
+                    $maxRecord = 20;
+                }
+            }
+            // Get default per page (take)
+            $perPage = (int) Config::get('orbit.pagination.event.per_page');
+            if ($perPage <= 0) {
+                // Fallback
+                $perPage = (int) Config::get('orbit.pagination.per_page');
+                if ($perPage <= 0) {
+                    $perPage = 20;
+                }
+            }
 
-            OrbitInput::get('status', function($status) use ($seo_texts) {
-                $seo_texts->where('pages.status', '=', $status);
+            $wallOperator = PaymentProvider::excludeDeleted();
+
+            OrbitInput::get('payment_name', function($payment_name) use ($wallOperator) {
+                $wallOperator->where('payment_name', '=', $payment_name);
             });
 
-            OrbitInput::get('object_type', function($object_type) use ($seo_texts) {
-                $seo_texts->where('pages.object_type', '=', $object_type);
+            OrbitInput::get('description', function($description) use ($wallOperator) {
+                $wallOperator->where('descriptions', '=', $description);
             });
 
-            OrbitInput::get('language', function($language) use ($seo_texts) {
-                $seo_texts->where('pages.language', '=', $language);
+            OrbitInput::get('mdr', function($mdr) use ($wallOperator) {
+                $wallOperator->where('mdr', '=', $mdr);
             });
 
-            $_seo_texts = clone $seo_texts;
+            OrbitInput::get('mdr_commission', function($mdr_commission) use ($wallOperator) {
+                $wallOperator->where('mdr_commission', '=', $mdr_commission);
+            });
 
-            $list_seo_texts = $seo_texts->get();
-            $count = RecordCounter::create($_seo_texts)->count();
+            OrbitInput::get('status', function($status) use ($wallOperator) {
+                $wallOperator->where('status', '=', $status);
+            });
+
+            // Add new relation based on request
+            OrbitInput::get('with', function ($with) use ($wallOperator) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'retailers') {
+                        $wallOperator->with('retailers');
+                    } elseif ($relation === 'retailer_categories') {
+                        $wallOperator->with('retailerCategories');
+                    } elseif ($relation === 'promotion') {
+                        $wallOperator->with('promotion');
+                    } elseif ($relation === 'news') {
+                        $wallOperator->with('news');
+                    } elseif ($relation === 'translations') {
+                        $wallOperator->with('translations');
+                    } elseif ($relation === 'translations.media') {
+                        $wallOperator->with('translations.media');
+                    }
+                }
+            });
+
+            $_wallOperator = clone $wallOperator;
+
+            // Get the take args
+            $take = $perPage;
+            OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                if ($_take > $maxRecord) {
+                    $_take = $maxRecord;
+                }
+                $take = $_take;
+
+                if ((int)$take <= 0) {
+                    $take = $maxRecord;
+                }
+            });
+            $wallOperator->take($take);
+
+            $skip = 0;
+            OrbitInput::get('skip', function($_skip) use (&$skip, $wallOperator)
+            {
+                if ($_skip < 0) {
+                    $_skip = 0;
+                }
+
+                $skip = $_skip;
+            });
+            $wallOperator->skip($skip);
+
+            // Default sort by
+            $sortBy = 'payment_providers.payment_name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+            {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'payment_name'    => 'payment_providers.payment_name',
+                    'description'     => 'payment_providers.descriptions',
+                    'mdr'             => 'payment_providers.mdr',
+                    'mdr_commission'  => 'payment_providers.mdr_commission',
+                    'status'          => 'payment_providers.status',
+                    'created_at'      => 'payment_providers.created_at',
+                    'updated_at'      => 'payment_providers.updated_at',
+                );
+
+                $sortBy = $sortByMapping[$_sortBy];
+            });
+
+            if ($sortBy !== 'payment_providers.status') {
+                $wallOperator->orderBy('payment_providers.status', 'asc');
+            }
+
+            OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+            {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+            $wallOperator->orderBy($sortBy, $sortMode);
+
+            $list_wallOperator = $wallOperator->get();
+            $count = RecordCounter::create($_wallOperator)->count();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($list_seo_texts);
-            $this->response->data->records = $list_seo_texts;
+            $this->response->data->returned_records = count($list_wallOperator);
+            $this->response->data->records = $list_wallOperator;
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
@@ -382,56 +502,4 @@ class WalletOperatorAPIController extends ControllerAPI
     }
 
 
-    private function validateAndSaveTranslations($country_id, $object_type, $translations, $status, $operation)
-    {
-        $valid_fields = ['title', 'description'];
-        $data = @json_decode($translations);
-        $page = [];
-        if (json_last_error() != JSON_ERROR_NONE) {
-            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-        }
-
-        if ($operation == 'update') {
-            // delete all value and them insert all new value
-            $existing_translation = Page::where('country_id', '=', '0')
-                         ->where('object_type', '=', $object_type)
-                         ->delete();
-        }
-
-        foreach ($data as $language_id => $translations) {
-            $language = Language::where('status', '=', 'active')
-                ->where('language_id', '=', $language_id)
-                ->first();
-            if (empty($language)) {
-                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-            }
-
-            if ($translations === null) {
-                // deleting, verify exists
-            } else {
-
-                foreach ($translations as $field => $value) {
-                    if (!in_array($field, $valid_fields, TRUE)) {
-                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
-                    }
-                    if ($value !== null && !is_string($value)) {
-                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
-                    }
-                }
-
-                // Insert every single seo per language_id
-                $new_page = new Page();
-                $new_page->country_id = $country_id;
-                $new_page->object_type = $object_type;
-                $new_page->language = $language->name;
-                $new_page->title = $translations->title;
-                $new_page->content = $translations->description;
-                $new_page->status =$status;
-                $new_page->save();
-                $page[] = $new_page;
-            }
-        }
-
-        return $page;
-    }
 }
