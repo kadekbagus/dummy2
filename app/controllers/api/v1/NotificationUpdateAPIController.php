@@ -168,6 +168,7 @@ class NotificationUpdateAPIController extends ControllerAPI
                     'big_picture'        => $attachmentUrl,
                     'adm_big_picture'    => $attachmentUrl,
                     'chrome_big_picture' => $attachmentUrl,
+                    'chrome_web_image'   => $attachmentUrl,
                 ];
 
                 $oneSignal = new OneSignal($oneSignalConfig);
