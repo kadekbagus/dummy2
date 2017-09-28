@@ -144,9 +144,9 @@ class NotificationNewAPIController extends ControllerAPI
                 $mongoNotifId = $response->data->_id;
 
                 // add query string for activity recording
-                $newUrl =  $launchUrl . '?notif_heading=' . urlencode($headings->$defaultLanguage) . '&notif_id=' . urlencode($mongoNotifId);
+                $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
                 if (parse_url($launchUrl, PHP_URL_QUERY)) { // if launch url containts query string
-                    $newUrl =  $launchUrl . '&notif_heading=' . urlencode($headings->$defaultLanguage) . '&notif_id=' . urlencode($mongoNotifId);
+                    $newUrl =  $launchUrl . '&notif_id=' . $mongoNotifId;
                 }
 
                 $data = [
