@@ -10631,6 +10631,220 @@ class UploadAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Upload logo for Wallet Operator.
+     *
+     * @author kadek <kadek@myorbit.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `payment_provider_id`       (required) - ID of the wallet operator
+     * @param file|array `logo`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadWalletOperatorLogo()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadwalletoperatorlogo.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('walletoperator.new, walletoperator.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadwalletoperatorlogo.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadwalletoperatorlogo.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('edit_merchant')) {
+                    Event::fire('orbit.upload.postuploadwalletoperatorlogo.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadwalletoperatorlogo.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $payment_provider_id = OrbitInput::post('payment_provider_id');
+            $logo = OrbitInput::files('logo');
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'payment_provider_id' => $payment_provider_id,
+                    'logo'                => $logo,
+                ),
+                array(
+                    'payment_provider_id' => 'required|orbit.empty.walletoperator',
+                    'logo'                => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadwalletoperatorlogo.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('walletoperator.new, walletoperator.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadwalletoperatorlogo.after.validation', array($this, $validator));
+
+            // We already had Merchant instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $walletOperator = App::make('orbit.empty.walletoperator');
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($walletOperator)
+            {
+                $payment_provider_id = $walletOperator->payment_provider_id;
+                $slug = Str::slug($walletOperator->payment_name);
+                $file['new']->name = sprintf('%s-%s-%s', $payment_provider_id, $slug, time());
+            };
+
+            // Load the orbit configuration for merchant upload logo
+            $uploadLogoConfig = Config::get('orbit.upload.wallet_operator.logo');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLogoConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadwalletoperatorlogo.before.save', array($this, $walletOperator, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($logo);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $walletOperator->payment_provider_id)
+                              ->where('object_name', 'wallet_operator')
+                              ->where('media_name_id', 'wallet_operator_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $walletOperator->payment_provider_id,
+                'name'          => 'wallet_operator',
+                'media_name_id' => 'wallet_operator_logo',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            // if (isset($uploaded[0])) {
+            //     $merchant->logo = $uploaded[0]['path'];
+            //     $merchant->save();
+            // }
+
+            Event::fire('orbit.upload.postuploadwalletoperatorlogo.after.save', array($this, $walletOperator, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.merchant.logo');
+
+            // Commit the changes
+            if (! $this->calledFrom('walletoperator.new, walletoperator.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadwalletoperatorlogo.after.commit', array($this, $walletOperator, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadwalletoperatorlogo.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('walletoperator.new, walletoperator.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadwalletoperatorlogo.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('walletoperator.new, walletoperator.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadwalletoperatorlogo.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('walletoperator.new, walletoperator.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadwalletoperatorlogo.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('walletoperator.new, walletoperator.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadwalletoperatorlogo.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
@@ -10871,6 +11085,20 @@ class UploadAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.merchant_language', $merchant_language);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.walletoperator', function ($attribute, $value, $parameters) {
+            $walletOperator = PaymentProvider::excludeDeleted()
+                                        ->where('payment_provider_id', $value)
+                                        ->first();
+
+            if (empty($walletOperator)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.walletoperator', $walletOperator);
 
             return TRUE;
         });

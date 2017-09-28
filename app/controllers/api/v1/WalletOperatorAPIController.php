@@ -1,6 +1,6 @@
 <?php
 /**
- * An API controller for managing seo text.
+ * An API controller for managing Wallet Operator/Payment Provider.
  */
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -51,6 +51,7 @@ class WalletOperatorAPIController extends ControllerAPI
             $status = OrbitInput::post('status', 'active');
             $mdr = OrbitInput::post('mdr');
             $mdr_commission = OrbitInput::post('mdr_commission');
+            $deeplink_url = OrbitInput::post('deeplink_url');
             $contact_person_name = OrbitInput::post('contact_person_name');
             $contact_person_position = OrbitInput::post('contact_person_position');
             $contact_person_phone_number = OrbitInput::post('contact_person_phone_number');
@@ -64,6 +65,7 @@ class WalletOperatorAPIController extends ControllerAPI
                     'description' => $description,
                     'status' => $status,
                     'mdr' => $mdr,
+                    'deeplink_url' => $deeplink_url,
                     'contact_person_name' => $contact_person_name,
                     'contact_person_position' => $contact_person_position,
                     'contact_person_phone_number' => $contact_person_phone_number,
@@ -75,6 +77,7 @@ class WalletOperatorAPIController extends ControllerAPI
                     'description' => 'required',
                     'status' => 'in:active,inactive',
                     'mdr' => 'required',
+                    'deeplink_url' => 'required',
                     'contact_person_name' => 'required',
                     'contact_person_position' => 'required',
                     'contact_person_phone_number' => 'required',
@@ -97,6 +100,7 @@ class WalletOperatorAPIController extends ControllerAPI
             $newWalletOperator->descriptions = $description;
             $newWalletOperator->mdr = $mdr;
             $newWalletOperator->mdr_commission = $mdr_commission;
+            $newWalletOperator->deeplink_url = $deeplink_url;
             $newWalletOperator->status = $status;
             $newWalletOperator->save();
 
@@ -109,6 +113,10 @@ class WalletOperatorAPIController extends ControllerAPI
             $newContactPerson->phone_number_for_sms = $contact_person_phone_number_for_sms;
             $newContactPerson->email = $contact_person_email;
             $newContactPerson->save();
+
+            Event::fire('orbit.walletoperator.postnewwalletoperator.after.save', array($this, $newWalletOperator));
+
+            $newWalletOperator->contact = $newContactPerson;
 
             // Commit the changes
             $this->commit();
@@ -233,11 +241,17 @@ class WalletOperatorAPIController extends ControllerAPI
                 $updateWalletOperator->mdr_commission = $mdr_commission;
             });
 
+            OrbitInput::post('deeplink_url', function($deeplink_url) use ($updateWalletOperator) {
+                $updateWalletOperator->deeplink_url = $deeplink_url;
+            });
+
             OrbitInput::post('status', function($status) use ($updateWalletOperator) {
                 $updateWalletOperator->status = $status;
             });
 
             $updateWalletOperator->save();
+
+            Event::fire('orbit.walletoperator.postupdatewalletoperator.after.save', array($this, $updateWalletOperator));
 
             $this->response->code = 0;
             $this->response->status = 'success';
