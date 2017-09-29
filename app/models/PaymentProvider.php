@@ -19,4 +19,16 @@ class PaymentProvider extends Eloquent
     {
         return $this->media()->where('media_name_id', 'wallet_operator_logo');
     }
+
+    public function contact()
+    {
+    	return $this->hasOne('ObjectContact', 'object_id', 'payment_provider_id')
+    				->where('object_type', 'wallet_operator');
+    }
+
+    public function banks()
+    {
+        return $this->hasMany('BankPaymentProvider', 'payment_provider_id', 'payment_provider_id')
+        			->leftJoin('banks', 'banks.bank_id', '=', 'banks_payment_providers.bank_id');
+    }
 }

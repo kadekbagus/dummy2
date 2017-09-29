@@ -17,3 +17,8 @@ Route::post('/app/v1/wallet-operator/update', 'IntermediateAuthController@Wallet
  * Get search wallet operator
  */
 Route::get('/app/v1/wallet-operator/list', 'IntermediateAuthController@WalletOperator_getSearchWalletOperator');
+
+/**
+ * Get search banks
+ */
+Route::get('/app/v1/bank/list', 'IntermediateAuthController@WalletOperator_getSearchBank');

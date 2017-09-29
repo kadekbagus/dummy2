@@ -366,6 +366,7 @@ return array(
             'gtm_city' => 'The :attribute is not found',
             'exclusive_partner' => 'Exclusive partner not found',
             'merchant_verification_number' => 'The merchant verification number field is required',
+            'payment_provider_id' => 'The payment_provider_id is not found',
         ),
         'update' => array (
             'promotional_event' => 'Cannot Update Promotional Event without permission / campaign status is stopped or expired',
