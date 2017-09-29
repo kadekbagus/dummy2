@@ -217,7 +217,7 @@ class WalletOperatorAPIController extends ControllerAPI
                     'status' => $status,
                 ),
                 array(
-                    'payment_provider_id' => 'required',
+                    'payment_provider_id' => 'required|orbit.empty.payment_provider_id',
                     'status' => 'in:active,inactive',
                 )
             );
@@ -752,6 +752,21 @@ class WalletOperatorAPIController extends ControllerAPI
 
     protected function registerCustomValidation()
     {
+        // Check the existance of payment_provider_id
+        Validator::extend('orbit.empty.payment_provider_id', function ($attribute, $value, $parameters){
+            $wallet = PaymentProvider::excludeDeleted()
+                                ->where('payment_provider_id', $value)
+                                ->first();
+
+            if (empty($wallet)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.payment_provider_id', $wallet);
+
+            return TRUE;
+        });
+
         // Check the existance of link_object_id
         Validator::extend('orbit.empty.link_object_id', function ($attribute, $value, $parameters) {
             $link_object_type = trim($parameters[0]);
