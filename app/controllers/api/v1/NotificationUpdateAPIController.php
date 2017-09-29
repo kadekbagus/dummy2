@@ -186,16 +186,12 @@ class NotificationUpdateAPIController extends ControllerAPI
             $this->response->status = 'success';
             $this->response->data = $response->data;;
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.access.forbidden', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.invalid.arguments', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -206,8 +202,6 @@ class NotificationUpdateAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.query.error', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
 
@@ -220,16 +214,18 @@ class NotificationUpdateAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.general.exception', array($this, $e));
+            $message = $e->getMessage();
+            if ($e->getCode() == 8701 && strpos($message, 'Incorrect player_id format in include_player_ids') !== false) {
+                $message = 'Notification token is not valid';
+            }
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $message;
             $this->response->data = null;
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.mall.getsearchmallcountry.before.render', array($this, &$output));
 
         return $output;
     }

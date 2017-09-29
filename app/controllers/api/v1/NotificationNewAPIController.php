@@ -37,6 +37,10 @@ class NotificationNewAPIController extends ControllerAPI
      */
     public function postNewNotification()
     {
+        $mongoConfig = Config::get('database.mongodb');
+        $mongoClient = MongoClient::create($mongoConfig);
+        $mongoNotifId = '';
+
         try {
             $httpCode = 200;
 
@@ -64,7 +68,6 @@ class NotificationNewAPIController extends ControllerAPI
             $status = OrbitInput::post('status', 'draft');
             $notificationTokens = OrbitInput::post('notification_tokens');
             $userIds = OrbitInput::post('user_ids');
-            $mongoConfig = Config::get('database.mongodb');
 
             $validator = Validator::make(
                 array(
@@ -134,7 +137,6 @@ class NotificationNewAPIController extends ControllerAPI
                 'user_ids'            => $userIds,
             ];
 
-            $mongoClient = MongoClient::create($mongoConfig);
             $response = $mongoClient->setFormParam($body)
                                     ->setEndPoint('notifications') // express endpoint
                                     ->request('POST');
@@ -177,16 +179,12 @@ class NotificationNewAPIController extends ControllerAPI
             $this->response->status = 'success';
             $this->response->data = $response->data;
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.access.forbidden', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.invalid.arguments', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -197,8 +195,6 @@ class NotificationNewAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.query.error', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
 
@@ -211,16 +207,23 @@ class NotificationNewAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.general.exception', array($this, $e));
+            $message = $e->getMessage();
+            if ($e->getCode() == 8701 && strpos($message, 'Incorrect player_id format in include_player_ids') !== false) {
+                $message = 'Notification token is not valid';
+            }
+
+            // rollback
+            if (! empty($mongoNotifId)) {
+                $deleteNotif = $mongoClient->setEndPoint("notifications/$mongoNotifId")->request('DELETE');
+            }
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $message;
             $this->response->data = null;
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.mall.getsearchmallcountry.before.render', array($this, &$output));
 
         return $output;
     }
