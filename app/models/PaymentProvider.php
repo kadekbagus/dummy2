@@ -26,9 +26,9 @@ class PaymentProvider extends Eloquent
     				->where('object_type', 'wallet_operator');
     }
 
-    public function banks()
+    public function gtmBanks()
     {
-        return $this->hasMany('BankPaymentProvider', 'payment_provider_id', 'payment_provider_id')
-        			->leftJoin('banks', 'banks.bank_id', '=', 'banks_payment_providers.bank_id');
+        return $this->hasMany('BankGotomall', 'payment_provider_id', 'payment_provider_id')
+        			->leftJoin('banks', 'banks.bank_id', '=', 'banks_gotomalls.bank_id');
     }
 }
