@@ -26,3 +26,11 @@ Route::get('/api/v1/wallet-operator/list', function()
 {
     return WalletOperatorAPIController::create()->getSearchWalletOperator();
 });
+
+/**
+ * Get search bank
+ */
+Route::get('/api/v1/bank/list', function()
+{
+    return WalletOperatorAPIController::create()->getSearchBank();
+});

@@ -592,7 +592,7 @@ class WalletOperatorAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:payment_name,description,status,created_at,updated_at',
+                    'sort_by' => 'in:bank_name,description,status,created_at,updated_at',
                 )
             );
 
@@ -623,48 +623,34 @@ class WalletOperatorAPIController extends ControllerAPI
 
             $banks = Bank::excludeDeleted();
 
-            OrbitInput::get('payment_provider_id', function($payment_provider_id) use ($wallOperator) {
-                $wallOperator->where('payment_provider_id', '=', $payment_provider_id);
+            OrbitInput::get('bank_id', function($bank_id) use ($banks) {
+                $banks->where('bank_id', '=', $bank_id);
             });
 
-            OrbitInput::get('payment_name', function($payment_name) use ($wallOperator) {
-                $wallOperator->where('payment_name', '=', $payment_name);
+            OrbitInput::get('bank_name', function($bank_name) use ($banks) {
+                $banks->where('bank_name', '=', $bank_name);
             });
 
-            OrbitInput::get('description', function($description) use ($wallOperator) {
-                $wallOperator->where('descriptions', '=', $description);
+            OrbitInput::get('description', function($description) use ($banks) {
+                $banks->where('description', '=', $description);
             });
 
-            OrbitInput::get('mdr', function($mdr) use ($wallOperator) {
-                $wallOperator->where('mdr', '=', $mdr);
-            });
-
-            OrbitInput::get('mdr_commission', function($mdr_commission) use ($wallOperator) {
-                $wallOperator->where('mdr_commission', '=', $mdr_commission);
-            });
-
-            OrbitInput::get('status', function($status) use ($wallOperator) {
-                $wallOperator->where('status', '=', $status);
+            OrbitInput::get('status', function($status) use ($banks) {
+                $banks->where('status', '=', $status);
             });
 
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($wallOperator) {
+            OrbitInput::get('with', function ($with) use ($banks) {
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
-                    if ($relation === 'media') {
-                        $wallOperator->with('media');
-                    } elseif ($relation === 'media_logo') {
-                        $wallOperator->with('mediaLogo');
-                    } elseif ($relation === 'contact') {
-                        $wallOperator->with('contact');
-                    } elseif ($relation === 'banks') {
-                        $wallOperator->with('banks');
+                    if ($relation === 'gtmBank') {
+                        $banks->with('gtmBank');
                     }
                 }
             });
 
-            $_wallOperator = clone $wallOperator;
+            $_banks = clone $banks;
 
             // Get the take args
             $take = $perPage;
@@ -678,10 +664,10 @@ class WalletOperatorAPIController extends ControllerAPI
                     $take = $maxRecord;
                 }
             });
-            $wallOperator->take($take);
+            $banks->take($take);
 
             $skip = 0;
-            OrbitInput::get('skip', function($_skip) use (&$skip, $wallOperator)
+            OrbitInput::get('skip', function($_skip) use (&$skip, $banks)
             {
                 if ($_skip < 0) {
                     $_skip = 0;
@@ -689,10 +675,10 @@ class WalletOperatorAPIController extends ControllerAPI
 
                 $skip = $_skip;
             });
-            $wallOperator->skip($skip);
+            $banks->skip($skip);
 
             // Default sort by
-            $sortBy = 'payment_providers.payment_name';
+            $sortBy = 'banks.bank_name';
             // Default sort mode
             $sortMode = 'asc';
 
@@ -700,20 +686,18 @@ class WalletOperatorAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'payment_name'    => 'payment_providers.payment_name',
-                    'description'     => 'payment_providers.descriptions',
-                    'mdr'             => 'payment_providers.mdr',
-                    'mdr_commission'  => 'payment_providers.mdr_commission',
-                    'status'          => 'payment_providers.status',
-                    'created_at'      => 'payment_providers.created_at',
-                    'updated_at'      => 'payment_providers.updated_at',
+                    'bank_name'   => 'banks.bank_name',
+                    'description' => 'banks.description',
+                    'status'      => 'banks.status',
+                    'created_at'  => 'banks.created_at',
+                    'updated_at'  => 'banks.updated_at',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'payment_providers.status') {
-                $wallOperator->orderBy('payment_providers.status', 'asc');
+            if ($sortBy !== 'banks.status') {
+                $banks->orderBy('banks.status', 'asc');
             }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
@@ -722,15 +706,15 @@ class WalletOperatorAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
-            $wallOperator->orderBy($sortBy, $sortMode);
+            $banks->orderBy($sortBy, $sortMode);
 
-            $list_wallOperator = $wallOperator->get();
-            $count = RecordCounter::create($_wallOperator)->count();
+            $list_banks = $banks->get();
+            $count = RecordCounter::create($_banks)->count();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($list_wallOperator);
-            $this->response->data->records = $list_wallOperator;
+            $this->response->data->returned_records = count($list_banks);
+            $this->response->data->records = $list_banks;
 
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
