@@ -275,14 +275,13 @@ class ESStoreUpdateQueue
             $locationRating = array();
             $mallRating = array();
 
-            $queryString = [
-                'object_id'   => $storeIds,
-                'object_type' => 'store'
-            ];
+            $queryString['object_type'] = 'store';
+            $_storeIds = '?object_id[]=' . implode('&object_id[]=', $storeIds);
 
             $mongoClient = MongoClient::create($mongoConfig);
-            $endPoint = "review-counters";
-            $response = $mongoClient->setQueryString($queryString)
+            $endPoint = "review-counters" . $_storeIds;
+            $response = $mongoClient->setCustomQuery(TRUE)
+                                    ->setQueryString($queryString)
                                     ->setEndPoint($endPoint)
                                     ->request('GET');
 
@@ -309,8 +308,9 @@ class ESStoreUpdateQueue
             }
 
             // get rating by mall
-            $endPoint = "mall-review-counters";
-            $response = $mongoClient->setQueryString($queryString)
+            $endPoint = "mall-review-counters" . $_storeIds;
+            $response = $mongoClient->setCustomQuery(TRUE)
+                                    ->setQueryString($queryString)
                                     ->setEndPoint($endPoint)
                                     ->request('GET');
 
