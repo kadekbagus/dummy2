@@ -4072,6 +4072,234 @@ class CouponAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * GET - Available Wallet Operator Based on link to tenant
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param array     `store_ids`    (required) - store_ids
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getAvailableWalletOperator()
+    {
+
+        try {
+            $httpCode = 200;
+            // Require authentication
+            $this->checkAuth();
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->couponViewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $store_ids = OrbitInput::get('store_ids');
+            $store_ids = (array) $store_ids;
+            $sort_by = OrbitInput::get('sortby');
+            $validator = Validator::make(
+                array(
+                    'store_ids' => $store_ids,
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'store_ids' => 'required',
+                    'sort_by' => 'in:payment_name,description,status,created_at,updated_at',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.event.max_record');
+            if ($maxRecord <= 0) {
+                // Fallback
+                $maxRecord = (int) Config::get('orbit.pagination.max_record');
+                if ($maxRecord <= 0) {
+                    $maxRecord = 20;
+                }
+            }
+            // Get default per page (take)
+            $perPage = (int) Config::get('orbit.pagination.event.per_page');
+            if ($perPage <= 0) {
+                // Fallback
+                $perPage = (int) Config::get('orbit.pagination.per_page');
+                if ($perPage <= 0) {
+                    $perPage = 20;
+                }
+            }
+
+            $dontShowWallet = false;
+
+            // check if all store is_payment_acquire = Y or not
+            $checkStore = Tenant::whereIn('merchant_id', $store_ids)
+                                ->where('is_payment_acquire', 'N')
+                                ->get();
+
+            if (count($checkStore)) {
+                $dontShowWallet = true;
+            }
+
+            if (!$dontShowWallet) {
+                $wallOperator = PaymentProvider::excludeDeleted();
+
+                OrbitInput::get('payment_provider_id', function($payment_provider_id) use ($wallOperator) {
+                    $wallOperator->where('payment_provider_id', '=', $payment_provider_id);
+                });
+
+                OrbitInput::get('payment_name', function($payment_name) use ($wallOperator) {
+                    $wallOperator->where('payment_name', '=', $payment_name);
+                });
+
+                OrbitInput::get('description', function($description) use ($wallOperator) {
+                    $wallOperator->where('descriptions', '=', $description);
+                });
+
+                OrbitInput::get('mdr', function($mdr) use ($wallOperator) {
+                    $wallOperator->where('mdr', '=', $mdr);
+                });
+
+                OrbitInput::get('mdr_commission', function($mdr_commission) use ($wallOperator) {
+                    $wallOperator->where('mdr_commission', '=', $mdr_commission);
+                });
+
+                OrbitInput::get('status', function($status) use ($wallOperator) {
+                    $wallOperator->where('status', '=', $status);
+                });
+
+                // Add new relation based on request
+                OrbitInput::get('with', function ($with) use ($wallOperator) {
+                    $with = (array) $with;
+
+                    foreach ($with as $relation) {
+                        if ($relation === 'media') {
+                            $wallOperator->with('media');
+                        } elseif ($relation === 'media_logo') {
+                            $wallOperator->with('mediaLogo');
+                        } elseif ($relation === 'contact') {
+                            $wallOperator->with('contact');
+                        } elseif ($relation === 'gtm_bank') {
+                            $wallOperator->with('gtmBanks');
+                        }
+                    }
+                });
+
+                $_wallOperator = clone $wallOperator;
+
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $wallOperator->take($take);
+
+                $skip = 0;
+                OrbitInput::get('skip', function($_skip) use (&$skip, $wallOperator)
+                {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                });
+                $wallOperator->skip($skip);
+
+                // Default sort by
+                $sortBy = 'payment_providers.payment_name';
+                // Default sort mode
+                $sortMode = 'asc';
+
+                OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
+                {
+                    // Map the sortby request to the real column name
+                    $sortByMapping = array(
+                        'payment_name'    => 'payment_providers.payment_name',
+                        'description'     => 'payment_providers.descriptions',
+                        'mdr'             => 'payment_providers.mdr',
+                        'mdr_commission'  => 'payment_providers.mdr_commission',
+                        'status'          => 'payment_providers.status',
+                        'created_at'      => 'payment_providers.created_at',
+                        'updated_at'      => 'payment_providers.updated_at',
+                    );
+
+                    $sortBy = $sortByMapping[$_sortBy];
+                });
+
+                if ($sortBy !== 'payment_providers.status') {
+                    $wallOperator->orderBy('payment_providers.status', 'asc');
+                }
+
+                OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
+                {
+                    if (strtolower($_sortMode) !== 'asc') {
+                        $sortMode = 'desc';
+                    }
+                });
+                $wallOperator->orderBy($sortBy, $sortMode);
+
+                $list_wallOperator = $wallOperator->get();
+                $count = RecordCounter::create($_wallOperator)->count();
+
+                $this->response->data = new stdClass();
+                $this->response->data->total_records = $count;
+                $this->response->data->returned_records = count($list_wallOperator);
+                $this->response->data->records = $list_wallOperator;
+            } else {
+                $this->response->data = new stdClass();
+                $this->response->data->message = 'wallet operator not available';
+            }
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        return $this->render($httpCode);
+    }
+
     protected function registerCustomValidation()
     {
         // Check maximal of total issued coupons
