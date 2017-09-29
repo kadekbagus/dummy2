@@ -125,9 +125,13 @@ class RegistrationMail
                 'message' => $message
             ];
         } catch (Exception $e) {
-            $message = sprintf('[Job ID: `%s`] Registration Email; Status: OK; Type: Activation Email; User ID: %s',
+            $message = sprintf('[Job ID: `%s`] Registration Email; Status: FAIL; Type: Activation Email; User ID: %s; Message: %s, File: %s, Line: %s',
                                 $job->getJobId(),
-                                $data['user_id']);
+                                $data['user_id'],
+                                $e->getMessage(),
+                                $e->getFile(),
+                                $e->getLine()
+                    );
 
             Log::info($message);
         }
