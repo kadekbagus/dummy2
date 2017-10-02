@@ -19,6 +19,10 @@ use Language;
 use Keyword;
 use Event;
 use Category;
+use ObjectBank;
+use ObjectFinancialDetail;
+use MerchantStorePaymentProvider;
+
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 
 class MerchantUpdateAPIController extends ControllerAPI
@@ -74,6 +78,22 @@ class MerchantUpdateAPIController extends ControllerAPI
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $phone = OrbitInput::post('phone');
             $email = OrbitInput::post('email');
+
+            // Payment_acquire
+            $paymentAcquire = OrbitInput::post('payment_acquire', 'N'); // Y or N
+            // $objectId = OrbitInput::post('object_id');
+            $objectType = OrbitInput::post('object_type');
+            $contactName = OrbitInput::post('contact_name');
+            $position = OrbitInput::post('position');
+            $phoneNumber = OrbitInput::post('phone_number');
+            $emailFinancial = OrbitInput::post('email_financial');
+            $paymentProviderIds = OrbitInput::post('payment_provider_ids',[]);
+            $mdr = OrbitInput::post('mdr',[]);
+            $bankIds = OrbitInput::post('bank_ids',[]);
+            $accountNames = OrbitInput::post('account_names',[]);
+            $accountNumbers = OrbitInput::post('account_numbers',[]);
+            $bankAddress = OrbitInput::post('bank_address',[]);
+            $swiftCodes = OrbitInput::post('swift_codes',[]);
 
             // Begin database transaction
             $this->beginTransaction();
@@ -285,6 +305,117 @@ class MerchantUpdateAPIController extends ControllerAPI
                   }
                 }
             });
+
+
+            // Payment Acquire
+            $deleteObjectFinancialDetail = ObjectFinancialDetail::where('object_id', '=', $baseMerchantId)->where('object_type', '=', 'merchant')->delete();
+            $deleteObjectFinancialDetail = ObjectBank::where('object_id', '=', $baseMerchantId)->where('object_type', '=', 'merchant')->delete();
+            $deleteMerchantStorePaymentProvider = MerchantStorePaymentProvider::where('object_id', '=', $baseMerchantId)->where('object_type', '=', 'merchant')->delete();
+
+            if ($paymentAcquire === 'Y') {
+
+                // Save object financial detail
+                $validator = Validator::make(
+                    array(
+                        'object_id'  => $baseMerchantId,
+                        'object_type'  => $objectType,
+                        'contact_name'  => $contactName,
+                        'position'  => $position,
+                        'phone_number'  => $phoneNumber,
+                        'email_financial'  => $emailFinancial,
+                    ),
+                    array(
+                        'object_id'  => 'required',
+                        'object_type'  => 'required',
+                        'contact_name'  => 'required',
+                        'position'  => 'required',
+                        'phone_number'  => 'required',
+                        'email_financial'  => 'required',
+                    )
+                );
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $newObjectFinancialDetail = new ObjectFinancialDetail;
+                $newObjectFinancialDetail->object_id = $baseMerchantId;
+                $newObjectFinancialDetail->object_type = $objectType;
+                $newObjectFinancialDetail->contact_name = $contactName;
+                $newObjectFinancialDetail->position = $position;
+                $newObjectFinancialDetail->phone_number = $phoneNumber;
+                $newObjectFinancialDetail->email = $emailFinancial;
+                $newObjectFinancialDetail->Save();
+                $objectFinancialDetail[] = $newObjectFinancialDetail;
+
+                if(count($bankIds) > 0){
+                    foreach ($bankIds as $objectBankKey => $bankId) {
+                        $validator = Validator::make(
+                            array(
+                                'bank_id'  => $bankId,
+                                'account_name'  => $accountNames[$objectBankKey],
+                                'account_number'  => $accountNumbers[$objectBankKey],
+                                'bank_address'  => $bankAddress[$objectBankKey],
+                            ),
+                            array(
+                                'bank_id'  => 'required',
+                                'account_name'  => 'required',
+                                'account_number'  => 'required',
+                                'bank_address'  => 'required',
+                            )
+                        );
+                        // Run the validation
+                        if ($validator->fails()) {
+                            $errorMessage = $validator->messages()->first();
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+                        $newObjectBank = new ObjectBank;
+                        $newObjectBank->object_id = $baseMerchantId;
+                        $newObjectBank->object_type = $objectType;
+                        $newObjectBank->bank_id = $bankId;
+                        $newObjectBank->account_name = $accountNames[$objectBankKey];
+                        $newObjectBank->account_number = $accountNumbers[$objectBankKey];
+                        $newObjectBank->bank_address = $bankAddress[$objectBankKey];
+                        $newObjectBank->swift_code = isset($swiftCodes[$objectBankKey]) ? $swiftCodes[$objectBankKey] : null;
+                        $newObjectBank->save();
+                        $objectBank[$objectBankKey] = $newObjectBank;
+                    }
+
+                    $updatedBaseMerchant->object_bank = $objectBank;
+                }
+
+                if (count($paymentProviderIds) > 0) {
+                    foreach ($paymentProviderIds as $paymentProviderKey => $paymentProviderId) {
+                        $validator = Validator::make(
+                            array(
+                                'payment_provider_id'  => $paymentProviderId,
+                                'mdr' => $mdr,
+                            ),
+                            array(
+                                'payment_provider_id'  => 'required',
+                                'mdr' => 'required',
+                            )
+                        );
+                        // Run the validation
+                        if ($validator->fails()) {
+                            $errorMessage = $validator->messages()->first();
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+                        $newMerchantStorePaymentProvider = new MerchantStorePaymentProvider;
+                        $newMerchantStorePaymentProvider->payment_provider_id = $paymentProviderId;
+                        $newMerchantStorePaymentProvider->object_id = $baseMerchantId;
+                        $newMerchantStorePaymentProvider->object_type = $objectType;
+                        $newMerchantStorePaymentProvider->phone_number_for_sms = '';
+                        $newMerchantStorePaymentProvider->mdr = $mdr[$paymentProviderKey];
+                        $newMerchantStorePaymentProvider->save();
+                        $merchantStorePaymentProvider[$paymentProviderKey] = $newMerchantStorePaymentProvider;
+                    }
+                    $updatedBaseMerchant->merchant_store_payment_provider = $merchantStorePaymentProvider;
+
+                }
+            }
 
             Event::fire('orbit.basemerchant.postupdatebasemerchant.after.save', array($this, $updatedBaseMerchant));
 
