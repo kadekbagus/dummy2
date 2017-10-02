@@ -77,3 +77,9 @@ Route::get('/app/v1/coupon-report/list', 'IntermediateAuthController@CouponRepor
  * Route to get CS by coupon ID
  */
 Route::get('/app/v1/coupon/customer-service', 'IntermediateAuthController@CSListByCoupon_getList');
+
+
+/**
+ * Get available wallet operator for coupon
+ */
+Route::get('/app/v1/available-wallet-operator/list', 'IntermediateAuthController@Coupon_getAvailableWalletOperator');

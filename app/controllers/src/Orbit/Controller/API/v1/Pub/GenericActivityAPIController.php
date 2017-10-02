@@ -253,17 +253,19 @@ class GenericActivityAPIController extends PubControllerAPI
                 } else {
                     $notes = 'Guest user';
                 }
+            } elseif ($activityName === 'click_push_notification') {
+                $notes = OrbitInput::post('object_id', null);
             }
 
             $activity->setUser($user)
-                ->setActivityName($activityName)
-                ->setActivityNameLong($activityNameLong)
-                ->setObject($object)
-                ->setModuleName($activityModuleName)
-                ->setLocation($mall)
-                ->setNotes($notes)
-                ->responseOK()
-                ->save();
+                    ->setActivityName($activityName)
+                    ->setActivityNameLong($activityNameLong)
+                    ->setModuleName($activityModuleName)
+                    ->setLocation($mall)
+                    ->setObject($object)
+                    ->setNotes($notes)
+                    ->responseOK()
+                    ->save();
 
             $this->response->code = 0;
             $this->response->status = 'success';
