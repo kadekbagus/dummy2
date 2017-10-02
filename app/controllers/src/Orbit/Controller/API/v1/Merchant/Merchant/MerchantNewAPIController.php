@@ -82,17 +82,12 @@ class MerchantNewAPIController extends ControllerAPI
 
             // Payment_acquire
             $paymentAcquire = OrbitInput::post('payment_acquire', 'N'); // Y or N
-            $objectId = OrbitInput::post('object_id');
-            $objectType = OrbitInput::post('object_type'); // merchant - store
-            // Financial contact
             $contactName = OrbitInput::post('contact_name');
             $position = OrbitInput::post('position');
             $phoneNumber = OrbitInput::post('phone_number');
             $emailFinancial = OrbitInput::post('email_financial');
-            // Mdr (array)
             $paymentProviderIds = OrbitInput::post('payment_provider_ids',[]);
             $mdr = OrbitInput::post('mdr',[]);
-            // Bank account (array)
             $bankIds = OrbitInput::post('bank_ids',[]);
             $accountNames = OrbitInput::post('account_names',[]);
             $accountNumbers = OrbitInput::post('account_numbers',[]);
@@ -127,26 +122,102 @@ class MerchantNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // validate category_ids
+            if (isset($categoryIds) && count($categoryIds) > 0) {
+                foreach ($categoryIds as $category_id_check) {
+                    $validator = Validator::make(
+                        array(
+                            'category_id'   => $category_id_check,
+                        ),
+                        array(
+                            'category_id'   => 'orbit.empty.category',
+                        )
+                    );
+
+                    Event::fire('orbit.basemerchant.postnewbasemerchant.before.categoryvalidation', array($this, $validator));
+
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    Event::fire('orbit.basemerchant.postnewbasemerchant.after.categoryvalidation', array($this, $validator));
+                }
+            }
+
+            Event::fire('orbit.basemerchant.postnewbasemerchant.after.validation', array($this, $validator));
+
+            // Get english language_id
+            $idLanguageEnglish = Language::select('language_id')
+                                ->where('name', '=', $language)
+                                ->first();
+
+            $newBaseMerchant = new BaseMerchant;
+            $newBaseMerchant->name = $merchantName;
+            $newBaseMerchant->country_id = $countryId;
+            $newBaseMerchant->facebook_url = $facebookUrl;
+            $newBaseMerchant->url = $websiteUrl;
+            $newBaseMerchant->phone = $phone;
+            $newBaseMerchant->email = $email;
+            $newBaseMerchant->status = 'active';
+
+            if (! empty($translations) ) {
+                $dataTranslations = @json_decode($translations);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
+                }
+
+                if (! is_null($dataTranslations)) {
+                    // Get english tenant description for saving to default language
+                    foreach ($dataTranslations as $key => $val) {
+                        // Validation language id from translation
+                        $language = Language::where('language_id', '=', $key)->first();
+                        if (empty($language)) {
+                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+                        }
+
+                        if ($key === $idLanguageEnglish->language_id) {
+                            $newBaseMerchant->description = $val->description;
+                        }
+                    }
+                }
+            }
+
+            Event::fire('orbit.basemerchant.postnewbasemerchant.before.save', array($this, $newBaseMerchant));
+
+            // check mobile default language must in supported language
+            if (in_array($mobile_default_language, $languages)) {
+                $newBaseMerchant->mobile_default_language = $mobile_default_language;
+            } else {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
+            }
+
+            $newBaseMerchant->save();
+
             // Validate the payment acquire, only chech if payment acquire = Y
             if ($paymentAcquire === 'Y') {
+
+                $objectId = $newBaseMerchant->base_merchant_id;
+                $objectType = 'merchant';
 
                 // Save object financial detail
                 $validator = Validator::make(
                     array(
-                        'object_id'  => $objectId,
-                        'object_type'  => $objectType,
-                        'contact_name'  => $contactName,
-                        'position'  => $position,
-                        'phone_number'  => $phoneNumber,
-                        'email_financial'  => $emailFinancial,
+                        'object_id' => $objectId,
+                        'object_type' => $objectType,
+                        'contact_name' => $contactName,
+                        'position' => $position,
+                        'phone_number' => $phoneNumber,
+                        'email_financial' => $emailFinancial,
                     ),
                     array(
-                        'object_id'  => 'required',
-                        'object_type'  => 'required',
-                        'contact_name'  => 'required',
-                        'position'  => 'required',
-                        'phone_number'  => 'required',
-                        'email_financial'  => 'required',
+                        'object_id' => 'required',
+                        'object_type' => 'required',
+                        'contact_name' => 'required',
+                        'position' => 'required',
+                        'phone_number' => 'required',
+                        'email_financial' => 'required',
                     )
                 );
 
@@ -227,78 +298,6 @@ class MerchantNewAPIController extends ControllerAPI
                 }
             }
 
-            // validate category_ids
-            if (isset($categoryIds) && count($categoryIds) > 0) {
-                foreach ($categoryIds as $category_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'category_id'   => $category_id_check,
-                        ),
-                        array(
-                            'category_id'   => 'orbit.empty.category',
-                        )
-                    );
-
-                    Event::fire('orbit.basemerchant.postnewbasemerchant.before.categoryvalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.basemerchant.postnewbasemerchant.after.categoryvalidation', array($this, $validator));
-                }
-            }
-
-            Event::fire('orbit.basemerchant.postnewbasemerchant.after.validation', array($this, $validator));
-
-            // Get english language_id
-            $idLanguageEnglish = Language::select('language_id')
-                                ->where('name', '=', $language)
-                                ->first();
-
-            $newBaseMerchant = new BaseMerchant;
-            $newBaseMerchant->name = $merchantName;
-            $newBaseMerchant->country_id = $countryId;
-            $newBaseMerchant->facebook_url = $facebookUrl;
-            $newBaseMerchant->url = $websiteUrl;
-            $newBaseMerchant->phone = $phone;
-            $newBaseMerchant->email = $email;
-            $newBaseMerchant->status = 'active';
-
-            if (! empty($translations) ) {
-                $dataTranslations = @json_decode($translations);
-                if (json_last_error() != JSON_ERROR_NONE) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
-                }
-
-                if (! is_null($dataTranslations)) {
-                    // Get english tenant description for saving to default language
-                    foreach ($dataTranslations as $key => $val) {
-                        // Validation language id from translation
-                        $language = Language::where('language_id', '=', $key)->first();
-                        if (empty($language)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
-                        }
-
-                        if ($key === $idLanguageEnglish->language_id) {
-                            $newBaseMerchant->description = $val->description;
-                        }
-                    }
-                }
-            }
-
-            Event::fire('orbit.basemerchant.postnewbasemerchant.before.save', array($this, $newBaseMerchant));
-
-            // check mobile default language must in supported language
-            if (in_array($mobile_default_language, $languages)) {
-                $newBaseMerchant->mobile_default_language = $mobile_default_language;
-            } else {
-                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.mobile_default_lang'));
-            }
-
-            $newBaseMerchant->save();
 
             // languages
             if (count($languages) > 0) {
