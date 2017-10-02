@@ -447,8 +447,8 @@ class WalletOperatorAPIController extends ControllerAPI
                         $wallOperator->with('mediaLogo');
                     } elseif ($relation === 'contact') {
                         $wallOperator->with('contact');
-                    } elseif ($relation === 'banks') {
-                        $wallOperator->with('banks');
+                    } elseif ($relation === 'gtm_bank') {
+                        $wallOperator->with('gtmBanks');
                     }
                 }
             });
