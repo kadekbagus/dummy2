@@ -23,7 +23,7 @@ class MerchantDetailAPIController extends ControllerAPI
      */
     public function getMerchantDetail()
     {
-    	try {
+        try {
             $httpCode = 200;
 
             // Require authentication
@@ -66,11 +66,23 @@ class MerchantDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $baseMerchant = BaseMerchant::with('baseMerchantCategory', 'baseMerchantTranslation', 'keywords', 'mediaLogo', 'mediaLogoGrab', 'partners', 'country', 'supportedLanguage')
-            						->where('base_merchant_id', '=', $baseMerchantId)
-            						->first();
+            $baseMerchant = BaseMerchant::with(
+                                                    'baseMerchantCategory',
+                                                    'baseMerchantTranslation',
+                                                    'keywords',
+                                                    'mediaLogo',
+                                                    'mediaLogoGrab',
+                                                    'partners',
+                                                    'country',
+                                                    'supportedLanguage',
+                                                    'bank',
+                                                    'financialContactDetail',
+                                                    'paymentProvider'
+                                                )
+                                    ->where('base_merchant_id', '=', $baseMerchantId)
+                                    ->first();
 
-           	$this->response->status = 'success';
+            $this->response->status = 'success';
             $this->response->message = 'Request Ok';
             $this->response->data = $baseMerchant;
 
