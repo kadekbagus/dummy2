@@ -18,6 +18,10 @@ use Orbit\Controller\API\v1\Merchant\Store\StoreHelper;
 use BaseStore;
 use Mall;
 use Object;
+use ObjectBank;
+use ObjectContact;
+use ObjectFinancialDetail;
+use MerchantStorePaymentProvider;
 
 class StoreUpdateAPIController extends ControllerAPI
 {
