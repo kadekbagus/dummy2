@@ -77,31 +77,28 @@ class StoreNewAPIController extends ControllerAPI
             $map = OrbitInput::files('maps');
             $grab_images = OrbitInput::files('grab_pictures');
 
-            $storeHelper = StoreHelper::create();
-            $storeHelper->storeCustomValidator();
-
             // Payment_acquire
             $paymentAcquire = OrbitInput::post('payment_acquire', 'N'); // Y or N
             $contactName = OrbitInput::post('contact_name');
             $position = OrbitInput::post('position');
             $phoneNumber = OrbitInput::post('phone_number');
             $emailFinancial = OrbitInput::post('email_financial');
-
             $storeContactContactNames = OrbitInput::post('store_contact_contact_names', []);
             $storeContactPositions = OrbitInput::post('store_contact_positions', []);
             $storeContactPhoneNumbers = OrbitInput::post('store_contact_phone_numbers', []);
             $storeContactPhoneNumberForSms = OrbitInput::post('store_contact_phone_number_for_sms', []);
             $storeContactEmails = OrbitInput::post('store_contact_emails', []);
-
             $paymentProviderIds = OrbitInput::post('payment_provider_ids',[]);
             $phoneNumberForSms = OrbitInput::post('phone_number_for_sms',[]);
             $mdr = OrbitInput::post('mdr',[]);
-
             $bankIds = OrbitInput::post('bank_ids',[]);
             $accountNames = OrbitInput::post('account_names',[]);
             $accountNumbers = OrbitInput::post('account_numbers',[]);
             $bankAddress = OrbitInput::post('bank_address',[]);
             $swiftCodes = OrbitInput::post('swift_codes',[]);
+
+            $storeHelper = StoreHelper::create();
+            $storeHelper->storeCustomValidator();
 
             // generate array validation image
             $images_validation = $storeHelper->generate_validation_image('store_image', $images, 'orbit.upload.retailer.picture', 3);
@@ -169,8 +166,7 @@ class StoreNewAPIController extends ControllerAPI
 
             // Validate the payment acquire, only chech if payment acquire = Y
             if ($paymentAcquire === 'Y') {
-
-                $objectId = $base_merchant_id;
+                $objectId = $newstore->base_store_id;
                 $objectType = 'store';
 
                 // Save object financial detail
@@ -309,11 +305,10 @@ class StoreNewAPIController extends ControllerAPI
 
                 // Add responses for payment acquire
                 $newBaseMerchant->object_financial_detail = $objectFinancialDetail;
-                $newBaseMerchant->object_contact = $ObjectContact;
+                $newBaseMerchant->object_contact = $objectContact;
                 $newBaseMerchant->object_bank = $objectBank;
                 $newBaseMerchant->merchant_store_payment_provider = $merchantStorePaymentProvider;
             }
-
 
             // cause not required
             $newstore->floor = '';
