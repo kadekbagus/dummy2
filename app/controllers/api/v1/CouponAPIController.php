@@ -194,6 +194,9 @@ class CouponAPIController extends ControllerAPI
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
             $thirdPartyName = OrbitInput::post('third_party_name', NULL);
             $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
+            $payByWallet = OrbitInput::post('is_payable_by_wallet', 'N');
+            $payByNormal = OrbitInput::post('is_payable_by_normal', 'N');
+            $paymentProvider = OrbitInput::post('paument_provider_ids', []);
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -619,6 +622,8 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->is_exclusive = $is_exclusive;
             $newcoupon->is_visible = $isVisible;
             $newcoupon->maximum_redeem = $maximumRedeem;
+            $newcoupon->is_payable_by_wallet = $payByWallet;
+            $newcoupon->is_payable_by_normal = $payByNormal;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
@@ -645,6 +650,16 @@ class CouponAPIController extends ControllerAPI
 
             // Return campaign_status_name
             $newcoupon->campaign_status = $idStatus->campaign_status_name;
+
+            // save coupon payment provider
+            if (! empty($paymentProvider)) {
+                foreach ($paymentProvider as $provider) {
+                    $couponPayment = new CouponPaymentProvider();
+                    $couponPayment->payment_provider_id = $provider;
+                    $couponPayment->coupon_id = $newcoupon->promotion_id;
+                    $couponPayment->save();
+                }
+            }
 
             // save CouponRule.
             $couponrule = new CouponRule();
@@ -1814,6 +1829,14 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->is_3rd_party_promotion = $is_3rd_party_promotion;
             });
 
+            OrbitInput::post('is_payable_by_wallet', function($is_payable_by_wallet) use ($updatedcoupon) {
+                $updatedcoupon->is_payable_by_wallet = $is_payable_by_wallet;
+            });
+
+            OrbitInput::post('is_payable_by_normal', function($is_payable_by_normal) use ($updatedcoupon) {
+                $updatedcoupon->is_payable_by_normal = $is_payable_by_normal;
+            });
+
             if ($is_3rd_party_promotion === 'Y') {
                 // update 3rd party
                 if (! empty($promotion_value)) {
@@ -2266,6 +2289,19 @@ class CouponAPIController extends ControllerAPI
                     }
                 }
                 $updatedcoupon->partners = $objectPartners;
+            });
+
+            OrbitInput::post('paument_provider_ids', function($paymentProvider) use ($updatedcoupon, $promotion_id) {
+                // Delete exsisting data
+                $deleteCouponPayment = CouponPaymentProvider::where('coupon_id', '=', $promotion_id);
+                $deleteCouponPayment->delete();
+
+                foreach ($paymentProvider as $provider) {
+                    $couponPayment = new CouponPaymentProvider();
+                    $couponPayment->payment_provider_id = $provider;
+                    $couponPayment->coupon_id = $promotion_id;
+                    $couponPayment->save();
+                }
             });
 
             // Delete old data

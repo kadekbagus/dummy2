@@ -13,6 +13,7 @@ use IssuedCoupon;
 use AdvertLocation;
 use PromotionRetailer;
 use AdvertSlotLocation;
+use CouponPaymentProvider;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
@@ -243,6 +244,28 @@ class ESAdvertCouponUpdateQueue
                 foreach ($coupon->campaignLocations as $campaignLocation) {
                     foreach ($campaignLocation->categories as $category) {
                         $categoryIds[] = $category->category_id;
+                    }
+                }
+
+                // wallet operator
+                $walletOperators = CouponPaymentProvider::select('payment_providers.payment_name', 'media.cdn_url', 'media.path')
+                                                    ->join('payment_providers', 'coupon_payment_provider.payment_provider_id', '=', 'payment_providers.payment_provider_id')
+                                                    ->leftJoin('media', function ($q) {
+                                                        $q->on('media.object_id', '=', 'payment_providers.payment_provider_id');
+                                                        $q->on('media.media_name_id', '=', DB::Raw("'wallet_operator_logo'"));
+                                                        $q->on('media.media_name_long', '=', DB::Raw("'wallet_operator_logo_orig'"));
+                                                    })
+                                                    ->where('coupon_payment_provider.coupon_id', $coupon->promotion_id)
+                                                    ->get();
+
+                $paymentOperator = array();
+                if (! $walletOperators->isEmpty()) {
+                    foreach ($walletOperators as $walletOperator) {
+                        $paymentOperator[] = array(
+                            'operator_name' => $walletOperator->payment_name,
+                            'operator_logo' => $walletOperator->path,
+                            'operator_logo_cdn' => $walletOperator->cdn_url
+                        );
                     }
                 }
 
@@ -490,6 +513,7 @@ class ESAdvertCouponUpdateQueue
                     'advert_type'          => $adverts->placement_type,
                     'location_rating'         => $locationRating,
                     'mall_rating'             => $mallRating,
+                    'wallet_operator'         => $paymentOperator,
                     'featured_slot_gtm'     => $featuredSlotGTM,
                     'featured_slot_mall'    => $featuredSlotMall
                 ];
