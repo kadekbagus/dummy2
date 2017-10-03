@@ -119,7 +119,7 @@ class BaseMerchant extends Eloquent
 
     public function financialContactDetail()
     {
-        return $this->hasMany('ObjectFinancialDetail', 'object_id', 'base_merchant_id');
+        return $this->hasOne('ObjectFinancialDetail', 'object_id', 'base_merchant_id');
     }
 
     public function paymentProvider()

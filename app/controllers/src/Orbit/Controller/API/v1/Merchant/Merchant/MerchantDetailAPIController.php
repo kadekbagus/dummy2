@@ -82,6 +82,20 @@ class MerchantDetailAPIController extends ControllerAPI
                                     ->where('base_merchant_id', '=', $baseMerchantId)
                                     ->first();
 
+            // Frontend request to make reformat financial contact detail
+            $baseMerchant->contact_name = null;
+            $baseMerchant->position = null;
+            $baseMerchant->phone_number = null;
+            $baseMerchant->email_financial = null;
+
+            if (count($baseMerchant->financialContactDetail) > 0) {
+                $baseMerchant->contact_name = $baseMerchant->financialContactDetail->contact_name;
+                $baseMerchant->position = $baseMerchant->financialContactDetail->position;
+                $baseMerchant->phone_number = $baseMerchant->financialContactDetail->phone_number;
+                $baseMerchant->email_financial = $baseMerchant->financialContactDetail->email;
+            }
+            unset($baseMerchant->financialContactDetail);
+
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
             $this->response->data = $baseMerchant;
