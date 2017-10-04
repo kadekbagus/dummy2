@@ -16,6 +16,10 @@ use \Exception;
 use \Event;
 use Orbit\Controller\API\v1\Merchant\Store\StoreHelper;
 use BaseStore;
+use ObjectBank;
+use ObjectContact;
+use ObjectFinancialDetail;
+use MerchantStorePaymentProvider;
 
 class StoreNewAPIController extends ControllerAPI
 {
@@ -72,6 +76,26 @@ class StoreNewAPIController extends ControllerAPI
             $images = OrbitInput::files('pictures');
             $map = OrbitInput::files('maps');
             $grab_images = OrbitInput::files('grab_pictures');
+
+            // Payment_acquire
+            $paymentAcquire = OrbitInput::post('payment_acquire', 'N'); // Y or N
+            $contactName = OrbitInput::post('contact_name');
+            $position = OrbitInput::post('position');
+            $phoneNumber = OrbitInput::post('phone_number');
+            $emailFinancial = OrbitInput::post('email_financial');
+            $storeContactContactNames = OrbitInput::post('store_contact_contact_names', []);
+            $storeContactPositions = OrbitInput::post('store_contact_positions', []);
+            $storeContactPhoneNumbers = OrbitInput::post('store_contact_phone_numbers', []);
+            $storeContactPhoneNumberForSms = OrbitInput::post('store_contact_phone_number_for_sms', []);
+            $storeContactEmails = OrbitInput::post('store_contact_emails', []);
+            $paymentProviderIds = OrbitInput::post('payment_provider_ids',[]);
+            $phoneNumberForSms = OrbitInput::post('phone_number_for_sms',[]);
+            $mdr = OrbitInput::post('mdr',[]);
+            $bankIds = OrbitInput::post('bank_ids',[]);
+            $accountNames = OrbitInput::post('account_names',[]);
+            $accountNumbers = OrbitInput::post('account_numbers',[]);
+            $bankAddress = OrbitInput::post('bank_address',[]);
+            $swiftCodes = OrbitInput::post('swift_codes',[]);
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -138,7 +162,154 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->phone = $phone;
             $newstore->status = $status;
             $newstore->verification_number = $verification_number;
+            $newstore->is_payment_acquire = $paymentAcquire;
             $newstore->save();
+
+            // Validate the payment acquire, only chech if payment acquire = Y
+            if ($paymentAcquire === 'Y') {
+                $objectId = $newstore->base_store_id;
+                $objectType = 'store';
+
+                // Save object financial detail
+                $validator = Validator::make(
+                    array(
+                        'object_id' => $objectId,
+                        'object_type' => $objectType,
+                        'contact_name' => $contactName,
+                        'position' => $position,
+                        'phone_number' => $phoneNumber,
+                        'email_financial' => $emailFinancial,
+                    ),
+                    array(
+                        'object_id' => 'required',
+                        'object_type' => 'required',
+                        'contact_name' => 'required',
+                        'position' => 'required',
+                        'phone_number' => 'required',
+                        'email_financial' => 'required',
+                    )
+                );
+
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $newObjectFinancialDetail = new ObjectFinancialDetail;
+                $newObjectFinancialDetail->object_id = $objectId;
+                $newObjectFinancialDetail->object_type = $objectType;
+                $newObjectFinancialDetail->contact_name = $contactName;
+                $newObjectFinancialDetail->position = $position;
+                $newObjectFinancialDetail->phone_number = $phoneNumber;
+                $newObjectFinancialDetail->email = $emailFinancial;
+                $newObjectFinancialDetail->Save();
+                $objectFinancialDetail[] = $newObjectFinancialDetail;
+
+                // Save store contact person
+                foreach ($storeContactContactNames as $storeContactPersonKey => $storeContactContactName) {
+                    $validator = Validator::make(
+                        array(
+                            'store_contact_contact_name' => $storeContactContactName,
+                            'store_contact_position' => $storeContactPositions[$storeContactPersonKey],
+                            'store_contact_phone_number' => $storeContactPhoneNumbers[$storeContactPersonKey],
+                            'store_contact_phone_number_for_sm' => $storeContactPhoneNumberForSms[$storeContactPersonKey],
+                            'store_contact_email' => $storeContactEmails[$storeContactPersonKey],
+                        ),
+                        array(
+                            'store_contact_contact_name' => 'required',
+                            'store_contact_position' => 'required',
+                            'store_contact_phone_number' => 'required',
+                            'store_contact_phone_number_for_sm' => 'required',
+                            'store_contact_email' => 'required',
+                        )
+                    );
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+
+                    $newStoreCotactPerson = new ObjectContact;
+                    $newStoreCotactPerson->object_id = $objectId;
+                    $newStoreCotactPerson->object_type = $objectType;
+                    $newStoreCotactPerson->store_contact_contact_names = $storeContactContactName;
+                    $newStoreCotactPerson->store_contact_positions = $storeContactPositions[$storeContactPersonKey];
+                    $newStoreCotactPerson->store_contact_phone_numbers = $storeContactPhoneNumbers[$storeContactPersonKey];
+                    $newStoreCotactPerson->store_contact_phone_number_for_sms = $storeContactPhoneNumberForSms[$storeContactPersonKey];
+                    $newStoreCotactPerson->store_contact_emails = $storeContactEmails[$storeContactPersonKey];
+                    $newStoreCotactPerson->Save();
+                    $objectContact[] = $newStoreCotactPerson;
+                }
+
+                // Save object contact
+                foreach ($bankIds as $objectBankKey => $bankId) {
+                    $validator = Validator::make(
+                        array(
+                            'bank_id'  => $bankId,
+                            'account_name'  => $accountNames[$objectBankKey],
+                            'account_number'  => $accountNumbers[$objectBankKey],
+                            'bank_address'  => $bankAddress[$objectBankKey],
+                        ),
+                        array(
+                            'bank_id'  => 'required',
+                            'account_name'  => 'required',
+                            'account_number'  => 'required',
+                            'bank_address'  => 'required',
+                        )
+                    );
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                    $newObjectBank = new ObjectBank;
+                    $newObjectBank->object_id = $objectId;
+                    $newObjectBank->object_type = $objectType;
+                    $newObjectBank->bank_id = $bankId;
+                    $newObjectBank->account_name = $accountNames[$objectBankKey];
+                    $newObjectBank->account_number = $accountNumbers[$objectBankKey];
+                    $newObjectBank->bank_address = $bankAddress[$objectBankKey];
+                    $newObjectBank->swift_code = isset($swiftCodes[$objectBankKey]) ? $swiftCodes[$objectBankKey] : null;
+                    $newObjectBank->save();
+                    $objectBank[$objectBankKey] = $newObjectBank;
+                }
+
+                // Save merchant store payment provider
+                foreach ($paymentProviderIds as $paymentProviderKey => $paymentProviderId) {
+                    $validator = Validator::make(
+                        array(
+                            'payment_provider_id'  => $paymentProviderId,
+                            'phone_number_for_sms' => $phoneNumberForSms[$paymentProviderKey],
+                            'mdr' => $mdr[$paymentProviderKey],
+                        ),
+                        array(
+                            'payment_provider_id'  => 'required',
+                            'phone_number_for_sms' => 'required',
+                            'mdr' => 'required',
+                        )
+                    );
+                    // Run the validation
+                    if ($validator->fails()) {
+                        $errorMessage = $validator->messages()->first();
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                    $newMerchantStorePaymentProvider = new MerchantStorePaymentProvider;
+                    $newMerchantStorePaymentProvider->payment_provider_id = $paymentProviderId;
+                    $newMerchantStorePaymentProvider->object_id = $objectId;
+                    $newMerchantStorePaymentProvider->object_type = $objectType;
+                    $newMerchantStorePaymentProvider->phone_number_for_sms = $phoneNumberForSms[$paymentProviderKey];
+                    $newMerchantStorePaymentProvider->mdr = $mdr[$paymentProviderKey];
+                    $newMerchantStorePaymentProvider->save();
+                    $merchantStorePaymentProvider[$paymentProviderKey] = $newMerchantStorePaymentProvider;
+                }
+
+                // Add responses for payment acquire
+                $newBaseMerchant->object_financial_detail = $objectFinancialDetail;
+                $newBaseMerchant->object_contact = $objectContact;
+                $newBaseMerchant->object_bank = $objectBank;
+                $newBaseMerchant->merchant_store_payment_provider = $merchantStorePaymentProvider;
+            }
 
             // cause not required
             $newstore->floor = '';

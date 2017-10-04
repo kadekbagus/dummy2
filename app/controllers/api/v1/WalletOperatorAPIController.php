@@ -815,16 +815,16 @@ class WalletOperatorAPIController extends ControllerAPI
         if (json_last_error() != JSON_ERROR_NONE) {
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'banks']));
         }
-        foreach ($data as $bank_id => $bankData) {
+        foreach ($data as $key => $bankData) {
             $bank = Bank::excludeDeleted()
-                        ->where('bank_id', '=', $bank_id)
+                        ->where('bank_id', '=', $bankData['bank_id'])
                         ->first();
             if (empty($bank)) {
                 OrbitShopAPI::throwInvalidArgument('Bank not found');
             }
             $existingBank = BankGotomall::excludeDeleted()
                                         ->where('payment_provider_id', '=', $walletOperator->payment_provider_id)
-                                        ->where('bank_id', '=', $bank_id)
+                                        ->where('bank_id', '=', $bankData['bank_id'])
                                         ->first();
             if ($bankData === null) {
                 // deleting, verify exists
@@ -842,7 +842,7 @@ class WalletOperatorAPIController extends ControllerAPI
                     }
                 }
                 if (empty($existingBank)) {
-                    $operations[] = ['create', $bank_id, $bankData];
+                    $operations[] = ['create', $bankData['bank_id'], $bankData];
                 } else {
                     $operations[] = ['update', $existingBank, $bankData];
                 }

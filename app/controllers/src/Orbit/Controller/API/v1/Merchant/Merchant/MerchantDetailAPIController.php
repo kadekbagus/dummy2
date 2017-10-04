@@ -23,7 +23,7 @@ class MerchantDetailAPIController extends ControllerAPI
      */
     public function getMerchantDetail()
     {
-    	try {
+        try {
             $httpCode = 200;
 
             // Require authentication
@@ -66,11 +66,37 @@ class MerchantDetailAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $baseMerchant = BaseMerchant::with('baseMerchantCategory', 'baseMerchantTranslation', 'keywords', 'mediaLogo', 'mediaLogoGrab', 'partners', 'country', 'supportedLanguage')
-            						->where('base_merchant_id', '=', $baseMerchantId)
-            						->first();
+            $baseMerchant = BaseMerchant::with(
+                                                    'baseMerchantCategory',
+                                                    'baseMerchantTranslation',
+                                                    'keywords',
+                                                    'mediaLogo',
+                                                    'mediaLogoGrab',
+                                                    'partners',
+                                                    'country',
+                                                    'supportedLanguage',
+                                                    'bank',
+                                                    'financialContactDetail',
+                                                    'paymentProvider'
+                                                )
+                                    ->where('base_merchant_id', '=', $baseMerchantId)
+                                    ->first();
 
-           	$this->response->status = 'success';
+            // Frontend request to make reformat financial contact detail
+            $baseMerchant->contact_name = null;
+            $baseMerchant->position = null;
+            $baseMerchant->phone_number = null;
+            $baseMerchant->email_financial = null;
+
+            if (count($baseMerchant->financialContactDetail) > 0) {
+                $baseMerchant->contact_name = $baseMerchant->financialContactDetail->contact_name;
+                $baseMerchant->position = $baseMerchant->financialContactDetail->position;
+                $baseMerchant->phone_number = $baseMerchant->financialContactDetail->phone_number;
+                $baseMerchant->email_financial = $baseMerchant->financialContactDetail->email;
+            }
+            unset($baseMerchant->financialContactDetail);
+
+            $this->response->status = 'success';
             $this->response->message = 'Request Ok';
             $this->response->data = $baseMerchant;
 
