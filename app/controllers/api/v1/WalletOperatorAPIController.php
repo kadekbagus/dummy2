@@ -410,7 +410,7 @@ class WalletOperatorAPIController extends ControllerAPI
                 }
             }
 
-            $wallOperator = PaymentProvider::excludeDeleted();
+            $wallOperator = PaymentProvider::with('contact' ,'gtmBanks')->excludeDeleted();
 
             OrbitInput::get('payment_provider_id', function($payment_provider_id) use ($wallOperator) {
                 $wallOperator->where('payment_provider_id', '=', $payment_provider_id);
