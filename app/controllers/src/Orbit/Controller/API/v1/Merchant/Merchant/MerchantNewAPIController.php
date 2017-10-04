@@ -160,6 +160,7 @@ class MerchantNewAPIController extends ControllerAPI
             $newBaseMerchant->url = $websiteUrl;
             $newBaseMerchant->phone = $phone;
             $newBaseMerchant->email = $email;
+            $newBaseMerchant->is_payment_acquire = $paymentAcquire;
             $newBaseMerchant->status = 'active';
 
             if (! empty($translations) ) {

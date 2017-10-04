@@ -188,6 +188,10 @@ class StoreUpdateAPIController extends ControllerAPI
                 $updatestore->verification_number = $verification_number;
             });
 
+            OrbitInput::post('payment_acquire', function($paymentAcquire) use ($updatestore) {
+                $updatestore->is_payment_acquire = $paymentAcquire;
+            });
+
             $updatestore->save();
 
             // Validate the payment acquire, only chech if payment acquire = Y

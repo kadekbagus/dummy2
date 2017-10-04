@@ -154,6 +154,10 @@ class MerchantUpdateAPIController extends ControllerAPI
                 $updatedBaseMerchant->email = $email;
             });
 
+            OrbitInput::post('payment_acquire', function($paymentAcquire) use ($updatedBaseMerchant) {
+                $updatedBaseMerchant->is_payment_acquire = $paymentAcquire;
+            });
+
             // Translations
             $idLanguageEnglish = Language::select('language_id')->where('name', '=', 'en')->first();
 

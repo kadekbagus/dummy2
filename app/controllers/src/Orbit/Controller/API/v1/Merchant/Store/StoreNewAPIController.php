@@ -162,6 +162,7 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->phone = $phone;
             $newstore->status = $status;
             $newstore->verification_number = $verification_number;
+            $newstore->is_payment_acquire = $paymentAcquire;
             $newstore->save();
 
             // Validate the payment acquire, only chech if payment acquire = Y
