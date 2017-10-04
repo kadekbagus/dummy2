@@ -114,6 +114,7 @@ class WalletOperatorAPIController extends ControllerAPI
             $newContactPerson->phone_number = $contact_person_phone_number;
             $newContactPerson->phone_number_for_sms = $contact_person_phone_number_for_sms;
             $newContactPerson->email = $contact_person_email;
+            $newContactPerson->address = $contact_person_address;
             $newContactPerson->save();
 
             OrbitInput::post('gtm_banks', function($gtm_banks_json_string) use ($newWalletOperator) {
@@ -283,6 +284,10 @@ class WalletOperatorAPIController extends ControllerAPI
                 $updateContactWalletOperator->email = $email;
             });
 
+            OrbitInput::post('contact_person_address', function($address) use ($updateContactWalletOperator) {
+                $updateContactWalletOperator->address = $address;
+            });
+
             $updateContactWalletOperator->save();
 
             OrbitInput::post('gtm_banks', function($gtm_banks_json_string) use ($updateWalletOperator) {
@@ -410,7 +415,7 @@ class WalletOperatorAPIController extends ControllerAPI
                 }
             }
 
-            $wallOperator = PaymentProvider::with('contact' ,'gtmBanks')->excludeDeleted();
+            $wallOperator = PaymentProvider::with('contact' ,'gtmBanks', 'mediaLogo')->excludeDeleted();
 
             OrbitInput::get('payment_provider_id', function($payment_provider_id) use ($wallOperator) {
                 $wallOperator->where('payment_provider_id', '=', $payment_provider_id);
@@ -816,6 +821,7 @@ class WalletOperatorAPIController extends ControllerAPI
         if (json_last_error() != JSON_ERROR_NONE) {
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'banks']));
         }
+
         foreach ($data as $key => $bankData) {
             $bank = Bank::excludeDeleted()
                         ->where('bank_id', '=', $bankData->bank_id)
