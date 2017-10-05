@@ -303,10 +303,10 @@ class StoreNewAPIController extends ControllerAPI
                 }
 
                 // Add responses for payment acquire
-                $newBaseMerchant->object_financial_detail = $objectFinancialDetail;
-                $newBaseMerchant->object_contact = $objectContact;
-                $newBaseMerchant->object_bank = $objectBank;
-                $newBaseMerchant->merchant_store_payment_provider = $merchantStorePaymentProvider;
+                $newstore->object_financial_detail = $objectFinancialDetail;
+                $newstore->object_contact = $objectContact;
+                $newstore->object_bank = $objectBank;
+                $newstore->merchant_store_payment_provider = $merchantStorePaymentProvider;
             }
 
             // cause not required
