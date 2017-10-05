@@ -4182,7 +4182,7 @@ class CouponAPIController extends ControllerAPI
             // check existing coupon payment provider
             if (! empty($existRedemptionPlace)) {
                 $existingProvider = CouponRetailerRedeem::with('couponPaymentProvider.paymentProvider')
-                                                        ->select('merchants.merchant_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"))
+                                                        ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'promotion_retailer_redeem.promotion_retailer_redeem_id')
                                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retialer_id')
                                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                                         ->whereIn('promotion_retailer_redeem.retialer_id', $existRedemptionPlace)
@@ -4196,7 +4196,7 @@ class CouponAPIController extends ControllerAPI
 
             if (! empty($newRedemptionPlace)) {
                 $provider = BaseStore::with('merchantStorePaymentProvider.paymentProvider')
-                                    ->select('base_stores.base_store_id', DB::raw("CONCAT({$prefix}base_merchants.name,' at ', {$prefix}merchants.name) as store_name"))
+                                    ->select('base_stores.base_store_id as store_id', DB::raw("CONCAT({$prefix}base_merchants.name,' at ', {$prefix}merchants.name) as store_name"), 'base_stores.base_store_id')
                                     ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
                                     ->leftJoin('merchants', 'merchants.parent_id', '=', 'base_stores.merchant_id')
                                     ->whereIn('base_store_id', $newRedemptionPlace)
