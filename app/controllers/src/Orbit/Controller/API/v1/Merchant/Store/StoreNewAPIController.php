@@ -232,14 +232,13 @@ class StoreNewAPIController extends ControllerAPI
                 $newStoreCotactPerson = new ObjectContact;
                 $newStoreCotactPerson->object_id = $objectId;
                 $newStoreCotactPerson->object_type = $objectType;
-                $newStoreCotactPerson->store_contact_contact_name = $storeContactContactName;
-                $newStoreCotactPerson->store_contact_position = $storeContactPosition;
-                $newStoreCotactPerson->store_contact_phone_number = $storeContactPhoneNumber;
-                $newStoreCotactPerson->store_contact_phone_number_for_sms = $storeContactPhoneNumberForSms;
-                $newStoreCotactPerson->store_contact_email = $storeContactEmail;
+                $newStoreCotactPerson->contact_name = $storeContactContactName;
+                $newStoreCotactPerson->position = $storeContactPosition;
+                $newStoreCotactPerson->phone_number = $storeContactPhoneNumber;
+                $newStoreCotactPerson->phone_number_for_sms = $storeContactPhoneNumberForSms;
+                $newStoreCotactPerson->email = $storeContactEmail;
                 $newStoreCotactPerson->Save();
                 $objectContact[] = $newStoreCotactPerson;
-
 
                 // Save object contact
                 foreach ($bankIds as $objectBankKey => $bankId) {
