@@ -83,11 +83,11 @@ class StoreNewAPIController extends ControllerAPI
             $position = OrbitInput::post('position');
             $phoneNumber = OrbitInput::post('phone_number');
             $emailFinancial = OrbitInput::post('email_financial');
-            $storeContactContactNames = OrbitInput::post('store_contact_contact_names', []);
-            $storeContactPositions = OrbitInput::post('store_contact_positions', []);
-            $storeContactPhoneNumbers = OrbitInput::post('store_contact_phone_numbers', []);
-            $storeContactPhoneNumberForSms = OrbitInput::post('store_contact_phone_number_for_sms', []);
-            $storeContactEmails = OrbitInput::post('store_contact_emails', []);
+            $storeContactContactName = OrbitInput::post('store_contact_contact_name');
+            $storeContactPosition = OrbitInput::post('store_contact_position');
+            $storeContactPhoneNumber = OrbitInput::post('store_contact_phone_number');
+            $storeContactPhoneNumberForSms = OrbitInput::post('store_contact_phone_number_for_sms');
+            $storeContactEmail = OrbitInput::post('store_contact_email');
             $paymentProviderIds = OrbitInput::post('payment_provider_ids',[]);
             $phoneNumberForSms = OrbitInput::post('phone_number_for_sms',[]);
             $mdr = OrbitInput::post('mdr',[]);
@@ -207,40 +207,39 @@ class StoreNewAPIController extends ControllerAPI
                 $objectFinancialDetail[] = $newObjectFinancialDetail;
 
                 // Save store contact person
-                foreach ($storeContactContactNames as $storeContactPersonKey => $storeContactContactName) {
-                    $validator = Validator::make(
-                        array(
-                            'store_contact_contact_name' => $storeContactContactName,
-                            'store_contact_position' => $storeContactPositions[$storeContactPersonKey],
-                            'store_contact_phone_number' => $storeContactPhoneNumbers[$storeContactPersonKey],
-                            'store_contact_phone_number_for_sm' => $storeContactPhoneNumberForSms[$storeContactPersonKey],
-                            'store_contact_email' => $storeContactEmails[$storeContactPersonKey],
-                        ),
-                        array(
-                            'store_contact_contact_name' => 'required',
-                            'store_contact_position' => 'required',
-                            'store_contact_phone_number' => 'required',
-                            'store_contact_phone_number_for_sm' => 'required',
-                            'store_contact_email' => 'required',
-                        )
-                    );
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    $newStoreCotactPerson = new ObjectContact;
-                    $newStoreCotactPerson->object_id = $objectId;
-                    $newStoreCotactPerson->object_type = $objectType;
-                    $newStoreCotactPerson->store_contact_contact_names = $storeContactContactName;
-                    $newStoreCotactPerson->store_contact_positions = $storeContactPositions[$storeContactPersonKey];
-                    $newStoreCotactPerson->store_contact_phone_numbers = $storeContactPhoneNumbers[$storeContactPersonKey];
-                    $newStoreCotactPerson->store_contact_phone_number_for_sms = $storeContactPhoneNumberForSms[$storeContactPersonKey];
-                    $newStoreCotactPerson->store_contact_emails = $storeContactEmails[$storeContactPersonKey];
-                    $newStoreCotactPerson->Save();
-                    $objectContact[] = $newStoreCotactPerson;
+                $validator = Validator::make(
+                    array(
+                        'store_contact_contact_name' => $storeContactContactName,
+                        'store_contact_position' => $storeContactPosition,
+                        'store_contact_phone_number' => $storeContactPhoneNumber,
+                        'store_contact_phone_number_for_sm' => $storeContactPhoneNumberForSms,
+                        'store_contact_email' => $storeContactEmail,
+                    ),
+                    array(
+                        'store_contact_contact_name' => 'required',
+                        'store_contact_position' => 'required',
+                        'store_contact_phone_number' => 'required',
+                        'store_contact_phone_number_for_sm' => 'required',
+                        'store_contact_email' => 'required',
+                    )
+                );
+                // Run the validation
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
+
+                $newStoreCotactPerson = new ObjectContact;
+                $newStoreCotactPerson->object_id = $objectId;
+                $newStoreCotactPerson->object_type = $objectType;
+                $newStoreCotactPerson->store_contact_contact_name = $storeContactContactName;
+                $newStoreCotactPerson->store_contact_position = $storeContactPosition;
+                $newStoreCotactPerson->store_contact_phone_number = $storeContactPhoneNumber;
+                $newStoreCotactPerson->store_contact_phone_number_for_sms = $storeContactPhoneNumberForSms;
+                $newStoreCotactPerson->store_contact_email = $storeContactEmail;
+                $newStoreCotactPerson->Save();
+                $objectContact[] = $newStoreCotactPerson;
+
 
                 // Save object contact
                 foreach ($bankIds as $objectBankKey => $bankId) {
@@ -280,7 +279,7 @@ class StoreNewAPIController extends ControllerAPI
                     $validator = Validator::make(
                         array(
                             'payment_provider_id'  => $paymentProviderId,
-                            'phone_number_for_sms' => $phoneNumberForSms[$paymentProviderKey],
+                            'phone_number_for_sms' => isset($phoneNumberForSms[$paymentProviderKey]) ? $phoneNumberForSms[$paymentProviderKey] : null,
                             'mdr' => $mdr[$paymentProviderKey],
                         ),
                         array(
