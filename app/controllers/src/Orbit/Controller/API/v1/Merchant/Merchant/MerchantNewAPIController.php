@@ -200,7 +200,7 @@ class MerchantNewAPIController extends ControllerAPI
             if ($paymentAcquire === 'Y') {
 
                 $objectId = $newBaseMerchant->base_merchant_id;
-                $objectType = 'merchant';
+                $objectType = 'base_merchant';
 
                 // Save object financial detail
                 $validator = Validator::make(

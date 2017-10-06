@@ -114,17 +114,20 @@ class BaseMerchant extends Eloquent
 
     public function bank()
     {
-        return $this->hasMany('ObjectBank', 'object_id', 'base_merchant_id');
+        return $this->hasMany('ObjectBank', 'object_id', 'base_merchant_id')
+                    ->where('object_banks.object_type', '=', 'base_merchant');
     }
 
     public function financialContactDetail()
     {
-        return $this->hasOne('ObjectFinancialDetail', 'object_id', 'base_merchant_id');
+        return $this->hasOne('ObjectFinancialDetail', 'object_id', 'base_merchant_id')
+                    ->where('object_financial_details.object_type', '=', 'base_merchant');
     }
 
     public function paymentProvider()
     {
-        return $this->hasMany('MerchantStorePaymentProvider', 'object_id', 'base_merchant_id');
+        return $this->hasMany('MerchantStorePaymentProvider', 'object_id', 'base_merchant_id')
+                    ->where('merchant_store_payment_provider.object_type', '=', 'base_merchant');
     }
 
 }
