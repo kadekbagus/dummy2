@@ -168,7 +168,7 @@ class StoreNewAPIController extends ControllerAPI
             // Validate the payment acquire, only chech if payment acquire = Y
             if ($paymentAcquire === 'Y') {
                 $objectId = $newstore->base_store_id;
-                $objectType = 'store';
+                $objectType = 'base_store';
 
                 // Save object financial detail
                 $validator = Validator::make(

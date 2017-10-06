@@ -195,7 +195,7 @@ class StoreUpdateAPIController extends ControllerAPI
             $updatestore->save();
 
             // Validate the payment acquire, only chech if payment acquire = Y
-            $objectType = 'store';
+            $objectType = 'base_store';
             $objectId = $baseStoreId;
 
             $deleteObjectFinancialDetail = ObjectFinancialDetail::where('object_id', '=', $objectId)->where('object_type', '=', $objectType)->delete();

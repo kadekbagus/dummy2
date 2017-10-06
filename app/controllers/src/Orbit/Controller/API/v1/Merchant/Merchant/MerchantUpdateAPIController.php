@@ -81,8 +81,6 @@ class MerchantUpdateAPIController extends ControllerAPI
 
             // Payment_acquire
             $paymentAcquire = OrbitInput::post('payment_acquire', 'N'); // Y or N
-            // $objectId = OrbitInput::post('object_id');
-            $objectType = OrbitInput::post('object_type');
             $contactName = OrbitInput::post('contact_name');
             $position = OrbitInput::post('position');
             $phoneNumber = OrbitInput::post('phone_number');
@@ -316,7 +314,10 @@ class MerchantUpdateAPIController extends ControllerAPI
             $deleteObjectFinancialDetail = ObjectBank::where('object_id', '=', $baseMerchantId)->where('object_type', '=', 'merchant')->delete();
             $deleteMerchantStorePaymentProvider = MerchantStorePaymentProvider::where('object_id', '=', $baseMerchantId)->where('object_type', '=', 'merchant')->delete();
 
+
             if ($paymentAcquire === 'Y') {
+
+                $objectType = 'base_merchant';
 
                 // Save object financial detail
                 $validator = Validator::make(

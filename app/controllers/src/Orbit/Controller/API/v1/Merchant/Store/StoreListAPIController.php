@@ -82,7 +82,8 @@ class StoreListAPIController extends ControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
-            $store = BaseStore::excludeDeleted('base_stores')
+            $store = BaseStore::with('bank', 'objectContact', 'financialContactDetail', 'paymentProvider')
+                            ->excludeDeleted('base_stores')
                             ->select('base_merchants.base_merchant_id', 'base_merchants.country_id',
                                 DB::raw("{$prefix}base_merchants.name AS merchant"),
                                 'base_stores.base_store_id',
@@ -92,6 +93,7 @@ class StoreListAPIController extends ControllerAPI
                                 DB::raw("{$prefix}objects.object_name AS floor"),
                                 'base_stores.unit', 'base_stores.phone',
                                 'base_stores.verification_number',
+                                'base_stores.is_payment_acquire',
                                 'base_stores.status',
                                 'base_stores.created_at')
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
