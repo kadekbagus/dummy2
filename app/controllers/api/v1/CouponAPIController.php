@@ -4270,11 +4270,10 @@ class CouponAPIController extends ControllerAPI
             $merge = array_merge($existRedemptionPlace, $newRedemptionPlace);
 
             // check if any redemption place id doesn't support payment method
-            $walletCheck = BaseStore::select('base_stores.base_store_id', DB::raw("CONCAT({$prefix}base_merchants.name,' at ', {$prefix}merchants.name) as store_name"))
-                                    ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
-                                    ->leftJoin('merchants', 'merchants.parent_id', '=', 'base_stores.merchant_id')
-                                    ->whereIn('base_store_id', $merge)
-                                    ->where('base_stores.is_payment_acquire', 'N')
+            $walletCheck = Merchant::select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"))
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->whereIn('merchants.merchant_id', $merge)
+                                    ->where('merchants.is_payment_acquire', 'N')
                                     ->get();
 
             if (! $walletCheck->isEmpty()) {
@@ -4305,13 +4304,12 @@ class CouponAPIController extends ControllerAPI
             }
 
             if (! empty($newRedemptionPlace)) {
-                $provider = BaseStore::with('merchantStorePaymentProvider.paymentProvider')
-                                    ->select('base_stores.base_store_id as store_id', DB::raw("CONCAT({$prefix}base_merchants.name,' at ', {$prefix}merchants.name) as store_name"), 'base_stores.base_store_id')
-                                    ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
-                                    ->leftJoin('merchants', 'merchants.parent_id', '=', 'base_stores.merchant_id')
-                                    ->whereIn('base_store_id', $newRedemptionPlace)
-                                    ->where('base_stores.is_payment_acquire', 'Y')
-                                    ->groupBy('base_stores.base_store_id')
+                $provider = Merchant::with('merchantStorePaymentProvider.paymentProvider')
+                                    ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'merchants.merchant_id')
+                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                    ->whereIn('merchants.merchant_id', $newRedemptionPlace)
+                                    ->where('merchants.is_payment_acquire', 'Y')
+                                    ->groupBy('merchants.merchant_id')
                                     ->get();
 
                 if (! empty((array) $list) && ! $provider->isEmpty()) {
