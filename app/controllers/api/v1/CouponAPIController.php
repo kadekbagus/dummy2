@@ -194,9 +194,12 @@ class CouponAPIController extends ControllerAPI
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
             $thirdPartyName = OrbitInput::post('third_party_name', NULL);
             $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
-            $payByWallet = OrbitInput::post('is_payable_by_wallet', 'N');
-            $payByNormal = OrbitInput::post('is_payable_by_normal', 'N');
-            $paymentProvider = OrbitInput::post('paument_provider_ids', []);
+
+            $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
+            $payByNormal = OrbitInput::post('pay_by_normal', 'N');
+            $paymentProviders = OrbitInput::post('payment_providers', null);
+            $amountCommission = OrbitInput::post('amount_commission', null);
+            $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -328,6 +331,37 @@ class CouponAPIController extends ControllerAPI
             if ($int_validity_date <= $int_before_end_date) {
                 $errorMessage = 'The validity redeem date should be greater than the end date.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($payByWallet === 'N' && $payByNormal === 'N') {
+                $errorMessage = 'Select one payment method.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($payByNormal === 'Y') {
+                $validator = Validator::make(
+                    array(
+                        'amount_commission'       => $amountCommission,
+                        'fixed_amount_commission' => $fixedAmountCommission,
+
+                    ),
+                    array(
+                        'amount_commission'       => 'required',
+                        'fixed_amount_commission' => 'required',
+                    )
+                );
+
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
+            if ($payByWallet === 'Y') {
+                $paymentProviders = @json_decode($paymentProviders);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
+                }
             }
 
             // validating retailer_ids.
@@ -624,6 +658,8 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->maximum_redeem = $maximumRedeem;
             $newcoupon->is_payable_by_wallet = $payByWallet;
             $newcoupon->is_payable_by_normal = $payByNormal;
+            $newcoupon->transaction_amount_commission = $amountCommission;
+            $newcoupon->fixed_amount_commission = $fixedAmountCommission;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
@@ -650,16 +686,6 @@ class CouponAPIController extends ControllerAPI
 
             // Return campaign_status_name
             $newcoupon->campaign_status = $idStatus->campaign_status_name;
-
-            // save coupon payment provider
-            if (! empty($paymentProvider)) {
-                foreach ($paymentProvider as $provider) {
-                    $couponPayment = new CouponPaymentProvider();
-                    $couponPayment->payment_provider_id = $provider;
-                    $couponPayment->coupon_id = $newcoupon->promotion_id;
-                    $couponPayment->save();
-                }
-            }
 
             // save CouponRule.
             $couponrule = new CouponRule();
@@ -773,6 +799,22 @@ class CouponAPIController extends ControllerAPI
                 $retailer->object_type = $isMall;
                 $retailer->save();
                 $retailers[] = $retailer;
+
+                $retailerRedeemId = $retailer->promotion_retailer_redeem_id;
+
+                // save coupon payment provider
+                if ($payByWallet === 'Y') {
+                    foreach ($paymentProviders as $key => $value) {
+                        if ($key === $tenant_id) {
+                            foreach ($value as $provider) {
+                                $couponPayment = new CouponPaymentProvider();
+                                $couponPayment->payment_provider_id = $provider;
+                                $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
+                                $couponPayment->save();
+                            }
+                        }
+                    }
+                }
             }
 
             $newcoupon->tenants = $retailers;
@@ -1306,6 +1348,12 @@ class CouponAPIController extends ControllerAPI
             $third_party_name = OrbitInput::post('third_party_name', NULL) === '' ? 'grab' : OrbitInput::post('third_party_name');
             $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
 
+            $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
+            $payByNormal = OrbitInput::post('pay_by_normal', 'N');
+            $paymentProviders = OrbitInput::post('payment_providers', null);
+            $amountCommission = OrbitInput::post('amount_commission', null);
+            $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
+
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
             if ($campaignStatus === 'ongoing') {
@@ -1386,6 +1434,37 @@ class CouponAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($payByWallet === 'N' && $payByNormal === 'N') {
+                $errorMessage = 'Select one payment method.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($payByNormal === 'Y') {
+                $validator = Validator::make(
+                    array(
+                        'amount_commission'       => $amountCommission,
+                        'fixed_amount_commission' => $fixedAmountCommission,
+
+                    ),
+                    array(
+                        'amount_commission'       => 'required',
+                        'fixed_amount_commission' => 'required',
+                    )
+                );
+
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
+            if ($payByWallet === 'Y') {
+                $paymentProviders = @json_decode($paymentProviders);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
+                }
             }
 
             // 3rd party coupon validation
@@ -1829,12 +1908,20 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->is_3rd_party_promotion = $is_3rd_party_promotion;
             });
 
-            OrbitInput::post('is_payable_by_wallet', function($is_payable_by_wallet) use ($updatedcoupon) {
-                $updatedcoupon->is_payable_by_wallet = $is_payable_by_wallet;
+            OrbitInput::post('pay_by_wallet', function($pay_by_wallet) use ($updatedcoupon) {
+                $updatedcoupon->is_payable_by_wallet = $pay_by_wallet;
             });
 
-            OrbitInput::post('is_payable_by_normal', function($is_payable_by_normal) use ($updatedcoupon) {
-                $updatedcoupon->is_payable_by_normal = $is_payable_by_normal;
+            OrbitInput::post('pay_by_normal', function($pay_by_normal) use ($updatedcoupon) {
+                $updatedcoupon->is_payable_by_normal = $pay_by_normal;
+            });
+
+            OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon) {
+                $updatedcoupon->amount_commission = $amount_commission;
+            });
+
+            OrbitInput::post('fixed_amount_commission', function($fixed_amount_commission) use ($updatedcoupon) {
+                $updatedcoupon->fixed_amount_commission = $fixed_amount_commission;
             });
 
             if ($is_3rd_party_promotion === 'Y') {
@@ -2110,6 +2197,13 @@ class CouponAPIController extends ControllerAPI
                     Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
                 }
 
+                if ($payByWallet === 'Y') {
+                    $existRetailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id)->lists('promotion_retailer_redeem_id');
+                    if (! empty($existRetailer)) {
+                        $delete_provider = CouponPaymentProvider::whereIn('promotion_retailer_redeem_id', $existRetailer)->delete();
+                    }
+                }
+
                 // Delete old data
                 $delete_retailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id);
                 $delete_retailer->delete();
@@ -2139,6 +2233,22 @@ class CouponAPIController extends ControllerAPI
                     $retailer->retailer_id = $tenant_id;
                     $retailer->object_type = $isMall;
                     $retailer->save();
+
+                    $retailerRedeemId = $retailer->promotion_retailer_redeem_id;
+
+                    // save coupon payment provider
+                    if ($payByWallet === 'Y') {
+                        foreach ($paymentProviders as $key => $value) {
+                            if ($key === $tenant_id) {
+                                foreach ($value as $provider) {
+                                    $couponPayment = new CouponPaymentProvider();
+                                    $couponPayment->payment_provider_id = $provider;
+                                    $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
+                                    $couponPayment->save();
+                                }
+                            }
+                        }
+                    }
                 }
             });
 
