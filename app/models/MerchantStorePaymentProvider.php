@@ -18,7 +18,8 @@ class MerchantStorePaymentProvider extends Eloquent
      */
     public function paymentProvider()
     {
-        return $this->belongsTo('PaymentProvider', 'payment_provider_id', 'payment_provider_id');
+        return $this->belongsTo('PaymentProvider', 'payment_provider_id', 'payment_provider_id')
+                    ->where('payment_providers.status', 'active');
     }
 
 }
