@@ -167,7 +167,9 @@ class ESCouponUpdateQueue
                                                         $q->on('media.media_name_id', '=', DB::Raw("'wallet_operator_logo'"));
                                                         $q->on('media.media_name_long', '=', DB::Raw("'wallet_operator_logo_orig'"));
                                                     })
-                                                    ->where('coupon_payment_provider.coupon_id', $coupon->promotion_id)
+                                                    ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_retailer_redeem_id', '=', 'coupon_payment_provider.promotion_retailer_redeem_id')
+                                                    ->where('promotion_retailer_redeem.coupon_id', $coupon->promotion_id)
+                                                    ->groupBy('payment_providers.payment_provider_id')
                                                     ->get();
 
             $paymentOperator = array();

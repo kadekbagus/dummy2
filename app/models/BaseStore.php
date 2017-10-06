@@ -167,6 +167,17 @@ class BaseStore extends Eloquent
         return $this->mediaCroppedDefault()->where('media_name_id', 'base_store_image_grab');
     }
 
+    /**
+     * Base Store has many payment provider
+     *
+     * @author Shelgi <shelgi@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function merchantStorePaymentProvider()
+    {
+        return $this->hasMany('MerchantStorePaymentProvider', 'object_id', 'base_store_id')
+                    ->where('merchant_store_payment_provider.object_type', 'store');
+    }
 
     /**
      * Get all store data (presync)

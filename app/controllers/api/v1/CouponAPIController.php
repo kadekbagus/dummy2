@@ -194,9 +194,12 @@ class CouponAPIController extends ControllerAPI
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
             $thirdPartyName = OrbitInput::post('third_party_name', NULL);
             $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
-            $payByWallet = OrbitInput::post('is_payable_by_wallet', 'N');
-            $payByNormal = OrbitInput::post('is_payable_by_normal', 'N');
-            $paymentProvider = OrbitInput::post('paument_provider_ids', []);
+
+            $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
+            $payByNormal = OrbitInput::post('pay_by_normal', 'N');
+            $paymentProviders = OrbitInput::post('payment_providers', null);
+            $amountCommission = OrbitInput::post('amount_commission', null);
+            $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -328,6 +331,37 @@ class CouponAPIController extends ControllerAPI
             if ($int_validity_date <= $int_before_end_date) {
                 $errorMessage = 'The validity redeem date should be greater than the end date.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($payByWallet === 'N' && $payByNormal === 'N') {
+                $errorMessage = 'Select one payment method.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($payByNormal === 'Y') {
+                $validator = Validator::make(
+                    array(
+                        'amount_commission'       => $amountCommission,
+                        'fixed_amount_commission' => $fixedAmountCommission,
+
+                    ),
+                    array(
+                        'amount_commission'       => 'required',
+                        'fixed_amount_commission' => 'required',
+                    )
+                );
+
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
+            if ($payByWallet === 'Y') {
+                $paymentProviders = @json_decode($paymentProviders);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
+                }
             }
 
             // validating retailer_ids.
@@ -624,6 +658,8 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->maximum_redeem = $maximumRedeem;
             $newcoupon->is_payable_by_wallet = $payByWallet;
             $newcoupon->is_payable_by_normal = $payByNormal;
+            $newcoupon->transaction_amount_commission = $amountCommission;
+            $newcoupon->fixed_amount_commission = $fixedAmountCommission;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
@@ -650,16 +686,6 @@ class CouponAPIController extends ControllerAPI
 
             // Return campaign_status_name
             $newcoupon->campaign_status = $idStatus->campaign_status_name;
-
-            // save coupon payment provider
-            if (! empty($paymentProvider)) {
-                foreach ($paymentProvider as $provider) {
-                    $couponPayment = new CouponPaymentProvider();
-                    $couponPayment->payment_provider_id = $provider;
-                    $couponPayment->coupon_id = $newcoupon->promotion_id;
-                    $couponPayment->save();
-                }
-            }
 
             // save CouponRule.
             $couponrule = new CouponRule();
@@ -773,6 +799,22 @@ class CouponAPIController extends ControllerAPI
                 $retailer->object_type = $isMall;
                 $retailer->save();
                 $retailers[] = $retailer;
+
+                $retailerRedeemId = $retailer->promotion_retailer_redeem_id;
+
+                // save coupon payment provider
+                if ($payByWallet === 'Y') {
+                    foreach ($paymentProviders as $key => $value) {
+                        if ($key === $tenant_id) {
+                            foreach ($value as $provider) {
+                                $couponPayment = new CouponPaymentProvider();
+                                $couponPayment->payment_provider_id = $provider;
+                                $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
+                                $couponPayment->save();
+                            }
+                        }
+                    }
+                }
             }
 
             $newcoupon->tenants = $retailers;
@@ -1306,6 +1348,12 @@ class CouponAPIController extends ControllerAPI
             $third_party_name = OrbitInput::post('third_party_name', NULL) === '' ? 'grab' : OrbitInput::post('third_party_name');
             $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
 
+            $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
+            $payByNormal = OrbitInput::post('pay_by_normal', 'N');
+            $paymentProviders = OrbitInput::post('payment_providers', null);
+            $amountCommission = OrbitInput::post('amount_commission', null);
+            $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
+
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
             if ($campaignStatus === 'ongoing') {
@@ -1386,6 +1434,37 @@ class CouponAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($payByWallet === 'N' && $payByNormal === 'N') {
+                $errorMessage = 'Select one payment method.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if ($payByNormal === 'Y') {
+                $validator = Validator::make(
+                    array(
+                        'amount_commission'       => $amountCommission,
+                        'fixed_amount_commission' => $fixedAmountCommission,
+
+                    ),
+                    array(
+                        'amount_commission'       => 'required',
+                        'fixed_amount_commission' => 'required',
+                    )
+                );
+
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+            }
+
+            if ($payByWallet === 'Y') {
+                $paymentProviders = @json_decode($paymentProviders);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
+                }
             }
 
             // 3rd party coupon validation
@@ -1829,12 +1908,20 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->is_3rd_party_promotion = $is_3rd_party_promotion;
             });
 
-            OrbitInput::post('is_payable_by_wallet', function($is_payable_by_wallet) use ($updatedcoupon) {
-                $updatedcoupon->is_payable_by_wallet = $is_payable_by_wallet;
+            OrbitInput::post('pay_by_wallet', function($pay_by_wallet) use ($updatedcoupon) {
+                $updatedcoupon->is_payable_by_wallet = $pay_by_wallet;
             });
 
-            OrbitInput::post('is_payable_by_normal', function($is_payable_by_normal) use ($updatedcoupon) {
-                $updatedcoupon->is_payable_by_normal = $is_payable_by_normal;
+            OrbitInput::post('pay_by_normal', function($pay_by_normal) use ($updatedcoupon) {
+                $updatedcoupon->is_payable_by_normal = $pay_by_normal;
+            });
+
+            OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon) {
+                $updatedcoupon->amount_commission = $amount_commission;
+            });
+
+            OrbitInput::post('fixed_amount_commission', function($fixed_amount_commission) use ($updatedcoupon) {
+                $updatedcoupon->fixed_amount_commission = $fixed_amount_commission;
             });
 
             if ($is_3rd_party_promotion === 'Y') {
@@ -2110,6 +2197,13 @@ class CouponAPIController extends ControllerAPI
                     Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
                 }
 
+                if ($payByWallet === 'Y') {
+                    $existRetailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id)->lists('promotion_retailer_redeem_id');
+                    if (! empty($existRetailer)) {
+                        $delete_provider = CouponPaymentProvider::whereIn('promotion_retailer_redeem_id', $existRetailer)->delete();
+                    }
+                }
+
                 // Delete old data
                 $delete_retailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id);
                 $delete_retailer->delete();
@@ -2139,6 +2233,22 @@ class CouponAPIController extends ControllerAPI
                     $retailer->retailer_id = $tenant_id;
                     $retailer->object_type = $isMall;
                     $retailer->save();
+
+                    $retailerRedeemId = $retailer->promotion_retailer_redeem_id;
+
+                    // save coupon payment provider
+                    if ($payByWallet === 'Y') {
+                        foreach ($paymentProviders as $key => $value) {
+                            if ($key === $tenant_id) {
+                                foreach ($value as $provider) {
+                                    $couponPayment = new CouponPaymentProvider();
+                                    $couponPayment->payment_provider_id = $provider;
+                                    $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
+                                    $couponPayment->save();
+                                }
+                            }
+                        }
+                    }
                 }
             });
 
@@ -4136,172 +4246,87 @@ class CouponAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $store_ids = OrbitInput::get('store_ids');
-            $store_ids = (array) $store_ids;
-            $sort_by = OrbitInput::get('sortby');
-            $validator = Validator::make(
-                array(
-                    'store_ids' => $store_ids,
-                    'sort_by' => $sort_by,
-                ),
-                array(
-                    'store_ids' => 'required',
-                    'sort_by' => 'in:payment_name,description,status,created_at,updated_at',
-                )
-            );
+            $couponId = OrbitInput::get('coupon_id', null);
+            $prefix = DB::getTablePrefix();
 
-            // Run the validation
-            if ($validator->fails()) {
-                $errorMessage = $validator->messages()->first();
+            $newRedemptionPlace = OrbitInput::get('redemption_place', []);
+            $existRedemptionPlace = array();
+            if (! empty($couponId)) {
+                $redeem = CouponRetailerRedeem::where('promotion_id', $couponId)
+                                                      ->where('object_type', 'tenant')
+                                                      ->lists('retailer_id');
+
+                if (! empty($redeem)) {
+                    $existRedemptionPlace = array_intersect($newRedemptionPlace, $redeem);
+                    $newRedemptionPlace = array_diff($newRedemptionPlace, $redeem);
+                }
+            }
+
+            if (empty($newRedemptionPlace) && empty($existRedemptionPlace)) {
+                $errorMessage = "Redemption Place is required";
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // Get the maximum record
-            $maxRecord = (int) Config::get('orbit.pagination.event.max_record');
-            if ($maxRecord <= 0) {
-                // Fallback
-                $maxRecord = (int) Config::get('orbit.pagination.max_record');
-                if ($maxRecord <= 0) {
-                    $maxRecord = 20;
+            $merge = array_merge($existRedemptionPlace, $newRedemptionPlace);
+
+            // check if any redemption place id doesn't support payment method
+            $walletCheck = BaseStore::select('base_stores.base_store_id', DB::raw("CONCAT({$prefix}base_merchants.name,' at ', {$prefix}merchants.name) as store_name"))
+                                    ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                                    ->leftJoin('merchants', 'merchants.parent_id', '=', 'base_stores.merchant_id')
+                                    ->whereIn('base_store_id', $merge)
+                                    ->where('base_stores.is_payment_acquire', 'N')
+                                    ->get();
+
+            if (! $walletCheck->isEmpty()) {
+                $errorMessage = '';
+                foreach ($walletCheck as $walletStore) {
+                    $errorMessage = $errorMessage . $walletStore->store_name . ', ';
+                }
+                $errorMessage = $errorMessage . " doesn't support payment method";
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $list = new stdClass();
+            $totalRecords = 0;
+
+            // check existing coupon payment provider
+            if (! empty($existRedemptionPlace)) {
+                $existingProvider = CouponRetailerRedeem::with('couponPaymentProvider.paymentProvider')
+                                                        ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'promotion_retailer_redeem.promotion_retailer_redeem_id')
+                                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retialer_id')
+                                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                                                        ->whereIn('promotion_retailer_redeem.retialer_id', $existRedemptionPlace)
+                                                        ->groupBy('merchants.merchant_id')
+                                                        ->get();
+
+                if (! $existingProvider->isEmpty()) {
+                    $list = $existingProvider;
                 }
             }
-            // Get default per page (take)
-            $perPage = (int) Config::get('orbit.pagination.event.per_page');
-            if ($perPage <= 0) {
-                // Fallback
-                $perPage = (int) Config::get('orbit.pagination.per_page');
-                if ($perPage <= 0) {
-                    $perPage = 20;
+
+            if (! empty($newRedemptionPlace)) {
+                $provider = BaseStore::with('merchantStorePaymentProvider.paymentProvider')
+                                    ->select('base_stores.base_store_id as store_id', DB::raw("CONCAT({$prefix}base_merchants.name,' at ', {$prefix}merchants.name) as store_name"), 'base_stores.base_store_id')
+                                    ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                                    ->leftJoin('merchants', 'merchants.parent_id', '=', 'base_stores.merchant_id')
+                                    ->whereIn('base_store_id', $newRedemptionPlace)
+                                    ->where('base_stores.is_payment_acquire', 'Y')
+                                    ->groupBy('base_stores.base_store_id')
+                                    ->get();
+
+                if (! empty((array) $list) && ! $provider->isEmpty()) {
+                    $list = $existingProvider->merge($provider);
+                } else if (! $provider->isEmpty()) {
+                    $list = $provider;
                 }
             }
 
-            $dontShowWallet = false;
-
-            // check if all store is_payment_acquire = Y or not
-            $checkStore = Tenant::whereIn('merchant_id', $store_ids)
-                                ->where('is_payment_acquire', 'N')
-                                ->get();
-
-            if (count($checkStore)) {
-                $dontShowWallet = true;
-            }
-
-            if (!$dontShowWallet) {
-                $wallOperator = PaymentProvider::excludeDeleted();
-
-                OrbitInput::get('payment_provider_id', function($payment_provider_id) use ($wallOperator) {
-                    $wallOperator->where('payment_provider_id', '=', $payment_provider_id);
-                });
-
-                OrbitInput::get('payment_name', function($payment_name) use ($wallOperator) {
-                    $wallOperator->where('payment_name', '=', $payment_name);
-                });
-
-                OrbitInput::get('description', function($description) use ($wallOperator) {
-                    $wallOperator->where('descriptions', '=', $description);
-                });
-
-                OrbitInput::get('mdr', function($mdr) use ($wallOperator) {
-                    $wallOperator->where('mdr', '=', $mdr);
-                });
-
-                OrbitInput::get('mdr_commission', function($mdr_commission) use ($wallOperator) {
-                    $wallOperator->where('mdr_commission', '=', $mdr_commission);
-                });
-
-                OrbitInput::get('status', function($status) use ($wallOperator) {
-                    $wallOperator->where('status', '=', $status);
-                });
-
-                // Add new relation based on request
-                OrbitInput::get('with', function ($with) use ($wallOperator) {
-                    $with = (array) $with;
-
-                    foreach ($with as $relation) {
-                        if ($relation === 'media') {
-                            $wallOperator->with('media');
-                        } elseif ($relation === 'media_logo') {
-                            $wallOperator->with('mediaLogo');
-                        } elseif ($relation === 'contact') {
-                            $wallOperator->with('contact');
-                        } elseif ($relation === 'gtm_bank') {
-                            $wallOperator->with('gtmBanks');
-                        }
-                    }
-                });
-
-                $_wallOperator = clone $wallOperator;
-
-                // Get the take args
-                $take = $perPage;
-                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
-                    if ($_take > $maxRecord) {
-                        $_take = $maxRecord;
-                    }
-                    $take = $_take;
-
-                    if ((int)$take <= 0) {
-                        $take = $maxRecord;
-                    }
-                });
-                $wallOperator->take($take);
-
-                $skip = 0;
-                OrbitInput::get('skip', function($_skip) use (&$skip, $wallOperator)
-                {
-                    if ($_skip < 0) {
-                        $_skip = 0;
-                    }
-
-                    $skip = $_skip;
-                });
-                $wallOperator->skip($skip);
-
-                // Default sort by
-                $sortBy = 'payment_providers.payment_name';
-                // Default sort mode
-                $sortMode = 'asc';
-
-                OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
-                {
-                    // Map the sortby request to the real column name
-                    $sortByMapping = array(
-                        'payment_name'    => 'payment_providers.payment_name',
-                        'description'     => 'payment_providers.descriptions',
-                        'mdr'             => 'payment_providers.mdr',
-                        'mdr_commission'  => 'payment_providers.mdr_commission',
-                        'status'          => 'payment_providers.status',
-                        'created_at'      => 'payment_providers.created_at',
-                        'updated_at'      => 'payment_providers.updated_at',
-                    );
-
-                    $sortBy = $sortByMapping[$_sortBy];
-                });
-
-                if ($sortBy !== 'payment_providers.status') {
-                    $wallOperator->orderBy('payment_providers.status', 'asc');
-                }
-
-                OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
-                {
-                    if (strtolower($_sortMode) !== 'asc') {
-                        $sortMode = 'desc';
-                    }
-                });
-                $wallOperator->orderBy($sortBy, $sortMode);
-
-                $list_wallOperator = $wallOperator->get();
-                $count = RecordCounter::create($_wallOperator)->count();
-
-                $this->response->data = new stdClass();
-                $this->response->data->total_records = $count;
-                $this->response->data->returned_records = count($list_wallOperator);
-                $this->response->data->records = $list_wallOperator;
-            } else {
-                $this->response->data = new stdClass();
-                $this->response->data->message = 'wallet operator not available';
-            }
-
+            // print_r($list); die();
+            $data = new stdclass();
+            $data->total_records = count($list);
+            $data->returned_records = count($list);
+            $data->records = $list;
+            $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
