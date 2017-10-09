@@ -32,21 +32,21 @@ class MerchantTransactionReportAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
-            // // Require authentication
+            // Require authentication
             $this->checkAuth();
 
-            // // Try to check access control list, does this user allowed to
-            // // perform this action
+            // Try to check access control list, does this user allowed to
+            // perform this action
             $user = $this->api->user;
 
-            // // @Todo: Use ACL authentication instead
+            // @Todo: Use ACL authentication instead
             $role = $user->role;
 
-            // $validRoles = $this->merchantViewRoles;
-            // if (! in_array(strtolower($role->role_name), $validRoles)) {
-            //     $message = 'Your role are not allowed to access this resource.';
-            //     ACL::throwAccessForbidden($message);
-            // }
+            $validRoles = $this->merchantViewRoles;
+            if (! in_array(strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
 
             // $merchantHelper = MerchantHelper::create();
             // $merchantHelper->merchantCustomValidator();
