@@ -298,7 +298,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                                         $q->on('media.media_name_long', '=', DB::Raw("'wallet_operator_logo_orig'"));
                                                     })
                                                     ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_retailer_redeem_id', '=', 'coupon_payment_provider.promotion_retailer_redeem_id')
-                                                    ->where('promotion_retailer_redeem.coupon_id', $coupon->promotion_id)
+                                                    ->where('promotion_retailer_redeem.coupon_id', $couponId)
                                                     ->groupBy('payment_providers.payment_provider_id')
                                                     ->get();
 

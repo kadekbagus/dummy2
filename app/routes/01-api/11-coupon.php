@@ -332,3 +332,13 @@ Route::get('/api/v1/pub/coupon-payment-provider/list', function()
 });
 
 Route::get('/app/v1/pub/coupon-payment-provider/list', ['as' => 'pub-coupon-payment-provider-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponPaymentProvider_getCouponPaymentProvider']);
+
+/**
+ * Detail coupon payment provider
+ */
+Route::get('/api/v1/pub/coupon-payment-provider/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponPaymentDetailAPIController::create()->getCouponPaymentDetail();
+});
+
+Route::get('/app/v1/pub/coupon-payment-provider/detail', ['as' => 'pub-coupon-payment-provider-detail', 'uses' => 'IntermediatePubAuthController@Coupon\CouponPaymentDetail_getCouponPaymentDetail']);
