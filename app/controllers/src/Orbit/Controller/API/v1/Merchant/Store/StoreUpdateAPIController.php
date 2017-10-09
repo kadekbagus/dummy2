@@ -90,7 +90,6 @@ class StoreUpdateAPIController extends ControllerAPI
             $storeContactContactName = OrbitInput::post('store_contact_contact_name');
             $storeContactPosition = OrbitInput::post('store_contact_position');
             $storeContactPhoneNumber = OrbitInput::post('store_contact_phone_number');
-            $storeContactPhoneNumberForSms = OrbitInput::post('store_contact_phone_number_for_sms');
             $storeContactEmail = OrbitInput::post('store_contact_email', []);
             $paymentProviderIds = OrbitInput::post('payment_provider_ids',[]);
             $phoneNumberForSms = OrbitInput::post('phone_number_for_sms',[]);
@@ -247,14 +246,12 @@ class StoreUpdateAPIController extends ControllerAPI
                         'store_contact_contact_name' => $storeContactContactName,
                         'store_contact_position' => $storeContactPosition,
                         'store_contact_phone_number' => $storeContactPhoneNumber,
-                        'store_contact_phone_number_for_sm' => $storeContactPhoneNumberForSms,
                         'store_contact_email' => $storeContactEmail,
                     ),
                     array(
                         'store_contact_contact_name' => 'required',
                         'store_contact_position' => 'required',
                         'store_contact_phone_number' => 'required',
-                        'store_contact_phone_number_for_sm' => 'required',
                         'store_contact_email' => 'required',
                     )
                 );
@@ -270,7 +267,6 @@ class StoreUpdateAPIController extends ControllerAPI
                 $newStoreCotactPerson->contact_name = $storeContactContactName;
                 $newStoreCotactPerson->position = $storeContactPosition;
                 $newStoreCotactPerson->phone_number = $storeContactPhoneNumber;
-                $newStoreCotactPerson->phone_number_for_sms = $storeContactPhoneNumberForSms;
                 $newStoreCotactPerson->email = $storeContactEmail;
                 $newStoreCotactPerson->Save();
                 $objectContact[] = $newStoreCotactPerson;
