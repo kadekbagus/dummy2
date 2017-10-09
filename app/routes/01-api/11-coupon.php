@@ -315,7 +315,6 @@ Route::get('/api/v1/pub/coupon-featured/list', function()
 
 Route::get('/app/v1/pub/coupon-featured/list', ['as' => 'pub-coupon-featured-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponFeaturedList_getCouponFeaturedList']);
 
-
 /**
  * Get available wallet operator for coupon
  */
@@ -323,3 +322,13 @@ Route::get('/api/v1/available-wallet-operator/list', function()
 {
     return CouponAPIController::create()->getAvailableWalletOperator();
 });
+
+/**
+ * List coupon payment provider
+ */
+Route::get('/api/v1/pub/coupon-payment-provider/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponPaymentProviderAPIController::create()->getCouponPaymentProvider();
+});
+
+Route::get('/app/v1/pub/coupon-payment-provider/list', ['as' => 'pub-coupon-payment-provider-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponPaymentProvider_getCouponPaymentProvider']);

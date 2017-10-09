@@ -10,6 +10,7 @@ use DB;
 use Coupon;
 use Advert;
 use IssuedCoupon;
+use CouponPaymentProvider;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
@@ -156,6 +157,30 @@ class ESCouponUpdateQueue
                 );
 
                 $linkToTenants[] = $linkToTenant;
+            }
+
+            // wallet operator
+            $walletOperators = CouponPaymentProvider::select('payment_providers.payment_name', 'media.cdn_url', 'media.path')
+                                                    ->join('payment_providers', 'coupon_payment_provider.payment_provider_id', '=', 'payment_providers.payment_provider_id')
+                                                    ->leftJoin('media', function ($q) {
+                                                        $q->on('media.object_id', '=', 'payment_providers.payment_provider_id');
+                                                        $q->on('media.media_name_id', '=', DB::Raw("'wallet_operator_logo'"));
+                                                        $q->on('media.media_name_long', '=', DB::Raw("'wallet_operator_logo_orig'"));
+                                                    })
+                                                    ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_retailer_redeem_id', '=', 'coupon_payment_provider.promotion_retailer_redeem_id')
+                                                    ->where('promotion_retailer_redeem.coupon_id', $coupon->promotion_id)
+                                                    ->groupBy('payment_providers.payment_provider_id')
+                                                    ->get();
+
+            $paymentOperator = array();
+            if (! $walletOperators->isEmpty()) {
+                foreach ($walletOperators as $walletOperator) {
+                    $paymentOperator[] = array(
+                        'operator_name' => $walletOperator->payment_name,
+                        'operator_logo' => $walletOperator->path,
+                        'operator_logo_cdn' => $walletOperator->cdn_url
+                    );
+                }
             }
 
             // get rating by location
@@ -349,7 +374,8 @@ class ESCouponUpdateQueue
                 'preferred_gtm_type'      => $preferredGtmType,
                 'preferred_mall_type'     => $preferredMallType,
                 'location_rating'         => $locationRating,
-                'mall_rating'             => $mallRating
+                'mall_rating'             => $mallRating,
+                'wallet_operator'         => $paymentOperator
             ];
 
             $body = array_merge($body, $translationBody);

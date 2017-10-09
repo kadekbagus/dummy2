@@ -104,4 +104,30 @@ class BaseMerchant extends Eloquent
                       ->select('base_object_partner.object_id', DB::raw("{$prefix}partners.partner_id"), DB::raw("{$prefix}partners.partner_name"))
                       ->leftjoin('partners', 'partners.partner_id', '=', 'base_object_partner.partner_id');
     }
+
+    /**
+     * Merchant to payment acquire
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function bank()
+    {
+        return $this->hasMany('ObjectBank', 'object_id', 'base_merchant_id')
+                    ->where('object_banks.object_type', '=', 'base_merchant');
+    }
+
+    public function financialContactDetail()
+    {
+        return $this->hasOne('ObjectFinancialDetail', 'object_id', 'base_merchant_id')
+                    ->where('object_financial_details.object_type', '=', 'base_merchant');
+    }
+
+    public function paymentProvider()
+    {
+        return $this->hasMany('MerchantStorePaymentProvider', 'object_id', 'base_merchant_id')
+                    ->where('merchant_store_payment_provider.object_type', '=', 'base_merchant');
+    }
+
 }

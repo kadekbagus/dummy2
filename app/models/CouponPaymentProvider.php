@@ -10,4 +10,16 @@ class CouponPaymentProvider extends Eloquent
 
     protected $table = 'coupon_payment_provider';
 
+    /**
+     * CouponPaymentProvider belongs to PaymentProvider.
+     *
+     * @author Shelgi <shelgi@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function paymentProvider()
+    {
+        return $this->belongsTo('PaymentProvider', 'payment_provider_id', 'payment_provider_id')
+                    ->where('payment_providers.status', 'active');
+    }
+
 }

@@ -587,6 +587,14 @@ class CouponListAPIController extends PubControllerAPI
                         }
                     }
 
+                    if ($key === "wallet_operator") {
+                        foreach ($record['_source']['wallet_operator'] as $dt) {
+                            $logoLocalPath = (! empty($dt['operator_logo'])) ? $dt['operator_logo'] : '';
+                            $logoCdnPath = (! empty($dt['operator_logo_cdn'])) ? $dt['operator_logo_cdn'] : '';
+                            $dt['operator_logo_url'] = $imgUrl->getImageUrl($logoLocalPath, $logoCdnPath);
+                        }
+                    }
+
                     if (empty($mallId)) {
                         if ($key === 'gtm_page_views') {
                             $pageView = $value;

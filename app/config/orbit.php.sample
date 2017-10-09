@@ -239,7 +239,12 @@ return array(
 
     // vendor push notification
     'vendor_push_notification' => [
-        'default' => 'onesignal'
+        'default' => 'onesignal',
+
+        'onesignal' => [
+            'api_key' => '',
+            'app_id' => ''
+        ],
     ],
 
     // Demo environtment
@@ -877,6 +882,7 @@ return array(
             'pmp_portal' => 'X-OMS-PMP',
             'admin_portal' => 'X-OMS-Admin',
             'mdm_portal' => 'X-OMS-MDM',
+            'mt_portal' => 'X-OMS-MT',
         ],
 
         /**
@@ -893,6 +899,7 @@ return array(
             'pmp_portal' => '6',
             'admin_portal' => '7',
             'mdm_portal' => '8',
+            'mt_portal' => '9',
         ],
 
         /**
@@ -1291,6 +1298,40 @@ return array(
                     'httponly'  => TRUE
                 ),
             ),
+            'mt_portal' => array(
+                'expire' => 3600,   // 1 hour
+
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-MT'
+                ),
+
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-MT'
+                ),
+
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-MT',
+
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+
+                    // Path of the cookie
+                    'path'      => '/',
+
+                    // domain
+                    'domain'    => NULL,
+
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
+
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
         ),
     ),
 
@@ -1346,6 +1387,7 @@ return array(
                 'Set-X-OMS-PMP',
                 'Set-X-OMS-CS',
                 'Set-X-OMS-MDM',
+                'Set-X-OMS-MT',
             ],
 
             // No need protocol, just enter domain name
@@ -5934,6 +5976,15 @@ return array(
             '142' => array(
                 'name' => 'click_notification_permission',
                 'name_long' => 'Click Notification Permission',
+                'module_name' => 'Notification',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User clicks on push notification pop up
+            '143' => array(
+                'name' => 'click_push_notification',
+                'name_long' => 'Click Push Notification',
                 'module_name' => 'Notification',
                 'type' => 'click',
                 'object_type' => null,

@@ -167,6 +167,17 @@ class BaseStore extends Eloquent
         return $this->mediaCroppedDefault()->where('media_name_id', 'base_store_image_grab');
     }
 
+    /**
+     * Base Store has many payment provider
+     *
+     * @author Shelgi <shelgi@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function merchantStorePaymentProvider()
+    {
+        return $this->hasMany('MerchantStorePaymentProvider', 'object_id', 'base_store_id')
+                    ->where('merchant_store_payment_provider.object_type', 'store');
+    }
 
     /**
      * Get all store data (presync)
@@ -192,6 +203,7 @@ class BaseStore extends Eloquent
                                 'objects.object_name',
                                 'base_stores.unit',
                                 'base_stores.verification_number',
+                                'base_stores.is_payment_acquire',
                                 'merchants.name as location_name'
                             )
                             ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
@@ -206,6 +218,37 @@ class BaseStore extends Eloquent
                             ->groupBy('base_stores.base_store_id');
 
         return $stores;
+    }
+
+    /**
+     * Merchant to payment acquire
+     *
+     * @author Firmansyah <firmansyah@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+
+    public function bank()
+    {
+        return $this->hasMany('ObjectBank', 'object_id', 'base_store_id')
+                    ->where('object_banks.object_type', '=', 'base_store');
+    }
+
+    public function financialContactDetail()
+    {
+        return $this->hasOne('ObjectFinancialDetail', 'object_id', 'base_store_id')
+                    ->where('object_financial_details.object_type', '=', 'base_store');
+    }
+
+    public function objectContact()
+    {
+        return $this->hasOne('ObjectContact', 'object_id', 'base_store_id')
+                    ->where('object_contacts.object_type', '=', 'base_store');
+    }
+
+    public function paymentProvider()
+    {
+        return $this->hasMany('MerchantStorePaymentProvider', 'object_id', 'base_store_id')
+                    ->where('merchant_store_payment_provider.object_type', '=', 'base_store');
     }
 
 }

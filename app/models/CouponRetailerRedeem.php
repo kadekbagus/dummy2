@@ -21,4 +21,15 @@ class CouponRetailerRedeem extends Eloquent
     {
         return $this->belongsTo('Tenant', 'retailer_id', 'merchant_id');
     }
+
+    /**
+     * CouponRetailerRedeem has many CouponPaymentProvider
+     *
+     * @author Shelgi <shelgi@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function couponPaymentProvider()
+    {
+        return $this->hasMany('CouponPaymentProvider', 'promotion_retailer_redeem_id', 'promotion_retailer_redeem_id');
+    }
 }

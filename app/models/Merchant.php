@@ -390,4 +390,16 @@ class Merchant extends Eloquent
                                      ->where('parent_id', $this->merchant_id)
                                      ->lists('merchant_id');
     }
+
+    /**
+     * merchants has many payment provider
+     *
+     * @author Shelgi <shelgi@dominopos.com>
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function merchantStorePaymentProvider()
+    {
+        return $this->hasMany('MerchantStorePaymentProvider', 'object_id', 'merchant_id')
+                    ->where('merchant_store_payment_provider.object_type', 'store');
+    }
 }
