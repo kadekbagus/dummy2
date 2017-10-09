@@ -302,6 +302,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                                     ->groupBy('payment_providers.payment_provider_id')
                                                     ->get();
 
+            $coupon->wallet_operator = null;
             if (! $walletOperators->isEmpty()) {
                  $coupon->wallet_operator = $walletOperators;
             }
