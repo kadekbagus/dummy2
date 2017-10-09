@@ -17,6 +17,7 @@ use Lang;
 use \Exception;
 use PromotionRetailer;
 use CouponPaymentProvider;
+use Coupon;
 use Helper\EloquentRecordCounter as RecordCounter;
 
 class CouponPaymentProviderAPIController extends PubControllerAPI
@@ -78,7 +79,11 @@ class CouponPaymentProviderAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $paymentProvider = CouponPaymentProvider::select('payment_providers.payment_provider_id', 'payment_providers.payment_name', 'payment_providers.descriptions', 'payment_providers.deeplink_url')
+            $coupon = Coupon::where('promotion_id', $couponId)->first();
+
+            $data = null;
+            if ($coupon->is_payable_by_wallet === 'Y') {
+              $paymentProvider = CouponPaymentProvider::select('payment_providers.payment_provider_id', 'payment_providers.payment_name', 'payment_providers.descriptions', 'payment_providers.deeplink_url')
                                                     ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_retailer_redeem_id', '=', 'coupon_payment_provider.promotion_retailer_redeem_id')
                                                     ->leftJoin('payment_providers', 'payment_providers.payment_provider_id', '=', 'coupon_payment_provider.payment_provider_id')
                                                     ->where('promotion_retailer_redeem.promotion_id', $couponId)
@@ -86,23 +91,40 @@ class CouponPaymentProviderAPIController extends PubControllerAPI
                                                     ->where('promotion_retailer_redeem.retailer_id', $merchantId)
                                                     ->groupBy('payment_providers.payment_provider_id');
 
-            $paymentProvider = $paymentProvider->orderBy($sort_by, $sort_mode);
+              $data = clone $paymentProvider;
+            }
 
-            $_paymentProvider = clone $paymentProvider;
+            if ($coupon->is_payable_by_normal === 'Y') {
+              $other = DB::table(DB::raw("(SELECT  'other' AS payment_provider_id, 'Other' AS payment_name, 'Other' AS descriptions, null AS deeplink_url) as a"));
+
+              $data = clone $other;
+              if ($coupon->is_payable_by_wallet === 'Y') {
+                $data = $paymentProvider->union($other);
+              }
+            }
+
+            if (empty($data)) {
+              $errorMessage = 'Please check payment method for this coupon';
+              OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $data = $data->orderBy($sort_by, $sort_mode);
+
+            $_data = clone $data;
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
-            $paymentProvider->take($take);
+            $data->take($take);
 
             $skip = PaginationNumber::parseSkipFromGet();
-            $paymentProvider->skip($skip);
+            $data->skip($skip);
 
-            $listPaymentProvider = $paymentProvider->get();
-            $count = RecordCounter::create($_paymentProvider)->count();
+            $listData = $data->get();
+            $count = RecordCounter::create($_data)->count();
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($listPaymentProvider);
-            $this->response->data->records = $listPaymentProvider;
+            $this->response->data->returned_records = count($listData);
+            $this->response->data->records = $listData;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
@@ -147,4 +169,10 @@ class CouponPaymentProviderAPIController extends PubControllerAPI
 
         return $output;
     }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
+
 }
