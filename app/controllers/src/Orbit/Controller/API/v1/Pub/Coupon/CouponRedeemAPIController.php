@@ -75,7 +75,7 @@ class CouponRedeemAPIController extends PubControllerAPI
             $couponId = OrbitInput::post('cid'); // hashed issued coupon id
             $userIdentifier = OrbitInput::post('uid', NULL); // hashed user identifier
             $verificationNumber = OrbitInput::post('merchant_verification_number', null);
-            $paymentProvider = OrbitInput::post('provider_id', null);
+            $paymentProvider = OrbitInput::post('provider_id', 0);
             $phone = OrbitInput::post('phone', null);
             $amount = OrbitInput::post('amount', 0);
 
