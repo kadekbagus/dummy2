@@ -4267,24 +4267,6 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $merge = array_merge($existRedemptionPlace, $newRedemptionPlace);
-
-            // check if any redemption place id doesn't support payment method
-            $walletCheck = Merchant::select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"))
-                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->whereIn('merchants.merchant_id', $merge)
-                                    ->where('merchants.is_payment_acquire', 'N')
-                                    ->get();
-
-            if (! $walletCheck->isEmpty()) {
-                $errorMessage = '';
-                foreach ($walletCheck as $walletStore) {
-                    $errorMessage = $errorMessage . $walletStore->store_name . ', ';
-                }
-                $errorMessage = $errorMessage . " doesn't support payment method";
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
             $list = new stdClass();
             $totalRecords = 0;
 
@@ -4304,7 +4286,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             if (! empty($newRedemptionPlace)) {
-                $provider = Merchant::with('merchantStorePaymentProvider.paymentProvider')
+                $provider = Tenant::with('merchantStorePaymentProvider.paymentProvider')
                                     ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'merchants.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->whereIn('merchants.merchant_id', $newRedemptionPlace)
