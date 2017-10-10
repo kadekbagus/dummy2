@@ -51,7 +51,7 @@ class CouponPaymentDetailAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $couponId = OrbitInput::get('coupon_id');
+            $issuedCouponId = OrbitInput::get('issued_coupon_id');
             $merchantId = OrbitInput::get('merchant_id');
             $providerId = OrbitInput::get('provider_id');
             $language = OrbitInput::get('language', 'id');
@@ -65,14 +65,14 @@ class CouponPaymentDetailAPIController extends PubControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'coupon_id' => $couponId,
-                    'merchant_id' => $merchantId,
-                    'provider_id' => $providerId,
+                    'issued_coupon_id' => $issuedCouponId,
+                    'merchant_id'      => $merchantId,
+                    'provider_id'      => $providerId,
                 ),
                 array(
-                    'coupon_id' => 'required',
-                    'merchant_id' => 'required',
-                    'provider_id' => 'required',
+                    'issued_coupon_id' => 'required',
+                    'merchant_id'      => 'required',
+                    'provider_id'      => 'required',
                 )
             );
 
@@ -83,7 +83,7 @@ class CouponPaymentDetailAPIController extends PubControllerAPI
             }
 
             // get redemption code
-            $issuedCoupon = IssuedCoupon::where('promotion_id', $couponId)
+            $issuedCoupon = IssuedCoupon::where('issued_coupon_id', $issuedCouponId)
                                         ->where('user_id', $user->user_id)
                                         ->where('status', 'issued')
                                         ->first();
@@ -101,7 +101,7 @@ class CouponPaymentDetailAPIController extends PubControllerAPI
                                     ->first();
 
             $detail = new stdClass();
-            $detail->coupon_id = $couponId;
+            $detail->coupon_id = $issuedCoupon->promotion_id;
             $detail->issued_coupon_id = $issuedCoupon->issued_coupon_id;
             $detail->redemption_code = $issuedCoupon->issued_coupon_code;
             $detail->user_id = $user->user_id;
