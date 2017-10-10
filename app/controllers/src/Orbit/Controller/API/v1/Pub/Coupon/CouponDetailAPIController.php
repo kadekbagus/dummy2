@@ -18,6 +18,7 @@ use DB;
 use Validator;
 use Activity;
 use Lang;
+use CouponPaymentProvider;
 use \Exception;
 use Mall;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
@@ -282,6 +283,28 @@ class CouponDetailAPIController extends PubControllerAPI
             // set maximum redeemed to maximum issued when empty
             if ($coupon->maximum_redeem === '0') {
                 $coupon->maximum_redeem = $coupon->maximum_issued_coupon;
+            }
+
+            // check payment method / wallet operator
+            $imageWallet = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";
+            if ($usingCdn) {
+                $imageWallet = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
+            }
+            $walletOperators = CouponPaymentProvider::select('payment_providers.payment_name', DB::raw("{$imageWallet} AS logo_url"))
+                                                    ->join('payment_providers', 'coupon_payment_provider.payment_provider_id', '=', 'payment_providers.payment_provider_id')
+                                                    ->leftJoin('media', function ($q) {
+                                                        $q->on('media.object_id', '=', 'payment_providers.payment_provider_id');
+                                                        $q->on('media.media_name_id', '=', DB::Raw("'wallet_operator_logo'"));
+                                                        $q->on('media.media_name_long', '=', DB::Raw("'wallet_operator_logo_orig'"));
+                                                    })
+                                                    ->leftJoin('promotion_retailer_redeem', 'promotion_retailer_redeem.promotion_retailer_redeem_id', '=', 'coupon_payment_provider.promotion_retailer_redeem_id')
+                                                    ->where('promotion_retailer_redeem.promotion_id', $couponId)
+                                                    ->groupBy('payment_providers.payment_provider_id')
+                                                    ->get();
+
+            $coupon->wallet_operator = null;
+            if (! $walletOperators->isEmpty()) {
+                 $coupon->wallet_operator = $walletOperators;
             }
 
             if (is_object($mall)) {
