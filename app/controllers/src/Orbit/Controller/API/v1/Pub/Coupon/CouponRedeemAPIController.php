@@ -233,7 +233,7 @@ class CouponRedeemAPIController extends PubControllerAPI
                 $body['mdr'] = $provider->mdr;
                 $body['default_mdr'] = $provider->default_mdr;
                 $body['provider_mdr_commission_percentage'] = $provider->mdr_commission;
-                $body['commission_transaction_percentage'] = $coupon->transaction_amount_commissio;
+                $body['commission_transaction_percentage'] = $coupon->transaction_amount_commission;
             }
 
             $paymentConfig = Config::get('orbit.payment_server');
