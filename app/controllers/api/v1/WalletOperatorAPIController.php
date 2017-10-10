@@ -510,16 +510,13 @@ class WalletOperatorAPIController extends ControllerAPI
                 $sortBy = $sortByMapping[$_sortBy];
             });
 
-            if ($sortBy !== 'payment_providers.status') {
-                $wallOperator->orderBy('payment_providers.status', 'asc');
-            }
-
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
                 if (strtolower($_sortMode) !== 'asc') {
                     $sortMode = 'desc';
                 }
             });
+
             $wallOperator->orderBy($sortBy, $sortMode);
 
             $list_wallOperator = $wallOperator->get();
