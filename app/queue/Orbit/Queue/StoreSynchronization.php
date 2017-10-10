@@ -61,7 +61,7 @@ class StoreSynchronization
                 break;
 
             case 'merchant':
-                return $this->syncStore($data, 'merchant', $job);
+                $this->syncStore($data, 'merchant', $job);
                 break;
         }
     }
