@@ -26,6 +26,7 @@ use CouponRetailer;
 use MerchantStorePaymentProvider;
 use BaseMerchant;
 use BaseStore;
+use Currency;
 use Carbon\Carbon;
 use IssuedCoupon;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
@@ -78,6 +79,7 @@ class CouponRedeemAPIController extends PubControllerAPI
             $paymentProvider = OrbitInput::post('provider_id', 0);
             $phone = OrbitInput::post('phone', null);
             $amount = OrbitInput::post('amount', 0);
+            $currency = OrbitInput::post('currency', 'IDR');
 
             $encryptionKey = Config::get('orbit.security.encryption_key');
             $encryptionDriver = Config::get('orbit.security.encryption_driver');
@@ -147,6 +149,12 @@ class CouponRedeemAPIController extends PubControllerAPI
                 $mallId = $baseStore->merchant_id;
             }
 
+            $currencies = Currency::where('currency_code', $currency)->first();
+            if (empty($verificationNumber)) {
+                $errorMessage = 'Currency not found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $body = [
                 'user_email'             => $user->user_email,
                 'user_name'              => $user->user_firstname . ' ' . $user->user_lastname,
@@ -166,8 +174,8 @@ class CouponRedeemAPIController extends PubControllerAPI
                 'coupon_redemption_code' => $issuedCoupon->issued_coupon_code,
                 'payment_provider_id'    => $paymentProvider,
                 'payment_method'         => $providerName,
-                'currency_id'            => '1',
-                'currency'               => 'IDR',
+                'currency_id'            => $currencies->currency_id,
+                'currency'               => $currency,
             ];
 
             if ($paymentProvider === '0') {
@@ -228,8 +236,6 @@ class CouponRedeemAPIController extends PubControllerAPI
                 $body['phone_number_for_sms'] = $provider->phone_number_for_sms;
                 $body['payment_provider_id'] = $paymentProvider;
                 $body['payment_method'] = $providerName;
-                $body['currency_id'] = '1';
-                $body['currency'] = 'IDR';
                 $body['mdr'] = $provider->mdr;
                 $body['default_mdr'] = $provider->default_mdr;
                 $body['provider_mdr_commission_percentage'] = $provider->mdr_commission;

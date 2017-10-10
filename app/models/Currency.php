@@ -4,7 +4,7 @@
  *
  * @author Firmansyah <firmansyah@dominopos.com>
  */
-class ObjectCurrency extends Eloquent
+class Currency extends Eloquent
 {
     protected $primaryKey = 'currency_id';
 
