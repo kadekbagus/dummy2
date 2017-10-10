@@ -386,7 +386,7 @@ class WalletOperatorAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:payment_name,description,status,created_at,updated_at',
+                    'sort_by' => 'in:payment_name,description,status,created_at,updated_at,mdr,mdr_commission,contact_person_email',
                 )
             );
 
@@ -415,7 +415,10 @@ class WalletOperatorAPIController extends ControllerAPI
                 }
             }
 
-            $wallOperator = PaymentProvider::with('contact' ,'gtmBanks', 'mediaLogo')->excludeDeleted();
+            $wallOperator = PaymentProvider::select('payment_providers.*','object_contacts.email')
+                                    ->excludeDeleted('payment_providers')
+                                    ->with('contact' ,'gtmBanks', 'mediaLogo')
+                                    ->leftJoin('object_contacts', 'object_contacts.object_id', '=', 'payment_providers.payment_provider_id');
 
             OrbitInput::get('payment_provider_id', function($payment_provider_id) use ($wallOperator) {
                 $wallOperator->where('payment_provider_id', '=', $payment_provider_id);
@@ -494,13 +497,14 @@ class WalletOperatorAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'payment_name'    => 'payment_providers.payment_name',
-                    'description'     => 'payment_providers.descriptions',
-                    'mdr'             => 'payment_providers.mdr',
-                    'mdr_commission'  => 'payment_providers.mdr_commission',
-                    'status'          => 'payment_providers.status',
-                    'created_at'      => 'payment_providers.created_at',
-                    'updated_at'      => 'payment_providers.updated_at',
+                    'payment_name'         => 'payment_providers.payment_name',
+                    'description'          => 'payment_providers.descriptions',
+                    'mdr'                  => 'payment_providers.mdr',
+                    'mdr_commission'       => 'payment_providers.mdr_commission',
+                    'status'               => 'payment_providers.status',
+                    'created_at'           => 'payment_providers.created_at',
+                    'updated_at'           => 'payment_providers.updated_at',
+                    'contact_person_email' => 'object_contacts.email',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
