@@ -13,6 +13,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use \Queue;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use Orbit\Helper\Payment\Payment as PaymentClient;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -3673,21 +3674,20 @@ class CouponAPIController extends ControllerAPI
             App::setLocale($language);
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
-            $verificationNumber = OrbitInput::post('merchant_verification_number');
+            $verificationNumber = OrbitInput::post('merchant_verification_number', null);
+            $paymentProvider = OrbitInput::post('provider_id', 0);
+            $phone = OrbitInput::post('phone', null);
+            $amount = OrbitInput::post('amount', 0);
+            $currency = OrbitInput::post('currency', 'IDR');
 
             $validator = Validator::make(
                 array(
                     'store_id' => $storeId,
                     'current_mall' => $mall_id,
-                    'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
                     'store_id'                      => 'required',
                     'current_mall'                  => 'required|orbit.empty.merchant',
-                    'merchant_verification_number'  => 'required'
-                ),
-                array(
-                    'merchant_verification_number.required' => Lang::get('validation.orbit.empty.merchant_verification_number')
                 )
             );
             $validator2 = Validator::make(
@@ -3715,30 +3715,157 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
 
-            $tenant = Tenant::active()
-                ->where('parent_id', $mall_id)
-                ->where('masterbox_number', $verificationNumber)
-                ->first();
-
-            $csVerificationNumber = UserVerificationNumber::
-                where('merchant_id', $mall_id)
-                ->where('verification_number', $verificationNumber)
-                ->first();
+            $currencies = Currency::where('currency_code', $currency)->first();
+            if (empty($currencies)) {
+                $errorMessage = 'Currency not found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $redeem_retailer_id = NULL;
             $redeem_user_id = NULL;
-            if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
-                // @Todo replace with language
-                $message = 'Tenant is not found.';
-                ACL::throwAccessForbidden($message);
+            $providerName = 'normal';
+            $paymentType = 'normal';
+
+            $issuedCoupon = IssuedCoupon::where('issued_coupon_id', $issuedCouponId)
+                                        ->where('status', 'issued')
+                                        ->first();
+
+            $baseStore = BaseStore::select('base_stores.base_store_id', 'base_stores.merchant_id', 'base_stores.phone', 'base_stores.base_merchant_id', 'base_merchants.name as store_name', 'merchants.country_id', 'timezones.timezone_name', 'merchants.name as mall_name')
+                                  ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                                  ->join('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
+                                  ->leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
+                                  ->where('base_stores.base_store_id', $storeId)
+                                  ->where('base_stores.merchant_id', $mall_id)
+                                  ->first();
+
+            $body = [
+                'user_email'             => $user->user_email,
+                'user_name'              => $user->user_firstname . ' ' . $user->user_lastname,
+                'user_id'                => $user->user_id,
+                'country_id'             => $baseStore->country_id,
+                'payment_type'           => $paymentType,
+                'merchant_id'            => $baseStore->base_merchant_id,
+                'merchant_name'          => $baseStore->store_name,
+                'store_id'               => $baseStore->base_store_id,
+                'store_name'             => $baseStore->store_name,
+                'timezone_name'          => $baseStore->timezone_name,
+                'building_id'            => $baseStore->merchant_id,
+                'building_name'          => $baseStore->mall_name,
+                'object_id'              => $couponId,
+                'object_type'            => 'coupon',
+                'object_name'            => $coupon->promotion_name,
+                'coupon_redemption_code' => $issuedCoupon->issued_coupon_code,
+                'payment_provider_id'    => $paymentProvider,
+                'payment_method'         => $providerName,
+                'currency_id'            => $currencies->currency_id,
+                'currency'               => $currency,
+            ];
+
+            if ($paymentProvider === '0') {
+                if (empty($verificationNumber)) {
+                    $errorMessage = 'Verification number is empty';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $tenant = Tenant::active()
+                    ->where('parent_id', $mall_id)
+                    ->where('masterbox_number', $verificationNumber)
+                    ->first();
+
+                $csVerificationNumber = UserVerificationNumber::
+                    where('merchant_id', $mall_id)
+                    ->where('verification_number', $verificationNumber)
+                    ->first();
+
+                if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
+                    // @Todo replace with language
+                    $message = 'Tenant is not found.';
+                    ACL::throwAccessForbidden($message);
+                } else {
+                    if (is_object($tenant)) {
+                        $redeem_retailer_id = $tenant->merchant_id;
+                    }
+                    if (is_object($csVerificationNumber)) {
+                        $redeem_user_id = $csVerificationNumber->user_id;
+                        $redeem_retailer_id = $mall_id;
+                    }
+                }
+
+                $body['commission_fixed_amount'] = $coupon->fixed_amount_commission;
             } else {
-                if (is_object($tenant)) {
-                    $redeem_retailer_id = $tenant->merchant_id;
+                // using paypro etc
+                $paymentType = 'wallet';
+
+                $provider = MerchantStorePaymentProvider::select('payment_providers.payment_provider_id', 'payment_providers.payment_name', 'merchant_store_payment_provider.mdr', 'payment_providers.mdr as default_mdr', 'payment_providers.mdr_commission', 'merchant_store_payment_provider.phone_number_for_sms')
+                                                        ->join('payment_providers', 'payment_providers.payment_provider_id', '=', 'merchant_store_payment_provider.payment_provider_id')
+                                                        ->where('merchant_store_payment_provider.payment_provider_id', $paymentProvider)
+                                                        ->where('merchant_store_payment_provider.object_type', 'store')
+                                                        ->where('merchant_store_payment_provider.object_id', $storeId)
+                                                        ->where('payment_providers.status', 'active')
+                                                        ->first();
+
+                if (empty($provider)) {
+                    $errorMessage = 'Payment profider not found';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
-                if (is_object($csVerificationNumber)) {
-                    $redeem_user_id = $csVerificationNumber->user_id;
-                    $redeem_retailer_id = $mall_id;
+
+                $bank = ObjectBank::select('banks.bank_id', 'banks.bank_name', 'banks.description')
+                                ->join('banks', 'banks.bank_id', '=', 'object_banks.bank_id')
+                                ->whereIn('object_banks.account_name', ['bca','mandiri'])
+                                ->where('object_banks.object_id', $storeId)
+                                ->where('object_banks.object_type', 'base_store')
+                                ->where('banks.status', 'active')
+                                ->orderBy('object_banks.account_name')
+                                ->first();
+
+                if (empty($bank)) {
+                    $bank = Bank::where('bank_name', 'bca')->where('status', 'active')->first();
+
+                    if (empty($bank)) {
+                        $errorMessage = 'Bank not found';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
                 }
+
+                $bankGotomalls = BankGotomall::where('bank_id', $bank->bank_id)
+                                             ->where('payment_provider_id', $paymentProvider)
+                                             ->first();
+
+                if (empty($bankGotomalls)) {
+                    $errorMessage = 'Bank for payment provider ' . $provider->payment_name . ' not found';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $bankInfo
+
+                $providerName = $provider->payment_name;
+
+                $body['to'] = $phone;
+                $body['payment_type'] = $paymentType;
+                $body['amount'] = $amount;
+                $body['phone_number_for_sms'] = $provider->phone_number_for_sms;
+                $body['payment_provider_id'] = $paymentProvider;
+                $body['payment_method'] = $providerName;
+                $body['mdr'] = $provider->mdr;
+                $body['default_mdr'] = $provider->default_mdr;
+                $body['provider_mdr_commission_percentage'] = $provider->mdr_commission;
+                $body['commission_transaction_percentage'] = $coupon->transaction_amount_commission;
+                $body['gtm_bank_id'] = $bankGotomalls->bank_id;
+                $body['gtm_bank_account_name'] = $bankGotomalls->account_name;
+                $body['gtm_bank_account_number'] = $bankGotomalls->account_number;
+                $body['gtm_bank_name'] = $bank->bank_name;
+                $body['gtm_bank_swift_code'] = $bankGotomalls->swift_code;
+                $body['gtm_bank_address'] = $bankGotomalls->bank_address;
+            }
+
+            $paymentConfig = Config::get('orbit.payment_server');
+            $paymentClient = PaymentClient::create($paymentConfig)->setFormParam($body);
+            $response = $paymentClient->setEndPoint('api/v1/pay')
+                                    ->request('POST');
+
+            if ($response->status !== 'success') {
+                $errorMessage = 'Transaction Failed';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
             $mall = App::make('orbit.empty.merchant');
@@ -3764,8 +3891,12 @@ class CouponAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            $data = new stdclass();
+            $data->issued_coupon_code = $issuedcoupon->issued_coupon_code;
+            $data->transaction_id = $response->data->transaction_id;
+
             $this->response->message = 'Coupon has been successfully redeemed.';
-            $this->response->data = $issuedcoupon->issued_coupon_code;
+            $this->response->data = $data;
 
             // Successfull Creation
             $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
