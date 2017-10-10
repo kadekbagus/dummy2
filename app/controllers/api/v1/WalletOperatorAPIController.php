@@ -386,7 +386,7 @@ class WalletOperatorAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:payment_name,description,status,created_at,updated_at',
+                    'sort_by' => 'in:payment_name,description,status,created_at,updated_at,mdr,mdr_commission,contact_person_email',
                 )
             );
 
@@ -415,7 +415,10 @@ class WalletOperatorAPIController extends ControllerAPI
                 }
             }
 
-            $wallOperator = PaymentProvider::with('contact' ,'gtmBanks', 'mediaLogo')->excludeDeleted();
+            $wallOperator = PaymentProvider::select('payment_providers.*','object_contacts.email')
+                                    ->excludeDeleted('payment_providers')
+                                    ->with('contact' ,'gtmBanks', 'mediaLogo')
+                                    ->leftJoin('object_contacts', 'object_contacts.object_id', '=', 'payment_providers.payment_provider_id');
 
             OrbitInput::get('payment_provider_id', function($payment_provider_id) use ($wallOperator) {
                 $wallOperator->where('payment_provider_id', '=', $payment_provider_id);
@@ -494,21 +497,18 @@ class WalletOperatorAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'payment_name'    => 'payment_providers.payment_name',
-                    'description'     => 'payment_providers.descriptions',
-                    'mdr'             => 'payment_providers.mdr',
-                    'mdr_commission'  => 'payment_providers.mdr_commission',
-                    'status'          => 'payment_providers.status',
-                    'created_at'      => 'payment_providers.created_at',
-                    'updated_at'      => 'payment_providers.updated_at',
+                    'payment_name'         => 'payment_providers.payment_name',
+                    'description'          => 'payment_providers.descriptions',
+                    'mdr'                  => 'payment_providers.mdr',
+                    'mdr_commission'       => 'payment_providers.mdr_commission',
+                    'status'               => 'payment_providers.status',
+                    'created_at'           => 'payment_providers.created_at',
+                    'updated_at'           => 'payment_providers.updated_at',
+                    'contact_person_email' => 'object_contacts.email',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
             });
-
-            if ($sortBy !== 'payment_providers.status') {
-                $wallOperator->orderBy('payment_providers.status', 'asc');
-            }
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
@@ -516,6 +516,7 @@ class WalletOperatorAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
+
             $wallOperator->orderBy($sortBy, $sortMode);
 
             $list_wallOperator = $wallOperator->get();
@@ -815,6 +816,7 @@ class WalletOperatorAPIController extends ControllerAPI
         $valid_fields = ['account_name', 'account_number', 'bank_address', 'swift_code', 'status'];
         $user = $this->api->user;
         $operations = [];
+        $update = false;
 
         $data = @json_decode($gtm_banks_json_string);
 
@@ -826,7 +828,6 @@ class WalletOperatorAPIController extends ControllerAPI
             $bank = Bank::excludeDeleted()
                         ->where('bank_id', '=', $bankData->bank_id)
                         ->first();
-
 
             if (empty($bank)) {
                 OrbitShopAPI::throwInvalidArgument('Bank not found');
@@ -845,9 +846,16 @@ class WalletOperatorAPIController extends ControllerAPI
                 if (empty($existingBank)) {
                     $operations[] = ['create', $bankData->bank_id, $bankData];
                 } else {
-                    $operations[] = ['update', $existingBank, $bankData];
+                    $operations[] = ['update', $bankData->bank_id, $bankData];
+                    $update = true;
                 }
             }
+        }
+
+        //delete all when update
+        if ($update) {
+          $deleteBanks = BankGotomall::where('payment_provider_id', '=', $walletOperator->payment_provider_id);
+          $deleteBanks->delete();
         }
 
         $bankDataReturn = [];
@@ -865,13 +873,15 @@ class WalletOperatorAPIController extends ControllerAPI
                 $bankDataReturn[] = $newGtmBank;
             }
             elseif ($op === 'update') {
-                $existingBank = $operation[1];
+                $newGtmBank = new BankGotomall();
+                $newGtmBank->payment_provider_id = $walletOperator->payment_provider_id;
+                $newGtmBank->bank_id = $operation[1];
                 $data = $operation[2];
                 foreach ($data as $field => $value) {
-                    $existingBank->{$field} = $value;
+                    $newGtmBank->{$field} = $value;
                 }
-                $existingBank->save();
-                $bankDataReturn[] = $existingBank;
+                $newGtmBank->save();
+                $bankDataReturn[] = $newGtmBank;
             }
             elseif ($op === 'delete') {
                 $existingBank = $operation[1];

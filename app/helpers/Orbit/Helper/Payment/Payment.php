@@ -1,13 +1,13 @@
-<?php namespace Orbit\Helper\MongoDB;
+<?php namespace Orbit\Helper\Payment;
 /**
- * MongoDB client using Guzzle
+ * Payment
  *
- * @author Ahmad <ahmad@dominopos.com>
+ * @author Shelgi <shelgi@dominopos.com>
  */
 use \GuzzleHttp\Client as Guzzle;
 use Orbit\Helper\Exception\OrbitCustomException;
 
-class Client
+class Payment
 {
     const CURL_CONNECT_ERROR_CODE = 8701;
 
@@ -61,7 +61,7 @@ class Client
     {
         $this->config = $config + $this->config;
         if (empty($this->config['host'])) {
-            throw new OrbitCustomException("Nodejs host is not set.", 1);
+            throw new OrbitCustomException("Payment host is not set.", 1);
         }
 
         $this->client = new Guzzle([
@@ -170,6 +170,8 @@ class Client
                 $options['body'] = $this->body;
                 $options['form_params'] = $this->formParam;
             }
+
+            // return [$method, $this->endpoint, $options, $this->config];
 
             $response = $this->client->request($method, $this->endpoint, $options);
 
