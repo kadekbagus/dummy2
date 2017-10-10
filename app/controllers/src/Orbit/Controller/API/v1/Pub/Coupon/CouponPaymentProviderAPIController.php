@@ -95,7 +95,7 @@ class CouponPaymentProviderAPIController extends PubControllerAPI
             }
 
             if ($coupon->is_payable_by_normal === 'Y') {
-              $other = DB::table(DB::raw("(SELECT  'other' AS payment_provider_id, 'Other' AS payment_name, 'Other' AS descriptions, null AS deeplink_url) as a"));
+              $other = DB::table(DB::raw("(SELECT  '0' AS payment_provider_id, 'Other' AS payment_name, 'Other' AS descriptions, null AS deeplink_url) as a"));
 
               $data = clone $other;
               if ($coupon->is_payable_by_wallet === 'Y') {
