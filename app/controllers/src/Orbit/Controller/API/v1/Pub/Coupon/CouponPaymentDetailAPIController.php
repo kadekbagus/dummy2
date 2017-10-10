@@ -102,6 +102,7 @@ class CouponPaymentDetailAPIController extends PubControllerAPI
 
             $detail = new stdClass();
             $detail->coupon_id = $couponId;
+            $detail->issued_coupon_id = $issuedCoupon->issued_coupon_id;
             $detail->redemption_code = $issuedCoupon->issued_coupon_code;
             $detail->user_id = $user->user_id;
             $detail->user_phone = (empty($userDetail->phone)) ? null : $userDetail->phone;
