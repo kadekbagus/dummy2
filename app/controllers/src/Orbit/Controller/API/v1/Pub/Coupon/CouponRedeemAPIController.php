@@ -171,6 +171,11 @@ class CouponRedeemAPIController extends PubControllerAPI
             ];
 
             if ($paymentProvider === '0') {
+                if (empty($verificationNumber)) {
+                    $errorMessage = 'Verification number is empty';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
                 $tenant = Tenant::join('promotion_retailer_redeem', 'promotion_retailer_redeem.retailer_id', '=', 'merchants.merchant_id')
                     ->where('promotion_id', $requestedCouponId)
                     ->where('merchant_id', $storeId)
