@@ -3836,8 +3836,6 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
-                $bankInfo
-
                 $providerName = $provider->payment_name;
 
                 $body['to'] = $phone;
