@@ -15,6 +15,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
 use Language;
+use Coupon;
 use Validator;
 use PaymentTransaction;
 use Orbit\Helper\Util\PaginationNumber;
@@ -83,6 +84,8 @@ class PingPaymentAPIController extends PubControllerAPI
             $transaction = PaymentTransaction::where('payment_transaction_id', $transactionId)->first();
             $valid_language = Language::where('name', $language)->first();
 
+            $prefix = DB::getTablePrefix();
+
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
@@ -111,9 +114,15 @@ class PingPaymentAPIController extends PubControllerAPI
                                         AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
                                     END AS original_media_path
                                 "))
+                            ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                            ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
                                 $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                                   ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
+                            ->leftJoin('coupon_translations as default_translation', function ($q) {
+                                $q->on(DB::raw('default_translation.promotion_id'), '=', 'promotions.promotion_id')
+                                  ->on(DB::raw('default_translation.merchant_language_id'), '=', 'languages.language_id');
                             })
                             ->where('promotions.promotion_id', $transaction->object_id)
                             ->first();
