@@ -812,13 +812,15 @@ class CouponAPIController extends ControllerAPI
                 // save coupon payment provider
                 if ($payByWallet === 'Y') {
                     $dataPayment = @json_decode($paymentProviders);
-                    foreach ($dataPayment as $key => $value) {
-                        if ($key === $tenant_id) {
-                            foreach ($value as $provider) {
-                                $couponPayment = new CouponPaymentProvider();
-                                $couponPayment->payment_provider_id = $provider;
-                                $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
-                                $couponPayment->save();
+                    foreach ($dataPayment as $data) {
+                        foreach ((array) $data as $key => $value) {
+                            if ($key === $tenant_id) {
+                                foreach ($value as $provider) {
+                                    $couponPayment = new CouponPaymentProvider();
+                                    $couponPayment->payment_provider_id = $provider;
+                                    $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
+                                    $couponPayment->save();
+                                }
                             }
                         }
                     }
@@ -2253,13 +2255,15 @@ class CouponAPIController extends ControllerAPI
                     // save coupon payment provider
                     if ($payByWallet === 'Y') {
                         $dataPayment = @json_decode($paymentProviders);
-                        foreach ($dataPayment as $key => $value) {
-                            if ($key === $tenant_id) {
-                                foreach ($value as $provider) {
-                                    $couponPayment = new CouponPaymentProvider();
-                                    $couponPayment->payment_provider_id = $provider;
-                                    $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
-                                    $couponPayment->save();
+                        foreach ($dataPayment as $data) {
+                            foreach ((array) $data as $key => $value) {
+                                if ($key === $tenant_id) {
+                                    foreach ($value as $provider) {
+                                        $couponPayment = new CouponPaymentProvider();
+                                        $couponPayment->payment_provider_id = $provider;
+                                        $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
+                                        $couponPayment->save();
+                                    }
                                 }
                             }
                         }
