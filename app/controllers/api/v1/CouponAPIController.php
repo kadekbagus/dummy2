@@ -4454,6 +4454,7 @@ class CouponAPIController extends ControllerAPI
                                                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                                         ->whereIn('promotion_retailer_redeem.retailer_id', $existRedemptionPlace)
+                                                        ->where('promotion_retailer_redeem.promotion_id', $couponId)
                                                         ->groupBy('merchants.merchant_id')
                                                         ->get();
 
