@@ -4432,7 +4432,8 @@ class CouponAPIController extends ControllerAPI
                                                       ->where('object_type', 'tenant')
                                                       ->lists('retailer_id');
 
-                if (! empty($newRedemptionPlace) && ! empty($redeem)) {
+                $existRedemptionPlace = $redeem;
+                if (! empty($newRedemptionPlace) && ! empty($existRedemptionPlace)) {
                     $existRedemptionPlace = array_intersect($newRedemptionPlace, $redeem);
                     $newRedemptionPlace = array_diff($newRedemptionPlace, $redeem);
                 }
@@ -4450,9 +4451,9 @@ class CouponAPIController extends ControllerAPI
             if (! empty($existRedemptionPlace)) {
                 $existingProvider = CouponRetailerRedeem::with('couponPaymentProvider.paymentProvider')
                                                         ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'promotion_retailer_redeem.promotion_retailer_redeem_id')
-                                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retialer_id')
+                                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                                        ->whereIn('promotion_retailer_redeem.retialer_id', $existRedemptionPlace)
+                                                        ->whereIn('promotion_retailer_redeem.retailer_id', $existRedemptionPlace)
                                                         ->groupBy('merchants.merchant_id')
                                                         ->get();
 
