@@ -1933,7 +1933,7 @@ class CouponAPIController extends ControllerAPI
             });
 
             OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon) {
-                $updatedcoupon->amount_commission = $amount_commission;
+                $updatedcoupon->transaction_amount_commission = $amount_commission;
             });
 
             OrbitInput::post('fixed_amount_commission', function($fixed_amount_commission) use ($updatedcoupon) {
