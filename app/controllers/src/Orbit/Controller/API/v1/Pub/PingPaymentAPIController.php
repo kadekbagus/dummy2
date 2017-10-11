@@ -79,7 +79,7 @@ class PingPaymentAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $transaction = PaymentTransaction::where('transaction_id', $transactionId)->first();
+            $transaction = PaymentTransaction::where('payment_transaction_id', $transactionId)->first();
 
             $body['transaction_id'] = $transactionId;
 
