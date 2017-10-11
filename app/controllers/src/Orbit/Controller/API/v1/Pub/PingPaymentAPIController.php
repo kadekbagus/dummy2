@@ -16,6 +16,7 @@ use \DB;
 use \URL;
 use Language;
 use Validator;
+use PaymentTransaction;
 use Orbit\Helper\Util\PaginationNumber;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Orbit\Controller\API\v1\Pub\News\NewsHelper;
@@ -26,6 +27,7 @@ use Orbit\Helper\Util\CdnUrlGenerator;
 use Elasticsearch\ClientBuilder;
 use stdClass;
 use Orbit\Helper\Payment\Payment as PaymentClient;
+use \Carbon\Carbon as Carbon;
 
 class PingPaymentAPIController extends PubControllerAPI
 {
@@ -77,6 +79,8 @@ class PingPaymentAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $transaction = PaymentTransaction::where('transaction_id', $transactionId)->first();
+
             $body['transaction_id'] = $transactionId;
 
             $paymentConfig = Config::get('orbit.payment_server');
@@ -85,10 +89,17 @@ class PingPaymentAPIController extends PubControllerAPI
                                     ->request('POST');
 
             $responseData = $response->data;
-            if ($responseData->status === 'failed') {
-                $message = $responseData->notes;
-                OrbitShopAPI::throwInvalidArgument($message);
-            }
+
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $transaction->created_at, 'UTC');
+            $dateTime = $date->setTimezone($transaction->timezone_name)->toDateTimeString();
+
+            $data = new stdClass();
+            $data->transactions = $responseData;
+            $data->transaction_time = $dateTime;
+            $data->coupon_id = $transaction->object_id;
+            $data->coupon_name = $transaction->object_name;
+            $data->store_name = $transaction->store_name;
+            $data->mall_name = $transaction->building_name;
 
             $this->response->data = $responseData;
             $this->response->code = 0;
