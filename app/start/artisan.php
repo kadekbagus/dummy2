@@ -260,3 +260,6 @@ Artisan::add(new CdnCouponMissingFile);
 
 // Update approval status of review to pending
 Artisan::add(new UpdateStatusReviewCommand);
+
+// Create User Merchant Transaction
+Artisan::add(new CreateUserMerchantTransactionCommand);
