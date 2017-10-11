@@ -21,12 +21,19 @@ use Orbit\Controller\API\v1\MerchantTransaction\MerchantTransactionHelper;
 class MerchantTransactionReportAPIController extends ControllerAPI
 {
     protected $merchantViewRoles = ['super admin', 'merchant transaction admin'];
-
     /**
      * GET Search Merchant Transactions
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      */
+
+    /**
+     * Flag to return the query builder.
+     *
+     * @var Builder
+     */
+    protected $returnBuilder = FALSE;
+
     public function getSearchMerchantTransactionReport()
     {
         try {
@@ -73,23 +80,10 @@ class MerchantTransactionReportAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $merchantTransactions = PaymentTransaction::select(
-                                                                'payment_transaction_id',
-                                                                'external_payment_transaction_id',
-                                                                'object_name',
-                                                                'created_at',
+            $merchantTransactions = PaymentTransaction::select('*',
                                                                 DB::raw("DATE_FORMAT(convert_tz( created_at, '+00:00', timezone_name)  , '%W %d/%m/%Y %H:%i') as date_tz"),
-                                                                'store_id',
-                                                                'store_name',
-                                                                'building_id',
-                                                                'building_name',
-                                                                'amount',
-                                                                'currency',
-                                                                'payment_method',
-                                                                'status',
-                                                                'timezone_name'
-                                                            )
-            ;
+                                                                DB::raw("CONCAT(store_name,' @ ', building_name) as store_at_building")
+                                                            );
 
             // Filter by transaction id
             OrbitInput::get('payment_transaction_id', function($payment_transaction_id) use ($merchantTransactions)
@@ -149,7 +143,7 @@ class MerchantTransactionReportAPIController extends ControllerAPI
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
-            $_merchants = clone $merchantTransactions;
+            $_merchantTransactions = clone $merchantTransactions;
 
             $take = PaginationNumber::parseTakeFromGet('merchant');
             $merchantTransactions->take($take);
@@ -183,15 +177,24 @@ class MerchantTransactionReportAPIController extends ControllerAPI
             });
             $merchantTransactions->orderBy($sortBy, $sortMode);
 
-            $totalMerchants = RecordCounter::create($_merchants)->count();
+            $totalMerchantTransactions = RecordCounter::create($_merchantTransactions)->count();
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return [
+                            'builder' => $merchantTransactions,
+                            'count' => $totalMerchantTransactions
+                        ];
+            }
+
             $listOfMerchants = $merchantTransactions->get();
 
             $data = new stdclass();
-            $data->total_records = $totalMerchants;
+            $data->total_records = $totalMerchantTransactions;
             $data->returned_records = count($listOfMerchants);
             $data->records = $listOfMerchants;
 
-            if ($totalMerchants === 0) {
+            if ($totalMerchantTransactions === 0) {
                 $data->records = NULL;
                 $this->response->message = Lang::get('statuses.orbit.nodata.merchant');
             }
@@ -239,5 +242,12 @@ class MerchantTransactionReportAPIController extends ControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
     }
 }
