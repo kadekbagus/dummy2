@@ -337,6 +337,12 @@ class CouponAPIController extends ControllerAPI
             if ($payByWallet === 'N' && $payByNormal === 'N') {
                 $errorMessage = 'Select one payment method.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
+                $dataPayment = @json_decode($paymentProviders);
+                if (count($dataPayment) != count($retailer_ids)) {
+                    $errorMessage = 'Not all redemption place support wallet payment method';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             if ($payByNormal === 'Y') {
@@ -805,7 +811,8 @@ class CouponAPIController extends ControllerAPI
 
                 // save coupon payment provider
                 if ($payByWallet === 'Y') {
-                    foreach ($paymentProviders as $key => $value) {
+                    $dataPayment = @json_decode($paymentProviders);
+                    foreach ($dataPayment as $key => $value) {
                         if ($key === $tenant_id) {
                             foreach ($value as $provider) {
                                 $couponPayment = new CouponPaymentProvider();
@@ -1440,6 +1447,12 @@ class CouponAPIController extends ControllerAPI
             if ($payByWallet === 'N' && $payByNormal === 'N') {
                 $errorMessage = 'Select one payment method.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
+                $dataPayment = @json_decode($paymentProviders);
+                if (count($dataPayment) != count($retailer_ids)) {
+                    $errorMessage = 'Not all redemption place support wallet payment method';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             if ($payByNormal === 'Y') {
@@ -2170,7 +2183,7 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id) {
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
                     $data = @json_decode($retailer_id_json);
@@ -2239,7 +2252,8 @@ class CouponAPIController extends ControllerAPI
 
                     // save coupon payment provider
                     if ($payByWallet === 'Y') {
-                        foreach ($paymentProviders as $key => $value) {
+                        $dataPayment = @json_decode($paymentProviders);
+                        foreach ($dataPayment as $key => $value) {
                             if ($key === $tenant_id) {
                                 foreach ($value as $provider) {
                                     $couponPayment = new CouponPaymentProvider();
