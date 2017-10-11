@@ -263,3 +263,6 @@ Artisan::add(new UpdateStatusReviewCommand);
 
 // Create User Merchant Transaction
 Artisan::add(new CreateUserMerchantTransactionCommand);
+
+// Create Master Bank for merchant transaction
+Artisan::add(new CreateBankCommand);
