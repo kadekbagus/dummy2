@@ -198,7 +198,7 @@ class CouponAPIController extends ControllerAPI
 
             $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $payByNormal = OrbitInput::post('pay_by_normal', 'N');
-            $paymentProviders = OrbitInput::post('payment_providers', null);
+            $paymentProviders = OrbitInput::post('payment_provider_ids', null);
             $amountCommission = OrbitInput::post('amount_commission', null);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
@@ -365,7 +365,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             if ($payByWallet === 'Y') {
-                $paymentProviders = @json_decode($paymentProviders);
+                $dataPayment = @json_decode($paymentProviders);
                 if (json_last_error() != JSON_ERROR_NONE) {
                     OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
                 }
@@ -1360,7 +1360,7 @@ class CouponAPIController extends ControllerAPI
 
             $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $payByNormal = OrbitInput::post('pay_by_normal', 'N');
-            $paymentProviders = OrbitInput::post('payment_providers', null);
+            $paymentProviders = OrbitInput::post('payment_provider_ids', null);
             $amountCommission = OrbitInput::post('amount_commission', null);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
@@ -1477,7 +1477,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             if ($payByWallet === 'Y') {
-                $paymentProviders = @json_decode($paymentProviders);
+                $dataPayment = @json_decode($paymentProviders);
                 if (json_last_error() != JSON_ERROR_NONE) {
                     OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
                 }
