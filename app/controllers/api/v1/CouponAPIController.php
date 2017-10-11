@@ -3809,14 +3809,15 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
-                $bank = ObjectBank::select('banks.bank_id', 'banks.bank_name', 'banks.description')
+                $merchantBank = ObjectBank::select('banks.bank_id', 'banks.bank_name', 'banks.description')
                                 ->join('banks', 'banks.bank_id', '=', 'object_banks.bank_id')
-                                ->whereIn('object_banks.account_name', ['bca','mandiri'])
                                 ->where('object_banks.object_id', $storeId)
                                 ->where('object_banks.object_type', 'base_store')
                                 ->where('banks.status', 'active')
-                                ->orderBy('object_banks.account_name')
-                                ->first();
+                                ->orderBy('object_banks.account_name', 'asc');
+
+                $bank = clone $merchantBank;
+                $bank = $bank->whereIn('object_banks.account_name', ['bca','mandiri'])->first();
 
                 if (empty($bank)) {
                     $bank = Bank::where('bank_name', 'bca')->where('status', 'active')->first();
@@ -3834,6 +3835,20 @@ class CouponAPIController extends ControllerAPI
                 if (empty($bankGotomalls)) {
                     $errorMessage = 'Bank for payment provider ' . $provider->payment_name . ' not found';
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $merchantBank = $merchantBank->first();
+                $merchantBankId = null;
+                $merchantBankAccountName = null;
+                if (! empty($merchantBank)) {
+                    $merchantBankId = $merchantBank->bank_id;
+                    $bankGotomallsMerchant = BankGotomall::where('bank_id', $merchantBankId)
+                                                         ->where('payment_provider_id', $paymentProvider)
+                                                         ->first();
+
+                    if (! empty($bankGotomallsMerchant)) {
+                        $merchantBankAccountName = $bankGotomallsMerchant->account_name;
+                    }
                 }
 
                 $providerName = $provider->payment_name;
@@ -3854,6 +3869,8 @@ class CouponAPIController extends ControllerAPI
                 $body['gtm_bank_name'] = $bank->bank_name;
                 $body['gtm_bank_swift_code'] = $bankGotomalls->swift_code;
                 $body['gtm_bank_address'] = $bankGotomalls->bank_address;
+                $body['merchant_bank_id'] = $merchantBankId;
+                $body['merchant_bank_account_name'] = $merchantBankAccountName;
             }
 
             $paymentConfig = Config::get('orbit.payment_server');
