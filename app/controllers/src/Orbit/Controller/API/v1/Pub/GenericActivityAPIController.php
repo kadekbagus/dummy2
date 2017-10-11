@@ -99,7 +99,6 @@ class GenericActivityAPIController extends PubControllerAPI
             $object = null;
             if (! empty($activityObjectType) && ! empty($activityObjectIDParamName)) {
                 $object_id = OrbitInput::post($activityObjectIDParamName, null);
-
                 if (! empty($object_id)) {
                     // Model name is provided from frontend, need to double check
                     $objectString = OrbitInput::post($activityObjectTypeParamName, NULL);
@@ -112,7 +111,8 @@ class GenericActivityAPIController extends PubControllerAPI
                             'promotion' => 'News',
                             'news'      => 'News',
                             'event'     => 'News',
-                            'paymentprovider' => 'PaymentProvider'
+                            'paymentprovider' => 'PaymentProvider',
+                            'paymenttransaction' => 'PaymentTransaction',
                         ];
 
                         $className = array_key_exists(strtolower($objectString), $mapObjectType) ? $mapObjectType[strtolower($objectString)] : null;
@@ -256,6 +256,10 @@ class GenericActivityAPIController extends PubControllerAPI
                 }
             } elseif ($activityName === 'click_push_notification') {
                 $notes = OrbitInput::post('object_id', null);
+            }  elseif ($activityName === 'payment_transaction_successful') {
+                $activity->setObjectDisplayName('Success');
+            }  elseif ($activityName === 'payment_transaction_failed') {
+                $activity->setObjectDisplayName('Failed');
             }
 
             $activity->setUser($user)
