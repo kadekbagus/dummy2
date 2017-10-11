@@ -3858,6 +3858,10 @@ class CouponAPIController extends ControllerAPI
                 $merchantBank = $merchantBank->first();
                 $merchantBankId = null;
                 $merchantBankAccountName = null;
+                $merchantBankAccountNumber = null;
+                $merchantBankName = null;
+                $merchantBankSwiftCode = null;
+                $merchantBankAddress = null;
                 if (! empty($merchantBank)) {
                     $merchantBankId = $merchantBank->bank_id;
                     $bankGotomallsMerchant = BankGotomall::where('bank_id', $merchantBankId)
@@ -3866,6 +3870,10 @@ class CouponAPIController extends ControllerAPI
 
                     if (! empty($bankGotomallsMerchant)) {
                         $merchantBankAccountName = $bankGotomallsMerchant->account_name;
+                        $merchantBankAccountNumber = $bankGotomallsMerchant->account_number;
+                        $merchantBankName = $merchantBank->bank_name;
+                        $merchantBankSwiftCode = $bankGotomallsMerchant->swift_code;
+                        $merchantBankAddress = $bankGotomallsMerchant->bank_address;
                     }
                 }
 
@@ -3889,6 +3897,10 @@ class CouponAPIController extends ControllerAPI
                 $body['gtm_bank_address'] = $bankGotomalls->bank_address;
                 $body['merchant_bank_id'] = $merchantBankId;
                 $body['merchant_bank_account_name'] = $merchantBankAccountName;
+                $body['merchant_bank_account_number'] = $merchantBankAccountName;
+                $body['merchant_bank_name'] = $merchantBankName;
+                $body['merchant_bank_swift_code'] = $merchantBankSwiftCode;
+                $body['merchant_bank_address'] = $merchantBankAddress;
             }
 
             $paymentConfig = Config::get('orbit.payment_server');
@@ -4420,7 +4432,7 @@ class CouponAPIController extends ControllerAPI
                                                       ->where('object_type', 'tenant')
                                                       ->lists('retailer_id');
 
-                if (! empty($redeem)) {
+                if (! empty($newRedemptionPlace) && ! empty($redeem)) {
                     $existRedemptionPlace = array_intersect($newRedemptionPlace, $redeem);
                     $newRedemptionPlace = array_diff($newRedemptionPlace, $redeem);
                 }
