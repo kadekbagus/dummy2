@@ -1933,7 +1933,7 @@ class CouponAPIController extends ControllerAPI
             });
 
             OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon) {
-                $updatedcoupon->amount_commission = $amount_commission;
+                $updatedcoupon->transaction_amount_commission = $amount_commission;
             });
 
             OrbitInput::post('fixed_amount_commission', function($fixed_amount_commission) use ($updatedcoupon) {
@@ -2185,7 +2185,7 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders) {
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
                     $data = @json_decode($retailer_id_json);
@@ -3858,6 +3858,10 @@ class CouponAPIController extends ControllerAPI
                 $merchantBank = $merchantBank->first();
                 $merchantBankId = null;
                 $merchantBankAccountName = null;
+                $merchantBankAccountNumber = null;
+                $merchantBankName = null;
+                $merchantBankSwiftCode = null;
+                $merchantBankAddress = null;
                 if (! empty($merchantBank)) {
                     $merchantBankId = $merchantBank->bank_id;
                     $bankGotomallsMerchant = BankGotomall::where('bank_id', $merchantBankId)
@@ -3866,6 +3870,10 @@ class CouponAPIController extends ControllerAPI
 
                     if (! empty($bankGotomallsMerchant)) {
                         $merchantBankAccountName = $bankGotomallsMerchant->account_name;
+                        $merchantBankAccountNumber = $bankGotomallsMerchant->account_number;
+                        $merchantBankName = $merchantBank->bank_name;
+                        $merchantBankSwiftCode = $bankGotomallsMerchant->swift_code;
+                        $merchantBankAddress = $bankGotomallsMerchant->bank_address;
                     }
                 }
 
@@ -3889,6 +3897,10 @@ class CouponAPIController extends ControllerAPI
                 $body['gtm_bank_address'] = $bankGotomalls->bank_address;
                 $body['merchant_bank_id'] = $merchantBankId;
                 $body['merchant_bank_account_name'] = $merchantBankAccountName;
+                $body['merchant_bank_account_number'] = $merchantBankAccountName;
+                $body['merchant_bank_name'] = $merchantBankName;
+                $body['merchant_bank_swift_code'] = $merchantBankSwiftCode;
+                $body['merchant_bank_address'] = $merchantBankAddress;
             }
 
             $paymentConfig = Config::get('orbit.payment_server');
@@ -4420,7 +4432,8 @@ class CouponAPIController extends ControllerAPI
                                                       ->where('object_type', 'tenant')
                                                       ->lists('retailer_id');
 
-                if (! empty($redeem)) {
+                $existRedemptionPlace = $redeem;
+                if (! empty($newRedemptionPlace) && ! empty($existRedemptionPlace)) {
                     $existRedemptionPlace = array_intersect($newRedemptionPlace, $redeem);
                     $newRedemptionPlace = array_diff($newRedemptionPlace, $redeem);
                 }
@@ -4438,9 +4451,10 @@ class CouponAPIController extends ControllerAPI
             if (! empty($existRedemptionPlace)) {
                 $existingProvider = CouponRetailerRedeem::with('couponPaymentProvider.paymentProvider')
                                                         ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'promotion_retailer_redeem.promotion_retailer_redeem_id')
-                                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retialer_id')
+                                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
                                                         ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                                        ->whereIn('promotion_retailer_redeem.retialer_id', $existRedemptionPlace)
+                                                        ->whereIn('promotion_retailer_redeem.retailer_id', $existRedemptionPlace)
+                                                        ->where('promotion_retailer_redeem.promotion_id', $couponId)
                                                         ->groupBy('merchants.merchant_id')
                                                         ->get();
 
