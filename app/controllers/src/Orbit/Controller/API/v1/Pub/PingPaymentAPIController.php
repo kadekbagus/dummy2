@@ -64,6 +64,7 @@ class PingPaymentAPIController extends PubControllerAPI
             }
 
             $transactionId = OrbitInput::get('transaction_id', null);
+            $language = OrbitInput::get('language', 'id');
             $validator = Validator::make(
                 array(
                     'transaction_id' => $transactionId,
@@ -80,7 +81,44 @@ class PingPaymentAPIController extends PubControllerAPI
             }
 
             $transaction = PaymentTransaction::where('payment_transaction_id', $transactionId)->first();
+            $valid_language = Language::where('name', $language)->first();
 
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
+            if ($usingCdn) {
+                $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
+            }
+
+            $couponImage = Coupon::select(DB::Raw("
+                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
+                                    CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
+                                    CASE WHEN (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
+                                    THEN
+                                        (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = default_translation.coupon_translation_id)
+                                    ELSE
+                                        (SELECT {$image}
+                                        FROM orb_media m
+                                        WHERE m.media_name_long = 'coupon_translation_image_orig'
+                                        AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
+                                    END AS original_media_path
+                                "))
+                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
+                            })
+                            ->where('promotions.promotion_id', $transaction->object_id)
+                            ->first();
+
+            $imageUrl = empty($couponImage) ? null : $couponImage->original_media_path;
             $body['transaction_id'] = $transactionId;
 
             $paymentConfig = Config::get('orbit.payment_server');
@@ -100,6 +138,8 @@ class PingPaymentAPIController extends PubControllerAPI
             $data->coupon_name = $transaction->object_name;
             $data->store_name = $transaction->store_name;
             $data->mall_name = $transaction->building_name;
+            $data->transaction_amount = $transaction->amount;
+            $data->coupon_image_url = $imageUrl;
 
             $this->response->data = $data;
             $this->response->code = 0;
