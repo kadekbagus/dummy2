@@ -14,6 +14,7 @@ use PaymentTransaction;
 use Validator;
 use Lang;
 use DB;
+use UserMerchantTransaction;
 use Config;
 use stdclass;
 use Orbit\Controller\API\v1\MerchantTransaction\MerchantTransactionHelper;
@@ -55,6 +56,13 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            // Get merchant id
+            $merchantId = null;
+            $userMerchantTransaction = UserMerchantTransaction::where('user_id', $user->user_id)->first();
+            if (! empty($userMerchantTransaction) > 0) {
+                // $merchantId = $userMerchantTransaction->merchant_id;
+            }
+
             // $merchantHelper = MerchantHelper::create();
             // $merchantHelper->merchantCustomValidator();
 
@@ -80,10 +88,24 @@ class MerchantTransactionReportAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $merchantTransactions = PaymentTransaction::select('*',
-                                                                DB::raw("DATE_FORMAT(convert_tz( created_at, '+00:00', timezone_name)  , '%W %d/%m/%Y %H:%i') as date_tz"),
-                                                                DB::raw("CONCAT(store_name,' @ ', building_name) as store_at_building")
-                                                            );
+            $merchantTransactions = PaymentTransaction::select(
+                                                                'payment_transaction_id',
+                                                                'external_payment_transaction_id',
+                                                                'object_name',
+                                                                'amount',
+                                                                'currency',
+                                                                'payment_method',
+                                                                'status',
+                                                                DB::raw("DATE_FORMAT(convert_tz( created_at, '+00:00', timezone_name)  , '%W %d/%m/%Y %H:%i %p') as date_tz"),
+                                                                DB::raw("CONCAT(store_name,' @ ', building_name) as store_at_building"),
+                                                                // data adding for print export
+                                                                'store_name',
+                                                                'store_id',
+                                                                'building_name',
+                                                                'object_id',
+                                                                'coupon_redemption_code'
+                                                            )
+                                                        ->where('merchant_id', $merchantId);
 
             // Filter by transaction id
             OrbitInput::get('payment_transaction_id', function($payment_transaction_id) use ($merchantTransactions)
