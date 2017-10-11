@@ -101,7 +101,7 @@ class PingPaymentAPIController extends PubControllerAPI
             $data->store_name = $transaction->store_name;
             $data->mall_name = $transaction->building_name;
 
-            $this->response->data = $responseData;
+            $this->response->data = $data;
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
