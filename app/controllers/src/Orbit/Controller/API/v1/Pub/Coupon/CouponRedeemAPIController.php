@@ -150,7 +150,7 @@ class CouponRedeemAPIController extends PubControllerAPI
             }
 
             $currencies = Currency::where('currency_code', $currency)->first();
-            if (empty($verificationNumber)) {
+            if (empty($currencies)) {
                 $errorMessage = 'Currency not found';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }

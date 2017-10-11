@@ -196,12 +196,12 @@ class StoreSynchronization
 
 
                     // Insert the payment acquire, only chech if payment acquire = Y
-                    if ($tenant->is_payment_acquire === 'Y') {
+                    if ($tenant->is_payment_acquire == 'Y') {
                         $objectId = $base_store_id;
                         $objectType = 'store';
 
                         $baseObjectFinancialDetail = ObjectFinancialDetail::where('object_id', $base_store_id)->where('object_type', 'base_store')->first();
-                        if (count($baseObjectFinancialDetail) > 0) {
+                        if (! empty($baseObjectFinancialDetail)) {
                             $newObjectFinancialDetail = new ObjectFinancialDetail;
                             $newObjectFinancialDetail->object_id = $objectId;
                             $newObjectFinancialDetail->object_type = $objectType;
@@ -209,11 +209,11 @@ class StoreSynchronization
                             $newObjectFinancialDetail->position = $baseObjectFinancialDetail->position;
                             $newObjectFinancialDetail->phone_number = $baseObjectFinancialDetail->phone_number;
                             $newObjectFinancialDetail->email = $baseObjectFinancialDetail->email;
-                            $newObjectFinancialDetail->Save();
+                            $newObjectFinancialDetail->save();
                         }
 
                         $baseObjectContact = ObjectContact::where('object_id', $base_store_id)->where('object_type', 'base_store')->first();
-                        if (count($baseObjectContact)) {
+                        if (! empty($baseObjectContact)) {
                             $newStoreCotactPerson = new ObjectContact;
                             $newStoreCotactPerson->object_id = $objectId;
                             $newStoreCotactPerson->object_type = $objectType;
@@ -221,16 +221,17 @@ class StoreSynchronization
                             $newStoreCotactPerson->position = $baseObjectContact->position;
                             $newStoreCotactPerson->phone_number = $baseObjectContact->phone_number;
                             $newStoreCotactPerson->email = $baseObjectContact->email;
-                            $newStoreCotactPerson->Save();
+                            $newStoreCotactPerson->save();
                         }
 
-                        $baseObjectBanks = ObjectBank::where('base_merchant_id', $base_merchant_id)->where('object_type', 'base_store')->get();
-                        if (count($baseObjectBanks) > 0) {
+                        $baseObjectBanks = ObjectBank::where('object_id', $base_store_id)->where('object_type', 'base_store')->get();
+                        if (! $baseObjectBanks->isEmpty()) {
                             $objectBanks = array();
                             foreach ($baseObjectBanks as $baseObjectBank) {
                                 $objectBanks[] = [
-                                                    'object_id' => $object_id,
-                                                    'object_type' => $bobject_type,
+                                                    'object_bank_id' => ObjectID::make(),
+                                                    'object_id' => $objectId,
+                                                    'object_type' => $objectType,
                                                     'bank_id' => $baseObjectBank->bank_id,
                                                     'account_name' => $baseObjectBank->account_name,
                                                     'account_number' => $baseObjectBank->account_number,
@@ -244,11 +245,12 @@ class StoreSynchronization
                             }
                         }
 
-                        $baseMerchantStorePaymentProviders = MerchantStorePaymentProvider::where('base_merchant_id', $base_merchant_id)->where('object_type', 'base_store')->get();
-                        if (count($baseMerchantStorePaymentProviders) > 0) {
+                        $baseMerchantStorePaymentProviders = MerchantStorePaymentProvider::where('object_id', $base_store_id)->where('object_type', 'base_store')->get();
+                        if (! $baseMerchantStorePaymentProviders->isEmpty()) {
                             $MerchantStorePaymentProviders = array();
                             foreach ($baseMerchantStorePaymentProviders as $baseMerchantStorePaymentProvider) {
                                 $MerchantStorePaymentProviders[] = [
+                                                    'payment_provider_store_id' => ObjectID::make(),
                                                     'payment_provider_id' => $baseMerchantStorePaymentProvider->payment_provider_id,
                                                     'object_id' => $objectId,
                                                     'object_type' => $objectType,

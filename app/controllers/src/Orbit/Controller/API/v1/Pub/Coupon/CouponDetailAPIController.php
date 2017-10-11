@@ -290,7 +290,7 @@ class CouponDetailAPIController extends PubControllerAPI
             if ($usingCdn) {
                 $imageWallet = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
             }
-            $walletOperators = CouponPaymentProvider::select('payment_providers.payment_name', DB::raw("{$imageWallet} AS logo_url"))
+            $walletOperators = CouponPaymentProvider::select('payment_providers.payment_name as operator_name', DB::raw("{$imageWallet} AS operator_logo_url"), 'payment_providers.deeplink_url', 'payment_providers.payment_provider_id as operator_id')
                                                     ->join('payment_providers', 'coupon_payment_provider.payment_provider_id', '=', 'payment_providers.payment_provider_id')
                                                     ->leftJoin('media', function ($q) {
                                                         $q->on('media.object_id', '=', 'payment_providers.payment_provider_id');
