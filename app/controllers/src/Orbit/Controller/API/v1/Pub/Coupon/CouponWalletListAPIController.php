@@ -129,7 +129,9 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     ELSE 'false'
                                     END AS is_started,
                                     {$prefix}issued_coupons.issued_coupon_id,
-                                    CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 'redeemable' ELSE 'redeemed' END as issued_coupon_status,
+                                    CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN
+                                        CASE WHEN {$prefix}promotions.is_payable_by_wallet = 'Y' THEN 'payable' ELSE 'redeemable' END
+                                        ELSE 'redeemed' END as issued_coupon_status,
                                     {$prefix}merchants.name as store_name,
                                     CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN malls.name ELSE NULL END as mall_name,
                                     CONVERT_TZ({$prefix}issued_coupons.redeemed_date, '+00:00', {$prefix}timezones.timezone_name) as redeemed_date,

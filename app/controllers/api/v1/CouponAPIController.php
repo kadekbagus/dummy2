@@ -13,6 +13,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use \Queue;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use Orbit\Helper\Payment\Payment as PaymentClient;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -197,7 +198,7 @@ class CouponAPIController extends ControllerAPI
 
             $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $payByNormal = OrbitInput::post('pay_by_normal', 'N');
-            $paymentProviders = OrbitInput::post('payment_providers', null);
+            $paymentProviders = OrbitInput::post('payment_provider_ids', null);
             $amountCommission = OrbitInput::post('amount_commission', null);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
@@ -336,6 +337,12 @@ class CouponAPIController extends ControllerAPI
             if ($payByWallet === 'N' && $payByNormal === 'N') {
                 $errorMessage = 'Select one payment method.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
+                $dataPayment = @json_decode($paymentProviders);
+                if (count($dataPayment) != count($retailer_ids)) {
+                    $errorMessage = 'Not all redemption place support wallet payment method';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             if ($payByNormal === 'Y') {
@@ -358,7 +365,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             if ($payByWallet === 'Y') {
-                $paymentProviders = @json_decode($paymentProviders);
+                $dataPayment = @json_decode($paymentProviders);
                 if (json_last_error() != JSON_ERROR_NONE) {
                     OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
                 }
@@ -804,13 +811,16 @@ class CouponAPIController extends ControllerAPI
 
                 // save coupon payment provider
                 if ($payByWallet === 'Y') {
-                    foreach ($paymentProviders as $key => $value) {
-                        if ($key === $tenant_id) {
-                            foreach ($value as $provider) {
-                                $couponPayment = new CouponPaymentProvider();
-                                $couponPayment->payment_provider_id = $provider;
-                                $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
-                                $couponPayment->save();
+                    $dataPayment = @json_decode($paymentProviders);
+                    foreach ($dataPayment as $data) {
+                        foreach ((array) $data as $key => $value) {
+                            if ($key === $tenant_id) {
+                                foreach ($value as $provider) {
+                                    $couponPayment = new CouponPaymentProvider();
+                                    $couponPayment->payment_provider_id = $provider;
+                                    $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
+                                    $couponPayment->save();
+                                }
                             }
                         }
                     }
@@ -1350,7 +1360,7 @@ class CouponAPIController extends ControllerAPI
 
             $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $payByNormal = OrbitInput::post('pay_by_normal', 'N');
-            $paymentProviders = OrbitInput::post('payment_providers', null);
+            $paymentProviders = OrbitInput::post('payment_provider_ids', null);
             $amountCommission = OrbitInput::post('amount_commission', null);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
@@ -1439,6 +1449,12 @@ class CouponAPIController extends ControllerAPI
             if ($payByWallet === 'N' && $payByNormal === 'N') {
                 $errorMessage = 'Select one payment method.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
+                $dataPayment = @json_decode($paymentProviders);
+                if (count($dataPayment) != count($retailer_ids)) {
+                    $errorMessage = 'Not all redemption place support wallet payment method';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
             }
 
             if ($payByNormal === 'Y') {
@@ -1461,7 +1477,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             if ($payByWallet === 'Y') {
-                $paymentProviders = @json_decode($paymentProviders);
+                $dataPayment = @json_decode($paymentProviders);
                 if (json_last_error() != JSON_ERROR_NONE) {
                     OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
                 }
@@ -2169,7 +2185,7 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id) {
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
                     $data = @json_decode($retailer_id_json);
@@ -2238,13 +2254,16 @@ class CouponAPIController extends ControllerAPI
 
                     // save coupon payment provider
                     if ($payByWallet === 'Y') {
-                        foreach ($paymentProviders as $key => $value) {
-                            if ($key === $tenant_id) {
-                                foreach ($value as $provider) {
-                                    $couponPayment = new CouponPaymentProvider();
-                                    $couponPayment->payment_provider_id = $provider;
-                                    $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
-                                    $couponPayment->save();
+                        $dataPayment = @json_decode($paymentProviders);
+                        foreach ($dataPayment as $data) {
+                            foreach ((array) $data as $key => $value) {
+                                if ($key === $tenant_id) {
+                                    foreach ($value as $provider) {
+                                        $couponPayment = new CouponPaymentProvider();
+                                        $couponPayment->payment_provider_id = $provider;
+                                        $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
+                                        $couponPayment->save();
+                                    }
                                 }
                             }
                         }
@@ -3673,21 +3692,20 @@ class CouponAPIController extends ControllerAPI
             App::setLocale($language);
 
             $issuedCouponId = OrbitInput::post('issued_coupon_id');
-            $verificationNumber = OrbitInput::post('merchant_verification_number');
+            $verificationNumber = OrbitInput::post('merchant_verification_number', null);
+            $paymentProvider = OrbitInput::post('provider_id', 0);
+            $phone = OrbitInput::post('phone', null);
+            $amount = OrbitInput::post('amount', 0);
+            $currency = OrbitInput::post('currency', 'IDR');
 
             $validator = Validator::make(
                 array(
                     'store_id' => $storeId,
                     'current_mall' => $mall_id,
-                    'merchant_verification_number' => $verificationNumber,
                 ),
                 array(
                     'store_id'                      => 'required',
                     'current_mall'                  => 'required|orbit.empty.merchant',
-                    'merchant_verification_number'  => 'required'
-                ),
-                array(
-                    'merchant_verification_number.required' => Lang::get('validation.orbit.empty.merchant_verification_number')
                 )
             );
             $validator2 = Validator::make(
@@ -3715,30 +3733,172 @@ class CouponAPIController extends ControllerAPI
             }
             Event::fire('orbit.coupon.postissuedcoupon.after.validation', array($this, $validator));
 
-            $tenant = Tenant::active()
-                ->where('parent_id', $mall_id)
-                ->where('masterbox_number', $verificationNumber)
-                ->first();
-
-            $csVerificationNumber = UserVerificationNumber::
-                where('merchant_id', $mall_id)
-                ->where('verification_number', $verificationNumber)
-                ->first();
+            $currencies = Currency::where('currency_code', $currency)->first();
+            if (empty($currencies)) {
+                $errorMessage = 'Currency not found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $redeem_retailer_id = NULL;
             $redeem_user_id = NULL;
-            if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
-                // @Todo replace with language
-                $message = 'Tenant is not found.';
-                ACL::throwAccessForbidden($message);
+            $providerName = 'normal';
+            $paymentType = 'normal';
+
+            $issuedCoupon = IssuedCoupon::where('issued_coupon_id', $issuedCouponId)
+                                        ->where('status', 'issued')
+                                        ->first();
+
+            $baseStore = BaseStore::select('base_stores.base_store_id', 'base_stores.merchant_id', 'base_stores.phone', 'base_stores.base_merchant_id', 'base_merchants.name as store_name', 'merchants.country_id', 'timezones.timezone_name', 'merchants.name as mall_name')
+                                  ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                                  ->join('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
+                                  ->leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
+                                  ->where('base_stores.base_store_id', $storeId)
+                                  ->where('base_stores.merchant_id', $mall_id)
+                                  ->first();
+
+            $body = [
+                'user_email'             => $user->user_email,
+                'user_name'              => $user->user_firstname . ' ' . $user->user_lastname,
+                'user_id'                => $user->user_id,
+                'country_id'             => $baseStore->country_id,
+                'payment_type'           => $paymentType,
+                'merchant_id'            => $baseStore->base_merchant_id,
+                'merchant_name'          => $baseStore->store_name,
+                'store_id'               => $baseStore->base_store_id,
+                'store_name'             => $baseStore->store_name,
+                'timezone_name'          => $baseStore->timezone_name,
+                'building_id'            => $baseStore->merchant_id,
+                'building_name'          => $baseStore->mall_name,
+                'object_id'              => $couponId,
+                'object_type'            => 'coupon',
+                'object_name'            => $coupon->promotion_name,
+                'coupon_redemption_code' => $issuedCoupon->issued_coupon_code,
+                'payment_provider_id'    => $paymentProvider,
+                'payment_method'         => $providerName,
+                'currency_id'            => $currencies->currency_id,
+                'currency'               => $currency,
+            ];
+
+            if ($paymentProvider === '0') {
+                if (empty($verificationNumber)) {
+                    $errorMessage = 'Verification number is empty';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $tenant = Tenant::active()
+                    ->where('parent_id', $mall_id)
+                    ->where('masterbox_number', $verificationNumber)
+                    ->first();
+
+                $csVerificationNumber = UserVerificationNumber::
+                    where('merchant_id', $mall_id)
+                    ->where('verification_number', $verificationNumber)
+                    ->first();
+
+                if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
+                    // @Todo replace with language
+                    $message = 'Tenant is not found.';
+                    ACL::throwAccessForbidden($message);
+                } else {
+                    if (is_object($tenant)) {
+                        $redeem_retailer_id = $tenant->merchant_id;
+                    }
+                    if (is_object($csVerificationNumber)) {
+                        $redeem_user_id = $csVerificationNumber->user_id;
+                        $redeem_retailer_id = $mall_id;
+                    }
+                }
+
+                $body['commission_fixed_amount'] = $coupon->fixed_amount_commission;
             } else {
-                if (is_object($tenant)) {
-                    $redeem_retailer_id = $tenant->merchant_id;
+                // using paypro etc
+                $paymentType = 'wallet';
+
+                $provider = MerchantStorePaymentProvider::select('payment_providers.payment_provider_id', 'payment_providers.payment_name', 'merchant_store_payment_provider.mdr', 'payment_providers.mdr as default_mdr', 'payment_providers.mdr_commission', 'merchant_store_payment_provider.phone_number_for_sms')
+                                                        ->join('payment_providers', 'payment_providers.payment_provider_id', '=', 'merchant_store_payment_provider.payment_provider_id')
+                                                        ->where('merchant_store_payment_provider.payment_provider_id', $paymentProvider)
+                                                        ->where('merchant_store_payment_provider.object_type', 'store')
+                                                        ->where('merchant_store_payment_provider.object_id', $storeId)
+                                                        ->where('payment_providers.status', 'active')
+                                                        ->first();
+
+                if (empty($provider)) {
+                    $errorMessage = 'Payment profider not found';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
-                if (is_object($csVerificationNumber)) {
-                    $redeem_user_id = $csVerificationNumber->user_id;
-                    $redeem_retailer_id = $mall_id;
+
+                $merchantBank = ObjectBank::select('banks.bank_id', 'banks.bank_name', 'banks.description')
+                                ->join('banks', 'banks.bank_id', '=', 'object_banks.bank_id')
+                                ->where('object_banks.object_id', $storeId)
+                                ->where('object_banks.object_type', 'base_store')
+                                ->where('banks.status', 'active')
+                                ->orderBy('object_banks.account_name', 'asc');
+
+                $bank = clone $merchantBank;
+                $bank = $bank->whereIn('object_banks.account_name', ['bca','mandiri'])->first();
+
+                if (empty($bank)) {
+                    $bank = Bank::where('bank_name', 'bca')->where('status', 'active')->first();
+
+                    if (empty($bank)) {
+                        $errorMessage = 'Bank not found';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
                 }
+
+                $bankGotomalls = BankGotomall::where('bank_id', $bank->bank_id)
+                                             ->where('payment_provider_id', $paymentProvider)
+                                             ->first();
+
+                if (empty($bankGotomalls)) {
+                    $errorMessage = 'Bank for payment provider ' . $provider->payment_name . ' not found';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $merchantBank = $merchantBank->first();
+                $merchantBankId = null;
+                $merchantBankAccountName = null;
+                if (! empty($merchantBank)) {
+                    $merchantBankId = $merchantBank->bank_id;
+                    $bankGotomallsMerchant = BankGotomall::where('bank_id', $merchantBankId)
+                                                         ->where('payment_provider_id', $paymentProvider)
+                                                         ->first();
+
+                    if (! empty($bankGotomallsMerchant)) {
+                        $merchantBankAccountName = $bankGotomallsMerchant->account_name;
+                    }
+                }
+
+                $providerName = $provider->payment_name;
+
+                $body['to'] = $phone;
+                $body['payment_type'] = $paymentType;
+                $body['amount'] = $amount;
+                $body['phone_number_for_sms'] = $provider->phone_number_for_sms;
+                $body['payment_provider_id'] = $paymentProvider;
+                $body['payment_method'] = $providerName;
+                $body['mdr'] = $provider->mdr;
+                $body['default_mdr'] = $provider->default_mdr;
+                $body['provider_mdr_commission_percentage'] = $provider->mdr_commission;
+                $body['commission_transaction_percentage'] = $coupon->transaction_amount_commission;
+                $body['gtm_bank_id'] = $bankGotomalls->bank_id;
+                $body['gtm_bank_account_name'] = $bankGotomalls->account_name;
+                $body['gtm_bank_account_number'] = $bankGotomalls->account_number;
+                $body['gtm_bank_name'] = $bank->bank_name;
+                $body['gtm_bank_swift_code'] = $bankGotomalls->swift_code;
+                $body['gtm_bank_address'] = $bankGotomalls->bank_address;
+                $body['merchant_bank_id'] = $merchantBankId;
+                $body['merchant_bank_account_name'] = $merchantBankAccountName;
+            }
+
+            $paymentConfig = Config::get('orbit.payment_server');
+            $paymentClient = PaymentClient::create($paymentConfig)->setFormParam($body);
+            $response = $paymentClient->setEndPoint('api/v1/pay')
+                                    ->request('POST');
+
+            if ($response->status !== 'success') {
+                $errorMessage = 'Transaction Failed';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
             $mall = App::make('orbit.empty.merchant');
@@ -3764,8 +3924,12 @@ class CouponAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            $data = new stdclass();
+            $data->issued_coupon_code = $issuedcoupon->issued_coupon_code;
+            $data->transaction_id = $response->data->transaction_id;
+
             $this->response->message = 'Coupon has been successfully redeemed.';
-            $this->response->data = $issuedcoupon->issued_coupon_code;
+            $this->response->data = $data;
 
             // Successfull Creation
             $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
@@ -4267,24 +4431,6 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $merge = array_merge($existRedemptionPlace, $newRedemptionPlace);
-
-            // check if any redemption place id doesn't support payment method
-            $walletCheck = Merchant::select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"))
-                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->whereIn('merchants.merchant_id', $merge)
-                                    ->where('merchants.is_payment_acquire', 'N')
-                                    ->get();
-
-            if (! $walletCheck->isEmpty()) {
-                $errorMessage = '';
-                foreach ($walletCheck as $walletStore) {
-                    $errorMessage = $errorMessage . $walletStore->store_name . ', ';
-                }
-                $errorMessage = $errorMessage . " doesn't support payment method";
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
             $list = new stdClass();
             $totalRecords = 0;
 
@@ -4304,7 +4450,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             if (! empty($newRedemptionPlace)) {
-                $provider = Merchant::with('merchantStorePaymentProvider.paymentProvider')
+                $provider = Tenant::with('merchantStorePaymentProvider.paymentProvider')
                                     ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'merchants.merchant_id')
                                     ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                     ->whereIn('merchants.merchant_id', $newRedemptionPlace)

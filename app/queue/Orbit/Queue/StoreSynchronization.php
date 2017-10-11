@@ -31,6 +31,11 @@ use Queue;
 use Orbit\FakeJob;
 use Log;
 use Orbit\Helper\Util\JobBurier;
+use ObjectBank;
+use ObjectContact;
+use ObjectFinancialDetail;
+use MerchantStorePaymentProvider;
+
 use Exception;
 
 class StoreSynchronization
@@ -188,6 +193,77 @@ class StoreSynchronization
                     $tenant->mobile_default_language = $store->mobile_default_language;
                     $tenant->is_payment_acquire = $store->is_payment_acquire;
                     $tenant->save();
+
+
+                    // Insert the payment acquire, only chech if payment acquire = Y
+                    if ($tenant->is_payment_acquire == 'Y') {
+                        $objectId = $base_store_id;
+                        $objectType = 'store';
+
+                        $baseObjectFinancialDetail = ObjectFinancialDetail::where('object_id', $base_store_id)->where('object_type', 'base_store')->first();
+                        if (! empty($baseObjectFinancialDetail)) {
+                            $newObjectFinancialDetail = new ObjectFinancialDetail;
+                            $newObjectFinancialDetail->object_id = $objectId;
+                            $newObjectFinancialDetail->object_type = $objectType;
+                            $newObjectFinancialDetail->contact_name = $baseObjectFinancialDetail->contact_name;
+                            $newObjectFinancialDetail->position = $baseObjectFinancialDetail->position;
+                            $newObjectFinancialDetail->phone_number = $baseObjectFinancialDetail->phone_number;
+                            $newObjectFinancialDetail->email = $baseObjectFinancialDetail->email;
+                            $newObjectFinancialDetail->save();
+                        }
+
+                        $baseObjectContact = ObjectContact::where('object_id', $base_store_id)->where('object_type', 'base_store')->first();
+                        if (! empty($baseObjectContact)) {
+                            $newStoreCotactPerson = new ObjectContact;
+                            $newStoreCotactPerson->object_id = $objectId;
+                            $newStoreCotactPerson->object_type = $objectType;
+                            $newStoreCotactPerson->contact_name = $baseObjectContact->contact_name;
+                            $newStoreCotactPerson->position = $baseObjectContact->position;
+                            $newStoreCotactPerson->phone_number = $baseObjectContact->phone_number;
+                            $newStoreCotactPerson->email = $baseObjectContact->email;
+                            $newStoreCotactPerson->save();
+                        }
+
+                        $baseObjectBanks = ObjectBank::where('object_id', $base_store_id)->where('object_type', 'base_store')->get();
+                        if (! $baseObjectBanks->isEmpty()) {
+                            $objectBanks = array();
+                            foreach ($baseObjectBanks as $baseObjectBank) {
+                                $objectBanks[] = [
+                                                    'object_bank_id' => ObjectID::make(),
+                                                    'object_id' => $objectId,
+                                                    'object_type' => $objectType,
+                                                    'bank_id' => $baseObjectBank->bank_id,
+                                                    'account_name' => $baseObjectBank->account_name,
+                                                    'account_number' => $baseObjectBank->account_number,
+                                                    'bank_address' => $baseObjectBank->bank_address,
+                                                    'swift_code' => $baseObjectBank->swift_code
+                                                ];
+                            }
+
+                            if (! empty($objectBanks)) {
+                                DB::table('object_banks')->insert($objectBanks);
+                            }
+                        }
+
+                        $baseMerchantStorePaymentProviders = MerchantStorePaymentProvider::where('object_id', $base_store_id)->where('object_type', 'base_store')->get();
+                        if (! $baseMerchantStorePaymentProviders->isEmpty()) {
+                            $MerchantStorePaymentProviders = array();
+                            foreach ($baseMerchantStorePaymentProviders as $baseMerchantStorePaymentProvider) {
+                                $MerchantStorePaymentProviders[] = [
+                                                    'payment_provider_store_id' => ObjectID::make(),
+                                                    'payment_provider_id' => $baseMerchantStorePaymentProvider->payment_provider_id,
+                                                    'object_id' => $objectId,
+                                                    'object_type' => $objectType,
+                                                    'phone_number_for_sms' => $baseMerchantStorePaymentProvider->phone_number_for_sms,
+                                                    'mdr' => $baseMerchantStorePaymentProvider->mdr
+                                                ];
+                            }
+
+                            if (! empty($MerchantStorePaymentProviders)) {
+                                DB::table('merchant_store_payment_provider')->insert($MerchantStorePaymentProviders);
+                            }
+                        }
+                    }
 
                     // save to table merchant_translation
                     // delete translation
