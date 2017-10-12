@@ -256,10 +256,6 @@ class GenericActivityAPIController extends PubControllerAPI
                 }
             } elseif ($activityName === 'click_push_notification') {
                 $notes = OrbitInput::post('object_id', null);
-            }  elseif ($activityName === 'payment_transaction_successful') {
-                $activity->setObjectDisplayName('Success');
-            }  elseif ($activityName === 'payment_transaction_failed') {
-                $activity->setObjectDisplayName('Failed');
             }
 
             $activity->setUser($user)
