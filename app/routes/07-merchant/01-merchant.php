@@ -97,3 +97,28 @@ Route::post('/api/v1/merchant/merchant-export', function()
 });
 
 Route::post('/app/v1/merchant/merchant-export', ['as' => 'merchant-export', 'uses' => 'IntermediateMerchantAuthController@MerchantExport_postMerchantExport']);
+
+
+/**
+ * List/Search bank
+ */
+Route::get('/api/v1/merchant/bank/{search}', function()
+{
+    return Orbit\Controller\API\v1\Merchant\BankListAPIController::create()->getSearchBank();
+})
+->where('search', '(list|search)');
+
+Route::get('/app/v1/merchant/bank/{search}', ['as' => 'merchant-api-bank-list', 'uses' => 'IntermediateMerchantAuthController@BankList_getSearchBank'])
+    ->where('search', '(list|search)');
+
+    /**
+ * List/Search payment provider
+ */
+Route::get('/api/v1/merchant/payment-provider/{search}', function()
+{
+    return Orbit\Controller\API\v1\Merchant\PaymentProviderListAPIController::create()->getSearchPaymentProvider();
+})
+->where('search', '(list|search)');
+
+Route::get('/app/v1/merchant/payment-provider/{search}', ['as' => 'merchant-api-payment-provider-list', 'uses' => 'IntermediateMerchantAuthController@PaymentProviderList_getSearchPaymentProvider'])
+    ->where('search', '(list|search)');
