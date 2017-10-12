@@ -3748,6 +3748,8 @@ class CouponAPIController extends ControllerAPI
                                         ->where('status', 'issued')
                                         ->first();
 
+            $coupon = Coupon::where('promotion_id', $issuedCoupon->promotion_id)->first();
+
             $baseStore = BaseStore::select('base_stores.base_store_id', 'base_stores.merchant_id', 'base_stores.phone', 'base_stores.base_merchant_id', 'base_merchants.name as store_name', 'merchants.country_id', 'timezones.timezone_name', 'merchants.name as mall_name')
                                   ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
                                   ->join('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
@@ -3769,7 +3771,7 @@ class CouponAPIController extends ControllerAPI
                 'timezone_name'          => $baseStore->timezone_name,
                 'building_id'            => $baseStore->merchant_id,
                 'building_name'          => $baseStore->mall_name,
-                'object_id'              => $couponId,
+                'object_id'              => $issuedCoupon->promotion_id,
                 'object_type'            => 'coupon',
                 'object_name'            => $coupon->promotion_name,
                 'coupon_redemption_code' => $issuedCoupon->issued_coupon_code,
@@ -4397,7 +4399,7 @@ class CouponAPIController extends ControllerAPI
     /**
      * GET - Available Wallet Operator Based on link to tenant
      *
-     * @author kadek <kadek@dominopos.com>
+     * @author shelgi <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -4425,65 +4427,55 @@ class CouponAPIController extends ControllerAPI
             $couponId = OrbitInput::get('coupon_id', null);
             $prefix = DB::getTablePrefix();
 
-            $newRedemptionPlace = OrbitInput::get('redemption_place', []);
-            $existRedemptionPlace = array();
-            if (! empty($couponId)) {
-                $redeem = CouponRetailerRedeem::where('promotion_id', $couponId)
-                                                      ->where('object_type', 'tenant')
-                                                      ->lists('retailer_id');
-
-                $existRedemptionPlace = $redeem;
-                if (! empty($newRedemptionPlace) && ! empty($existRedemptionPlace)) {
-                    $existRedemptionPlace = array_intersect($newRedemptionPlace, $redeem);
-                    $newRedemptionPlace = array_diff($newRedemptionPlace, $redeem);
-                }
-            }
-
-            if (empty($newRedemptionPlace) && empty($existRedemptionPlace)) {
+            $redemptionPlace = OrbitInput::get('redemption_place', []);
+            if (empty($redemptionPlace)) {
                 $errorMessage = "Redemption Place is required";
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $list = new stdClass();
-            $totalRecords = 0;
+            $stores = Tenant::select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"))
+                            ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                            ->whereIn('merchants.merchant_id', $redemptionPlace)
+                            ->where('merchants.is_payment_acquire', 'Y')
+                            ->groupBy('merchants.merchant_id')
+                            ->get();
 
-            // check existing coupon payment provider
-            if (! empty($existRedemptionPlace)) {
-                $existingProvider = CouponRetailerRedeem::with('couponPaymentProvider.paymentProvider')
-                                                        ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'promotion_retailer_redeem.promotion_retailer_redeem_id')
-                                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retailer_id')
-                                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                                        ->whereIn('promotion_retailer_redeem.retailer_id', $existRedemptionPlace)
-                                                        ->where('promotion_retailer_redeem.promotion_id', $couponId)
-                                                        ->groupBy('merchants.merchant_id')
-                                                        ->get();
+            if (! $stores->isEmpty()) {
+                foreach ($stores as $store) {
+                    $store->payment_providers = null;
+                    $paymentProviders = MerchantStorePaymentProvider::select('payment_providers.payment_provider_id', 'payment_providers.payment_name', DB::raw("'N' as is_selected"))
+                                                                   ->join('payment_providers', 'payment_providers.payment_provider_id', '=', 'merchant_store_payment_provider.payment_provider_id')
+                                                                   ->where('merchant_store_payment_provider.object_type', 'store')
+                                                                   ->where('payment_providers.status', 'active')
+                                                                   ->where('merchant_store_payment_provider.object_id', $store->store_id)
+                                                                   ->get();
 
-                if (! $existingProvider->isEmpty()) {
-                    $list = $existingProvider;
+                    if (! $paymentProviders->isEmpty()) {
+                        if (! empty($couponId)) {
+                            foreach ($paymentProviders as $provider) {
+                                $couponPaymentProvider = CouponPaymentProvider::join('promotion_retailer_redeem', 'coupon_payment_provider.promotion_retailer_redeem_id', '=', 'promotion_retailer_redeem.promotion_retailer_redeem_id')
+                                                                        ->where('promotion_retailer_redeem.promotion_id', $couponId)
+                                                                        ->where('promotion_retailer_redeem.retailer_id', $store->store_id)
+                                                                        ->where('coupon_payment_provider.payment_provider_id', $paymentProviders->payment_provider_id)
+                                                                        ->groupBy('coupon_payment_provider.coupon_payment_provider_id')
+                                                                        ->first();
+
+                                if (! empty($couponPaymentProvider)) {
+                                    $provider->is_selected = 'Y';
+                                }
+
+                            }
+                        }
+
+                        $store->payment_providers = $paymentProviders;
+                    }
                 }
             }
 
-            if (! empty($newRedemptionPlace)) {
-                $provider = Tenant::with('merchantStorePaymentProvider.paymentProvider')
-                                    ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'merchants.merchant_id')
-                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->whereIn('merchants.merchant_id', $newRedemptionPlace)
-                                    ->where('merchants.is_payment_acquire', 'Y')
-                                    ->groupBy('merchants.merchant_id')
-                                    ->get();
-
-                if (! empty((array) $list) && ! $provider->isEmpty()) {
-                    $list = $existingProvider->merge($provider);
-                } else if (! $provider->isEmpty()) {
-                    $list = $provider;
-                }
-            }
-
-            // print_r($list); die();
             $data = new stdclass();
-            $data->total_records = count($list);
-            $data->returned_records = count($list);
-            $data->records = $list;
+            $data->total_records = count($stores);
+            $data->returned_records = count($stores);
+            $data->records = $stores;
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();

@@ -588,10 +588,14 @@ class CouponListAPIController extends PubControllerAPI
                     }
 
                     if ($key === "wallet_operator") {
-                        foreach ($record['_source']['wallet_operator'] as $dt) {
-                            $logoLocalPath = (! empty($dt['operator_logo'])) ? $dt['operator_logo'] : '';
-                            $logoCdnPath = (! empty($dt['operator_logo_cdn'])) ? $dt['operator_logo_cdn'] : '';
-                            $dt['operator_logo_url'] = $imgUrl->getImageUrl($logoLocalPath, $logoCdnPath);
+                        $data['wallet_operator'] = null;
+                        if (! empty($record['_source']['wallet_operator'])) {
+                            foreach ($record['_source']['wallet_operator'] as $dt) {
+                                $logoLocalPath = (! empty($dt['operator_logo'])) ? $dt['operator_logo'] : '';
+                                $logoCdnPath = (! empty($dt['operator_logo_cdn'])) ? $dt['operator_logo_cdn'] : '';
+                                $data['wallet_operator'][] = array('operator_name' => $dt['operator_name'], 'operator_logo_url' => $imgUrl->getImageUrl($logoLocalPath, $logoCdnPath));
+                            }
+
                         }
                     }
 
