@@ -3910,10 +3910,10 @@ class CouponAPIController extends ControllerAPI
             }
 
             $mall = App::make('orbit.empty.merchant');
-            $issuedcoupon = App::make('orbit.empty.issuedcoupon');
 
-            // The coupon information
-            $coupon = $issuedcoupon->coupon;
+            $issuedcoupon = IssuedCoupon::where('issued_coupon_id', $issuedCouponId)
+                                        ->where('status', 'issued')
+                                        ->first();
 
             $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
             $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
