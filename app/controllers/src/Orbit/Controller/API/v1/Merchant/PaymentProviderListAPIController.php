@@ -68,7 +68,7 @@ class PaymentProviderListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $paymentProvider = PaymentProvider::excludedeleted();
+            $paymentProvider = PaymentProvider::where('status', 'active');
 
             // Filter by payment_name
             OrbitInput::get('payment_name', function($payment_name) use ($paymentProvider)
