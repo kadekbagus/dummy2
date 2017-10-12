@@ -99,7 +99,6 @@ class GenericActivityAPIController extends PubControllerAPI
             $object = null;
             if (! empty($activityObjectType) && ! empty($activityObjectIDParamName)) {
                 $object_id = OrbitInput::post($activityObjectIDParamName, null);
-
                 if (! empty($object_id)) {
                     // Model name is provided from frontend, need to double check
                     $objectString = OrbitInput::post($activityObjectTypeParamName, NULL);
@@ -111,7 +110,9 @@ class GenericActivityAPIController extends PubControllerAPI
                             'coupon'    => 'Coupon',
                             'promotion' => 'News',
                             'news'      => 'News',
-                            'event'     => 'News'
+                            'event'     => 'News',
+                            'paymentprovider' => 'PaymentProvider',
+                            'paymenttransaction' => 'PaymentTransaction',
                         ];
 
                         $className = array_key_exists(strtolower($objectString), $mapObjectType) ? $mapObjectType[strtolower($objectString)] : null;

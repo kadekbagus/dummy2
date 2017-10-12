@@ -372,7 +372,6 @@ class Activity extends Eloquent
             $primaryKey = $object->getKeyName();
             $this->object_id = $object->$primaryKey;
             $this->object_name = get_class($object);
-
             switch (get_class($object)) {
                 case 'News':
                     if (strtolower($object->object_type) === 'promotion') {
@@ -450,6 +449,17 @@ class Activity extends Eloquent
 
                 case 'Language':
                     $this->object_display_name = $object->name_long;
+                    break;
+
+                case 'PaymentProvider':
+                    $this->object_display_name = $object->payment_name;
+                    break;
+
+                case 'PaymentTransaction':
+                    $paymentProvider = PaymentProvider::where('payment_provider_id', '=', $object->payment_provider_id)->first();
+                    if (is_object($paymentProvider)) {
+                        $this->object_display_name = $paymentProvider->payment_name;
+                    }
                     break;
 
                 default:

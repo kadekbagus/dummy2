@@ -5990,6 +5990,75 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // User clicks on download app
+            '144' => array(
+                'name' => 'click_download_app',
+                'name_long' => 'Click Download App',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // User clicks on use and pay
+            '145' => array(
+                'name' => 'click_use_and_pay',
+                'name_long' => 'Click Use and Pay',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // User clicks on payment method
+            '146' => array(
+                'name' => 'click_payment_method',
+                'name_long' => 'Click Payment Method',
+                'module_name' => 'Transaction',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+             // User clicks on submit payment
+            '147' => array(
+                'name' => 'click_submit_payment',
+                'name_long' => 'Click Submit Payment',
+                'module_name' => 'Transaction',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // User view on my purchase page
+            '148' => array(
+                'name' => 'view_my_purchase_page',
+                'name_long' => 'View My Purchase Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // payment transaction succesful
+            '149' => array(
+                'name' => 'payment_transaction_successful',
+                'name_long' => 'Payment Transaction Successful',
+                'module_name' => 'Transaction',
+                'type' => 'payment',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // payment transaction failed
+            '150' => array(
+                'name' => 'payment_transaction_failed',
+                'name_long' => 'Payment Transaction Failed',
+                'module_name' => 'Transaction',
+                'type' => 'payment',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 

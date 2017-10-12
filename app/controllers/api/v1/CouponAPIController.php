@@ -198,7 +198,7 @@ class CouponAPIController extends ControllerAPI
 
             $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $payByNormal = OrbitInput::post('pay_by_normal', 'N');
-            $paymentProviders = OrbitInput::post('payment_providers', null);
+            $paymentProviders = OrbitInput::post('payment_provider_ids', null);
             $amountCommission = OrbitInput::post('amount_commission', null);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
@@ -365,7 +365,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             if ($payByWallet === 'Y') {
-                $paymentProviders = @json_decode($paymentProviders);
+                $dataPayment = @json_decode($paymentProviders);
                 if (json_last_error() != JSON_ERROR_NONE) {
                     OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
                 }
@@ -1360,7 +1360,7 @@ class CouponAPIController extends ControllerAPI
 
             $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $payByNormal = OrbitInput::post('pay_by_normal', 'N');
-            $paymentProviders = OrbitInput::post('payment_providers', null);
+            $paymentProviders = OrbitInput::post('payment_provider_ids', null);
             $amountCommission = OrbitInput::post('amount_commission', null);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
@@ -1477,7 +1477,7 @@ class CouponAPIController extends ControllerAPI
             }
 
             if ($payByWallet === 'Y') {
-                $paymentProviders = @json_decode($paymentProviders);
+                $dataPayment = @json_decode($paymentProviders);
                 if (json_last_error() != JSON_ERROR_NONE) {
                     OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
                 }
@@ -1933,7 +1933,7 @@ class CouponAPIController extends ControllerAPI
             });
 
             OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon) {
-                $updatedcoupon->amount_commission = $amount_commission;
+                $updatedcoupon->transaction_amount_commission = $amount_commission;
             });
 
             OrbitInput::post('fixed_amount_commission', function($fixed_amount_commission) use ($updatedcoupon) {
@@ -2185,7 +2185,7 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders) {
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
                     $data = @json_decode($retailer_id_json);
@@ -3713,7 +3713,7 @@ class CouponAPIController extends ControllerAPI
                     'issued_coupon_id' => $issuedCouponId,
                 ),
                 array(
-                    'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
+                    'issued_coupon_id'              => 'required',
                 )
             );
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
@@ -3748,6 +3748,8 @@ class CouponAPIController extends ControllerAPI
                                         ->where('status', 'issued')
                                         ->first();
 
+            $coupon = Coupon::where('promotion_id', $issuedCoupon->promotion_id)->first();
+
             $baseStore = BaseStore::select('base_stores.base_store_id', 'base_stores.merchant_id', 'base_stores.phone', 'base_stores.base_merchant_id', 'base_merchants.name as store_name', 'merchants.country_id', 'timezones.timezone_name', 'merchants.name as mall_name')
                                   ->join('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
                                   ->join('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
@@ -3769,7 +3771,7 @@ class CouponAPIController extends ControllerAPI
                 'timezone_name'          => $baseStore->timezone_name,
                 'building_id'            => $baseStore->merchant_id,
                 'building_name'          => $baseStore->mall_name,
-                'object_id'              => $couponId,
+                'object_id'              => $issuedCoupon->promotion_id,
                 'object_type'            => 'coupon',
                 'object_name'            => $coupon->promotion_name,
                 'coupon_redemption_code' => $issuedCoupon->issued_coupon_code,
@@ -3827,10 +3829,10 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
-                $merchantBank = ObjectBank::select('banks.bank_id', 'banks.bank_name', 'banks.description')
+                $merchantBank = ObjectBank::select('banks.bank_id', 'banks.bank_name', 'banks.description', 'object_banks.account_name', 'object_banks.account_number', 'object_banks.swift_code', 'object_banks.bank_address')
                                 ->join('banks', 'banks.bank_id', '=', 'object_banks.bank_id')
                                 ->where('object_banks.object_id', $storeId)
-                                ->where('object_banks.object_type', 'base_store')
+                                ->where('object_banks.object_type', 'store')
                                 ->where('banks.status', 'active')
                                 ->orderBy('object_banks.account_name', 'asc');
 
@@ -3858,15 +3860,17 @@ class CouponAPIController extends ControllerAPI
                 $merchantBank = $merchantBank->first();
                 $merchantBankId = null;
                 $merchantBankAccountName = null;
+                $merchantBankAccountNumber = null;
+                $merchantBankName = null;
+                $merchantBankSwiftCode = null;
+                $merchantBankAddress = null;
                 if (! empty($merchantBank)) {
                     $merchantBankId = $merchantBank->bank_id;
-                    $bankGotomallsMerchant = BankGotomall::where('bank_id', $merchantBankId)
-                                                         ->where('payment_provider_id', $paymentProvider)
-                                                         ->first();
-
-                    if (! empty($bankGotomallsMerchant)) {
-                        $merchantBankAccountName = $bankGotomallsMerchant->account_name;
-                    }
+                    $merchantBankAccountName = $merchantBank->account_name;
+                    $merchantBankAccountNumber = $merchantBank->account_number;
+                    $merchantBankName = $merchantBank->bank_name;
+                    $merchantBankSwiftCode = $merchantBank->swift_code;
+                    $merchantBankAddress = $merchantBank->bank_address;
                 }
 
                 $providerName = $provider->payment_name;
@@ -3889,6 +3893,10 @@ class CouponAPIController extends ControllerAPI
                 $body['gtm_bank_address'] = $bankGotomalls->bank_address;
                 $body['merchant_bank_id'] = $merchantBankId;
                 $body['merchant_bank_account_name'] = $merchantBankAccountName;
+                $body['merchant_bank_account_number'] = $merchantBankAccountName;
+                $body['merchant_bank_name'] = $merchantBankName;
+                $body['merchant_bank_swift_code'] = $merchantBankSwiftCode;
+                $body['merchant_bank_address'] = $merchantBankAddress;
             }
 
             $paymentConfig = Config::get('orbit.payment_server');
@@ -3902,10 +3910,10 @@ class CouponAPIController extends ControllerAPI
             }
 
             $mall = App::make('orbit.empty.merchant');
-            $issuedcoupon = App::make('orbit.empty.issuedcoupon');
 
-            // The coupon information
-            $coupon = $issuedcoupon->coupon;
+            $issuedcoupon = IssuedCoupon::where('issued_coupon_id', $issuedCouponId)
+                                        ->where('status', 'issued')
+                                        ->first();
 
             $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
             $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
@@ -4385,7 +4393,7 @@ class CouponAPIController extends ControllerAPI
     /**
      * GET - Available Wallet Operator Based on link to tenant
      *
-     * @author kadek <kadek@dominopos.com>
+     * @author shelgi <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -4413,63 +4421,55 @@ class CouponAPIController extends ControllerAPI
             $couponId = OrbitInput::get('coupon_id', null);
             $prefix = DB::getTablePrefix();
 
-            $newRedemptionPlace = OrbitInput::get('redemption_place', []);
-            $existRedemptionPlace = array();
-            if (! empty($couponId)) {
-                $redeem = CouponRetailerRedeem::where('promotion_id', $couponId)
-                                                      ->where('object_type', 'tenant')
-                                                      ->lists('retailer_id');
-
-                if (! empty($redeem)) {
-                    $existRedemptionPlace = array_intersect($newRedemptionPlace, $redeem);
-                    $newRedemptionPlace = array_diff($newRedemptionPlace, $redeem);
-                }
-            }
-
-            if (empty($newRedemptionPlace) && empty($existRedemptionPlace)) {
+            $redemptionPlace = OrbitInput::get('redemption_place', []);
+            if (empty($redemptionPlace)) {
                 $errorMessage = "Redemption Place is required";
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $list = new stdClass();
-            $totalRecords = 0;
+            $stores = Tenant::select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"))
+                            ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
+                            ->whereIn('merchants.merchant_id', $redemptionPlace)
+                            ->where('merchants.is_payment_acquire', 'Y')
+                            ->groupBy('merchants.merchant_id')
+                            ->get();
 
-            // check existing coupon payment provider
-            if (! empty($existRedemptionPlace)) {
-                $existingProvider = CouponRetailerRedeem::with('couponPaymentProvider.paymentProvider')
-                                                        ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'promotion_retailer_redeem.promotion_retailer_redeem_id')
-                                                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer_redeem.retialer_id')
-                                                        ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                                        ->whereIn('promotion_retailer_redeem.retialer_id', $existRedemptionPlace)
-                                                        ->groupBy('merchants.merchant_id')
-                                                        ->get();
+            if (! $stores->isEmpty()) {
+                foreach ($stores as $store) {
+                    $store->payment_providers = null;
+                    $paymentProviders = MerchantStorePaymentProvider::select('payment_providers.payment_provider_id', 'payment_providers.payment_name', DB::raw("'N' as is_selected"))
+                                                                   ->join('payment_providers', 'payment_providers.payment_provider_id', '=', 'merchant_store_payment_provider.payment_provider_id')
+                                                                   ->where('merchant_store_payment_provider.object_type', 'store')
+                                                                   ->where('payment_providers.status', 'active')
+                                                                   ->where('merchant_store_payment_provider.object_id', $store->store_id)
+                                                                   ->get();
 
-                if (! $existingProvider->isEmpty()) {
-                    $list = $existingProvider;
+                    if (! $paymentProviders->isEmpty()) {
+                        if (! empty($couponId)) {
+                            foreach ($paymentProviders as $provider) {
+                                $couponPaymentProvider = CouponPaymentProvider::join('promotion_retailer_redeem', 'coupon_payment_provider.promotion_retailer_redeem_id', '=', 'promotion_retailer_redeem.promotion_retailer_redeem_id')
+                                                                        ->where('promotion_retailer_redeem.promotion_id', $couponId)
+                                                                        ->where('promotion_retailer_redeem.retailer_id', $store->store_id)
+                                                                        ->where('coupon_payment_provider.payment_provider_id', $paymentProviders->payment_provider_id)
+                                                                        ->groupBy('coupon_payment_provider.coupon_payment_provider_id')
+                                                                        ->first();
+
+                                if (! empty($couponPaymentProvider)) {
+                                    $provider->is_selected = 'Y';
+                                }
+
+                            }
+                        }
+
+                        $store->payment_providers = $paymentProviders;
+                    }
                 }
             }
 
-            if (! empty($newRedemptionPlace)) {
-                $provider = Tenant::with('merchantStorePaymentProvider.paymentProvider')
-                                    ->select('merchants.merchant_id as store_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', oms.name) as store_name"), 'merchants.merchant_id')
-                                    ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                    ->whereIn('merchants.merchant_id', $newRedemptionPlace)
-                                    ->where('merchants.is_payment_acquire', 'Y')
-                                    ->groupBy('merchants.merchant_id')
-                                    ->get();
-
-                if (! empty((array) $list) && ! $provider->isEmpty()) {
-                    $list = $existingProvider->merge($provider);
-                } else if (! $provider->isEmpty()) {
-                    $list = $provider;
-                }
-            }
-
-            // print_r($list); die();
             $data = new stdclass();
-            $data->total_records = count($list);
-            $data->returned_records = count($list);
-            $data->records = $list;
+            $data->total_records = count($stores);
+            $data->returned_records = count($stores);
+            $data->records = $stores;
             $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();

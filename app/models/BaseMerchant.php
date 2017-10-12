@@ -115,6 +115,8 @@ class BaseMerchant extends Eloquent
     public function bank()
     {
         return $this->hasMany('ObjectBank', 'object_id', 'base_merchant_id')
+                    ->select('object_banks.*', 'banks.bank_name')
+                    ->leftjoin('banks', 'banks.bank_id', '=', 'object_banks.bank_id')
                     ->where('object_banks.object_type', '=', 'base_merchant');
     }
 
@@ -127,6 +129,8 @@ class BaseMerchant extends Eloquent
     public function paymentProvider()
     {
         return $this->hasMany('MerchantStorePaymentProvider', 'object_id', 'base_merchant_id')
+                    ->select('merchant_store_payment_provider.*', 'payment_providers.payment_name')
+                    ->leftjoin('payment_providers', 'payment_providers.payment_provider_id', '=', 'merchant_store_payment_provider.payment_provider_id')
                     ->where('merchant_store_payment_provider.object_type', '=', 'base_merchant');
     }
 
