@@ -5997,8 +5997,8 @@ return array(
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => '--SET BY object_type_parameter_name--',
-                'object_type_parameter_name' => 'PaymentProvider',
-                'parameter_name' => 'payment_provider_id'
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
             ),
             // User clicks on use and pay
             '145' => array(
@@ -6006,8 +6006,9 @@ return array(
                 'name_long' => 'Click Use and Pay',
                 'module_name' => 'Application',
                 'type' => 'click',
-                'object_type' => 'Coupon',
-                'parameter_name' => 'coupon_id'
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
             ),
             // User clicks on payment method
             '146' => array(
@@ -6016,8 +6017,8 @@ return array(
                 'module_name' => 'Transaction',
                 'type' => 'click',
                 'object_type' => '--SET BY object_type_parameter_name--',
-                'object_type_parameter_name' => 'PaymentProvider',
-                'parameter_name' => 'payment_provider_id'
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
             ),
              // User clicks on submit payment
             '147' => array(
@@ -6026,8 +6027,8 @@ return array(
                 'module_name' => 'Transaction',
                 'type' => 'click',
                 'object_type' => '--SET BY object_type_parameter_name--',
-                'object_type_parameter_name' => 'PaymentProvider',
-                'parameter_name' => 'payment_provider_id'
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
             ),
             // User view on my purchase page
             '148' => array(
@@ -6037,6 +6038,26 @@ return array(
                 'type' => 'view',
                 'object_type' => null,
                 'parameter_name' => null
+            ),
+            // payment transaction succesful
+            '149' => array(
+                'name' => 'payment_transaction_successful',
+                'name_long' => 'Payment Transaction Successful',
+                'module_name' => 'Transaction',
+                'type' => 'payment',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // payment transaction failed
+            '150' => array(
+                'name' => 'payment_transaction_failed',
+                'name_long' => 'Payment Transaction Failed',
+                'module_name' => 'Transaction',
+                'type' => 'payment',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
             ),
         ),
     ),
