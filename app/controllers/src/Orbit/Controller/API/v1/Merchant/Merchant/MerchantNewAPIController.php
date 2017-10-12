@@ -297,8 +297,20 @@ class MerchantNewAPIController extends ControllerAPI
                     $newMerchantStorePaymentProvider->save();
                     $merchantStorePaymentProvider[$paymentProviderKey] = $newMerchantStorePaymentProvider;
                 }
-            }
 
+                // Add responses for payment acquire
+                if (! empty($objectFinancialDetail)) {
+                    $newBaseMerchant->object_financial_detail = $objectFinancialDetail;
+                }
+
+                if (! empty($objectBank)) {
+                    $newBaseMerchant->object_bank = $objectBank;
+                }
+
+                if (! empty($merchantStorePaymentProvider)) {
+                    $newBaseMerchant->merchant_store_payment_provider = $merchantStorePaymentProvider;
+                }
+            }
 
             // languages
             if (count($languages) > 0) {
@@ -391,11 +403,6 @@ class MerchantNewAPIController extends ControllerAPI
                 }
               }
             }
-
-            // Add responses for payment acquire
-            $newBaseMerchant->object_financial_detail = $objectFinancialDetail;
-            $newBaseMerchant->object_bank = $objectBank;
-            $newBaseMerchant->merchant_store_payment_provider = $merchantStorePaymentProvider;
 
             Event::fire('orbit.basemerchant.postnewbasemerchant.after.save', array($this, $newBaseMerchant));
 
