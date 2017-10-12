@@ -3866,16 +3866,17 @@ class CouponAPIController extends ControllerAPI
                 $merchantBankAddress = null;
                 if (! empty($merchantBank)) {
                     $merchantBankId = $merchantBank->bank_id;
-                    $bankGotomallsMerchant = BankGotomall::where('bank_id', $merchantBankId)
-                                                         ->where('payment_provider_id', $paymentProvider)
+                    $objectBank = ObjectBank::where('bank_id', $merchantBankId)
+                                                         ->where('object_id', $storeId)
+                                                         ->where('object_type', 'store')
                                                          ->first();
 
-                    if (! empty($bankGotomallsMerchant)) {
-                        $merchantBankAccountName = $bankGotomallsMerchant->account_name;
-                        $merchantBankAccountNumber = $bankGotomallsMerchant->account_number;
+                    if (! empty($objectBank)) {
+                        $merchantBankAccountName = $objectBank->account_name;
+                        $merchantBankAccountNumber = $objectBank->account_number;
                         $merchantBankName = $merchantBank->bank_name;
-                        $merchantBankSwiftCode = $bankGotomallsMerchant->swift_code;
-                        $merchantBankAddress = $bankGotomallsMerchant->bank_address;
+                        $merchantBankSwiftCode = $objectBank->swift_code;
+                        $merchantBankAddress = $objectBank->bank_address;
                     }
                 }
 
