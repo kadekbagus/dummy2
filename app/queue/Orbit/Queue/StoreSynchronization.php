@@ -200,6 +200,7 @@ class StoreSynchronization
                         $objectId = $base_store_id;
                         $objectType = 'store';
 
+                        $deleteBaseObjectFinancialDetail = ObjectFinancialDetail::where('object_id', $base_store_id)->where('object_type', 'store')->delete(true);
                         $baseObjectFinancialDetail = ObjectFinancialDetail::where('object_id', $base_store_id)->where('object_type', 'base_store')->first();
                         if (! empty($baseObjectFinancialDetail)) {
                             $newObjectFinancialDetail = new ObjectFinancialDetail;
@@ -212,6 +213,7 @@ class StoreSynchronization
                             $newObjectFinancialDetail->save();
                         }
 
+                        $deleteBaseObjectContact = ObjectContact::where('object_id', $base_store_id)->where('object_type', 'store')->delete(true);
                         $baseObjectContact = ObjectContact::where('object_id', $base_store_id)->where('object_type', 'base_store')->first();
                         if (! empty($baseObjectContact)) {
                             $newStoreCotactPerson = new ObjectContact;
@@ -224,6 +226,7 @@ class StoreSynchronization
                             $newStoreCotactPerson->save();
                         }
 
+                        $deleteBaseObjectBanks = ObjectBank::where('object_id', $base_store_id)->where('object_type', 'store')->delete(true);
                         $baseObjectBanks = ObjectBank::where('object_id', $base_store_id)->where('object_type', 'base_store')->get();
                         if (! $baseObjectBanks->isEmpty()) {
                             $objectBanks = array();
@@ -245,6 +248,7 @@ class StoreSynchronization
                             }
                         }
 
+                        $deleteBaseMerchantStorePaymentProviders = MerchantStorePaymentProvider::where('object_id', $base_store_id)->where('object_type', 'store')->delete(true);
                         $baseMerchantStorePaymentProviders = MerchantStorePaymentProvider::where('object_id', $base_store_id)->where('object_type', 'base_store')->get();
                         if (! $baseMerchantStorePaymentProviders->isEmpty()) {
                             $MerchantStorePaymentProviders = array();
