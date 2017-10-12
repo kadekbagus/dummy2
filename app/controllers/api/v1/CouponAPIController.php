@@ -3832,7 +3832,7 @@ class CouponAPIController extends ControllerAPI
                 $merchantBank = ObjectBank::select('banks.bank_id', 'banks.bank_name', 'banks.description', 'object_banks.account_name', 'object_banks.account_number', 'object_banks.swift_code', 'object_banks.bank_address')
                                 ->join('banks', 'banks.bank_id', '=', 'object_banks.bank_id')
                                 ->where('object_banks.object_id', $storeId)
-                                ->where('object_banks.object_type', 'base_store')
+                                ->where('object_banks.object_type', 'store')
                                 ->where('banks.status', 'active')
                                 ->orderBy('object_banks.account_name', 'asc');
 
