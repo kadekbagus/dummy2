@@ -3713,7 +3713,7 @@ class CouponAPIController extends ControllerAPI
                     'issued_coupon_id' => $issuedCouponId,
                 ),
                 array(
-                    'issued_coupon_id'              => 'required|orbit.empty.issuedcoupon',
+                    'issued_coupon_id'              => 'required',
                 )
             );
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
