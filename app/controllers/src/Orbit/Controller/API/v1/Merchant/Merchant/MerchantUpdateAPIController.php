@@ -310,14 +310,13 @@ class MerchantUpdateAPIController extends ControllerAPI
 
 
             // Payment Acquire
-            $deleteObjectFinancialDetail = ObjectFinancialDetail::where('object_id', '=', $baseMerchantId)->where('object_type', '=', 'merchant')->delete();
-            $deleteObjectFinancialDetail = ObjectBank::where('object_id', '=', $baseMerchantId)->where('object_type', '=', 'merchant')->delete();
-            $deleteMerchantStorePaymentProvider = MerchantStorePaymentProvider::where('object_id', '=', $baseMerchantId)->where('object_type', '=', 'merchant')->delete();
+            $objectType = 'base_merchant';
 
+            $deleteObjectFinancialDetail = ObjectFinancialDetail::where('object_id', '=', $baseMerchantId)->where('object_type', '=', $objectType)->delete(true);
+            $deleteObjectBank = ObjectBank::where('object_id', '=', $baseMerchantId)->where('object_type', '=', $objectType)->delete(true);
+            $deleteMerchantStorePaymentProvider = MerchantStorePaymentProvider::where('object_id', '=', $baseMerchantId)->where('object_type', '=', $objectType)->delete(true);
 
             if ($paymentAcquire === 'Y') {
-
-                $objectType = 'base_merchant';
 
                 // Save object financial detail
                 $validator = Validator::make(
