@@ -3829,7 +3829,7 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
 
-                $merchantBank = ObjectBank::select('banks.bank_id', 'banks.bank_name', 'banks.description')
+                $merchantBank = ObjectBank::select('banks.bank_id', 'banks.bank_name', 'banks.description', 'object_banks.account_name', 'object_banks.account_number', 'object_banks.swift_code', 'object_banks.bank_address')
                                 ->join('banks', 'banks.bank_id', '=', 'object_banks.bank_id')
                                 ->where('object_banks.object_id', $storeId)
                                 ->where('object_banks.object_type', 'base_store')
@@ -3866,18 +3866,11 @@ class CouponAPIController extends ControllerAPI
                 $merchantBankAddress = null;
                 if (! empty($merchantBank)) {
                     $merchantBankId = $merchantBank->bank_id;
-                    $objectBank = ObjectBank::where('bank_id', $merchantBankId)
-                                                         ->where('object_id', $storeId)
-                                                         ->where('object_type', 'store')
-                                                         ->first();
-
-                    if (! empty($objectBank)) {
-                        $merchantBankAccountName = $objectBank->account_name;
-                        $merchantBankAccountNumber = $objectBank->account_number;
-                        $merchantBankName = $merchantBank->bank_name;
-                        $merchantBankSwiftCode = $objectBank->swift_code;
-                        $merchantBankAddress = $objectBank->bank_address;
-                    }
+                    $merchantBankAccountName = $merchantBank->account_name;
+                    $merchantBankAccountNumber = $merchantBank->account_number;
+                    $merchantBankName = $merchantBank->bank_name;
+                    $merchantBankSwiftCode = $merchantBank->swift_code;
+                    $merchantBankAddress = $merchantBank->bank_address;
                 }
 
                 $providerName = $provider->payment_name;
