@@ -231,7 +231,7 @@ class BaseStore extends Eloquent
     {
         return $this->hasMany('ObjectBank', 'object_id', 'base_store_id')
                     ->select('object_banks.*', 'banks.bank_name')
-                    ->leftjoin('banks', 'banks.bank_id', '=', 'object_banks.object_id')
+                    ->leftjoin('banks', 'banks.bank_id', '=', 'object_banks.bank_id')
                     ->where('object_banks.object_type', '=', 'base_store');
     }
 
