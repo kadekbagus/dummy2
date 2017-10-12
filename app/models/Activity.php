@@ -456,6 +456,10 @@ class Activity extends Eloquent
                     break;
 
                 case 'PaymentTransaction':
+                    $paymentProvider = PaymentProvider::where('payment_provider_id', '=', $object->payment_provider_id)->first();
+                    if (is_object($paymentProvider)) {
+                        $this->object_display_name = $paymentProvider->payment_name;
+                    }
                     break;
 
                 default:
