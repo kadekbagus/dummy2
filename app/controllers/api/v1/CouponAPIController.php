@@ -4451,7 +4451,7 @@ class CouponAPIController extends ControllerAPI
                                 $couponPaymentProvider = CouponPaymentProvider::join('promotion_retailer_redeem', 'coupon_payment_provider.promotion_retailer_redeem_id', '=', 'promotion_retailer_redeem.promotion_retailer_redeem_id')
                                                                         ->where('promotion_retailer_redeem.promotion_id', $couponId)
                                                                         ->where('promotion_retailer_redeem.retailer_id', $store->store_id)
-                                                                        ->where('coupon_payment_provider.payment_provider_id', $paymentProviders->payment_provider_id)
+                                                                        ->where('coupon_payment_provider.payment_provider_id', $provider->payment_provider_id)
                                                                         ->groupBy('coupon_payment_provider.coupon_payment_provider_id')
                                                                         ->first();
 
