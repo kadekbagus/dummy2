@@ -3779,6 +3779,7 @@ class CouponAPIController extends ControllerAPI
                 'payment_method'         => $providerName,
                 'currency_id'            => $currencies->currency_id,
                 'currency'               => $currency,
+                'issued_coupon_id'       => $issuedCouponId,
             ];
 
             if ($paymentProvider === '0') {

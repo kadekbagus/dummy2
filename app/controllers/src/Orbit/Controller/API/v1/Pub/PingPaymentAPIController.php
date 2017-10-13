@@ -145,6 +145,22 @@ class PingPaymentAPIController extends PubControllerAPI
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $transaction->created_at, 'UTC');
             $dateTime = $date->setTimezone($transaction->timezone_name)->toDateTimeString();
 
+            if ($responseData->status == 'failed') {
+                DB::beginTransaction();
+
+                $issuedcoupon = IssuedCoupon::where('issued_coupon_id', $transaction->issued_coupon_id)
+                                        ->first();
+
+                $issuedcoupon->redeemed_date = null;
+                $issuedcoupon->redeem_retailer_id = null;
+                $issuedcoupon->redeem_user_id = null;
+                $issuedcoupon->redeem_verification_code = null;
+                $issuedcoupon->status = 'issued';
+                $issuedcoupon->save();
+
+                DB::commit();
+            }
+
             $data = new stdClass();
             $data->transactions = $responseData;
             $data->transaction_time = $dateTime;
