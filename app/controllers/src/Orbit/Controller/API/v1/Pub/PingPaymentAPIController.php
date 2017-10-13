@@ -16,6 +16,7 @@ use \DB;
 use \URL;
 use Language;
 use Coupon;
+use IssuedCoupon;
 use Validator;
 use PaymentTransaction;
 use Orbit\Helper\Util\PaginationNumber;
@@ -145,7 +146,7 @@ class PingPaymentAPIController extends PubControllerAPI
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $transaction->created_at, 'UTC');
             $dateTime = $date->setTimezone($transaction->timezone_name)->toDateTimeString();
 
-            if ($responseData->status == 'failed') {
+            if (strtolower($responseData->status) == 'failed') {
                 DB::beginTransaction();
 
                 $issuedcoupon = IssuedCoupon::where('issued_coupon_id', $transaction->issued_coupon_id)
