@@ -143,26 +143,10 @@ class MerchantTransactionReportAPIController extends ControllerAPI
             $end_date = OrbitInput::get('end_date');
 
             if ($start_date != '' && $end_date != ''){
-
-                // Convert UTC to Mall Time
-                $startConvert = Carbon::createFromFormat('Y-m-d H:i:s', $start_date, 'UTC');
-                $startConvert->setTimezone($timezone);
-
-                $endConvert = Carbon::createFromFormat('Y-m-d H:i:s', $end_date, 'UTC');
-                $endConvert->setTimezone($timezone);
-
-                $start_date = $startConvert->toDateString();
-                $end_date = $endConvert->toDateString();
-
-                // $campaign->where(function ($q) use ($start_date, $end_date) {
-                //     $q->WhereRaw("DATE_FORMAT(begin_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT(begin_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
-                //       ->orWhereRaw("DATE_FORMAT(end_date, '%Y-%m-%d') >= DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') and DATE_FORMAT(end_date, '%Y-%m-%d') <= DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d')")
-                //       ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') >= DATE_FORMAT(begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT(end_date, '%Y-%m-%d')")
-                //       ->orWhereRaw("DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT(begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') <= DATE_FORMAT(end_date, '%Y-%m-%d')")
-                //       ->orWhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d') <= DATE_FORMAT(begin_date, '%Y-%m-%d') and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d') >= DATE_FORMAT(end_date, '%Y-%m-%d')");
-                // });
+                $merchantTransactions->where(function ($q) use ($start_date, $end_date) {
+                    $q->WhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d %H:%i:%s') <= convert_tz( created_at, '+00:00', timezone_name) and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d %H:%i:%s') >= convert_tz( created_at, '+00:00', timezone_name)");
+                });
             }
-
 
             // Clone the query builder which still does not include the take,
             // skip, and order by
@@ -273,4 +257,10 @@ class MerchantTransactionReportAPIController extends ControllerAPI
 
         return $this;
     }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
+
 }
