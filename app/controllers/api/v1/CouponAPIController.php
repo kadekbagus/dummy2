@@ -203,11 +203,11 @@ class CouponAPIController extends ControllerAPI
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
             if ($payByNormal === 'N') {
-                $amountCommission = null;
                 $fixedAmountCommission = null;
             }
 
             if ($payByWallet === 'N') {
+                $amountCommission = null;
                 $paymentProviders = null;
             }
 
@@ -1941,8 +1941,8 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->is_payable_by_normal = $pay_by_normal;
             });
 
-            OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon, $payByNormal) {
-                if ($payByNormal === 'N') {
+            OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon, $payByWallet) {
+                if ($payByWallet === 'N') {
                     $amount_commission = null;
                 }
 
