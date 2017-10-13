@@ -202,6 +202,15 @@ class CouponAPIController extends ControllerAPI
             $amountCommission = OrbitInput::post('amount_commission', null);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
+            if ($payByNormal === 'N') {
+                $amountCommission = null;
+                $fixedAmountCommission = null;
+            }
+
+            if ($payByWallet === 'N') {
+                $paymentProviders = null;
+            }
+
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
             }
@@ -1932,11 +1941,19 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->is_payable_by_normal = $pay_by_normal;
             });
 
-            OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon) {
+            OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon, $payByNormal) {
+                if ($payByNormal === 'N') {
+                    $amount_commission = null;
+                }
+
                 $updatedcoupon->transaction_amount_commission = $amount_commission;
             });
 
-            OrbitInput::post('fixed_amount_commission', function($fixed_amount_commission) use ($updatedcoupon) {
+            OrbitInput::post('fixed_amount_commission', function($fixed_amount_commission) use ($updatedcoupon, $payByNormal) {
+                if ($payByNormal === 'N') {
+                    $fixed_amount_commission = null;
+                }
+
                 $updatedcoupon->fixed_amount_commission = $fixed_amount_commission;
             });
 
@@ -2213,11 +2230,9 @@ class CouponAPIController extends ControllerAPI
                     Event::fire('orbit.coupon.postupdatecoupon.after.retailervalidation', array($this, $validator));
                 }
 
-                if ($payByWallet === 'Y') {
-                    $existRetailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id)->lists('promotion_retailer_redeem_id');
-                    if (! empty($existRetailer)) {
-                        $delete_provider = CouponPaymentProvider::whereIn('promotion_retailer_redeem_id', $existRetailer)->delete();
-                    }
+                $existRetailer = CouponRetailerRedeem::where('promotion_id', '=', $promotion_id)->lists('promotion_retailer_redeem_id');
+                if (! empty($existRetailer)) {
+                    $delete_provider = CouponPaymentProvider::whereIn('promotion_retailer_redeem_id', $existRetailer)->delete();
                 }
 
                 // Delete old data
