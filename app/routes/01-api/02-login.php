@@ -67,6 +67,11 @@ Route::post('/api/v1/logout/customer', function()
     return LoginAPIController::create()->postLogout();
 });
 
+Route::post('/api/v1/logout/mtp', function()
+{
+    return LoginAPIController::create()->postLogout();
+});
+
 /**
  * Customer registration
  */

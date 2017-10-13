@@ -84,6 +84,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
 
             $coupon = PaymentTransaction::select(DB::raw("
                                     {$prefix}payment_transactions.object_id as object_id,
+                                    {$prefix}payment_transactions.amount,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                     CONCAT({$prefix}payment_transactions.store_name,' @ ', {$prefix}payment_transactions.building_name) as store_at_building,
                                     {$prefix}payment_transactions.payment_transaction_id,
