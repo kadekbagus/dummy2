@@ -18,6 +18,7 @@ use UserMerchantTransaction;
 use Config;
 use stdclass;
 use Orbit\Controller\API\v1\MerchantTransaction\MerchantTransactionHelper;
+use \Carbon\Carbon as Carbon;
 
 class MerchantTransactionReportAPIController extends ControllerAPI
 {
@@ -60,7 +61,7 @@ class MerchantTransactionReportAPIController extends ControllerAPI
             $merchantId = null;
             $userMerchantTransaction = UserMerchantTransaction::where('user_id', $user->user_id)->first();
             if (! empty($userMerchantTransaction) > 0) {
-                // $merchantId = $userMerchantTransaction->merchant_id;
+                $merchantId = $userMerchantTransaction->merchant_id;
             }
 
             // $merchantHelper = MerchantHelper::create();
