@@ -81,7 +81,12 @@ class PingPaymentAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $transaction = PaymentTransaction::where('payment_transaction_id', $transactionId)->first();
+            $transaction = PaymentTransaction::where('payment_transaction_id', $transactionId)->where('user_id', $user->user_id)->first();
+            if (! is_object($transaction)) {
+                $errorMessage = 'Data transaction not found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $valid_language = Language::where('name', $language)->first();
 
             $prefix = DB::getTablePrefix();
