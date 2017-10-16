@@ -264,7 +264,15 @@ class WalletOperatorAPIController extends ControllerAPI
                 $updateWalletOperator->deeplink_url = $deeplink_url;
             });
 
-            OrbitInput::post('status', function($status) use ($updateWalletOperator) {
+            OrbitInput::post('status', function($status) use ($updateWalletOperator, $payment_provider_id) {
+                // if payment linked in mdm it cannot be inactive
+                if ($status == 'inactive') {
+                    $merchantStorePayment = MerchantStorePaymentProvider::where('payment_provider_id', '=', $payment_provider_id)->first();
+                    if (is_object($merchantStorePayment)) {
+                        $errorMessage = 'Payment linked to one or more store';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
                 $updateWalletOperator->status = $status;
             });
 
