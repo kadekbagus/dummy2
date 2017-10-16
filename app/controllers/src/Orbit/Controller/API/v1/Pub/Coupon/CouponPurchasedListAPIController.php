@@ -48,14 +48,14 @@ class CouponPurchasedListAPIController extends PubControllerAPI
         $mall = NULL;
 
         try {
-            // $user = $this->getUser();
+            $user = $this->getUser();
 
-            // // should always check the role
-            // $role = $user->role->role_name;
-            // if (strtolower($role) !== 'consumer') {
-            //     $message = 'You have to login to continue';
-            //     OrbitShopAPI::throwInvalidArgument($message);
-            // }
+            // should always check the role
+            $role = $user->role->role_name;
+            if (strtolower($role) !== 'consumer') {
+                $message = 'You have to login to continue';
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
 
             $sort_by = OrbitInput::get('sortby', 'coupon_name');
             $sort_mode = OrbitInput::get('sortmode','asc');
@@ -83,93 +83,28 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             $coupon = PaymentTransaction::select(DB::raw("
-                                    {$prefix}payment_transactions.payment_transaction_id,
-                                    {$prefix}promotions.promotion_id as promotion_id,
+                                    {$prefix}payment_transactions.object_id as object_id,
+                                    {$prefix}payment_transactions.amount,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                    CONCAT({$prefix}payment_transactions.store_name,' @ ', {$prefix}payment_transactions.building_name) as store_at_building,
+                                    {$prefix}payment_transactions.payment_transaction_id,
+                                    convert_tz( {$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz,
+                                    {$prefix}payment_transactions.status,
+                                    {$prefix}payment_transactions.payment_method,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
                                     CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath,
-                                    {$prefix}promotions.end_date,
-                                    {$prefix}promotions.coupon_validity_in_date,
-                                    {$prefix}promotions.status,
-                                    CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
-                                        THEN {$prefix}campaign_status.campaign_status_name
-                                        ELSE (
-                                            CASE WHEN {$prefix}promotions.end_date < (
-                                                SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
-                                                FROM {$prefix}promotion_retailer opt
-                                                    LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                                    LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                    LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                                WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                            )
-                                            THEN 'expired'
-                                            ELSE {$prefix}campaign_status.campaign_status_name
-                                            END
-                                        )
-                                    END AS campaign_status,
-                                    CASE WHEN {$prefix}promotions.coupon_validity_in_date < (
-                                            SELECT min(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name))
-                                            FROM {$prefix}promotion_retailer opt
-                                                LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                                LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                                LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                            WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                        )
-                                        THEN 'true'
-                                        ELSE 'false'
-                                    END AS is_exceeding_validity_date,
-                                    CASE WHEN (
-                                        SELECT count(opt.promotion_retailer_id)
-                                        FROM {$prefix}promotion_retailer opt
-                                            LEFT JOIN {$prefix}merchants om ON om.merchant_id = opt.retailer_id
-                                            LEFT JOIN {$prefix}merchants oms on oms.merchant_id = om.parent_id
-                                            LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = (CASE WHEN om.object_type = 'tenant' THEN oms.timezone_id ELSE om.timezone_id END)
-                                        WHERE opt.promotion_id = {$prefix}promotions.promotion_id
-                                        AND CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) between {$prefix}promotions.begin_date and {$prefix}promotions.coupon_validity_in_date) > 0
-                                    THEN 'true'
-                                    ELSE 'false'
-                                    END AS is_started,
-                                    {$prefix}issued_coupons.issued_coupon_id,
-                                    CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN
-                                        CASE WHEN {$prefix}promotions.is_payable_by_wallet = 'Y' THEN 'payable' ELSE 'redeemeble' END
-                                        ELSE 'redeemed' END as issued_coupon_status,
-                                    {$prefix}merchants.name as store_name,
-                                    CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN malls.name ELSE NULL END as mall_name,
-                                    CONVERT_TZ({$prefix}issued_coupons.redeemed_date, '+00:00', {$prefix}timezones.timezone_name) as redeemed_date,
-                                    (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status = 'redeemed') as total_redeemed,
-                                    (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status in ('issued','redeemed')) as total_issued,
-                                    CASE WHEN {$prefix}promotions.maximum_redeem = '0' THEN {$prefix}promotions.maximum_issued_coupon ELSE {$prefix}promotions.maximum_redeem END maximum_redeem,
-                                    {$prefix}promotions.maximum_issued_coupon,
-                                    {$prefix}promotions.available,
-                                    {$prefix}promotions.is_unique_redeem,
-                                    CASE WHEN {$prefix}promotions.maximum_redeem > 0
-                                    THEN
-                                        CASE WHEN (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id) >= {$prefix}promotions.maximum_redeem
-                                        THEN 0
-                                        ELSE ({$prefix}promotions.maximum_redeem - (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id))
-                                        END
-                                    ELSE (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status not in ('redeemed', 'deleted') AND oic.promotion_id = {$prefix}promotions.promotion_id)
-                                    END AS available_for_redeem,
                                     (SELECT substring_index(group_concat(distinct om.name SEPARATOR ', '), ', ', 2)
-                                        FROM {$prefix}promotion_retailer opr
-                                        JOIN {$prefix}merchants om
-                                            ON om.merchant_id = opr.retailer_id
-                                        WHERE opr.promotion_id = {$prefix}promotions.promotion_id
-                                        GROUP BY opr.promotion_id
-                                        ORDER BY om.name
-                                    ) as link_to_tenant,
-                                    (SELECT count(distinct om.name) - 2
-                                        FROM {$prefix}promotion_retailer opr
-                                        JOIN {$prefix}merchants om
-                                            ON om.merchant_id = opr.retailer_id
-                                        WHERE opr.promotion_id = {$prefix}promotions.promotion_id
-                                    ) as total_link_to_tenant
-                                "),
-                                'issued_coupons.issued_date'
-                            )
+                                                    FROM {$prefix}promotion_retailer opr
+                                                    JOIN {$prefix}merchants om
+                                                        ON om.merchant_id = opr.retailer_id
+                                                    WHERE opr.promotion_id = {$prefix}promotions.promotion_id
+                                                    GROUP BY opr.promotion_id
+                                                    ORDER BY om.name
+                                                ) as link_to_tenant
+
+                            "))
                             ->join('promotions', 'promotions.promotion_id', '=', 'payment_transactions.object_id')
-                            ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
@@ -204,12 +139,10 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                             ON m.object_id = ct.coupon_translation_id
                                             AND m.media_name_long = 'coupon_translation_image_orig'
                                         GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
-                            // ->where('payment_transactions.user_id', $user->user_id)
-                            ->where('payment_transactions.user_id', 'K_QTs_LOVMF0NSWR')
+                            ->where('payment_transactions.user_id', $user->user_id)
                             ->where('payment_transactions.object_type', 'coupon')
-                            ->havingRaw("(campaign_status = 'ongoing' OR campaign_status = 'expired')")
                             ->groupBy('payment_transactions.payment_transaction_id');
-print_r($coupon->get()); die();
+
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
                     if ($filterName === '#') {
@@ -239,20 +172,7 @@ print_r($coupon->get()); die();
 
             // need subquery to order my coupon
             $querySql = $coupon->toSql();
-            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupon->getQuery())
-                            ->select(
-                                DB::raw("sub_query.*"),
-                                DB::raw("CASE WHEN issued_coupon_status = 'redeemed' THEN 2
-                                            ELSE CASE WHEN available_for_redeem = 0 THEN 3
-                                                ELSE CASE WHEN is_exceeding_validity_date = 'true' THEN 3
-                                                    ELSE 1
-                                                    END
-                                                END
-                                        END as redeem_order")
-                            );
-
-            $coupon = $coupon->orderBy(DB::raw("redeem_order"), 'asc');
-            $coupon = $coupon->orderBy(DB::raw("issued_date"), 'desc');
+            $coupon = $coupon->orderBy(DB::raw("{$prefix}payment_transactions.created_at"), 'desc');
 
             $_coupon = clone $coupon;
 

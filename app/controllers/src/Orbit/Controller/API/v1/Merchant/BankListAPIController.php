@@ -68,7 +68,7 @@ class BankListAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $banks = Bank::excludedeleted();
+            $banks = Bank::where('status', 'active');
 
             // Filter bank by bank_name
             OrbitInput::get('bank_name', function($bank_name) use ($banks)

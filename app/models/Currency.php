@@ -8,5 +8,5 @@ class Currency extends Eloquent
 {
     protected $primaryKey = 'currency_id';
 
-    protected $table = 'currency';
+    protected $table = 'currencies';
 }

@@ -16,6 +16,7 @@ use \DB;
 use \URL;
 use Language;
 use Coupon;
+use IssuedCoupon;
 use Validator;
 use PaymentTransaction;
 use Orbit\Helper\Util\PaginationNumber;
@@ -81,7 +82,12 @@ class PingPaymentAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $transaction = PaymentTransaction::where('payment_transaction_id', $transactionId)->first();
+            $transaction = PaymentTransaction::where('payment_transaction_id', $transactionId)->where('user_id', $user->user_id)->first();
+            if (! is_object($transaction)) {
+                $errorMessage = 'Data transaction not found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $valid_language = Language::where('name', $language)->first();
 
             $prefix = DB::getTablePrefix();
@@ -139,6 +145,22 @@ class PingPaymentAPIController extends PubControllerAPI
 
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $transaction->created_at, 'UTC');
             $dateTime = $date->setTimezone($transaction->timezone_name)->toDateTimeString();
+
+            if (strtolower($responseData->status) == 'failed') {
+                DB::beginTransaction();
+
+                $issuedcoupon = IssuedCoupon::where('issued_coupon_id', $transaction->issued_coupon_id)
+                                        ->first();
+
+                $issuedcoupon->redeemed_date = null;
+                $issuedcoupon->redeem_retailer_id = null;
+                $issuedcoupon->redeem_user_id = null;
+                $issuedcoupon->redeem_verification_code = null;
+                $issuedcoupon->status = 'issued';
+                $issuedcoupon->save();
+
+                DB::commit();
+            }
 
             $data = new stdClass();
             $data->transactions = $responseData;

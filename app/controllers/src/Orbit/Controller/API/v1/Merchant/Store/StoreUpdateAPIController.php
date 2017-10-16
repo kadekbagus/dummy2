@@ -197,10 +197,10 @@ class StoreUpdateAPIController extends ControllerAPI
             $objectType = 'base_store';
             $objectId = $baseStoreId;
 
-            $deleteObjectFinancialDetail = ObjectFinancialDetail::where('object_id', '=', $objectId)->where('object_type', '=', $objectType)->delete();
-            $deleteObjectContact = ObjectContact::where('object_id', '=', $objectId)->where('object_type', '=', $objectType)->delete();
-            $deleteObjectBank = ObjectBank::where('object_id', '=', $objectId)->where('object_type', '=', $objectType)->delete();
-            $deleteMerchantStorePaymentProvider = MerchantStorePaymentProvider::where('object_id', '=', $objectId)->where('object_type', '=', $objectType)->delete();
+            $deleteObjectFinancialDetail = ObjectFinancialDetail::where('object_id', '=', $objectId)->where('object_type', '=', $objectType)->delete(true);
+            $deleteObjectContact = ObjectContact::where('object_id', '=', $objectId)->where('object_type', '=', $objectType)->delete(true);
+            $deleteObjectBank = ObjectBank::where('object_id', '=', $objectId)->where('object_type', '=', $objectType)->delete(true);
+            $deleteMerchantStorePaymentProvider = MerchantStorePaymentProvider::where('object_id', '=', $objectId)->where('object_type', '=', $objectType)->delete(true);
 
             if ($paymentAcquire === 'Y') {
 

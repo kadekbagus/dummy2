@@ -299,10 +299,18 @@ class StoreNewAPIController extends ControllerAPI
                 }
 
                 // Add responses for payment acquire
-                $newstore->object_financial_detail = $objectFinancialDetail;
-                $newstore->object_contact = $objectContact;
-                $newstore->object_bank = $objectBank;
-                $newstore->merchant_store_payment_provider = $merchantStorePaymentProvider;
+                if (! empty($objectFinancialDetail)) {
+                    $newstore->object_financial_detail = $objectFinancialDetail;
+                }
+                if (! empty($objectContact)) {
+                    $newstore->object_contact = $objectContact;
+                }
+                if (! empty($objectBank)) {
+                    $newstore->object_bank = $objectBank;
+                }
+                if (! empty($merchantStorePaymentProvider)) {
+                    $newstore->merchant_store_payment_provider = $merchantStorePaymentProvider;
+                }
             }
 
             // cause not required
