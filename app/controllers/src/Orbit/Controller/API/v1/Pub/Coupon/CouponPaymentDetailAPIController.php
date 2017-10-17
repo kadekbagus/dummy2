@@ -104,7 +104,7 @@ class CouponPaymentDetailAPIController extends PubControllerAPI
             $userDetail = UserDetail::select('users.user_id', 'users.user_firstname', 'users.user_lastname', 'users.user_email', 'user_details.phone')
                                     ->join('users', 'users.user_id', '=', 'user_details.user_id')
                                     ->where('user_details.user_id', $user->user_id)
-                                    ->where('users.status', 'active')
+                                    ->where('users.status', '!=', 'inactive')
                                     ->first();
 
             $detail = new stdClass();
