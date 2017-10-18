@@ -208,7 +208,7 @@ class CouponAPIController extends ControllerAPI
 
             if ($payByWallet === 'N') {
                 $amountCommission = 0;
-                $paymentProviders = 0;
+                $paymentProviders = null;
             }
 
             if (empty($campaignStatus)) {
