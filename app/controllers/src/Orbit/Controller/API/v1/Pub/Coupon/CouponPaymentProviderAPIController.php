@@ -79,7 +79,16 @@ class CouponPaymentProviderAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $coupon = Coupon::where('promotion_id', $couponId)->first();
+            $coupon = Coupon::select(DB::raw("{$prefix}promotions.*,
+                                        (SELECT substring_index(group_concat(distinct om.name SEPARATOR ', '), ', ', 2)
+                                            FROM {$prefix}promotion_retailer opr
+                                            JOIN {$prefix}merchants om
+                                                ON om.merchant_id = opr.retailer_id
+                                            WHERE opr.promotion_id = {$prefix}promotions.promotion_id
+                                            GROUP BY opr.promotion_id
+                                            ORDER BY om.name
+                                        ) as link_to_tenant"))
+                            ->where('promotion_id', $couponId)->first();
 
             $data = null;
             if ($coupon->is_payable_by_wallet === 'Y') {
@@ -125,6 +134,7 @@ class CouponPaymentProviderAPIController extends PubControllerAPI
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = count($listData);
             $this->response->data->records = $listData;
+            $this->response->data->tenants = $coupon->link_to_tenant;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();

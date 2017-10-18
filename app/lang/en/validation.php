@@ -150,6 +150,7 @@ return array(
             'link_mobile_default_lang'=> 'Cannot change default supported language has campaign translation',
             'link_to_tenant'         => 'Link to tenant is not allowed',
             'base_store'             => 'The mall unit on this floor already use',
+            'payment_name'           => 'Payment name already exist'
         ),
         'access' => array(
             'forbidden'              => 'You do not have permission to :action',

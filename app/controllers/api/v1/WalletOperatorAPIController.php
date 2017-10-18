@@ -75,7 +75,7 @@ class WalletOperatorAPIController extends ControllerAPI
                     'contact_person_address' => $contact_person_address,
                 ),
                 array(
-                    'payment_name' => 'required',
+                    'payment_name' => 'required|orbit.exists.payment_name',
                     'description' => 'required',
                     'status' => 'in:active,inactive',
                     'mdr' => 'required',
@@ -210,16 +210,22 @@ class WalletOperatorAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             $payment_provider_id = OrbitInput::post('payment_provider_id');
+            $payment_name = OrbitInput::post('payment_name');
             $status = OrbitInput::post('status');
 
             $validator = Validator::make(
                 array(
                     'payment_provider_id' => $payment_provider_id,
+                    'payment_name' => $payment_name,
                     'status' => $status,
                 ),
                 array(
                     'payment_provider_id' => 'required|orbit.empty.payment_provider_id',
+                    'payment_name' => 'payment_name_exists_but_me',
                     'status' => 'in:active,inactive',
+                ),
+                array(
+                    'payment_name_exists_but_me' => Lang::get('validation.orbit.exists.payment_name'),
                 )
             );
 
@@ -258,7 +264,15 @@ class WalletOperatorAPIController extends ControllerAPI
                 $updateWalletOperator->deeplink_url = $deeplink_url;
             });
 
-            OrbitInput::post('status', function($status) use ($updateWalletOperator) {
+            OrbitInput::post('status', function($status) use ($updateWalletOperator, $payment_provider_id) {
+                // if payment linked in mdm it cannot be inactive
+                if ($status == 'inactive') {
+                    $merchantStorePayment = MerchantStorePaymentProvider::where('payment_provider_id', '=', $payment_provider_id)->first();
+                    if (is_object($merchantStorePayment)) {
+                        $errorMessage = 'Payment linked to one or more store';
+                        OrbitShopAPI::throwInvalidArgument($errorMessage);
+                    }
+                }
                 $updateWalletOperator->status = $status;
             });
 
@@ -788,6 +802,40 @@ class WalletOperatorAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.link_object_id', $linkObject);
+
+            return TRUE;
+        });
+
+        // Check payment name, it should not exists
+        Validator::extend('orbit.exists.payment_name', function ($attribute, $value, $parameters) {
+
+            $paymentName = PaymentProvider::excludeDeleted()
+                                ->where('payment_name', $value)
+                                ->first();
+
+            if (! empty($paymentName)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.payment_name', $paymentName);
+
+            return TRUE;
+        });
+
+        // Check payment name, it should not exists (for update)
+        Validator::extend('payment_name_exists_but_me', function ($attribute, $value, $parameters) {
+            $payment_provider_id = trim(OrbitInput::post('payment_provider_id'));
+
+            $paymentName = PaymentProvider::excludeDeleted()
+                                ->where('payment_name', $value)
+                                ->where('payment_provider_id', '!=', $payment_provider_id)
+                                ->first();
+
+            if (! empty($paymentName)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.validation.payment_name', $paymentName);
 
             return TRUE;
         });

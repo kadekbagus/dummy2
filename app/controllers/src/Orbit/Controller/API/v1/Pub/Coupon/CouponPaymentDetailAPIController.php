@@ -93,11 +93,18 @@ class CouponPaymentDetailAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $tenants = PromotionRetailer::select(DB::raw("substring_index(group_concat(distinct {$prefix}merchants.name SEPARATOR ', '), ', ', 2) as link_to_tenant"))
+                                        ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                        ->where('promotion_retailer.promotion_id', $issuedCoupon->promotion_id)
+                                        ->groupBy('promotion_retailer.promotion_id')
+                                        ->orderBy('merchants.name')
+                                        ->first();
+
             // get user detail
             $userDetail = UserDetail::select('users.user_id', 'users.user_firstname', 'users.user_lastname', 'users.user_email', 'user_details.phone')
                                     ->join('users', 'users.user_id', '=', 'user_details.user_id')
                                     ->where('user_details.user_id', $user->user_id)
-                                    ->where('users.status', 'active')
+                                    ->where('users.status', '!=', 'inactive')
                                     ->first();
 
             $detail = new stdClass();
@@ -109,6 +116,7 @@ class CouponPaymentDetailAPIController extends PubControllerAPI
             $detail->user_email = (empty($userDetail->user_email)) ? null : $userDetail->user_email;
             $detail->user_firstname = (empty($userDetail->user_firstname)) ? null : $userDetail->user_firstname;
             $detail->user_lastname = (empty($userDetail->user_lastname)) ? null : $userDetail->user_lastname;
+            $detail->tenants = (empty($tenants->link_to_tenant)) ? null : $tenants->link_to_tenant;
 
             $this->response->data = new stdClass();
             $this->response->data->returned_records = count($detail);
