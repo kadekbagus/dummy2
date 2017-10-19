@@ -180,7 +180,16 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'merchant_name' => 'payment_transactions.created_at',
-                    'location_number' => 'location_count'
+                    'location_number' => 'location_count',
+                    'payment_transaction_id' => 'payment_transaction_id',
+                    'external_payment_transaction_id' => 'external_payment_transaction_id',
+                    'object_name' => 'object_name',
+                    'created_at' => 'created_at',
+                    'location' => 'object_name',
+                    'amount' => 'amount',
+                    'currency' => 'currency',
+                    'payment_method' => 'payment_method',
+                    'status' => 'status'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
