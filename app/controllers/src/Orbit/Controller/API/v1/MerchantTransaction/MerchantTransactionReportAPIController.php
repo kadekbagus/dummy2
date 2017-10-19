@@ -111,7 +111,7 @@ class MerchantTransactionReportAPIController extends ControllerAPI
             // Filter by transaction id
             OrbitInput::get('payment_transaction_id', function($payment_transaction_id) use ($merchantTransactions)
             {
-                $merchantTransactions->where('payment_transactions.payment_transaction_id', $payment_transaction_id);
+                $merchantTransactions->where('payment_transactions.payment_transaction_id', 'like', "%$payment_transaction_id%");
             });
 
             // Filter by object name
@@ -126,6 +126,12 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                 $merchantTransactions->where('payment_transactions.building_id', $building_id);
             });
 
+            // Filter by location_name
+            OrbitInput::get('building_name', function($building_name) use ($merchantTransactions)
+            {
+                $merchantTransactions->where('payment_transactions.building_name', 'like', "%$building_name%");
+            });
+
             // Filter by status
             OrbitInput::get('status', function($status) use ($merchantTransactions)
             {
@@ -136,6 +142,12 @@ class MerchantTransactionReportAPIController extends ControllerAPI
             OrbitInput::get('merchant_id', function($merchant_id) use ($merchantTransactions)
             {
                 $merchantTransactions->where('payment_transactions.merchant_id', $merchant_id);
+            });
+
+            // Filter by payment method
+            OrbitInput::get('payment_method', function($payment_method) use ($merchantTransactions)
+            {
+                $merchantTransactions->where('payment_transactions.payment_method', 'like', "%$payment_method%");
             });
 
             // Filter by range date
