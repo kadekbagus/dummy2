@@ -67,7 +67,7 @@ class MerchantTransactionPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '','','','','','','','','','','','','','');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    printf("\"%s\", \"%s\",\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"\n", $row->merchant_id, $row->merchant_name, $row->store_id, $row->store_at_building, $row->building_name, $row->object_name, $row->object_id, $row->coupon_redemption_code, $row->date_tz, $row->payment_transaction_id, $row->external_payment_transaction_id, $row->payment_method, number_format($row->amount, 0, '', ''), $row->currency, $row->status);
+                    printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n", $row->merchant_id, $row->merchant_name, $row->store_id, $row->store_at_building, $row->building_name, $row->object_name, $row->object_id, $row->coupon_redemption_code, $row->date_tz, $row->payment_transaction_id, $row->external_payment_transaction_id, $row->payment_method, number_format($row->amount, 0, '', ''), $row->currency, $row->status);
                 }
                 exit;
                 break;
