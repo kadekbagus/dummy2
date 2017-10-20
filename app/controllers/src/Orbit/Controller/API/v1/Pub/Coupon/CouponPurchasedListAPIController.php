@@ -141,6 +141,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                         GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
                             ->where('payment_transactions.user_id', $user->user_id)
                             ->where('payment_transactions.object_type', 'coupon')
+                            ->where('payment_transactions.payment_method', '!=', 'normal')
                             ->groupBy('payment_transactions.payment_transaction_id');
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
