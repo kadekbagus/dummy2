@@ -63,12 +63,11 @@ class MerchantTransactionPrinterController extends DataPrinterController
                 @header('Content-Type: text/csv');
                 @header('Content-Disposition: attachment; filename=' . $this->getFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', null) );
 
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Merchant Name','Store ID','Store Name','Store Location (mall)','Coupon Campaign Name','Coupon ID','Coupon Redemption Code','Transaction Date and Time','Gtm Transaction ID','External Transaction ID','Payment Method (ewallet Operator Name OR Normal Redeem)','Transaction Amount (paid by user)','Currency','Transaction Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'Base Merchant ID', 'Merchant Name', 'Store ID', 'Store Name', 'Store Location (mall)', 'Coupon Campaign Name', 'Coupon ID', 'Coupon Redemption Code', 'Transaction Date and Time', 'Gtm Transaction ID', 'External Transaction ID', 'Payment Method(ewallet Operator Name OR Normal Redeem)', 'Transaction Amount (paid by user)', 'Currency', 'Transaction Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", '','','','','','','','','','','','','','');
 
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                    printf(" \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"\n", $row->store_name, $row->store_id, $row->store_at_building, $row->building_name, $row->object_name, $row->object_id, $row->coupon_redemption_code, $row->date_tz, $row->payment_transaction_id, $row->external_payment_transaction_id, $row->payment_method, number_format($row->amount, 2, '.', ','), $row->currency, $row->status
-                    );
+                    printf("\"%s\", \"%s\",\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\"\n", $row->merchant_id, $row->merchant_name, $row->store_id, $row->store_at_building, $row->building_name, $row->object_name, $row->object_id, $row->coupon_redemption_code, $row->date_tz, $row->payment_transaction_id, $row->external_payment_transaction_id, $row->payment_method, number_format($row->amount, 2, '.', ','), $row->currency, $row->status);
                 }
                 exit;
                 break;
