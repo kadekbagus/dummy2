@@ -57,11 +57,14 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            // Get merchant id
-            $merchantId = null;
+            // Get user type and merchant id
+            $merchanOrStoretId = null;
+            $userType = null;
+
             $userMerchantTransaction = UserMerchantTransaction::where('user_id', $user->user_id)->first();
             if (! empty($userMerchantTransaction) > 0) {
-                $merchantId = $userMerchantTransaction->merchant_id;
+                $merchanOrStoretId = $userMerchantTransaction->merchant_id;
+                $userType = $userMerchantTransaction->object_type;
             }
 
             // $merchantHelper = MerchantHelper::create();
@@ -74,10 +77,10 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:payment_transaction_id,external_payment_transaction_id,object_name,created_at,location,amount,currency,payment_method,status',
+                    'sortby' => 'in:merchant_id,merchant_name,store_id,store_at_building,building_name,object_name,object_id,coupon_redemption_code,created_at,payment_transaction_id,external_payment_transaction_id,payment_method,amount,currency,status',
                 ),
                 array(
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: payment_transaction_id, external_payment_transaction_id, object_name, created_at, location, amount, currency, payment_method, status',
+                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: merchant_id, merchant_name, store_id, store_at_building, building_name, object_name, object_id, coupon_redemption_code, created_at, payment_transaction_id, external_payment_transaction_id, payment_method, amount, currency, status',
                 )
             );
 
@@ -90,55 +93,66 @@ class MerchantTransactionReportAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
 
             $merchantTransactions = PaymentTransaction::select(
+                                                                'merchant_id',
+                                                                'merchant_name',
+                                                                'store_id',
+                                                                DB::raw("CONCAT(store_name,' @ ', building_name) as store_at_building"),
+                                                                'building_name',
+                                                                'object_name',
+                                                                'object_id',
+                                                                'coupon_redemption_code',
+                                                                DB::raw("DATE_FORMAT(convert_tz( created_at, '+00:00', timezone_name)  , '%d/%m/%Y %H:%i:%s') as date_tz"),
                                                                 'payment_transaction_id',
                                                                 'external_payment_transaction_id',
-                                                                'object_name',
+                                                                'payment_method',
                                                                 'amount',
                                                                 'currency',
-                                                                'payment_method',
-                                                                'status',
-                                                                DB::raw("DATE_FORMAT(convert_tz( created_at, '+00:00', timezone_name)  , '%W %d/%m/%Y %H:%i %p') as date_tz"),
-                                                                DB::raw("CONCAT(store_name,' @ ', building_name) as store_at_building"),
-                                                                // data adding for print export
-                                                                'store_name',
-                                                                'store_id',
-                                                                'building_name',
-                                                                'object_id',
-                                                                'coupon_redemption_code'
-                                                            )
-                                                        ->where('merchant_id', $merchantId);
+                                                                'status'
+                                                            );
 
-            // Filter by transaction id
+            // Filtering by user store or merchant
+            if ($userType = 'merchant') {
+                $merchantTransactions->where('merchant_id', $merchanOrStoretId);
+            } elseif ($userType == 'store') {
+                $merchantTransactions->where('store_id', $merchanOrStoretId);
+            }
+
+            // Filtering
             OrbitInput::get('payment_transaction_id', function($payment_transaction_id) use ($merchantTransactions)
             {
-                $merchantTransactions->where('payment_transactions.payment_transaction_id', $payment_transaction_id);
+                $merchantTransactions->where('payment_transactions.payment_transaction_id', 'like', "%$payment_transaction_id%");
             });
 
-            // Filter by object name
             OrbitInput::get('object_name', function($object_name) use ($merchantTransactions)
             {
                 $merchantTransactions->where('payment_transactions.object_name', 'like', "%$object_name%");
             });
 
-            // Filter by location
             OrbitInput::get('building_id', function($building_id) use ($merchantTransactions)
             {
                 $merchantTransactions->where('payment_transactions.building_id', $building_id);
             });
 
-            // Filter by status
+            OrbitInput::get('building_name', function($building_name) use ($merchantTransactions)
+            {
+                $merchantTransactions->where('payment_transactions.building_name', 'like', "%$building_name%");
+            });
+
             OrbitInput::get('status', function($status) use ($merchantTransactions)
             {
                 $merchantTransactions->where('payment_transactions.status', $status);
             });
 
-            // Filter by per merchant
             OrbitInput::get('merchant_id', function($merchant_id) use ($merchantTransactions)
             {
                 $merchantTransactions->where('payment_transactions.merchant_id', $merchant_id);
             });
 
-            // Filter by range date
+            OrbitInput::get('payment_method', function($payment_method) use ($merchantTransactions)
+            {
+                $merchantTransactions->where('payment_transactions.payment_method', 'like', "%$payment_method%");
+            });
+
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
@@ -167,8 +181,21 @@ class MerchantTransactionReportAPIController extends ControllerAPI
             {
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
-                    'merchant_name' => 'payment_transactions.created_at',
-                    'location_number' => 'location_count'
+                    'merchant_id' => 'merchant_id',
+                    'merchant_name' => 'merchant_name',
+                    'store_id' => 'store_id',
+                    'store_at_building' => 'store_at_building',
+                    'building_name' => 'building_name',
+                    'object_name' => 'object_name',
+                    'object_id' => 'object_id',
+                    'coupon_redemption_code' => 'coupon_redemption_code',
+                    'created_at' => 'date_tz',
+                    'payment_transaction_id' => 'payment_transaction_id',
+                    'external_payment_transaction_id' => 'external_payment_transaction_id',
+                    'payment_method' => 'payment_method',
+                    'amount' => 'amount',
+                    'currency' => 'currency',
+                    'status' => 'status'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {

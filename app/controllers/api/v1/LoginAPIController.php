@@ -278,9 +278,11 @@ class LoginAPIController extends ControllerAPI
 
             $roles = ['Merchant Transaction Admin'];
 
-            $user = User::with('role')
+            $user = User::select('users.*', 'roles.*', 'user_merchant_transactions.object_type as user_mtp_type')
+                        ->with('role')
                         ->active()
                         ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
+                        ->join('user_merchant_transactions', 'users.user_id', '=', 'user_merchant_transactions.user_id')
                         ->where('user_email', $email)
                         ->whereIn('roles.role_name', $roles)
                         ->first();
