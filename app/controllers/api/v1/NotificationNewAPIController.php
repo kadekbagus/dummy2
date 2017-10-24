@@ -68,6 +68,7 @@ class NotificationNewAPIController extends ControllerAPI
             $status = OrbitInput::post('status', 'draft');
             $notificationTokens = OrbitInput::post('notification_tokens');
             $userIds = OrbitInput::post('user_ids');
+            $targetAudience = OrbitInput::post('target_audience');
 
             $validator = Validator::make(
                 array(
@@ -77,7 +78,6 @@ class NotificationNewAPIController extends ControllerAPI
                     'contents'            => $contents,
                     'type'                => $type,
                     'status'              => $status,
-                    'notification_tokens' => $notificationTokens,
                 ),
                 array(
                     'launch_url'          => 'required',
@@ -86,7 +86,6 @@ class NotificationNewAPIController extends ControllerAPI
                     'contents'            => 'required',
                     'type'                => 'required',
                     'status'              => 'required',
-                    'notification_tokens' => 'required|array',
                 )
             );
 
@@ -96,8 +95,24 @@ class NotificationNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            if (empty($notificationTokens) && empty($userIds)) {
+                OrbitShopAPI::throwInvalidArgument('Notification tokens and user id is empty');
+            }
+
             if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
                 OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+            }
+
+            if (count($userIds) !== count(array_unique($userIds))) {
+                OrbitShopAPI::throwInvalidArgument('Duplicate user ids');
+            }
+
+            if (! empty($notificationTokens)) {
+                $notificationTokens = array_unique($notificationTokens);
+            }
+
+            if (! empty($userIds)) {
+                $userIds = array_unique($userIds);
             }
 
             $timestamp = date("Y-m-d H:i:s");
@@ -140,6 +155,8 @@ class NotificationNewAPIController extends ControllerAPI
             $response = $mongoClient->setFormParam($body)
                                     ->setEndPoint('notifications') // express endpoint
                                     ->request('POST');
+
+            Event::fire('orbit.notification.postnotification.after.save', array($this, $response));
 
             if ($status !== 'draft') { // send
                 $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
