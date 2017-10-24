@@ -77,10 +77,10 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                     'sortby' => $sort_by,
                 ),
                 array(
-                    'sortby' => 'in:merchant_id,merchant_name,store_id,store_name,store_at_building,store_name,object_id,coupon_redemption_code,created_at,payment_transaction_id,external_payment_transaction_id,payment_method,amount,currency,status',
+                    'sortby' => 'in:merchant_id,merchant_name,store_id,store_at_building,building_name,object_name,object_id,coupon_redemption_code,created_at,payment_transaction_id,external_payment_transaction_id,payment_method,amount,currency,status',
                 ),
                 array(
-                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: payment_transaction_id, external_payment_transaction_id, object_name, created_at, location, amount, currency, payment_method, status',
+                    'sortby.in' => 'The sort by argument you specified is not valid, the valid values are: merchant_id, merchant_name, store_id, store_at_building, building_name, object_name, object_id, coupon_redemption_code, created_at, payment_transaction_id, external_payment_transaction_id, payment_method, amount, currency, status',
                 )
             );
 
@@ -184,17 +184,18 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                     'merchant_id' => 'merchant_id',
                     'merchant_name' => 'merchant_name',
                     'store_id' => 'store_id',
-                    'store_name' => 'store_name',
                     'store_at_building' => 'store_at_building',
+                    'building_name' => 'building_name',
+                    'object_name' => 'object_name',
                     'object_id' => 'object_id',
                     'coupon_redemption_code' => 'coupon_redemption_code',
-                    'created_at' => 'created_at',
+                    'created_at' => 'date_tz',
                     'payment_transaction_id' => 'payment_transaction_id',
                     'external_payment_transaction_id' => 'external_payment_transaction_id',
                     'payment_method' => 'payment_method',
                     'amount' => 'amount',
                     'currency' => 'currency',
-                    'status' => 'status',
+                    'status' => 'status'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
