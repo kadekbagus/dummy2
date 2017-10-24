@@ -82,6 +82,7 @@
 <div id="main">
     <table style="width:100%">
         <thead>
+            <th style="text-align:left;">Base Merchant ID</th>
             <th style="text-align:left;">Merchant Name</th>
             <th style="text-align:left;">Store ID</th>
             <th style="text-align:left;">Store Name</th>
@@ -100,7 +101,8 @@
         <tbody>
         <?php while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
             <tr class="{{ $rowCounter % 2 === 0 ? 'zebra' : '' }}">
-                <td><?php echo $row->store_name; ?></td>
+                <td><?php echo $row->merchant_id; ?></td>
+                <td><?php echo $row->merchant_name; ?></td>
                 <td><?php echo $row->store_id; ?></td>
                 <td><?php echo $row->store_at_building; ?></td>
                 <td><?php echo $row->building_name; ?></td>
