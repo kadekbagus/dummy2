@@ -15,6 +15,7 @@ use DominoPOS\OrbitUploader\UploaderConfig;
 use DominoPOS\OrbitUploader\UploaderMessage;
 use DominoPOS\OrbitUploader\Uploader;
 use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class UploadAPIController extends ControllerAPI
 {
@@ -10841,6 +10842,185 @@ class UploadAPIController extends ControllerAPI
 
         $output = $this->render($httpCode);
         Event::fire('orbit.upload.postuploadwalletoperatorlogo.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload images for Notification.
+     *
+     * @author Shelgi <shelgi@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `news_id`                     (required) - ID of the news
+     * @param file|array `images`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadNotificationImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadnewsimage.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('notification.new')) {
+                $this->checkAuth();
+
+                // Try to check access control list, does this notification allowed to
+                // perform this action
+                $user = $this->api->user;
+
+                if (! ACL::create($user)->isAllowed('update_news')) {
+                    $editNewsLang = Lang::get('validation.orbit.actionlist.update_news');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editNewsLang));
+                    ACL::throwAccessForbidden($message);
+                }
+            } else {
+                // Comes from event
+                $user = App::make('orbit.upload.user');
+            }
+
+            // Load the orbit configuration for notification upload image
+            $uploadImageConfig = Config::get('orbit.upload.notification.main');
+            $elementName = $uploadImageConfig['name'];
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $images = OrbitInput::files($elementName);
+            $notificationId = OrbitInput::post('notification_id');
+            $messages = array(
+                'nomore.than.three' => Lang::get('validation.max.array', array(
+                    'max' => 3
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    $elementName    => $images,
+                    'notification_id'    => $notificationId,
+                ),
+                array(
+                    $elementName    => 'required|array|nomore.than.three',
+                    'notification_id'    => 'required',
+                ),
+                $messages
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $mongoConfig = Config::get('database.mongodb');
+            $mongoClient = MongoClient::create($mongoConfig);
+            $notif = $mongoClient->setEndPoint("notifications/$notificationId")->request('GET');
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($notif, $notificationId)
+            {
+                $slug = Str::slug($notif->title);
+                $file['new']->name = sprintf('%s-%s-%s', $notificationId, $slug, time());
+            };
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadImageConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($images);
+
+            // delete existing notification image
+            $isUpdate = false;
+            $oldPath = array();
+            if (! empty($notif->data->attachment_url_realpath)) {
+                $isUpdate = true;
+                //get old path before delete
+                $oldPath['path'] = $oldMedia->path;
+                $oldPath['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
+                @unlink($notif->data->attachment_url_realpath);    
+            }
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $uploaded['extras'] = $extras;
+
+            $this->response->data = $uploaded;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.news.main');
+
+            Event::fire('orbit.upload.postuploadnewsimage.after.commit', array($this, $news, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadnewsimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadnewsimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadnewsimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadnewsimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('news.new, news.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadnewsimage.before.render', array($this, $output));
 
         return $output;
     }
