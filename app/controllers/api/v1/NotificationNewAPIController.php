@@ -99,19 +99,17 @@ class NotificationNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Notification tokens and user id is empty');
             }
 
-            if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
-                OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
-            }
-
-            if (count($userIds) !== count(array_unique($userIds))) {
-                OrbitShopAPI::throwInvalidArgument('Duplicate user ids');
-            }
-
             if (! empty($notificationTokens)) {
+                if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
+                    OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+                }
                 $notificationTokens = array_unique($notificationTokens);
             }
 
             if (! empty($userIds)) {
+                if (count($userIds) !== count(array_unique($userIds))) {
+                    OrbitShopAPI::throwInvalidArgument('Duplicate user ids');
+                }
                 $userIds = array_unique($userIds);
             }
 
@@ -156,7 +154,7 @@ class NotificationNewAPIController extends ControllerAPI
                                     ->setEndPoint('notifications') // express endpoint
                                     ->request('POST');
 
-            Event::fire('orbit.notification.postnotification.after.save', array($this, $response));
+            Event::fire('orbit.notification.postnotification.after.save', array($this, $response->data->_id));
 
             if ($status !== 'draft') { // send
                 $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
