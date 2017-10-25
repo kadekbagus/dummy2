@@ -13,14 +13,15 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  * @param NotificationNewAPIController $controller - The instance of the NewsAPIController or its subclass
  * @param Notification $notification - Instance of object notification
  */
-Event::listen('orbit.notification.postnotification.after.save', function($controller, $notification)
+Event::listen('orbit.notification.postnotification.after.save', function($controller, $notificationId)
 {
     $files = OrbitInput::files('images');
     if (! $files) {
         return;
     }
 
-    $_POST['notification_id'] = $notification->data->_id;
+    $_POST['notification_id'] = $notificationId;
+
     // This will be used on UploadAPIController
     App::instance('orbit.upload.user', $controller->api->user);
 

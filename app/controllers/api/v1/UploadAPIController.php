@@ -10859,6 +10859,10 @@ class UploadAPIController extends ControllerAPI
      */
     public function postUploadNotificationImage()
     {
+        $notificationId = OrbitInput::post('notification_id');
+        $mongoConfig = Config::get('database.mongodb');
+        $mongoClient = MongoClient::create($mongoConfig);
+
         try {
             $httpCode = 200;
 
@@ -10891,7 +10895,6 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $images = OrbitInput::files($elementName);
-            $notificationId = OrbitInput::post('notification_id');
             $messages = array(
                 'nomore.than.three' => Lang::get('validation.max.array', array(
                     'max' => 3
@@ -10916,15 +10919,13 @@ class UploadAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $mongoConfig = Config::get('database.mongodb');
-            $mongoClient = MongoClient::create($mongoConfig);
             $notif = $mongoClient->setEndPoint("notifications/$notificationId")->request('GET');
 
             // Callback to rename the file, we will format it as follow
             // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
             $renameFile = function($uploader, &$file, $dir) use ($notif, $notificationId)
             {
-                $slug = Str::slug($notif->title);
+                $slug = Str::slug($notif->data->title);
                 $file['new']->name = sprintf('%s-%s-%s', $notificationId, $slug, time());
             };
 
@@ -10948,8 +10949,19 @@ class UploadAPIController extends ControllerAPI
                 $oldPath['cdn_url'] = $oldMedia->cdn_url;
                 $oldPath['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
 
-                @unlink($notif->data->attachment_url_realpath);    
+                @unlink($notif->data->attachment_url_realpath);
             }
+
+            // update mongodb
+            $body = [
+                '_id'                 => $notificationId,
+                'attachment_path'     => $uploaded[0]['path'],
+                'attachment_realpath' => $uploaded[0]['realpath'],
+            ];
+
+            $responseUpdate = $mongoClient->setFormParam($body)
+                                    ->setEndPoint('notifications') // express endpoint
+                                    ->request('PUT');
 
             $extras = new \stdClass();
             $extras->isUpdate = $isUpdate;
@@ -10958,10 +10970,7 @@ class UploadAPIController extends ControllerAPI
 
             $this->response->data = $uploaded;
             $this->response->message = Lang::get('statuses.orbit.uploaded.news.main');
-
-            Event::fire('orbit.upload.postuploadnewsimage.after.commit', array($this, $news, $uploader));
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.upload.postuploadnewsimage.access.forbidden', array($this, $e));
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -10970,9 +10979,7 @@ class UploadAPIController extends ControllerAPI
             $httpCode = 403;
 
             // Rollback the changes
-            if (! $this->calledFrom('news.new, news.update')) {
-                $this->rollBack();
-            }
+            $deleteNotif = $mongoClient->setEndPoint("notifications/$notificationId")->request('DELETE');
         } catch (InvalidArgsException $e) {
             Event::fire('orbit.upload.postuploadnewsimage.invalid.arguments', array($this, $e));
 
@@ -10983,9 +10990,7 @@ class UploadAPIController extends ControllerAPI
             $httpCode = 403;
 
             // Rollback the changes
-            if (! $this->calledFrom('news.new, news.update')) {
-                $this->rollBack();
-            }
+            $deleteNotif = $mongoClient->setEndPoint("notifications/$notificationId")->request('DELETE');
         } catch (QueryException $e) {
             Event::fire('orbit.upload.postuploadnewsimage.query.error', array($this, $e));
 
@@ -11002,9 +11007,7 @@ class UploadAPIController extends ControllerAPI
             $httpCode = 500;
 
             // Rollback the changes
-            if (! $this->calledFrom('news.new, news.update')) {
-                $this->rollBack();
-            }
+            $deleteNotif = $mongoClient->setEndPoint("notifications/$notificationId")->request('DELETE');
         } catch (Exception $e) {
             Event::fire('orbit.upload.postuploadnewsimage.general.exception', array($this, $e));
 
@@ -11014,9 +11017,7 @@ class UploadAPIController extends ControllerAPI
             $this->response->data = null;
 
             // Rollback the changes
-            if (! $this->calledFrom('news.new, news.update')) {
-                $this->rollBack();
-            }
+            $deleteNotif = $mongoClient->setEndPoint("notifications/$notificationId")->request('DELETE');
         }
 
         $output = $this->render($httpCode);
