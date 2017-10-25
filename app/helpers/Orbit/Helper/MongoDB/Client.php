@@ -171,7 +171,12 @@ class Client
                 $options['form_params'] = $this->formParam;
             }
 
-            $response = $this->client->request($method, $this->endpoint, $options);
+            if ($method === 'DELETE') {
+                $response = $this->client->request($method, $this->endpoint);
+                // print_r(json_decode($response->getBody()->getContents())); die();
+            } else {
+                $response = $this->client->request($method, $this->endpoint, $options);
+            }
 
             return json_decode($response->getBody()->getContents());
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
