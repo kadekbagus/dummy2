@@ -4,9 +4,14 @@
  */
 
 /**
- * Create new target audience
+ * Create target audience
  */
 Route::post('/app/v1/target-audience/new', 'IntermediateAuthController@TargetAudience_postNewTargetAudience');
+
+/**
+ * Update target audience
+ */
+Route::post('/app/v1/target-audience/update', 'IntermediateAuthController@TargetAudience_postUpdateTargetAudience');
 
 /**
  * Get search target audience

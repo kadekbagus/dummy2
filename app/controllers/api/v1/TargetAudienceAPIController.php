@@ -61,7 +61,7 @@ class TargetAudienceAPIController extends ControllerAPI
             $notificationTokens = (array) $notificationTokens;
             $notificationUserId = OrbitInput::post('notification_user_id');
             $notificationUserId = (array) $notificationUserId;
-            $status = OrbitInput::post('status', 'active');
+            $status = OrbitInput::post('status');
 
             $validator = Validator::make(
                 array(
@@ -90,24 +90,6 @@ class TargetAudienceAPIController extends ControllerAPI
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->toDateTimeString();
 
-            // $headings = @json_decode($headings);
-            // if (json_last_error() != JSON_ERROR_NONE) {
-            //     OrbitShopAPI::throwInvalidArgument('Heading JSON not valid');
-            // }
-
-            // $contents = @json_decode($contents);
-            // if (json_last_error() != JSON_ERROR_NONE) {
-            //     OrbitShopAPI::throwInvalidArgument('Contents JSON not valid');
-            // }
-
-            // if (empty($headings->$defaultLanguage)) {
-            //     OrbitShopAPI::throwInvalidArgument('Heading in default language is empty');
-            // }
-
-            // if (empty($contents->$defaultLanguage)) {
-            //     OrbitShopAPI::throwInvalidArgument('Content in default language is empty');
-            // }
-
             $body = [
                 'target_name'        => $targetAudienceName,
                 'target_description' => $targetAudienceDescription,
@@ -120,40 +102,6 @@ class TargetAudienceAPIController extends ControllerAPI
             $response = $mongoClient->setFormParam($body)
                                     ->setEndPoint('target-audience-notifications') // express endpoint
                                     ->request('POST');
-
-            // if ($status !== 'draft') { // send
-            //     $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
-            //     $mongoNotifId = $response->data->_id;
-
-            //     // add query string for activity recording
-            //     $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
-            //     if (parse_url($launchUrl, PHP_URL_QUERY)) { // if launch url containts query string
-            //         $newUrl =  $launchUrl . '&notif_id=' . $mongoNotifId;
-            //     }
-
-            //     $data = [
-            //         'headings'           => $headings,
-            //         'contents'           => $contents,
-            //         'url'                => $newUrl,
-            //         'include_player_ids' => $notificationTokens,
-            //         'ios_attachments'    => $attachmentUrl,
-            //         'big_picture'        => $attachmentUrl,
-            //         'adm_big_picture'    => $attachmentUrl,
-            //         'chrome_big_picture' => $attachmentUrl,
-            //         'chrome_web_image'   => $attachmentUrl,
-            //     ];
-
-            //     $oneSignal = new OneSignal($oneSignalConfig);
-            //     $newNotif = $oneSignal->notifications->add($data);
-
-            //     $body['sent_at'] = $dateTime;
-            //     $body['vendor_notification_id'] = $newNotif->id;
-            //     $body['_id'] = $mongoNotifId;
-
-            //     $response = $mongoClient->setFormParam($body)
-            //                         ->setEndPoint('notifications') // express endpoint
-            //                         ->request('PUT');
-            // }
 
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -369,8 +317,147 @@ class TargetAudienceAPIController extends ControllerAPI
         return $output;
     }
 
-    protected function quote($arg)
+    /**
+     * POST - post update target audience
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string        `target_audience_name`
+     * @param string        `target_audience_description`
+     * @param string        `status`
+     * @param array         `notification_tokens`
+     * @param array         `notification_user_id`
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     */
+    public function postUpdateTargetAudience()
     {
-        return DB::connection()->getPdo()->quote($arg);
+        try {
+            $httpCode = 200;
+
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $targetAudienceId = OrbitInput::post('target_audience_id');
+            $targetAudienceName = OrbitInput::post('target_audience_name');
+            $targetAudienceDescription = OrbitInput::post('target_audience_description');
+            $notificationTokens = OrbitInput::post('notification_token');
+            $notificationTokens = (array) $notificationTokens;
+            $notificationUserId = OrbitInput::post('notification_user_id');
+            $notificationUserId = (array) $notificationUserId;
+            $status = OrbitInput::post('status');
+
+            $validator = Validator::make(
+                array(
+                    'target_audience_id'          => $targetAudienceId,
+                    'target_audience_name'        => $targetAudienceName,
+                    'target_audience_description' => $targetAudienceDescription,
+                    'status'                      => $status,
+                ),
+                array(
+                    'target_audience_id'          => 'required',
+                    'target_audience_name'        => 'required',
+                    'target_audience_description' => 'required',
+                    'status'                      => 'in:active,inactive'
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
+                OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+            }
+
+            $mongoClient = MongoClient::create($mongoConfig);
+            $oldNotification = $mongoClient->setEndPoint("target-audience-notifications/$targetAudienceId")->request('GET');
+
+            if (empty($oldNotification)) {
+                $errorMessage = 'Target Audience ID is not found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateTime = $date->toDateTimeString();
+
+            $body = [
+                '_id'                => $targetAudienceId,
+                'target_name'        => $targetAudienceName,
+                'target_description' => $targetAudienceDescription,
+                'tokens'             => $notificationTokens,
+                'user_ids'           => $notificationUserId,
+                'status'             => $status,
+                'created_at'         => $dateTime
+            ];
+
+            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
+            $response = $mongoClient->setEndPoint('target-audience-notifications') // express endpoint
+                                    ->request('PUT');
+
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->data = $response->data;;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            //$this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $message = $e->getMessage();
+            if ($e->getCode() == 8701 && strpos($message, 'Incorrect player_id format in include_player_ids') !== false) {
+                $message = 'Notification token is not valid';
+            }
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $message;
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
     }
+
 }
