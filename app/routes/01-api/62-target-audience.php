@@ -4,11 +4,19 @@
  */
 
 /**
- * Create new target audience
+ * Create target audience
  */
 Route::post('/api/v1/target-audience/new', function()
 {
     return TargetAudienceAPIController::create()->postNewTargetAudience();
+});
+
+/**
+ * Update target audience
+ */
+Route::post('/api/v1/target-audience/update', function()
+{
+    return TargetAudienceAPIController::create()->postUpdateTargetAudience();
 });
 
 /**
