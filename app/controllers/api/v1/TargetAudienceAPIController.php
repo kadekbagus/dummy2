@@ -263,16 +263,31 @@ class TargetAudienceAPIController extends ControllerAPI
 
             $mongoConfig = Config::get('database.mongodb');
             $mongoClient = MongoClient::create($mongoConfig);
-            $response = $mongoClient->setQueryString($queryString)
-                                    ->setEndPoint('target-audience-notifications')
-                                    ->request('GET');
+            $response = null;
+            $filter = false;
+            $data = null;
 
-            $listOfRec = $response->data;
+            // Filter target audience id
+            OrbitInput::get('target_audience_id', function($target_audience_id) use ($response, $mongoClient, &$filter, &$data)
+            {
+                $filter = true;
+                $response = $mongoClient->setEndPoint("target-audience-notifications/$target_audience_id")
+                                        ->request('GET');
+                $data = $response->data;
+            });
 
-            $data = new \stdclass();
-            $data->returned_records = $listOfRec->returned_records;
-            $data->total_records = $listOfRec->total_records;
-            $data->records = $listOfRec->records;
+            if (!$filter) {
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint('target-audience-notifications')
+                                        ->request('GET');
+
+                $listOfRec = $response->data;
+
+                $data = new \stdclass();
+                $data->returned_records = $listOfRec->returned_records;
+                $data->total_records = $listOfRec->total_records;
+                $data->records = $listOfRec->records;
+            }
 
             $this->response->data = $data;
             $this->response->code = 0;
