@@ -16,6 +16,7 @@ use Queue;
 use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class CdnUploadUpdateQueue
 {
@@ -44,21 +45,17 @@ class CdnUploadUpdateQueue
         $useRelativePath = (! empty($data['use_relative_path'])) ? $data['use_relative_path'] : TRUE;
         $bucketName = (! empty($data['bucket_name'])) ? $data['bucket_name'] : '';
         $esCountry = (! empty($data['es_country'])) ? $data['es_country'] : '';
+        $dbSource = (! empty($data['db_source'])) ? $data['db_source'] : 'mysql';
+
+        $mongoConfig = Config::get('database.mongodb');
+        $mongoClient = MongoClient::create($mongoConfig);
 
         try {
             $sdk = new Aws\Sdk(Config::get('orbit.aws-sdk', []));
             $s3 = $sdk->createS3();
 
-            $media = Media::select('media_id', 'path', 'realpath', 'cdn_url', 'cdn_bucket_name', 'mime_type')->where('object_id', $objectId);
-
-            if (! empty($mediaNameId)) {
-                $media->where('media_name_id', $mediaNameId);
-            }
-
-            $media = $media->get();
             $message = array();
             $publicPath = public_path();
-
             $genericUploadConfig = [
                 'Bucket' => $bucketName
             ];
@@ -67,30 +64,83 @@ class CdnUploadUpdateQueue
             $genericUploadConfig = $genericUploadConfig + Config::get('orbit.aws-sdk.upload-metadata', [
                 'CacheControl' => 'public, max-age=2592000']);
 
-            foreach ($media as $file) {
-                $sourceFile = $useRelativePath ? $publicPath . '/' . $file->path : $file->realpath;
+            if ($dbSource === 'mysql') {
+                $localMedia = Media::select('media_id', 'path', 'realpath', 'cdn_url', 'cdn_bucket_name', 'mime_type')->where('object_id', $objectId);
 
-                // insert new
+                if (! empty($mediaNameId)) {
+                    $localMedia->where('media_name_id', $mediaNameId);
+                }
+
+                $localMedia = $localMedia->get();
+
+                foreach ($localMedia as $localFile) {
+                    $sourceFile = $useRelativePath ? $publicPath . '/' . $localFile->path : $localFile->realpath;
+
+                    $uploadConfig = [
+                        'Key' => $localFile->path,
+                        'SourceFile' => $sourceFile,
+                        'ContentType' => $localFile->mime_type
+                    ];
+                    $uploadConfig = $uploadConfig + $genericUploadConfig;
+                    $response = $s3->putObject($uploadConfig);
+
+                    $s3Media = Media::find($localFile->media_id);
+                    $s3Media->cdn_url = $response['ObjectURL'];
+                    $s3Media->cdn_bucket_name = $bucketName;
+                    $s3Media->save();
+
+                    $contentMessage = sprintf('Upload file to S3; Status: OK; Object_id: %s; Bucket_name: %s; File: %s;',
+                                        $objectId,
+                                        $bucketName,
+                                        $response['ObjectURL']);
+
+                    if (! empty($mediaNameId)) {
+                        $contentMessage = sprintf('Upload file to S3; Status: OK; Media name: %s, Object_id: %s; Bucket_name: %s; File: %s;',
+                                    $mediaNameId,
+                                    $objectId,
+                                    $bucketName,
+                                    $response['ObjectURL']);
+                    }
+
+                    $message[] = $contentMessage;
+                    Log::info($contentMessage);
+                }
+
+            } elseif ($dbSource === 'mongoDB') {
+                switch ($esType) {
+                    case 'notification':
+                        $localMedia = $mongoClient->setEndPoint("notifications/$objectId")->request('GET');
+                        break;
+                }
+
+                $sourceFile = $useRelativePath ? $publicPath . '/' . $localMedia->data->path : $localMedia->data->realpath;
+
                 $uploadConfig = [
-                    'Key' => $file->path,
+                    'Key' => $localMedia->data->path,
                     'SourceFile' => $sourceFile,
-                    'ContentType' => $file->mime_type
+                    'ContentType' => $localMedia->data->mime_type
                 ];
                 $uploadConfig = $uploadConfig + $genericUploadConfig;
                 $response = $s3->putObject($uploadConfig);
 
-                $s3Media = Media::find($file->media_id);
-                $s3Media->cdn_url = $response['ObjectURL'];
-                $s3Media->cdn_bucket_name = $bucketName;
-                $s3Media->save();
+                // update mongodb
+                $body = [
+                    '_id'             => $objectId,
+                    'cdn_url'         => $response['ObjectURL'],
+                    'cdn_bucket_name' => $bucketName
+                ];
 
-                $contentMessage = sprintf('Update file to S3; Status: OK; Object_id: %s; Bucket_name: %s; File: %s;',
-                                $objectId,
-                                $bucketName,
-                                $response['ObjectURL']);
+                $responseUpdate = $mongoClient->setFormParam($body)
+                                        ->setEndPoint('notifications') // express endpoint
+                                        ->request('PUT');
+
+                $contentMessage = sprintf('Upload file to S3; Status: OK; Object_id: %s; Bucket_name: %s; File: %s;',
+                                        $objectId,
+                                        $bucketName,
+                                        $response['ObjectURL']);
 
                 if (! empty($mediaNameId)) {
-                    $contentMessage = sprintf('Update file to S3; Status: OK; Media name: %s, Object_id: %s; Bucket_name: %s; File: %s;',
+                    $contentMessage = sprintf('Upload file to S3; Status: OK; Media name: %s, Object_id: %s; Bucket_name: %s; File: %s;',
                                 $mediaNameId,
                                 $objectId,
                                 $bucketName,

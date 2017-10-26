@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\OneSignal\OneSignal;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 class NotificationNewAPIController extends ControllerAPI
 {
@@ -69,6 +70,7 @@ class NotificationNewAPIController extends ControllerAPI
             $notificationTokens = OrbitInput::post('notification_tokens');
             $userIds = OrbitInput::post('user_ids');
             $targetAudience = OrbitInput::post('target_audience');
+            $files = OrbitInput::files('images');
 
             $validator = Validator::make(
                 array(
@@ -148,6 +150,7 @@ class NotificationNewAPIController extends ControllerAPI
                 'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
                 'notification_tokens' => $notificationTokens,
                 'user_ids'            => $userIds,
+                'target_audience_ids' => $targetAudience,
             ];
 
             $response = $mongoClient->setFormParam($body)
@@ -158,7 +161,16 @@ class NotificationNewAPIController extends ControllerAPI
 
             if ($status !== 'draft') { // send
                 $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
+
                 $mongoNotifId = $response->data->_id;
+                $imageUrl = $attachmentUrl;
+                if ($files) {
+                    $notif = $mongoClient->setEndPoint("notifications/$mongoNotifId")->request('GET');
+
+                    $cdnConfig = Config::get('orbit.cdn');
+                    $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+                    $imageUrl = $imgUrl->getImageUrl($notif->data->attachment_path, $notif->data->cdn_url);
+                }
 
                 // add query string for activity recording
                 $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
@@ -171,11 +183,11 @@ class NotificationNewAPIController extends ControllerAPI
                     'contents'           => $contents,
                     'url'                => $newUrl,
                     'include_player_ids' => $notificationTokens,
-                    'ios_attachments'    => $attachmentUrl,
-                    'big_picture'        => $attachmentUrl,
-                    'adm_big_picture'    => $attachmentUrl,
-                    'chrome_big_picture' => $attachmentUrl,
-                    'chrome_web_image'   => $attachmentUrl,
+                    'ios_attachments'    => $imageUrl,
+                    'big_picture'        => $imageUrl,
+                    'adm_big_picture'    => $imageUrl,
+                    'chrome_big_picture' => $imageUrl,
+                    'chrome_web_image'   => $imageUrl,
                 ];
 
                 $oneSignal = new OneSignal($oneSignalConfig);

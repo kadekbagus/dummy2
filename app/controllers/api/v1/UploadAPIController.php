@@ -10957,6 +10957,7 @@ class UploadAPIController extends ControllerAPI
                 '_id'                 => $notificationId,
                 'attachment_path'     => $uploaded[0]['path'],
                 'attachment_realpath' => $uploaded[0]['realpath'],
+                'mime_type'           => $uploaded[0]['mime_type'],
             ];
 
             $responseUpdate = $mongoClient->setFormParam($body)
