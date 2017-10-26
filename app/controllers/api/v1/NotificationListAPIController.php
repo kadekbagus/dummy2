@@ -135,6 +135,26 @@ class NotificationListAPIController extends ControllerAPI
                                     ->request('GET');
             $listOfRec = $response->data;
 
+            // get target audience
+            foreach ($listOfRec->records as $notif) {
+                $targetAudience = null;
+                if (! empty($notif->target_audience_ids)) {
+                    $queryString = [
+                        'sortBy'     => 'target_name',
+                        'sortMode'   => 'asc',
+                        'status'     => 'active',
+                        'target_ids' => $notif->target_audience_ids,
+                    ];
+
+                    $target = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint('target-audience-notifications')
+                                        ->request('GET');
+
+                    $targetAudience = $target->data;
+                }
+                $notif->target_audience = $targetAudience;
+            }
+
             $data = new \stdclass();
             $data->returned_records = $listOfRec->returned_records;
             $data->total_records = $listOfRec->total_records;
