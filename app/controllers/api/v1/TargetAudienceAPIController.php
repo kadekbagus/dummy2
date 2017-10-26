@@ -58,10 +58,13 @@ class TargetAudienceAPIController extends ControllerAPI
             $targetAudienceName = OrbitInput::post('target_audience_name');
             $targetAudienceDescription = OrbitInput::post('target_audience_description');
             $notificationTokens = OrbitInput::post('notification_token');
-            $notificationTokens = (array) $notificationTokens;
+            //$notificationTokens = (array) $notificationTokens;
             $notificationUserId = OrbitInput::post('notification_user_id');
-            $notificationUserId = (array) $notificationUserId;
+            //$notificationUserId = (array) $notificationUserId;
             $status = OrbitInput::post('status');
+
+            $notificationTokens = explode(",", $notificationTokens);
+            $notificationUserId = explode(",", $notificationUserId);
 
             $validator = Validator::make(
                 array(
@@ -251,18 +254,43 @@ class TargetAudienceAPIController extends ControllerAPI
                 'sortMode'    => $sortMode
             ];
 
+            OrbitInput::get('status', function($status) use (&$queryString)
+            {
+                $queryString['status'] = $status;
+            });
+
+            OrbitInput::get('target_ids', function($target_ids) use (&$queryString)
+            {
+                $queryString['target_ids'] = $target_ids;
+            });
+
             $mongoConfig = Config::get('database.mongodb');
             $mongoClient = MongoClient::create($mongoConfig);
-            $response = $mongoClient->setQueryString($queryString)
-                                    ->setEndPoint('target-audience-notifications')
-                                    ->request('GET');
+            $response = null;
+            $filter = false;
+            $data = null;
 
-            $listOfRec = $response->data;
+            // Filter target audience id
+            OrbitInput::get('target_audience_id', function($target_audience_id) use ($response, $mongoClient, &$filter, &$data)
+            {
+                $filter = true;
+                $response = $mongoClient->setEndPoint("target-audience-notifications/$target_audience_id")
+                                        ->request('GET');
+                $data = $response->data;
+            });
 
-            $data = new \stdclass();
-            $data->returned_records = $listOfRec->returned_records;
-            $data->total_records = $listOfRec->total_records;
-            $data->records = $listOfRec->records;
+            if (!$filter) {
+                $response = $mongoClient->setQueryString($queryString)
+                                        ->setEndPoint('target-audience-notifications')
+                                        ->request('GET');
+
+                $listOfRec = $response->data;
+
+                $data = new \stdclass();
+                $data->returned_records = $listOfRec->returned_records;
+                $data->total_records = $listOfRec->total_records;
+                $data->records = $listOfRec->records;
+            }
 
             $this->response->data = $data;
             $this->response->code = 0;
@@ -356,10 +384,13 @@ class TargetAudienceAPIController extends ControllerAPI
             $targetAudienceName = OrbitInput::post('target_audience_name');
             $targetAudienceDescription = OrbitInput::post('target_audience_description');
             $notificationTokens = OrbitInput::post('notification_token');
-            $notificationTokens = (array) $notificationTokens;
+            //$notificationTokens = (array) $notificationTokens;
             $notificationUserId = OrbitInput::post('notification_user_id');
-            $notificationUserId = (array) $notificationUserId;
+            //$notificationUserId = (array) $notificationUserId;
             $status = OrbitInput::post('status');
+
+            $notificationTokens = explode(",", $notificationTokens);
+            $notificationUserId = explode(",", $notificationUserId);
 
             $validator = Validator::make(
                 array(
@@ -386,6 +417,7 @@ class TargetAudienceAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
             }
 
+            $mongoConfig = Config::get('database.mongodb');
             $mongoClient = MongoClient::create($mongoConfig);
             $oldNotification = $mongoClient->setEndPoint("target-audience-notifications/$targetAudienceId")->request('GET');
 
@@ -409,12 +441,14 @@ class TargetAudienceAPIController extends ControllerAPI
             ];
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
-            $response = $mongoClient->setEndPoint('target-audience-notifications') // express endpoint
+            $update = $mongoClient->setEndPoint('target-audience-notifications') // express endpoint
                                     ->request('PUT');
+
+            $response = $mongoClient->setEndPoint("target-audience-notifications/$targetAudienceId")->request('GET');
 
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->data = $response->data;;
+            $this->response->data = $response->data;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
