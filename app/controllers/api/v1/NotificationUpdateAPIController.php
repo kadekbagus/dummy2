@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\OneSignal\OneSignal;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 class NotificationUpdateAPIController extends ControllerAPI
 {
@@ -68,6 +69,8 @@ class NotificationUpdateAPIController extends ControllerAPI
             $notificationTokens = OrbitInput::post('notification_tokens');
             $userIds = OrbitInput::post('user_ids');
             $mongoConfig = Config::get('database.mongodb');
+            $targetAudience = OrbitInput::post('target_audience');
+            $files = OrbitInput::files('images');
 
             $validator = Validator::make(
                 array(
@@ -76,8 +79,7 @@ class NotificationUpdateAPIController extends ControllerAPI
                     'headings'            => $headings,
                     'contents'            => $contents,
                     'type'                => $type,
-                    'status'              => $status,
-                    'notification_tokens' => $notificationTokens,
+                    'status'              => $status
                 ),
                 array(
                     'notification_id'     => 'required',
@@ -85,8 +87,7 @@ class NotificationUpdateAPIController extends ControllerAPI
                     'headings'            => 'required',
                     'contents'            => 'required',
                     'type'                => 'required',
-                    'status'              => 'required',
-                    'notification_tokens' => 'required|array',
+                    'status'              => 'required'
                 )
             );
 
@@ -96,8 +97,22 @@ class NotificationUpdateAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
-                OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+            if (empty($notificationTokens) && empty($userIds)) {
+                OrbitShopAPI::throwInvalidArgument('Notification tokens and user id is empty');
+            }
+
+            if (! empty($notificationTokens)) {
+                if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
+                    OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+                }
+                $notificationTokens = array_unique($notificationTokens);
+            }
+
+            if (! empty($userIds)) {
+                if (count($userIds) !== count(array_unique($userIds))) {
+                    OrbitShopAPI::throwInvalidArgument('Duplicate user ids');
+                }
+                $userIds = array_unique($userIds);
             }
 
             $mongoClient = MongoClient::create($mongoConfig);
@@ -148,10 +163,22 @@ class NotificationUpdateAPIController extends ControllerAPI
                 'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
                 'notification_tokens' => $notificationTokens,
                 'user_ids'            => $userIds,
+                'target_audience_ids' => $targetAudience,
             ];
+
+            Event::fire('orbit.notification.postnotification.after.save', array($this, $notificationId));
 
             if ($status !== 'draft') {
                 $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
+
+                $imageUrl = $attachmentUrl;
+                if ($files) {
+                    $notif = $mongoClient->setEndPoint("notifications/$notificationId")->request('GET');
+
+                    $cdnConfig = Config::get('orbit.cdn');
+                    $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+                    $imageUrl = $imgUrl->getImageUrl($notif->data->attachment_path, $notif->data->cdn_url);
+                }
 
                 // add query string for activity recording
                 $newUrl =  $launchUrl . '?notif_id=' . $notificationId;
@@ -164,11 +191,11 @@ class NotificationUpdateAPIController extends ControllerAPI
                     'contents'           => $contents,
                     'url'                => $newUrl,
                     'include_player_ids' => $notificationTokens,
-                    'ios_attachments'    => $attachmentUrl,
-                    'big_picture'        => $attachmentUrl,
-                    'adm_big_picture'    => $attachmentUrl,
-                    'chrome_big_picture' => $attachmentUrl,
-                    'chrome_web_image'   => $attachmentUrl,
+                    'ios_attachments'    => $imageUrl,
+                    'big_picture'        => $imageUrl,
+                    'adm_big_picture'    => $imageUrl,
+                    'chrome_big_picture' => $imageUrl,
+                    'chrome_web_image'   => $imageUrl,
                 ];
 
                 $oneSignal = new OneSignal($oneSignalConfig);

@@ -48,12 +48,12 @@ Event::listen('orbit.notification.postnotification.after.save', function($contro
         }
 
         Queue::push($queueFile, [
-            'object_id'     => $news->news_id,
-            'media_name_id' => $response->data['extras']->mediaNameId,
-            'old_path'      => $response->data['extras']->oldPath,
-            'es_type'       => $news->object_type,
-            'es_id'         => $news->news_id,
-            'bucket_name'   => $bucketName
+            'object_id'   => $notificationId,
+            'old_path'    => $response->data['extras']->oldPath,
+            'es_type'     => 'notification',
+            'es_id'       => $notificationId,
+            'bucket_name' => $bucketName,
+            'db_source'   => 'mongoDB',
         ], $queueName);
     }
 });

@@ -90,7 +90,24 @@ class NotificationDetailAPIController extends ControllerAPI
                 }
             }
 
+            $targetAudience = null;
+            if (! empty($notif->data->target_audience_ids)) {
+                $queryString = [
+                    'sortBy'     => 'target_name',
+                    'sortMode'   => 'asc',
+                    'status'     => 'active',
+                    'target_ids' => $notif->data->target_audience_ids,
+                ];
+
+                $target = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint('target-audience-notifications')
+                                    ->request('GET');
+
+                $targetAudience = $target->data;
+            }
+
             $listOfRec = $notif->data;
+            $listOfRec->target_audience = $targetAudience;
             $listOfRec->successful = $successful;
             $listOfRec->failed = $failed;
             $listOfRec->converted = $converted;
