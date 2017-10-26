@@ -251,6 +251,11 @@ class TargetAudienceAPIController extends ControllerAPI
                 'sortMode'    => $sortMode
             ];
 
+            OrbitInput::get('status', function($status) use (&$queryString)
+            {
+                $queryString['status'] = $status;
+            });
+
             $mongoConfig = Config::get('database.mongodb');
             $mongoClient = MongoClient::create($mongoConfig);
             $response = $mongoClient->setQueryString($queryString)
