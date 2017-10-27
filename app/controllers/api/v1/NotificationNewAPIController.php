@@ -194,6 +194,7 @@ class NotificationNewAPIController extends ControllerAPI
 
                     $oneSignal = new OneSignal($oneSignalConfig);
                     $newNotif = $oneSignal->notifications->add($data);
+                    $bodyUpdate['vendor_notification_id'] = $newNotif->id;
                 }
 
                 // send as inApps notification
@@ -202,7 +203,7 @@ class NotificationNewAPIController extends ControllerAPI
                         $bodyInApps = [
                             'user_id'       => $userId,
                             'token'         => null,
-                            'notifications' => $notif,
+                            'notifications' => $notif->data,
                             'send_status'   => 'sent',
                             'is_viewed'     => false,
                             'is_read'       => false,
@@ -215,13 +216,12 @@ class NotificationNewAPIController extends ControllerAPI
                     }
                 }
 
-                $body['sent_at'] = $dateTime;
-                $body['vendor_notification_id'] = $newNotif->id;
-                $body['_id'] = $mongoNotifId;
+                $bodyUpdate['sent_at'] = $dateTime;
+                $bodyUpdate['_id'] = $mongoNotifId;
 
-                $response = $mongoClient->setFormParam($body)
-                                ->setEndPoint('notifications') // express endpoint
-                                ->request('PUT');
+                $responseUpdate = $mongoClient->setFormParam($bodyUpdate)
+                                            ->setEndPoint('notifications') // express endpoint
+                                            ->request('PUT');
             }
 
             $this->response->code = 0;
