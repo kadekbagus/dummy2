@@ -52,10 +52,24 @@ class UserNotificationListAPIController extends PubControllerAPI
             $mongoConfig = Config::get('database.mongodb');
             $mongoClient = MongoClient::create($mongoConfig);
 
-            $queryString = [
-                'take'    => $take,
-                'skip'    => $skip,
+            $updateQueryString = [
                 'user_id' => $user->user_id
+            ];
+
+            $bodyUpdate = [
+                'is_viewed' => true
+            ];
+
+            $response = $mongoClient->setQueryString($updateQueryString)
+                                    ->setFormParam($bodyUpdate)
+                                    ->setEndPoint('user-notifications') // express endpoint
+                                    ->request('PUT');
+
+            $queryString = [
+                'take'       => $take,
+                'skip'       => $skip,
+                'user_id'    => $user->user_id,
+                'multi_sort' => [['is_read', 'asc'], ['created_at', 'desc']]
             ];
 
             $response = $mongoClient->setQueryString($queryString)
