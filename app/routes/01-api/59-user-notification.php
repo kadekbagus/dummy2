@@ -44,3 +44,13 @@ Route::post('/api/v1/notification/detail', function()
 {
     return NotificationDetailAPIController::create()->getNotificationDetail();
 });
+
+/**
+ * notification in Apps list
+ */
+Route::get('/api/v1/pub/user-notification/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\UserNotification\UserNotificationListAPIController::create()->getUserNotificationList();
+});
+
+Route::get('/app/v1/pub/user-notification/list', ['as' => 'pub-user-notification-list', 'uses' => 'IntermediatePubAuthController@UserNotification\UserNotificationList_getUserNotificationList']);

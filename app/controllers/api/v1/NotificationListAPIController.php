@@ -122,10 +122,11 @@ class NotificationListAPIController extends ControllerAPI
             });
 
             $queryString = [
-                'take'        => $take,
-                'skip'        => $skip,
-                'sortBy'      => $sortBy,
-                'sortMode'    => $sortMode
+                'take'         => $take,
+                'skip'         => $skip,
+                'sortBy'       => $sortBy,
+                'sortMode'     => $sortMode,
+                'is_automatic' => null,
             ];
 
             $mongoConfig = Config::get('database.mongodb');
