@@ -164,42 +164,64 @@ class NotificationNewAPIController extends ControllerAPI
 
                 $mongoNotifId = $response->data->_id;
                 $imageUrl = $attachmentUrl;
-                if ($files) {
-                    $notif = $mongoClient->setEndPoint("notifications/$mongoNotifId")->request('GET');
+                $notif = $mongoClient->setEndPoint("notifications/$mongoNotifId")->request('GET');
 
+                if ($files) {
                     $cdnConfig = Config::get('orbit.cdn');
                     $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
                     $imageUrl = $imgUrl->getImageUrl($notif->data->attachment_path, $notif->data->cdn_url);
                 }
 
-                // add query string for activity recording
-                $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
-                if (parse_url($launchUrl, PHP_URL_QUERY)) { // if launch url containts query string
-                    $newUrl =  $launchUrl . '&notif_id=' . $mongoNotifId;
+                // send to onesignal
+                if (! empty($notificationTokens)) {
+                    // add query string for activity recording
+                    $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
+                    if (parse_url($launchUrl, PHP_URL_QUERY)) { // if launch url containts query string
+                        $newUrl =  $launchUrl . '&notif_id=' . $mongoNotifId;
+                    }
+
+                    $data = [
+                        'headings'           => $headings,
+                        'contents'           => $contents,
+                        'url'                => $newUrl,
+                        'include_player_ids' => $notificationTokens,
+                        'ios_attachments'    => $imageUrl,
+                        'big_picture'        => $imageUrl,
+                        'adm_big_picture'    => $imageUrl,
+                        'chrome_big_picture' => $imageUrl,
+                        'chrome_web_image'   => $imageUrl,
+                    ];
+
+                    $oneSignal = new OneSignal($oneSignalConfig);
+                    $newNotif = $oneSignal->notifications->add($data);
                 }
 
-                $data = [
-                    'headings'           => $headings,
-                    'contents'           => $contents,
-                    'url'                => $newUrl,
-                    'include_player_ids' => $notificationTokens,
-                    'ios_attachments'    => $imageUrl,
-                    'big_picture'        => $imageUrl,
-                    'adm_big_picture'    => $imageUrl,
-                    'chrome_big_picture' => $imageUrl,
-                    'chrome_web_image'   => $imageUrl,
-                ];
+                // send as inApps notification
+                if (! empty($userIds)) {
+                    foreach ($userIds as $userId) {
+                        $bodyInApps = [
+                            'user_id'       => $userId,
+                            'token'         => null,
+                            'notifications' => $notif,
+                            'send_status'   => 'sent',
+                            'is_viewed'     => false,
+                            'is_read'       => false,
+                            'created_at'    => $dateTime
+                        ];
 
-                $oneSignal = new OneSignal($oneSignalConfig);
-                $newNotif = $oneSignal->notifications->add($data);
+                        $inApps = $mongoClient->setFormParam($bodyInApps)
+                                    ->setEndPoint('user-notifications') // express endpoint
+                                    ->request('POST');
+                    }
+                }
 
                 $body['sent_at'] = $dateTime;
                 $body['vendor_notification_id'] = $newNotif->id;
                 $body['_id'] = $mongoNotifId;
 
                 $response = $mongoClient->setFormParam($body)
-                                    ->setEndPoint('notifications') // express endpoint
-                                    ->request('PUT');
+                                ->setEndPoint('notifications') // express endpoint
+                                ->request('PUT');
             }
 
             $this->response->code = 0;
