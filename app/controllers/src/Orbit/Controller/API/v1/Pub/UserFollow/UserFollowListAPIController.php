@@ -73,8 +73,8 @@ class UserFollowListAPIController extends PubControllerAPI
 
             // Collect data what user follow (mall and store) from monggo db
             $queryString = [
-                'take'        => $take,
-                'skip'        => $skip,
+                'take' => $take,
+                'skip' => $skip,
             ];
 
             $queryString['user_id'] = $user->user_id;
@@ -90,26 +90,26 @@ class UserFollowListAPIController extends PubControllerAPI
             $merchantIds = array();
             if (! empty($merchantId->data->records) > 0) {
                 foreach ($merchantId->data->records as $key => $value) {
-                    $merchantIds[] = $value->store_id;
+                    $merchantIds[] = $value->object_id;
                 }
             }
 
             // Query to mysql where in merchant id and user id
             if ($objectType === 'mall') {
-                $follows = Mall::select('merchant_id', 'name')
-                                ->with('mediaOrig')
+                $follows = Mall::select('merchant_id', 'name', 'media.cdn_url', 'media.path')
+                                ->leftJoin('media', 'media.object_id', '=', 'merchants.merchant_id')
+                                ->where('media.media_name_long', 'mall_logo_cropped_default')
                                 ->whereIn('merchant_id', $merchantIds)
                                 ->excludeDeleted();
-
             } else if ($objectType === 'store') {
-                $follows = Tenant::select('merchant_id', 'name')
-                                ->with('mediaOrig')
-                                ->whereIn('merchant_id', $merchantIds)
-                                ->excludeDeleted();
+                $prefix = DB::getTablePrefix();
+                $follows = Tenant::select('merchants.merchant_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"), 'media.cdn_url', 'media.path', DB::raw('parent.name as mall_name'))
+                                ->leftJoin('media' , 'media.object_id', '=', 'merchants.merchant_id')
+                                ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id' )
+                                ->where('media.media_name_long', 'retailer_logo_cropped_default')
+                                ->whereIn('merchants.merchant_id', $merchantIds)
+                                ->where('merchants.status', '=', 'active');
             }
-
-
-            $follows = $follows->groupBy('merchants.name');
 
             $_follows = clone($follows);
 
@@ -119,7 +119,7 @@ class UserFollowListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $follows->skip($skip);
 
-            $follows->orderBy('name', 'asc');
+            $follows->orderBy('merchants.name', 'asc');
 
             $listOfRec = $follows->get();
 
