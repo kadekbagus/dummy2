@@ -227,8 +227,8 @@ class NotificationUpdateAPIController extends ControllerAPI
                 $body['sent_at'] = $dateTime;
             }
 
-            $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body);
-            $response = $mongoClient->setEndPoint('notifications') // express endpoint
+            $response = $mongoClient->setFormParam($body)
+                                    ->setEndPoint('notifications') // express endpoint
                                     ->request('PUT');
 
             $this->response->code = 0;
