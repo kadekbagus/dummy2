@@ -44,3 +44,23 @@ Route::post('/api/v1/notification/detail', function()
 {
     return NotificationDetailAPIController::create()->getNotificationDetail();
 });
+
+/**
+ * notification in Apps list
+ */
+Route::get('/api/v1/pub/user-notification/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\UserNotification\UserNotificationListAPIController::create()->getUserNotificationList();
+});
+
+Route::get('/app/v1/pub/user-notification/list', ['as' => 'pub-user-notification-list', 'uses' => 'IntermediatePubAuthController@UserNotification\UserNotificationList_getUserNotificationList']);
+
+/**
+ * new notification counter
+ */
+Route::get('/api/v1/pub/user-notification/new', function()
+{
+    return Orbit\Controller\API\v1\Pub\UserNotification\UserNotificationListAPIController::create()->getUserNotificationNew();
+});
+
+Route::get('/app/v1/pub/user-notification/new', ['as' => 'pub-user-notification-new', 'uses' => 'IntermediatePubAuthController@UserNotification\UserNotificationList_getUserNotificationNew']);
