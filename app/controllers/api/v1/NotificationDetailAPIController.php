@@ -76,6 +76,13 @@ class NotificationDetailAPIController extends ControllerAPI
             $remaining = 0;
             $totalRecipients = (! empty($notif->data->notification_tokens)) ? count($notif->data->notification_tokens) : 0;
 
+            $inappsSuccessful = (! empty($notif->data->user_ids)) ? count($notif->data->user_ids) : 0;
+            $inappsFailed = 0;
+            $inappsConverted = 0;
+            $inappsRemaining = 0;
+            $inappsTotalRecipients = (! empty($notif->data->user_ids)) ? count($notif->data->user_ids) : 0;
+
+            // push
             if (! empty($notif->data->vendor_notification_id)) {
                 $oneSignalId = $notif->data->vendor_notification_id;
                 $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
@@ -88,6 +95,20 @@ class NotificationDetailAPIController extends ControllerAPI
                     $converted = $oneSignalNotif->converted;
                     $remaining = $oneSignalNotif->remaining;
                 }
+            }
+
+            // inapps
+            if (! empty($notif->data->user_ids)) {
+                $queryString = [
+                    'notifications._id' => $notificationId,
+                    'is_read'           => '1'
+                ];
+
+                $inApps = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint('user-notifications')
+                                    ->request('GET');
+
+                $inappsConverted = $inApps->data->total_records;
             }
 
             $targetAudience = null;
@@ -107,12 +128,22 @@ class NotificationDetailAPIController extends ControllerAPI
             }
 
             $listOfRec = $notif->data;
+
+            // push
             $listOfRec->target_audience = $targetAudience;
             $listOfRec->successful = $successful;
             $listOfRec->failed = $failed;
             $listOfRec->converted = $converted;
             $listOfRec->remaining = $remaining;
             $listOfRec->total_recipients = $totalRecipients;
+
+            //in apps
+            $listOfRec->inapps_target_audience = $inappsSuccessful;
+            $listOfRec->inapps_successful = $successful;
+            $listOfRec->inapps_failed = $failed;
+            $listOfRec->inapps_converted = $converted;
+            $listOfRec->inapps_remaining = $remaining;
+            $listOfRec->inapps_total_recipients = $totalRecipients;
 
             $data = new \stdclass();
             $this->response->data = $listOfRec;
