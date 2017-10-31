@@ -113,10 +113,10 @@ class CdnUploadUpdateQueue
                         break;
                 }
 
-                $sourceFile = $useRelativePath ? $publicPath . '/' . $localMedia->data->path : $localMedia->data->realpath;
+                $sourceFile = $useRelativePath ? $publicPath . '/' . $localMedia->data->attachment_path : $localMedia->data->attachment_realpath;
 
                 $uploadConfig = [
-                    'Key' => $localMedia->data->path,
+                    'Key' => $localMedia->data->attachment_path,
                     'SourceFile' => $sourceFile,
                     'ContentType' => $localMedia->data->mime_type
                 ];
