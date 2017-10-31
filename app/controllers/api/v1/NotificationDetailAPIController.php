@@ -138,12 +138,11 @@ class NotificationDetailAPIController extends ControllerAPI
             $listOfRec->total_recipients = $totalRecipients;
 
             //in apps
-            $listOfRec->inapps_target_audience = $inappsSuccessful;
-            $listOfRec->inapps_successful = $successful;
-            $listOfRec->inapps_failed = $failed;
-            $listOfRec->inapps_converted = $converted;
-            $listOfRec->inapps_remaining = $remaining;
-            $listOfRec->inapps_total_recipients = $totalRecipients;
+            $listOfRec->inapps_successful = $inappsSuccessful;
+            $listOfRec->inapps_failed = $inappsFailed;
+            $listOfRec->inapps_converted = $inappsConverted;
+            $listOfRec->inapps_remaining = $inappsRemaining;
+            $listOfRec->inapps_total_recipients = $inappsTotalRecipients;
 
             $data = new \stdclass();
             $this->response->data = $listOfRec;
