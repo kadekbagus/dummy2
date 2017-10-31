@@ -14,6 +14,9 @@ use Validator;
 use Activity;
 use Mall;
 use Tenant;
+use BaseStore;
+use BaseMerchant;
+use DB;
 
 class FollowAPIController extends PubControllerAPI
 {
@@ -41,16 +44,21 @@ class FollowAPIController extends PubControllerAPI
             $object_id = OrbitInput::post('object_id');
             $object_type = OrbitInput::post('object_type');
             $city = OrbitInput::post('city');
-            $country_id = OrbitInput::post('country_id');
+            $city = (array) $city;
+            $country = OrbitInput::post('country');
+            $action = OrbitInput::post('action');
+            $mall_id = OrbitInput::post('mall_id', null);
 
             $validator = Validator::make(
                 array(
                     'object_id'   => $object_id,
                     'object_type' => $object_type,
+                    'action'      => $action,
                 ),
                 array(
                     'object_id'   => 'required',
                     'object_type' => 'required|in:mall,store',
+                    'action'      => 'required|in:follow,unfollow',
                 )
             );
 
@@ -59,6 +67,13 @@ class FollowAPIController extends PubControllerAPI
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
+
+            // generate date
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateTime = $date->toDateTimeString();
+            $response = new \stdclass();
+            $response->data = null;
 
             switch($object_type) {
                 case "mall":
@@ -75,9 +90,6 @@ class FollowAPIController extends PubControllerAPI
 
                     if (count($existingData->data->records) === 0) {
                         // follow
-                        $timestamp = date("Y-m-d H:i:s");
-                        $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
-                        $dateTime = $date->toDateTimeString();
                         $city = null;
                         $country_id = null;
 
@@ -93,9 +105,10 @@ class FollowAPIController extends PubControllerAPI
                         $dataInsert = [
                             'user_id'     => $user->user_id,
                             'object_id'   => $object_id,
-                            'object_type' => 'mall',
+                            'object_type' => $object_type,
                             'city'        => $city,
                             'country_id'  => $country_id,
+                            'mall_id'     => $object_id,
                             'created_at'  => $dateTime
                         ];
 
@@ -112,7 +125,192 @@ class FollowAPIController extends PubControllerAPI
 
                     break;
                 case "store":
+                    if ($action === 'follow')
+                    {
+                        if (!empty($mall_id)) {
+                            // mall level
+                            $baseStore = BaseStore::select('merchants.city', 'merchants.country_id', 'base_merchants.base_merchant_id')
+                                              ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                                              ->leftJoin('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
+                                              ->where('base_stores.base_store_id', '=', $object_id)
+                                              ->where('base_stores.merchant_id', '=', $mall_id)
+                                              ->first();
 
+                            if (is_object($baseStore)) {
+                                $dataInsert = [
+                                    'user_id'          => $user->user_id,
+                                    'object_id'        => $object_id,
+                                    'object_type'      => $object_type,
+                                    'city'             => $baseStore->city,
+                                    'country_id'       => $baseStore->country_id,
+                                    'base_merchant_id' => $baseStore->base_merchant_id,
+                                    'mall_id'          => $mall_id,
+                                    'created_at'       => $dateTime
+                                ];
+
+                                $response = $mongoClient->setFormParam($dataInsert)
+                                                    ->setEndPoint('user-follows')
+                                                    ->request('POST');
+                            }
+
+                        } else {
+                            // gtm level
+                            $baseStore = BaseStore::select('merchants.country_id', 'base_stores.base_merchant_id', 'base_merchants.name')
+                                              ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                                              ->leftJoin('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
+                                              ->where('base_stores.base_store_id', '=', $object_id)
+                                              ->first();
+
+                            if (is_object($baseStore)) {
+                                $stores = Tenant::select('merchants.merchant_id as store_id',
+                                                         'merchants.name as store_name',
+                                                         DB::raw('parent.merchant_id as mall_id'),
+                                                         DB::raw('parent.city as city'),
+                                                         DB::raw('parent.country_id as country_id')
+                                                        )
+                                                ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants as parent', 'merchants.parent_id', '=', DB::raw('parent.merchant_id'))
+                                                ->where('merchants.name', '=', $baseStore->name)
+                                                ->where('merchants.status', '=', 'active')
+                                                ->where(DB::raw('parent.status'), '=', 'active')
+                                                ->where(DB::raw('parent.is_subscribed'), '=', 'Y')
+                                                ->where(DB::raw('parent.country_id'), '=', $baseStore->country_id)
+                                                ->whereIn(DB::raw('parent.city'), $city)
+                                                ->get();
+                            }
+
+                            if (!empty($stores)) {
+                                foreach ($stores as $key => $value) {
+                                    $dataStoresSearch = [
+                                        'user_id'          => $user->user_id,
+                                        'object_id'        => $value->store_id,
+                                        'object_type'      => $object_type,
+                                        'city'             => $value->city,
+                                        'country_id'       => $value->country_id,
+                                        'base_merchant_id' => $baseStore->base_merchant_id,
+                                        'mall_id'          => $value->mall_id
+                                    ];
+
+                                    $existingData = $mongoClient->setQueryString($dataStoresSearch)
+                                                                ->setEndPoint('user-follows')
+                                                                ->request('GET');
+
+                                    if (count($existingData->data->records) !== 0) {
+                                        $existingIds[] = $existingData->data->records[0]->_id;
+                                    }
+
+                                    $dataStoresInsert[] = [
+                                        'user_id'          => $user->user_id,
+                                        'object_id'        => $value->store_id,
+                                        'object_type'      => $object_type,
+                                        'city'             => $value->city,
+                                        'country_id'       => $value->country_id,
+                                        'base_merchant_id' => $baseStore->base_merchant_id,
+                                        'mall_id'          => $value->mall_id,
+                                        'created_at'       => $dateTime
+                                    ];
+                                }
+                            }
+
+                            if(!empty($dataStoresInsert)) {
+                                $dataInsert = ['bulk_insert' => $dataStoresInsert];
+                                // delete existing data
+                                if (!empty($existingIds)) {
+                                    foreach ($existingIds as $key => $value) {
+                                        $delete = $mongoClient->setEndPoint("user-follows/$value")
+                                                              ->request('DELETE');
+                                    }
+                                }
+                                // insert new data
+                                $response = $mongoClient->setFormParam($dataInsert)
+                                                        ->setEndPoint('user-follows')
+                                                        ->request('POST');
+                            }
+
+                        }
+
+                    }
+
+                    if ($action === 'unfollow')
+                    {
+                        if (!empty($mall_id)) {
+                            // mall level
+                            $queryString = [
+                                'user_id'     => $user->user_id,
+                                'object_id'   => $object_id,
+                                'object_type' => $object_type
+                            ];
+
+                            $existingData = $mongoClient->setQueryString($queryString)
+                                                 ->setEndPoint('user-follows')
+                                                 ->request('GET');
+
+                            if (count($existingData->data->records) !== 0) {
+                                $id = $existingData->data->records[0]->_id;
+                                $response = $mongoClient->setEndPoint("user-follows/$id")
+                                                        ->request('DELETE');
+                            }
+
+                        } else {
+                            // gtm level
+                            $baseStore = BaseStore::select('merchants.country_id', 'base_stores.base_merchant_id', 'base_merchants.name')
+                                              ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                                              ->leftJoin('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
+                                              ->where('base_stores.base_store_id', '=', $object_id)
+                                              ->first();
+
+                            if (is_object($baseStore)) {
+                                $stores = Tenant::select('merchants.merchant_id as store_id',
+                                                         'merchants.name as store_name',
+                                                         DB::raw('parent.merchant_id as mall_id'),
+                                                         DB::raw('parent.city as city'),
+                                                         DB::raw('parent.country_id as country_id')
+                                                        )
+                                                ->excludeDeleted('merchants')
+                                                ->leftJoin('merchants as parent', 'merchants.parent_id', '=', DB::raw('parent.merchant_id'))
+                                                ->where('merchants.name', '=', $baseStore->name)
+                                                ->where('merchants.status', '=', 'active')
+                                                ->where(DB::raw('parent.status'), '=', 'active')
+                                                ->where(DB::raw('parent.is_subscribed'), '=', 'Y')
+                                                ->where(DB::raw('parent.country_id'), '=', $baseStore->country_id)
+                                                ->whereIn(DB::raw('parent.city'), $city)
+                                                ->get();
+                            }
+
+                            if (!empty($stores))
+                            {
+                                foreach ($stores as $key => $value)
+                                {
+                                    $dataStoresSearch = [
+                                        'user_id'          => $user->user_id,
+                                        'object_id'        => $value->store_id,
+                                        'object_type'      => $object_type,
+                                        'city'             => $value->city,
+                                        'country_id'       => $value->country_id,
+                                        'base_merchant_id' => $baseStore->base_merchant_id,
+                                        'mall_id'          => $value->mall_id
+                                    ];
+
+                                    $existingData = $mongoClient->setQueryString($dataStoresSearch)
+                                                                ->setEndPoint('user-follows')
+                                                                ->request('GET');
+
+                                    if (count($existingData->data->records) !== 0) {
+                                        $existingIds[] = $existingData->data->records[0]->_id;
+                                    }
+                                }
+
+                                if (!empty($existingIds)) {
+                                    foreach ($existingIds as $key => $value) {
+                                        $response = $mongoClient->setEndPoint("user-follows/$value")
+                                                              ->request('DELETE');
+                                    }
+                                }
+                            }
+
+
+                        }
+                    }
                     break;
             }
 
