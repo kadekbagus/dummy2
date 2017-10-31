@@ -22,6 +22,7 @@ use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use OrbitShop\API\v1\ResponseProvider;
 use Partner;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class NewsDetailAPIController extends PubControllerAPI
 {
@@ -53,6 +54,7 @@ class NewsDetailAPIController extends PubControllerAPI
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
             $partnerToken = OrbitInput::get('token', null);
+            $notificationId = OrbitInput::get('notification_id', null);
 
             $newsHelper = NewsHelper::create();
             $newsHelper->registerCustomValidation();
@@ -92,6 +94,20 @@ class NewsDetailAPIController extends PubControllerAPI
             $location = $mallId;
             if (empty($location)) {
                 $location = 0;
+            }
+
+            if (! empty($notificationId)) {
+                $mongoConfig = Config::get('database.mongodb');
+                $mongoClient = MongoClient::create($mongoConfig);
+
+                $bodyUpdate = [
+                    '_id'     => $notificationId,
+                    'is_read' => true
+                ];
+
+                $response = $mongoClient->setFormParam($bodyUpdate)
+                                        ->setEndPoint('user-notifications') // express endpoint
+                                        ->request('PUT');
             }
 
             $news = News::select(
