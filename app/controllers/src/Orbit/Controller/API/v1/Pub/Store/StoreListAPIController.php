@@ -32,6 +32,7 @@ use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Orbit\Controller\API\v1\Pub\Store\StoreHelper;
 use Country;
+use Orbit\Helper\Util\FollowStatusChecker;
 
 class StoreListAPIController extends PubControllerAPI
 {
@@ -364,6 +365,12 @@ class StoreListAPIController extends PubControllerAPI
 
             $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
 
+            $role = $user->role->role_name;
+            $objectFollow = [];
+            if (strtolower($role) === 'consumer') {
+                $objectFollow = $this->getUserFollow($user);
+            }
+
             // sort by name or location
             $defaultSort = array('name.raw' => array('order' => 'asc'));
 
@@ -508,11 +515,17 @@ class StoreListAPIController extends PubControllerAPI
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
                 $storeId = '';
+                $data['follow_status'] = false;
+                $baseMerchantId = '';
                 foreach ($record['_source'] as $key => $value) {
 
                     $localPath = ($key == 'logo') ? $value : $localPath;
                     $cdnPath = ($key == 'logo_cdn') ? $value : $cdnPath;
                     $key = ($key == 'logo') ? 'logo_url' : $key;
+
+                    if ($key === 'base_merchant_id') {
+                        $baseMerchantId = $value;
+                    }
 
                     $data[$key] = $value;
                     $data['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
@@ -583,6 +596,12 @@ class StoreListAPIController extends PubControllerAPI
                 if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
                     if (! empty($mallId)) {
                         $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
+                    }
+                }
+
+                if (! empty($objectFollow)) {
+                    if (in_array($baseMerchantId, $objectFollow)) {
+                        $data['follow_status'] = true;
                     }
                 }
 
@@ -728,5 +747,16 @@ class StoreListAPIController extends PubControllerAPI
         $this->withoutScore = TRUE;
 
         return $this;
+    }
+
+    // check user follow
+    public function getUserFollow($user)
+    {
+        $follow = FollowStatusChecker::create()
+                                    ->setUserId($user->user_id)
+                                    ->setObjecType('store')
+                                    ->getFollowStatus();
+
+        return $follow;
     }
 }

@@ -32,6 +32,7 @@ use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Orbit\Controller\API\v1\Pub\Store\StoreHelper;
 use Country;
+use Orbit\Helper\Util\FollowStatusChecker;
 
 class StoreFeaturedListAPIController extends PubControllerAPI
 {
@@ -557,6 +558,12 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
             }
 
+            $role = $user->role->role_name;
+            $objectFollow = [];
+            if (strtolower($role) === 'consumer') {
+                $objectFollow = $this->getUserFollow($user);
+            }
+
             $defaultSort = array('name.raw' => array('order' => 'asc'));
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
             $sortPage = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
@@ -606,6 +613,8 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 $data['placement_type_orig'] = null;
                 $storeId = '';
                 $data['is_featured'] = false;
+                $data['follow_status'] = false;
+                $baseMerchantId = '';
                 foreach ($record['_source'] as $key => $value) {
 
                     $storeId = $record['_source']['merchant_id'];
@@ -613,6 +622,10 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                     $localPath = ($key == 'logo') ? $value : $localPath;
                     $cdnPath = ($key == 'logo_cdn') ? $value : $cdnPath;
                     $key = ($key == 'logo') ? 'logo_url' : $key;
+
+                    if ($key === 'base_merchant_id') {
+                        $baseMerchantId = $value;
+                    }
 
                     $data[$key] = $value;
                     $data['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
@@ -670,6 +683,12 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
                     if (! empty($mallId)) {
                         $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
+                    }
+                }
+
+                if (! empty($objectFollow)) {
+                    if (in_array($baseMerchantId, $objectFollow)) {
+                        $data['follow_status'] = true;
                     }
                 }
 
@@ -789,5 +808,16 @@ class StoreFeaturedListAPIController extends PubControllerAPI
         $this->withoutScore = TRUE;
 
         return $this;
+    }
+
+    // check user follow
+    public function getUserFollow($user)
+    {
+        $follow = FollowStatusChecker::create()
+                                    ->setUserId($user->user_id)
+                                    ->setObjecType('store')
+                                    ->getFollowStatus();
+
+        return $follow;
     }
 }
