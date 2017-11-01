@@ -400,6 +400,12 @@ class ESAdvertStoreUpdateQueue
                     }
                 }
 
+                $baseStore = BaseStore::where('base_store_id', $store[0]->merchant_id)->first();
+                $baseMerchantId = null;
+                if (! empty($baseStore)) {
+                    $baseMerchantId = $baseStore->base_merchant_id;
+                }
+
                 $body = [
                     'merchant_id'         => $store[0]->merchant_id,
                     'name'                => $store[0]->name,
@@ -436,7 +442,7 @@ class ESAdvertStoreUpdateQueue
                     'mall_rating'          => $mallRating,
                     'featured_slot_gtm'     => $featuredSlotGTM,
                     'featured_slot_mall'    => $featuredSlotMall,
-                    'base_merchant_id'     => $baseMerchant->base_merchant_id
+                    'base_merchant_id'     => $baseMerchantId
                 ];
 
                 if ($response_search['hits']['total'] > 0) {

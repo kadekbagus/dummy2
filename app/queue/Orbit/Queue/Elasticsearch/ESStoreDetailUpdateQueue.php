@@ -184,6 +184,10 @@ class ESStoreDetailUpdateQueue
                 }
 
                 $baseStore = BaseStore::where('base_store_id', $_store->merchant_id)->first();
+                $baseMerchantId = null;
+                if (! empty($baseStore)) {
+                    $baseMerchantId = $baseStore->base_merchant_id;
+                }
 
                 $body = array(
                     'merchant_id' => $_store->merchant_id,
@@ -217,7 +221,7 @@ class ESStoreDetailUpdateQueue
                     'created_at' => date('Y-m-d', strtotime($_store->created_at)) . 'T' . date('H:i:s', strtotime($_store->created_at)) . 'Z',
                     'updated_at' => date('Y-m-d', strtotime($_store->updated_at)) . 'T' . date('H:i:s', strtotime($_store->updated_at)) . 'Z',
                     'translation' => $translations,
-                    'base_merchant_id' => $baseStore->base_merchant_id
+                    'base_merchant_id' => $baseMerchantId
                 );
 
                 $response = NULL;

@@ -10,6 +10,7 @@ use DB;
 use Tenant;
 use Advert;
 use BaseMerchant;
+use BaseStore;
 use TotalObjectPageView;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
@@ -322,6 +323,12 @@ class ESStoreUpdateQueue
                 }
             }
 
+            $baseStore = BaseStore::where('base_store_id', $store[0]->merchant_id)->first();
+            $baseMerchantId = null;
+            if (! empty($baseStore)) {
+                $baseMerchantId = $baseStore->base_merchant_id;
+            }
+
             $body = [
                 'merchant_id'         => $store[0]->merchant_id,
                 'name'                => $store[0]->name,
@@ -351,7 +358,7 @@ class ESStoreUpdateQueue
                 'preferred_mall_type'  => $preferredMallType,
                 'location_rating'      => $locationRating,
                 'mall_rating'          => $mallRating,
-                'base_merchant_id'     => $baseMerchant->base_merchant_id
+                'base_merchant_id'     => $baseMerchantId
             ];
 
             $params['body'] = $body;
