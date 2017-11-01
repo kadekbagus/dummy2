@@ -85,6 +85,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
             $sort_mode = OrbitInput::get('sortmode','asc');
             $location = OrbitInput::get('location', null);
             $cityFilters = OrbitInput::get('cities', []);
+            $cityFilters = (array) $cityFilters;
             $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $language = OrbitInput::get('language', 'id');
@@ -561,7 +562,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
             $role = $user->role->role_name;
             $objectFollow = [];
             if (strtolower($role) === 'consumer') {
-                $objectFollow = $this->getUserFollow($user);
+                $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
             }
 
             $defaultSort = array('name.raw' => array('order' => 'asc'));
@@ -811,12 +812,21 @@ class StoreFeaturedListAPIController extends PubControllerAPI
     }
 
     // check user follow
-    public function getUserFollow($user)
+    public function getUserFollow($user, $mallId, $city=array())
     {
         $follow = FollowStatusChecker::create()
                                     ->setUserId($user->user_id)
-                                    ->setObjecType('store')
-                                    ->getFollowStatus();
+                                    ->setObjecType('store');
+
+        if (! empty($mallId)) {
+            $follow = $follow->setMallId($mallId);
+        }
+
+        if (! empty($city)) {
+            $follow = $follow->setCity($city);
+        }
+
+        $follow = $follow->getFollowStatus();
 
         return $follow;
     }
