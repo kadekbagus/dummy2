@@ -186,6 +186,7 @@ class FollowStatusChecker
      * return object_id
      */
     public function getFollowStatus() {
+        $objectFollow = [];
         if ($this->objectType === 'mall') {
             $queryString = [
                 'object_type' => 'mall',
@@ -206,23 +207,19 @@ class FollowStatusChecker
                             ->setEndPoint('user-follows')
                             ->request('GET');
 
-            $followMall = [];
             if (! empty($response->data->records)) {
                 foreach ($response->data->records as $mall) {
-                    $followMall[] = $mall->object_id;
+                    $objectFollow[] = $mall->object_id;
                 }
             }
 
-            return $followMall;
+            return $objectFollow;
 
         } else { // store
             $queryString = [
                 'object_type' => 'store',
                 'user_id'     => $this->userId
             ];
-
-            $followStore = [];
-            $followStoreAgg = [];
 
             // store list in mall level
             if (! empty($this->mallId)) {
@@ -235,11 +232,11 @@ class FollowStatusChecker
 
                 if (! empty($response->data->records)) {
                     foreach ($response->data->records as $stores) {
-                        $followStore[] = $stores->base_merchant_id;
+                        $objectFollow[] = $stores->base_merchant_id;
                     }
                 }
 
-                return $followStore;
+                return $objectFollow;
             }
 
             // store list in gtm level
@@ -253,10 +250,11 @@ class FollowStatusChecker
                                 ->request('GET');
 
             if (empty($response->data->records)) {
-                return $followStore;
+                return $objectFollow;
             }
 
             $followBaseMerchantId = [];
+            $followStoreAgg = [];
             foreach ($response->data->records as $stores) {
                 $followBaseMerchantId[] = $stores->_id;
                 $followStoreAgg[$stores->_id] = $stores->count;
@@ -281,11 +279,11 @@ class FollowStatusChecker
             $tenants = $tenants->get();
             foreach ($tenants as $tenant) {
                 if ((int) $tenant->total_store === (int) $followStoreAgg[$tenant->base_merchant_id]) {
-                    $followStore[] = $tenant->base_merchant_id;
+                    $objectFollow[] = $tenant->base_merchant_id;
                 }
             }
 
-            return $followStore;
+            return $objectFollow;
         }
     }
 }
