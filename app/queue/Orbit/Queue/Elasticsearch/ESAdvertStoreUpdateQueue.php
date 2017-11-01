@@ -435,7 +435,8 @@ class ESAdvertStoreUpdateQueue
                     'location_rating'      => $locationRating,
                     'mall_rating'          => $mallRating,
                     'featured_slot_gtm'     => $featuredSlotGTM,
-                    'featured_slot_mall'    => $featuredSlotMall
+                    'featured_slot_mall'    => $featuredSlotMall,
+                    'base_merchant_id'     => $baseMerchant->base_merchant_id
                 ];
 
                 if ($response_search['hits']['total'] > 0) {

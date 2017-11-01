@@ -350,7 +350,8 @@ class ESStoreUpdateQueue
                 'preferred_gtm_type'   => $preferredGtmType,
                 'preferred_mall_type'  => $preferredMallType,
                 'location_rating'      => $locationRating,
-                'mall_rating'          => $mallRating
+                'mall_rating'          => $mallRating,
+                'base_merchant_id'     => $baseMerchant->base_merchant_id
             ];
 
             $params['body'] = $body;
