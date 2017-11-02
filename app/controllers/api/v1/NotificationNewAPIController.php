@@ -96,6 +96,7 @@ class NotificationNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $jsonNotifications = $notificationTokens;
             $notificationTokens = @json_decode($notificationTokens);
             if (json_last_error() != JSON_ERROR_NONE) {
                 OrbitShopAPI::throwInvalidArgument('Notification token JSON not valid');
@@ -142,7 +143,7 @@ class NotificationNewAPIController extends ControllerAPI
                 'status'              => $status,
                 'created_at'          => $dateTime,
                 'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
-                'notification_tokens' => $notificationTokens,
+                'notification_tokens' => $jsonNotifications,
                 'user_ids'            => $userIds,
             ];
 
