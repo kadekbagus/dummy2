@@ -366,11 +366,12 @@ class StoreListAPIController extends PubControllerAPI
 
             $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
 
-            $role = $user->role->role_name;
+            // $role = $user->role->role_name;
+            // $objectFollow = [];
+            // if (strtolower($role) === 'consumer') {
+            //     $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
+            // }
             $objectFollow = [];
-            if (strtolower($role) === 'consumer') {
-                $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
-            }
 
             // sort by name or location
             $defaultSort = array('name.raw' => array('order' => 'asc'));

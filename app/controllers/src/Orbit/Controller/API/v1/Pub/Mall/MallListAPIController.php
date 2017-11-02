@@ -243,11 +243,12 @@ class MallListAPIController extends PubControllerAPI
 
             $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
 
-            $role = $user->role->role_name;
+            // $role = $user->role->role_name;
+            // $objectFollow = [];
+            // if (strtolower($role) === 'consumer') {
+            //     $objectFollow = $this->getUserFollow($user);
+            // }
             $objectFollow = [];
-            if (strtolower($role) === 'consumer') {
-                $objectFollow = $this->getUserFollow($user);
-            }
 
             // sort by name or location
             $sort = array('name.raw' => array('order' => 'asc'));

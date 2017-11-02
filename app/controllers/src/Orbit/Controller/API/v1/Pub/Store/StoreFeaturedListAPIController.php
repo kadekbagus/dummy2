@@ -559,11 +559,12 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
             }
 
-            $role = $user->role->role_name;
+            // $role = $user->role->role_name;
+            // $objectFollow = [];
+            // if (strtolower($role) === 'consumer') {
+            //     $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
+            // }
             $objectFollow = [];
-            if (strtolower($role) === 'consumer') {
-                $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
-            }
 
             $defaultSort = array('name.raw' => array('order' => 'asc'));
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
