@@ -41,6 +41,13 @@ class FollowAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
 
+            // should always check the role
+            $role = $user->role->role_name;
+            if (strtolower($role) !== 'consumer') {
+                $message = 'You have to login to continue';
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
+
             $object_id = OrbitInput::post('object_id');
             $object_type = OrbitInput::post('object_type');
             $city = OrbitInput::post('city');
@@ -174,9 +181,13 @@ class FollowAPIController extends PubControllerAPI
                                                 ->where('merchants.status', '=', 'active')
                                                 ->where(DB::raw('parent.status'), '=', 'active')
                                                 ->where(DB::raw('parent.is_subscribed'), '=', 'Y')
-                                                ->where(DB::raw('parent.country_id'), '=', $baseStore->country_id)
-                                                ->whereIn(DB::raw('parent.city'), $city)
-                                                ->get();
+                                                ->where(DB::raw('parent.country_id'), '=', $baseStore->country_id);
+
+                                if (! empty($city)) {
+                                    $stores = $stores->whereIn(DB::raw('parent.city'), $city);
+                                }
+
+                                $stores = $stores->get();
                             }
 
                             if (!empty($stores)) {

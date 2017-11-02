@@ -51,6 +51,13 @@ class UserFollowListAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
 
+            // should always check the role
+            $role = $user->role->role_name;
+            if (strtolower($role) !== 'consumer') {
+                $message = 'You have to login to continue';
+                OrbitShopAPI::throwInvalidArgument($message);
+            }
+
             $objectType = OrbitInput::get('object_type', null);
             $mongoConfig = Config::get('database.mongodb');
             $take = PaginationNumber::parseTakeFromGet('news');
