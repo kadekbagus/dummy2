@@ -86,7 +86,7 @@ class NotificationNewAPIController extends ControllerAPI
                     'contents'            => 'required',
                     'type'                => 'required',
                     'status'              => 'required',
-                    'notification_tokens' => 'required|array',
+                    'notification_tokens' => 'required',
                 )
             );
 
@@ -94,6 +94,15 @@ class NotificationNewAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $notificationTokens = @json_decode($notificationTokens);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument('Notification token JSON not valid');
+            }
+
+            if (count($notificationTokens) > 2000) {
+                OrbitShopAPI::throwInvalidArgument('Notification tokens can not more than 2000');
             }
 
             if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
