@@ -366,12 +366,11 @@ class StoreListAPIController extends PubControllerAPI
 
             $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
 
-            // $role = $user->role->role_name;
-            // $objectFollow = [];
-            // if (strtolower($role) === 'consumer') {
-            //     $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
-            // }
+            $role = $user->role->role_name;
             $objectFollow = [];
+            if (strtolower($role) === 'consumer') {
+                $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
+            }
 
             // sort by name or location
             $defaultSort = array('name.raw' => array('order' => 'asc'));
@@ -756,7 +755,7 @@ class StoreListAPIController extends PubControllerAPI
     {
         $follow = FollowStatusChecker::create()
                                     ->setUserId($user->user_id)
-                                    ->setObjecType('store');
+                                    ->setObjectType('store');
 
         if (! empty($mallId)) {
             $follow = $follow->setMallId($mallId);

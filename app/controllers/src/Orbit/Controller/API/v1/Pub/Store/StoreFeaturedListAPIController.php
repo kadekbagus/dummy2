@@ -559,12 +559,11 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 $jsonQuery['query']['bool']['must_not'][] = array('terms' => ['_id' => $excludeId]);
             }
 
-            // $role = $user->role->role_name;
-            // $objectFollow = [];
-            // if (strtolower($role) === 'consumer') {
-            //     $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
-            // }
+            $role = $user->role->role_name;
             $objectFollow = [];
+            if (strtolower($role) === 'consumer') {
+                $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
+            }
 
             $defaultSort = array('name.raw' => array('order' => 'asc'));
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
@@ -817,7 +816,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
     {
         $follow = FollowStatusChecker::create()
                                     ->setUserId($user->user_id)
-                                    ->setObjecType('store');
+                                    ->setObjectType('store');
 
         if (! empty($mallId)) {
             $follow = $follow->setMallId($mallId);
