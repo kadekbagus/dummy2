@@ -100,7 +100,7 @@ class NotificationUpdateAPIController extends ControllerAPI
             if (empty($notificationTokens) && empty($userIds)) {
                 OrbitShopAPI::throwInvalidArgument('Notification tokens and user id is empty');
             }
-	
+
 			$jsonNotifications = '';
             if (! empty($notificationTokens)) {
                 $jsonNotifications = $notificationTokens;
@@ -120,7 +120,18 @@ class NotificationUpdateAPIController extends ControllerAPI
                 $notificationTokens = array_unique($notificationTokens);
             }
 
+            $jsonUserIds = '';
             if (! empty($userIds)) {
+                $jsonUserIds = $userIds;
+                $userIds = @json_decode($userIds);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('User ids JSON not valid');
+                }
+
+                if (count($userIds) > 2000) {
+                    OrbitShopAPI::throwInvalidArgument('User ids can not more than 2000');
+                }
+
                 if (count($userIds) !== count(array_unique($userIds))) {
                     OrbitShopAPI::throwInvalidArgument('Duplicate user ids');
                 }
@@ -174,7 +185,7 @@ class NotificationUpdateAPIController extends ControllerAPI
                 'status'              => $status,
                 'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
                 'notification_tokens' => $jsonNotifications,
-                'user_ids'            => $userIds,
+                'user_ids'            => $jsonUserIds,
                 'target_audience_ids' => $targetAudience,
             ];
 
