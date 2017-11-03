@@ -180,19 +180,4 @@ class UserFollowListAPIController extends PubControllerAPI
         return $this->render($httpCode);
     }
 
-    /**
-     * Force $withScore value to FALSE, ignoring previously set value
-     * @param $bool boolean
-     */
-    public function setWithOutScore()
-    {
-        $this->withoutScore = TRUE;
-
-        return $this;
-    }
-
-    protected function quote($arg)
-    {
-        return DB::connection()->getPdo()->quote($arg);
-    }
 }
