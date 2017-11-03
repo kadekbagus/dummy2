@@ -157,7 +157,6 @@ class LandingPageUrlGenerator
                 break;
 
             case 'promotion':
-                $url = printf($this->promotionUrl, $this->objectId, Str::slug($this->objectName));
                 $url = str_replace(['id', 'name-slug'], [$this->objectId, Str::slug($this->objectName)], $this->promotionUrl);
                 break;
 
