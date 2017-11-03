@@ -5,32 +5,49 @@
  * @author Shelgi Prasetyo <shelgi@dominopos.com>
  */
 
+use Str;
+
 class LandingPageUrlGenerator
 {
     /**
+     * @var string objectId
+     */
+    protected $objectId = '';
+
+    /**
+     * @var string objectType
+     */
+    protected $objectType = '';
+
+    /**
+     * @var string objectName
+     */
+    protected $objectName = '';
+
+    /**
      * @var string eventUrl
      */
-    protected $eventUrl = '/events/%s/%s';
+    protected $eventUrl = '/events/id/name-slug';
 
     /**
      * @var string promotionUrl
      */
-    protected $promotionUrl = '/promotions/%s/%s';
+    protected $promotionUrl = '/promotions/id/name-slug';
 
     /**
      * @var string couponUrl
      */
-    protected $couponUrl = '/coupons/%s/%s';
+    protected $couponUrl = '/coupons/id/name-slug';
 
     /**
      * @var string mallUrl
      */
-    protected $mallUrl = '/malls/%s/%s';
+    protected $mallUrl = '/malls/id/name-slug';
 
     /**
      * @var string storeUrl
      */
-    protected $storeUrl = '/stores/%s/%s';
+    protected $storeUrl = '/stores/id/name-slug';
 
     /**
      * Set the eventUrl
@@ -98,47 +115,62 @@ class LandingPageUrlGenerator
     }
 
     /**
-     * @param array $config
-     * @return url()
+     * @return void
      */
-    public static function create()
+    public function __construct($objectType, $objectId, $objectName)
     {
-        return new Static();
+        if ($objectType == '' || $objectId == '' || $objectName == '') {
+            return;
+        }
+
+        $this->objectType = $objectType;
+        $this->objectId = $objectId;
+        $this->objectName = $objectName;
     }
 
     /**
      * @param string $objectType
      * @param string $objectId
      * @param string $objectName
+     *
+     * @return url()
+     */
+    public static function create($objectType='', $objectId='', $objectName='')
+    {
+        return new Static($objectType, $objectId, $objectName);
+    }
+
+    /**
      * @return url
      */
-    public function generateUrl($objectType, $objectId, $objectName) {
+    public function generateUrl() {
 
-        if ($objectType === 'event' || $objectType === 'news') {
-            $objectType = 'event';
+        if ($this->objectType === 'event' || $this->objectType === 'news') {
+            $this->objectType = 'event';
         }
 
         $url = '';
 
-        switch ($objectType) {
+        switch ($this->objectType) {
             case 'event':
-                $url = printf($this->eventUrl, $objectId, Str::slug($objectName));
+                $url = str_replace(['id', 'name-slug'], [$this->objectId, Str::slug($this->objectName)], $this->eventUrl);
                 break;
 
             case 'promotion':
-                $url = printf($this->promotionUrl, $objectId, Str::slug($objectName));
+                $url = printf($this->promotionUrl, $this->objectId, Str::slug($this->objectName));
+                $url = str_replace(['id', 'name-slug'], [$this->objectId, Str::slug($this->objectName)], $this->promotionUrl);
                 break;
 
             case 'coupon':
-                $url = printf($this->couponUrl, $objectId, Str::slug($objectName));
+                $url = str_replace(['id', 'name-slug'], [$this->objectId, Str::slug($this->objectName)], $this->couponUrl);
                 break;
 
             case 'mall':
-                $url = printf($this->mallUrl, $objectId, Str::slug($objectName));
+                $url = str_replace(['id', 'name-slug'], [$this->objectId, Str::slug($this->objectName)], $this->mallUrl);
                 break;
 
             case 'store':
-                $url = printf($this->storeUrl, $objectId, Str::slug($objectName));
+                $url = str_replace(['id', 'name-slug'], [$this->objectId, Str::slug($this->objectName)], $this->storeUrl);
                 break;
         }
 
