@@ -247,6 +247,12 @@ class MallListAPIController extends PubControllerAPI
             $objectFollow = [];
             if (strtolower($role) === 'consumer') {
                 $objectFollow = $this->getUserFollow($user);
+
+                if (! empty($objectFollow)) {
+                    $withScore = TRUE;
+                    $jsonArea['query']['bool']['should'][] = array('terms' => array('_id' => $objectFollow, 'boost' => 5));
+                    $jsonArea['query']['bool']['should'][] = array('match_all' => new stdClass());
+                }
             }
 
             // sort by name or location
