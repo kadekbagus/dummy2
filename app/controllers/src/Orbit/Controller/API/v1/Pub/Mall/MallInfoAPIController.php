@@ -18,6 +18,7 @@ use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\CdnUrlGenerator;
+use Orbit\Helper\Util\FollowStatusChecker;
 
 class MallInfoAPIController extends PubControllerAPI
 {
@@ -116,6 +117,12 @@ class MallInfoAPIController extends PubControllerAPI
 
             $response = $client->search($param_area);
 
+            $role = $user->role->role_name;
+            $objectFollow = [];
+            if (strtolower($role) === 'consumer') {
+                $objectFollow = $this->getUserFollow($user, $mallId);
+            }
+
             $area_data = $response['hits'];
             $listmall = array();
             $cdnConfig = Config::get('orbit.cdn');
@@ -132,6 +139,13 @@ class MallInfoAPIController extends PubControllerAPI
                 $areadata['id'] = $dt['_id'];
                 $localPath = '';
                 $cdnPath = '';
+
+                $areadata['follow_status'] = false;
+                if (! empty($objectFollow)) {
+                    if (in_array($dt['_id'], $objectFollow)) {
+                        $areadata['follow_status'] = true;
+                    }
+                }
 
                 foreach ($dt['_source'] as $source => $val) {
                     if ($source === 'logo_url') {
@@ -250,5 +264,17 @@ class MallInfoAPIController extends PubControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    // check user follow
+    public function getUserFollow($user, $objectId)
+    {
+        $follow = FollowStatusChecker::create()
+                                    ->setUserId($user->user_id)
+                                    ->setObjectType('mall')
+                                    ->setObjectId($objectId)
+                                    ->getFollowStatus();
+
+        return $follow;
     }
 }
