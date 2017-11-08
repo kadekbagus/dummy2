@@ -167,6 +167,7 @@ class PingPaymentAPIController extends PubControllerAPI
             $data->transaction_time = $dateTime;
             $data->coupon_id = $transaction->object_id;
             $data->coupon_name = $transaction->object_name;
+            $data->store_id = $transaction->store_id;
             $data->store_name = $transaction->store_name;
             $data->mall_id = $transaction->building_id;
             $data->mall_name = $transaction->building_name;
