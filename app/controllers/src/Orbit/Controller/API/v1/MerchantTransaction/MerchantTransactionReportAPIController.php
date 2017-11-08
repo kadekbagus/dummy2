@@ -111,9 +111,9 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                                                             );
 
             // Filtering by user store or merchant
-            if ($userType = 'merchant') {
+            if ($userType === 'merchant') {
                 $merchantTransactions->where('merchant_id', $merchanOrStoretId);
-            } elseif ($userType == 'store') {
+            } elseif ($userType === 'store') {
                 $merchantTransactions->where('store_id', $merchanOrStoretId);
             }
 

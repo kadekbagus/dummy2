@@ -359,6 +359,7 @@ class NewsAPIController extends ControllerAPI
             $newnews->keywords = $newsKeywords;
 
             Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));
+            Event::fire('orbit.news.pushnotofication.after.save', array($this, $newnews));
 
             //save campaign price
             $campaignbaseprice = CampaignBasePrice::where('merchant_id', '=', $newnews->mall_id)
