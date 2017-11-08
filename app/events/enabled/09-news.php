@@ -76,6 +76,7 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
 Event::listen('orbit.news.pushnotofication.after.save', function($controller, $news, $defaultLangId)
 {
     // Push Notification and In Apps notofication, Insert to store_object_notification
+
     // Get distinct user_id who follows the link to tenant
     $tenantIds = null;
     if (count($news['tenants']) > 0) {
@@ -144,24 +145,6 @@ Event::listen('orbit.news.pushnotofication.after.save', function($controller, $n
                     $contents->$languageName = $newsTransaltion->description;
                 }
             }
-
-            // Get media translation default language
-            $newsDefaultTransaltions = NewsTranslation::where('news_id', $news->news_id)
-                                        ->where('merchant_language_id', $defaultLanguageId)
-                                        ->first();
-
-            $newsDefaultTransaltionsId = null;
-            if (! empty($newsDefaultTransaltions)) {
-                $newsDefaultTransaltionsId = $newsDefaultTransaltions->news_translation_id;
-            }
-
-            $mediaDefaultLanguage = Media::where('media_name_long', 'news_translation_image_orig')
-                                    ->where('object_id', $newsDefaultTransaltionsId)
-                                    ->first();
-
-            $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-            $attachmentUrl = $imgUrl->getImageUrl($mediaDefaultLanguage->path, $mediaDefaultLanguage->cdn_url);
 
             // Insert notofications
             $bodyNotifications = [
