@@ -81,31 +81,34 @@ class CreateUserMerchantTransactionCommand extends Command {
             $last_name = trim($data['last_name']);
             $password = trim($data['password']);
             $role = trim($data['role']);
-            $base_merchant_id = trim($data['base_merchant_id']);
+            $object_type = trim($data['object_type']);
+            $merchant_or_store_id = trim($data['merchant_or_store_id']);
 
             $this->registerCustomValidation();
 
             $validator = Validator::make(
                 array(
-                    'email'            => $email,
-                    'first_name'       => $first_name,
-                    'last_name'        => $last_name,
-                    'password'         => $password,
-                    'role'             => $role,
-                    'base_merchant_id' => $base_merchant_id,
+                    'email'                => $email,
+                    'first_name'           => $first_name,
+                    'last_name'            => $last_name,
+                    'password'             => $password,
+                    'role'                 => $role,
+                    'object_type'          => $object_type,
+                    'merchant_or_store_id' => $merchant_or_store_id,
                 ),
                 array(
-                    'email'            => 'required|orbit.exist.email',
-                    'first_name'       => 'required',
-                    'last_name'        => 'required',
-                    'password'         => 'required|min:6',
-                    'role'             => 'required|orbit.exist.role_id',
-                    'base_merchant_id' => 'required|orbit.exist.base_merchant_id',
+                    'email'                => 'required|orbit.exist.email',
+                    'first_name'           => 'required',
+                    'last_name'            => 'required',
+                    'password'             => 'required|min:6',
+                    'role'                 => 'required|orbit.exist.role_id',
+                    'object_type'          => 'required|in:merchant,store',
+                    'merchant_or_store_id' => 'required|orbit.exist.merchant_or_store_id:' . $object_type . ',' . $merchant_or_store_id,
                 ),
                 array(
                     'orbit.exist.email'                     => 'Email already exist',
                     'orbit.exist.role_id'                   => 'Role name is invalid',
-                    'orbit.exist.base_merchant_id'          => 'Base merchant id name is invalid',
+                    'orbit.exist.merchant_or_store_id'      => 'Base merchant or store id name is invalid',
                     'orbit.exist.user_merchant_transaction' => 'User merchant transaction with this merchant already exist',
                 )
             );
@@ -143,9 +146,9 @@ class CreateUserMerchantTransactionCommand extends Command {
             $apikey = $newuser->apikey()->save($apikey);
 
             $usermerchanttransaction = new UserMerchantTransaction();
-            $usermerchanttransaction->merchant_id = $base_merchant_id;
+            $usermerchanttransaction->merchant_id = $merchant_or_store_id;
             $usermerchanttransaction->user_id = $newuser->user_id;
-            $usermerchanttransaction->object_type = 'merchant';
+            $usermerchanttransaction->object_type = $object_type;
             $usermerchanttransaction->save();
 
             $newuser->setRelation('apikey', $apikey);
@@ -186,9 +189,17 @@ class CreateUserMerchantTransactionCommand extends Command {
         });
 
         // Check the existance of role id
-        Validator::extend('orbit.exist.base_merchant_id', function ($attribute, $value, $parameters) {
-            $checkBaseMerchant = BaseMerchant::where('base_merchant_id', $value)->first();
-            if (empty($checkBaseMerchant)) {
+        Validator::extend('orbit.exist.merchant_or_store_id', function ($attribute, $value, $parameters) {
+            $object_type = $parameters[0];
+            $merchant_or_store_id = $parameters[1];
+
+            if ($object_type === 'merchant') {
+                $checkMerchantOrStore = BaseMerchant::where('base_merchant_id', $value)->first();
+            } else if ($object_type === 'store') {
+                $checkMerchantOrStore = BaseStore::where('base_store_id', $value)->first();
+            }
+
+            if (empty($checkMerchantOrStore)) {
                 return FALSE;
             }
 
