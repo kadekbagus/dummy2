@@ -431,3 +431,144 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
     }
 
 });
+
+
+/**
+ * Listen on:    `orbit.coupon.pushnotofication.after.save`
+ * Purpose:      Handle push and inapps notification
+ * @author firmansyah <firmansyah@dominopos.com>
+ *
+ * @param CouponAPIController $controller - The instance of the CouponAPIController or its subclass
+ * @param Coupon $coupon - Instance of object Coupon
+ */
+Event::listen('orbit.coupon.pushnotofication.after.commit', function($controller, $coupon, $defaultLangId)
+{
+    // Push Notification and In Apps notofication, Insert to store_object_notification
+
+    // Get distinct user_id who follows the link to tenant
+    $tenantIds = null;
+    if (count($coupon['tenants']) > 0) {
+        foreach ($coupon['tenants'] as $key => $tenant) {
+            if ($tenant->object_type === 'retailer') {
+                $tenantIds[] = $tenant->merchant_id;
+            }
+        }
+    }
+
+    if ($tenantIds != null) {
+        $mongoConfig = Config::get('database.mongodb');
+
+        $queryString['object_id'] = $tenantIds;
+        $queryString['object_type'] = 'store';
+
+        $mongoClient = MongoClient::create($mongoConfig);
+        $endPoint = "user-id-follows";
+
+        $mongoConfig = Config::get('database.mongodb');
+        $userFollows = $mongoClient->setQueryString($queryString)
+                                ->setEndPoint($endPoint)
+                                ->request('GET');
+
+        $objectType = 'coupon';
+        if ($userFollows->data->returned_records > 0) {
+            $launchUrl = LandingPageUrlGenerator::create($objectType, $coupon->promotion_id, $coupon->promotion_name)->generateUrl();
+            $userIds = $userFollows->data->records;
+
+            $queryStringUserNotifToken['user_ids'] = $userIds;
+            $endPoint = "user-notification-tokens";
+            $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                                ->setEndPoint($endPoint)
+                                ->request('GET');
+
+            $notificationToken = array();
+            if ($notificationTokens->data->total_records > 0) {
+                foreach ($notificationTokens->data->records as $key => $val) {
+                    $notificationToken[] = $val->notification_token;
+                }
+            }
+
+            // Get language
+            $defaultLanguage = null;
+            $defaultLanguageId = null;
+            $language = language::where('language_id', $defaultLangId)->first();
+            if (! empty($language)) {
+                $defaultLanguage = $language->name;
+                $defaultLanguageId = $language->language_id;
+            }
+
+            // Get news translation defaul language
+            $headings = new stdClass();
+            $contents = new stdClass();
+            $couponTransaltions = CouponTranslation::where('promotion_id', $coupon->promotion_id)->get();
+
+            if (! empty($couponTransaltions)) {
+                foreach ($couponTransaltions as $key => $couponTransaltion) {
+                    $language = language::where('language_id', $couponTransaltion->merchant_language_id)->first();
+                    $languageName = $language->name;
+                    $headings->$languageName = $couponTransaltion->promotion_name;
+                    $contents->$languageName = $couponTransaltion->description;
+                }
+            }
+
+            // Insert notofications
+            $bodyNotifications = [
+                'title'               => $coupon->promotion_name,
+                'launch_url'          => $launchUrl,
+                'attachment_url'      => $attachmentUrl,
+                'default_language'    => $defaultLanguage,
+                'headings'            => $headings,
+                'contents'            => $contents,
+                'type'                => 'coupon',
+                'status'              => 'pending',
+                'created_at'          => $coupon->created_at,
+                'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
+                'notification_tokens' => $notificationToken,
+                'user_ids'            => $userIds,
+                'target_audience_ids' => null,
+            ];
+
+            $responseNotofocations = $mongoClient->setFormParam($bodyNotifications)
+                                    ->setEndPoint('notifications') // express endpoint
+                                    ->request('POST');
+
+            // Insert to Store Object Notifications Collections
+            $token = '';
+            $status = '';
+            $bodyStoreObjectNotifications = [
+                'notification' => $responseNotofocations->data,
+                'object_id' => $coupon->promotion_id,
+                'object_type' => $objectType,
+                'user_ids' => $userIds,
+                'token' => $notificationToken,
+                'status' => 'pending',
+                'start_date' => $coupon->begin_date,
+                'created_at' => $coupon->created_at
+            ];
+
+            $inApps = $mongoClient->setFormParam($bodyStoreObjectNotifications)
+                        ->setEndPoint('store-object-notifications')
+                        ->request('POST');
+        }
+
+        // send as inApps notification
+        if (! empty($userIds)) {
+            foreach ($userIds as $userId) {
+                $bodyInApps = [
+                    'user_id'       => $userId,
+                    'token'         => null,
+                    'notifications' => $responseNotofocations->data,
+                    'send_status'   => 'sent',
+                    'is_viewed'     => false,
+                    'is_read'       => false,
+                    'created_at'    => $coupon->created_at
+                ];
+
+                $inApps = $mongoClient->setFormParam($bodyInApps)
+                            ->setEndPoint('user-notifications') // express endpoint
+                            ->request('POST');
+            }
+        }
+
+    }
+
+});

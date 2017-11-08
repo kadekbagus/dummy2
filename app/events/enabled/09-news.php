@@ -64,154 +64,6 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
     }
 });
 
-
-/**
- * Listen on:    `orbit.news.pushnotofication.after.save`
- * Purpose:      Handle push and inapps notification
- * @author firmansyah <firmansyah@dominopos.com>
- *
- * @param NewsAPIController $controller - The instance of the NewsAPIController or its subclass
- * @param News $news - Instance of object News
- */
-Event::listen('orbit.news.pushnotofication.after.save', function($controller, $news, $defaultLangId)
-{
-    // Push Notification and In Apps notofication, Insert to store_object_notification
-
-    // Get distinct user_id who follows the link to tenant
-    $tenantIds = null;
-    if (count($news['tenants']) > 0) {
-        foreach ($news['tenants'] as $key => $tenant) {
-            if ($tenant->object_type === 'retailer') {
-                $tenantIds[] = $tenant->merchant_id;
-            }
-        }
-    }
-
-    if ($tenantIds != null) {
-        $mongoConfig = Config::get('database.mongodb');
-
-        $queryString['object_id'] = $tenantIds;
-        $queryString['object_type'] = 'store';
-
-        $mongoClient = MongoClient::create($mongoConfig);
-        $endPoint = "user-id-follows";
-
-        $mongoConfig = Config::get('database.mongodb');
-        $userFollows = $mongoClient->setQueryString($queryString)
-                                ->setEndPoint($endPoint)
-                                ->request('GET');
-
-        if ($userFollows->data->returned_records > 0) {
-            $launchUrl = LandingPageUrlGenerator::create($news->object_type, $news->news_id, $news->news_name)->generateUrl();
-            $userIds = $userFollows->data->records;
-
-            $type = 'promotion';
-            if ($news->object_type === 'news') {
-                $type = 'event';
-            }
-
-            $queryStringUserNotifToken['user_ids'] = $userIds;
-            $endPoint = "user-notification-tokens";
-            $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
-                                ->setEndPoint($endPoint)
-                                ->request('GET');
-
-            $notificationToken = array();
-            if ($notificationTokens->data->total_records > 0) {
-                foreach ($notificationTokens->data->records as $key => $val) {
-                    $notificationToken[] = $val->notification_token;
-                }
-            }
-
-            // Get language
-            $defaultLanguage = null;
-            $defaultLanguageId = null;
-            $language = language::where('language_id', $defaultLangId)->first();
-            if (! empty($language)) {
-                $defaultLanguage = $language->name;
-                $defaultLanguageId = $language->language_id;
-            }
-
-            // Get news translation defaul language
-            $headings = new stdClass();
-            $contents = new stdClass();
-            $newsTransaltions = NewsTranslation::where('news_id', $news->news_id)->get();
-
-            if (! empty($newsTransaltions)) {
-                foreach ($newsTransaltions as $key => $newsTransaltion) {
-                    $language = language::where('language_id', $newsTransaltion->merchant_language_id)->first();
-                    $languageName = $language->name;
-                    $headings->$languageName = $newsTransaltion->news_name;
-                    $contents->$languageName = $newsTransaltion->description;
-                }
-            }
-
-            // Insert notofications
-            $bodyNotifications = [
-                'title'               => $news->news_name,
-                'launch_url'          => $launchUrl,
-                'attachment_url'      => $attachmentUrl,
-                'default_language'    => $defaultLanguage,
-                'headings'            => $headings,
-                'contents'            => $contents,
-                'type'                => $type,
-                'status'              => 'pending',
-                'created_at'          => $news->created_at,
-                'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
-                'notification_tokens' => $notificationToken,
-                'user_ids'            => $userIds,
-                'target_audience_ids' => null,
-            ];
-
-            $responseNotofocations = $mongoClient->setFormParam($bodyNotifications)
-                                    ->setEndPoint('notifications') // express endpoint
-                                    ->request('POST');
-
-            // Insert to Store Object Notifications Collections
-            $token = '';
-            $status = '';
-            $bodyStoreObjectNotifications = [
-                'notification' => $responseNotofocations->data,
-                'object_id' => $news->news_id,
-                'object_type' => $news->object_type,
-                'user_ids' => $userIds,
-                'token' => $notificationToken,
-                'status' => 'pending',
-                'start_date' => $news->begin_date,
-                'created_at' => $news->created_at
-            ];
-
-            $inApps = $mongoClient->setFormParam($bodyStoreObjectNotifications)
-                        ->setEndPoint('store-object-notifications')
-                        ->request('POST');
-        }
-
-
-        // send as inApps notification
-        if (! empty($userIds)) {
-            foreach ($userIds as $userId) {
-                $bodyInApps = [
-                    'user_id'       => $userId,
-                    'token'         => null,
-                    'notifications' => $responseNotofocations->data,
-                    'send_status'   => 'sent',
-                    'is_viewed'     => false,
-                    'is_read'       => false,
-                    'created_at'    => $news->created_at
-                ];
-
-                $inApps = $mongoClient->setFormParam($bodyInApps)
-                            ->setEndPoint('user-notifications') // express endpoint
-                            ->request('POST');
-            }
-        }
-
-    }
-
-});
-
-
-
 /**
  * Listen on:       `orbit.news.postupdatenews.after.save`
  *   Purpose:       Handle file upload on news update
@@ -598,3 +450,149 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
     }
 
 });
+
+/**
+ * Listen on:    `orbit.news.pushnotofication.after.commit`
+ * Purpose:      Handle push and inapps notification
+ * @author firmansyah <firmansyah@dominopos.com>
+ *
+ * @param NewsAPIController $controller - The instance of the NewsAPIController or its subclass
+ * @param News $news - Instance of object News
+ */
+Event::listen('orbit.news.pushnotofication.after.commit', function($controller, $news, $defaultLangId)
+{
+    // Push Notification and In Apps notofication, Insert to store_object_notification
+
+    // Get distinct user_id who follows the link to tenant
+    $tenantIds = null;
+    if (count($news['tenants']) > 0) {
+        foreach ($news['tenants'] as $key => $tenant) {
+            if ($tenant->object_type === 'retailer') {
+                $tenantIds[] = $tenant->merchant_id;
+            }
+        }
+    }
+
+    if ($tenantIds != null) {
+        $mongoConfig = Config::get('database.mongodb');
+
+        $queryString['object_id'] = $tenantIds;
+        $queryString['object_type'] = 'store';
+
+        $mongoClient = MongoClient::create($mongoConfig);
+        $endPoint = "user-id-follows";
+
+        $mongoConfig = Config::get('database.mongodb');
+        $userFollows = $mongoClient->setQueryString($queryString)
+                                ->setEndPoint($endPoint)
+                                ->request('GET');
+
+        if ($userFollows->data->returned_records > 0) {
+            $launchUrl = LandingPageUrlGenerator::create($news->object_type, $news->news_id, $news->news_name)->generateUrl();
+            $userIds = $userFollows->data->records;
+
+            $type = 'promotion';
+            if ($news->object_type === 'news') {
+                $type = 'event';
+            }
+
+            $queryStringUserNotifToken['user_ids'] = $userIds;
+            $endPoint = "user-notification-tokens";
+            $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                                ->setEndPoint($endPoint)
+                                ->request('GET');
+
+            $notificationToken = array();
+            if ($notificationTokens->data->total_records > 0) {
+                foreach ($notificationTokens->data->records as $key => $val) {
+                    $notificationToken[] = $val->notification_token;
+                }
+            }
+
+            // Get language
+            $defaultLanguage = null;
+            $defaultLanguageId = null;
+            $language = language::where('language_id', $defaultLangId)->first();
+            if (! empty($language)) {
+                $defaultLanguage = $language->name;
+                $defaultLanguageId = $language->language_id;
+            }
+
+            // Get news translation defaul language
+            $headings = new stdClass();
+            $contents = new stdClass();
+            $newsTransaltions = NewsTranslation::where('news_id', $news->news_id)->get();
+
+            if (! empty($newsTransaltions)) {
+                foreach ($newsTransaltions as $key => $newsTransaltion) {
+                    $language = language::where('language_id', $newsTransaltion->merchant_language_id)->first();
+                    $languageName = $language->name;
+                    $headings->$languageName = $newsTransaltion->news_name;
+                    $contents->$languageName = $newsTransaltion->description;
+                }
+            }
+
+            // Insert notofications
+            $bodyNotifications = [
+                'title'               => $news->news_name,
+                'launch_url'          => $launchUrl,
+                'attachment_url'      => $attachmentUrl,
+                'default_language'    => $defaultLanguage,
+                'headings'            => $headings,
+                'contents'            => $contents,
+                'type'                => $type,
+                'status'              => 'pending',
+                'created_at'          => $news->created_at,
+                'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
+                'notification_tokens' => $notificationToken,
+                'user_ids'            => $userIds,
+                'target_audience_ids' => null,
+            ];
+
+            $responseNotofocations = $mongoClient->setFormParam($bodyNotifications)
+                                    ->setEndPoint('notifications') // express endpoint
+                                    ->request('POST');
+
+            // Insert to Store Object Notifications Collections
+            $token = '';
+            $status = '';
+            $bodyStoreObjectNotifications = [
+                'notification' => $responseNotofocations->data,
+                'object_id' => $news->news_id,
+                'object_type' => $news->object_type,
+                'user_ids' => $userIds,
+                'token' => $notificationToken,
+                'status' => 'pending',
+                'start_date' => $news->begin_date,
+                'created_at' => $news->created_at
+            ];
+
+            $inApps = $mongoClient->setFormParam($bodyStoreObjectNotifications)
+                        ->setEndPoint('store-object-notifications')
+                        ->request('POST');
+        }
+
+
+        // send as inApps notification
+        if (! empty($userIds)) {
+            foreach ($userIds as $userId) {
+                $bodyInApps = [
+                    'user_id'       => $userId,
+                    'token'         => null,
+                    'notifications' => $responseNotofocations->data,
+                    'send_status'   => 'sent',
+                    'is_viewed'     => false,
+                    'is_read'       => false,
+                    'created_at'    => $news->created_at
+                ];
+
+                $inApps = $mongoClient->setFormParam($bodyInApps)
+                            ->setEndPoint('user-notifications') // express endpoint
+                            ->request('POST');
+            }
+        }
+
+    }
+
+});
+
