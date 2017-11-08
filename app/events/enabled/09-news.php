@@ -121,13 +121,6 @@ Event::listen('orbit.news.pushnotofication.after.save', function($controller, $n
                 }
             }
 
-
-echo "<pre>";
-print_r($news);
-die();
-
-
-
             /*
                 TODO :
                 attachmentUrl
