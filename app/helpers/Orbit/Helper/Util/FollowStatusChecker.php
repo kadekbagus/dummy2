@@ -278,7 +278,7 @@ class FollowStatusChecker
 
             $tenants = $tenants->get();
             foreach ($tenants as $tenant) {
-                if ((int) $tenant->total_store === (int) $followStoreAgg[$tenant->base_merchant_id]) {
+                if ((int) $tenant->total_store <= (int) $followStoreAgg[$tenant->base_merchant_id]) {
                     $objectFollow[] = $tenant->base_merchant_id;
                 }
             }

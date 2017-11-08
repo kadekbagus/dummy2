@@ -2500,6 +2500,7 @@ class CouponAPIController extends ControllerAPI
             $tempContent->save();
 
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
+            Event::fire('orbit.coupon.postupdatecoupon-mallnotification.after.save', array($this, $updatedcoupon));
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid, $is_3rd_party_promotion) {
                 $is_third_party = $is_3rd_party_promotion === 'Y' ? TRUE : FALSE;
