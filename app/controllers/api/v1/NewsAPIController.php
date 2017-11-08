@@ -359,7 +359,6 @@ class NewsAPIController extends ControllerAPI
             $newnews->keywords = $newsKeywords;
 
             Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));
-            Event::fire('orbit.news.pushnotofication.after.save', array($this, $newnews));
 
             //save campaign price
             $campaignbaseprice = CampaignBasePrice::where('merchant_id', '=', $newnews->mall_id)
@@ -482,6 +481,9 @@ class NewsAPIController extends ControllerAPI
 
             // Commit the changes
             $this->commit();
+
+            // Push notification
+            Event::fire('orbit.news.pushnotofication.after.commit', array($this, $newnews, $id_language_default));
 
             // queue for campaign spending news & promotion
             Queue::push('Orbit\\Queue\\SpendingCalculation', [

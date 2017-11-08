@@ -8,6 +8,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use Carbon\Carbon as Carbon;
+use Orbit\Helper\Util\CdnUrlGenerator;
 /**
  * Listen on:    `orbit.news.postnewnews.after.save`
  * Purpose:      Handle file upload on news creation
@@ -605,6 +606,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
         } else {
             $notificationId = $notification->data->records[0]->_id;
         }
+
 
 
         // loop the mall again
