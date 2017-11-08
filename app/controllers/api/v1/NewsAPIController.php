@@ -1228,6 +1228,7 @@ class NewsAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
+            Event::fire('orbit.news.postupdatenews-mallnotification.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
             // $this->response->data->translation_default = $updatednews_default_language;
 

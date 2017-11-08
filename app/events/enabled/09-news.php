@@ -263,131 +263,6 @@ Event::listen('orbit.news.postupdatenews.after.save', function($controller, $new
             ], $queueName);
         }
     }
-
-    // check mall follower
-    $timestamp = date("Y-m-d H:i:s");
-    $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
-    $dateTime = $date->toDateTimeString();
-    $mongoConfig = Config::get('database.mongodb');
-    $mongoClient = MongoClient::create($mongoConfig);
-    $follower = null;
-
-    $prefix = DB::getTablePrefix();
-    $mallData = News::select(DB::raw("CASE WHEN {$prefix}merchants.object_type ='tenant' THEN {$prefix}merchants.parent_id
-                                            ELSE {$prefix}merchants.merchant_id
-                                    END as mall_id"))
-                    ->excludeDeleted('news')
-                    ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
-                    ->where('news.news_id', $news->news_id)
-                    ->get();
-
-    if (!empty($mallData))
-    {
-       foreach ($mallData as $key => $value)
-       {
-            $queryString = [
-                'object_id'   => $value->mall_id,
-                'object_type' => 'mall'
-            ];
-
-            $userFollow = $mongoClient->setQueryString($queryString)
-                                      ->setEndPoint('user-follows')
-                                      ->request('GET');
-
-            if (count($userFollow->data->records) !== 0) {
-                $follower[] = $userFollow->data->records[0];
-            }
-        }
-    }
-
-    if (!empty($follower))
-    {
-        $userIds = null;
-        foreach ($follower as $key => $value) {
-            $userIds[] = $value->user_id;
-        }
-
-        $_news = News::select('news.*',
-                              DB::raw('default_languages.name as default_language_name'),
-                              DB::raw('default_languages.language_id as default_language_id')
-                             )
-                     ->with('translations.media')
-                     ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
-                     ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
-                     ->where('news_id', '=', $news->news_id)
-                     ->first();
-
-        $headings = [];
-        $contents = [];
-        $attachmentPath = null;
-        $attachmentRealPath = null;
-        $cdnUrl = null;
-        $cdnBucketName = null;
-        $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl();
-
-        foreach ($news->translations as $key => $value) {
-            if (!empty($value->news_name) && !empty($value->description)){
-                $headings[$value->name] = $value->news_name;
-                $contents[$value->name] = $value->description;
-            }
-            if ($value->merchant_language_id === $_news->default_language_id) {
-                if (count($value->media) !==0) {
-                    foreach ($value->media as $key => $value_media) {
-                        if($value_media->media_name_long === 'news_translation_image_orig') {
-                            $attachmentPath = $value_media->file_name;
-                            $attachmentRealPath = $value_media->path;
-                            $cdnUrl = $value_media->cdn_url;
-                            $cdnBucketName = $value_media->cdn_bucket_name;
-                        }
-                    }
-                }
-            }
-        }
-
-
-        $dataNotification = [
-            'title' => $_news->news_name,
-            'launch_url' => $launchUrl,
-            'attachment_path' => $attachmentPath,
-            'attachment_realpath' => $attachmentRealPath,
-            'cdn_url' => $cdnUrl,
-            'cdn_bucket_name' => $cdnBucketName,
-            'default_language' => $_news->default_language_name,
-            'headings' => $headings,
-            'contents' => $contents,
-            'type' => 'mall',
-            'status' => 'pending',
-            'sent_at' => null,
-            'notification_tokens' => null,
-            'user_ids' => $userIds,
-            'vendor_notification_id' => null,
-            'vendor_type' => 'onesignal',
-            'is_automatic' => null,
-            'mime_type' => 'image/jpeg',
-            'target_audience_ids' => null,
-            'created_at' => $dateTime
-        ];
-
-        $notification = $mongoClient->setFormParam($dataNotification)
-                                    ->setEndPoint('notifications')
-                                    ->request('POST');
-
-        $dataMallObjectNotification = [
-            'notification' => $notification->data,
-            'object_id' => $news->news_id,
-            'object_type' => $news->object_type,
-            'user_ids' => $userIds,
-            'tokens' => null,
-            'status' => 'pending',
-            'start_date' => $news->begin_date,
-            'created_at' => $dateTime
-        ];
-
-        $mallObjectNotification = $mongoClient->setFormParam($dataMallObjectNotification)
-                                              ->setEndPoint('mall-object-notifications')
-                                              ->request('POST');
-    }
 });
 
 
@@ -594,6 +469,208 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
             Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', [
                 'news_id' => $news->news_id
             ]);
+        }
+    }
+
+});
+
+Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function($controller, $news)
+{
+    // check mall follower
+    $timestamp = date("Y-m-d H:i:s");
+    $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+    $dateTime = $date->toDateTimeString();
+    $mongoConfig = Config::get('database.mongodb');
+    $mongoClient = MongoClient::create($mongoConfig);
+    $follower = null;
+
+    $prefix = DB::getTablePrefix();
+    $mallData = News::select(DB::raw("CASE WHEN {$prefix}merchants.object_type ='tenant' THEN {$prefix}merchants.parent_id
+                                            ELSE {$prefix}merchants.merchant_id
+                                    END as mall_id"))
+                    ->excludeDeleted('news')
+                    ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                    ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                    ->where('news.news_id', $news->news_id)
+                    ->groupBy('mall_id')
+                    ->get();
+
+    if (!empty($mallData))
+    {
+       foreach ($mallData as $key => $value)
+        {
+            $queryString = [
+                'object_id'   => $value->mall_id,
+                'object_type' => 'mall'
+            ];
+
+            $userFollow = $mongoClient->setQueryString($queryString)
+                                      ->setEndPoint('user-follows')
+                                      ->request('GET');
+
+            if (count($userFollow->data->records) !== 0)
+            {
+                $follower[] = $userFollow->data->records[0];
+            }
+        }
+    }
+
+    if (!empty($follower))
+    {
+        $headings = [];
+        $contents = [];
+        $userIds = null;
+        $attachmentPath = null;
+        $attachmentRealPath = null;
+        $cdnUrl = null;
+        $cdnBucketName = null;
+        $notificationId = null;
+        $tokens = null;
+
+        // get user_ids and tokens
+        foreach ($follower as $key => $value)
+        {
+            $userIds[] = $value->user_id;
+        }
+
+        $tokenSearch = ['user_ids' => $userIds, 'notification_provider' => 'onesignal'];
+        $tokenData = $mongoClient->setQueryString($tokenSearch)
+                                 ->setEndPoint('user-notification-tokens')
+                                 ->request('GET');
+
+        if ($tokenData->data->total_records > 0) {
+            foreach ($tokenData->data->records as $key => $value) {
+                $tokens[] = $value->notification_token;
+            }
+        }
+
+        $_news = News::select('news.*',
+                              DB::raw('default_languages.name as default_language_name'),
+                              DB::raw('default_languages.language_id as default_language_id')
+                             )
+                     ->with('translations.media')
+                     ->join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                     ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
+                     ->where('news_id', '=', $news->news_id)
+                     ->first();
+
+        $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl();
+
+        foreach ($news->translations as $key => $value)
+        {
+            if (!empty($value->news_name) && !empty($value->description))
+            {
+                $headings[$value->name] = $value->news_name;
+                $contents[$value->name] = $value->description;
+            }
+            if ($value->merchant_language_id === $_news->default_language_id)
+            {
+                if (count($value->media) !==0)
+                {
+                    foreach ($value->media as $key => $value_media)
+                    {
+                        if($value_media->media_name_long === 'news_translation_image_orig')
+                        {
+                            $attachmentPath = $value_media->file_name;
+                            $attachmentRealPath = $value_media->path;
+                            $cdnUrl = $value_media->cdn_url;
+                            $cdnBucketName = $value_media->cdn_bucket_name;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        $dataNotification = [
+            'title' => $_news->news_name,
+            'launch_url' => $launchUrl,
+            'attachment_path' => $attachmentPath,
+            'attachment_realpath' => $attachmentRealPath,
+            'cdn_url' => $cdnUrl,
+            'cdn_bucket_name' => $cdnBucketName,
+            'default_language' => $_news->default_language_name,
+            'headings' => $headings,
+            'contents' => $contents,
+            'type' => $_news->object_type,
+            'status' => 'pending',
+            'sent_at' => null,
+            'notification_tokens' => $tokens,
+            'user_ids' => $userIds,
+            'vendor_notification_id' => null,
+            'vendor_type' => 'onesignal',
+            'is_automatic' => true,
+            'mime_type' => 'image/jpeg',
+            'target_audience_ids' => null,
+            'created_at' => $dateTime
+        ];
+
+        $dataNotificationCheck = [
+            'title' => $_news->news_name,
+            'launch_url' => $launchUrl,
+            'type' => $_news->object_type,
+        ];
+
+        $notification = $mongoClient->setQueryString($dataNotificationCheck)
+                                     ->setEndPoint('notifications')
+                                     ->request('GET');
+
+        if (count($notification->data->records) === 0) {
+            $notification = $mongoClient->setFormParam($dataNotification)
+                                        ->setEndPoint('notifications')
+                                        ->request('POST');
+            $notificationId = $notification->data->_id;
+        } else {
+            $notificationId = $notification->data->records[0]->_id;
+        }
+
+
+
+        // loop the mall again
+        foreach ($mallData as $key => $value)
+        {
+            $queryString = [
+                'mall_id' => $value->mall_id,
+                'status' => 'pending'
+            ];
+
+            $mallObjectNotif = $mongoClient->setQueryString($queryString)
+                                      ->setEndPoint('mall-object-notifications')
+                                      ->request('GET');
+
+            if (count($mallObjectNotif->data->records) === 0)
+            {
+                // insert data if not exist
+                $insertMallObjectNotification = [
+                    'notification_ids' => (array)$notificationId,
+                    'mall_id' => $value->mall_id,
+                    'user_ids' => $userIds,
+                    'tokens' => $tokens,
+                    'status' => 'pending',
+                    'start_at' => null,
+                    'created_at' => $dateTime
+                ];
+
+                $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
+                                                      ->setEndPoint('mall-object-notifications')
+                                                      ->request('POST');
+            } else {
+                // update data if exist
+                $notificationIds = $mallObjectNotif->data->records[0]->notification_ids;
+                $notificationIds[] = $notificationId;
+                $updateMallObjectNotification = [
+                    '_id' => $mallObjectNotif->data->records[0]->_id,
+                    'notification_ids' => array_unique($notificationIds),
+                    'mall_id' => $value->mall_id,
+                    'user_ids' => $userIds,
+                    'tokens' => $tokens,
+                    'status' => 'pending'
+                ];
+
+                $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
+                                                      ->setEndPoint('mall-object-notifications')
+                                                      ->request('PUT');
+            }
         }
     }
 
