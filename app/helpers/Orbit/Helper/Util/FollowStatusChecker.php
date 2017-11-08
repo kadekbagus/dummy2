@@ -223,7 +223,7 @@ class FollowStatusChecker
 
             // store list in mall level
             if (! empty($this->mallId)) {
-                $queryString['mall_id'] = $this->mall_id;
+                $queryString['mall_id'] = $this->mallId;
 
                 $response = $this->mongoClient
                                 ->setQueryString($queryString)
