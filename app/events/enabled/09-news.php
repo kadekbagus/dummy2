@@ -73,7 +73,6 @@ Event::listen('orbit.news.postnewnews.after.save', function($controller, $news)
  */
 Event::listen('orbit.news.pushnotofication.after.save', function($controller, $news)
 {
-
     // Push Notification and In Apps notofication, Insert to store_object_notification
 
     // Get distinct user_id who follows the link to tenant
@@ -101,7 +100,7 @@ Event::listen('orbit.news.pushnotofication.after.save', function($controller, $n
                                 ->request('GET');
 
         if ($userFollows->data->returned_records > 0) {
-            // $launchUrl = LandingPageUrlGenerator::create($news->object_type, $news->news_id, $news->news_name)->generateUrl();
+            $launchUrl = LandingPageUrlGenerator::create($news->object_type, $news->news_id, $news->news_name)->generateUrl();
             $userIds = $userFollows->data->records;
 
             $type = 'promotion';
@@ -124,7 +123,6 @@ Event::listen('orbit.news.pushnotofication.after.save', function($controller, $n
 
             /*
                 TODO :
-                launchUrl
                 attachmentUrl
                 defaultLanguage
                 headings
@@ -134,7 +132,7 @@ Event::listen('orbit.news.pushnotofication.after.save', function($controller, $n
             // Insert notofications
             $bodyNotifications = [
                 'title'               => $news->news_name,
-                // 'launch_url'          => $launchUrl,
+                'launch_url'          => $launchUrl,
                 // 'attachment_url'      => $attachmentUrl,
                 // 'default_language'    => $defaultLanguage,
                 // 'headings'            => $headings,
@@ -193,22 +191,7 @@ Event::listen('orbit.news.pushnotofication.after.save', function($controller, $n
 
     }
 
-
-
-
-
-
-
-echo "<pre>";
-print_r('--- end of push notifications ---');
-die();
-
-
 });
-
-
-
-
 
 
 

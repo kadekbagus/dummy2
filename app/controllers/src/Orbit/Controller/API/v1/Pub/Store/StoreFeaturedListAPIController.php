@@ -830,6 +830,9 @@ class StoreFeaturedListAPIController extends PubControllerAPI
         }
 
         if (! empty($city)) {
+            if (! is_array($city)) {
+                $city = (array) $city;
+            }
             $follow = $follow->setCity($city);
         }
 
