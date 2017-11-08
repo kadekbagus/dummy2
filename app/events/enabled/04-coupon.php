@@ -4,7 +4,9 @@
  *
  */
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-
+use Orbit\Helper\MongoDB\Client as MongoClient;
+use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
+use Carbon\Carbon as Carbon;
 /**
  * Listen on:    `orbit.coupon.postnewcoupon.after.save`
  * Purpose:      Handle file upload on coupon creation
@@ -431,3 +433,206 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
     }
 
 });
+
+
+Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', function($controller, $coupon)
+{
+    // check mall follower
+    $timestamp = date("Y-m-d H:i:s");
+    $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+    $dateTime = $date->toDateTimeString();
+    $mongoConfig = Config::get('database.mongodb');
+    $mongoClient = MongoClient::create($mongoConfig);
+    $follower = null;
+    $mallData = null;
+    $malls = null;
+
+    $prefix = DB::getTablePrefix();
+    $malls = Coupon::select(DB::raw("CASE WHEN {$prefix}merchants.object_type ='tenant' THEN {$prefix}merchants.parent_id
+                                            ELSE {$prefix}merchants.merchant_id
+                                        END as mall_id"))
+                        ->excludeDeleted('promotions')
+                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                        ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                        ->where('promotions.promotion_id', $coupon->promotion_id)
+                        ->groupBy('mall_id')
+                        ->get();
+
+    if (!empty($malls))
+    {
+       foreach ($malls as $key => $value)
+        {
+            $queryString = [
+                'object_id'   => $value->mall_id,
+                'object_type' => 'mall'
+            ];
+
+            $userFollow = $mongoClient->setQueryString($queryString)
+                                      ->setEndPoint('user-follows')
+                                      ->request('GET');
+
+            if (count($userFollow->data->records) !== 0)
+            {
+                $follower[] = $userFollow->data->records[0]->user_id;
+                $mallData[] = $value->mall_id;
+            }
+        }
+    }
+
+    if (!empty($follower) && !empty($mallData))
+    {
+        $headings = [];
+        $contents = [];
+        $userIds = null;
+        $attachmentPath = null;
+        $attachmentRealPath = null;
+        $cdnUrl = null;
+        $cdnBucketName = null;
+        $notificationId = null;
+        $tokens = null;
+
+        // get user_ids and tokens
+        $userIds = $follower;
+        $tokenSearch = ['user_ids' => $userIds, 'notification_provider' => 'onesignal'];
+        $tokenData = $mongoClient->setQueryString($tokenSearch)
+                                 ->setEndPoint('user-notification-tokens')
+                                 ->request('GET');
+
+        if ($tokenData->data->total_records > 0) {
+            foreach ($tokenData->data->records as $key => $value) {
+                $tokens[] = $value->notification_token;
+            }
+        }
+
+        $_coupon = Coupon::select('promotions.*',
+                              DB::raw('default_languages.name as default_language_name'),
+                              DB::raw('default_languages.language_id as default_language_id')
+                             )
+                     ->with('translations.media')
+                     ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                     ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
+                     ->where('promotion_id', '=', $coupon->promotion_id)
+                     ->first();
+
+        $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl();
+
+        foreach($_coupon->translations as $key => $value)
+        {
+            if (!empty($value->promotion_name) && !empty($value->description))
+            {
+                $headings[$value->name] = $value->promotion_name;
+                $contents[$value->name] = $value->description;
+            }
+            if ($value->merchant_language_id === $_coupon->default_language_id)
+            {
+                if (count($value->media) !==0)
+                {
+                    foreach ($value->media as $key => $value_media)
+                    {
+                        if($value_media->media_name_long === 'coupon_translation_image_orig')
+                        {
+                            $attachmentPath = $value_media->file_name;
+                            $attachmentRealPath = $value_media->path;
+                            $cdnUrl = $value_media->cdn_url;
+                            $cdnBucketName = $value_media->cdn_bucket_name;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        $dataNotification = [
+            'title' => $_coupon->promotion_name,
+            'launch_url' => $launchUrl,
+            'attachment_path' => $attachmentPath,
+            'attachment_realpath' => $attachmentRealPath,
+            'cdn_url' => $cdnUrl,
+            'cdn_bucket_name' => $cdnBucketName,
+            'default_language' => $_coupon->default_language_name,
+            'headings' => $headings,
+            'contents' => $contents,
+            'type' => $_coupon->object_type,
+            'status' => 'pending',
+            'sent_at' => null,
+            'notification_tokens' => $tokens,
+            'user_ids' => $userIds,
+            'vendor_notification_id' => null,
+            'vendor_type' => 'onesignal',
+            'is_automatic' => true,
+            'mime_type' => 'image/jpeg',
+            'target_audience_ids' => null,
+            'created_at' => $dateTime
+        ];
+
+        $dataNotificationCheck = [
+            'title' => $_coupon->promotion_name,
+            'launch_url' => $launchUrl,
+            'type' => $_coupon->object_type,
+        ];
+
+        $notification = $mongoClient->setQueryString($dataNotificationCheck)
+                                     ->setEndPoint('notifications')
+                                     ->request('GET');
+
+        if (count($notification->data->records) === 0) {
+            $notification = $mongoClient->setFormParam($dataNotification)
+                                        ->setEndPoint('notifications')
+                                        ->request('POST');
+            $notificationId = $notification->data->_id;
+        } else {
+            $notificationId = $notification->data->records[0]->_id;
+        }
+
+
+
+        // loop the mall again
+        foreach ($mallData as $key => $value)
+        {
+            $queryString = [
+                'mall_id' => $value,
+                'status' => 'pending'
+            ];
+
+            $mallObjectNotif = $mongoClient->setQueryString($queryString)
+                                      ->setEndPoint('mall-object-notifications')
+                                      ->request('GET');
+
+            if (count($mallObjectNotif->data->records) === 0)
+            {
+                // insert data if not exist
+                $insertMallObjectNotification = [
+                    'notification_ids' => (array)$notificationId,
+                    'mall_id' => $value,
+                    'user_ids' => $userIds,
+                    'tokens' => $tokens,
+                    'status' => 'pending',
+                    'start_at' => null,
+                    'created_at' => $dateTime
+                ];
+
+                $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
+                                                      ->setEndPoint('mall-object-notifications')
+                                                      ->request('POST');
+            } else {
+                // update data if exist
+                $notificationIds = $mallObjectNotif->data->records[0]->notification_ids;
+                $notificationIds[] = $notificationId;
+                $updateMallObjectNotification = [
+                    '_id' => $mallObjectNotif->data->records[0]->_id,
+                    'notification_ids' => array_unique($notificationIds),
+                    'mall_id' => $value,
+                    'user_ids' => $userIds,
+                    'tokens' => $tokens,
+                    'status' => 'pending'
+                ];
+
+                $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
+                                                      ->setEndPoint('mall-object-notifications')
+                                                      ->request('PUT');
+            }
+        }
+    }
+
+});
+

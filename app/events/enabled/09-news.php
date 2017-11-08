@@ -466,9 +466,11 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
     $mongoConfig = Config::get('database.mongodb');
     $mongoClient = MongoClient::create($mongoConfig);
     $follower = null;
+    $mallData = null;
+    $malls = null;
 
     $prefix = DB::getTablePrefix();
-    $mallData = News::select(DB::raw("CASE WHEN {$prefix}merchants.object_type ='tenant' THEN {$prefix}merchants.parent_id
+    $malls = News::select(DB::raw("CASE WHEN {$prefix}merchants.object_type ='tenant' THEN {$prefix}merchants.parent_id
                                             ELSE {$prefix}merchants.merchant_id
                                     END as mall_id"))
                     ->excludeDeleted('news')
@@ -478,9 +480,9 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                     ->groupBy('mall_id')
                     ->get();
 
-    if (!empty($mallData))
+    if (!empty($malls))
     {
-       foreach ($mallData as $key => $value)
+       foreach ($malls as $key => $value)
         {
             $queryString = [
                 'object_id'   => $value->mall_id,
@@ -493,12 +495,13 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
 
             if (count($userFollow->data->records) !== 0)
             {
-                $follower[] = $userFollow->data->records[0];
+                $follower[] = $userFollow->data->records[0]->user_id;
+                $mallData[] = $value->mall_id;
             }
         }
     }
 
-    if (!empty($follower))
+    if (!empty($follower) && !empty($mallData))
     {
         $headings = [];
         $contents = [];
@@ -511,11 +514,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
         $tokens = null;
 
         // get user_ids and tokens
-        foreach ($follower as $key => $value)
-        {
-            $userIds[] = $value->user_id;
-        }
-
+        $userIds = $follower;
         $tokenSearch = ['user_ids' => $userIds, 'notification_provider' => 'onesignal'];
         $tokenData = $mongoClient->setQueryString($tokenSearch)
                                  ->setEndPoint('user-notification-tokens')
@@ -608,12 +607,11 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
         }
 
 
-
         // loop the mall again
         foreach ($mallData as $key => $value)
         {
             $queryString = [
-                'mall_id' => $value->mall_id,
+                'mall_id' => $value,
                 'status' => 'pending'
             ];
 
@@ -626,7 +624,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                 // insert data if not exist
                 $insertMallObjectNotification = [
                     'notification_ids' => (array)$notificationId,
-                    'mall_id' => $value->mall_id,
+                    'mall_id' => $value,
                     'user_ids' => $userIds,
                     'tokens' => $tokens,
                     'status' => 'pending',
@@ -644,7 +642,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                 $updateMallObjectNotification = [
                     '_id' => $mallObjectNotif->data->records[0]->_id,
                     'notification_ids' => array_unique($notificationIds),
-                    'mall_id' => $value->mall_id,
+                    'mall_id' => $value,
                     'user_ids' => $userIds,
                     'tokens' => $tokens,
                     'status' => 'pending'
