@@ -441,7 +441,7 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
  * @param CouponAPIController $controller - The instance of the CouponAPIController or its subclass
  * @param Coupon $coupon - Instance of object Coupon
  */
-Event::listen('orbit.coupon.pushnotofication.after.save', function($controller, $coupon, $defaultLangId)
+Event::listen('orbit.coupon.pushnotofication.after.commit', function($controller, $coupon, $defaultLangId)
 {
     // Push Notification and In Apps notofication, Insert to store_object_notification
 

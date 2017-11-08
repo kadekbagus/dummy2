@@ -452,14 +452,14 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
 });
 
 /**
- * Listen on:    `orbit.news.pushnotofication.after.save`
+ * Listen on:    `orbit.news.pushnotofication.after.commit`
  * Purpose:      Handle push and inapps notification
  * @author firmansyah <firmansyah@dominopos.com>
  *
  * @param NewsAPIController $controller - The instance of the NewsAPIController or its subclass
  * @param News $news - Instance of object News
  */
-Event::listen('orbit.news.pushnotofication.after.save', function($controller, $news, $defaultLangId)
+Event::listen('orbit.news.pushnotofication.after.commit', function($controller, $news, $defaultLangId)
 {
     // Push Notification and In Apps notofication, Insert to store_object_notification
 
