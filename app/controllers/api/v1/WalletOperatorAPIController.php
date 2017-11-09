@@ -112,7 +112,6 @@ class WalletOperatorAPIController extends ControllerAPI
             $newContactPerson->contact_name = $contact_person_name;
             $newContactPerson->position = $contact_person_position;
             $newContactPerson->phone_number = $contact_person_phone_number;
-            $newContactPerson->phone_number_for_sms = $contact_person_phone_number_for_sms;
             $newContactPerson->email = $contact_person_email;
             $newContactPerson->address = $contact_person_address;
             $newContactPerson->save();
