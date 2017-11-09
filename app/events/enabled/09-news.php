@@ -634,19 +634,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                     'created_at' => $dateTime
                 ];
 
-<<<<<<< HEAD
-        // send as inApps notification
-        if (! empty($userIds)) {
-            foreach ($userIds as $userId) {
-                $bodyInApps = [
-                    'user_id'       => $userId,
-                    'token'         => null,
-                    'notifications' => $responseNotofocations->data,
-                    'send_status'   => 'pending',
-                    'is_viewed'     => false,
-                    'is_read'       => false,
-                    'created_at'    => $news->created_at
-=======
+
                 $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
                                                       ->setEndPoint('mall-object-notifications')
                                                       ->request('POST');
@@ -661,7 +649,6 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                     'user_ids' => $userIds,
                     'tokens' => $tokens,
                     'status' => 'pending'
->>>>>>> gitlab-cloud/feature-4.4-development
                 ];
 
                 $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
@@ -672,7 +659,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
     }
 
 });
-<<<<<<< HEAD
+
 
 
 /**
