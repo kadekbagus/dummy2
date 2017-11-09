@@ -89,12 +89,10 @@ class StoreCounterAPIController extends PubControllerAPI
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
-                    'language' => $this->language,
-                    'sortby'   => $this->sort_by,
+                    'language' => $this->language
                 ),
                 array(
-                    'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,updated_date,rating',
+                    'language' => 'required|orbit.empty.language_default'
                 )
             );
 
