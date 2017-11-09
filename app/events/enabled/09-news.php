@@ -338,8 +338,8 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
     $follower = null;
     $mallData = null;
     $malls = null;
-    $headings = [];
-    $contents = [];
+    $headings = null;
+    $contents = null;
     $userIds = null;
     $attachmentPath = null;
     $attachmentRealPath = null;
