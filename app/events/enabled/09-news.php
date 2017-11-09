@@ -634,6 +634,19 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                     'created_at' => $dateTime
                 ];
 
+<<<<<<< HEAD
+        // send as inApps notification
+        if (! empty($userIds)) {
+            foreach ($userIds as $userId) {
+                $bodyInApps = [
+                    'user_id'       => $userId,
+                    'token'         => null,
+                    'notifications' => $responseNotofocations->data,
+                    'send_status'   => 'pending',
+                    'is_viewed'     => false,
+                    'is_read'       => false,
+                    'created_at'    => $news->created_at
+=======
                 $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
                                                       ->setEndPoint('mall-object-notifications')
                                                       ->request('POST');
@@ -648,6 +661,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                     'user_ids' => $userIds,
                     'tokens' => $tokens,
                     'status' => 'pending'
+>>>>>>> gitlab-cloud/feature-4.4-development
                 ];
 
                 $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
@@ -658,3 +672,107 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
     }
 
 });
+<<<<<<< HEAD
+
+
+/**
+ * Listen on:    `orbit.news.pushnotoficationupdate.after.commit`
+ * Purpose:      Handle push and inapps notification
+ * @author firmansyah <firmansyah@dominopos.com>
+ *
+ * @param NewsAPIController $controller - The instance of the NewsAPIController or its subclass
+ * @param News $news - Instance of object News
+ */
+Event::listen('orbit.news.pushnotoficationupdate.after.commit', function($controller, $updatednews)
+{
+    //Check date and status
+    $timezone = 'Asia/Jakarta'; // now with jakarta timezone
+    $timestamp = date("Y-m-d H:i:s");
+    $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+    $dateTimeNow = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+
+    if ( ($updatednews->status === 'active') && ($dateTimeNow >= $updatednews->begin_date) ) {
+
+        $dateTime = $updatednews->updated_at;
+
+        // Get data user-notification : where object_id object_type
+        $queryString['object_id'] = $updatednews->news_id;
+        $queryString['object_type'] = $updatednews->object_type;
+        $queryString['status'] = 'pending';
+
+        $mongoConfig = Config::get('database.mongodb');
+        $mongoClient = MongoClient::create($mongoConfig);
+        $endPoint = "store-object-notifications";
+        $storeObjectNotifications = $mongoClient->setQueryString($queryString)
+                                ->setEndPoint($endPoint)
+                                ->request('GET');
+
+        // Send to onesignal
+        $notificationTokens = $storeObjectNotifications->data->records[0]->notification->notification_tokens;
+        if (isset($notificationTokens) && count($notificationTokens) > 0) {
+
+            $mongoNotifId = $storeObjectNotifications->data->records[0]->_id;
+            $launchUrl = $storeObjectNotifications->data->records[0]->notification->launch_url;
+            $headings = $storeObjectNotifications->data->records[0]->notification->headings;
+            $contents = $storeObjectNotifications->data->records[0]->notification->contents;
+            $imageUrl = $storeObjectNotifications->data->records[0]->notification->attachment_url;
+
+            // add query string for activity recording
+            $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
+
+            $data = [
+                'headings'           => $headings,
+                'contents'           => $contents,
+                'url'                => $newUrl,
+                'include_player_ids' => $notificationTokens,
+                'ios_attachments'    => $imageUrl,
+                'big_picture'        => $imageUrl,
+                'adm_big_picture'    => $imageUrl,
+                'chrome_big_picture' => $imageUrl,
+                'chrome_web_image'   => $imageUrl,
+            ];
+
+            $oneSignal = new OneSignal($oneSignalConfig);
+            $newNotif = $oneSignal->notifications->add($data);
+            $bodyUpdate['vendor_notification_id'] = $newNotif->id;
+
+            // Update status pending to sent
+            $bodyUpdate['_id'] = $mongoNotifId;
+            $bodyUpdate['sent_at'] = $dateTime;
+            $bodyUpdate['status'] = 'sent';
+
+            $responseUpdate = $mongoClient->setFormParam($bodyUpdate)
+                                        ->setEndPoint($endPoint) // express endpoint
+                                        ->request('PUT');
+        }
+
+        // Send as inApps notification
+        $userIds = $storeObjectNotifications->data->records[0]->notification->user_ids;
+        if (isset($userIds) && count($userIds) > 0) {
+            foreach ($userIds as $userId) {
+                $bodyInApps = [
+                    'user_id'       => $userId,
+                    'token'         => null,
+                    'notifications' => $notif->data,
+                    'send_status'   => 'sent',
+                    'is_viewed'     => false,
+                    'is_read'       => false,
+                    'created_at'    => $dateTime
+                ];
+
+                $inApps = $mongoClient->setFormParam($bodyInApps)
+                            ->setEndPoint('user-notifications') // express endpoint
+                            ->request('POST');
+            }
+        }
+
+        $bodyUpdate['sent_at'] = $dateTime;
+        $bodyUpdate['_id'] = $mongoNotifId;
+
+        $responseUpdate = $mongoClient->setFormParam($bodyUpdate)
+                                    ->setEndPoint('notifications') // express endpoint
+                                    ->request('PUT');
+    }
+});
+=======
+>>>>>>> gitlab-cloud/feature-4.4-development
