@@ -761,5 +761,3 @@ Event::listen('orbit.news.pushnotoficationupdate.after.commit', function($contro
                                     ->request('PUT');
     }
 });
-=======
->>>>>>> gitlab-cloud/feature-4.4-development
