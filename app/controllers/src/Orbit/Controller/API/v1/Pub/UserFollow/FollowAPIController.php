@@ -283,9 +283,13 @@ class FollowAPIController extends PubControllerAPI
                                                 ->where('merchants.status', '=', 'active')
                                                 ->where(DB::raw('parent.status'), '=', 'active')
                                                 ->where(DB::raw('parent.is_subscribed'), '=', 'Y')
-                                                ->where(DB::raw('parent.country_id'), '=', $baseStore->country_id)
-                                                ->whereIn(DB::raw('parent.city'), $city)
-                                                ->get();
+                                                ->where(DB::raw('parent.country_id'), '=', $baseStore->country_id);
+
+                                if (! empty($city)) {
+                                    $stores = $stores->whereIn(DB::raw('parent.city'), $city);
+                                }
+
+                                $stores = $stores->get();
                             }
 
                             if (!empty($stores))
