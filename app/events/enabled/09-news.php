@@ -469,6 +469,15 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
     $follower = null;
     $mallData = null;
     $malls = null;
+    $headings = [];
+    $contents = [];
+    $userIds = null;
+    $attachmentPath = null;
+    $attachmentRealPath = null;
+    $cdnUrl = null;
+    $cdnBucketName = null;
+    $notificationId = null;
+    $tokens = null;
 
     $prefix = DB::getTablePrefix();
     $malls = News::select(DB::raw("CASE WHEN {$prefix}merchants.object_type ='tenant' THEN {$prefix}merchants.parent_id
@@ -496,7 +505,9 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
 
             if (count($userFollow->data->records) !== 0)
             {
-                $follower[] = $userFollow->data->records[0]->user_id;
+                foreach ($userFollow->data->records as $key => $value) {
+                    $follower[] = $value->user_id;
+                }
                 $mallData[] = $value->mall_id;
             }
         }
@@ -504,16 +515,6 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
 
     if (!empty($follower) && !empty($mallData))
     {
-        $headings = [];
-        $contents = [];
-        $userIds = null;
-        $attachmentPath = null;
-        $attachmentRealPath = null;
-        $cdnUrl = null;
-        $cdnBucketName = null;
-        $notificationId = null;
-        $tokens = null;
-
         // get user_ids and tokens
         $userIds = $follower;
         $tokenSearch = ['user_ids' => $userIds, 'notification_provider' => 'onesignal'];
@@ -605,6 +606,15 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
             $notificationId = $notification->data->_id;
         } else {
             $notificationId = $notification->data->records[0]->_id;
+            $updateDataNotification = [
+                '_id' => $notificationId,
+                'user_ids' => $userIds,
+                'tokens' => $tokens,
+            ];
+
+            $updateNotification = $mongoClient->setFormParam($updateDataNotification)
+                                                  ->setEndPoint('notifications')
+                                                  ->request('PUT');
         }
 
 
