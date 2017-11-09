@@ -124,7 +124,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,updated_date,rating',
+                    'sortby'   => 'in:name,location,updated_date,rating,followed',
                 )
             );
 
