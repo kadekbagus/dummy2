@@ -704,8 +704,8 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
     $follower = null;
     $mallData = null;
     $malls = null;
-    $headings = [];
-    $contents = [];
+    $headings = null;
+    $contents = null;
     $userIds = null;
     $attachmentPath = null;
     $attachmentRealPath = null;
