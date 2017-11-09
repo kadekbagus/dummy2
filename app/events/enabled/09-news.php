@@ -410,12 +410,23 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
 
         $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl();
 
+        $headings = new stdClass();
+        $contents = new stdClass();
+        $attachmentPath = null;
+        $attachmentRealPath = null;
+        $cdnUrl = null;
+        $cdnBucketName = null;
+        $mimeType = null;
+
         foreach ($news->translations as $key => $value)
         {
             if (!empty($value->news_name) && !empty($value->description))
             {
-                $headings[$value->name] = $value->news_name;
-                $contents[$value->name] = $value->description;
+                $languageName = $value->name;
+                if (! empty($value->news_name)) {
+                    $headings->$languageName = $value->news_name;
+                    $contents->$languageName = $value->description;
+                }
             }
             if ($value->merchant_language_id === $_news->default_language_id)
             {
@@ -429,6 +440,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                             $attachmentRealPath = $value_media->path;
                             $cdnUrl = $value_media->cdn_url;
                             $cdnBucketName = $value_media->cdn_bucket_name;
+                            $mimeType = $value_media->mime_type;
                         }
                     }
                 }
@@ -454,7 +466,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
             'vendor_notification_id' => null,
             'vendor_type' => 'onesignal',
             'is_automatic' => true,
-            'mime_type' => 'image/jpeg',
+            'mime_type' => $mimeType,
             'target_audience_ids' => null,
             'created_at' => $dateTime
         ];
@@ -605,11 +617,11 @@ Event::listen('orbit.news.pushnotoficationupdate.after.commit', function($contro
                              ->first();
 
             $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl();
-            $attachmentPath = '';
-            $attachmentRealPath = '';
-            $cdnUrl = '';
-            $cdnBucketName = '';
-            $mimeType = '';
+            $attachmentPath = null;
+            $attachmentRealPath = null;
+            $cdnUrl = null;
+            $cdnBucketName = null;
+            $mimeType = null;
             $headings = new stdClass();
             $contents = new stdClass();
 

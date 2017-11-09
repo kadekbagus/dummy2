@@ -776,12 +776,23 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
 
         $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl();
 
+        $headings = new stdClass();
+        $contents = new stdClass();
+        $attachmentPath = null;
+        $attachmentRealPath = null;
+        $cdnUrl = null;
+        $cdnBucketName = null;
+        $mimeType = null;
+
         foreach ($coupon->translations as $key => $value)
         {
             if (!empty($value->promotion_name) && !empty($value->description))
             {
-                $headings[$value->name] = $value->promotion_name;
-                $contents[$value->name] = $value->description;
+                $languageName = $value->name;
+                if (! empty($value->promotion_name)) {
+                    $headings->$languageName = $value->promotion_name;
+                    $contents->$languageName = $value->description;
+                }
             }
             if ($value->merchant_language_id === $_coupon->default_language_id)
             {
@@ -795,6 +806,7 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
                             $attachmentRealPath = $value_media->path;
                             $cdnUrl = $value_media->cdn_url;
                             $cdnBucketName = $value_media->cdn_bucket_name;
+                            $mimeType = $value_media->mime_type;
                         }
                     }
                 }
@@ -820,7 +832,7 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
             'vendor_notification_id' => null,
             'vendor_type' => 'onesignal',
             'is_automatic' => true,
-            'mime_type' => 'image/jpeg',
+            'mime_type' => $mimeType,
             'target_audience_ids' => null,
             'created_at' => $dateTime
         ];
