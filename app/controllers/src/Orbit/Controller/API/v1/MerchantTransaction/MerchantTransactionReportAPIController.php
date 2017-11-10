@@ -189,7 +189,7 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                     'object_name' => 'object_name',
                     'object_id' => 'object_id',
                     'coupon_redemption_code' => 'coupon_redemption_code',
-                    'created_at' => 'date_tz',
+                    'created_at' => 'created_at',
                     'payment_transaction_id' => 'payment_transaction_id',
                     'external_payment_transaction_id' => 'external_payment_transaction_id',
                     'payment_method' => 'payment_method',
