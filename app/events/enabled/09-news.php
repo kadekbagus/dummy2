@@ -560,14 +560,14 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
 
 
 /**
- * Listen on:    `orbit.news.pushnotoficationupdate.after.commit`
- * Purpose:      Handle push and inapps notification
+ * Listen on: `orbit.news.pushnotificationupdate.after.commit`
+ * Purpose: Handle push and inapps notification
  * @author firmansyah <firmansyah@dominopos.com>
  *
  * @param NewsAPIController $controller - The instance of the NewsAPIController or its subclass
  * @param News $news - Instance of object News
  */
-Event::listen('orbit.news.pushnotoficationupdate.after.commit', function($controller, $updatednews)
+Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', function($controller, $updatednews)
 {
     //Check date and status
     $timezone = 'Asia/Jakarta'; // now with jakarta timezone
