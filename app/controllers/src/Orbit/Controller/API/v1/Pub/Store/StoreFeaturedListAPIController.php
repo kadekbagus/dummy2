@@ -124,7 +124,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,updated_date,rating',
+                    'sortby'   => 'in:name,location,updated_date,rating,followed',
                 )
             );
 
@@ -566,7 +566,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 if (! empty($objectFollow)) {
                     if ($sort_by === 'followed') {
                         $withScore = TRUE;
-                        $jsonQuery['query']['bool']['should'][] = array('terms' => array('base_merchant_id' => $objectFollow, 'boost' => 10));
+                        $jsonQuery['query']['bool']['should'][] = array('terms' => array('base_merchant_id' => $objectFollow, 'boost' => 100));
                         $jsonQuery['query']['bool']['should'][] = array('match_all' => new stdClass());
                     }
                 }

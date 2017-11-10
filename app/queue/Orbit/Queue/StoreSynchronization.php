@@ -35,7 +35,9 @@ use ObjectBank;
 use ObjectContact;
 use ObjectFinancialDetail;
 use MerchantStorePaymentProvider;
-
+use Orbit\Helper\MongoDB\Client as MongoClient;
+use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
+use Carbon\Carbon as Carbon;
 use Exception;
 
 class StoreSynchronization
@@ -194,6 +196,119 @@ class StoreSynchronization
                     $tenant->is_payment_acquire = $store->is_payment_acquire;
                     $tenant->save();
 
+                    $activeStore = Tenant::where('merchant_id', $base_store_id)->where('status', 'active')->first();
+                    if (!is_object($activeStore))
+                    {
+                        $timestamp = date("Y-m-d H:i:s");
+                        $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+                        $dateTime = $date->toDateTimeString();
+                        $follower = null;
+                        $tokens = null;
+                        $userIds = null;
+                        $headings = null;
+                        $contents = null;
+
+                        // get user_id and token
+                        $queryString = [
+                            'object_id'   => $store->merchant_id,
+                            'object_type' => 'mall'
+                        ];
+
+                        $userFollow = $mongoClient->setQueryString($queryString)
+                                                  ->setEndPoint('user-follows')
+                                                  ->request('GET');
+
+                        foreach ($userFollow->data->records as $key => $value) {
+                            $follower[] = $value->user_id;
+                        }
+
+                        $userIds = array_unique($follower);
+
+                        $tokenData = $mongoClient->setQueryString($tokenSearch)
+                                                 ->setEndPoint('user-notification-tokens')
+                                                 ->request('GET');
+
+                        if ($tokenData->data->total_records > 0) {
+                            foreach ($tokenData->data->records as $key => $value) {
+                                $tokens[] = $value->notification_token;
+                            }
+                        }
+
+                        $launchUrl = LandingPageUrlGenerator::create('store', $activeStore->merchant_id, $activeStore->name)->generateUrl();
+
+                        $dataNotification = [
+                            'title' => $activeStore->name,
+                            'launch_url' => $launchUrl,
+                            'attachment_path' => $attachmentPath,
+                            'attachment_realpath' => $attachmentRealPath,
+                            'cdn_url' => $cdnUrl,
+                            'cdn_bucket_name' => $cdnBucketName,
+                            'default_language' => null,
+                            'headings' => $headings,
+                            'contents' => $contents,
+                            'type' => 'store',
+                            'status' => 'pending',
+                            'sent_at' => null,
+                            'notification_tokens' => $tokens,
+                            'user_ids' => $userIds,
+                            'vendor_notification_id' => null,
+                            'vendor_type' => 'onesignal',
+                            'is_automatic' => true,
+                            'mime_type' => 'image/jpeg',
+                            'target_audience_ids' => null,
+                            'created_at' => $dateTime
+                        ];
+
+                        $queryString = [
+                            'mall_id' => $store->merchant_id,
+                            'status' => 'pending'
+                        ];
+
+                        $mallObjectNotif = $mongoClient->setQueryString($queryString)
+                                                       ->setEndPoint('mall-object-notifications')
+                                                       ->request('GET');
+
+                        if (count($mallObjectNotif->data->records) === 0)
+                        {
+                            // insert data if not exist
+                            $insertMallObjectNotification = [
+                                'notification_ids' => (array)$notificationId,
+                                'mall_id' => $store->merchant_id,
+                                'user_ids' => $userIds,
+                                'tokens' => $tokens,
+                                'status' => 'pending',
+                                'start_at' => null,
+                                'created_at' => $dateTime
+                            ];
+
+                            $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
+                                                                  ->setEndPoint('mall-object-notifications')
+                                                                  ->request('POST');
+                        } else {
+                            // update data if exist
+                            $_notificationIds = $mallObjectNotif->data->records[0]->notification_ids;
+                            $_userIds = $mallObjectNotif->data->records[0]->user_ids;
+                            $_tokens = $mallObjectNotif->data->records[0]->tokens;
+                            $_notificationIds[] = $notificationId;
+                            foreach ($userIds as $key => $uservalue) {
+                                $_userIds[] = $uservalue;
+                            }
+                            foreach ($tokens as $key => $tokenvalue) {
+                                $_tokens[] = $tokenvalue;
+                            }
+                            $updateMallObjectNotification = [
+                                '_id' => $mallObjectNotif->data->records[0]->_id,
+                                'notification_ids' => array_unique($_notificationIds),
+                                'mall_id' => $store->merchant_id,
+                                'user_ids' => array_unique($_userIds),
+                                'tokens' => array_unique($_tokens),
+                            ];
+
+                            $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
+                                                                  ->setEndPoint('mall-object-notifications')
+                                                                  ->request('PUT');
+                        }
+                    }
 
                     // Insert the payment acquire, only chech if payment acquire = Y
                     if ($tenant->is_payment_acquire == 'Y') {
