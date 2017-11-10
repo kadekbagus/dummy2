@@ -37,7 +37,6 @@ use ObjectFinancialDetail;
 use MerchantStorePaymentProvider;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
-use Carbon\Carbon as Carbon;
 use Exception;
 
 class StoreSynchronization
@@ -196,9 +195,12 @@ class StoreSynchronization
                     $tenant->is_payment_acquire = $store->is_payment_acquire;
                     $tenant->save();
 
+                    // mall notification
                     $activeStore = Tenant::where('merchant_id', $base_store_id)->where('status', 'active')->first();
                     if (!is_object($activeStore))
                     {
+                        $mongoConfig = Config::get('database.mongodb');
+                        $mongoClient = MongoClient::create($mongoConfig);
                         $timestamp = date("Y-m-d H:i:s");
                         $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
                         $dateTime = $date->toDateTimeString();
