@@ -197,7 +197,7 @@ class StoreSynchronization
 
                     // mall notification
                     $activeStore = Tenant::where('merchant_id', $base_store_id)->where('status', 'active')->first();
-                    if (is_object($activeStore))
+                    if (!is_object($activeStore))
                     {
                         $mongoConfig = Config::get('database.mongodb');
                         $mongoClient = MongoClient::create($mongoConfig);
@@ -215,7 +215,7 @@ class StoreSynchronization
                         $cdnBucketName = null;
 
                         // get user_ids
-                        $userFollowSearch = ['object_id'   => $store->merchant_id, 'object_type' => 'mall'];
+                        $userFollowSearch = ['object_id' => $store->merchant_id, 'object_type' => 'mall'];
                         $userFollow = $mongoClient->setQueryString($userFollowSearch)
                                                   ->setEndPoint('user-follows')
                                                   ->request('GET');
@@ -256,8 +256,8 @@ class StoreSynchronization
                                 'type' => 'store',
                                 'status' => 'pending',
                                 'sent_at' => null,
-                                'notification_tokens' => null,//$tokens,
-                                'user_ids' => null,//$userIds,
+                                'notification_tokens' => $tokens,
+                                'user_ids' => $userIds,
                                 'vendor_notification_id' => null,
                                 'vendor_type' => 'onesignal',
                                 'is_automatic' => true,
