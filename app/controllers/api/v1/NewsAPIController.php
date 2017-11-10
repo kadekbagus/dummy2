@@ -1238,7 +1238,7 @@ class NewsAPIController extends ControllerAPI
             $this->commit();
 
             // Push notification
-            Event::fire('orbit.news.pushnotoficationupdate.after.commit', array($this, $updatednews));
+            Event::fire('orbit.news.postupdatenews-storenotificationupdate.after.commit', array($this, $updatednews));
 
             // queue for campaign spending news & promotion
             Queue::push('Orbit\\Queue\\SpendingCalculation', [

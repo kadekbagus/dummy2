@@ -2567,7 +2567,7 @@ class CouponAPIController extends ControllerAPI
             $this->commit();
 
             // Push notification
-            Event::fire('orbit.coupon.pushnotoficationupdate.after.commit', array($this, $updatedcoupon));
+            Event::fire('orbit.coupon.postupdatecoupon-mallnotification.after.save', array($this, $updatedcoupon));
 
             // queue for campaign spending coupon
             \Queue::push('Orbit\\Queue\\SpendingCalculation', [
