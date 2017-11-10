@@ -252,7 +252,6 @@ class MallListAPIController extends PubControllerAPI
                     if ($sort_by === 'followed') {
                         $withScore = TRUE;
                         $jsonArea['query']['bool']['should'][] = array('terms' => array('_id' => $objectFollow, 'boost' => 100));
-                        $jsonArea['query']['bool']['should'][] = array('match_all' => new stdClass());
                     }
                 }
             }
