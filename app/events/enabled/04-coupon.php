@@ -439,14 +439,14 @@ Event::listen('orbit.coupon.postaddtowallet.after.commit', function($controller,
 
 
 /**
- * Listen on:    `orbit.coupon.pushnotoficationupdate.after.commit`
+ * Listen on:    `orbit.coupon.postupdatecoupon-storenotificationupdate.after.commit`
  * Purpose:      Handle push and inapps notification
  * @author firmansyah <firmansyah@dominopos.com>
  *
  * @param CouponAPIController $controller - The instance of the CouponAPIController or its subclass
  * @param News $coupon - Instance of object News
  */
-Event::listen('orbit.coupon.pushnotoficationupdate.after.commit', function($controller, $updatedcoupon)
+Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commit', function($controller, $updatedcoupon)
 {
     //Check date and status
     $timezone = 'Asia/Jakarta'; // now with jakarta timezone
