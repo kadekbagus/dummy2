@@ -176,7 +176,7 @@ class StoreDetailAPIController extends PubControllerAPI
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'");
 
-            $storeInfo = Tenant::select('merchants.name', DB::raw("oms.country"))
+            $storeInfo = Tenant::select('merchants.name', DB::raw("oms.country"), DB::raw("oms.country_id"))
                             ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                             ->where('merchants.status', '=', 'active')
                             ->where(DB::raw('oms.status'), '=', 'active')
@@ -212,28 +212,34 @@ class StoreDetailAPIController extends PubControllerAPI
                 ->first();
 
             // follow status
-            $baseStore = BaseStore::where('base_store_id', $merchantid)->first();
-            $follow = FollowStatusChecker::create()
-                                    ->setUserId($user->user_id)
-                                    ->setObjectType('store')
-                                    ->setObjectId($baseStore->base_merchant_id);
-
-            if (! empty($mallId)) {
-                $follow = $follow->setMallId($mallId);
-            }
-
-            if (! empty($cityFilters)) {
-                if (! is_array($cityFilters)) {
-                    $cityFilters = (array) $cityFilters;
-                }
-                $follow = $follow->setCity($cityFilters);
-            }
-
-            $follow = $follow->getFollowStatus();
+            $baseMerchant = BaseMerchant::where('name', $storeInfo->name)
+                                    ->where('country_id', $storeInfo->country_id)
+                                    ->first();
 
             $store->follow_status = false;
-            if (! empty($follow)) {
-                $store->follow_status = true;
+            if (! empty($baseMerchant)) {
+                $follow = FollowStatusChecker::create()
+                                        ->setUserId($user->user_id)
+                                        ->setObjectType('store')
+                                        ->setObjectId($baseMerchant->base_merchant_id);
+
+                if (! empty($mallId)) {
+                    $follow = $follow->setMallId($mallId);
+                }
+
+                if (! empty($cityFilters)) {
+                    if (! is_array($cityFilters)) {
+                        $cityFilters = (array) $cityFilters;
+                    }
+                    $follow = $follow->setCity($cityFilters);
+                }
+
+                $follow = $follow->getFollowStatus();
+
+
+                if (! empty($follow)) {
+                    $store->follow_status = true;
+                }
             }
 
             // ---- START RATING ----

@@ -38,7 +38,7 @@ class CdnUploadUpdateQueue
     {
         $prefix = DB::getTablePrefix();
         $objectId = $data['object_id'];
-        $mediaNameId = $data['media_name_id'];
+        $mediaNameId = (! empty($data['media_name_id'])) ? $data['media_name_id'] : '';
         $oldPath = (! empty($data['old_path'])) ? $data['old_path'] : array();
         $esType = (! empty($data['es_type'])) ? $data['es_type'] : '';
         $esId = (! empty($data['es_id'])) ? $data['es_id'] : '';
@@ -138,14 +138,6 @@ class CdnUploadUpdateQueue
                                         $objectId,
                                         $bucketName,
                                         $response['ObjectURL']);
-
-                if (! empty($mediaNameId)) {
-                    $contentMessage = sprintf('Upload file to S3; Status: OK; Media name: %s, Object_id: %s; Bucket_name: %s; File: %s;',
-                                $mediaNameId,
-                                $objectId,
-                                $bucketName,
-                                $response['ObjectURL']);
-                }
 
                 $message[] = $contentMessage;
                 Log::info($contentMessage);
