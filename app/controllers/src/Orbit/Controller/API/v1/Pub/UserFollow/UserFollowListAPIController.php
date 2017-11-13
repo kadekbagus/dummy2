@@ -103,14 +103,14 @@ class UserFollowListAPIController extends PubControllerAPI
 
             // Query to mysql where in merchant id and user id
             if ($objectType === 'mall') {
-                $follows = Mall::select('merchant_id', 'name', 'media.cdn_url', 'media.path')
+                $follows = Mall::select('merchant_id', 'name as mall_name', 'media.cdn_url', 'media.path')
                                 ->leftJoin('media', 'media.object_id', '=', 'merchants.merchant_id')
                                 ->where('media.media_name_long', 'mall_logo_cropped_default')
                                 ->whereIn('merchant_id', $merchantIds)
                                 ->excludeDeleted();
             } else if ($objectType === 'store') {
                 $prefix = DB::getTablePrefix();
-                $follows = Tenant::select('merchants.merchant_id', DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"), 'media.cdn_url', 'media.path', DB::raw('parent.name as mall_name'))
+                $follows = Tenant::select('merchants.merchant_id', DB::raw("parent.merchant_id as mall_id"), DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"), 'media.cdn_url', 'media.path', DB::raw("{$prefix}merchants.name as store_name"))
                                 ->leftJoin('media' , 'media.object_id', '=', 'merchants.merchant_id')
                                 ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id' )
                                 ->where('media.media_name_long', 'retailer_logo_cropped_default')
@@ -130,9 +130,41 @@ class UserFollowListAPIController extends PubControllerAPI
 
             $listOfRec = $follows->get();
 
+            // Reformat response data for store list
+            if ($objectType === 'store') {
+                // Store name unique
+                foreach ($listOfRec as $key => $value) {
+                    $storeUnique[$key] = $value->store_name;
+                }
+
+                $storeNameUniques = array_unique($storeUnique);
+
+                $listOfStores = array();
+                foreach ($storeNameUniques as $keyStoreName => $valStoreName) {
+                    foreach ($listOfRec as $keyRec => $valRec) {
+                        if ($valRec->store_name == $valStoreName) {
+                            $storeSingle =  array(
+                                                'mall_id' => $valRec->mall_id,
+                                                'merchant_id' => $valRec->merchant_id,
+                                                'object_type' => 'store',
+                                                'name' => $valRec->name,
+                                                'cdn_url' => $valRec->cdn_url,
+                                                'path' =>  $valRec->path,
+                                                'store_name' => $valRec->store_name
+                                            );
+
+                            $listOfStores[$valStoreName][] = $storeSingle;
+                        }
+                    }
+                }
+
+                $listOfRec = $listOfStores;
+            }
+
             $data = new \stdclass();
             $data->returned_records = count($listOfRec);
             $data->total_records = RecordCounter::create($_follows)->count();
+
             $data->records = $listOfRec;
 
             $this->response->data = $data;
