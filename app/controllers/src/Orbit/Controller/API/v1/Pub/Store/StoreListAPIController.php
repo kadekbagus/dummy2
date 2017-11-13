@@ -375,7 +375,7 @@ class StoreListAPIController extends PubControllerAPI
                     $withScore = TRUE;
                     if ($sort_by === 'followed') {
                         $withScore = TRUE;
-                        $jsonQuery['query']['bool']['should'][] = array('terms' => array('base_merchant_id' => $objectFollow, 'boost' => 100));
+                        $jsonQuery['query']['bool']['should'][] = array('constant_score' => array('filter' => array('terms' => array('base_merchant_id' => $objectFollow)), 'boost' => 100));
                     }
                 }
             }
