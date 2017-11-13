@@ -218,6 +218,10 @@ class StoreDetailAPIController extends PubControllerAPI
                                     ->setObjectType('store')
                                     ->setObjectId($baseStore->base_merchant_id);
 
+            if (! empty($mallId)) {
+                $follow = $follow->setMallId($mallId);
+            }
+
             if (! empty($cityFilters)) {
                 if (! is_array($cityFilters)) {
                     $cityFilters = (array) $cityFilters;
