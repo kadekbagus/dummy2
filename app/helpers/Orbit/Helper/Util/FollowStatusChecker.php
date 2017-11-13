@@ -221,6 +221,11 @@ class FollowStatusChecker
                 'user_id'     => $this->userId
             ];
 
+            // store detail
+            if (! empty($this->object_id)) {
+                $queryString['base_merchant_id'] = $this->object_id;
+            }
+
             // store list in mall level
             if (! empty($this->mallId)) {
                 $queryString['mall_id'] = $this->mallId;
