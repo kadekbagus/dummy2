@@ -463,8 +463,8 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                 'type' => $_news->object_type == 'news' ? 'event' : 'promotion',
                 'status' => 'pending',
                 'sent_at' => null,
-                'notification_tokens' => $tokens,
-                'user_ids' => $userIds,
+                'notification_tokens' => json_encode($tokens),
+                'user_ids' => json_encode($userIds),
                 'vendor_notification_id' => null,
                 'vendor_type' => 'onesignal',
                 'is_automatic' => true,
@@ -477,6 +477,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                 'title' => $_news->news_name,
                 'launch_url' => $launchUrl,
                 'type' => $_news->object_type,
+                'status' => 'pending',
             ];
 
             $notification = $mongoClient->setQueryString($dataNotificationCheck)
@@ -492,8 +493,8 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                 $notificationId = $notification->data->records[0]->_id;
                 $updateDataNotification = [
                     '_id' => $notificationId,
-                    'user_ids' => $userIds,
-                    'tokens' => $tokens,
+                    'notification_tokens' => json_encode($tokens),
+                    'user_ids' => json_encode($userIds),
                 ];
 
                 $updateNotification = $mongoClient->setFormParam($updateDataNotification)
