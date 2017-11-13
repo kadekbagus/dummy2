@@ -54,8 +54,7 @@ class UserNotificationStoreCommand extends Command {
         // check existing notification
         // TODO :  add filter by date gte today datetime
         // $queryStringStoreObject['start_date'] = $dateTimeNow;
-        $queryStringStoreObject['status'] = 'pendingx';
-        // $queryStringStoreObject['id'] = 'ObjectId("5a05166065784b130dadb2f8")';
+        $queryStringStoreObject['status'] = 'pending';
 
         $storeObjectNotifications = $mongoClient->setQueryString($queryStringStoreObject)
                                 ->setEndPoint('store-object-notifications')
