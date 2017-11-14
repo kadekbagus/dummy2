@@ -79,11 +79,6 @@ class UserFollowListAPIController extends PubControllerAPI
             }
 
             // Collect data what user follow (mall and store) from monggo db
-            $queryString = [
-                'take' => $take,
-                'skip' => $skip,
-            ];
-
             $queryString['user_id'] = $user->user_id;
             $queryString['object_type'] = $objectType;
 
