@@ -89,7 +89,7 @@ class UserFollowListAPIController extends PubControllerAPI
                                     ->setEndPoint($endPoint)
                                     ->request('GET');
 
-            $merchantIds = array();
+            $merchantIds = array('');
             if (! empty($merchantId->data->records) > 0) {
                 foreach ($merchantId->data->records as $key => $value) {
                     $merchantIds[] = $value->object_id;
