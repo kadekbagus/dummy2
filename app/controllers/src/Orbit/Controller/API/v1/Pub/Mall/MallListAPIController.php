@@ -216,6 +216,7 @@ class MallListAPIController extends PubControllerAPI
             // calculate rating and review based on location/mall
             $scriptFieldRating = "double counter = 0; double rating = 0;";
             $scriptFieldReview = "double review = 0;";
+            $scriptFieldFollow = "int follow = 0;";
 
             if (! empty($cityFilters)) {
                 $countryId = $countryData->country_id;
@@ -241,8 +242,6 @@ class MallListAPIController extends PubControllerAPI
             $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
             $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
 
-            $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
-
             $role = $user->role->role_name;
             $objectFollow = [];
             if (strtolower($role) === 'consumer') {
@@ -250,11 +249,16 @@ class MallListAPIController extends PubControllerAPI
 
                 if (! empty($objectFollow)) {
                     if ($sort_by === 'followed') {
-                        $withScore = TRUE;
-                        $jsonArea['query']['bool']['should'][] = array('constant_score' => array('filter' => array('terms' => array('base_merchant_id' => $objectFollow)), 'boost' => 100));
+                        foreach ($objectFollow as $followId) {
+                            $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('merchant_id')) { if (! doc['merchant_id'].empty) { if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
+                        }
+
+                        $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
                     }
                 }
             }
+
+            $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
 
             // sort by name or location
             $sort = array('name.raw' => array('order' => 'asc'));
@@ -269,6 +273,8 @@ class MallListAPIController extends PubControllerAPI
                 $sort = array('name.raw' => array('order' => 'asc'));
             } elseif ($sort_by === 'rating') {
                 $sort = array('_script' => array('script' => $scriptFieldRating, 'type' => 'number', 'order' => $sort_mode));
+            } elseif ($sort_by === 'followed') {
+                $sort = array('_script' => array('script' => $scriptFieldFollow, 'type' => 'number', 'order' => 'desc'));
             }
 
             // put featured mall id in highest priority
