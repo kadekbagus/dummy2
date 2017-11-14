@@ -89,7 +89,7 @@ class UserFollowListAPIController extends PubControllerAPI
                                     ->setEndPoint($endPoint)
                                     ->request('GET');
 
-            $merchantIds = array();
+            $merchantIds = array('-');
             if (! empty($merchantId->data->records) > 0) {
                 foreach ($merchantId->data->records as $key => $value) {
                     $merchantIds[] = $value->object_id;
@@ -108,7 +108,11 @@ class UserFollowListAPIController extends PubControllerAPI
                 $follows = Tenant::select('merchants.merchant_id', DB::raw("parent.merchant_id as mall_id"), DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"), 'media.cdn_url', 'media.path', DB::raw("{$prefix}merchants.name as store_name"))
                                 ->leftJoin('media' , 'media.object_id', '=', 'merchants.merchant_id')
                                 ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id' )
-                                ->where('media.media_name_long', 'retailer_logo_cropped_default')
+                                ->where(function($q){
+                                    $q->where('media.media_name_long', 'retailer_logo_cropped_default')
+                                      ->orWhere('media.media_name_long', null)
+                                      ;
+                                })
                                 ->whereIn('merchants.merchant_id', $merchantIds)
                                 ->where('merchants.status', '=', 'active');
             }

@@ -151,6 +151,7 @@ class ESMallUpdateQueue
                                         ->sum('total_view');
 
             $esBody = [
+                'merchant_id'     => $mall->merchant_id,
                 'name'            => $mall->name,
                 'description'     => $mall->description,
                 'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line2])),

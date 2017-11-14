@@ -242,8 +242,6 @@ class MallListAPIController extends PubControllerAPI
             $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
             $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
 
-            $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
-
             $role = $user->role->role_name;
             $objectFollow = [];
             if (strtolower($role) === 'consumer') {
@@ -252,14 +250,15 @@ class MallListAPIController extends PubControllerAPI
                 if (! empty($objectFollow)) {
                     if ($sort_by === 'followed') {
                         foreach ($objectFollow as $followId) {
-                            $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('base_merchant_id')) { if (! doc['base_merchant_id'].empty) { if (doc['base_merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
+                            $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('merchant_id')) { if (! doc['merchant_id'].empty) { if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
                         }
 
                         $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
-                        $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
                     }
                 }
             }
+
+            $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
 
             // sort by name or location
             $sort = array('name.raw' => array('order' => 'asc'));
