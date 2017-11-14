@@ -175,7 +175,7 @@ class MerchantTransactionReportAPIController extends ControllerAPI
             // Default sort by
             $sortBy = 'payment_transactions.created_at';
             // Default sort mode
-            $sortMode = 'asc';
+            $sortMode = 'desc';
 
             OrbitInput::get('sortby', function($_sortBy) use (&$sortBy)
             {
@@ -189,7 +189,7 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                     'object_name' => 'object_name',
                     'object_id' => 'object_id',
                     'coupon_redemption_code' => 'coupon_redemption_code',
-                    'created_at' => 'date_tz',
+                    'created_at' => 'created_at',
                     'payment_transaction_id' => 'payment_transaction_id',
                     'external_payment_transaction_id' => 'external_payment_transaction_id',
                     'payment_method' => 'payment_method',
@@ -205,8 +205,8 @@ class MerchantTransactionReportAPIController extends ControllerAPI
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sortMode)
             {
-                if (strtolower($_sortMode) !== 'asc') {
-                    $sortMode = 'desc';
+                if (strtolower($_sortMode) !== 'desc') {
+                    $sortMode = 'asc';
                 }
             });
             $merchantTransactions->orderBy($sortBy, $sortMode);
