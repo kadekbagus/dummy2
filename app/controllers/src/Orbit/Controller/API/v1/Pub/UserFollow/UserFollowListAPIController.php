@@ -100,7 +100,10 @@ class UserFollowListAPIController extends PubControllerAPI
             if ($objectType === 'mall') {
                 $follows = Mall::select('merchant_id', 'name as mall_name', 'media.cdn_url', 'media.path')
                                 ->leftJoin('media', 'media.object_id', '=', 'merchants.merchant_id')
-                                ->where('media.media_name_long', 'mall_logo_orig')
+                                ->where(function($q){
+                                    $q->where('media.media_name_long', 'mall_logo_orig')
+                                      ->orWhere('media.media_name_long', null);
+                                })
                                 ->whereIn('merchant_id', $merchantIds)
                                 ->excludeDeleted();
             } else if ($objectType === 'store') {
@@ -110,8 +113,7 @@ class UserFollowListAPIController extends PubControllerAPI
                                 ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id' )
                                 ->where(function($q){
                                     $q->where('media.media_name_long', 'retailer_logo_orig')
-                                      ->orWhere('media.media_name_long', null)
-                                      ;
+                                      ->orWhere('media.media_name_long', null);
                                 })
                                 ->whereIn('merchants.merchant_id', $merchantIds)
                                 ->where('merchants.status', '=', 'active');
