@@ -87,6 +87,7 @@ class ESMallCreateQueue
                 'type' => Config::get('orbit.elasticsearch.indices.malldata.type'),
                 'id' => $mall->merchant_id,
                 'body' => [
+                    'merchant_id'     => $mall->merchant_id,
                     'name'            => $mall->name,
                     'description'     => $mall->description,
                     'address_line'    => trim(implode("\n", [$mall->address_line1, $mall->address_line2, $mall->address_line3])),
