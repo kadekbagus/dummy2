@@ -79,11 +79,6 @@ class UserFollowListAPIController extends PubControllerAPI
             }
 
             // Collect data what user follow (mall and store) from monggo db
-            $queryString = [
-                'take' => $take,
-                'skip' => $skip,
-            ];
-
             $queryString['user_id'] = $user->user_id;
             $queryString['object_type'] = $objectType;
 
@@ -133,32 +128,34 @@ class UserFollowListAPIController extends PubControllerAPI
             // Reformat response data for store list
             if ($objectType === 'store') {
                 // Store name unique
-                foreach ($listOfRec as $key => $value) {
-                    $storeUnique[$key] = $value->store_name;
-                }
+                if (count($listOfRec) > 0) {
+                    foreach ($listOfRec as $key => $value) {
+                        $storeUnique[$key] = $value->store_name;
+                    }
 
-                $storeNameUniques = array_unique($storeUnique);
+                    $storeNameUniques = array_unique($storeUnique);
 
-                $listOfStores = array();
-                foreach ($storeNameUniques as $keyStoreName => $valStoreName) {
-                    foreach ($listOfRec as $keyRec => $valRec) {
-                        if ($valRec->store_name == $valStoreName) {
-                            $storeSingle =  array(
-                                                'mall_id' => $valRec->mall_id,
-                                                'merchant_id' => $valRec->merchant_id,
-                                                'object_type' => 'store',
-                                                'name' => $valRec->name,
-                                                'cdn_url' => $valRec->cdn_url,
-                                                'path' =>  $valRec->path,
-                                                'store_name' => $valRec->store_name
-                                            );
+                    $listOfStores = array();
+                    foreach ($storeNameUniques as $keyStoreName => $valStoreName) {
+                        foreach ($listOfRec as $keyRec => $valRec) {
+                            if ($valRec->store_name == $valStoreName) {
+                                $storeSingle =  array(
+                                                    'mall_id' => $valRec->mall_id,
+                                                    'merchant_id' => $valRec->merchant_id,
+                                                    'object_type' => 'store',
+                                                    'name' => $valRec->name,
+                                                    'cdn_url' => $valRec->cdn_url,
+                                                    'path' =>  $valRec->path,
+                                                    'store_name' => $valRec->store_name
+                                                );
 
-                            $listOfStores[$valStoreName][] = $storeSingle;
+                                $listOfStores[$valStoreName][] = $storeSingle;
+                            }
                         }
                     }
-                }
 
-                $listOfRec = $listOfStores;
+                    $listOfRec = $listOfStores;
+                }
             }
 
             $data = new \stdclass();
