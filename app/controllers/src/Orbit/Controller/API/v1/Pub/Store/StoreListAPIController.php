@@ -336,6 +336,7 @@ class StoreListAPIController extends PubControllerAPI
             // calculate rating and review based on location/mall
             $scriptFieldRating = "double counter = 0; double rating = 0;";
             $scriptFieldReview = "double review = 0;";
+            $scriptFieldFollow = "int follow = 0;";
 
             if (! empty($mallId)) {
                 $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('mall_rating.rating_" . $mallId . "')) { if (! doc['mall_rating.rating_" . $mallId . "'].empty) { counter = counter + doc['mall_rating.review_" . $mallId . "'].value; rating = rating + (doc['mall_rating.rating_" . $mallId . "'].value * doc['mall_rating.review_" . $mallId . "'].value);}};";
@@ -372,10 +373,13 @@ class StoreListAPIController extends PubControllerAPI
                 $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
 
                 if (! empty($objectFollow)) {
-                    $withScore = TRUE;
                     if ($sort_by === 'followed') {
-                        $withScore = TRUE;
-                        $jsonQuery['query']['bool']['should'][] = array('constant_score' => array('filter' => array('terms' => array('base_merchant_id' => $objectFollow)), 'boost' => 100));
+                        foreach ($objectFollow as $followId) {
+                            $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('base_merchant_id')) { if (! doc['base_merchant_id'].empty) { if (doc['base_merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
+                        }
+
+                        $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
+                        $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
                     }
                 }
             }
@@ -391,6 +395,8 @@ class StoreListAPIController extends PubControllerAPI
                 $sort = array('updated_at' => array('order' => $sort_mode));
             } elseif ($sort_by === 'rating') {
                 $sort = array('_script' => array('script' => $scriptFieldRating, 'type' => 'number', 'order' => $sort_mode));
+            } elseif ($sort_by === 'followed') {
+                $sort = array('_script' => array('script' => $scriptFieldFollow, 'type' => 'number', 'order' => 'desc'));
             } else {
                 $sort = $defaultSort;
             }
