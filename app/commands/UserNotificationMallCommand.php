@@ -54,6 +54,10 @@ class UserNotificationMallCommand extends Command {
         $mongoConfig = Config::get('database.mongodb');
         $mongoClient = MongoClient::create($mongoConfig);
         $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
+        $timezone = 'Asia/Makassar'; // now with jakarta timezone
+        $timestamp = date("Y-m-d H:i:s");
+        $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+        $dateTime = $date->toDateTimeString();
 
         $mallObjectNotificationSearch['status'] = 'pending';
         $mallObjectNotifications = $mongoClient->setQueryString($mallObjectNotificationSearch)
@@ -106,8 +110,10 @@ class UserNotificationMallCommand extends Command {
                     $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
                     $imageUrl = $imgUrl->getImageUrl($attachmentPath, $cdnUrl);
                     $launchUrl = LandingPageUrlGenerator::create('mall', $mall->merchant_id, $mall->name)->generateUrl();
-                    $headings = $mall->name;
-                    $contents = 'There are new happenings in '.$mall->name;
+                    $headings = new stdClass();
+                    $contents = new stdClass();
+                    $headings->en = $mall->name;
+                    $contents->en = 'There are new happenings in '.$mall->name;
 
                     // add query string for activity recording
                     $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
@@ -126,33 +132,47 @@ class UserNotificationMallCommand extends Command {
 
 	                $oneSignal = new OneSignal($oneSignalConfig);
 	                $newNotif = $oneSignal->notifications->add($data);
-	                $notificationUpdate['vendor_notification_id'] = $newNotif->id;
+	                $vendorNotificationId = $newNotif->id;
 
+	                // update mall object notification
 	                $mallObjectNotificationUpdate['_id'] = $mallObjectNotificationId;
 	                $mallObjectNotificationUpdate['status'] = 'sent';
-
 	                $responseMallUpdate = $mongoClient->setFormParam($mallObjectNotificationUpdate)
-		                                               ->setEndPoint('mall-object-notifications')
-		                                               ->request('PUT');
+		                                              ->setEndPoint('mall-object-notifications')
+		                                              ->request('PUT');
+
+		            // update notification
+		            $notificationIds = $mallObjectNotification->notification_ids;
+		            if (! empty($notificationIds)) {
+		            	foreach ($notificationIds as $key => $value) {
+		            		$notificationUpdate = ['_id' => $value,
+		            		                       'vendor_notification_id' => $vendorNotificationId,
+		            		                       'status' => 'sent',
+		            		                       'sent_at' => $dateTime];
+			                $responseNotificationUpdate = $mongoClient->setFormParam($notificationUpdate)
+								                                   	  ->setEndPoint('notifications')
+								                                      ->request('PUT');
+		            	}
+		            }
 
 		            // send as inApps notification
-	                // if (! empty($storeObjectNotification->notification->user_ids)) {
-	                //     foreach ($storeObjectNotification->notification->user_ids as $userId) {
-	                //         $bodyInApps = [
-	                //             'user_id'       => $userId,
-	                //             'token'         => null,
-	                //             'notifications' => $storeObjectNotification->notification,
-	                //             'send_status'   => 'sent',
-	                //             'is_viewed'     => false,
-	                //             'is_read'       => false,
-	                //             'created_at'    => $dateTime
-	                //         ];
+	                if (! empty($userIds)) {
+	                    foreach ($userIds as $userId) {
+	                        $bodyInApps = [
+	                            'user_id'       => $userId,
+	                            'token'         => null,
+	                            'notifications' => $notificationIds,
+	                            'send_status'   => 'sent',
+	                            'is_viewed'     => false,
+	                            'is_read'       => false,
+	                            'created_at'    => $dateTime
+	                        ];
 
-	                //         $inApps = $mongoClient->setFormParam($bodyInApps)
-	                //                     ->setEndPoint('user-notifications') // express endpoint
-	                //                     ->request('POST');
-	                //     }
-	                // }
+	                        $inApps = $mongoClient->setFormParam($bodyInApps)
+			                                      ->setEndPoint('user-notifications')
+			                                      ->request('POST');
+	                    }
+	                }
 	            }
             }
         }
@@ -165,9 +185,7 @@ class UserNotificationMallCommand extends Command {
 	 */
 	protected function getArguments()
 	{
-		return array(
-			array('example', InputArgument::REQUIRED, 'An example argument.'),
-		);
+		return array();
 	}
 
 	/**
@@ -177,9 +195,7 @@ class UserNotificationMallCommand extends Command {
 	 */
 	protected function getOptions()
 	{
-		return array(
-			array('example', null, InputOption::VALUE_OPTIONAL, 'An example option.', null),
-		);
+		return array();
 	}
 
 }
