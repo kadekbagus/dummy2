@@ -180,7 +180,6 @@ class FollowAPIController extends PubControllerAPI
                                                 ->where('merchants.name', '=', $baseStore->name)
                                                 ->where('merchants.status', '=', 'active')
                                                 ->where(DB::raw('parent.status'), '=', 'active')
-                                                ->where(DB::raw('parent.is_subscribed'), '=', 'Y')
                                                 ->where(DB::raw('parent.country_id'), '=', $baseStore->country_id);
 
                                 if (! empty($city)) {
@@ -282,7 +281,6 @@ class FollowAPIController extends PubControllerAPI
                                                 ->where('merchants.name', '=', $baseStore->name)
                                                 ->where('merchants.status', '=', 'active')
                                                 ->where(DB::raw('parent.status'), '=', 'active')
-                                                ->where(DB::raw('parent.is_subscribed'), '=', 'Y')
                                                 ->where(DB::raw('parent.country_id'), '=', $baseStore->country_id);
 
                                 if (! empty($city)) {
