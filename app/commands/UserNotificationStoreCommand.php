@@ -42,10 +42,10 @@ class UserNotificationStoreCommand extends Command {
     public function fire()
     {
         //Check date and status
-        $timezone = 'Asia/Makassar'; // now with jakarta timezone
+        $timezone = 'Asia/Jakarta'; // now with jakarta timezone
         $timestamp = date("Y-m-d H:i:s");
         $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
-        $dateTimeNow = $date->toDateTimeString();
+        $dateTimeNow = $date->setTimezone($timezone)->toDateTimeString();
 
         $mongoConfig = Config::get('database.mongodb');
         $mongoClient = MongoClient::create($mongoConfig);
@@ -65,7 +65,6 @@ class UserNotificationStoreCommand extends Command {
                 // send to onesignal
                 if (! empty($storeObjectNotification->notification->notification_tokens)) {
                     $mongoNotifId = $storeObjectNotification->notification->_id;
-
                     $launchUrl = $storeObjectNotification->notification->launch_url;
                     $headings = $storeObjectNotification->notification->headings;
                     $contents = $storeObjectNotification->notification->contents;
@@ -117,7 +116,7 @@ class UserNotificationStoreCommand extends Command {
                             'send_status'   => 'sent',
                             'is_viewed'     => false,
                             'is_read'       => false,
-                            'created_at'    => $dateTime
+                            'created_at'    => $dateTimeNow
                         ];
 
                         $inApps = $mongoClient->setFormParam($bodyInApps)
@@ -127,7 +126,7 @@ class UserNotificationStoreCommand extends Command {
                 }
 
                 // Update status in notification collection from pending to sent
-                $bodyUpdate['sent_at'] = $dateTime;
+                $bodyUpdate['sent_at'] = $dateTimeNow;
                 $bodyUpdate['_id'] = $mongoNotifId;
                 $bodyUpdate['status'] = 'sent';
 
@@ -144,6 +143,9 @@ class UserNotificationStoreCommand extends Command {
                                             ->setEndPoint('store-object-notifications') // express endpoint
                                             ->request('PUT');
             }
+
+            $this->info('Cronjob User Notification For Store, Running at ' . $dateTimeNow . ' successfully');
+
         }
     }
 
