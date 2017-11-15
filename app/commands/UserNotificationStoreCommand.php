@@ -45,15 +45,14 @@ class UserNotificationStoreCommand extends Command {
         $timezone = 'Asia/Makassar'; // now with jakarta timezone
         $timestamp = date("Y-m-d H:i:s");
         $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
-        $dateTime = $date->toDateTimeString();
+        $dateTimeNow = $date->toDateTimeString();
 
         $mongoConfig = Config::get('database.mongodb');
         $mongoClient = MongoClient::create($mongoConfig);
         $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
 
         // check existing notification
-        // TODO :  add filter by date gte today datetime
-        // $queryStringStoreObject['start_date'] = $dateTimeNow;
+        $queryStringStoreObject['start_date'] = $dateTimeNow;
         $queryStringStoreObject['status'] = 'pending';
 
         $storeObjectNotifications = $mongoClient->setQueryString($queryStringStoreObject)
