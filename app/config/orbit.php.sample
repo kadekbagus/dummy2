@@ -6177,9 +6177,8 @@ return array(
                 'name_long' => 'Click Notification Icon',
                 'module_name' => 'Application',
                 'type' => 'click',
-                'object_type' => '--SET BY object_type_parameter_name--',
-                'object_type_parameter_name' => 'object_type',
-                'parameter_name' => 'object_id'
+                'object_type' => null,
+                'parameter_name' => null
             ),
             // User view notification page
             '156' => array(
@@ -6206,9 +6205,8 @@ return array(
                 'name_long' => 'Click Delete All Notification',
                 'module_name' => 'Notification',
                 'type' => 'click',
-                'object_type' => '--SET BY object_type_parameter_name--',
-                'object_type_parameter_name' => 'object_type',
-                'parameter_name' => 'object_id'
+                'object_type' => null,
+                'parameter_name' => null
             ),
         ),
     ),
