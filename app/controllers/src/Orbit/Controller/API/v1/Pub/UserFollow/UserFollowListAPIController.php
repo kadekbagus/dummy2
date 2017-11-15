@@ -110,22 +110,20 @@ class UserFollowListAPIController extends PubControllerAPI
             // Query to mysql where in merchant id and user id
             if ($objectType === 'mall') {
                 $follows = Mall::select('merchant_id', 'name as mall_name', DB::raw("{$image} AS cdn_url"))
-                                ->leftJoin('media', 'media.object_id', '=', 'merchants.merchant_id')
-                                ->where(function($q){
-                                    $q->where('media.media_name_long', 'mall_logo_orig')
-                                      ->orWhere('media.media_name_long', null);
-                                })
+                                ->leftJoin('media', function ($q) {
+                                                                    $q->on('media.object_id', '=', 'merchants.merchant_id')
+                                                                    ->on('media.media_name_long', '=', DB::raw("'mall_logo_orig'"));
+                                                                })
                                 ->whereIn('merchant_id', $merchantIds)
                                 ->excludeDeleted();
             } else if ($objectType === 'store') {
                 $prefix = DB::getTablePrefix();
                 $follows = Tenant::select('merchants.merchant_id', DB::raw("parent.merchant_id as mall_id"), DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"), 'media.cdn_url', 'media.path', DB::raw("{$image} AS logo"), DB::raw("{$prefix}merchants.name as store_name"))
-                                ->leftJoin('media' , 'media.object_id', '=', 'merchants.merchant_id')
+                                ->leftJoin('media', function ($q) {
+                                                                    $q->on('media.object_id', '=', 'merchants.merchant_id')
+                                                                    ->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
+                                                                })
                                 ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id' )
-                                ->where(function($q){
-                                    $q->where('media.media_name_long', 'retailer_logo_orig')
-                                      ->orWhere('media.media_name_long', null);
-                                })
                                 ->whereIn('merchants.merchant_id', $merchantIds)
                                 ->where('merchants.status', '=', 'active');
             }
