@@ -767,6 +767,7 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
                     $newToken = array();
                     $stopLoop = false;
                     $startLoop = 0;
+                    $oneSignalId = array();
                     while ($stopLoop == false) {
                         $newToken = array_slice($notificationTokens, $startLoop, 1500);
 
@@ -789,10 +790,11 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
 
                         $oneSignal = new OneSignal($oneSignalConfig);
                         $newNotif = $oneSignal->notifications->add($data);
-                        $bodyUpdate['vendor_notification_id'] = $newNotif->id;
+                        $oneSignalId[] = $newNotif->id;
 
                         $startLoop = $startLoop + 1500;
                     }
+                    $bodyUpdate['vendor_notification_id'] = $oneSignalId;
                 } else {
                     $data = [
                         'headings'           => $headings,
