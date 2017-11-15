@@ -96,9 +96,20 @@ class UserFollowListAPIController extends PubControllerAPI
                 }
             }
 
+            $prefix = DB::getTablePrefix();
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            // check payment method / wallet operators
+            $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";
+            if ($usingCdn) {
+                $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
+            }
+
             // Query to mysql where in merchant id and user id
             if ($objectType === 'mall') {
-                $follows = Mall::select('merchant_id', 'name as mall_name', 'media.cdn_url', 'media.path')
+                $follows = Mall::select('merchant_id', 'name as mall_name', DB::raw("{$image} AS cdn_url"))
                                 ->leftJoin('media', 'media.object_id', '=', 'merchants.merchant_id')
                                 ->where(function($q){
                                     $q->where('media.media_name_long', 'mall_logo_orig')
@@ -108,7 +119,7 @@ class UserFollowListAPIController extends PubControllerAPI
                                 ->excludeDeleted();
             } else if ($objectType === 'store') {
                 $prefix = DB::getTablePrefix();
-                $follows = Tenant::select('merchants.merchant_id', DB::raw("parent.merchant_id as mall_id"), DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"), 'media.cdn_url', 'media.path', DB::raw("{$prefix}merchants.name as store_name"))
+                $follows = Tenant::select('merchants.merchant_id', DB::raw("parent.merchant_id as mall_id"), DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"), 'media.cdn_url', 'media.path', DB::raw("{$image} AS logo"), DB::raw("{$prefix}merchants.name as store_name"))
                                 ->leftJoin('media' , 'media.object_id', '=', 'merchants.merchant_id')
                                 ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id' )
                                 ->where(function($q){
@@ -150,8 +161,7 @@ class UserFollowListAPIController extends PubControllerAPI
                                                     'merchant_id' => $valRec->merchant_id,
                                                     'object_type' => 'store',
                                                     'name' => $valRec->name,
-                                                    'cdn_url' => $valRec->cdn_url,
-                                                    'path' =>  $valRec->path,
+                                                    'cdn_url' => $valRec->logo,
                                                     'store_name' => $valRec->store_name
                                                 );
 
@@ -213,6 +223,11 @@ class UserFollowListAPIController extends PubControllerAPI
         }
 
         return $this->render($httpCode);
+    }
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
     }
 
 }
