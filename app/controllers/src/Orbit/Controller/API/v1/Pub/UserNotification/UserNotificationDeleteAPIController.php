@@ -59,8 +59,8 @@ class UserNotificationDeleteAPIController extends PubControllerAPI
                 ];
 
                 $deleteNotif = $mongoClient->setFormParam($bodyDelete)
-                                           ->setEndPoint("user-notifications")
-                                           ->request('DELETE');
+                                    ->setEndPoint('user-notifications-delete') // express endpoint
+                                    ->request('POST');
             }
 
             $this->response->code = 0;
