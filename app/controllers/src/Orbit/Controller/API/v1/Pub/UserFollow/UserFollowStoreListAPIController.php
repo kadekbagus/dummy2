@@ -56,6 +56,7 @@ class UserFollowStoreListAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
+            $mongoConfig = Config::get('database.mongodb');
             $storeName = OrbitInput::get('store_name', null);
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
@@ -74,6 +75,25 @@ class UserFollowStoreListAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // Collect data what user follow (mall and store) from monggo db
+            $queryString['user_id'] = $user->user_id;
+            $queryString['object_type'] = 'store';
+
+            $mongoClient = MongoClient::create($mongoConfig);
+            $endPoint = "user-follows";
+
+            $merchantId = $mongoClient->setQueryString($queryString)
+                                    ->setEndPoint($endPoint)
+                                    ->request('GET');
+
+            $merchantIds = array('-');
+            if (! empty($merchantId->data->records) > 0) {
+                foreach ($merchantId->data->records as $key => $value) {
+                    $merchantIds[] = $value->object_id;
+                }
+            }
+
+
             $prefix = DB::getTablePrefix();
             $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
@@ -84,6 +104,7 @@ class UserFollowStoreListAPIController extends PubControllerAPI
             $follows = Tenant::select('merchants.merchant_id', DB::raw("parent.merchant_id as mall_id"), DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"))
                             ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id' )
                             ->where('merchants.name', $storeName)
+                            ->whereIn('merchants.merchant_id', $merchantIds)
                             ->where('merchants.status', '=', 'active');
 
             $_follows = clone($follows);
