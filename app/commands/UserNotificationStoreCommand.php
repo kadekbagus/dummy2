@@ -62,6 +62,21 @@ class UserNotificationStoreCommand extends Command {
         if (! empty($storeObjectNotifications->data->records)) {
             foreach ($storeObjectNotifications->data->records as $key => $storeObjectNotification) {
 
+                $objectType = $storeObjectNotification->object_type;
+
+                if ($objectType === 'news' || $objectType === 'promotion') {
+                    $campaign = News::join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                                     ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
+                                     ->where('news_id', '=', $storeObjectNotification->object_id);
+                } else if ($objectType === 'coupon') {
+                    $campaign = Coupon::join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                                        ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
+                                        ->where('promotions.promotion_id', '=', $storeObjectNotification->object_id);
+                }
+
+                $langCampaign = $campaign->select(DB::raw('default_languages.name as default_language_name'))->first();
+                $defaultLangName = $langCampaign->default_language_name;
+
                 // send to onesignal
                 if (! empty($storeObjectNotification->notification->notification_tokens)) {
                     $mongoNotifId = $storeObjectNotification->notification->_id;
