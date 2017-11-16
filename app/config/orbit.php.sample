@@ -6133,6 +6133,81 @@ return array(
                 'object_type_parameter_name' => 'object_type',
                 'parameter_name' => 'object_id'
             ),
+            // User clicks inapps notifications
+            '151' => array(
+                'name' => 'click_inapp_notification',
+                'name_long' => 'Click InApp Notification',
+                'module_name' => 'Notification',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click follow
+            '152' => array(
+                'name' => 'click_follow',
+                'name_long' => 'Click Follow',
+                'module_name' => 'Follow',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // user click unfollow
+            '153' => array(
+                'name' => 'click_unfollow',
+                'name_long' => 'Click Unfollow',
+                'module_name' => 'Follow',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // User views my favorit page
+            '154' => array(
+                'name' => 'view_my_favorite_page',
+                'name_long' => 'View My Favorite Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click notification icon
+            '155' => array(
+                'name' => 'click_notification_icon',
+                'name_long' => 'Click Notification Icon',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User view notification page
+            '156' => array(
+                'name' => 'view_notification_page',
+                'name_long' => 'View Notification Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click delete single notification
+            '157' => array(
+                'name' => 'click_delete_single_notification',
+                'name_long' => 'Click Delete Single Notification',
+                'module_name' => 'Notification',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // user click delete all notification
+            '158' => array(
+                'name' => 'click_delete_all_notification',
+                'name_long' => 'Click Delete All Notification',
+                'module_name' => 'Notification',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
