@@ -45,6 +45,7 @@ class UserNotificationStoreCommand extends Command {
         $timezone = 'Asia/Jakarta'; // now with jakarta timezone
         $timestamp = date("Y-m-d H:i:s");
         $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+        $dateTime = $date->toDateTimeString();
         $dateTimeNow = $date->setTimezone($timezone)->toDateTimeString();
 
         $mongoConfig = Config::get('database.mongodb');
@@ -61,6 +62,20 @@ class UserNotificationStoreCommand extends Command {
 
         if (! empty($storeObjectNotifications->data->records)) {
             foreach ($storeObjectNotifications->data->records as $key => $storeObjectNotification) {
+
+                $objectType = $storeObjectNotification->object_type;
+                if ($objectType === 'event' || $objectType === 'promotion') {
+                    $campaign = News::join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
+                                     ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
+                                     ->where('news_id', '=', $storeObjectNotification->object_id);
+                } else if ($objectType === 'coupon') {
+                    $campaign = Coupon::join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                                        ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
+                                        ->where('promotions.promotion_id', '=', $storeObjectNotification->object_id);
+                }
+
+                $langCampaign = $campaign->select(DB::raw('default_languages.name as default_language_name'))->first();
+                $defaultLangName = $langCampaign->default_language_name;
 
                 // send to onesignal
                 if (! empty($storeObjectNotification->notification->notification_tokens)) {
@@ -151,7 +166,7 @@ class UserNotificationStoreCommand extends Command {
                             'send_status'   => 'sent',
                             'is_viewed'     => false,
                             'is_read'       => false,
-                            'created_at'    => $dateTimeNow,
+                            'created_at'    => $dateTime,
                             'image_url'     => $imageUrl
                         ];
 
@@ -162,7 +177,7 @@ class UserNotificationStoreCommand extends Command {
                 }
 
                 // Update status in notification collection from pending to sent
-                $bodyUpdate['sent_at'] = $dateTimeNow;
+                $bodyUpdate['sent_at'] = $dateTime;
                 $bodyUpdate['_id'] = $mongoNotifId;
                 $bodyUpdate['status'] = 'sent';
 

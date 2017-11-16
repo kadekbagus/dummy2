@@ -513,8 +513,8 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
                     if (! empty($translation->media)) {
                         foreach ($translation->media as $media) {
                             if ($media['media_name_long'] === 'coupon_translation_image_orig') {
-                                $attachmentPath = $media['file_name'];
-                                $attachmentRealPath = $media['path'];
+                                $attachmentPath = $media['path'];
+                                $attachmentRealPath = $media['realpath'];
                                 $cdnUrl = $media['cdn_url'];
                                 $cdnBucketName = $media['cdn_bucket_name'];
                                 $mimeType = $media['mime_type'];
