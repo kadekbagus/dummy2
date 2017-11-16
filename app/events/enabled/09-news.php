@@ -397,8 +397,8 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                 foreach ($tokenData->data->records as $key => $value) {
                     $tokens[] = $value->notification_token;
                 }
+                $tokens = array_unique($tokens);
             }
-            $tokens = array_unique($tokens);
 
             $_news = News::select('news.*',
                                   DB::raw('default_languages.name as default_language_name'),
@@ -533,22 +533,30 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                                                           ->request('POST');
                 } else {
                     // update data if exist
+                    $_tokens = null;
+                    $_userIds = null;
                     $_notificationIds = $mallObjectNotif->data->records[0]->notification_ids;
                     $_userIds = $mallObjectNotif->data->records[0]->user_ids;
                     $_tokens = $mallObjectNotif->data->records[0]->tokens;
                     $_notificationIds[] = $notificationId;
-                    foreach ($userIds as $key => $uservalue) {
-                        $_userIds[] = $uservalue;
+                    if (!empty($userIds)) {
+                        foreach ($userIds as $key => $uservalue) {
+                            $_userIds[] = $uservalue;
+                        }
+                        $_userIds = array_unique($_userIds);
                     }
-                    foreach ($tokens as $key => $tokenvalue) {
-                        $_tokens[] = $tokenvalue;
+                    if (!empty($tokens)) {
+                        foreach ($tokens as $key => $tokenvalue) {
+                            $_tokens[] = $tokenvalue;
+                        }
+                        $_tokens = array_unique($_tokens);
                     }
                     $updateMallObjectNotification = [
                         '_id' => $mallObjectNotif->data->records[0]->_id,
                         'notification_ids' => array_unique($_notificationIds),
                         'mall_id' => $mallvalue,
-                        'user_ids' => array_unique($_userIds),
-                        'tokens' => array_unique($_tokens),
+                        'user_ids' => $_userIds,
+                        'tokens' => $_tokens,
                     ];
 
                     $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
