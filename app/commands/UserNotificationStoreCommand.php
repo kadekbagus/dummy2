@@ -63,8 +63,7 @@ class UserNotificationStoreCommand extends Command {
             foreach ($storeObjectNotifications->data->records as $key => $storeObjectNotification) {
 
                 $objectType = $storeObjectNotification->object_type;
-
-                if ($objectType === 'news' || $objectType === 'promotion') {
+                if ($objectType === 'event' || $objectType === 'promotion') {
                     $campaign = News::join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                                      ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
                                      ->where('news_id', '=', $storeObjectNotification->object_id);
