@@ -89,21 +89,56 @@ class UserNotificationStoreCommand extends Command {
                         $contents->en = $contents->$defaultLangName;
                     }
 
-                    $data = [
-                        'headings'           => $headings,
-                        'contents'           => $contents,
-                        'url'                => $newUrl,
-                        'include_player_ids' => $notificationTokens,
-                        'ios_attachments'    => $imageUrl,
-                        'big_picture'        => $imageUrl,
-                        'adm_big_picture'    => $imageUrl,
-                        'chrome_big_picture' => $imageUrl,
-                        'chrome_web_image'   => $imageUrl,
-                    ];
+                    // Slice token where token up to 1500
+                    if (count($notificationTokens) > 1500) {
+                        $newToken = array();
+                        $stopLoop = false;
+                        $startLoop = 0;
+                        $oneSignalId = array();
+                        while ($stopLoop == false) {
+                            $newToken = array_slice($notificationTokens, $startLoop, 1500);
 
-                    $oneSignal = new OneSignal($oneSignalConfig);
-                    $newNotif = $oneSignal->notifications->add($data);
-                    $bodyUpdate['vendor_notification_id'] = $newNotif->id;
+                            if (empty($newToken)) {
+                                $stopLoop =  true;
+                                break;
+                            }
+
+                            $data = [
+                                'headings'           => $headings,
+                                'contents'           => $contents,
+                                'url'                => $newUrl,
+                                'include_player_ids' => $newToken,
+                                'ios_attachments'    => $imageUrl,
+                                'big_picture'        => $imageUrl,
+                                'adm_big_picture'    => $imageUrl,
+                                'chrome_big_picture' => $imageUrl,
+                                'chrome_web_image'   => $imageUrl,
+                            ];
+
+                            $oneSignal = new OneSignal($oneSignalConfig);
+                            $newNotif = $oneSignal->notifications->add($data);
+                            $oneSignalId[] = $newNotif->id;
+
+                            $startLoop = $startLoop + 1500;
+                        }
+                        $bodyUpdate['vendor_notification_id'] = $oneSignalId;
+                    } else {
+                        $data = [
+                            'headings'           => $headings,
+                            'contents'           => $contents,
+                            'url'                => $newUrl,
+                            'include_player_ids' => $notificationTokens,
+                            'ios_attachments'    => $imageUrl,
+                            'big_picture'        => $imageUrl,
+                            'adm_big_picture'    => $imageUrl,
+                            'chrome_big_picture' => $imageUrl,
+                            'chrome_web_image'   => $imageUrl,
+                        ];
+
+                        $oneSignal = new OneSignal($oneSignalConfig);
+                        $newNotif = $oneSignal->notifications->add($data);
+                        $bodyUpdate['vendor_notification_id'] = $newNotif->id;
+                    }
                 }
 
                 // send as inApps notification
@@ -116,7 +151,8 @@ class UserNotificationStoreCommand extends Command {
                             'send_status'   => 'sent',
                             'is_viewed'     => false,
                             'is_read'       => false,
-                            'created_at'    => $dateTimeNow
+                            'created_at'    => $dateTimeNow,
+                            'image_url'     => $imageUrl
                         ];
 
                         $inApps = $mongoClient->setFormParam($bodyInApps)

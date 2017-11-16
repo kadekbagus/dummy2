@@ -698,7 +698,8 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
                         'send_status'   => 'sent',
                         'is_viewed'     => false,
                         'is_read'       => false,
-                        'created_at'    => $dateTime
+                        'created_at'    => $dateTime,
+                        'image_url'     => $imageUrl
                     ];
 
                     $inApps = $mongoClient->setFormParam($bodyInApps)
