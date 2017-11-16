@@ -66,7 +66,7 @@ Route::get('/api/v1/pub/user-notification/new', function()
 Route::get('/app/v1/pub/user-notification/new', ['as' => 'pub-user-notification-new', 'uses' => 'IntermediatePubAuthController@UserNotification\UserNotificationList_getUserNotificationNew']);
 
 /**
- * new notification counter
+ * delete notification
  */
 Route::post('/api/v1/pub/user-notification/delete', function()
 {
@@ -74,3 +74,13 @@ Route::post('/api/v1/pub/user-notification/delete', function()
 });
 
 Route::post('/app/v1/pub/user-notification/delete', ['as' => 'pub-user-notification-delete', 'uses' => 'IntermediatePubAuthController@UserNotification\UserNotificationDelete_postDeleteUserNotification']);
+
+/**
+ * set notification as read
+ */
+Route::post('/api/v1/pub/user-notification/read', function()
+{
+    return Orbit\Controller\API\v1\Pub\UserNotification\UserNotificationReadAPIController::create()->postUpdateUserNotificationAsRead();
+});
+
+Route::post('/app/v1/pub/user-notification/read', ['as' => 'pub-user-notification-read', 'uses' => 'IntermediatePubAuthController@UserNotification\UserNotificationRead_postUpdateUserNotificationAsRead']);

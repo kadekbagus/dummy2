@@ -197,10 +197,14 @@ class NotificationUpdateAPIController extends ControllerAPI
                 $imageUrl = $attachmentUrl;
                 $notif = $mongoClient->setEndPoint("notifications/$notificationId")->request('GET');
 
+                $localPath = "";
+                $cdnPath = "";
                 if ($files) {
                     $cdnConfig = Config::get('orbit.cdn');
                     $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-                    $imageUrl = $imgUrl->getImageUrl($notif->data->attachment_path, $notif->data->cdn_url);
+                    $localPath = $notif->data->attachment_path;
+                    $cdnPath = $notif->data->cdn_url;
+                    $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
                 }
 
                 // send to onesignal
@@ -238,7 +242,8 @@ class NotificationUpdateAPIController extends ControllerAPI
                             'send_status'   => 'sent',
                             'is_viewed'     => false,
                             'is_read'       => false,
-                            'created_at'    => $dateTime
+                            'created_at'    => $dateTime,
+                            'image_url'     => $imageUrl
                         ];
 
                         $inApps = $mongoClient->setFormParam($bodyInApps)
