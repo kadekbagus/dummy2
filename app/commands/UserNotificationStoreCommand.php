@@ -45,6 +45,7 @@ class UserNotificationStoreCommand extends Command {
         $timezone = 'Asia/Jakarta'; // now with jakarta timezone
         $timestamp = date("Y-m-d H:i:s");
         $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+        $dateTime = $date->toDateTimeString();
         $dateTimeNow = $date->setTimezone($timezone)->toDateTimeString();
 
         $mongoConfig = Config::get('database.mongodb');
@@ -165,7 +166,7 @@ class UserNotificationStoreCommand extends Command {
                             'send_status'   => 'sent',
                             'is_viewed'     => false,
                             'is_read'       => false,
-                            'created_at'    => $dateTimeNow,
+                            'created_at'    => $dateTime,
                             'image_url'     => $imageUrl
                         ];
 
@@ -176,7 +177,7 @@ class UserNotificationStoreCommand extends Command {
                 }
 
                 // Update status in notification collection from pending to sent
-                $bodyUpdate['sent_at'] = $dateTimeNow;
+                $bodyUpdate['sent_at'] = $dateTime;
                 $bodyUpdate['_id'] = $mongoNotifId;
                 $bodyUpdate['status'] = 'sent';
 
