@@ -118,21 +118,56 @@ class UserNotificationMallCommand extends Command {
                     // add query string for activity recording
                     $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
 
-	        	    $data = [
-	                    'headings'           => $headings,
-	                    'contents'           => $contents,
-	                    'url'                => $newUrl,
-	                    'include_player_ids' => $notificationTokens,
-	                    'ios_attachments'    => $imageUrl,
-	                    'big_picture'        => $imageUrl,
-	                    'adm_big_picture'    => $imageUrl,
-	                    'chrome_big_picture' => $imageUrl,
-	                    'chrome_web_image'   => $imageUrl,
-	                ];
+	                // Slice token where token up to 1500
+                    if (count($notificationTokens) > 1500) {
+                        $newToken = array();
+                        $stopLoop = false;
+                        $startLoop = 0;
+                        $oneSignalId = array();
+                        while ($stopLoop == false) {
+                            $newToken = array_slice($notificationTokens, $startLoop, 1500);
 
-	                $oneSignal = new OneSignal($oneSignalConfig);
-	                $newNotif = $oneSignal->notifications->add($data);
-	                $vendorNotificationId = $newNotif->id;
+                            if (empty($newToken)) {
+                                $stopLoop =  true;
+                                break;
+                            }
+
+                            $data = [
+                                'headings'           => $headings,
+                                'contents'           => $contents,
+                                'url'                => $newUrl,
+                                'include_player_ids' => $newToken,
+                                'ios_attachments'    => $imageUrl,
+                                'big_picture'        => $imageUrl,
+                                'adm_big_picture'    => $imageUrl,
+                                'chrome_big_picture' => $imageUrl,
+                                'chrome_web_image'   => $imageUrl,
+                            ];
+
+                            $oneSignal = new OneSignal($oneSignalConfig);
+                            $newNotif = $oneSignal->notifications->add($data);
+                            $oneSignalId[] = $newNotif->id;
+
+                            $startLoop = $startLoop + 1500;
+                        }
+                        $vendorNotificationId = $oneSignalId;
+                    } else {
+		        	    $data = [
+		                    'headings'           => $headings,
+		                    'contents'           => $contents,
+		                    'url'                => $newUrl,
+		                    'include_player_ids' => $notificationTokens,
+		                    'ios_attachments'    => $imageUrl,
+		                    'big_picture'        => $imageUrl,
+		                    'adm_big_picture'    => $imageUrl,
+		                    'chrome_big_picture' => $imageUrl,
+		                    'chrome_web_image'   => $imageUrl,
+		                ];
+
+		                $oneSignal = new OneSignal($oneSignalConfig);
+		                $newNotif = $oneSignal->notifications->add($data);
+		                $vendorNotificationId = $newNotif->id;
+                    }
 
 	                // update mall object notification
 	                $mallObjectNotificationUpdate['_id'] = $mallObjectNotificationId;
