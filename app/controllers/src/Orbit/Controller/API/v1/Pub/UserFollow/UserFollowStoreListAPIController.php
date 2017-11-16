@@ -14,18 +14,16 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
-use Language;
 use Validator;
 use User;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
-use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use stdClass;
 use Tenant;
-use Mall;
 
-class UserFollowListAPIController extends PubControllerAPI
+
+class UserFollowStoreListAPIController extends PubControllerAPI
 {
     protected $valid_language = NULL;
     protected $withoutScore = FALSE;
@@ -37,14 +35,14 @@ class UserFollowListAPIController extends PubControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string object_type
+     * @param string store_name
      * @param string sortmode
      * @param string take
      * @param string skip
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getUserFollowList()
+    public function getUserFollowStoreList()
     {
         $httpCode = 200;
 
@@ -58,42 +56,22 @@ class UserFollowListAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $objectType = OrbitInput::get('object_type', null);
-            $mongoConfig = Config::get('database.mongodb');
+            $storeName = OrbitInput::get('store_name', null);
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
 
             $validator = Validator::make(
                 array(
-                    'object_type' => $objectType
+                    'store_name' => $storeName
                 ),
                 array(
-                    'object_type' => 'required|in:mall,store'
+                    'store_name' => 'required'
                 )
             );
-
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            // Collect data what user follow (mall and store) from monggo db
-            $queryString['user_id'] = $user->user_id;
-            $queryString['object_type'] = $objectType;
-
-            $mongoClient = MongoClient::create($mongoConfig);
-            $endPoint = "user-follows";
-
-            $merchantId = $mongoClient->setQueryString($queryString)
-                                    ->setEndPoint($endPoint)
-                                    ->request('GET');
-
-            $merchantIds = array('-');
-            if (! empty($merchantId->data->records) > 0) {
-                foreach ($merchantId->data->records as $key => $value) {
-                    $merchantIds[] = $value->object_id;
-                }
             }
 
             $prefix = DB::getTablePrefix();
@@ -101,33 +79,12 @@ class UserFollowListAPIController extends PubControllerAPI
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
-            // check payment method / wallet operators
-            $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";
-            if ($usingCdn) {
-                $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
-            }
-
             // Query to mysql where in merchant id and user id
-            if ($objectType === 'mall') {
-                $follows = Mall::select('merchant_id', 'name as mall_name', DB::raw("{$image} AS cdn_url"))
-                                ->leftJoin('media', function ($q) {
-                                                                    $q->on('media.object_id', '=', 'merchants.merchant_id')
-                                                                    ->on('media.media_name_long', '=', DB::raw("'mall_logo_orig'"));
-                                                                })
-                                ->whereIn('merchant_id', $merchantIds)
-                                ->excludeDeleted();
-            } else if ($objectType === 'store') {
-                $prefix = DB::getTablePrefix();
-                $follows = Tenant::select('merchants.merchant_id', DB::raw("parent.merchant_id as mall_id"), DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"), 'media.cdn_url', 'media.path', DB::raw("{$image} AS logo"), DB::raw("{$prefix}merchants.name as store_name"), DB::raw("COUNT({$prefix}merchants.name) as total_follow"))
-                                ->leftJoin('media', function ($q) {
-                                                                    $q->on('media.object_id', '=', 'merchants.merchant_id')
-                                                                    ->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
-                                                                })
-                                ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id' )
-                                ->whereIn('merchants.merchant_id', $merchantIds)
-                                ->where('merchants.status', '=', 'active')
-                                ->groupBy('merchants.name');
-            }
+            $prefix = DB::getTablePrefix();
+            $follows = Tenant::select('merchants.merchant_id', DB::raw("parent.merchant_id as mall_id"), DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"))
+                            ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id' )
+                            ->where('merchants.name', $storeName)
+                            ->where('merchants.status', '=', 'active');
 
             $_follows = clone($follows);
 

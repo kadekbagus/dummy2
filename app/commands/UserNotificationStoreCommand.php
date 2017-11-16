@@ -151,7 +151,8 @@ class UserNotificationStoreCommand extends Command {
                             'send_status'   => 'sent',
                             'is_viewed'     => false,
                             'is_read'       => false,
-                            'created_at'    => $dateTimeNow
+                            'created_at'    => $dateTimeNow,
+                            'image_url'     => $imageUrl
                         ];
 
                         $inApps = $mongoClient->setFormParam($bodyInApps)
