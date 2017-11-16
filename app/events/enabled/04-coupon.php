@@ -799,8 +799,8 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
                 foreach ($tokenData->data->records as $key => $value) {
                     $tokens[] = $value->notification_token;
                 }
+                $tokens = array_unique($tokens);
             }
-            $tokens = array_unique($tokens);
 
             $_coupon = Coupon::select('promotions.*',
                                   DB::raw('default_languages.name as default_language_name'),

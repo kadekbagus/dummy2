@@ -397,8 +397,8 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                 foreach ($tokenData->data->records as $key => $value) {
                     $tokens[] = $value->notification_token;
                 }
+                $tokens = array_unique($tokens);
             }
-            $tokens = array_unique($tokens);
 
             $_news = News::select('news.*',
                                   DB::raw('default_languages.name as default_language_name'),
