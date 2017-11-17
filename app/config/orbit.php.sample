@@ -6195,9 +6195,8 @@ return array(
                 'name_long' => 'Click Delete Single Notification',
                 'module_name' => 'Notification',
                 'type' => 'click',
-                'object_type' => '--SET BY object_type_parameter_name--',
-                'object_type_parameter_name' => 'object_type',
-                'parameter_name' => 'object_id'
+                'object_type' => null,
+                'parameter_name' => null
             ),
             // user click delete all notification
             '158' => array(

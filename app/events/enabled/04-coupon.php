@@ -452,8 +452,8 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
     $timezone = 'Asia/Jakarta'; // now with jakarta timezone
     $timestamp = date("Y-m-d H:i:s");
     $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
-    $dateTimeNow = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
     $dateTime = $date->toDateTimeString();
+    $dateTimeNow = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
 
     $mongoConfig = Config::get('database.mongodb');
     $mongoClient = MongoClient::create($mongoConfig);
