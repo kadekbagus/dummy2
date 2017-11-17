@@ -1300,6 +1300,7 @@ class PromotionalEventAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.promotionalevent.postupdatepromotionalevent.after.save', array($this, $updatedpromotional_event));
+            Event::fire('orbit.promotionalevent.postupdatepromotionalevent-mallnotification.after.save', array($this, $updatedpromotional_event));
             $this->response->data = $updatedpromotional_event;
             // $this->response->data->translation_default = $updatedpromotional_event_default_language;
 

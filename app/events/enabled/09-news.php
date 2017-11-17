@@ -476,7 +476,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
             $dataNotificationCheck = [
                 'title' => $_news->news_name,
                 'launch_url' => $launchUrl,
-                'type' => $_news->object_type,
+                'type' => $_news->object_type == 'news' ? 'event' : 'promotion',
                 'status' => 'pending',
             ];
 
