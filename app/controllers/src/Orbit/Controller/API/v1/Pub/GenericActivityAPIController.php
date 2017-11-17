@@ -169,6 +169,9 @@ class GenericActivityAPIController extends PubControllerAPI
             // Get notes
             $notes = OrbitInput::post('notes', null);
 
+            // notification activities
+            $objectNotifName = ['click_push_notification', 'click_inapp_notification', 'click_delete_single_notification'];
+
             // Menu specific block,
             if ($activityName === 'click_menu') {
                 // to set object_display_name to 'sidebar' or else
@@ -254,8 +257,9 @@ class GenericActivityAPIController extends PubControllerAPI
                 } else {
                     $notes = 'Guest user';
                 }
-            } elseif ($activityName === 'click_push_notification') {
+            } elseif (in_array($activityName, $objectNotifName)) {
                 $notes = OrbitInput::post('object_id', null);
+                $activity->setObjectName('Notification');
             }
 
             $activity->setUser($user)
