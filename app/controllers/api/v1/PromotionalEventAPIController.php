@@ -1306,6 +1306,9 @@ class PromotionalEventAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            // Push notification
+            Event::fire('orbit.promotionalevent.postupdatepromotionalevent-storenotificationupdate.after.commit', array($this, $updatedpromotional_event));
+
             // queue for campaign spending promotionalevent & promotion
             Queue::push('Orbit\\Queue\\SpendingCalculation', [
                 'campaign_id' => $promotional_event_id,
