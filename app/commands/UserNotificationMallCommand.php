@@ -88,8 +88,8 @@ class UserNotificationMallCommand extends Command {
 	                    foreach ($userFollow->data->records as $key => $value) {
 	                        $user_ids[] = $value->user_id;
 	                    }
+	                	$userIds = array_unique($user_ids);
 	                }
-	                $userIds = array_unique($user_ids);
 
 	                // Get notification tokens
 	                $tokenSearch = ['user_ids' => $userIds, 'notification_provider' => 'onesignal'];
@@ -101,8 +101,8 @@ class UserNotificationMallCommand extends Command {
 		                foreach ($tokenData->data->records as $key => $value) {
 		                    $notification_token[] = $value->notification_token;
 		                }
+		            	$notificationTokens = array_unique($notification_token);
 		            }
-		            $notificationTokens = array_unique($notification_token);
 
 		            $attachmentPath = (!empty($mall->path)) ? $mall->path : '';
 		            $cdnUrl = (!empty($mall->cdnUrl)) ? $mall->cdnUrl : '';
