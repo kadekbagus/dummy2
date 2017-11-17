@@ -48,6 +48,10 @@ class UserNotificationStoreCommand extends Command {
         $dateTime = $date->toDateTimeString();
         $dateTimeNow = $date->setTimezone($timezone)->toDateTimeString();
 
+        $dateTimeNow = '2017-11-17 09:42:25';
+
+echo $dateTimeNow;
+
         $mongoConfig = Config::get('database.mongodb');
         $mongoClient = MongoClient::create($mongoConfig);
         $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
