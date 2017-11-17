@@ -910,7 +910,7 @@ class Activity extends Eloquent
         // Save to object page views table
         Queue::push('Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue', [
             'activity_id' => $this->activity_id
-        ]);
+        ], 'object_page_view_prod');
 
         $this->saveEmailToMailchimp();
 
