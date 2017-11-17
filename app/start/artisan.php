@@ -260,3 +260,6 @@ Artisan::add(new CdnCouponMissingFile);
 
 // Update approval status of review to pending
 Artisan::add(new UpdateStatusReviewCommand);
+
+// Sync total page view counter from object_page_views to total_page_views
+Artisan::add(new SyncTotalPageViewCommand);
