@@ -116,7 +116,7 @@ class UserNotificationMallCommand extends Command {
                         $contents = new stdClass();
                         $headings->en = $mall->name;
                         $contents->en = 'There are new happenings in '.$mall->name;
-
+                        $mongoNotifId = (!empty($mallObjectNotification->notification_ids[0])) ? $mallObjectNotification->notification_ids[0]: '';
                         // add query string for activity recording
                         $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
 
@@ -193,13 +193,21 @@ class UserNotificationMallCommand extends Command {
                         }
                     }
 
+                    $notificationMall = new stdClass();
+                    $notificationMall->title = $mall->name;
+                    $notificationMall->launch_url = $newUrl;
+                    $notificationMall->default_language = 'en';
+                    $notificationMall->headings = $headings;
+                    $notificationMall->contents = $contents;
+                    $notificationMall->type = 'mall';
+
                     // send as inApps notification
                     if (! empty($userIds)) {
                         foreach ($userIds as $userId) {
                             $bodyInApps = [
                                 'user_id'       => $userId,
                                 'token'         => null,
-                                'notifications' => $notificationIds,
+                                'notifications' => $notificationMall,
                                 'send_status'   => 'sent',
                                 'is_viewed'     => false,
                                 'is_read'       => false,
