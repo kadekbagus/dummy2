@@ -24,6 +24,8 @@ use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Partner;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use TotalObjectPageView;
+use Redis;
 
 class CouponDetailAPIController extends PubControllerAPI
 {
@@ -126,7 +128,6 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.end_date',
                             'promotions.coupon_validity_in_date',
                             'promotions.is_exclusive',
-                            'total_object_page_views.total_view',
                             'promotions.available',
                             'promotions.is_unique_redeem',
                             'promotions.maximum_redeem',
@@ -194,11 +195,6 @@ class CouponDetailAPIController extends PubControllerAPI
                             })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                        ->leftJoin('total_object_page_views', function ($q) use ($location){
-                            $q->on('total_object_page_views.object_id', '=', 'promotions.promotion_id')
-                                ->on('total_object_page_views.object_type', '=', DB::raw("'coupon'"))
-                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
-                        })
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
                             }])
@@ -214,6 +210,27 @@ class CouponDetailAPIController extends PubControllerAPI
             });
 
             $coupon = $coupon->first();
+
+            // Get total page views, Hit mysql if there is no data in Redis
+            $keyRedis = 'coupon-' . $couponId . '-' . $location;
+            $redis = Redis::connection('page_view');
+            $totalPageViewRedis = $redis->get($keyRedis);
+            $totalPageViews = 0;
+
+            if (! empty($totalPageViewRedis)) {
+                $totalPageViews = $totalPageViewRedis;
+            } else {
+                $totalObjectPageView = TotalObjectPageView::where('object_type', 'coupon')
+                                                             ->where('object_id', $couponId)
+                                                             ->where('location_id', $location)
+                                                             ->first();
+
+                if (! empty($totalObjectPageView->total_view)) {
+                    $totalPageViews = $totalObjectPageView->total_view;
+                }
+            }
+            $coupon->total_view = $totalPageViews;
+
 
             $message = 'Request Ok';
             if (! is_object($coupon)) {

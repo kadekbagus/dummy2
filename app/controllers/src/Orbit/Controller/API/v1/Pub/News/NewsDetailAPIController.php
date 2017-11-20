@@ -183,13 +183,13 @@ class NewsDetailAPIController extends PubControllerAPI
             if (! empty($totalPageViewRedis)) {
                 $totalPageViews = $totalPageViewRedis;
             } else {
-                $total_object_page_view = TotalObjectPageView::where('object_type', 'news')
+                $totalObjectPageView = TotalObjectPageView::where('object_type', 'news')
                                                              ->where('object_id', $newsId)
                                                              ->where('location_id', $location)
                                                              ->first();
 
-                if (! empty($total_object_page_view->total_view)) {
-                    $totalPageViews = $total_object_page_view->total_view;
+                if (! empty($totalObjectPageView->total_view)) {
+                    $totalPageViews = $totalObjectPageView->total_view;
                 }
             }
             $news->total_view = $totalPageViews;
