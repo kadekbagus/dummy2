@@ -15,6 +15,7 @@ use BaseMerchant;
 use Exception;
 use Tenant;
 use DB;
+use Redis;
 use Orbit\FakeJob;
 use Orbit\Queue\Elasticsearch\ESCouponUpdateQueue;
 use Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue;
