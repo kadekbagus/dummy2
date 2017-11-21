@@ -1300,11 +1300,15 @@ class PromotionalEventAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.promotionalevent.postupdatepromotionalevent.after.save', array($this, $updatedpromotional_event));
+            Event::fire('orbit.promotionalevent.postupdatepromotionalevent-mallnotification.after.save', array($this, $updatedpromotional_event));
             $this->response->data = $updatedpromotional_event;
             // $this->response->data->translation_default = $updatedpromotional_event_default_language;
 
             // Commit the changes
             $this->commit();
+
+            // Push notification
+            Event::fire('orbit.promotionalevent.postupdatepromotionalevent-storenotificationupdate.after.commit', array($this, $updatedpromotional_event));
 
             // queue for campaign spending promotionalevent & promotion
             Queue::push('Orbit\\Queue\\SpendingCalculation', [

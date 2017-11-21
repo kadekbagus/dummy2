@@ -4496,6 +4496,80 @@ return array(
                 ),
             ),
         ),
+
+        // -------------------------------------------------------------------//
+        // notification Related Uploads
+        // -------------------------------------------------------------------//
+        'notification'  => array(
+            'main' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 90000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/news',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => FALSE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => FALSE,
+
+                // Crop the image
+                'crop_image'        => FALSE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 400,
+                        'height'    => 400
+                    )
+                ),
+
+                // Crop the image
+                'crop'          => array(
+                    // Profile name
+                    'default' => array(
+                        'width'     => 100,
+                        'height'    => 100,
+                    )
+                ),
+
+                // Scale the image in percent
+                'scale'         => array(
+                    // Profile name
+                    'default'   => 50
+                ),
+
+                // Callback before saving the file
+                'before_saving' => NULL,
+
+                // Callback after saving the file
+                'after_saving'  => NULL,
+            ),
+
+        ),
     ),
 
     'devices'  => array(
@@ -6058,6 +6132,80 @@ return array(
                 'object_type' => '--SET BY object_type_parameter_name--',
                 'object_type_parameter_name' => 'object_type',
                 'parameter_name' => 'object_id'
+            ),
+            // User clicks inapps notifications
+            '151' => array(
+                'name' => 'click_inapp_notification',
+                'name_long' => 'Click InApp Notification',
+                'module_name' => 'Notification',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click follow
+            '152' => array(
+                'name' => 'click_follow',
+                'name_long' => 'Click Follow',
+                'module_name' => 'Follow',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // user click unfollow
+            '153' => array(
+                'name' => 'click_unfollow',
+                'name_long' => 'Click Unfollow',
+                'module_name' => 'Follow',
+                'type' => 'click',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
+            // User views my favorit page
+            '154' => array(
+                'name' => 'view_my_favorite_page',
+                'name_long' => 'View My Favorite Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click notification icon
+            '155' => array(
+                'name' => 'click_notification_icon',
+                'name_long' => 'Click Notification Icon',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // User view notification page
+            '156' => array(
+                'name' => 'view_notification_page',
+                'name_long' => 'View Notification Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click delete single notification
+            '157' => array(
+                'name' => 'click_delete_single_notification',
+                'name_long' => 'Click Delete Single Notification',
+                'module_name' => 'Notification',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click delete all notification
+            '158' => array(
+                'name' => 'click_delete_all_notification',
+                'name_long' => 'Click Delete All Notification',
+                'module_name' => 'Notification',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
             ),
         ),
     ),

@@ -2497,6 +2497,7 @@ class CouponAPIController extends ControllerAPI
             $tempContent->save();
 
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
+            Event::fire('orbit.coupon.postupdatecoupon-mallnotification.after.save', array($this, $updatedcoupon));
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid, $is_3rd_party_promotion) {
                 $is_third_party = $is_3rd_party_promotion === 'Y' ? TRUE : FALSE;
@@ -2564,6 +2565,9 @@ class CouponAPIController extends ControllerAPI
 
             // Commit the changes
             $this->commit();
+
+            // Push notification
+            Event::fire('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commit', array($this, $updatedcoupon));
 
             // queue for campaign spending coupon
             \Queue::push('Orbit\\Queue\\SpendingCalculation', [
@@ -3797,6 +3801,7 @@ class CouponAPIController extends ControllerAPI
                 'issued_coupon_id'       => $issuedCouponId,
             ];
 
+            // Maual redeem
             if ($paymentProvider === '0') {
                 if (empty($verificationNumber)) {
                     $errorMessage = 'Verification number is empty';
@@ -3829,7 +3834,9 @@ class CouponAPIController extends ControllerAPI
 
                 $body['commission_fixed_amount'] = $coupon->fixed_amount_commission;
             } else {
-                // using paypro etc
+                // Redeem using paypro etc
+                $redeem_retailer_id = $storeId;
+
                 $paymentType = 'wallet';
 
                 $provider = MerchantStorePaymentProvider::select('payment_providers.payment_provider_id', 'payment_providers.payment_name', 'merchant_store_payment_provider.mdr', 'payment_providers.mdr as default_mdr', 'payment_providers.mdr_commission', 'merchant_store_payment_provider.phone_number_for_sms')

@@ -25,6 +25,7 @@ use Orbit\Helper\Util\CdnUrlGenerator;
 use MallCountry;
 use MallCity;
 use Country;
+use Orbit\Helper\Util\FollowStatusChecker;
 
 class MallListAPIController extends PubControllerAPI
 {
@@ -215,6 +216,7 @@ class MallListAPIController extends PubControllerAPI
             // calculate rating and review based on location/mall
             $scriptFieldRating = "double counter = 0; double rating = 0;";
             $scriptFieldReview = "double review = 0;";
+            $scriptFieldFollow = "int follow = 0;";
 
             if (! empty($cityFilters)) {
                 $countryId = $countryData->country_id;
@@ -240,7 +242,23 @@ class MallListAPIController extends PubControllerAPI
             $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
             $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
 
-            $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
+            $role = $user->role->role_name;
+            $objectFollow = [];
+            if (strtolower($role) === 'consumer') {
+                $objectFollow = $this->getUserFollow($user);
+
+                if (! empty($objectFollow)) {
+                    if ($sort_by === 'followed') {
+                        foreach ($objectFollow as $followId) {
+                            $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('merchant_id')) { if (! doc['merchant_id'].empty) { if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
+                        }
+
+                        $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
+                    }
+                }
+            }
+
+            $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
 
             // sort by name or location
             $sort = array('name.raw' => array('order' => 'asc'));
@@ -255,6 +273,8 @@ class MallListAPIController extends PubControllerAPI
                 $sort = array('name.raw' => array('order' => 'asc'));
             } elseif ($sort_by === 'rating') {
                 $sort = array('_script' => array('script' => $scriptFieldRating, 'type' => 'number', 'order' => $sort_mode));
+            } elseif ($sort_by === 'followed') {
+                $sort = array('_script' => array('script' => $scriptFieldFollow, 'type' => 'number', 'order' => 'desc'));
             }
 
             // put featured mall id in highest priority
@@ -339,6 +359,13 @@ class MallListAPIController extends PubControllerAPI
                 $areadata['average_rating'] = (! empty($dt['fields']['average_rating'][0])) ? number_format(round($dt['fields']['average_rating'][0], 1), 1) : 0;
                 $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? round($dt['fields']['total_review'][0], 1) : 0;
 
+                $followStatus = false;
+                if (! empty($objectFollow)) {
+                    if (in_array($dt['_id'], $objectFollow)) {
+                        $followStatus = true;
+                    }
+                }
+
                 if ($words === 1) {
                     // handle if user filter location with one word, ex "jakarta", data in city "jakarta selatan", "jakarta barat" etc will be dissapear
                     if (strtolower($dt['_source']['city']) === strtolower($location)) {
@@ -362,6 +389,7 @@ class MallListAPIController extends PubControllerAPI
                             }
                         }
 
+                        $areadata['follow_status'] = $followStatus;
                         $listmall[] = $areadata;
                     }
                     $total = count($listmall);
@@ -383,6 +411,7 @@ class MallListAPIController extends PubControllerAPI
                         $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                     }
 
+                    $areadata['follow_status'] = $followStatus;
                     $listmall[] = $areadata;
                 }
             }
@@ -615,5 +644,16 @@ class MallListAPIController extends PubControllerAPI
         $this->withoutScore = TRUE;
 
         return $this;
+    }
+
+    // check user follow
+    public function getUserFollow($user)
+    {
+        $follow = FollowStatusChecker::create()
+                                    ->setUserId($user->user_id)
+                                    ->setObjectType('mall')
+                                    ->getFollowStatus();
+
+        return $follow;
     }
 }

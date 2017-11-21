@@ -482,6 +482,9 @@ class NewsAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            // Push notification
+            Event::fire('orbit.news.postupdatenews-storenotificationupdate.after.commit', array($this, $newnews, $id_language_default));
+
             // queue for campaign spending news & promotion
             Queue::push('Orbit\\Queue\\SpendingCalculation', [
                 'campaign_id' => $newnews->news_id,
@@ -1227,11 +1230,15 @@ class NewsAPIController extends ControllerAPI
             }
 
             Event::fire('orbit.news.postupdatenews.after.save', array($this, $updatednews));
+            Event::fire('orbit.news.postupdatenews-mallnotification.after.save', array($this, $updatednews));
             $this->response->data = $updatednews;
             // $this->response->data->translation_default = $updatednews_default_language;
 
             // Commit the changes
             $this->commit();
+
+            // Push notification
+            Event::fire('orbit.news.postupdatenews-storenotificationupdate.after.commit', array($this, $updatednews));
 
             // queue for campaign spending news & promotion
             Queue::push('Orbit\\Queue\\SpendingCalculation', [

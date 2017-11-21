@@ -25,6 +25,7 @@ use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Partner;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class CouponDetailAPIController extends PubControllerAPI
 {
@@ -47,6 +48,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $language = OrbitInput::get('language', 'id');
             $mallId = OrbitInput::get('mall_id', null);
             $partnerToken = OrbitInput::get('token', null);
+            $notificationId = OrbitInput::get('notification_id', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -101,6 +103,20 @@ class CouponDetailAPIController extends PubControllerAPI
             $location = $mallId;
             if (empty($location)) {
                 $location = 0;
+            }
+
+            if (! empty($notificationId)) {
+                $mongoConfig = Config::get('database.mongodb');
+                $mongoClient = MongoClient::create($mongoConfig);
+
+                $bodyUpdate = [
+                    '_id'     => $notificationId,
+                    'is_read' => true
+                ];
+
+                $response = $mongoClient->setFormParam($bodyUpdate)
+                                        ->setEndPoint('user-notifications') // express endpoint
+                                        ->request('PUT');
             }
 
             $coupon = Coupon::select(

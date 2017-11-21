@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\OneSignal\OneSignal;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 class NotificationNewAPIController extends ControllerAPI
 {
@@ -68,6 +69,8 @@ class NotificationNewAPIController extends ControllerAPI
             $status = OrbitInput::post('status', 'draft');
             $notificationTokens = OrbitInput::post('notification_tokens');
             $userIds = OrbitInput::post('user_ids');
+            $targetAudience = OrbitInput::post('target_audience');
+            $files = OrbitInput::files('images');
 
             $validator = Validator::make(
                 array(
@@ -77,7 +80,6 @@ class NotificationNewAPIController extends ControllerAPI
                     'contents'            => $contents,
                     'type'                => $type,
                     'status'              => $status,
-                    'notification_tokens' => $notificationTokens,
                 ),
                 array(
                     'launch_url'          => 'required',
@@ -86,7 +88,6 @@ class NotificationNewAPIController extends ControllerAPI
                     'contents'            => 'required',
                     'type'                => 'required',
                     'status'              => 'required',
-                    'notification_tokens' => 'required|array',
                 )
             );
 
@@ -96,8 +97,44 @@ class NotificationNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
-                OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+            if (empty($notificationTokens) && empty($userIds)) {
+                OrbitShopAPI::throwInvalidArgument('Notification tokens and user id is empty');
+            }
+
+			$jsonNotifications = '';
+            if (! empty($notificationTokens)) {
+				$jsonNotifications = $notificationTokens;
+		        $notificationTokens = @json_decode($notificationTokens);
+		        if (json_last_error() != JSON_ERROR_NONE) {
+		            OrbitShopAPI::throwInvalidArgument('Notification token JSON not valid');
+		        }
+
+				if (count($notificationTokens) > 2000) {
+		            OrbitShopAPI::throwInvalidArgument('Notification tokens can not more than 2000');
+		        }
+
+                if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
+                    OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+                }
+                $notificationTokens = array_unique($notificationTokens);
+            }
+
+            $jsonUserIds = '';
+            if (! empty($userIds)) {
+                $jsonUserIds = $userIds;
+                $userIds = @json_decode($userIds);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('User ids JSON not valid');
+                }
+
+                if (count($userIds) > 2000) {
+                    OrbitShopAPI::throwInvalidArgument('User ids can not more than 2000');
+                }
+
+                if (count($userIds) !== count(array_unique($userIds))) {
+                    OrbitShopAPI::throwInvalidArgument('Duplicate user ids');
+                }
+                $userIds = array_unique($userIds);
             }
 
             $timestamp = date("Y-m-d H:i:s");
@@ -133,46 +170,85 @@ class NotificationNewAPIController extends ControllerAPI
                 'status'              => $status,
                 'created_at'          => $dateTime,
                 'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
-                'notification_tokens' => $notificationTokens,
-                'user_ids'            => $userIds,
+                'notification_tokens' => $jsonNotifications,
+                'user_ids'            => $jsonUserIds,
+                'target_audience_ids' => $targetAudience,
             ];
 
             $response = $mongoClient->setFormParam($body)
                                     ->setEndPoint('notifications') // express endpoint
                                     ->request('POST');
 
+            Event::fire('orbit.notification.postnotification.after.save', array($this, $response->data->_id));
+
             if ($status !== 'draft') { // send
                 $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
-                $mongoNotifId = $response->data->_id;
 
-                // add query string for activity recording
-                $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
-                if (parse_url($launchUrl, PHP_URL_QUERY)) { // if launch url containts query string
-                    $newUrl =  $launchUrl . '&notif_id=' . $mongoNotifId;
+                $mongoNotifId = $response->data->_id;
+                $imageUrl = $attachmentUrl;
+                $notif = $mongoClient->setEndPoint("notifications/$mongoNotifId")->request('GET');
+
+                $localPath = "";
+                $cdnPath = "";
+                if ($files) {
+                    $cdnConfig = Config::get('orbit.cdn');
+                    $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+                    $localPath = $notif->data->attachment_path;
+                    $cdnPath = $notif->data->cdn_url;
+                    $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
                 }
 
-                $data = [
-                    'headings'           => $headings,
-                    'contents'           => $contents,
-                    'url'                => $newUrl,
-                    'include_player_ids' => $notificationTokens,
-                    'ios_attachments'    => $attachmentUrl,
-                    'big_picture'        => $attachmentUrl,
-                    'adm_big_picture'    => $attachmentUrl,
-                    'chrome_big_picture' => $attachmentUrl,
-                    'chrome_web_image'   => $attachmentUrl,
-                ];
+                // send to onesignal
+                if (! empty($notificationTokens)) {
+                    // add query string for activity recording
+                    $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
+                    if (parse_url($launchUrl, PHP_URL_QUERY)) { // if launch url containts query string
+                        $newUrl =  $launchUrl . '&notif_id=' . $mongoNotifId;
+                    }
 
-                $oneSignal = new OneSignal($oneSignalConfig);
-                $newNotif = $oneSignal->notifications->add($data);
+                    $data = [
+                        'headings'           => $headings,
+                        'contents'           => $contents,
+                        'url'                => $newUrl,
+                        'include_player_ids' => $notificationTokens,
+                        'ios_attachments'    => $imageUrl,
+                        'big_picture'        => $imageUrl,
+                        'adm_big_picture'    => $imageUrl,
+                        'chrome_big_picture' => $imageUrl,
+                        'chrome_web_image'   => $imageUrl,
+                    ];
 
-                $body['sent_at'] = $dateTime;
-                $body['vendor_notification_id'] = $newNotif->id;
-                $body['_id'] = $mongoNotifId;
+                    $oneSignal = new OneSignal($oneSignalConfig);
+                    $newNotif = $oneSignal->notifications->add($data);
+                    $bodyUpdate['vendor_notification_id'] = $newNotif->id;
+                }
 
-                $response = $mongoClient->setFormParam($body)
-                                    ->setEndPoint('notifications') // express endpoint
-                                    ->request('PUT');
+                // send as inApps notification
+                if (! empty($userIds)) {
+                    foreach ($userIds as $userId) {
+                        $bodyInApps = [
+                            'user_id'       => $userId,
+                            'token'         => null,
+                            'notifications' => $notif->data,
+                            'send_status'   => 'sent',
+                            'is_viewed'     => false,
+                            'is_read'       => false,
+                            'created_at'    => $dateTime,
+                            'image_url'     => $imageUrl
+                        ];
+
+                        $inApps = $mongoClient->setFormParam($bodyInApps)
+                                    ->setEndPoint('user-notifications') // express endpoint
+                                    ->request('POST');
+                    }
+                }
+
+                $bodyUpdate['sent_at'] = $dateTime;
+                $bodyUpdate['_id'] = $mongoNotifId;
+
+                $responseUpdate = $mongoClient->setFormParam($bodyUpdate)
+                                            ->setEndPoint('notifications') // express endpoint
+                                            ->request('PUT');
             }
 
             $this->response->code = 0;

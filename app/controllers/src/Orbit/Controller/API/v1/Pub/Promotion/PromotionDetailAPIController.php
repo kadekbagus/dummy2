@@ -26,6 +26,7 @@ use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 use Partner;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class PromotionDetailAPIController extends PubControllerAPI
 {
@@ -46,6 +47,7 @@ class PromotionDetailAPIController extends PubControllerAPI
             $country = OrbitInput::get('country', null);
             $cities = OrbitInput::get('cities', null);
             $partnerToken = OrbitInput::get('token', null);
+            $notificationId = OrbitInput::get('notification_id', null);
 
             $promotionHelper = PromotionHelper::create();
             $promotionHelper->registerCustomValidation();
@@ -85,6 +87,20 @@ class PromotionDetailAPIController extends PubControllerAPI
             $location = $mallId;
             if (empty($location)) {
                 $location = 0;
+            }
+
+            if (! empty($notificationId)) {
+                $mongoConfig = Config::get('database.mongodb');
+                $mongoClient = MongoClient::create($mongoConfig);
+
+                $bodyUpdate = [
+                    '_id'     => $notificationId,
+                    'is_read' => true
+                ];
+
+                $response = $mongoClient->setFormParam($bodyUpdate)
+                                        ->setEndPoint('user-notifications') // express endpoint
+                                        ->request('PUT');
             }
 
             $promotion = News::select(

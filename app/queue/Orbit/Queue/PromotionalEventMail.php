@@ -44,8 +44,7 @@ class PromotionalEventMail
                 $langParam = '&lang=' . $data['languageId'];
             }
 
-            $user = User::where('user_id','=', $data['userId'])
-                        ->first();
+            $user = User::findOnWriteConnection($data['userId']);
 
             $campaign =  News::select('reward_details.reward_detail_id',
                                 DB::raw("

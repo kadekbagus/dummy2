@@ -8,6 +8,7 @@ use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
 use DB;
 use Tenant;
+use BaseStore;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
@@ -182,6 +183,12 @@ class ESStoreDetailUpdateQueue
                     $translations[] = $trans;
                 }
 
+                $baseStore = BaseStore::where('base_store_id', $_store->merchant_id)->first();
+                $baseMerchantId = null;
+                if (! empty($baseStore)) {
+                    $baseMerchantId = $baseStore->base_merchant_id;
+                }
+
                 $body = array(
                     'merchant_id' => $_store->merchant_id,
                     'name' => $_store->name,
@@ -213,7 +220,8 @@ class ESStoreDetailUpdateQueue
                     'default_lang' => $_store->mobile_default_language,
                     'created_at' => date('Y-m-d', strtotime($_store->created_at)) . 'T' . date('H:i:s', strtotime($_store->created_at)) . 'Z',
                     'updated_at' => date('Y-m-d', strtotime($_store->updated_at)) . 'T' . date('H:i:s', strtotime($_store->updated_at)) . 'Z',
-                    'translation' => $translations
+                    'translation' => $translations,
+                    'base_merchant_id' => $baseMerchantId
                 );
 
                 $response = NULL;

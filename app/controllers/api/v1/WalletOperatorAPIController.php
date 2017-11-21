@@ -57,7 +57,6 @@ class WalletOperatorAPIController extends ControllerAPI
             $contact_person_name = OrbitInput::post('contact_person_name');
             $contact_person_position = OrbitInput::post('contact_person_position');
             $contact_person_phone_number = OrbitInput::post('contact_person_phone_number');
-            $contact_person_phone_number_for_sms = OrbitInput::post('contact_person_phone_number_for_sms');
             $contact_person_email = OrbitInput::post('contact_person_email');
             $contact_person_address = OrbitInput::post('contact_person_address');
 
@@ -112,7 +111,6 @@ class WalletOperatorAPIController extends ControllerAPI
             $newContactPerson->contact_name = $contact_person_name;
             $newContactPerson->position = $contact_person_position;
             $newContactPerson->phone_number = $contact_person_phone_number;
-            $newContactPerson->phone_number_for_sms = $contact_person_phone_number_for_sms;
             $newContactPerson->email = $contact_person_email;
             $newContactPerson->address = $contact_person_address;
             $newContactPerson->save();
@@ -288,10 +286,6 @@ class WalletOperatorAPIController extends ControllerAPI
 
             OrbitInput::post('contact_person_phone_number', function($phone_number) use ($updateContactWalletOperator) {
                 $updateContactWalletOperator->phone_number = $phone_number;
-            });
-
-            OrbitInput::post('contact_person_phone_number_for_sms', function($phone_number_for_sms) use ($updateContactWalletOperator) {
-                $updateContactWalletOperator->phone_number_for_sms = $phone_number_for_sms;
             });
 
             OrbitInput::post('contact_person_email', function($email) use ($updateContactWalletOperator) {

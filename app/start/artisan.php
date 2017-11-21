@@ -266,3 +266,9 @@ Artisan::add(new CreateUserMerchantTransactionCommand);
 
 // Create Master Bank for merchant transaction
 Artisan::add(new CreateBankCommand);
+
+// Create Master Bank for merchant transaction
+Artisan::add(new UserNotificationStoreCommand);
+
+// Create Master Bank for merchant transaction
+Artisan::add(new UserNotificationMallCommand);

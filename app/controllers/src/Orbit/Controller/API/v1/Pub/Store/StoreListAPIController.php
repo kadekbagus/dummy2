@@ -32,6 +32,7 @@ use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Orbit\Controller\API\v1\Pub\Store\StoreHelper;
 use Country;
+use Orbit\Helper\Util\FollowStatusChecker;
 
 class StoreListAPIController extends PubControllerAPI
 {
@@ -83,7 +84,8 @@ class StoreListAPIController extends PubControllerAPI
             $sort_by = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $location = OrbitInput::get('location', null);
-            $cityFilters = OrbitInput::get('cities', null);
+            $cityFilters = OrbitInput::get('cities', []);
+            $cityFilters = (array) $cityFilters;
             $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $language = OrbitInput::get('language', 'id');
@@ -122,7 +124,7 @@ class StoreListAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:name,location,updated_date,rating',
+                    'sortby'   => 'in:name,location,updated_date,rating,followed',
                 )
             );
 
@@ -334,6 +336,7 @@ class StoreListAPIController extends PubControllerAPI
             // calculate rating and review based on location/mall
             $scriptFieldRating = "double counter = 0; double rating = 0;";
             $scriptFieldReview = "double review = 0;";
+            $scriptFieldFollow = "int follow = 0;";
 
             if (! empty($mallId)) {
                 $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('mall_rating.rating_" . $mallId . "')) { if (! doc['mall_rating.rating_" . $mallId . "'].empty) { counter = counter + doc['mall_rating.review_" . $mallId . "'].value; rating = rating + (doc['mall_rating.rating_" . $mallId . "'].value * doc['mall_rating.review_" . $mallId . "'].value);}};";
@@ -362,7 +365,23 @@ class StoreListAPIController extends PubControllerAPI
             $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
             $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
 
-            $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview));
+            $role = $user->role->role_name;
+            $objectFollow = [];
+            if (strtolower($role) === 'consumer') {
+                $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters);
+
+                if (! empty($objectFollow)) {
+                    if ($sort_by === 'followed') {
+                        foreach ($objectFollow as $followId) {
+                            $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('base_merchant_id')) { if (! doc['base_merchant_id'].empty) { if (doc['base_merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
+                        }
+
+                        $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
+                    }
+                }
+            }
+
+            $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
 
             // sort by name or location
             $defaultSort = array('name.raw' => array('order' => 'asc'));
@@ -375,6 +394,8 @@ class StoreListAPIController extends PubControllerAPI
                 $sort = array('updated_at' => array('order' => $sort_mode));
             } elseif ($sort_by === 'rating') {
                 $sort = array('_script' => array('script' => $scriptFieldRating, 'type' => 'number', 'order' => $sort_mode));
+            } elseif ($sort_by === 'followed') {
+                $sort = array('_script' => array('script' => $scriptFieldFollow, 'type' => 'number', 'order' => 'desc'));
             } else {
                 $sort = $defaultSort;
             }
@@ -508,11 +529,17 @@ class StoreListAPIController extends PubControllerAPI
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
                 $storeId = '';
+                $data['follow_status'] = false;
+                $baseMerchantId = '';
                 foreach ($record['_source'] as $key => $value) {
 
                     $localPath = ($key == 'logo') ? $value : $localPath;
                     $cdnPath = ($key == 'logo_cdn') ? $value : $cdnPath;
                     $key = ($key == 'logo') ? 'logo_url' : $key;
+
+                    if ($key === 'base_merchant_id') {
+                        $baseMerchantId = $value;
+                    }
 
                     $data[$key] = $value;
                     $data['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
@@ -583,6 +610,12 @@ class StoreListAPIController extends PubControllerAPI
                 if (! empty($record['inner_hits']['tenant_detail']['hits']['total'])) {
                     if (! empty($mallId)) {
                         $data['merchant_id'] = $record['inner_hits']['tenant_detail']['hits']['hits'][0]['_source']['merchant_id'];
+                    }
+                }
+
+                if (! empty($objectFollow)) {
+                    if (in_array($baseMerchantId, $objectFollow)) {
+                        $data['follow_status'] = true;
                     }
                 }
 
@@ -728,5 +761,28 @@ class StoreListAPIController extends PubControllerAPI
         $this->withoutScore = TRUE;
 
         return $this;
+    }
+
+    // check user follow
+    public function getUserFollow($user, $mallId, $city=array())
+    {
+        $follow = FollowStatusChecker::create()
+                                    ->setUserId($user->user_id)
+                                    ->setObjectType('store');
+
+        if (! empty($mallId)) {
+            $follow = $follow->setMallId($mallId);
+        }
+
+        if (! empty($city)) {
+            if (! is_array($city)) {
+                $city = (array) $city;
+            }
+            $follow = $follow->setCity($city);
+        }
+
+        $follow = $follow->getFollowStatus();
+
+        return $follow;
     }
 }
