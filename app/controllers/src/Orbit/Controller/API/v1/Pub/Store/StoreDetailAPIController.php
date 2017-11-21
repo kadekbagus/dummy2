@@ -193,15 +193,29 @@ class StoreDetailAPIController extends PubControllerAPI
             $store = $store->orderBy('merchants.created_at', 'asc')
                 ->first();
 
-
-            // Get total page views, Hit mysql if there is no data in Redis
-            $keyRedis = 'store-' . $merchantId . '-' . $location;
-            $redis = Redis::connection('page_view');
-            $totalPageViewRedis = $redis->get($keyRedis);
+            // Config page_views
+            $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
+            $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
             $totalPageViews = 0;
 
-            if (! empty($totalPageViewRedis)) {
-                $totalPageViews = $totalPageViewRedis;
+            // Get total page views, depend of config what DB used
+            if ($configPageViewSource === 'redis') {
+                $keyRedis = 'store-' . $merchantId . '-' . $location;
+                $redis = Redis::connection($configPageViewRedisDb);
+                $totalPageViewRedis = $redis->get($keyRedis);
+
+                if (! empty($totalPageViewRedis)) {
+                    $totalPageViews = $totalPageViewRedis;
+                } else {
+                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'store')
+                                                                 ->where('object_id', $merchantId)
+                                                                 ->where('location_id', $location)
+                                                                 ->first();
+
+                    if (! empty($totalObjectPageView->total_view)) {
+                        $totalPageViews = $totalObjectPageView->total_view;
+                    }
+                }
             } else {
                 $totalObjectPageView = TotalObjectPageView::where('object_type', 'store')
                                                              ->where('object_id', $merchantId)
@@ -213,7 +227,6 @@ class StoreDetailAPIController extends PubControllerAPI
                 }
             }
             $store->total_view = $totalPageViews;
-
 
             // ---- START RATING ----
             $storeIds = [];

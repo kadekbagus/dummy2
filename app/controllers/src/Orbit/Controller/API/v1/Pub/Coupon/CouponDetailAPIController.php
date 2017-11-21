@@ -211,14 +211,31 @@ class CouponDetailAPIController extends PubControllerAPI
 
             $coupon = $coupon->first();
 
-            // Get total page views, Hit mysql if there is no data in Redis
-            $keyRedis = 'coupon-' . $couponId . '-' . $location;
-            $redis = Redis::connection('page_view');
-            $totalPageViewRedis = $redis->get($keyRedis);
+            // Config page_views
+            $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
+            $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
             $totalPageViews = 0;
 
-            if (! empty($totalPageViewRedis)) {
-                $totalPageViews = $totalPageViewRedis;
+            // Get total page views, depend of config what DB used
+            if ($configPageViewSource === 'redis') {
+                $keyRedis = 'coupon-' . $couponId . '-' . $location;
+                $redis = Redis::connection($configPageViewRedisDb);
+                $totalPageViewRedis = $redis->get($keyRedis);
+                $totalPageViews = 0;
+
+                if (! empty($totalPageViewRedis)) {
+                    $totalPageViews = $totalPageViewRedis;
+                } else {
+                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'coupon')
+                                                                 ->where('object_id', $couponId)
+                                                                 ->where('location_id', $location)
+                                                                 ->first();
+
+                    if (! empty($totalObjectPageView->total_view)) {
+                        $totalPageViews = $totalObjectPageView->total_view;
+                    }
+                }
+
             } else {
                 $totalObjectPageView = TotalObjectPageView::where('object_type', 'coupon')
                                                              ->where('object_id', $couponId)
@@ -230,7 +247,6 @@ class CouponDetailAPIController extends PubControllerAPI
                 }
             }
             $coupon->total_view = $totalPageViews;
-
 
             $message = 'Request Ok';
             if (! is_object($coupon)) {
