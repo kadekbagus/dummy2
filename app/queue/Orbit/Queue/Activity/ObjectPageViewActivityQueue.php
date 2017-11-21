@@ -75,8 +75,6 @@ class ObjectPageViewActivityQueue
                 case 'view_mall_promotional_event_detail';
                 case 'view_landing_page_promotional_event_detail';
 
-                    DB::beginTransaction();
-
                     // insert to object_page_views
                     $object_page_view = ObjectPageView::where('activity_id', $activity->activity_id)->first();
 
@@ -144,8 +142,6 @@ class ObjectPageViewActivityQueue
                     $total_object_page_view->total_view = $total_object_page_view->total_view + 1;
                     $total_object_page_view->save();
 
-                    DB::commit();
-
                     // update elastic search
                     $fakeJob = new FakeJob();
                     $message = sprintf('[Job ID: `%s`] Object Page View Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
@@ -197,7 +193,6 @@ class ObjectPageViewActivityQueue
         } catch (Exception $e) {
             $message = sprintf('[activity_id: `%s`] Object Page View Activity Queue ERROR: %s', $activityId, $e->getMessage());
             Log::error($message);
-            DB::rollBack();
         }
 
         // Bury the job for later inspection

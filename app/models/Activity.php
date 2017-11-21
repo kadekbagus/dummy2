@@ -907,7 +907,7 @@ class Activity extends Eloquent
         }
 
         // Save to additional activities table
-        Queue::push('Orbit\\Queue\\Activity\\AdditionalActivityQueue', [
+        $activityQueue = Queue::push('Orbit\\Queue\\Activity\\AdditionalActivityQueue', [
             'activity_id' => $this->activity_id,
             'datetime' => date('Y-m-d H:i:s'),
             'referer' => substr($referer, 0, 2048),
@@ -917,10 +917,17 @@ class Activity extends Eloquent
             'notification_token' => $notificationToken
         ]);
 
+        // Format -> JOB_ID;EXTENDED_ACTIVITY_ID;ACTIVITY_ID;MESSAGE
+        $dataLog = sprintf("%s;%s;\n", $activityQueue, $this->activity_id);
+
+        // Write the error log to dedicated file so it is easy to investigate and
+        // easy to replay because the log is structured
+        file_put_contents(storage_path() . '/logs/activity-model.log', $dataLog, FILE_APPEND);
+
         // Save to object page views table
         Queue::push('Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue', [
             'activity_id' => $this->activity_id
-        ]);
+        ], 'object_page_view_prod');
 
         $this->saveEmailToMailchimp();
 
