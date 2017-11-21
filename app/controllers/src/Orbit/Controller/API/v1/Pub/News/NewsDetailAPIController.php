@@ -22,6 +22,8 @@ use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use OrbitShop\API\v1\ResponseProvider;
 use Partner;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use TotalObjectPageView;
+use Redis;
 
 class NewsDetailAPIController extends PubControllerAPI
 {
@@ -118,7 +120,6 @@ class NewsDetailAPIController extends PubControllerAPI
                             'news.object_type',
                             'news.end_date',
                             'news.is_exclusive',
-                            'total_object_page_views.total_view',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -164,18 +165,34 @@ class NewsDetailAPIController extends PubControllerAPI
                               ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('total_object_page_views', function ($q) use ($location){
-                            $q->on('total_object_page_views.object_id', '=', 'news.news_id')
-                                ->on('total_object_page_views.object_type', '=', DB::raw("'news'"))
-                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
-                        })
                         ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
                             }])
-                        ->first();
+                        ->first()
+                        ;
+
+            // Get total page views, Hit mysql if there is no data in Redis
+            $keyRedis = 'news-' . $newsId . '-' . $location;
+            $redis = Redis::connection('page_view');
+            $totalPageViewRedis = $redis->get($keyRedis);
+            $totalPageViews = 0;
+
+            if (! empty($totalPageViewRedis)) {
+                $totalPageViews = $totalPageViewRedis;
+            } else {
+                $totalObjectPageView = TotalObjectPageView::where('object_type', 'news')
+                                                             ->where('object_id', $newsId)
+                                                             ->where('location_id', $location)
+                                                             ->first();
+
+                if (! empty($totalObjectPageView->total_view)) {
+                    $totalPageViews = $totalObjectPageView->total_view;
+                }
+            }
+            $news->total_view = $totalPageViews;
 
             $message = 'Request Ok';
             if (! is_object($news)) {

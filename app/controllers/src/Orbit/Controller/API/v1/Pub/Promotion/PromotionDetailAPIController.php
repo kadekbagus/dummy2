@@ -26,6 +26,8 @@ use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
 use Mall;
 use Partner;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use TotalObjectPageView;
+use Redis;
 
 class PromotionDetailAPIController extends PubControllerAPI
 {
@@ -111,7 +113,6 @@ class PromotionDetailAPIController extends PubControllerAPI
                             'news.object_type',
                             'news.end_date',
                             'news.is_exclusive',
-                            'total_object_page_views.total_view',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -157,11 +158,6 @@ class PromotionDetailAPIController extends PubControllerAPI
                               ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('total_object_page_views', function ($q) use ($location){
-                            $q->on('total_object_page_views.object_id', '=', 'news.news_id')
-                                ->on('total_object_page_views.object_type', '=', DB::raw("'promotion'"))
-                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
-                        })
                         ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $promotionId)
                         ->where('news.object_type', '=', 'promotion')
@@ -169,6 +165,26 @@ class PromotionDetailAPIController extends PubControllerAPI
                                 $q->addSelect('keyword', 'object_id');
                             }])
                         ->first();
+
+            // Get total page views, Hit mysql if there is no data in Redis
+            $keyRedis = 'promotion-' . $promotionId . '-' . $location;
+            $redis = Redis::connection('page_view');
+            $totalPageViewRedis = $redis->get($keyRedis);
+            $totalPageViews = 0;
+
+            if (! empty($totalPageViewRedis)) {
+                $totalPageViews = $totalPageViewRedis;
+            } else {
+                $totalObjectPageView = TotalObjectPageView::where('object_type', 'promotion')
+                                                             ->where('object_id', $promotionId)
+                                                             ->where('location_id', $location)
+                                                             ->first();
+
+                if (! empty($totalObjectPageView->total_view)) {
+                    $totalPageViews = $totalObjectPageView->total_view;
+                }
+            }
+            $promotion->total_view = $totalPageViews;
 
             $message = 'Request Ok';
             if (! is_object($promotion)) {
