@@ -219,16 +219,19 @@ class MallListAPIController extends PubControllerAPI
             $scriptFieldFollow = "int follow = 0;";
 
             if (! empty($cityFilters)) {
+                // count total review and average rating based on city filter
                 $countryId = $countryData->country_id;
                 foreach ((array) $cityFilters as $cityFilter) {
                     $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);}}; ";
                     $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;}}; ";
                 }
             } else if (! empty($countryFilter)) {
+                // count total review and average rating based on country filter
                 $countryId = $countryData->country_id;
                 $scriptFieldRating = $scriptFieldRating . " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { if (! doc['location_rating.rating_" . $countryId . "'].empty) { counter = counter + doc['location_rating.review_" . $countryId . "'].value; rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);}}; ";
                 $scriptFieldReview = $scriptFieldReview . " if (doc.containsKey('location_rating.review_" . $countryId . "')) { if (! doc['location_rating.review_" . $countryId . "'].empty) { review = review + doc['location_rating.review_" . $countryId . "'].value;}}; ";
             } else {
+                // count total review and average rating based in all location
                 $mallCountry = Mall::groupBy('country')->lists('country');
                 $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
 
@@ -245,7 +248,7 @@ class MallListAPIController extends PubControllerAPI
             $role = $user->role->role_name;
             $objectFollow = [];
             if (strtolower($role) === 'consumer') {
-                $objectFollow = $this->getUserFollow($user);
+                $objectFollow = $this->getUserFollow($user); // return array of followed mall_id
 
                 if (! empty($objectFollow)) {
                     if ($sort_by === 'followed') {
@@ -362,6 +365,7 @@ class MallListAPIController extends PubControllerAPI
                 $followStatus = false;
                 if (! empty($objectFollow)) {
                     if (in_array($dt['_id'], $objectFollow)) {
+                        // if mall_id is available inside $objectFollow set follow status to true
                         $followStatus = true;
                     }
                 }
