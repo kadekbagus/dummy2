@@ -126,7 +126,7 @@ class NotificationListAPIController extends ControllerAPI
                 'skip'         => $skip,
                 'sortBy'       => $sortBy,
                 'sortMode'     => $sortMode,
-                'is_automatic' => null,
+                'is_automatic' => false,
             ];
 
             $mongoConfig = Config::get('database.mongodb');
