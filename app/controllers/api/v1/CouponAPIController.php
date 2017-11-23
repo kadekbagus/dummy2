@@ -3857,23 +3857,27 @@ class CouponAPIController extends ControllerAPI
                                 ->where('object_banks.object_id', $storeId)
                                 ->where('object_banks.object_type', 'store')
                                 ->where('banks.status', 'active')
-                                ->orderBy('object_banks.account_name', 'asc');
+                                ->orderBy('banks.bank_name', 'asc');
 
                 $bank = clone $merchantBank;
-                $bank = $bank->whereIn('object_banks.account_name', ['bca','mandiri'])->first();
+                // prioritize bca then mandiri
+                $bank = $bank->whereIn('banks.bank_name', ['bca','mandiri'])->first();
 
-                if (empty($bank)) {
-                    $bank = Bank::where('bank_name', 'bca')->where('status', 'active')->first();
-
-                    if (empty($bank)) {
-                        $errorMessage = 'Bank not found';
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
+                $bankGotomalls = null;
+                if (! empty($bank)) {
+                    // find bank gotomalls which are the same as merchant bank
+                    $bankGotomalls = BankGotomall::where('bank_id', $bank->bank_id)
+                                                 ->where('payment_provider_id', $paymentProvider)
+                                                 ->where('status', 'active')
+                                                 ->first();
                 }
 
-                $bankGotomalls = BankGotomall::where('bank_id', $bank->bank_id)
-                                             ->where('payment_provider_id', $paymentProvider)
-                                             ->first();
+                if (! is_object($bankGotomalls)) {
+                    // Falls back to 1 first active gotomalls bank
+                    $bankGotomalls = BankGotomall::where('payment_provider_id', $paymentProvider)
+                                    ->where('status', 'active')
+                                    ->first();
+                }
 
                 if (empty($bankGotomalls)) {
                     $errorMessage = 'Bank for payment provider ' . $provider->payment_name . ' not found';

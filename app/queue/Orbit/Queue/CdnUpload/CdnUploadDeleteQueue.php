@@ -11,6 +11,7 @@ use Aws;
 use Media;
 use Orbit\Database\ObjectID;
 use Log;
+use Orbit\Helper\Util\JobBurier;
 
 class CdnUploadDeleteQueue
 {
