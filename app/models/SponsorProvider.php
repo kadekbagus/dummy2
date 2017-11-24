@@ -7,4 +7,10 @@ class SponsorProvider extends Eloquent
     protected $primaryKey = 'sponsor_provider_id';
 
     protected $table = 'sponsor_providers';
+
+
+    public function creditCards()
+    {
+        return $this->hasMany('SponsorCreditCard', 'sponsor_provider_id', 'sponsor_provider_id');
+    }
 }
