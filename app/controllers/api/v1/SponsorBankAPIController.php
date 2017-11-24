@@ -55,16 +55,19 @@ class SponsorBankAPIController extends ControllerAPI
             $countryId = OrbitInput::post('country_id');
             $description = OrbitInput::post('description');
             $status = OrbitInput::post('status');
+            $defaultLanguageId = OrbitInput::post('default_language_id');
 
             $validator = Validator::make(
                 array(
                     'sponsor_provider_name' => $sponsorName,
                     'object_type'           => $objectType,
+                    'default_language_id'   => $defaultLanguageId
                     'status'                => $status,
                 ),
                 array(
                     'sponsor_provider_name' => 'required',
                     'object_type'           => 'required|in:bank,ewallet',
+                    'default_language_id'   => 'required|orbit.empty.language_default',
                     'status'                => 'in:active,inactive'
                 )
             );
@@ -84,7 +87,7 @@ class SponsorBankAPIController extends ControllerAPI
             $newSponsorProvider->save();
 
             OrbitInput::post('credit_cards', function($credit_cards_json_string) use ($newSponsorProvider) {
-                $this->validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, 'create');
+                $this->validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, 'create', $defaultLanguageId);
             });
 
             // Commit the changes
@@ -206,18 +209,18 @@ class SponsorBankAPIController extends ControllerAPI
             });
 
             // Add new relation based on request
-            OrbitInput::get('with', function ($with) use ($wallOperator) {
+            OrbitInput::get('with', function ($with) use ($sponsorProviders) {
                 $with = (array) $with;
 
                 foreach ($with as $relation) {
                     if ($relation === 'media') {
-                        $wallOperator->with('media');
+                        $sponsorProviders->with('media');
                     } elseif ($relation === 'creditCards') {
-                        $wallOperator->with('creditCards');
+                        $sponsorProviders->with('creditCards');
                     } elseif ($relation === 'contact') {
-                        $wallOperator->with('contact');
+                        $sponsorProviders->with('contact');
                     } elseif ($relation === 'gtm_bank') {
-                        $wallOperator->with('gtmBanks');
+                        $sponsorProviders->with('gtmBanks');
                     }
                 }
             });
@@ -324,7 +327,7 @@ class SponsorBankAPIController extends ControllerAPI
      * @param string $scenario 'create' / 'update'
      * @throws InvalidArgsException
      */
-    private function validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, $scenario = 'create')
+    private function validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, $scenario = 'create', $default_language_id)
     {
         $user = $this->api->user;
 
@@ -358,12 +361,19 @@ class SponsorBankAPIController extends ControllerAPI
 
         $creditCards = [];
         $creditCardTranslation = [];
+        $defaultDescription = null;
         foreach ($data as $key => $creditCardData)
         {
+            // find description for default language
+            foreach ($creditCardData->description as $key => $value) {
+                if ($key === $default_language_id) {
+                    $defaultDescription = $value->description;
+                }
+            }
             // save credit card
             $newCreditCard = new SponsorCreditCard();
             $newCreditCard->name = $creditCardData->card_name;
-            $newCreditCard->description = '';
+            $newCreditCard->description = $defaultDescription;
             $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
             $newCreditCard->status = 'active';
             $newCreditCard->save();
@@ -383,4 +393,20 @@ class SponsorBankAPIController extends ControllerAPI
         $newSponsorProvider->credit_card_translations = $creditCardTranslation;
     }
 
+    protected function registerCustomValidation()
+    {
+        // Check the existance of id_language_default
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $language = Language::where('language_id', '=', $value)
+                                    ->first();
+
+            if (empty($language)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.language_default', $language);
+
+            return true;
+        });
+    }
 }
