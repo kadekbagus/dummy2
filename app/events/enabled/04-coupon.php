@@ -524,14 +524,12 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
                 }
             }
 
-            // get user_ids and tokens
-            $tenantIds = null;
-            if (count($updatedcoupon['tenants']) > 0) {
-                foreach ($updatedcoupon['tenants'] as $key => $tenant) {
-                    if ($tenant->object_type === 'retailer') {
-                        $tenantIds[] = $tenant->merchant_id;
-                    }
-                }
+            $tenantIds = '';
+            $couponLinkToTenant = PromotionRetailer::where('promotion_id', $updatedcoupon->promotion_id)
+                                            ->lists('retailer_id');
+
+            if (count($couponLinkToTenant) > 0) {
+                $tenantIds = $couponLinkToTenant;
             }
 
             $queryStringUserFollow = [

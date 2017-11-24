@@ -660,13 +660,12 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
             }
 
             // get user_ids and tokens
-            $tenantIds = null;
-            if (count($updatednews['tenants']) > 0) {
-                foreach ($updatednews['tenants'] as $key => $tenant) {
-                    if ($tenant->object_type === 'retailer') {
-                        $tenantIds[] = $tenant->merchant_id;
-                    }
-                }
+            $tenantIds = '';
+            $newsLinkToTenant = NewsMerchant::where('news_id', $updatednews->news_id)
+                                            ->lists('merchant_id');
+
+            if (count($newsLinkToTenant) > 0) {
+                $tenantIds = $newsLinkToTenant;
             }
 
             $queryStringUserFollow = [
