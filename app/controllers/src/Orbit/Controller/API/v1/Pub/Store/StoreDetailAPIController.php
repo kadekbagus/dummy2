@@ -211,7 +211,7 @@ class StoreDetailAPIController extends PubControllerAPI
             $store = $store->orderBy('merchants.created_at', 'asc')
                 ->first();
 
-            if (! empty($store)) {
+            if (empty($store)) {
                 throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
             }
 

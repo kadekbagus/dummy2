@@ -3920,7 +3920,7 @@ class CouponAPIController extends ControllerAPI
                 $body['gtm_bank_address'] = $bankGotomalls->bank_address;
                 $body['merchant_bank_id'] = $merchantBankId;
                 $body['merchant_bank_account_name'] = $merchantBankAccountName;
-                $body['merchant_bank_account_number'] = $merchantBankAccountName;
+                $body['merchant_bank_account_number'] = $merchantBankAccountNumber;
                 $body['merchant_bank_name'] = $merchantBankName;
                 $body['merchant_bank_swift_code'] = $merchantBankSwiftCode;
                 $body['merchant_bank_address'] = $merchantBankAddress;
