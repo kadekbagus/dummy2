@@ -218,6 +218,7 @@ class NewsAPIController extends ControllerAPI
                 Event::fire('orbit.news.postnewnews.after.retailervalidation', array($this, $validator));
             }
 
+            $sponsorIds = array();
             if ($is_sponsored === 'Y') {
                 $sponsorIds = @json_decode($sponsor_ids);
                 if (json_last_error() != JSON_ERROR_NONE) {
@@ -503,7 +504,7 @@ class NewsAPIController extends ControllerAPI
                         $objectSponsor = new ObjectSponsor();
                         $objectSponsor->sponsor_provider_id = $key;
                         $objectSponsor->object_id = $newnews->news_id;
-                        $objectSponsor->object_type = $objectType;
+                        $objectSponsor->object_type = $object_type;
 
                         $allCreditCard = 'N';
                         if ($value === 'all_credit_card') {
@@ -513,11 +514,13 @@ class NewsAPIController extends ControllerAPI
                         $objectSponsor->save();
 
                         if (($allCreditCard === 'N') && (count($value) > 0)) {
-                            foreach ($value as $creditCardId) {
-                                $objectSponsorCreditCard = new ObjectSponsorCreditCard();
-                                $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
-                                $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
-                                $objectSponsorCreditCard->save();
+                            if (is_array($value)) {
+                                foreach ($value as $creditCardId) {
+                                    $objectSponsorCreditCard = new ObjectSponsorCreditCard();
+                                    $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
+                                    $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
+                                    $objectSponsorCreditCard->save();
+                                }
                             }
                         }
                     }
@@ -915,7 +918,7 @@ class NewsAPIController extends ControllerAPI
                         $objectSponsor = new ObjectSponsor();
                         $objectSponsor->sponsor_provider_id = $key;
                         $objectSponsor->object_id = $news_id;
-                        $objectSponsor->object_type = $objectType;
+                        $objectSponsor->object_type = $object_type;
 
                         $allCreditCard = 'N';
                         if ($value === 'all_credit_card') {
@@ -925,11 +928,13 @@ class NewsAPIController extends ControllerAPI
                         $objectSponsor->save();
 
                         if (($allCreditCard === 'N') && (count($value) > 0)) {
-                            foreach ($value as $creditCardId) {
-                                $objectSponsorCreditCard = new ObjectSponsorCreditCard();
-                                $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
-                                $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
-                                $objectSponsorCreditCard->save();
+                            if (is_array($value)) {
+                                foreach ($value as $creditCardId) {
+                                    $objectSponsorCreditCard = new ObjectSponsorCreditCard();
+                                    $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
+                                    $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
+                                    $objectSponsorCreditCard->save();
+                                }
                             }
                         }
                     }

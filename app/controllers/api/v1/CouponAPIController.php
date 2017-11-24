@@ -326,6 +326,7 @@ class CouponAPIController extends ControllerAPI
                 );
             }
 
+            $sponsorIds = array();
             if ($is_sponsored === 'Y') {
                 $sponsorIds = @json_decode($sponsor_ids);
                 if (json_last_error() != JSON_ERROR_NONE) {
@@ -1115,11 +1116,13 @@ class CouponAPIController extends ControllerAPI
                         $objectSponsor->save();
 
                         if (($allCreditCard === 'N') && (count($value) > 0)) {
-                            foreach ($value as $creditCardId) {
-                                $objectSponsorCreditCard = new ObjectSponsorCreditCard();
-                                $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
-                                $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
-                                $objectSponsorCreditCard->save();
+                            if (is_array($value)) {
+                                foreach ($value as $creditCardId) {
+                                    $objectSponsorCreditCard = new ObjectSponsorCreditCard();
+                                    $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
+                                    $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
+                                    $objectSponsorCreditCard->save();
+                                }
                             }
                         }
                     }
@@ -2010,11 +2013,13 @@ class CouponAPIController extends ControllerAPI
                         $objectSponsor->save();
 
                         if (($allCreditCard === 'N') && (count($value) > 0)) {
-                            foreach ($value as $creditCardId) {
-                                $objectSponsorCreditCard = new ObjectSponsorCreditCard();
-                                $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
-                                $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
-                                $objectSponsorCreditCard->save();
+                            if (is_array($value)) {
+                                foreach ($value as $creditCardId) {
+                                    $objectSponsorCreditCard = new ObjectSponsorCreditCard();
+                                    $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
+                                    $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
+                                    $objectSponsorCreditCard->save();
+                                }
                             }
                         }
                     }
