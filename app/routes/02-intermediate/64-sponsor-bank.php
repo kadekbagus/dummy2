@@ -17,3 +17,8 @@ Route::post('/app/v1/sponsor-bank/update', 'IntermediateAuthController@SponsorBa
  * Get search sponsor bank, e-wallet, credit card
  */
 Route::get('/app/v1/sponsor-bank/list', 'IntermediateAuthController@SponsorBank_getSearchSponsorBank');
+
+/**
+ * Get link to sponsor bank, e-wallet, credit card
+ */
+Route::get('/app/v1/link-to-sponsor/list', 'IntermediateAuthController@LinkToSponsor_getLinkToSponsor');

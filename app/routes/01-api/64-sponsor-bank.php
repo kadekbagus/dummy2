@@ -26,3 +26,11 @@ Route::get('/api/v1/sponsor-bank/list', function()
 {
     return SponsorBankAPIController::create()->getSearchSponsorBank();
 });
+
+/**
+ * Get link to sponsor bank, e-wallet, credit card
+ */
+Route::get('/api/v1/link-to-sponsor/list', function()
+{
+    return LinkToSponsorAPIController::create()->getLinkToSponsor();
+});
