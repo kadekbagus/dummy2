@@ -50,12 +50,15 @@ class SponsorBankAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $this->registerCustomValidation();
+
             $sponsorName = OrbitInput::post('sponsor_name');
             $objectType = OrbitInput::post('object_type');
             $countryId = OrbitInput::post('country_id');
             $description = OrbitInput::post('description');
             $status = OrbitInput::post('status');
             $defaultLanguageId = OrbitInput::post('default_language_id');
+            $translation = OrbitInput::post('translations');
 
             $validator = Validator::make(
                 array(
@@ -78,15 +81,33 @@ class SponsorBankAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $translations = @json_decode($translation);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument('translation JSON is not valid');
+            }
+
+            $defaultDescription = null;
+            if (!empty ($translations)) {
+                foreach ($translations as $key => $value) {
+                    if ($key === $defaultLanguageId) {
+                        $defaultDescription = $value->description;
+                    }
+                }
+            }
+
             $newSponsorProvider = new SponsorProvider();
             $newSponsorProvider->name = $sponsorName;
             $newSponsorProvider->object_type = $objectType;
             $newSponsorProvider->country_id = $countryId;
-            $newSponsorProvider->description = $description;
+            $newSponsorProvider->description = $defaultDescription;
             $newSponsorProvider->status = $status;
             $newSponsorProvider->save();
 
-            OrbitInput::post('credit_cards', function($credit_cards_json_string) use ($newSponsorProvider) {
+            OrbitInput::post('translations', function($translations_json_string) use ($newSponsorProvider) {
+                $this->validateAndSaveTranslation($newSponsorProvider, $translations_json_string, 'create');
+            });
+
+            OrbitInput::post('credit_cards', function($credit_cards_json_string) use ($newSponsorProvider, $defaultLanguageId) {
                 $this->validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, 'create', $defaultLanguageId);
             });
 
@@ -208,6 +229,16 @@ class SponsorBankAPIController extends ControllerAPI
                 $sponsorProviders->where('sponsor_providers.name', $name);
             });
 
+            // Filter sponsor provider by name like
+            OrbitInput::get('sponsor_name_like', function ($name) use ($sponsorProviders) {
+                $sponsorProviders->where('sponsor_providers.name', 'like', "%$name%");
+            });
+
+            // Filter sponsor provider by status
+            OrbitInput::get('status', function ($status) use ($sponsorProviders) {
+                $sponsorProviders->where('sponsor_providers.status', $status);
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($sponsorProviders) {
                 $with = (array) $with;
@@ -327,7 +358,7 @@ class SponsorBankAPIController extends ControllerAPI
      * @param string $scenario 'create' / 'update'
      * @throws InvalidArgsException
      */
-    private function validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, $scenario = 'create', $default_language_id)
+    private function validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, $scenario = 'create', $defaultLanguageId)
     {
         $user = $this->api->user;
 
@@ -366,7 +397,7 @@ class SponsorBankAPIController extends ControllerAPI
         {
             // find description for default language
             foreach ($creditCardData->description as $key => $value) {
-                if ($key === $default_language_id) {
+                if ($key === $defaultLanguageId) {
                     $defaultDescription = $value->description;
                 }
             }
