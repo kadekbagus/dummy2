@@ -396,11 +396,14 @@ class SponsorBankAPIController extends ControllerAPI
         foreach ($data as $key => $creditCardData)
         {
             // find description for default language
-            foreach ($creditCardData->description as $key => $value) {
-                if ($key === $defaultLanguageId) {
-                    $defaultDescription = $value->description;
+            if (!empty ($creditCardData->description)) {
+                foreach ($creditCardData->description as $key => $value) {
+                    if ($key === $defaultLanguageId) {
+                        $defaultDescription = $value->description;
+                    }
                 }
             }
+
             // save credit card
             $newCreditCard = new SponsorCreditCard();
             $newCreditCard->name = $creditCardData->card_name;
@@ -411,17 +414,58 @@ class SponsorBankAPIController extends ControllerAPI
             $creditCards[] = $newCreditCard;
 
             // save translation
-            foreach ($creditCardData->description as $key => $value) {
-                $newCreditCardTranslation = new SponsorCreditCardTranslation();
-                $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
-                $newCreditCardTranslation->language_id = $key;
-                $newCreditCardTranslation->description = $value->description;
-                $newCreditCardTranslation->save();
-                $creditCardTranslation[] = $newCreditCardTranslation;
+            if (!empty ($creditCardData->description)) {
+                foreach ($creditCardData->description as $key => $value) {
+                    $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                    $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
+                    $newCreditCardTranslation->language_id = $key;
+                    $newCreditCardTranslation->description = $value->description;
+                    $newCreditCardTranslation->save();
+                    $creditCardTranslation[] = $newCreditCardTranslation;
+                }
             }
         }
         $newSponsorProvider->credit_cards = $creditCards;
         $newSponsorProvider->credit_card_translations = $creditCardTranslation;
+    }
+
+
+    /**
+     * @param EventModel $event
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveTranslation($newSponsorProvider, $translations_json_string, $scenario = 'create')
+    {
+        $user = $this->api->user;
+
+        $data = @json_decode($translations_json_string);
+
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument('Translations JSON format not valid');
+        }
+
+        $sponsor_provider_id = $newSponsorProvider->sponsor_provider_id;
+
+        // if update delete the old data first
+        if ($scenario === 'update')
+        {
+            $oldTranslation = SponsorProviderTranslation::where('sponsor_provider_id', '=', $sponsor_provider_id);
+            $oldTranslation->delete();
+        }
+
+        $dataTranslations = [];
+        foreach ($data as $key => $translationData)
+        {
+            $newSponsorProviderTranslation = new SponsorProviderTranslation();
+            $newSponsorProviderTranslation->language_id = $key;
+            $newSponsorProviderTranslation->sponsor_provider_id = $sponsor_provider_id;
+            $newSponsorProviderTranslation->description = $translationData->description;
+            $newSponsorProviderTranslation->save();
+            $dataTranslations[] = $newSponsorProviderTranslation;
+        }
+        $newSponsorProvider->translations = $dataTranslations;
     }
 
     protected function registerCustomValidation()
