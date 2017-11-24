@@ -194,7 +194,7 @@ class SponsorBankAPIController extends ControllerAPI
                 }
             }
 
-            $sponsorProviders = SponsorProvider::excludeDeleted()
+            $sponsorProviders = SponsorProvider::excludeDeleted('sponsor_providers')
                                                ->select('sponsor_providers.*', 'countries.name as country')
                                                ->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id');
 
