@@ -83,6 +83,10 @@ class SponsorBankAPIController extends ControllerAPI
             $newSponsorProvider->status = $status;
             $newSponsorProvider->save();
 
+            OrbitInput::post('credit_cards', function($credit_cards_json_string) use ($newSponsorProvider) {
+                $this->validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, 'create');
+            });
+
             // Commit the changes
             $this->commit();
 
@@ -201,6 +205,23 @@ class SponsorBankAPIController extends ControllerAPI
                 $sponsorProviders->where('sponsor_providers.name', $name);
             });
 
+            // Add new relation based on request
+            OrbitInput::get('with', function ($with) use ($wallOperator) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'media') {
+                        $wallOperator->with('media');
+                    } elseif ($relation === 'creditCards') {
+                        $wallOperator->with('creditCards');
+                    } elseif ($relation === 'contact') {
+                        $wallOperator->with('contact');
+                    } elseif ($relation === 'gtm_bank') {
+                        $wallOperator->with('gtmBanks');
+                    }
+                }
+            });
+
             $_sponsorProviders = clone $sponsorProviders;
 
             // Get the take args
@@ -294,6 +315,72 @@ class SponsorBankAPIController extends ControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+
+    /**
+     * @param EventModel $event
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, $scenario = 'create')
+    {
+        $user = $this->api->user;
+
+        $data = @json_decode($credit_cards_json_string);
+
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument('Credit Card JSON format not valid');
+        }
+
+        $sponsor_provider_id = $newSponsorProvider->sponsor_provider_id;
+
+        // if update delete the old data first
+        if ($scenario === 'update')
+        {
+            $oldCreditCardData = SponsorCreditCard::select('sponsor_credit_card_id')
+                                                ->where('sponsor_provider_id', '=', $sponsor_provider_id)
+                                                ->get();
+            $arrCreditCardId = [];
+            foreach ($oldCreditCardData as $key => $value) {
+                $arrCreditCardId[] = $oldCreditCardData[$key]['sponsor_credit_card_id'];
+            }
+
+            foreach ($arrCreditCardId as $key => $value) {
+                $oldCreditCardTranslation = SponsorCreditCardTranslation::where('sponsor_credit_card_id', $value);
+                $oldCreditCardTranslation->delete();
+            }
+
+            $oldCreditCard = SponsorCreditCard::where('sponsor_provider_id', '=', $sponsor_provider_id);
+            $oldCreditCard->delete();
+        }
+
+        $creditCards = [];
+        $creditCardTranslation = [];
+        foreach ($data as $key => $creditCardData)
+        {
+            // save credit card
+            $newCreditCard = new SponsorCreditCard();
+            $newCreditCard->name = $creditCardData->card_name;
+            $newCreditCard->description = '';
+            $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
+            $newCreditCard->status = 'active';
+            $newCreditCard->save();
+            $creditCards[] = $newCreditCard;
+
+            // save translation
+            foreach ($creditCardData->description as $key => $value) {
+                $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
+                $newCreditCardTranslation->language_id = $key;
+                $newCreditCardTranslation->description = $value->description;
+                $newCreditCardTranslation->save();
+                $creditCardTranslation[] = $newCreditCardTranslation;
+            }
+        }
+        $newSponsorProvider->credit_cards = $creditCards;
+        $newSponsorProvider->credit_card_translations = $creditCardTranslation;
     }
 
 }
