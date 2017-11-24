@@ -61,7 +61,7 @@ class SponsorBankAPIController extends ControllerAPI
                 array(
                     'sponsor_provider_name' => $sponsorName,
                     'object_type'           => $objectType,
-                    'default_language_id'   => $defaultLanguageId
+                    'default_language_id'   => $defaultLanguageId,
                     'status'                => $status,
                 ),
                 array(
