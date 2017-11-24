@@ -229,7 +229,7 @@ class StoreSynchronization
                             $userIds = array_unique($follower);
 
                             // get tokens
-                            $tokenSearch = ['user_ids' => $userIds, 'notification_provider' => 'onesignal'];
+                            $tokenSearch = ['user_ids' => json_encode($userIds), 'notification_provider' => 'onesignal'];
                             $tokenData = $mongoClient->setQueryString($tokenSearch)
                                                      ->setEndPoint('user-notification-tokens')
                                                      ->request('GET');
