@@ -54,70 +54,99 @@ class LinkToSponsorAPIController extends ControllerAPI
             $objectId = OrbitInput::get('object_id');
             $objectType = OrbitInput::get('object_type');
 
-            // return all if empty object_type and object_id
+            $sponsorProviders = SponsorProvider::where('status', 'active');
+
+            $_sponsorProviders = clone $sponsorProviders;
+            $sponsorProviders = $sponsorProviders->get();
+
             if (! empty($objectId) && ! empty($objectType)) {
-                $objectSponsor = ObjectSponsor::select('sponsor_providers.*', 'object_sponsor.object_sponsor_id')
+                $objectSponsors = ObjectSponsor::select('sponsor_providers.*', 'object_sponsor.is_all_credit_card', 'object_sponsor.object_sponsor_id')
                                               ->leftJoin('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'object_sponsor.sponsor_provider_id')
                                               ->where('sponsor_providers.status', 'active')
                                               ->where('object_sponsor.object_type', $objectType)
-                                              ->where('object_sponsor.object_id', $objectId);
+                                              ->where('object_sponsor.object_id', $objectId)
+                                              ->get();
 
-                $_objectSponsor = clone $objectSponsor;
-                $objectSponsor = $objectSponsor->get();
+                $selectedSponsor = array();
+                $isAllCreditCard = array();
+                $haveObjectSponsor = array();
+                foreach ($objectSponsors as $objectSponsor) {
+                    $selectedSponsor[] = $objectSponsor->sponsor_provider_id;
+                    $haveObjectSponsor[$objectSponsor->sponsor_provider_id] = $objectSponsor->object_sponsor_id;
+                    if ($objectSponsor->is_all_credit_card === 'Y') {
+                        $isAllCreditCard[] = $objectSponsor->sponsor_provider_id;
+                    }
+                }
 
-                if (! $objectSponsor->isEmpty()) {
+                foreach ($sponsorProviders as $sponsorProvider) {
+                    $sponsorProvider->is_selected = 'N';
+                    if (in_array($sponsorProvider->sponsor_provider_id, $selectedSponsor)) {
+                        $sponsorProvider->is_selected = 'Y';
+                    }
 
-                    foreach ($objectSponsor as $sponsor) {
-                        $sponsor->credit_cards = array();
-                        if ($sponsor->object_type === 'bank') {
+                    $sponsorProvider->is_all_credit_card = 'N';
+                    if (in_array($sponsorProvider->sponsor_provider_id, $isAllCreditCard)) {
+                        $sponsorProvider->is_all_credit_card = 'Y';
+                    }
+
+                    $sponsorProvider->credit_cards = array();
+                    if ($sponsorProvider->object_type === 'bank') {
+                        $creditCardList = array();
+                        if (! empty($haveObjectSponsor[$sponsorProvider->sponsor_provider_id])) {
                             $objectCreditCard = ObjectSponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id')
-                                                                  ->join('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'object_sponsor_credit_card.sponsor_credit_card_id')
-                                                                  ->where('sponsor_credit_cards.status', 'active')
-                                                                  ->where('object_sponsor_credit_card.object_sponsor_id', $sponsor->object_sponsor_id)
-                                                                  ->get();
+                                                              ->join('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'object_sponsor_credit_card.sponsor_credit_card_id')
+                                                              ->where('sponsor_credit_cards.status', 'active')
+                                                              ->where('object_sponsor_credit_card.object_sponsor_id', $haveObjectSponsor[$sponsorProvider->sponsor_provider_id])
+                                                              ->get();
 
-                            $creditCardList = array();
                             foreach ($objectCreditCard as $objectCC) {
                                 $creditCardList[] = $objectCC->sponsor_credit_card_id;
                             }
+                        }
 
-                            $creditCards = SponsorCreditCard::where('status', 'active')
-                                                           ->where('sponsor_provider_id', $sponsor->sponsor_provider_id)
-                                                           ->get();
+                        $creditCards = SponsorCreditCard::where('status', 'active')
+                                                       ->where('sponsor_provider_id', $sponsorProvider->sponsor_provider_id)
+                                                       ->get();
 
-                            if (! $creditCards->isEmpty()) {
-                                foreach ($creditCards as $creditCard) {
-                                    $creditCard->is_selected = 'N';
-                                    if (in_array($creditCard->sponsor_credit_card_id, $creditCardList)) {
-                                        $creditCard->is_selected = 'Y';
-                                    }
+                        if (! $creditCards->isEmpty()) {
+                            foreach ($creditCards as $creditCard) {
+                                $creditCard->is_selected = 'N';
+                                if (in_array($creditCard->sponsor_credit_card_id, $creditCardList)) {
+                                    $creditCard->is_selected = 'Y';
                                 }
-                                $sponsor->credit_cards = $creditCards;
                             }
+                            $sponsorProvider->credit_cards = $creditCards;
                         }
                     }
-                } else {
-                    $objectSponsor = SponsorProvider::with('creditCards')
-                                                  ->where('status', 'active');
-
-                    $_objectSponsor = clone $objectSponsor;
-                    $objectSponsor = $objectSponsor->get();
                 }
             } else {
-                $objectSponsor = SponsorProvider::with('creditCards')
-                                                  ->where('status', 'active');
+                foreach ($sponsorProviders as $sponsorProvider) {
+                    $sponsorProvider->is_selected = 'N';
+                    $sponsorProvider->is_all_credit_card = 'N';
 
-                $_objectSponsor = clone $objectSponsor;
-                $objectSponsor = $objectSponsor->get();
+                    $sponsorProvider->credit_cards = array();
+                    if ($sponsorProvider->object_type === 'bank') {
+                        $creditCards = SponsorCreditCard::where('status', 'active')
+                                                       ->where('sponsor_provider_id', $sponsorProvider->sponsor_provider_id)
+                                                       ->get();
+
+                        if (! $creditCards->isEmpty()) {
+                            foreach ($creditCards as $creditCard) {
+                                $creditCard->is_selected = 'N';
+                            }
+                            $sponsorProvider->credit_cards = $creditCards;
+                        }
+                    }
+                }
             }
 
-            $totalObjectSponsor = RecordCounter::create($_objectSponsor)->count();
-            $totalReturnedRecords = count($objectSponsor);
+            $totalObjectSponsor = RecordCounter::create($_sponsorProviders)->count();
+            $totalReturnedRecords = count($sponsorProviders);
 
             $data = new stdclass();
             $data->total_records = $totalObjectSponsor;
             $data->returned_records = $totalReturnedRecords;
-            $data->records = $objectSponsor;
+            $data->records = $sponsorProviders;
             $this->response->data = $data;
 
         } catch (ACLForbiddenException $e) {
