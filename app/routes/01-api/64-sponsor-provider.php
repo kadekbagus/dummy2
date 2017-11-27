@@ -6,7 +6,7 @@
 /**
  * Create sponsor bank, e-wallet, credit card
  */
-Route::post('/api/v1/sponsor-bank/new', function()
+Route::post('/api/v1/sponsor-provider/new', function()
 {
     return SponsorProviderAPIController::create()->postNewSponsorProvider();
 });
@@ -14,7 +14,7 @@ Route::post('/api/v1/sponsor-bank/new', function()
 /**
  * Update sponsor bank, e-wallet, credit card
  */
-Route::post('/api/v1/sponsor-bank/update', function()
+Route::post('/api/v1/sponsor-provider/update', function()
 {
     return SponsorProviderAPIController::create()->postUpdateSponsorProvider();
 });
@@ -22,7 +22,7 @@ Route::post('/api/v1/sponsor-bank/update', function()
 /**
  * Get search sponsor bank, e-wallet, credit card
  */
-Route::get('/api/v1/sponsor-bank/list', function()
+Route::get('/api/v1/sponsor-provider/list', function()
 {
     return SponsorProviderAPIController::create()->getSearchSponsorProvider();
 });

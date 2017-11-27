@@ -1,7 +1,7 @@
 <?php
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
-Event::listen('orbit.sponsorprovider.postnewsponsorprovider.after.save', function($controller, $news)
+Event::listen('orbit.sponsorprovider.postnewsponsorprovider.after.save', function($controller, $sponsorProvider)
 {
     $files = OrbitInput::files('logo');
     if (! $files) {
@@ -11,20 +11,20 @@ Event::listen('orbit.sponsorprovider.postnewsponsorprovider.after.save', functio
     // This will be used on UploadAPIController
     App::instance('orbit.upload.user', $controller->api->user);
 
-    $_POST['news_id'] = $news->news_id;
+    $_POST['sponsor_provider_id'] = $sponsorProvider->sponsor_provider_id;
     $response = UploadAPIController::create('raw')
                                    ->setCalledFrom('sponsorprovider.new')
-                                   ->postUploadSponsorBankLogo();
+                                   ->postUploadSponsorProviderLogo();
 
     if ($response->code !== 0)
     {
         throw new \Exception($response->message, $response->code);
     }
-    unset($_POST['news_id']);
+    unset($_POST['sponsor_provider_id']);
 
-    $news->setRelation('media', $response->data);
-    $news->media = $response->data;
-    $news->image = $response->data[0]->path;
+    $sponsorProvider->setRelation('media', $response->data);
+    $sponsorProvider->media = $response->data;
+    $sponsorProvider->image = $response->data[0]->path;
 
     // // queue for data amazon s3
     // $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
