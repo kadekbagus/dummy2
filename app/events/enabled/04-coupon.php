@@ -524,18 +524,16 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
                 }
             }
 
-            // get user_ids and tokens
-            $tenantIds = null;
-            if (count($updatedcoupon['tenants']) > 0) {
-                foreach ($updatedcoupon['tenants'] as $key => $tenant) {
-                    if ($tenant->object_type === 'retailer') {
-                        $tenantIds[] = $tenant->merchant_id;
-                    }
-                }
+            $tenantIds = '';
+            $couponLinkToTenant = PromotionRetailer::where('promotion_id', $updatedcoupon->promotion_id)
+                                            ->lists('retailer_id');
+
+            if (count($couponLinkToTenant) > 0) {
+                $tenantIds = $couponLinkToTenant;
             }
 
             $queryStringUserFollow = [
-                'object_id'   => $tenantIds,
+                'object_id'   => json_encode($tenantIds),
                 'object_type' => 'store'
             ];
 
@@ -547,7 +545,7 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
             $notificationToken = array();
             if ($userFollows->data->returned_records > 0) {
                 $userIds = $userFollows->data->records;
-                $queryStringUserNotifToken['user_ids'] = $userIds;
+                $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
 
                 $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
                                     ->setEndPoint('user-notification-tokens')
@@ -744,7 +742,7 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
         $malls = null;
         $headings = null;
         $contents = null;
-        $userIds = null;
+        $userIds = '';
         $attachmentPath = null;
         $attachmentRealPath = null;
         $cdnUrl = null;
@@ -790,7 +788,7 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
         {
             // get user_ids and tokens
             $userIds = array_unique($follower);
-            $tokenSearch = ['user_ids' => $userIds, 'notification_provider' => 'onesignal'];
+            $tokenSearch = ['user_ids' => json_encode($userIds), 'notification_provider' => 'onesignal'];
             $tokenData = $mongoClient->setQueryString($tokenSearch)
                                      ->setEndPoint('user-notification-tokens')
                                      ->request('GET');
@@ -922,8 +920,8 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
                     $insertMallObjectNotification = [
                         'notification_ids' => (array)$notificationId,
                         'mall_id' => $mallvalue,
-                        'user_ids' => $userIds,
-                        'tokens' => $tokens,
+                        'user_ids' => json_encode($userIds),
+                        'tokens' => json_encode($tokens),
                         'status' => 'pending',
                         'start_at' => null,
                         'created_at' => $dateTime

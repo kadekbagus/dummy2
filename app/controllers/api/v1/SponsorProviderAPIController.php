@@ -12,7 +12,7 @@ use Illuminate\Database\QueryException;
 use Carbon\Carbon as Carbon;
 use Helper\EloquentRecordCounter as RecordCounter;
 
-class SponsorBankAPIController extends ControllerAPI
+class SponsorProviderAPIController extends ControllerAPI
 {
     protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
     /**
@@ -30,7 +30,7 @@ class SponsorBankAPIController extends ControllerAPI
      * @return Illuminate\Support\Facades\Response
      *
      */
-    public function postNewSponsorBank()
+    public function postNewSponsorProvider()
     {
         try {
             $httpCode = 200;
@@ -50,21 +50,27 @@ class SponsorBankAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $this->registerCustomValidation();
+
             $sponsorName = OrbitInput::post('sponsor_name');
             $objectType = OrbitInput::post('object_type');
             $countryId = OrbitInput::post('country_id');
             $description = OrbitInput::post('description');
             $status = OrbitInput::post('status');
+            $defaultLanguageId = OrbitInput::post('default_language_id');
+            $translation = OrbitInput::post('translations');
 
             $validator = Validator::make(
                 array(
                     'sponsor_provider_name' => $sponsorName,
                     'object_type'           => $objectType,
+                    'default_language_id'   => $defaultLanguageId,
                     'status'                => $status,
                 ),
                 array(
                     'sponsor_provider_name' => 'required',
                     'object_type'           => 'required|in:bank,ewallet',
+                    'default_language_id'   => 'required|orbit.empty.language_default',
                     'status'                => 'in:active,inactive'
                 )
             );
@@ -75,13 +81,37 @@ class SponsorBankAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $translations = @json_decode($translation);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument('translation JSON is not valid');
+            }
+
+            $defaultDescription = null;
+            if (!empty ($translations)) {
+                foreach ($translations as $key => $value) {
+                    if ($key === $defaultLanguageId) {
+                        $defaultDescription = $value->description;
+                    }
+                }
+            }
+
             $newSponsorProvider = new SponsorProvider();
             $newSponsorProvider->name = $sponsorName;
             $newSponsorProvider->object_type = $objectType;
             $newSponsorProvider->country_id = $countryId;
-            $newSponsorProvider->description = $description;
+            $newSponsorProvider->description = $defaultDescription;
             $newSponsorProvider->status = $status;
             $newSponsorProvider->save();
+
+            Event::fire('orbit.sponsorbank.postnewsponsorprovider.after.save', array($this, $newSponsorProvider));
+
+            OrbitInput::post('translations', function($translations_json_string) use ($newSponsorProvider) {
+                $this->validateAndSaveTranslation($newSponsorProvider, $translations_json_string, 'create');
+            });
+
+            OrbitInput::post('credit_cards', function($credit_cards_json_string) use ($newSponsorProvider, $defaultLanguageId) {
+                $this->validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, 'create', $defaultLanguageId);
+            });
 
             // Commit the changes
             $this->commit();
@@ -124,12 +154,12 @@ class SponsorBankAPIController extends ControllerAPI
         return $output;
     }
 
-    public function postUpdateSponsorBank()
+    public function postUpdateSponsorProvider()
     {
 
     }
 
-    public function getSearchSponsorBank()
+    public function getSearchSponsorProvider()
     {
         try {
             $httpCode = 200;
@@ -157,9 +187,6 @@ class SponsorBankAPIController extends ControllerAPI
                 ),
                 array(
                     'sort_by' => 'in:sponsor_name,country,status',
-                ),
-                array(
-                    'in' => Lang::get('validation.orbit.empty.partner_sortby'),
                 )
             );
             // Run the validation
@@ -187,7 +214,7 @@ class SponsorBankAPIController extends ControllerAPI
                 }
             }
 
-            $sponsorProviders = SponsorProvider::excludeDeleted()
+            $sponsorProviders = SponsorProvider::excludeDeleted('sponsor_providers')
                                                ->select('sponsor_providers.*', 'countries.name as country')
                                                ->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id');
 
@@ -199,6 +226,33 @@ class SponsorBankAPIController extends ControllerAPI
             // Filter sponsor provider by name
             OrbitInput::get('sponsor_name', function ($name) use ($sponsorProviders) {
                 $sponsorProviders->where('sponsor_providers.name', $name);
+            });
+
+            // Filter sponsor provider by name like
+            OrbitInput::get('sponsor_name_like', function ($name) use ($sponsorProviders) {
+                $sponsorProviders->where('sponsor_providers.name', 'like', "%$name%");
+            });
+
+            // Filter sponsor provider by status
+            OrbitInput::get('status', function ($status) use ($sponsorProviders) {
+                $sponsorProviders->where('sponsor_providers.status', $status);
+            });
+
+            // Add new relation based on request
+            OrbitInput::get('with', function ($with) use ($sponsorProviders) {
+                $with = (array) $with;
+
+                foreach ($with as $relation) {
+                    if ($relation === 'media') {
+                        $sponsorProviders->with('media');
+                    } elseif ($relation === 'creditCards') {
+                        $sponsorProviders->with('creditCards');
+                    } elseif ($relation === 'contact') {
+                        $sponsorProviders->with('contact');
+                    } elseif ($relation === 'gtm_bank') {
+                        $sponsorProviders->with('gtmBanks');
+                    }
+                }
             });
 
             $_sponsorProviders = clone $sponsorProviders;
@@ -236,7 +290,7 @@ class SponsorBankAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'sponsor_name' => 'sponsor_providers.name',
-                    'country'      => 'countries.country',
+                    'country'      => 'country',
                     'status'       => 'sponsor_providers.status',
                 );
 
@@ -296,4 +350,137 @@ class SponsorBankAPIController extends ControllerAPI
         return $output;
     }
 
+
+    /**
+     * @param EventModel $event
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, $scenario = 'create', $defaultLanguageId)
+    {
+        $user = $this->api->user;
+
+        $data = @json_decode($credit_cards_json_string);
+
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument('Credit Card JSON format not valid');
+        }
+
+        $sponsor_provider_id = $newSponsorProvider->sponsor_provider_id;
+
+        // if update delete the old data first
+        if ($scenario === 'update')
+        {
+            $oldCreditCardData = SponsorCreditCard::select('sponsor_credit_card_id')
+                                                ->where('sponsor_provider_id', '=', $sponsor_provider_id)
+                                                ->get();
+            $arrCreditCardId = [];
+            foreach ($oldCreditCardData as $key => $value) {
+                $arrCreditCardId[] = $oldCreditCardData[$key]['sponsor_credit_card_id'];
+            }
+
+            foreach ($arrCreditCardId as $key => $value) {
+                $oldCreditCardTranslation = SponsorCreditCardTranslation::where('sponsor_credit_card_id', $value);
+                $oldCreditCardTranslation->delete();
+            }
+
+            $oldCreditCard = SponsorCreditCard::where('sponsor_provider_id', '=', $sponsor_provider_id);
+            $oldCreditCard->delete();
+        }
+
+        $creditCards = [];
+        $creditCardTranslation = [];
+        $defaultDescription = null;
+        foreach ($data as $key => $creditCardData)
+        {
+            // find description for default language
+            if (!empty ($creditCardData->description)) {
+                foreach ($creditCardData->description as $key => $value) {
+                    if ($key === $defaultLanguageId) {
+                        $defaultDescription = $value->description;
+                    }
+                }
+            }
+
+            // save credit card
+            $newCreditCard = new SponsorCreditCard();
+            $newCreditCard->name = $creditCardData->card_name;
+            $newCreditCard->description = $defaultDescription;
+            $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
+            $newCreditCard->status = 'active';
+            $newCreditCard->save();
+            $creditCards[] = $newCreditCard;
+
+            // save translation
+            if (!empty ($creditCardData->description)) {
+                foreach ($creditCardData->description as $key => $value) {
+                    $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                    $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
+                    $newCreditCardTranslation->language_id = $key;
+                    $newCreditCardTranslation->description = $value->description;
+                    $newCreditCardTranslation->save();
+                    $creditCardTranslation[] = $newCreditCardTranslation;
+                }
+            }
+        }
+        $newSponsorProvider->credit_cards = $creditCards;
+        $newSponsorProvider->credit_card_translations = $creditCardTranslation;
+    }
+
+
+    /**
+     * @param EventModel $event
+     * @param string $translations_json_string
+     * @param string $scenario 'create' / 'update'
+     * @throws InvalidArgsException
+     */
+    private function validateAndSaveTranslation($newSponsorProvider, $translations_json_string, $scenario = 'create')
+    {
+        $user = $this->api->user;
+
+        $data = @json_decode($translations_json_string);
+
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument('Translations JSON format not valid');
+        }
+
+        $sponsor_provider_id = $newSponsorProvider->sponsor_provider_id;
+
+        // if update delete the old data first
+        if ($scenario === 'update')
+        {
+            $oldTranslation = SponsorProviderTranslation::where('sponsor_provider_id', '=', $sponsor_provider_id);
+            $oldTranslation->delete();
+        }
+
+        $dataTranslations = [];
+        foreach ($data as $key => $translationData)
+        {
+            $newSponsorProviderTranslation = new SponsorProviderTranslation();
+            $newSponsorProviderTranslation->language_id = $key;
+            $newSponsorProviderTranslation->sponsor_provider_id = $sponsor_provider_id;
+            $newSponsorProviderTranslation->description = $translationData->description;
+            $newSponsorProviderTranslation->save();
+            $dataTranslations[] = $newSponsorProviderTranslation;
+        }
+        $newSponsorProvider->translations = $dataTranslations;
+    }
+
+    protected function registerCustomValidation()
+    {
+        // Check the existance of id_language_default
+        Validator::extend('orbit.empty.language_default', function ($attribute, $value, $parameters) {
+            $language = Language::where('language_id', '=', $value)
+                                    ->first();
+
+            if (empty($language)) {
+                return false;
+            }
+
+            App::instance('orbit.empty.language_default', $language);
+
+            return true;
+        });
+    }
 }

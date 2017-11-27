@@ -6,7 +6,6 @@
 
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
-use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use \Config;
 use \Exception;
@@ -16,17 +15,8 @@ use \DB;
 use \URL;
 use Language;
 use Coupon;
-use IssuedCoupon;
 use Validator;
 use PaymentTransaction;
-use Orbit\Helper\Util\PaginationNumber;
-use Orbit\Controller\API\v1\Pub\SocMedAPIController;
-use Orbit\Controller\API\v1\Pub\News\NewsHelper;
-use Orbit\Helper\Util\ObjectPartnerBuilder;
-use Orbit\Helper\Database\Cache as OrbitDBCache;
-use Orbit\Helper\Util\SimpleCache;
-use Orbit\Helper\Util\CdnUrlGenerator;
-use Elasticsearch\ClientBuilder;
 use stdClass;
 use Orbit\Helper\Payment\Payment as PaymentClient;
 use \Carbon\Carbon as Carbon;
@@ -145,22 +135,6 @@ class PingPaymentAPIController extends PubControllerAPI
 
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $transaction->created_at, 'UTC');
             $dateTime = $date->setTimezone($transaction->timezone_name)->toDateTimeString();
-
-            if (strtolower($responseData->status) == 'failed') {
-                DB::beginTransaction();
-
-                $issuedcoupon = IssuedCoupon::where('issued_coupon_id', $transaction->issued_coupon_id)
-                                        ->first();
-
-                $issuedcoupon->redeemed_date = null;
-                $issuedcoupon->redeem_retailer_id = null;
-                $issuedcoupon->redeem_user_id = null;
-                $issuedcoupon->redeem_verification_code = null;
-                $issuedcoupon->status = 'issued';
-                $issuedcoupon->save();
-
-                DB::commit();
-            }
 
             $data = new stdClass();
             $data->transactions = $responseData;

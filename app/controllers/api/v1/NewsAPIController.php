@@ -111,6 +111,8 @@ class NewsAPIController extends ControllerAPI
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
+            $is_sponsored = OrbitInput::post('is_sponsored', 'N');
+            $sponsor_ids = OrbitInput::post('sponsor_ids');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -216,6 +218,14 @@ class NewsAPIController extends ControllerAPI
                 Event::fire('orbit.news.postnewnews.after.retailervalidation', array($this, $validator));
             }
 
+            $sponsorIds = array();
+            if ($is_sponsored === 'Y') {
+                $sponsorIds = @json_decode($sponsor_ids);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('JSON sponsor is not valid');
+                }
+            }
+
             Event::fire('orbit.news.postnewnews.after.validation', array($this, $validator));
 
             // Get data status like ongoing, stopped etc
@@ -236,6 +246,7 @@ class NewsAPIController extends ControllerAPI
             $newnews->created_by = $this->api->user->user_id;
             $newnews->sticky_order = $sticky_order;
             $newnews->is_exclusive = $is_exclusive;
+            $newnews->is_sponsored = $is_sponsored;
 
             // Check for english content
             $dataTranslations = @json_decode($translations);
@@ -477,6 +488,45 @@ class NewsAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            if ($is_sponsored === 'Y' && (! empty($sponsorIds))) {
+                foreach ($sponsorIds as $sponsorData) {
+                    foreach ((array) $sponsorData as $key => $value) {
+                        //credit card must be filled
+                        if ((count($value) == 0) || ($value === '')) {
+                            $sponsorProvider = SponsorProvider::where('sponsor_provider_id', $key)->first();
+
+                            if ($sponsorProvider->object_type === 'bank') {
+                                $errorMessage = "Credit card is required";
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+                        }
+
+                        $objectSponsor = new ObjectSponsor();
+                        $objectSponsor->sponsor_provider_id = $key;
+                        $objectSponsor->object_id = $newnews->news_id;
+                        $objectSponsor->object_type = $object_type;
+
+                        $allCreditCard = 'N';
+                        if ($value === 'all_credit_card') {
+                            $allCreditCard = 'Y';
+                        }
+                        $objectSponsor->is_all_credit_card = $allCreditCard;
+                        $objectSponsor->save();
+
+                        if (($allCreditCard === 'N') && (count($value) > 0)) {
+                            if (is_array($value)) {
+                                foreach ($value as $creditCardId) {
+                                    $objectSponsorCreditCard = new ObjectSponsorCreditCard();
+                                    $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
+                                    $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
+                                    $objectSponsorCreditCard->save();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             $this->response->data = $newnews;
 
             // Commit the changes
@@ -673,6 +723,8 @@ class NewsAPIController extends ControllerAPI
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
             $is_exclusive = OrbitInput::post('is_exclusive');
+            $is_sponsored = OrbitInput::post('is_sponsored', 'N');
+            $sponsor_ids = OrbitInput::post('sponsor_ids');
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -827,6 +879,66 @@ class NewsAPIController extends ControllerAPI
 
             OrbitInput::post('is_exclusive', function($is_exclusive) use ($updatednews) {
                 $updatednews->is_exclusive = $is_exclusive;
+            });
+
+            OrbitInput::post('is_sponsored', function($is_sponsored) use ($updatednews) {
+                $updatednews->is_sponsored = $is_sponsored;
+            });
+
+            OrbitInput::post('sponsor_ids', function($sponsor_ids) use ($updatednews, $news_id, $object_type) {
+                $sponsorIds = @json_decode($sponsor_ids);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('JSON sponsor is not valid');
+                }
+
+                // delete before insert new
+                $objectSponsor = ObjectSponsor::where('object_id', $news_id)
+                                              ->where('object_id', $object_type);
+
+                $objectSponsorIds = $objectSponsor->lists('object_sponsor_id');
+
+                // delete ObjectSponsorCreditCard
+                if (! empty($objectSponsorIds)) {
+                    $objectSponsorCreditCard = ObjectSponsorCreditCard::whereIn('object_sponsor_id', $objectSponsorIds)->delete();
+                    $objectSponsor->delete();
+                }
+
+                foreach ($sponsorIds as $sponsorData) {
+                    foreach ((array) $sponsorData as $key => $value) {
+                        //credit card must be filled
+                        if ((count($value) == 0) || ($value === '')) {
+                            $sponsorProvider = SponsorProvider::where('sponsor_provider_id', $key)->first();
+
+                            if ($sponsorProvider->object_type === 'bank') {
+                                $errorMessage = "Credit card is required";
+                                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                            }
+                        }
+
+                        $objectSponsor = new ObjectSponsor();
+                        $objectSponsor->sponsor_provider_id = $key;
+                        $objectSponsor->object_id = $news_id;
+                        $objectSponsor->object_type = $object_type;
+
+                        $allCreditCard = 'N';
+                        if ($value === 'all_credit_card') {
+                            $allCreditCard = 'Y';
+                        }
+                        $objectSponsor->is_all_credit_card = $allCreditCard;
+                        $objectSponsor->save();
+
+                        if (($allCreditCard === 'N') && (count($value) > 0)) {
+                            if (is_array($value)) {
+                                foreach ($value as $creditCardId) {
+                                    $objectSponsorCreditCard = new ObjectSponsorCreditCard();
+                                    $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
+                                    $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
+                                    $objectSponsorCreditCard->save();
+                                }
+                            }
+                        }
+                    }
+                }
             });
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatednews) {

@@ -38,13 +38,6 @@ class UserNotificationReadAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
 
-            // should always check the role
-            $role = $user->role->role_name;
-            if (strtolower($role) !== 'consumer') {
-                $message = 'You have to login to continue';
-                OrbitShopAPI::throwInvalidArgument($message);
-            }
-
             $mongoConfig = Config::get('database.mongodb');
             $mongoClient = MongoClient::create($mongoConfig);
             $notificationId = OrbitInput::post('notification_id', null);

@@ -58,13 +58,8 @@ class TargetAudienceAPIController extends ControllerAPI
             $targetAudienceName = OrbitInput::post('target_audience_name');
             $targetAudienceDescription = OrbitInput::post('target_audience_description');
             $notificationTokens = OrbitInput::post('notification_token');
-            //$notificationTokens = (array) $notificationTokens;
-            $notificationUserId = OrbitInput::post('notification_user_id');
-            //$notificationUserId = (array) $notificationUserId;
+            $notificationUserIds = OrbitInput::post('notification_user_id');
             $status = OrbitInput::post('status');
-
-            $notificationTokens = explode(",", $notificationTokens);
-            $notificationUserId = explode(",", $notificationUserId);
 
             $validator = Validator::make(
                 array(
@@ -85,8 +80,44 @@ class TargetAudienceAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
-                OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+            if (empty($notificationTokens) && empty($notificationUserIds)) {
+                OrbitShopAPI::throwInvalidArgument('Notification tokens and user id is empty');
+            }
+
+            $jsonNotificationTokens = '';
+            if (! empty($notificationTokens)) {
+                $jsonNotificationTokens = $notificationTokens;
+                $notificationTokens = @json_decode($notificationTokens);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('Notification token JSON not valid');
+                }
+
+                if (count($notificationTokens) > 2000) {
+                    OrbitShopAPI::throwInvalidArgument('Notification tokens can not more than 2000');
+                }
+
+                if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
+                    OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+                }
+                $notificationTokens = array_unique($notificationTokens);
+            }
+
+            $jsonNotificationUserIds = '';
+            if (! empty($notificationUserIds)) {
+                $jsonNotificationUserIds = $notificationUserIds;
+                $notificationUserIds = @json_decode($notificationUserIds);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('User ids JSON not valid');
+                }
+
+                if (count($notificationUserIds) > 2000) {
+                    OrbitShopAPI::throwInvalidArgument('User ids can not more than 2000');
+                }
+
+                if (count($notificationUserIds) !== count(array_unique($notificationUserIds))) {
+                    OrbitShopAPI::throwInvalidArgument('Duplicate user ids');
+                }
+                $notificationUserIds = array_unique($notificationUserIds);
             }
 
             $timestamp = date("Y-m-d H:i:s");
@@ -96,8 +127,8 @@ class TargetAudienceAPIController extends ControllerAPI
             $body = [
                 'target_name'        => $targetAudienceName,
                 'target_description' => $targetAudienceDescription,
-                'tokens'             => $notificationTokens,
-                'user_ids'           => $notificationUserId,
+                'tokens'             => $jsonNotificationTokens,
+                'user_ids'           => $jsonNotificationUserIds,
                 'status'             => $status,
                 'created_at'         => $dateTime
             ];
@@ -384,13 +415,8 @@ class TargetAudienceAPIController extends ControllerAPI
             $targetAudienceName = OrbitInput::post('target_audience_name');
             $targetAudienceDescription = OrbitInput::post('target_audience_description');
             $notificationTokens = OrbitInput::post('notification_token');
-            //$notificationTokens = (array) $notificationTokens;
             $notificationUserId = OrbitInput::post('notification_user_id');
-            //$notificationUserId = (array) $notificationUserId;
             $status = OrbitInput::post('status');
-
-            $notificationTokens = explode(",", $notificationTokens);
-            $notificationUserId = explode(",", $notificationUserId);
 
             $validator = Validator::make(
                 array(
@@ -426,6 +452,42 @@ class TargetAudienceAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            $jsonNotificationTokens = '';
+            if (! empty($notificationTokens)) {
+                $jsonNotificationTokens = $notificationTokens;
+                $notificationTokens = @json_decode($notificationTokens);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('Notification token JSON not valid');
+                }
+
+                if (count($notificationTokens) > 2000) {
+                    OrbitShopAPI::throwInvalidArgument('Notification tokens can not more than 2000');
+                }
+
+                if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
+                    OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
+                }
+                $notificationTokens = array_unique($notificationTokens);
+            }
+
+            $jsonNotificationUserIds = '';
+            if (! empty($notificationUserIds)) {
+                $jsonNotificationUserIds = $notificationUserIds;
+                $notificationUserIds = @json_decode($notificationUserIds);
+                if (json_last_error() != JSON_ERROR_NONE) {
+                    OrbitShopAPI::throwInvalidArgument('User ids JSON not valid');
+                }
+
+                if (count($notificationUserIds) > 2000) {
+                    OrbitShopAPI::throwInvalidArgument('User ids can not more than 2000');
+                }
+
+                if (count($notificationUserIds) !== count(array_unique($notificationUserIds))) {
+                    OrbitShopAPI::throwInvalidArgument('Duplicate user ids');
+                }
+                $notificationUserIds = array_unique($notificationUserIds);
+            }
+
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
             $dateTime = $date->toDateTimeString();
@@ -434,8 +496,8 @@ class TargetAudienceAPIController extends ControllerAPI
                 '_id'                => $targetAudienceId,
                 'target_name'        => $targetAudienceName,
                 'target_description' => $targetAudienceDescription,
-                'tokens'             => $notificationTokens,
-                'user_ids'           => $notificationUserId,
+                'tokens'             => $jsonNotificationTokens,
+                'user_ids'           => $jsonNotificationUserIds,
                 'status'             => $status,
                 'created_at'         => $dateTime
             ];
