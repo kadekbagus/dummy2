@@ -8,7 +8,7 @@
  */
 Route::post('/api/v1/sponsor-bank/new', function()
 {
-    return SponsorBankAPIController::create()->postNewSponsorBank();
+    return SponsorProviderAPIController::create()->postNewSponsorProvider();
 });
 
 /**
@@ -16,7 +16,7 @@ Route::post('/api/v1/sponsor-bank/new', function()
  */
 Route::post('/api/v1/sponsor-bank/update', function()
 {
-    return SponsorBankAPIController::create()->postUpdateSponsorBank();
+    return SponsorProviderAPIController::create()->postUpdateSponsorProvider();
 });
 
 /**
@@ -24,7 +24,7 @@ Route::post('/api/v1/sponsor-bank/update', function()
  */
 Route::get('/api/v1/sponsor-bank/list', function()
 {
-    return SponsorBankAPIController::create()->getSearchSponsorBank();
+    return SponsorProviderAPIController::create()->getSearchSponsorProvider();
 });
 
 /**

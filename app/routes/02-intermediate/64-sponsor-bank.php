@@ -6,17 +6,17 @@
 /**
  * Create sponsor bank, e-wallet, credit card
  */
-Route::post('/app/v1/sponsor-bank/new', 'IntermediateAuthController@SponsorBank_postNewSponsorBank');
+Route::post('/app/v1/sponsor-bank/new', 'IntermediateAuthController@SponsorProvider_postNewSponsorProvider');
 
 /**
  * Update sponsor bank, e-wallet, credit card
  */
-Route::post('/app/v1/sponsor-bank/update', 'IntermediateAuthController@SponsorBank_postUpdateSponsorBank');
+Route::post('/app/v1/sponsor-bank/update', 'IntermediateAuthController@SponsorProvider_postUpdateSponsorProvider');
 
 /**
  * Get search sponsor bank, e-wallet, credit card
  */
-Route::get('/app/v1/sponsor-bank/list', 'IntermediateAuthController@SponsorBank_getSearchSponsorBank');
+Route::get('/app/v1/sponsor-bank/list', 'IntermediateAuthController@SponsorProvider_getSearchSponsorProvider');
 
 /**
  * Get link to sponsor bank, e-wallet, credit card
