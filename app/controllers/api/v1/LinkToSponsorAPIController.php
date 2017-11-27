@@ -10,9 +10,6 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
-use SponsorCreditCard;
-use SponsorProvider;
-use ObjectSponsorCreditCard;
 
 class LinkToSponsorAPIController extends ControllerAPI
 {
