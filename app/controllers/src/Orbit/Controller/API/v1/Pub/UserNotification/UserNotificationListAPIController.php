@@ -39,13 +39,6 @@ class UserNotificationListAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
 
-            // should always check the role
-            $role = $user->role->role_name;
-            if (strtolower($role) !== 'consumer') {
-                $message = 'You have to login to continue';
-                OrbitShopAPI::throwInvalidArgument($message);
-            }
-
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
 
@@ -139,13 +132,6 @@ class UserNotificationListAPIController extends PubControllerAPI
 
         try {
             $user = $this->getUser();
-
-            // should always check the role
-            $role = $user->role->role_name;
-            if (strtolower($role) !== 'consumer') {
-                $message = 'You have to login to continue';
-                OrbitShopAPI::throwInvalidArgument($message);
-            }
 
             $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();

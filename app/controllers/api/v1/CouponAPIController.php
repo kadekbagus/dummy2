@@ -326,6 +326,7 @@ class CouponAPIController extends ControllerAPI
                 );
             }
 
+            $sponsorIds = array();
             if ($is_sponsored === 'Y') {
                 $sponsorIds = @json_decode($sponsor_ids);
                 if (json_last_error() != JSON_ERROR_NONE) {
@@ -1115,11 +1116,13 @@ class CouponAPIController extends ControllerAPI
                         $objectSponsor->save();
 
                         if (($allCreditCard === 'N') && (count($value) > 0)) {
-                            foreach ($value as $creditCardId) {
-                                $objectSponsorCreditCard = new ObjectSponsorCreditCard();
-                                $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
-                                $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
-                                $objectSponsorCreditCard->save();
+                            if (is_array($value)) {
+                                foreach ($value as $creditCardId) {
+                                    $objectSponsorCreditCard = new ObjectSponsorCreditCard();
+                                    $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
+                                    $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
+                                    $objectSponsorCreditCard->save();
+                                }
                             }
                         }
                     }
@@ -2010,11 +2013,13 @@ class CouponAPIController extends ControllerAPI
                         $objectSponsor->save();
 
                         if (($allCreditCard === 'N') && (count($value) > 0)) {
-                            foreach ($value as $creditCardId) {
-                                $objectSponsorCreditCard = new ObjectSponsorCreditCard();
-                                $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
-                                $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
-                                $objectSponsorCreditCard->save();
+                            if (is_array($value)) {
+                                foreach ($value as $creditCardId) {
+                                    $objectSponsorCreditCard = new ObjectSponsorCreditCard();
+                                    $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
+                                    $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
+                                    $objectSponsorCreditCard->save();
+                                }
                             }
                         }
                     }
@@ -4050,15 +4055,17 @@ class CouponAPIController extends ControllerAPI
                                         ->where('status', 'issued')
                                         ->first();
 
-            $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
-            $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
-            $issuedcoupon->redeem_user_id = $redeem_user_id;
-            $issuedcoupon->redeem_verification_code = $verificationNumber;
-            $issuedcoupon->status = 'redeemed';
+            if ($paymentProvider === '0') {
+                $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
+                $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
+                $issuedcoupon->redeem_user_id = $redeem_user_id;
+                $issuedcoupon->redeem_verification_code = $verificationNumber;
+                $issuedcoupon->status = 'redeemed';
 
-            Event::fire('orbit.coupon.postissuedcoupon.before.save', array($this, $issuedcoupon));
+                Event::fire('orbit.coupon.postissuedcoupon.before.save', array($this, $issuedcoupon));
 
-            $issuedcoupon->save();
+                $issuedcoupon->save();
+            }
 
             Event::fire('orbit.coupon.postissuedcoupon.after.save', array($this, $issuedcoupon));
             $this->response->data = null;
@@ -4074,19 +4081,23 @@ class CouponAPIController extends ControllerAPI
             $this->response->message = 'Coupon has been successfully redeemed.';
             $this->response->data = $data;
 
-            // Successfull Creation
-            $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
-            $activity->setUser($user)
-                    ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Successful)')
-                    ->setObject($coupon)
-                    ->setNotes($activityNotes)
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->responseOK();
+            if ($paymentProvider === '0') {
+                // Successfull Creation
+                $activityNotes = sprintf('Coupon Redeemed: %s', $issuedcoupon->coupon->promotion_name);
+                $activity->setUser($user)
+                        ->setActivityName('redeem_coupon')
+                        ->setActivityNameLong('Coupon Redemption (Successful)')
+                        ->setObject($coupon)
+                        ->setNotes($activityNotes)
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->responseOK();
 
-            $activity->coupon_id = $issuedcoupon->promotion_id;
-            $activity->coupon_name = $issuedcoupon->coupon->promotion_name;
+                $activity->coupon_id = $issuedcoupon->promotion_id;
+                $activity->coupon_name = $issuedcoupon->coupon->promotion_name;
+
+                $activity->save();
+            }
 
             Event::fire('orbit.coupon.postissuedcoupon.after.commit', array($this, $issuedcoupon));
         } catch (ACLForbiddenException $e) {
@@ -4109,7 +4120,8 @@ class CouponAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->setLocation($mall)
                     ->setModuleName('Coupon')
-                    ->responseFailed();
+                    ->responseFailed()
+                    ->save();
         } catch (InvalidArgsException $e) {
             Event::fire('orbit.coupon.redeemcoupon.invalid.arguments', array($this, $e));
 
@@ -4130,7 +4142,8 @@ class CouponAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->setLocation($mall)
                     ->setModuleName('Coupon')
-                    ->responseFailed();
+                    ->responseFailed()
+                    ->save();
         } catch (QueryException $e) {
             Event::fire('orbit.coupon.redeemcoupon.query.error', array($this, $e));
 
@@ -4157,7 +4170,8 @@ class CouponAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->setLocation($mall)
                     ->setModuleName('Coupon')
-                    ->responseFailed();
+                    ->responseFailed()
+                    ->save();
         } catch (Exception $e) {
             Event::fire('orbit.coupon.redeemcoupon.general.exception', array($this, $e));
 
@@ -4177,13 +4191,11 @@ class CouponAPIController extends ControllerAPI
                     ->setNotes($e->getMessage())
                     ->setLocation($mall)
                     ->setModuleName('Coupon')
-                    ->responseFailed();
+                    ->responseFailed()
+                    ->save();
         }
 
         $output = $this->render($httpCode);
-
-        // Save the activity
-        $activity->save();
 
         return $output;
     }
