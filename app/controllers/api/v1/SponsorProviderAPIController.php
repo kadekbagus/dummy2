@@ -12,7 +12,7 @@ use Illuminate\Database\QueryException;
 use Carbon\Carbon as Carbon;
 use Helper\EloquentRecordCounter as RecordCounter;
 
-class SponsorBankAPIController extends ControllerAPI
+class SponsorProviderAPIController extends ControllerAPI
 {
     protected $viewRoles = ['super admin', 'mall admin', 'mall owner', 'campaign owner', 'campaign employee', 'campaign admin'];
     /**
@@ -30,7 +30,7 @@ class SponsorBankAPIController extends ControllerAPI
      * @return Illuminate\Support\Facades\Response
      *
      */
-    public function postNewSponsorBank()
+    public function postNewSponsorProvider()
     {
         try {
             $httpCode = 200;
@@ -103,6 +103,8 @@ class SponsorBankAPIController extends ControllerAPI
             $newSponsorProvider->status = $status;
             $newSponsorProvider->save();
 
+            Event::fire('orbit.sponsorbank.postnewsponsorprovider.after.save', array($this, $newSponsorProvider));
+
             OrbitInput::post('translations', function($translations_json_string) use ($newSponsorProvider) {
                 $this->validateAndSaveTranslation($newSponsorProvider, $translations_json_string, 'create');
             });
@@ -152,12 +154,12 @@ class SponsorBankAPIController extends ControllerAPI
         return $output;
     }
 
-    public function postUpdateSponsorBank()
+    public function postUpdateSponsorProvider()
     {
 
     }
 
-    public function getSearchSponsorBank()
+    public function getSearchSponsorProvider()
     {
         try {
             $httpCode = 200;
