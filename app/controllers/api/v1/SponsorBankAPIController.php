@@ -185,9 +185,6 @@ class SponsorBankAPIController extends ControllerAPI
                 ),
                 array(
                     'sort_by' => 'in:sponsor_name,country,status',
-                ),
-                array(
-                    'in' => Lang::get('validation.orbit.empty.partner_sortby'),
                 )
             );
             // Run the validation
@@ -291,7 +288,7 @@ class SponsorBankAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'sponsor_name' => 'sponsor_providers.name',
-                    'country'      => 'countries.country',
+                    'country'      => 'country',
                     'status'       => 'sponsor_providers.status',
                 );
 
