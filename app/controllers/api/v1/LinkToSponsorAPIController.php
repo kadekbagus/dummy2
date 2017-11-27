@@ -54,7 +54,7 @@ class LinkToSponsorAPIController extends ControllerAPI
             $objectId = OrbitInput::get('object_id');
             $objectType = OrbitInput::get('object_type');
 
-            $sponsorProviders = SponsorProvider::where('status', 'active');
+            $sponsorProviders = SponsorProvider::where('status', 'active')->orderBy('name', 'asc');
 
             $_sponsorProviders = clone $sponsorProviders;
             $sponsorProviders = $sponsorProviders->get();
@@ -106,6 +106,7 @@ class LinkToSponsorAPIController extends ControllerAPI
 
                         $creditCards = SponsorCreditCard::where('status', 'active')
                                                        ->where('sponsor_provider_id', $sponsorProvider->sponsor_provider_id)
+                                                       ->orderBy('name', 'asc')
                                                        ->get();
 
                         if (! $creditCards->isEmpty()) {
@@ -128,6 +129,7 @@ class LinkToSponsorAPIController extends ControllerAPI
                     if ($sponsorProvider->object_type === 'bank') {
                         $creditCards = SponsorCreditCard::where('status', 'active')
                                                        ->where('sponsor_provider_id', $sponsorProvider->sponsor_provider_id)
+                                                       ->orderBy('name', 'asc')
                                                        ->get();
 
                         if (! $creditCards->isEmpty()) {
