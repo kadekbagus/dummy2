@@ -70,7 +70,8 @@ class LinkToSponsorAPIController extends ControllerAPI
                     foreach ($objectSponsor as $sponsor) {
                         $sponsor->credit_cards = array();
                         if ($sponsor->object_type === 'bank') {
-                            $objectCreditCard = ObjectSponsorCreditCard::join('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'object_sponsor_credit_card.sponsor_credit_card_id')
+                            $objectCreditCard = ObjectSponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id')
+                                                                  ->join('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'object_sponsor_credit_card.sponsor_credit_card_id')
                                                                   ->where('sponsor_credit_cards.status', 'active')
                                                                   ->where('object_sponsor_credit_card.object_sponsor_id', $sponsor->object_sponsor_id)
                                                                   ->get();
