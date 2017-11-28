@@ -50,6 +50,11 @@ class LandingPageUrlGenerator
     protected $storeUrl = '/stores/id/name-slug';
 
     /**
+     * @var string storeUrl
+     */
+    protected $promotionalEventUrl = '/promotional-events/id/name-slug';
+
+    /**
      * Set the eventUrl
      *
      * @param string $eventUrl
@@ -170,6 +175,9 @@ class LandingPageUrlGenerator
 
             case 'store':
                 $url = str_replace(['id', 'name-slug'], [$this->objectId, Str::slug($this->objectName)], $this->storeUrl);
+                break;
+            case 'promotional-event':
+                $url = str_replace(['id', 'name-slug'], [$this->objectId, Str::slug($this->objectName)], $this->promotionalEventUrl);
                 break;
         }
 

@@ -318,8 +318,8 @@ class StoreSynchronization
                                             '_id' => $mallObjectNotif->data->records[0]->_id,
                                             'notification_ids' => array_unique($_notificationIds),
                                             'mall_id' => $store->merchant_id,
-                                            'user_ids' => array_unique($_userIds),
-                                            'tokens' => array_unique($_tokens),
+                                            'user_ids' => json_encode(array_unique($_userIds)),
+                                            'tokens' => json_encode(array_unique($_tokens)),
                                         ];
 
                                         $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)

@@ -410,7 +410,12 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                          ->where('news_id', '=', $news->news_id)
                          ->first();
 
-            $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl();
+            $objectTypeLink = $_news->object_type;
+            if ($objectTypeLink === 'news' && $_news->is_having_reward === 'Y') {
+                $objectTypeLink = 'promotional-event';
+            }
+
+            $launchUrl = LandingPageUrlGenerator::create($objectTypeLink, $_news->news_id, $_news->news_name)->generateUrl();
 
             $headings = new stdClass();
             $contents = new stdClass();
@@ -527,7 +532,6 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                         'created_at' => $dateTime
                     ];
 
-
                     $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
                                                           ->setEndPoint('mall-object-notifications')
                                                           ->request('POST');
@@ -555,8 +559,8 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                         '_id' => $mallObjectNotif->data->records[0]->_id,
                         'notification_ids' => array_unique($_notificationIds),
                         'mall_id' => $mallvalue,
-                        'user_ids' => $_userIds,
-                        'tokens' => $_tokens,
+                        'user_ids' => json_encode($_userIds),
+                        'tokens' => json_encode($_tokens),
                     ];
 
                     $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
