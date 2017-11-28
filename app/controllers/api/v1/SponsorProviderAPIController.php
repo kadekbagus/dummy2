@@ -116,6 +116,8 @@ class SponsorProviderAPIController extends ControllerAPI
                 $this->validateAndSaveCreditCard($newSponsorProvider, $credit_cards_json_string, 'create', $defaultLanguageId);
             });
 
+            Event::fire('orbit.sponsorprovider.postnewsponsorprovidercreditcard.after.save', array($this, $newSponsorProvider));
+
             // Commit the changes
             $this->commit();
 
@@ -379,17 +381,19 @@ class SponsorProviderAPIController extends ControllerAPI
                                                 ->where('sponsor_provider_id', '=', $sponsor_provider_id)
                                                 ->get();
             $arrCreditCardId = [];
-            foreach ($oldCreditCardData as $key => $value) {
-                $arrCreditCardId[] = $oldCreditCardData[$key]['sponsor_credit_card_id'];
-            }
+            if (!empty($oldCreditCardData)) {
+                foreach ($oldCreditCardData as $key => $value) {
+                    $arrCreditCardId[] = $oldCreditCardData[$key]['sponsor_credit_card_id'];
+                }
 
-            foreach ($arrCreditCardId as $key => $value) {
-                $oldCreditCardTranslation = SponsorCreditCardTranslation::where('sponsor_credit_card_id', $value);
-                $oldCreditCardTranslation->delete();
-            }
+                foreach ($arrCreditCardId as $key => $value) {
+                    $oldCreditCardTranslation = SponsorCreditCardTranslation::where('sponsor_credit_card_id', $value);
+                    $oldCreditCardTranslation->delete();
+                }
 
-            $oldCreditCard = SponsorCreditCard::where('sponsor_provider_id', '=', $sponsor_provider_id);
-            $oldCreditCard->delete();
+                $oldCreditCard = SponsorCreditCard::where('sponsor_provider_id', '=', $sponsor_provider_id);
+                $oldCreditCard->delete();
+            }
         }
 
         $creditCards = [];
