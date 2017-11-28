@@ -964,8 +964,8 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-mallnotificatio
                         '_id' => $mallObjectNotif->data->records[0]->_id,
                         'notification_ids' => array_unique($_notificationIds),
                         'mall_id' => $mallvalue,
-                        'user_ids' => $_userIds,
-                        'tokens' => $_tokens,
+                        'user_ids' => json_encode($_userIds),
+                        'tokens' => json_encode($_tokens),
                     ];
 
                     $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
