@@ -410,7 +410,12 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                          ->where('news_id', '=', $news->news_id)
                          ->first();
 
-            $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl();
+            $objectTypeLink = $_news->object_type;
+            if ($objectTypeLink === 'news' && $_news->is_having_reward === 'Y') {
+                $objectTypeLink = 'promotional-event';
+            }
+
+            $launchUrl = LandingPageUrlGenerator::create($objectTypeLink, $_news->news_id, $_news->news_name)->generateUrl();
 
             $headings = new stdClass();
             $contents = new stdClass();
