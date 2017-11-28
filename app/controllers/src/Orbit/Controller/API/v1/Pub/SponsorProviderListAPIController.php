@@ -28,7 +28,7 @@ class SponsorProviderListAPIController extends PubControllerAPI
      * @param string `object_id` (required) - object type of the seo text
      * @param string `object_type` (required) - object type of the seo text
      * @param string `language` (required) - id, en
-     * @param string `country` (required) - id, en
+     * @param string `country` (required) - Indonesia
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -41,7 +41,6 @@ class SponsorProviderListAPIController extends PubControllerAPI
             $objectId = OrbitInput::get('object_id', null);
             $objectType = OrbitInput::get('object_type', null);
             $language = OrbitInput::get('language', 'id');
-            $country = OrbitInput::get('country', null);
 
             $validator = Validator::make(
                 array(
@@ -74,7 +73,7 @@ class SponsorProviderListAPIController extends PubControllerAPI
                 $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
             }
 
-            $sponsorProvider = ObjectSponsor::select('sponsor_providers.name', 'languages.name as name_language', 'sponsor_provider_translations.description', 'sponsor_providers.object_type', DB::raw("{$image} as image_url"))
+            $sponsorProvider = ObjectSponsor::select('sponsor_providers.name', 'sponsor_providers.object_type', DB::raw("{$image} as image_url"))
                                             // Get name bank/ewallet
                                             ->join('sponsor_providers', function($q){
                                                     $q->on('sponsor_providers.sponsor_provider_id', '=', 'object_sponsor.sponsor_provider_id')
@@ -85,14 +84,19 @@ class SponsorProviderListAPIController extends PubControllerAPI
                                                     $q->on('media.object_id', '=', 'sponsor_providers.sponsor_provider_id')
                                                       ->on('media.media_name_long', '=', DB::raw('"sponsor_provider_logo_orig"'));
                                               })
-                                            // Get translation
-                                            ->leftJoin('sponsor_provider_translations', 'sponsor_provider_translations.sponsor_provider_id', '=', 'sponsor_providers.sponsor_provider_id')
-                                            ->leftJoin('languages', 'languages.language_id', '=', 'sponsor_provider_translations.language_id')
-                                            // TODO : Get default language, where by language, filter by country
+
                                             ->where('object_sponsor.object_id', $objectId)
                                             ->where('object_sponsor.object_type', $objectType)
                                             ->orderBy('sponsor_providers.object_type', 'asc')
                                             ->orderBy('sponsor_providers.name', 'asc');
+
+
+            OrbitInput::get('country', function($country) use ($sponsorProvider)
+            {
+                // Join to country and cities
+                $sponsorProvider->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id');
+                $sponsorProvider->where('countries.name', $country);
+            });
 
             $_sponsorProvider = clone($sponsorProvider);
 
