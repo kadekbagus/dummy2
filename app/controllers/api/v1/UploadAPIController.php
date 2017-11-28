@@ -11027,6 +11027,220 @@ class UploadAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Upload logo for Sponsor Provider.
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `payment_provider_id`       (required) - ID of the wallet operator
+     * @param file|array `logo`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadSponsorProviderLogo()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadsponsorproviderlogo.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('edit_merchant')) {
+                    Event::fire('orbit.upload.postuploadsponsorproviderlogo.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $sponsor_provider_id = OrbitInput::post('sponsor_provider_id');
+            $logo = OrbitInput::files('logo');
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'sponsor_provider_id' => $sponsor_provider_id,
+                    'logo'                => $logo,
+                ),
+                array(
+                    'sponsor_provider_id' => 'required|orbit.empty.sponsorprovider',
+                    'logo'                => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.validation', array($this, $validator));
+
+            // We already had Merchant instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $sponsorProvider = App::make('orbit.empty.sponsorprovider');
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($sponsorProvider)
+            {
+                $sponsor_provider_id = $sponsorProvider->sponsor_provider_id;
+                $slug = Str::slug($sponsorProvider->name);
+                $file['new']->name = sprintf('%s-%s-%s', $sponsor_provider_id, $slug, time());
+            };
+
+            // Load the orbit configuration for merchant upload logo
+            $uploadLogoConfig = Config::get('orbit.upload.sponsor_provider.logo');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLogoConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.before.save', array($this, $sponsorProvider, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($logo);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $sponsorProvider->sponsor_provider_id)
+                              ->where('object_name', 'sponsor_provider')
+                              ->where('media_name_id', 'sponsor_provider_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            foreach ($oldMediaFiles as $oldMedia) {
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            if (count($oldMediaFiles) > 0) {
+                $pastMedia->delete();
+            }
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $sponsorProvider->sponsor_provider_id,
+                'name'          => 'sponsor_provider',
+                'media_name_id' => 'sponsor_provider_logo',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            // if (isset($uploaded[0])) {
+            //     $merchant->logo = $uploaded[0]['path'];
+            //     $merchant->save();
+            // }
+
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.save', array($this, $sponsorProvider, $uploader));
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.merchant.logo');
+
+            // Commit the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.commit', array($this, $sponsorProvider, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadsponsorproviderlogo.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
@@ -11281,6 +11495,20 @@ class UploadAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.walletoperator', $walletOperator);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.sponsorprovider', function ($attribute, $value, $parameters) {
+            $sponsorProvider = SponsorProvider::excludeDeleted()
+                                        ->where('sponsor_provider_id', $value)
+                                        ->first();
+
+            if (empty($sponsorProvider)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.sponsorprovider', $sponsorProvider);
 
             return TRUE;
         });
