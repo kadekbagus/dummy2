@@ -223,9 +223,15 @@ class SponsorProviderAPIController extends ControllerAPI
                                                ->select('sponsor_providers.*', 'countries.name as country')
                                                ->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id');
 
+            // Filter sponsor provider by Id
+            OrbitInput::get('sponsor_provider_id', function ($sponsorProviderId) use ($sponsorProviders) {
+                $sponsorProviders->where('sponsor_providers.sponsor_provider_id', $sponsorProviderId);
+            });
+
             // Filter sponsor provider by Ids
-            OrbitInput::get('sponsor_provider_id', function ($sponsorProviderIds) use ($sponsorProviders) {
-                $sponsorProviders->whereIn('sponsor_providers.sponsor_provider_id', $sponsorProviderIds);
+            OrbitInput::get('sponsor_provider_ids', function ($sponsorProviderIds) use ($sponsorProviders) {
+                $sponsorProviderIds = (array)$sponsorProviderIds;
+                $sponsorProviders->where('sponsor_providers.sponsor_provider_id', $sponsorProviderIds);
             });
 
             // Filter sponsor provider by name
@@ -250,12 +256,10 @@ class SponsorProviderAPIController extends ControllerAPI
                 foreach ($with as $relation) {
                     if ($relation === 'media') {
                         $sponsorProviders->with('media');
-                    } elseif ($relation === 'creditCards') {
+                    } elseif ($relation === 'creditcards') {
                         $sponsorProviders->with('creditCards');
-                    } elseif ($relation === 'contact') {
-                        $sponsorProviders->with('contact');
-                    } elseif ($relation === 'gtm_bank') {
-                        $sponsorProviders->with('gtmBanks');
+                    } elseif ($relation === 'translation') {
+                        $sponsorProviders->with('translation');
                     }
                 }
             });
@@ -316,6 +320,101 @@ class SponsorProviderAPIController extends ControllerAPI
             $data->total_records = $totalRec;
             $data->returned_records = count($listOfRec);
             $data->records = $listOfRec;
+
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->data = $data;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $message = $e->getMessage();
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $message;
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+
+    public function getSearchSponsorProviderDetail()
+    {
+        try {
+            $httpCode = 200;
+
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $sponsor_provider_id = OrbitInput::get('sponsor_provider_id');
+
+            $validator = Validator::make(
+                array(
+                    'sponsor_provider_id' => $sponsor_provider_id,
+                ),
+                array(
+                    'sponsor_provider_id' => 'required',
+                )
+            );
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $sponsorProviders = SponsorProvider::excludeDeleted('sponsor_providers')
+                                               ->with('media', 'translation')
+                                               ->select('sponsor_providers.*', 'countries.name as country')
+                                               ->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                                               ->where('sponsor_provider_id', '=', $sponsor_provider_id)
+                                               ->first();
+
+            if (!is_object($sponsorProviders)) {
+                $errorMessage = 'Sponsor provider not found';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $sponsorCreditCard = SponsorCreditCard::with('media','translation')
+                                                ->where('sponsor_provider_id','=', $sponsor_provider_id)
+                                                ->get();
+
+            $data = new stdclass();
+            $data->sponsor_provider = $sponsorProviders;
+            $data->credit_cards = $sponsorCreditCard;
 
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -419,7 +518,7 @@ class SponsorProviderAPIController extends ControllerAPI
             $newCreditCard->save();
             $creditCards[] = $newCreditCard;
 
-            // save translation
+            // save credit card translation
             if (!empty ($creditCardData->description)) {
                 foreach ($creditCardData->description as $key => $value) {
                     $newCreditCardTranslation = new SponsorCreditCardTranslation();

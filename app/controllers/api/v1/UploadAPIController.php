@@ -11381,7 +11381,7 @@ class UploadAPIController extends ControllerAPI
             };
 
             // Load the orbit configuration for merchant upload logo
-            $uploadLogoConfig = Config::get('orbit.upload.sponsor_provider.logo');
+            $uploadLogoConfig = Config::get('orbit.upload.sponsor_credit_card.image');
 
             $message = new UploaderMessage([]);
             $config = new UploaderConfig($uploadLogoConfig);
@@ -11412,6 +11412,7 @@ class UploadAPIController extends ControllerAPI
                 $pastMedia->delete();
             }
 
+            // get the id of sponsor credit card
             $creditCards = SponsorCreditCard::select('sponsor_credit_card_id')
                                 ->where('sponsor_provider_id','=', $sponsorProvider->sponsor_provider_id)
                                 ->get();
@@ -11422,7 +11423,7 @@ class UploadAPIController extends ControllerAPI
                     $arrCreditCardId[] = $creditCards[$key]['sponsor_credit_card_id'];
                 }
             }
-            //print_r($arrCreditCardId); die();
+
             // Save the files metadata
             $object = array(
                 'id'            => $arrCreditCardId,

@@ -28,6 +28,15 @@ Route::get('/api/v1/sponsor-provider/list', function()
 });
 
 /**
+ * Get search detail sponsor bank, e-wallet, credit card
+ */
+Route::get('/api/v1/sponsor-provider/detail', function()
+{
+    return SponsorProviderAPIController::create()->getSearchSponsorProviderDetail();
+});
+
+
+/**
  * Get link to sponsor bank, e-wallet, credit card
  */
 Route::get('/api/v1/link-to-sponsor/list', function()
