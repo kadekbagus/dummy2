@@ -527,7 +527,6 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                         'created_at' => $dateTime
                     ];
 
-
                     $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
                                                           ->setEndPoint('mall-object-notifications')
                                                           ->request('POST');
@@ -555,8 +554,8 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                         '_id' => $mallObjectNotif->data->records[0]->_id,
                         'notification_ids' => array_unique($_notificationIds),
                         'mall_id' => $mallvalue,
-                        'user_ids' => $_userIds,
-                        'tokens' => $_tokens,
+                        'user_ids' => json_encode($_userIds),
+                        'tokens' => json_encode($_tokens),
                     ];
 
                     $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
