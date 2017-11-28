@@ -13,4 +13,9 @@ class SponsorProvider extends Eloquent
     {
         return $this->hasMany('SponsorCreditCard', 'sponsor_provider_id', 'sponsor_provider_id');
     }
+
+    public function translation()
+    {
+        return $this->hasMany('SponsorProviderTranslation', 'sponsor_provider_id', 'sponsor_provider_id');
+    }
 }

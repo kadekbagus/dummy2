@@ -543,6 +543,8 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
 
             $userIds = null;
             $notificationToken = array();
+
+            // If there is any followed by user
             if ($userFollows->data->returned_records > 0) {
                 $userIds = $userFollows->data->records;
                 $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
@@ -556,174 +558,178 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
                         $notificationToken[] = $val->notification_token;
                     }
                 }
-            }
 
-            // save to notifications collection in mongodb
-            $dataNotification = [
-                'title' => $_coupon->promotion_name,
-                'launch_url' => $launchUrl,
-                'attachment_path' => $attachmentPath,
-                'attachment_realpath' => $attachmentRealPath,
-                'cdn_url' => $cdnUrl,
-                'cdn_bucket_name' => $cdnBucketName,
-                'default_language' => $_coupon->default_language_name,
-                'headings' => $headings,
-                'contents' => $contents,
-                'type' => $objectType,
-                'status' => 'pending',
-                'sent_at' => null,
-                'notification_tokens' => json_encode($notificationToken),
-                'user_ids' => json_encode($userIds),
-                'vendor_notification_id' => null,
-                'vendor_type' => Config::get('orbit.vendor_push_notification.default'),
-                'is_automatic' => true,
-                'mime_type' => $mimeType,
-                'target_audience_ids' => null,
-                'created_at' => $dateTime
-            ];
+                // save to notifications collection in mongodb
+                $dataNotification = [
+                    'title' => $_coupon->promotion_name,
+                    'launch_url' => $launchUrl,
+                    'attachment_path' => $attachmentPath,
+                    'attachment_realpath' => $attachmentRealPath,
+                    'cdn_url' => $cdnUrl,
+                    'cdn_bucket_name' => $cdnBucketName,
+                    'default_language' => $_coupon->default_language_name,
+                    'headings' => $headings,
+                    'contents' => $contents,
+                    'type' => $objectType,
+                    'status' => 'pending',
+                    'sent_at' => null,
+                    'notification_tokens' => json_encode($notificationToken),
+                    'user_ids' => json_encode($userIds),
+                    'vendor_notification_id' => null,
+                    'vendor_type' => Config::get('orbit.vendor_push_notification.default'),
+                    'is_automatic' => true,
+                    'mime_type' => $mimeType,
+                    'target_audience_ids' => null,
+                    'created_at' => $dateTime
+                ];
 
-            $notification = $mongoClient->setFormParam($dataNotification)
-                                        ->setEndPoint('notifications')
-                                        ->request('POST');
-            $notificationId = $notification->data->_id;
-
-            // save to store_object_notifications collection in mongodb
-            $bodyStoreObjectNotifications = [
-                'notification' => $notification->data,
-                'object_id' => $_coupon->promotion_id,
-                'object_type' => $objectType,
-                'user_ids' => json_encode($userIds),
-                'token' => json_encode($notificationToken),
-                'status' => 'pending',
-                'start_date' => $_coupon->begin_date,
-                'created_at' => $dateTime
-            ];
-
-            $storeObjectNotif = $mongoClient->setFormParam($bodyStoreObjectNotifications)
-                                            ->setEndPoint('store-object-notifications')
+                $notification = $mongoClient->setFormParam($dataNotification)
+                                            ->setEndPoint('notifications')
                                             ->request('POST');
+                $notificationId = $notification->data->_id;
 
-            $storeNotification = $storeObjectNotif->data;
-        }
+                // save to store_object_notifications collection in mongodb
+                $bodyStoreObjectNotifications = [
+                    'notification' => $notification->data,
+                    'object_id' => $_coupon->promotion_id,
+                    'object_type' => $objectType,
+                    'user_ids' => json_encode($userIds),
+                    'token' => json_encode($notificationToken),
+                    'status' => 'pending',
+                    'start_date' => $_coupon->begin_date,
+                    'created_at' => $dateTime
+                ];
 
-        // sent notification if campaign already started
-        if (($dateTimeNow >= $updatedcoupon->begin_date) && ($storeNotification->status === 'pending')) {
-            // send to onesignal
-            if (! empty($storeNotification->notification->notification_tokens)) {
-                $mongoNotifId = $storeNotification->notification->_id;
-                $launchUrl = $storeNotification->notification->launch_url;
-                $headings = $storeNotification->notification->headings;
-                $contents = $storeNotification->notification->contents;
-                $notificationTokens = $storeNotification->notification->notification_tokens;
+                $storeObjectNotif = $mongoClient->setFormParam($bodyStoreObjectNotifications)
+                                                ->setEndPoint('store-object-notifications')
+                                                ->request('POST');
 
-                $cdnConfig = Config::get('orbit.cdn');
-                $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-                $localPath = (! empty($storeNotification->notification->attachment_path)) ? $storeNotification->notification->attachment_path : '';
-                $cdnPath = (! empty($storeNotification->notification->cdn_url)) ? $storeNotification->notification->cdn_url : '';
-                $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
+                $storeNotification = $storeObjectNotif->data;
 
-                // add query string for activity recording
-                $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
 
-                // english is mandatory in onesignal, set en value with default language content
-                if (empty($headings->en)) {
-                    $headings->en = $headings->$defaultLangName;
-                }
+                // sent notification if campaign already started
+                if (($dateTimeNow >= $updatedcoupon->begin_date) && ($storeNotification->status === 'pending')) {
+                    // send to onesignal
+                    if (! empty($storeNotification->notification->notification_tokens)) {
+                        $mongoNotifId = $storeNotification->notification->_id;
+                        $launchUrl = $storeNotification->notification->launch_url;
+                        $headings = $storeNotification->notification->headings;
+                        $contents = $storeNotification->notification->contents;
+                        $notificationTokens = $storeNotification->notification->notification_tokens;
 
-                if (empty($contents->en)) {
-                    $contents->en = $contents->$defaultLangName;
-                }
+                        $cdnConfig = Config::get('orbit.cdn');
+                        $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+                        $localPath = (! empty($storeNotification->notification->attachment_path)) ? $storeNotification->notification->attachment_path : '';
+                        $cdnPath = (! empty($storeNotification->notification->cdn_url)) ? $storeNotification->notification->cdn_url : '';
+                        $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
 
-                if (count($notificationTokens) > 1500) {
-                    $newToken = array();
-                    $stopLoop = false;
-                    $startLoop = 0;
-                    $oneSignalId = array();
-                    while ($stopLoop == false) {
-                        $newToken = array_slice($notificationTokens, $startLoop, 1500);
+                        // add query string for activity recording
+                        $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
 
-                        if (empty($newToken)) {
-                            $stopLoop =  true;
-                            break;
+                        // english is mandatory in onesignal, set en value with default language content
+                        if (empty($headings->en)) {
+                            $headings->en = $headings->$defaultLangName;
                         }
 
-                        $data = [
-                            'headings'           => $headings,
-                            'contents'           => $contents,
-                            'url'                => $newUrl,
-                            'include_player_ids' => $newToken,
-                            'ios_attachments'    => $imageUrl,
-                            'big_picture'        => $imageUrl,
-                            'adm_big_picture'    => $imageUrl,
-                            'chrome_big_picture' => $imageUrl,
-                            'chrome_web_image'   => $imageUrl,
-                        ];
+                        if (empty($contents->en)) {
+                            $contents->en = $contents->$defaultLangName;
+                        }
 
-                        $oneSignal = new OneSignal($oneSignalConfig);
-                        $newNotif = $oneSignal->notifications->add($data);
-                        $oneSignalId[] = $newNotif->id;
+                        if (count($notificationTokens) > 1500) {
+                            $newToken = array();
+                            $stopLoop = false;
+                            $startLoop = 0;
+                            $oneSignalId = array();
+                            while ($stopLoop == false) {
+                                $newToken = array_slice($notificationTokens, $startLoop, 1500);
 
-                        $startLoop = $startLoop + 1500;
+                                if (empty($newToken)) {
+                                    $stopLoop =  true;
+                                    break;
+                                }
+
+                                $data = [
+                                    'headings'           => $headings,
+                                    'contents'           => $contents,
+                                    'url'                => $newUrl,
+                                    'include_player_ids' => $newToken,
+                                    'ios_attachments'    => $imageUrl,
+                                    'big_picture'        => $imageUrl,
+                                    'adm_big_picture'    => $imageUrl,
+                                    'chrome_big_picture' => $imageUrl,
+                                    'chrome_web_image'   => $imageUrl,
+                                ];
+
+                                $oneSignal = new OneSignal($oneSignalConfig);
+                                $newNotif = $oneSignal->notifications->add($data);
+                                $oneSignalId[] = $newNotif->id;
+
+                                $startLoop = $startLoop + 1500;
+                            }
+                            $bodyUpdate['vendor_notification_id'] = $oneSignalId;
+                        } else {
+
+                            $data = [
+                                'headings'           => $headings,
+                                'contents'           => $contents,
+                                'url'                => $newUrl,
+                                'include_player_ids' => $notificationTokens,
+                                'ios_attachments'    => $imageUrl,
+                                'big_picture'        => $imageUrl,
+                                'adm_big_picture'    => $imageUrl,
+                                'chrome_big_picture' => $imageUrl,
+                                'chrome_web_image'   => $imageUrl,
+                            ];
+
+                            $oneSignal = new OneSignal($oneSignalConfig);
+                            $newNotif = $oneSignal->notifications->add($data);
+                            $bodyUpdate['vendor_notification_id'] = $newNotif->id;
+                        }
+
+                        // Update status in notification collection from pending to sent
+                        $bodyUpdate['sent_at'] = $dateTime;
+                        $bodyUpdate['_id'] = $mongoNotifId;
+                        $bodyUpdate['status'] = 'sent';
+
+                        $responseUpdate = $mongoClient->setFormParam($bodyUpdate)
+                                                    ->setEndPoint('notifications') // express endpoint
+                                                    ->request('PUT');
                     }
-                    $bodyUpdate['vendor_notification_id'] = $oneSignalId;
-                } else {
 
-                    $data = [
-                        'headings'           => $headings,
-                        'contents'           => $contents,
-                        'url'                => $newUrl,
-                        'include_player_ids' => $notificationTokens,
-                        'ios_attachments'    => $imageUrl,
-                        'big_picture'        => $imageUrl,
-                        'adm_big_picture'    => $imageUrl,
-                        'chrome_big_picture' => $imageUrl,
-                        'chrome_web_image'   => $imageUrl,
-                    ];
+                    // send as inApps notification
+                    if (! empty($storeNotification->notification->user_ids)) {
+                        foreach ($storeNotification->notification->user_ids as $userId) {
+                            $bodyInApps = [
+                                'user_id'       => $userId,
+                                'token'         => null,
+                                'notifications' => $storeNotification->notification,
+                                'send_status'   => 'sent',
+                                'is_viewed'     => false,
+                                'is_read'       => false,
+                                'created_at'    => $dateTime,
+                                'image_url'     => $imageUrl
+                            ];
 
-                    $oneSignal = new OneSignal($oneSignalConfig);
-                    $newNotif = $oneSignal->notifications->add($data);
-                    $bodyUpdate['vendor_notification_id'] = $newNotif->id;
+                            $inApps = $mongoClient->setFormParam($bodyInApps)
+                                        ->setEndPoint('user-notifications') // express endpoint
+                                        ->request('POST');
+                        }
+                    }
+
+                    // Update status in store-object-notifications collection from pending to sent
+                    $storeBodyUpdate['_id'] = $storeNotification->_id;
+                    $storeBodyUpdate['notification'] = $responseUpdate->data;
+                    $storeBodyUpdate['status'] = 'sent';
+
+                    $responseStoreUpdate = $mongoClient->setFormParam($storeBodyUpdate)
+                                                ->setEndPoint('store-object-notifications') // express endpoint
+                                                ->request('PUT');
                 }
+
             }
 
-            // send as inApps notification
-            if (! empty($storeNotification->notification->user_ids)) {
-                foreach ($storeNotification->notification->user_ids as $userId) {
-                    $bodyInApps = [
-                        'user_id'       => $userId,
-                        'token'         => null,
-                        'notifications' => $storeNotification->notification,
-                        'send_status'   => 'sent',
-                        'is_viewed'     => false,
-                        'is_read'       => false,
-                        'created_at'    => $dateTime,
-                        'image_url'     => $imageUrl
-                    ];
-
-                    $inApps = $mongoClient->setFormParam($bodyInApps)
-                                ->setEndPoint('user-notifications') // express endpoint
-                                ->request('POST');
-                }
-            }
-
-            // Update status in notification collection from pending to sent
-            $bodyUpdate['sent_at'] = $dateTime;
-            $bodyUpdate['_id'] = $mongoNotifId;
-            $bodyUpdate['status'] = 'sent';
-
-            $responseUpdate = $mongoClient->setFormParam($bodyUpdate)
-                                        ->setEndPoint('notifications') // express endpoint
-                                        ->request('PUT');
-
-            // Update status in store-object-notifications collection from pending to sent
-            $storeBodyUpdate['_id'] = $storeNotification->_id;
-            $storeBodyUpdate['notification'] = $responseUpdate->data;
-            $storeBodyUpdate['status'] = 'sent';
-
-            $responseStoreUpdate = $mongoClient->setFormParam($storeBodyUpdate)
-                                        ->setEndPoint('store-object-notifications') // express endpoint
-                                        ->request('PUT');
         }
+
     }
 });
 
@@ -954,8 +960,8 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
                         '_id' => $mallObjectNotif->data->records[0]->_id,
                         'notification_ids' => array_unique($_notificationIds),
                         'mall_id' => $mallvalue,
-                        'user_ids' => $_userIds,
-                        'tokens' => $_tokens,
+                        'user_ids' => json_encode($_userIds),
+                        'tokens' => json_encode($_tokens),
                     ];
 
                     $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)

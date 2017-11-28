@@ -92,7 +92,7 @@ class UserNotificationMallCommand extends Command {
                     }
 
                     // Get notification tokens
-                    $tokenSearch = ['user_ids' => $userIds, 'notification_provider' => 'onesignal'];
+                    $tokenSearch = ['user_ids' => json_encode($userIds), 'notification_provider' => 'onesignal'];
                     $tokenData = $mongoClient->setQueryString($tokenSearch)
                                              ->setEndPoint('user-notification-tokens')
                                              ->request('GET');
