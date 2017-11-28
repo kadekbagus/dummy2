@@ -21,11 +21,14 @@ class SponsorProviderAPIController extends ControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param string        `target_audience_name`
-     * @param string        `target_audience_description`
-     * @param string        `status`
-     * @param array         `notification_tokens`
-     * @param array         `notification_user_id`
+     * @param string       `sponsor_name`
+     * @param string       `object_type`
+     * @param string       `country_id`
+     * @param string       `status`
+     * @param string       `default_language_id`
+     * @param JSON         `translations`
+     * @param JSON         `credit_cards`
+     * @param file         `logo`
      *
      * @return Illuminate\Support\Facades\Response
      *
@@ -103,7 +106,7 @@ class SponsorProviderAPIController extends ControllerAPI
             $newSponsorProvider->status = $status;
             $newSponsorProvider->save();
 
-            Event::fire('orbit.sponsorbank.postnewsponsorprovider.after.save', array($this, $newSponsorProvider));
+            Event::fire('orbit.sponsorprovider.postnewsponsorprovider.after.save', array($this, $newSponsorProvider));
 
             OrbitInput::post('translations', function($translations_json_string) use ($newSponsorProvider) {
                 $this->validateAndSaveTranslation($newSponsorProvider, $translations_json_string, 'create');

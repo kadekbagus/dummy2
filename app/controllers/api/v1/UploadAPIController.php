@@ -11069,7 +11069,7 @@ class UploadAPIController extends ControllerAPI
             $this->registerCustomValidation();
 
             // Application input
-            $payment_provider_id = OrbitInput::post('payment_provider_id');
+            $sponsor_provider_id = OrbitInput::post('sponsor_provider_id');
             $logo = OrbitInput::files('logo');
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -11079,11 +11079,11 @@ class UploadAPIController extends ControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'payment_provider_id' => $payment_provider_id,
+                    'sponsor_provider_id' => $sponsor_provider_id,
                     'logo'                => $logo,
                 ),
                 array(
-                    'payment_provider_id' => 'required|orbit.empty.sponsorprovider',
+                    'sponsor_provider_id' => 'required|orbit.empty.sponsorprovider',
                     'logo'                => 'required|nomore.than.one',
                 ),
                 $messages
@@ -11117,7 +11117,7 @@ class UploadAPIController extends ControllerAPI
             };
 
             // Load the orbit configuration for merchant upload logo
-            $uploadLogoConfig = Config::get('orbit.upload.wallet_operator.logo');
+            $uploadLogoConfig = Config::get('orbit.upload.sponsor_provider.logo');
 
             $message = new UploaderMessage([]);
             $config = new UploaderConfig($uploadLogoConfig);
@@ -11165,7 +11165,7 @@ class UploadAPIController extends ControllerAPI
             //     $merchant->save();
             // }
 
-            Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.save', array($this, $walletOperator, $uploader));
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.save', array($this, $sponsorProvider, $uploader));
 
             $this->response->data = $mediaList;
             $this->response->message = Lang::get('statuses.orbit.uploaded.merchant.logo');
@@ -11175,7 +11175,7 @@ class UploadAPIController extends ControllerAPI
                 $this->commit();
             }
 
-            Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.commit', array($this, $walletOperator, $uploader));
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.commit', array($this, $sponsorProvider, $uploader));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.upload.postuploadsponsorproviderlogo.access.forbidden', array($this, $e));
 
@@ -11495,6 +11495,20 @@ class UploadAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.walletoperator', $walletOperator);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.sponsorprovider', function ($attribute, $value, $parameters) {
+            $sponsorProvider = SponsorProvider::excludeDeleted()
+                                        ->where('sponsor_provider_id', $value)
+                                        ->first();
+
+            if (empty($sponsorProvider)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.sponsorprovider', $sponsorProvider);
 
             return TRUE;
         });
