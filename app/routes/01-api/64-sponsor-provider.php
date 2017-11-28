@@ -36,14 +36,14 @@ Route::get('/api/v1/link-to-sponsor/list', function()
 });
 
 /**
- * sponsor bank list
+ * sponsor list
  */
-Route::get('/api/v1/pub/user-sponsor/list', function()
+Route::get('/api/v1/pub/available-sponsor/list', function()
 {
-    return Orbit\Controller\API\v1\Pub\Sponsor\SponsorListAPIController::create()->getSponsorList();
+    return Orbit\Controller\API\v1\Pub\Sponsor\AvailableSponsorListAPIController::create()->getSponsorList();
 });
 
-Route::get('/app/v1/pub/user-sponsor/list', ['as' => 'pub-user-sponsor-list', 'uses' => 'IntermediatePubAuthController@Sponsor\SponsorList_getSponsorList']);
+Route::get('/app/v1/pub/available-sponsor/list', ['as' => 'pub-user-sponsor-list', 'uses' => 'IntermediatePubAuthController@Sponsor\AvailableSponsorList_getAvailableSponsorList']);
 
 
 /**
@@ -66,3 +66,23 @@ Route::get('/api/v1/pub/sponsor-provider-cc/list', function()
 });
 
 Route::get('/app/v1/pub/sponsor-provider-cc/list', ['as' => 'pub-sponsor-provider-cc-list', 'uses' => 'IntermediatePubAuthController@SponsorProviderCreditCardList_getSponsorProviderCreditcardList']);
+
+/**
+ * user credit card list
+ */
+Route::get('/api/v1/pub/user-credit-card/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Sponsor\UserCreditCardListAPIController::create()->getUserCreditCard();
+});
+
+Route::get('/app/v1/pub/user-credit-card/list', ['as' => 'pub-user-credit-card-list', 'uses' => 'IntermediatePubAuthController@Sponsor\UserCreditCardList_getUserCreditCard']);
+
+/**
+ * user e-wallet list
+ */
+Route::get('/api/v1/pub/user-ewallet/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Sponsor\UserEWalletListAPIController::create()->getUserEWallet();
+});
+
+Route::get('/app/v1/pub/user-ewallet/list', ['as' => 'pub-user-ewallet-list', 'uses' => 'IntermediatePubAuthController@Sponsor\UserEWalletList_getUserEWallet']);
