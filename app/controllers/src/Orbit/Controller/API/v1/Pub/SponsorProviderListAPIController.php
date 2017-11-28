@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub;
 /**
- * API for getting sponsor provider ()
+ * API for getting sponsor provider
  * @author firmansyah <firmansyah@dominopos.com>
  */
 use OrbitShop\API\v1\PubControllerAPI;
@@ -49,8 +49,8 @@ class SponsorProviderListAPIController extends PubControllerAPI
                     'language' => $language,
                 ),
                 array(
-                    'object_type'   => 'required|in:news,coupon,promotion',
                     'object_id'   => 'required',
+                    'object_type'   => 'required|in:news,coupon,promotion',
                     'language'   => 'required',
                 )
             );
@@ -73,7 +73,7 @@ class SponsorProviderListAPIController extends PubControllerAPI
                 $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
             }
 
-            $sponsorProvider = ObjectSponsor::select('sponsor_providers.name', 'sponsor_providers.object_type', DB::raw("{$image} as image_url"))
+            $sponsorProvider = ObjectSponsor::select('sponsor_providers.sponsor_provider_id', 'sponsor_providers.name', 'sponsor_providers.object_type', DB::raw("{$image} as image_url"))
                                             // Get name bank/ewallet
                                             ->join('sponsor_providers', function($q){
                                                     $q->on('sponsor_providers.sponsor_provider_id', '=', 'object_sponsor.sponsor_provider_id')
