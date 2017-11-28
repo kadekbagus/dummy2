@@ -34,3 +34,13 @@ Route::get('/api/v1/link-to-sponsor/list', function()
 {
     return LinkToSponsorAPIController::create()->getLinkToSponsor();
 });
+
+/**
+ * sponsor bank list
+ */
+Route::get('/api/v1/pub/user-sponsor/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Sponsor\SponsorListAPIController::create()->getSponsorList();
+});
+
+Route::get('/app/v1/pub/user-sponsor/list', ['as' => 'pub-user-sponsor-list', 'uses' => 'IntermediatePubAuthController@Sponsor\SponsorList_getSponsorList']);

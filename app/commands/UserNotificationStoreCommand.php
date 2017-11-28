@@ -154,6 +154,15 @@ class UserNotificationStoreCommand extends Command {
                         $newNotif = $oneSignal->notifications->add($data);
                         $bodyUpdate['vendor_notification_id'] = $newNotif->id;
                     }
+
+                    // Update status in notification collection from pending to sent
+                    $bodyUpdate['sent_at'] = $dateTime;
+                    $bodyUpdate['_id'] = $mongoNotifId;
+                    $bodyUpdate['status'] = 'sent';
+
+                    $responseUpdate = $mongoClient->setFormParam($bodyUpdate)
+                                                ->setEndPoint('notifications') // express endpoint
+                                                ->request('PUT');
                 }
 
                 // send as inApps notification
@@ -175,15 +184,6 @@ class UserNotificationStoreCommand extends Command {
                                     ->request('POST');
                     }
                 }
-
-                // Update status in notification collection from pending to sent
-                $bodyUpdate['sent_at'] = $dateTime;
-                $bodyUpdate['_id'] = $mongoNotifId;
-                $bodyUpdate['status'] = 'sent';
-
-                $responseUpdate = $mongoClient->setFormParam($bodyUpdate)
-                                            ->setEndPoint('notifications') // express endpoint
-                                            ->request('PUT');
 
                 // Update status in store-object-notifications collection from pending to sent
                 $storeBodyUpdate['_id'] = $storeObjectNotification->_id;
