@@ -22,6 +22,8 @@ use Activity;
 use Lang;
 use Tenant;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use TotalObjectPageView;
+use Redis;
 use Orbit\Helper\Util\FollowStatusChecker;
 
 class StoreDetailAPIController extends PubControllerAPI
@@ -51,7 +53,7 @@ class StoreDetailAPIController extends PubControllerAPI
             $storeHelper = StoreHelper::create();
             $storeHelper->registerCustomValidation();
 
-            $merchantid = OrbitInput::get('merchant_id');
+            $merchantId = OrbitInput::get('merchant_id');
             $language = OrbitInput::get('language', 'id');
             $mallId = OrbitInput::get('mall_id', null);
             $cityFilters = OrbitInput::get('cities', []);
@@ -60,7 +62,7 @@ class StoreDetailAPIController extends PubControllerAPI
             $this->registerCustomValidation();
             $validator = Validator::make(
                 array(
-                    'merchantid' => $merchantid,
+                    'merchantid' => $merchantId,
                     'language' => $language,
                 ),
                 array(
@@ -88,6 +90,11 @@ class StoreDetailAPIController extends PubControllerAPI
             $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) as path";
             if ($usingCdn) {
                 $image = "CASE WHEN ({$prefix}media.cdn_url is null or {$prefix}media.cdn_url = '') THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END as path";
+            }
+
+            $location = $mallId;
+            if (empty($location)) {
+                $location = 0;
             }
 
             $store = Tenant::select(
@@ -180,71 +187,50 @@ class StoreDetailAPIController extends PubControllerAPI
                             ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                             ->where('merchants.status', '=', 'active')
                             ->where(DB::raw('oms.status'), '=', 'active')
-                            ->where('merchants.merchant_id', $merchantid)
+                            ->where('merchants.merchant_id', $merchantId)
                             ->first();
 
             if (! is_object($storeInfo)) {
                 throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
             }
 
-            if (! is_null($mallId)) {
-                $store->leftJoin('total_object_page_views', function ($q) use ($mallId){
-                            $q->on('total_object_page_views.object_id', '=', 'base_merchants.base_merchant_id')
-                                ->on('total_object_page_views.object_type', '=', DB::raw("'tenant'"))
-                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$mallId}'"));
-                        })
-                      ->where('merchants.name', $storeInfo->name)
-                      ->where('merchants.parent_id', $mallId);
-
-                $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $mallId)
-                        ->first();
-            } else {
-                $store->leftJoin('total_object_page_views', function ($q) {
-                            $q->on('total_object_page_views.object_id', '=', 'base_merchants.base_merchant_id')
-                                ->on('total_object_page_views.object_type', '=', DB::raw("'tenant'"))
-                                ->on('total_object_page_views.location_id', '=', DB::raw("'0'"));
-                        })
-                      ->where('merchants.merchant_id', $merchantid);
-            }
-
             $store = $store->orderBy('merchants.created_at', 'asc')
                 ->first();
 
-            if (empty($store)) {
-                throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
-            }
+            // Config page_views
+            $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
+            $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
+            $totalPageViews = 0;
 
-            // follow status
-            $baseMerchant = BaseMerchant::where('name', $storeInfo->name)
-                                    ->where('country_id', $storeInfo->country_id)
-                                    ->first();
+            // Get total page views, depend of config what DB used
+            if ($configPageViewSource === 'redis') {
+                $keyRedis = 'store||' . $merchantId . '||' . $location;
+                $redis = Redis::connection($configPageViewRedisDb);
+                $totalPageViewRedis = $redis->get($keyRedis);
 
-            $store->follow_status = false;
-            if (! empty($baseMerchant)) {
-                $follow = FollowStatusChecker::create()
-                                        ->setUserId($user->user_id)
-                                        ->setObjectType('store')
-                                        ->setObjectId($baseMerchant->base_merchant_id);
+                if (! empty($totalPageViewRedis)) {
+                    $totalPageViews = $totalPageViewRedis;
+                } else {
+                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'store')
+                                                                 ->where('object_id', $merchantId)
+                                                                 ->where('location_id', $location)
+                                                                 ->first();
 
-                if (! empty($mallId)) {
-                    $follow = $follow->setMallId($mallId);
-                }
-
-                if (! empty($cityFilters)) {
-                    if (! is_array($cityFilters)) {
-                        $cityFilters = (array) $cityFilters;
+                    if (! empty($totalObjectPageView->total_view)) {
+                        $totalPageViews = $totalObjectPageView->total_view;
                     }
-                    $follow = $follow->setCity($cityFilters);
                 }
+            } else {
+                $totalObjectPageView = TotalObjectPageView::where('object_type', 'store')
+                                                             ->where('object_id', $merchantId)
+                                                             ->where('location_id', $location)
+                                                             ->first();
 
-                $follow = $follow->getFollowStatus();
-
-
-                if (! empty($follow)) {
-                    $store->follow_status = true;
+                if (! empty($totalObjectPageView->total_view)) {
+                    $totalPageViews = $totalObjectPageView->total_view;
                 }
             }
+            $store->total_view = $totalPageViews;
 
             // ---- START RATING ----
             $storeIds = [];

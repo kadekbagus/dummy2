@@ -15,6 +15,7 @@ use BaseMerchant;
 use Exception;
 use Tenant;
 use DB;
+use Redis;
 use Orbit\FakeJob;
 use Orbit\Queue\Elasticsearch\ESCouponUpdateQueue;
 use Orbit\Queue\Elasticsearch\ESPromotionUpdateQueue;
@@ -126,21 +127,27 @@ class ObjectPageViewActivityQueue
                     $object_page_view->activity_id = $activity->activity_id;
                     $object_page_view->save();
 
-                    $total_object_page_view = TotalObjectPageView::where('object_type', strtolower($activity->object_name))
-                                                ->where('object_id', $object_id)
-                                                ->where('location_id', $activity->location_id)
-                                                ->first();
+                    $keyRedis = strtolower($activity->object_name) . '||' . $object_id . '||' . $activity->location_id;
+                    $redis = Redis::connection('page_view');
 
-                    if (! is_object($total_object_page_view)) {
-                        $total_object_page_view = new TotalObjectPageView();
-                        $total_object_page_view->total_view = 0;
+                    $totalPageView = $redis->get($keyRedis);
+                    $totalView = 1;
+                    if (empty($totalPageView)) {
+                        $total_object_page_view = TotalObjectPageView::where('object_type', strtolower($activity->object_name))
+                                                                     ->where('object_id', $object_id)
+                                                                     ->where('location_id', $activity->location_id)
+                                                                     ->first();
+
+                        if (! empty($total_object_page_view->total_view)) {
+                            $totalView = (int) $total_object_page_view->total_view + 1;
+                            $redis->set($keyRedis, $totalView);
+                        } else {
+                            $redis->set($keyRedis, $totalView);
+                        }
+                    } else {
+                        $totalView = $totalPageView + 1;
+                        $redis->set($keyRedis, $totalView);
                     }
-
-                    $total_object_page_view->object_type = strtolower($activity->object_name);
-                    $total_object_page_view->object_id = $object_id;
-                    $total_object_page_view->location_id = $activity->location_id;
-                    $total_object_page_view->total_view = $total_object_page_view->total_view + 1;
-                    $total_object_page_view->save();
 
                     // update elastic search
                     $fakeJob = new FakeJob();
