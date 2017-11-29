@@ -161,7 +161,141 @@ class SponsorProviderAPIController extends ControllerAPI
 
     public function postUpdateSponsorProvider()
     {
+        try {
+            $httpCode = 200;
 
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->registerCustomValidation();
+
+            $sponsorProviderId = OrbitInput::post('sponsor_provider_id');
+            $objectType = OrbitInput::post('object_type');
+            $status = OrbitInput::post('status');
+            $defaultLanguageId = OrbitInput::post('default_language_id');
+
+            $validator = Validator::make(
+                array(
+                    'sponsor_provider_id'   => $sponsorProviderId,
+                    'default_language_id'   => $defaultLanguageId,
+                    'object_type'           => $objectType,
+                    'status'                => $status,
+                ),
+                array(
+                    'sponsor_provider_id'   => 'required',
+                    'default_language_id'   => 'required|orbit.empty.language_default',
+                    'object_type'           => 'in:bank,ewallet',
+                    'status'                => 'in:active,inactive'
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $translations = @json_decode($translation);
+            if (json_last_error() != JSON_ERROR_NONE) {
+                OrbitShopAPI::throwInvalidArgument('translation JSON is not valid');
+            }
+
+            $defaultDescription = null;
+            if (!empty ($translations)) {
+                foreach ($translations as $key => $value) {
+                    if ($key === $defaultLanguageId) {
+                        $defaultDescription = $value->description;
+                    }
+                }
+            }
+
+            $updatedSponsorProvider = SponsorProvider::where('sponsor_provider_id', '=', $sponsorProviderId)->first();
+
+            OrbitInput::post('sponsor_name', function($name) use ($updatedSponsorProvider) {
+                $updatedSponsorProvider->name = $name;
+            });
+
+            OrbitInput::post('object_type', function($object_type) use ($updatedSponsorProvider) {
+                $updatedSponsorProvider->object_type = $object_type;
+            });
+
+            OrbitInput::post('country_id', function($country_id) use ($updatedSponsorProvider) {
+                $updatedSponsorProvider->country_id = $country_id;
+            });
+
+            OrbitInput::post('default_language_id', function($default_language_id) use ($updatedSponsorProvider, $defaultDescription) {
+                $updatedSponsorProvider->description = $defaultDescription;
+            });
+
+            OrbitInput::post('status', function($status) use ($updatedSponsorProvider) {
+                $updatedSponsorProvider->status = $status;
+            });
+
+            $updatedSponsorProvider->save();
+
+            Event::fire('orbit.sponsorprovider.postupdatesponsorprovider.after.save', array($this, $updatedSponsorProvider));
+
+            OrbitInput::post('translations', function($translations_json_string) use ($updatedSponsorProvider) {
+                $this->validateAndSaveTranslation($updatedSponsorProvider, $translations_json_string, 'update');
+            });
+
+            OrbitInput::post('credit_cards', function($credit_cards_json_string) use ($updatedSponsorProvider, $defaultLanguageId) {
+                $this->validateAndSaveCreditCard($updatedSponsorProvider, $credit_cards_json_string, 'update', $defaultLanguageId);
+            });
+
+            Event::fire('orbit.sponsorprovider.postupdatesponsorprovidercreditcard.after.save', array($this, $updatedSponsorProvider));
+
+            // Commit the changes
+            $this->commit();
+
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->data = $updatedSponsorProvider;
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $message = $e->getMessage();
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $message;
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
     }
 
     public function getSearchSponsorProvider()

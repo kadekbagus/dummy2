@@ -95,3 +95,13 @@ Route::get('/api/v1/pub/user-ewallet/list', function()
 });
 
 Route::get('/app/v1/pub/user-ewallet/list', ['as' => 'pub-user-ewallet-list', 'uses' => 'IntermediatePubAuthController@Sponsor\UserEWalletList_getUserEWallet']);
+
+/**
+ * credit card list
+ */
+Route::get('/api/v1/pub/available-sponsor/credit-card', function()
+{
+    return Orbit\Controller\API\v1\Pub\Sponsor\AvailableSponsorListAPIController::create()->getAvailableSponsorCreditCard();
+});
+
+Route::get('/app/v1/pub/available-sponsor/credit-card', ['as' => 'pub-user-sponsor-credit-card', 'uses' => 'IntermediatePubAuthController@Sponsor\AvailableSponsorList_getAvailableSponsorCreditCard']);
