@@ -748,6 +748,13 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
 
                 // sent notification if campaign already started
                 if (($dateTimeNow >= $updatednews->begin_date) && ($storeNotification->status === 'pending')) {
+                    // Get imageUrl
+                    $cdnConfig = Config::get('orbit.cdn');
+                    $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+                    $localPath = (! empty($storeNotification->notification->attachment_path)) ? $storeNotification->notification->attachment_path : '';
+                    $cdnPath = (! empty($storeNotification->notification->cdn_url)) ? $storeNotification->notification->cdn_url : '';
+                    $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
+
                     // send to onesignal
                     if (! empty($storeNotification->notification->notification_tokens)) {
                         $mongoNotifId = $storeNotification->notification->_id;
@@ -755,12 +762,6 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
                         $headings = $storeNotification->notification->headings;
                         $contents = $storeNotification->notification->contents;
                         $notificationTokens = $storeNotification->notification->notification_tokens;
-
-                        $cdnConfig = Config::get('orbit.cdn');
-                        $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-                        $localPath = (! empty($storeNotification->notification->attachment_path)) ? $storeNotification->notification->attachment_path : '';
-                        $cdnPath = (! empty($storeNotification->notification->cdn_url)) ? $storeNotification->notification->cdn_url : '';
-                        $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
 
                         // add query string for activity recording
                         $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
