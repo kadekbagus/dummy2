@@ -797,7 +797,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-mallnotificatio
         if (!empty($follower) && !empty($mallData))
         {
             // get user_ids and tokens
-            $userIds = array_unique($follower);
+            $userIds = array_values(array_unique($follower));
             $tokenSearch = ['user_ids' => json_encode($userIds), 'notification_provider' => 'onesignal'];
             $tokenData = $mongoClient->setQueryString($tokenSearch)
                                      ->setEndPoint('user-notification-tokens')
@@ -807,7 +807,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-mallnotificatio
                 foreach ($tokenData->data->records as $key => $value) {
                     $tokens[] = $value->notification_token;
                 }
-                $tokens = array_unique($tokens);
+                $tokens = array_values(array_unique($tokens));
             }
 
             $_news = News::select('news.*',
@@ -945,25 +945,25 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-mallnotificatio
                     // update data if exist
                     $_tokens = null;
                     $_userIds = null;
-                    $_notificationIds = $mallObjectNotif->data->records[0]->notification_ids;
-                    $_userIds = $mallObjectNotif->data->records[0]->user_ids;
-                    $_tokens = $mallObjectNotif->data->records[0]->tokens;
+                    $_notificationIds = (array) $mallObjectNotif->data->records[0]->notification_ids;
+                    $_userIds = (array) $mallObjectNotif->data->records[0]->user_ids;
+                    $_tokens = (array) $mallObjectNotif->data->records[0]->tokens;
                     $_notificationIds[] = $notificationId;
                     if (!empty($userIds)) {
                         foreach ($userIds as $key => $uservalue) {
                             $_userIds[] = $uservalue;
                         }
-                        $_userIds = array_unique($_userIds);
+                        $_userIds = array_values(array_unique($_userIds));
                     }
                     if (!empty($tokens)) {
                         foreach ($tokens as $key => $tokenvalue) {
                             $_tokens[] = $tokenvalue;
                         }
-                        $_tokens = array_unique($_tokens);
+                        $_tokens = array_values(array_unique($_tokens));
                     }
                     $updateMallObjectNotification = [
                         '_id' => $mallObjectNotif->data->records[0]->_id,
-                        'notification_ids' => array_unique($_notificationIds),
+                        'notification_ids' => array_values(array_unique($_notificationIds)),
                         'mall_id' => $mallvalue,
                         'user_ids' => json_encode($_userIds),
                         'tokens' => json_encode($_tokens),
