@@ -116,7 +116,7 @@ class NotificationNewAPIController extends ControllerAPI
                 if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
                     OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
                 }
-                $notificationTokens = array_unique($notificationTokens);
+                $notificationTokens = array_values(array_unique($notificationTokens));
             }
 
             $jsonUserIds = '';
@@ -134,7 +134,7 @@ class NotificationNewAPIController extends ControllerAPI
                 if (count($userIds) !== count(array_unique($userIds))) {
                     OrbitShopAPI::throwInvalidArgument('Duplicate user ids');
                 }
-                $userIds = array_unique($userIds);
+                $userIds = array_values(array_unique($userIds));
             }
 
             $timestamp = date("Y-m-d H:i:s");
