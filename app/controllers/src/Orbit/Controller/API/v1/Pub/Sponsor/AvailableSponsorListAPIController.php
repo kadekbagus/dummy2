@@ -25,7 +25,7 @@ class AvailableSponsorListAPIController extends PubControllerAPI
 {
 
     /**
-     * GET - Get active sponsor list (bank)
+     * GET - Get active sponsor list (all)
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
      *
@@ -114,6 +114,150 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                     if (in_array($list->sponsor_id, $userSponsor)) {
                         $list->is_selected = 'Y';
                     }
+                }
+            }
+
+            $count = count($_sponsor->get());
+            $this->response->data = new stdClass();
+            $this->response->data->total_records = $count;
+            $this->response->data->returned_records = count($listSponsor);
+            $this->response->data->records = $listSponsor;
+        } catch (ACLForbiddenException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (\Exception $e) {
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+    /**
+     * GET - Get active sponsor list (bank)
+     *
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string area
+     *
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function getAvailableSponsorCreditCard()
+    {
+      $httpCode = 200;
+        try {
+            $this->checkAuth();
+            $user = $this->api->user;
+
+            // should always check the role
+            // $role = $user->role->role_name;
+            $role = 'consumer';
+            // if (strtolower($role) !== 'consumer') {
+            //     $message = 'You have to login to continue';
+            //     OrbitShopAPI::throwInvalidArgument($message);
+            // }
+
+            // $userId = $user->user_id;
+            $userId = 'LDG6XOXoxLGbFFUg';
+
+            $prefix = DB::getTablePrefix();
+            $lang = OrbitInput::get('language', 'id');
+
+            $language = Language::where('status', '=', 'active')
+                            ->where('name', $lang)
+                            ->first();
+
+            $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";
+            if ($usingCdn) {
+                $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
+            }
+
+            $sponsor = SponsorProvider::select('sponsor_providers.sponsor_provider_id as bank_id', 'sponsor_providers.name', DB::raw("({$image}) as image_url"))
+                                   ->leftJoin('media', function ($q) use ($prefix){
+                                            $q->on('media.object_id', '=', 'sponsor_providers.sponsor_provider_id')
+                                              ->on('media.media_name_long', '=', DB::raw("'sponsor_provider_logo_orig'"));
+                                        })
+                                   ->where('object_type', 'bank')
+                                   ->where('status', 'active')
+                                   ->orderBy('sponsor_providers.name', 'asc');
+
+            $_sponsor = $sponsor;
+
+            $take = PaginationNumber::parseTakeFromGet('category');
+            $sponsor->take($take);
+
+            $skip = PaginationNumber::parseSkipFromGet();
+            $sponsor->skip($skip);
+
+            $userSponsor = array();
+            if (strtolower($role) === 'consumer') {
+                $userSponsor = UserSponsor::where('user_sponsor.sponsor_type', 'credit_card')
+                                          ->where('user_sponsor.user_id', $userId)
+                                          ->lists('sponsor_id');
+            }
+
+            $listSponsor = $sponsor->get();
+            foreach ($listSponsor as $bank) {
+                $creditCards = SponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id as credit_card_id', 'sponsor_credit_cards.name', DB::raw("({$image}) as image_url"))
+                                            ->leftJoin('media', function ($q) use ($prefix){
+                                                $q->on('media.object_id', '=', 'sponsor_credit_cards.sponsor_credit_card_id')
+                                                  ->on('media.media_name_long', '=', DB::raw("'sponsor_provider_image_orig'"));
+                                            })
+                                            ->where('sponsor_credit_cards.sponsor_provider_id', $bank->bank_id)
+                                            ->where('sponsor_credit_cards.status', 'active')
+                                            ->orderBy('sponsor_credit_cards.name', 'asc')
+                                            ->get();
+
+                $bank->credit_cards = array();
+                if (! $creditCards->isEmpty()) {
+                    foreach ($creditCards as $creditCard) {
+                        $creditCard->is_selected = 'N';
+                        if (in_array($creditCard->credit_card_id, $userSponsor)) {
+                            $creditCard->is_selected = 'Y';
+                        }
+                    }
+
+                    $bank->credit_cards = $creditCards;
                 }
             }
 

@@ -72,7 +72,7 @@ class UserCreditCardListAPIController extends PubControllerAPI
                                                DB::raw("{$imageBank} as bank_image"),
                                                'sponsor_credit_cards.sponsor_credit_card_id as credit_card_id',
                                                'sponsor_credit_cards.name as credit_card_name',
-                                               DB::raw("{$imageBank} as credit_card_image")
+                                               DB::raw("{$imageCC} as credit_card_image")
                                         )
                                       ->join('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'user_sponsor.sponsor_id')
                                       ->join('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'sponsor_credit_cards.sponsor_provider_id')
