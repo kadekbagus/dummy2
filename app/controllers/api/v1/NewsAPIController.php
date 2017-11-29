@@ -489,8 +489,16 @@ class NewsAPIController extends ControllerAPI
             }
 
             if ($is_sponsored === 'Y' && (! empty($sponsorIds))) {
+                $uniqueSponsor = array();
                 foreach ($sponsorIds as $sponsorData) {
                     foreach ((array) $sponsorData as $key => $value) {
+                        if (in_array($key, $uniqueSponsor)) {
+                            $errorMessage = "Duplicate Sponsor (bank or e-wallet)";
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        $uniqueSponsor[] = $key;
+
                         //credit card must be filled
                         if ((count($value) == 0) || ($value === '')) {
                             $sponsorProvider = SponsorProvider::where('sponsor_provider_id', $key)->first();
@@ -881,8 +889,22 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->is_exclusive = $is_exclusive;
             });
 
-            OrbitInput::post('is_sponsored', function($is_sponsored) use ($updatednews) {
+            OrbitInput::post('is_sponsored', function($is_sponsored) use ($updatednews, $news_id, $object_type) {
                 $updatednews->is_sponsored = $is_sponsored;
+
+                if ($is_sponsored === 'N') {
+                    // delete before insert new
+                    $objectSponsor = ObjectSponsor::where('object_id', $news_id)
+                                                  ->where('object_id', $object_type);
+
+                    $objectSponsorIds = $objectSponsor->lists('object_sponsor_id');
+
+                    // delete ObjectSponsorCreditCard
+                    if (! empty($objectSponsorIds)) {
+                        $objectSponsorCreditCard = ObjectSponsorCreditCard::whereIn('object_sponsor_id', $objectSponsorIds)->delete();
+                        $objectSponsor->delete();
+                    }
+                }
             });
 
             OrbitInput::post('sponsor_ids', function($sponsor_ids) use ($updatednews, $news_id, $object_type) {
@@ -903,8 +925,16 @@ class NewsAPIController extends ControllerAPI
                     $objectSponsor->delete();
                 }
 
+                $uniqueSponsor = array();
                 foreach ($sponsorIds as $sponsorData) {
                     foreach ((array) $sponsorData as $key => $value) {
+                        if (in_array($key, $uniqueSponsor)) {
+                            $errorMessage = "Duplicate Sponsor (bank or e-wallet)";
+                            OrbitShopAPI::throwInvalidArgument($errorMessage);
+                        }
+
+                        $uniqueSponsor[] = $key;
+
                         //credit card must be filled
                         if ((count($value) == 0) || ($value === '')) {
                             $sponsorProvider = SponsorProvider::where('sponsor_provider_id', $key)->first();
