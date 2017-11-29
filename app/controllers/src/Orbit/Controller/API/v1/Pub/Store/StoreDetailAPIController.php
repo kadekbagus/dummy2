@@ -47,7 +47,7 @@ class StoreDetailAPIController extends PubControllerAPI
         $mall = NULL;
 
         try {
-            $user = $this->getUser();
+            // $user = $this->getUser();
 
             // Call validation from store helper
             $storeHelper = StoreHelper::create();
@@ -102,7 +102,7 @@ class StoreDetailAPIController extends PubControllerAPI
                                 'merchants.name',
                                 'merchants.name as mall_name',
                                 'merchants.description as mall_description',
-                                DB::raw("CASE WHEN ({$prefix}total_object_page_views.total_view IS NULL OR {$prefix}total_object_page_views.total_view = '') THEN 0 ELSE {$prefix}total_object_page_views.total_view END as total_view"),
+                                DB::raw('oms.country_id'),
                                 DB::Raw("CASE WHEN (
                                                 select mt.description
                                                 from {$prefix}merchant_translations mt
@@ -175,11 +175,7 @@ class StoreDetailAPIController extends PubControllerAPI
                     ])
                 ->join(DB::raw("(select merchant_id, country_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                 ->join('languages', 'languages.name', '=', 'merchants.mobile_default_language')
-                ->leftJoin('base_merchants', function ($q) {
-                                            $q->on('base_merchants.name', '=', 'merchants.name')
-                                              ->on('base_merchants.country_id', '=', DB::raw("oms.country_id"));
-                                        })
-
+                ->where('merchants.merchant_id', $merchantId)
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'");
 
@@ -202,17 +198,35 @@ class StoreDetailAPIController extends PubControllerAPI
             $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
             $totalPageViews = 0;
 
+            $storeName = null;
+            $storeCountryId = null;
+            if (! empty($store)) {
+                $storeName = $store->name;
+                $storeCountryId = $store->country_id;
+            }
+
+            // Get base_merchant_id
+            $baseMerchants = BaseMerchant::select('base_merchant_id')
+                                        ->where('name', $store->name)
+                                        ->where('country_id', $store->country_id)
+                                        ->first();
+
+            $baseMerchantId = null;
+            if (! empty($baseMerchants)) {
+                $baseMerchantId =$baseMerchants->base_merchant_id;
+            }
+
             // Get total page views, depend of config what DB used
             if ($configPageViewSource === 'redis') {
-                $keyRedis = 'store||' . $merchantId . '||' . $location;
+                $keyRedis = 'tenant||' . $baseMerchantId . '||' . $location;
                 $redis = Redis::connection($configPageViewRedisDb);
                 $totalPageViewRedis = $redis->get($keyRedis);
 
                 if (! empty($totalPageViewRedis)) {
                     $totalPageViews = $totalPageViewRedis;
                 } else {
-                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'store')
-                                                                 ->where('object_id', $merchantId)
+                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'tenant')
+                                                                 ->where('object_id', $baseMerchantId)
                                                                  ->where('location_id', $location)
                                                                  ->first();
 
@@ -221,8 +235,8 @@ class StoreDetailAPIController extends PubControllerAPI
                     }
                 }
             } else {
-                $totalObjectPageView = TotalObjectPageView::where('object_type', 'store')
-                                                             ->where('object_id', $merchantId)
+                $totalObjectPageView = TotalObjectPageView::where('object_type', 'tenant')
+                                                             ->where('object_id', $baseMerchantId)
                                                              ->where('location_id', $location)
                                                              ->first();
 
