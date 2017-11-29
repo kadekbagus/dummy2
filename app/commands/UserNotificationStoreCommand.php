@@ -77,6 +77,14 @@ class UserNotificationStoreCommand extends Command {
                 $langCampaign = $campaign->select(DB::raw('default_languages.name as default_language_name'))->first();
                 $defaultLangName = $langCampaign->default_language_name;
 
+                // Get image url
+                $cdnConfig = Config::get('orbit.cdn');
+                $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
+                $localPath = (! empty($storeObjectNotification->notification->attachment_path)) ? $storeObjectNotification->notification->attachment_path : '';
+                $cdnPath = (! empty($storeObjectNotification->notification->cdn_url)) ? $storeObjectNotification->notification->cdn_url : '';
+                $imageUrl = $imgUrl->getImageUrl('', '');
+
                 // send to onesignal
                 if (! empty($storeObjectNotification->notification->notification_tokens)) {
                     $mongoNotifId = $storeObjectNotification->notification->_id;
@@ -84,13 +92,6 @@ class UserNotificationStoreCommand extends Command {
                     $headings = $storeObjectNotification->notification->headings;
                     $contents = $storeObjectNotification->notification->contents;
                     $notificationTokens = $storeObjectNotification->notification->notification_tokens;
-
-                    $cdnConfig = Config::get('orbit.cdn');
-                    $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-
-                    $localPath = (! empty($storeObjectNotification->notification->attachment_path)) ? $storeObjectNotification->notification->attachment_path : '';
-                    $cdnPath = (! empty($storeObjectNotification->notification->cdn_url)) ? $storeObjectNotification->notification->cdn_url : '';
-                    $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
 
                     // add query string for activity recording
                     $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
