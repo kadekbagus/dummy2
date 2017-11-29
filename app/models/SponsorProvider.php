@@ -18,4 +18,9 @@ class SponsorProvider extends Eloquent
     {
         return $this->hasMany('SponsorProviderTranslation', 'sponsor_provider_id', 'sponsor_provider_id');
     }
+
+    public function media()
+    {
+        return $this->hasMany('Media', 'object_id', 'sponsor_provider_id')->where('object_name', 'sponsor_provider');
+    }
 }

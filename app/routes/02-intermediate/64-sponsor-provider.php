@@ -19,6 +19,11 @@ Route::post('/app/v1/sponsor-provider/update', 'IntermediateAuthController@Spons
 Route::get('/app/v1/sponsor-provider/list', 'IntermediateAuthController@SponsorProvider_getSearchSponsorProvider');
 
 /**
+ * Get search detail sponsor bank, e-wallet, credit card
+ */
+Route::get('/app/v1/sponsor-provider/detail', 'IntermediateAuthController@SponsorProvider_getSearchSponsorProviderDetail');
+
+/**
  * Get link to sponsor bank, e-wallet, credit card
  */
 Route::get('/app/v1/link-to-sponsor/list', 'IntermediateAuthController@LinkToSponsor_getLinkToSponsor');
