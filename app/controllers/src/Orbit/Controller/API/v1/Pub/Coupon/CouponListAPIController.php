@@ -608,7 +608,7 @@ class CouponListAPIController extends PubControllerAPI
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
                 if (Config::get('page_view.source', 'mysql') === 'redis') {
-                    $redisKey = 'promotion' . '-' . $campaignId . '-' . $locationId;
+                    $redisKey = 'promotion' . '||' . $campaignId . '||' . $locationId;
                     $redisConnection = Config::get('page_view.redis.connection', '');
                     $redis = Redis::connection($redisConnection);
                     $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;

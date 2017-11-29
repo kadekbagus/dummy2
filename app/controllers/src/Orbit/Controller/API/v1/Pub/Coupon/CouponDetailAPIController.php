@@ -218,7 +218,7 @@ class CouponDetailAPIController extends PubControllerAPI
 
             // Get total page views, depend of config what DB used
             if ($configPageViewSource === 'redis') {
-                $keyRedis = 'coupon-' . $couponId . '-' . $location;
+                $keyRedis = 'coupon||' . $couponId . '||' . $location;
                 $redis = Redis::connection($configPageViewRedisDb);
                 $totalPageViewRedis = $redis->get($keyRedis);
                 $totalPageViews = 0;

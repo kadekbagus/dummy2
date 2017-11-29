@@ -594,7 +594,7 @@ class StoreListAPIController extends PubControllerAPI
                     $baseStore = BaseStore::where('base_store_id', $storeId)->first();
 
                     if (! empty($baseStore)) {
-                        $redisKey = 'tenant' . '-' . $baseStore->base_merchant_id . '-' . $locationId;
+                        $redisKey = 'tenant' . '||' . $baseStore->base_merchant_id . '||' . $locationId;
                         $redisConnection = Config::get('page_view.redis.connection', '');
                         $redis = Redis::connection($redisConnection);
                         $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;

@@ -342,8 +342,8 @@ class MallListAPIController extends PubControllerAPI
 
                 $pageView = 0;
                 if (Config::get('page_view.source', 'mysql') === 'redis') {
-                    $redisKeyGTM = 'mall' . '-' . $dt['_id'] . '-0';
-                    $redisKeyMall = 'mall' . '-' . $dt['_id'] . '-' . $dt['_id'];
+                    $redisKeyGTM = 'mall' . '||' . $dt['_id'] . '||0';
+                    $redisKeyMall = 'mall' . '||' . $dt['_id'] . '||' . $dt['_id'];
                     $redisConnection = Config::get('page_view.redis.connection', '');
                     $redis = Redis::connection($redisConnection);
                     $pageViewGTM = (! empty($redis->get($redisKeyGTM))) ? $redis->get($redisKeyGTM) : 0;

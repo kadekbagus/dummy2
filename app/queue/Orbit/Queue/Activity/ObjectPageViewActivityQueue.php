@@ -127,7 +127,7 @@ class ObjectPageViewActivityQueue
                     $object_page_view->activity_id = $activity->activity_id;
                     $object_page_view->save();
 
-                    $keyRedis = strtolower($activity->object_name) . '-' . $object_id . '-' . $activity->location_id;
+                    $keyRedis = strtolower($activity->object_name) . '||' . $object_id . '||' . $activity->location_id;
                     $redis = Redis::connection('page_view');
 
                     $totalPageView = $redis->get($keyRedis);

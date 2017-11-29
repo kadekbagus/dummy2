@@ -180,7 +180,7 @@ class NewsDetailAPIController extends PubControllerAPI
 
             // Get total page views, depend of config what DB used
             if ($configPageViewSource === 'redis') {
-                $keyRedis = 'news-' . $newsId . '-' . $location;
+                $keyRedis = 'news||' . $newsId . '||' . $location;
                 $redis = Redis::connection($configPageViewRedisDb);
                 $totalPageViewRedis = $redis->get($keyRedis);
 

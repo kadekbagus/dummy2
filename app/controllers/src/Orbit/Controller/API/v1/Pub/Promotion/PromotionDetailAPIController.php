@@ -174,7 +174,7 @@ class PromotionDetailAPIController extends PubControllerAPI
 
             // Get total page views, depend of config what DB used
             if ($configPageViewSource === 'redis') {
-                $keyRedis = 'promotion-' . $promotionId . '-' . $location;
+                $keyRedis = 'promotion||' . $promotionId . '||' . $location;
                 $redis = Redis::connection($configPageViewRedisDb);
                 $totalPageViewRedis = $redis->get($keyRedis);
 

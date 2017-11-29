@@ -630,7 +630,7 @@ class NewsListAPIController extends PubControllerAPI
                 }
 
                 if (Config::get('page_view.source', 'mysql') === 'redis') {
-                    $redisKey = 'news' . '-' . $campaignId . '-' . $locationId;
+                    $redisKey = 'news' . '||' . $campaignId . '||' . $locationId;
                     $redisConnection = Config::get('page_view.redis.connection', '');
                     $redis = Redis::connection($redisConnection);
                     $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;

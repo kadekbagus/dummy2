@@ -200,7 +200,7 @@ class StoreDetailAPIController extends PubControllerAPI
 
             // Get total page views, depend of config what DB used
             if ($configPageViewSource === 'redis') {
-                $keyRedis = 'store-' . $merchantId . '-' . $location;
+                $keyRedis = 'store||' . $merchantId . '||' . $location;
                 $redis = Redis::connection($configPageViewRedisDb);
                 $totalPageViewRedis = $redis->get($keyRedis);
 
