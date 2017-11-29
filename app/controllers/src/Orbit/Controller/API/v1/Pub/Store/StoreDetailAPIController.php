@@ -47,7 +47,7 @@ class StoreDetailAPIController extends PubControllerAPI
         $mall = NULL;
 
         try {
-            // $user = $this->getUser();
+            $user = $this->getUser();
 
             // Call validation from store helper
             $storeHelper = StoreHelper::create();
