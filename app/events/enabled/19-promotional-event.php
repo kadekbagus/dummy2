@@ -529,7 +529,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-storenotificati
 
             // get user_ids and tokens
             $tenantIds = '';
-            $newsLinkToTenant = NewsMerchant::where('news_id', $updatednews->news_id)
+            $newsLinkToTenant = NewsMerchant::where('news_id', $updatedPromotionalEvent->news_id)
                                             ->lists('merchant_id');
 
             if (count($newsLinkToTenant) > 0) {
