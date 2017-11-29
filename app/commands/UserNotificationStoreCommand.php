@@ -187,8 +187,10 @@ class UserNotificationStoreCommand extends Command {
                 }
 
                 // Update status in store-object-notifications collection from pending to sent
+                if (! empty($responseUpdate)) {
+                    $storeBodyUpdate['notification'] = $responseUpdate->data;
+                }
                 $storeBodyUpdate['_id'] = $storeObjectNotification->_id;
-                $storeBodyUpdate['notification'] = $responseUpdate->data;
                 $storeBodyUpdate['status'] = 'sent';
 
                 $responseStoreUpdate = $mongoClient->setFormParam($storeBodyUpdate)
