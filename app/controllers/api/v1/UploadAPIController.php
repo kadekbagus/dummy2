@@ -11397,10 +11397,16 @@ class UploadAPIController extends ControllerAPI
             // Begin uploading the files
             $uploaded = $uploader->upload($logo);
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $sponsorProvider->sponsor_provider_id)
-                              ->where('object_name', 'sponsor_credit_card')
-                              ->where('media_name_id', 'sponsor_credit_card_image');
+            if ($this->calledFrom('sponsorprovider.update')) {
+                // Delete old merchant logo
+                $pastMedia = Media::whereIn('object_id', $credit_card_image_ids)
+                                  ->where('object_name', 'sponsor_credit_card')
+                                  ->where('media_name_id', 'sponsor_credit_card_image');
+            } else {
+                $pastMedia = Media::whereIn('object_id', $sponsorProvider->sponsor_provider_id)
+                                  ->where('object_name', 'sponsor_credit_card')
+                                  ->where('media_name_id', 'sponsor_credit_card_image');
+            }
 
             // Delete each files
             $oldMediaFiles = $pastMedia->get();
@@ -11442,7 +11448,7 @@ class UploadAPIController extends ControllerAPI
                 'media_name_id' => 'sponsor_credit_card_image',
                 'modified_by'   => 1
             );
-            //print_r($object); die();
+
             $mediaList = $this->saveMetaDataCreditCard($object, $uploaded);
 
             // Update the `image` field which store the original path of the image
