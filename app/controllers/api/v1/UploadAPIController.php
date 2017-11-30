@@ -11334,6 +11334,8 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $sponsor_provider_id = OrbitInput::post('sponsor_provider_id');
+            $credit_card_image_ids = OrbitInput::post('credit_card_image_ids');
+            $credit_card_image_ids = (array) $credit_card_image_ids;
             $logo = OrbitInput::files('credit_card_image');
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -11412,17 +11414,26 @@ class UploadAPIController extends ControllerAPI
                 $pastMedia->delete();
             }
 
-            // get the id of sponsor credit card
-            $creditCards = SponsorCreditCard::select('sponsor_credit_card_id')
-                                ->where('sponsor_provider_id','=', $sponsorProvider->sponsor_provider_id)
-                                ->get();
+            if ($this->calledFrom('sponsorprovider.new'))
+            {
+                // get the id of sponsor credit card
+                $creditCards = SponsorCreditCard::select('sponsor_credit_card_id')
+                                    ->where('sponsor_provider_id','=', $sponsorProvider->sponsor_provider_id)
+                                    ->get();
 
-            $arrCreditCardId = [];
-            if (!empty($creditCards)) {
-                foreach ($creditCards as $key => $value) {
-                    $arrCreditCardId[] = $creditCards[$key]['sponsor_credit_card_id'];
+                $arrCreditCardId = [];
+                if (!empty($creditCards)) {
+                    foreach ($creditCards as $key => $value) {
+                        $arrCreditCardId[] = $creditCards[$key]['sponsor_credit_card_id'];
+                    }
                 }
             }
+
+            if ($this->calledFrom('sponsorprovider.update'))
+            {
+                $arrCreditCardId = $credit_card_image_ids;
+            }
+
 
             // Save the files metadata
             $object = array(

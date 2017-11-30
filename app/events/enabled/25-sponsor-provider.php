@@ -151,7 +151,8 @@ Event::listen('orbit.sponsorprovider.postupdatesponsorprovider.after.save', func
 Event::listen('orbit.sponsorprovider.postupdatesponsorprovidercreditcard.after.save', function($controller, $sponsorProvider)
 {
     $files = OrbitInput::files('credit_card_image');
-    if (! $files) {
+    $files_ids = OrbitInput::files('credit_card_image_ids');
+    if (! $files && ! $files_ids) {
         return;
     }
 
