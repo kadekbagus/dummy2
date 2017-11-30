@@ -186,15 +186,8 @@ class AvailableSponsorListAPIController extends PubControllerAPI
             $user = $this->api->user;
 
             // should always check the role
-            // $role = $user->role->role_name;
-            $role = 'consumer';
-            // if (strtolower($role) !== 'consumer') {
-            //     $message = 'You have to login to continue';
-            //     OrbitShopAPI::throwInvalidArgument($message);
-            // }
-
-            // $userId = $user->user_id;
-            $userId = 'LDG6XOXoxLGbFFUg';
+            $role = $user->role->role_name;
+            $userId = $user->user_id;
 
             $prefix = DB::getTablePrefix();
             $lang = OrbitInput::get('language', 'id');
