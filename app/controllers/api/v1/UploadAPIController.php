@@ -11402,22 +11402,17 @@ class UploadAPIController extends ControllerAPI
                 $pastMedia = Media::whereIn('object_id', $credit_card_image_ids)
                                   ->where('object_name', 'sponsor_credit_card')
                                   ->where('media_name_id', 'sponsor_credit_card_image');
-            } else {
-                $pastMedia = Media::whereIn('object_id', $sponsorProvider->sponsor_provider_id)
-                                  ->where('object_name', 'sponsor_credit_card')
-                                  ->where('media_name_id', 'sponsor_credit_card_image');
-            }
+                // Delete each files
+                $oldMediaFiles = $pastMedia->get();
+                foreach ($oldMediaFiles as $oldMedia) {
+                    // No need to check the return status, just delete and forget
+                    @unlink($oldMedia->realpath);
+                }
 
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
+                // Delete from database
+                if (count($oldMediaFiles) > 0) {
+                    $pastMedia->delete();
+                }
             }
 
             if ($this->calledFrom('sponsorprovider.new'))
@@ -11439,7 +11434,6 @@ class UploadAPIController extends ControllerAPI
             {
                 $arrCreditCardId = $credit_card_image_ids;
             }
-
 
             // Save the files metadata
             $object = array(
