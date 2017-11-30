@@ -264,6 +264,10 @@ Artisan::add(new UpdateStatusReviewCommand);
 // Create User Merchant Transaction
 Artisan::add(new CreateUserMerchantTransactionCommand);
 
+
+// Sync total page view counter from object_page_views to total_page_views
+Artisan::add(new SyncTotalPageViewCommand);
+
 // Create Master Bank for merchant transaction
 Artisan::add(new CreateBankCommand);
 

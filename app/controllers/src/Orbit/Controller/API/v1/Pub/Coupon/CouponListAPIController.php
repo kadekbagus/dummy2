@@ -12,6 +12,7 @@ use Coupon;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
+use Redis;
 use Validator;
 use Activity;
 use Mall;
@@ -501,6 +502,7 @@ class CouponListAPIController extends PubControllerAPI
                 $pageView = 0;
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
+                $campaignId = '';
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === "name") {
                         $key = "coupon_name";
@@ -617,6 +619,12 @@ class CouponListAPIController extends PubControllerAPI
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
+                if (Config::get('page_view.source', 'mysql') === 'redis') {
+                    $redisKey = 'promotion' . '||' . $campaignId . '||' . $locationId;
+                    $redisConnection = Config::get('page_view.redis.connection', '');
+                    $redis = Redis::connection($redisConnection);
+                    $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
+                }
                 $data['page_view'] = $pageView;
                 $data['owned'] = $isOwned;
                 $data['score'] = $record['_score'];

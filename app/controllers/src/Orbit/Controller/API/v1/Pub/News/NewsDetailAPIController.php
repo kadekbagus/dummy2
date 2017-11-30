@@ -22,6 +22,8 @@ use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use OrbitShop\API\v1\ResponseProvider;
 use Partner;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use TotalObjectPageView;
+use Redis;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class NewsDetailAPIController extends PubControllerAPI
@@ -134,7 +136,6 @@ class NewsDetailAPIController extends PubControllerAPI
                             'news.object_type',
                             'news.end_date',
                             'news.is_exclusive',
-                            'total_object_page_views.total_view',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -180,11 +181,6 @@ class NewsDetailAPIController extends PubControllerAPI
                               ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->leftJoin('total_object_page_views', function ($q) use ($location){
-                            $q->on('total_object_page_views.object_id', '=', 'news.news_id')
-                                ->on('total_object_page_views.object_type', '=', DB::raw("'news'"))
-                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
-                        })
                         ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
@@ -192,6 +188,41 @@ class NewsDetailAPIController extends PubControllerAPI
                                 $q->addSelect('keyword', 'object_id');
                             }])
                         ->first();
+
+            // Config page_views
+            $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
+            $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
+            $totalPageViews = 0;
+
+            // Get total page views, depend of config what DB used
+            if ($configPageViewSource === 'redis') {
+                $keyRedis = 'news||' . $newsId . '||' . $location;
+                $redis = Redis::connection($configPageViewRedisDb);
+                $totalPageViewRedis = $redis->get($keyRedis);
+
+                if (! empty($totalPageViewRedis)) {
+                    $totalPageViews = $totalPageViewRedis;
+                } else {
+                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'news')
+                                                                 ->where('object_id', $newsId)
+                                                                 ->where('location_id', $location)
+                                                                 ->first();
+
+                    if (! empty($totalObjectPageView->total_view)) {
+                        $totalPageViews = $totalObjectPageView->total_view;
+                    }
+                }
+            } else {
+                $totalObjectPageView = TotalObjectPageView::where('object_type', 'news')
+                                                             ->where('object_id', $newsId)
+                                                             ->where('location_id', $location)
+                                                             ->first();
+
+                if (! empty($totalObjectPageView->total_view)) {
+                    $totalPageViews = $totalObjectPageView->total_view;
+                }
+            }
+            $news->total_view = $totalPageViews;
 
             $message = 'Request Ok';
             if (! is_object($news)) {
