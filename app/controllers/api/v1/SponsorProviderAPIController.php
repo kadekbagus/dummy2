@@ -364,8 +364,8 @@ class SponsorProviderAPIController extends ControllerAPI
 
             // Filter sponsor provider by Ids
             OrbitInput::get('sponsor_provider_ids', function ($sponsorProviderIds) use ($sponsorProviders) {
-                $sponsorProviderIds = (array)$sponsorProviderIds;
-                $sponsorProviders->where('sponsor_providers.sponsor_provider_id', $sponsorProviderIds);
+                $sponsorProviderIds = (array) $sponsorProviderIds;
+                $sponsorProviders->whereIn('sponsor_providers.sponsor_provider_id', $sponsorProviderIds);
             });
 
             // Filter sponsor provider by name
@@ -380,7 +380,8 @@ class SponsorProviderAPIController extends ControllerAPI
 
             // Filter sponsor provider by status
             OrbitInput::get('status', function ($status) use ($sponsorProviders) {
-                $sponsorProviders->where('sponsor_providers.status', $status);
+                $status = (array) $status;
+                $sponsorProviders->whereIn('sponsor_providers.status', $status);
             });
 
             // Add new relation based on request
