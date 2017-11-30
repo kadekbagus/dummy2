@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
+use Redis;
 use Activity;
 use Mall;
 use PartnerAffectedGroup;
@@ -362,6 +363,18 @@ class MallListAPIController extends PubControllerAPI
                 $areadata['average_rating'] = (! empty($dt['fields']['average_rating'][0])) ? number_format(round($dt['fields']['average_rating'][0], 1), 1) : 0;
                 $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? round($dt['fields']['total_review'][0], 1) : 0;
 
+                $pageView = 0;
+                if (Config::get('page_view.source', 'mysql') === 'redis') {
+                    $redisKeyGTM = 'mall' . '||' . $dt['_id'] . '||0';
+                    $redisKeyMall = 'mall' . '||' . $dt['_id'] . '||' . $dt['_id'];
+                    $redisConnection = Config::get('page_view.redis.connection', '');
+                    $redis = Redis::connection($redisConnection);
+                    $pageViewGTM = (! empty($redis->get($redisKeyGTM))) ? $redis->get($redisKeyGTM) : 0;
+                    $pageViewMall = (! empty($redis->get($redisKeyMall))) ? $redis->get($redisKeyMall) : 0;
+
+                    $pageView = (int) $pageViewGTM + (int) $pageViewMall;
+                }
+
                 $followStatus = false;
                 if (! empty($objectFollow)) {
                     if (in_array($dt['_id'], $objectFollow)) {
@@ -389,6 +402,10 @@ class MallListAPIController extends PubControllerAPI
                                 }
 
                                 $areadata[$source] = $val;
+                                if ($pageView != 0) {
+                                    $areadata['gtm_page_view'] = $pageView;
+                                }
+
                                 $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                             }
                         }
@@ -412,6 +429,10 @@ class MallListAPIController extends PubControllerAPI
                         }
 
                         $areadata[$source] = $val;
+                        if ($pageView != 0) {
+                            $areadata['gtm_page_view'] = $pageView;
+                        }
+
                         $areadata['logo_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
                     }
 

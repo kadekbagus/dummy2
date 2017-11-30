@@ -25,6 +25,8 @@ use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
 use Partner;
 use \Orbit\Helper\Exception\OrbitCustomException;
+use TotalObjectPageView;
+use Redis;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 
 class CouponDetailAPIController extends PubControllerAPI
@@ -143,7 +145,6 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.end_date',
                             'promotions.coupon_validity_in_date',
                             'promotions.is_exclusive',
-                            'total_object_page_views.total_view',
                             'promotions.available',
                             'promotions.is_unique_redeem',
                             'promotions.maximum_redeem',
@@ -211,11 +212,6 @@ class CouponDetailAPIController extends PubControllerAPI
                             })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                        ->leftJoin('total_object_page_views', function ($q) use ($location){
-                            $q->on('total_object_page_views.object_id', '=', 'promotions.promotion_id')
-                                ->on('total_object_page_views.object_type', '=', DB::raw("'coupon'"))
-                                ->on('total_object_page_views.location_id', '=', DB::raw("'{$location}'"));
-                        })
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
                             }])
@@ -231,6 +227,43 @@ class CouponDetailAPIController extends PubControllerAPI
             });
 
             $coupon = $coupon->first();
+
+            // Config page_views
+            $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
+            $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
+            $totalPageViews = 0;
+
+            // Get total page views, depend of config what DB used
+            if ($configPageViewSource === 'redis') {
+                $keyRedis = 'coupon||' . $couponId . '||' . $location;
+                $redis = Redis::connection($configPageViewRedisDb);
+                $totalPageViewRedis = $redis->get($keyRedis);
+                $totalPageViews = 0;
+
+                if (! empty($totalPageViewRedis)) {
+                    $totalPageViews = $totalPageViewRedis;
+                } else {
+                    $totalObjectPageView = TotalObjectPageView::where('object_type', 'coupon')
+                                                                 ->where('object_id', $couponId)
+                                                                 ->where('location_id', $location)
+                                                                 ->first();
+
+                    if (! empty($totalObjectPageView->total_view)) {
+                        $totalPageViews = $totalObjectPageView->total_view;
+                    }
+                }
+
+            } else {
+                $totalObjectPageView = TotalObjectPageView::where('object_type', 'coupon')
+                                                             ->where('object_id', $couponId)
+                                                             ->where('location_id', $location)
+                                                             ->first();
+
+                if (! empty($totalObjectPageView->total_view)) {
+                    $totalPageViews = $totalObjectPageView->total_view;
+                }
+            }
+            $coupon->total_view = $totalPageViews;
 
             $message = 'Request Ok';
             if (! is_object($coupon)) {
