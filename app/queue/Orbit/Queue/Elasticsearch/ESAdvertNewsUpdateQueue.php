@@ -427,8 +427,9 @@ class ESAdvertNewsUpdateQueue
                                                         $q->on('media.object_id', '=', 'sponsor_providers.sponsor_provider_id')
                                                           ->on('media.media_name_long', '=', DB::raw('"sponsor_provider_logo_orig"'));
                                                   })
-                                                ->where('object_type', 'news')
-                                                ->where('object_id', $news->news_id);
+                                                ->where('object_sponsor.object_type', 'news')
+                                                ->where('sponsor_providers.status', 'active')
+                                                ->where('object_sponsor.object_id', $news->news_id);
 
                 $sponsorProviderWallets = $sponsorProviders->where('sponsor_providers.object_type', 'ewallet')
                                                             ->get();
@@ -460,7 +461,7 @@ class ESAdvertNewsUpdateQueue
                             // get credit_card id by user selection
                             $sponsorProviderCC = ObjectSponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id')
                                                                         ->leftJoin('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'object_sponsor_credit_card.sponsor_credit_card_id')
-                                                                        ->where('object_sponsor_id', $sponsorProviderBank->object_sponsor_id);
+                                                                        ->where('object_sponsor_credit_card.object_sponsor_id', $sponsorProviderBank->object_sponsor_id);
                         }
 
                         $sponsorProviderCC = $sponsorProviderCC->get();
