@@ -895,7 +895,7 @@ class NewsAPIController extends ControllerAPI
                 if ($is_sponsored === 'N') {
                     // delete before insert new
                     $objectSponsor = ObjectSponsor::where('object_id', $news_id)
-                                                  ->where('object_id', $object_type);
+                                                  ->where('object_type', $object_type);
 
                     $objectSponsorIds = $objectSponsor->lists('object_sponsor_id');
 
@@ -915,7 +915,7 @@ class NewsAPIController extends ControllerAPI
 
                 // delete before insert new
                 $objectSponsor = ObjectSponsor::where('object_id', $news_id)
-                                              ->where('object_id', $object_type);
+                                              ->where('object_type', $object_type);
 
                 $objectSponsorIds = $objectSponsor->lists('object_sponsor_id');
 

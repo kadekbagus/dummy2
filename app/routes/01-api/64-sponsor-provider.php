@@ -105,3 +105,13 @@ Route::get('/api/v1/pub/available-sponsor/credit-card', function()
 });
 
 Route::get('/app/v1/pub/available-sponsor/credit-card', ['as' => 'pub-user-sponsor-credit-card', 'uses' => 'IntermediatePubAuthController@Sponsor\AvailableSponsorList_getAvailableSponsorCreditCard']);
+
+/**
+ * update user sponsor
+ */
+Route::post('/api/v1/pub/user-sponsor/update', function()
+{
+    return Orbit\Controller\API\v1\Pub\Sponsor\UserSponsorUpdateAPIController::create()->postUserSponsor();
+});
+
+Route::post('/app/v1/pub/user-sponsor/update', ['as' => 'pub-user-sponsor-update', 'uses' => 'IntermediatePubAuthController@Sponsor\UserSponsorUpdate_postUserSponsor']);

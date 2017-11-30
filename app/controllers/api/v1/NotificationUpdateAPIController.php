@@ -117,7 +117,7 @@ class NotificationUpdateAPIController extends ControllerAPI
 		            OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
 		        }
 
-                $notificationTokens = array_unique($notificationTokens);
+                $notificationTokens = array_values(array_unique($notificationTokens));
             }
 
             $jsonUserIds = '';
@@ -135,7 +135,7 @@ class NotificationUpdateAPIController extends ControllerAPI
                 if (count($userIds) !== count(array_unique($userIds))) {
                     OrbitShopAPI::throwInvalidArgument('Duplicate user ids');
                 }
-                $userIds = array_unique($userIds);
+                $userIds = array_values(array_unique($userIds));
             }
 
             $mongoClient = MongoClient::create($mongoConfig);

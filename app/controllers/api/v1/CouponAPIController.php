@@ -1980,7 +1980,7 @@ class CouponAPIController extends ControllerAPI
                 if ($is_sponsored === 'N') {
                     // delete before insert new
                     $objectSponsor = ObjectSponsor::where('object_id', $promotion_id)
-                                                  ->where('object_id', 'coupon');
+                                                  ->where('object_type', 'coupon');
 
                     $objectSponsorIds = $objectSponsor->lists('object_sponsor_id');
 
@@ -2000,7 +2000,7 @@ class CouponAPIController extends ControllerAPI
 
                 // delete before insert new
                 $objectSponsor = ObjectSponsor::where('object_id', $promotion_id)
-                                              ->where('object_id', 'coupon');
+                                              ->where('object_type', 'coupon');
 
                 $objectSponsorIds = $objectSponsor->lists('object_sponsor_id');
 
