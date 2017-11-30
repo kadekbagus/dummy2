@@ -198,7 +198,7 @@ class ObjectPageViewActivityQueue
                 'message' => $message
             ];
         } catch (Exception $e) {
-            $message = sprintf('[activity_id: `%s`] Object Page View Activity Queue ERROR: %s', $activityId, $e->getMessage());
+            $message = sprintf('[activity_id: `%s`] Object Page View Activity Queue ERROR: %s; LINE: %s; FILE: %s', $activityId, $e->getMessage(), $e->getLine(), $e->getFile());
             Log::error($message);
         }
 
