@@ -226,7 +226,7 @@ class StoreSynchronization
                             foreach ($userFollow->data->records as $key => $value) {
                                 $follower[] = $value->user_id;
                             }
-                            $userIds = array_unique($follower);
+                            $userIds = array_values(array_unique($follower));
 
                             // get tokens
                             $tokenSearch = ['user_ids' => json_encode($userIds), 'notification_provider' => 'onesignal'];
@@ -239,7 +239,7 @@ class StoreSynchronization
                                     $tokens[] = $value->notification_token;
                                 }
                             }
-                            $tokens = array_unique($tokens);
+                            $tokens = array_values(array_unique($tokens));
 
                             $launchUrl = LandingPageUrlGenerator::create('store', $activeStore->merchant_id, $activeStore->name)->generateUrl();
 
@@ -304,9 +304,9 @@ class StoreSynchronization
                                                                               ->request('POST');
                                     } else {
                                         // update data if exist
-                                        $_notificationIds = $mallObjectNotif->data->records[0]->notification_ids;
-                                        $_userIds = $mallObjectNotif->data->records[0]->user_ids;
-                                        $_tokens = $mallObjectNotif->data->records[0]->tokens;
+                                        $_notificationIds = (array) $mallObjectNotif->data->records[0]->notification_ids;
+                                        $_userIds = (array) $mallObjectNotif->data->records[0]->user_ids;
+                                        $_tokens = (array) $mallObjectNotif->data->records[0]->tokens;
                                         $_notificationIds[] = $notificationId;
                                         foreach ($userIds as $key => $uservalue) {
                                             $_userIds[] = $uservalue;
@@ -316,10 +316,10 @@ class StoreSynchronization
                                         }
                                         $updateMallObjectNotification = [
                                             '_id' => $mallObjectNotif->data->records[0]->_id,
-                                            'notification_ids' => array_unique($_notificationIds),
+                                            'notification_ids' => array_values(array_unique($_notificationIds)),
                                             'mall_id' => $store->merchant_id,
-                                            'user_ids' => json_encode(array_unique($_userIds)),
-                                            'tokens' => json_encode(array_unique($_tokens)),
+                                            'user_ids' => json_encode(array_values(array_unique($_userIds))),
+                                            'tokens' => json_encode(array_values(array_unique($_tokens))),
                                         ];
 
                                         $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
