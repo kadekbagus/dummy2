@@ -324,7 +324,7 @@ class ESNewsUpdateQueue
                                             ->where('object_id', $news->news_id);
 
             $sponsorProviderWallets = $sponsorProviders->where('sponsor_providers.object_type', 'ewallet')
-                                                        >get();
+                                                        ->get();
 
             $sponsorProviderES = array();
             if (!$sponsorProviderWallets->isEmpty()){
@@ -341,7 +341,7 @@ class ESNewsUpdateQueue
 
             // Get sponsor provider bank
             $sponsorProviderBanks = $sponsorProviders->where('sponsor_providers.object_type', 'bank')
-                                                        >get();
+                                                     ->get();
 
             if (!$sponsorProviderBanks->isEmpty()){
                 foreach ($sponsorProviderBanks as $sponsorProviderBank) {
