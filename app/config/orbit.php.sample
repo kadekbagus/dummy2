@@ -6946,4 +6946,12 @@ return array(
         'host' => '',
         'port' => ''
     ],
+
+    'page_view' => [
+        'source' => 'redis',
+
+        'redis' => [
+            'connection' => 'page_view'
+        ],
+    ],
 );

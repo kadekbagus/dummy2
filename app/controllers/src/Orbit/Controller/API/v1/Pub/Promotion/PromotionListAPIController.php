@@ -15,6 +15,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
+use Redis;
 use News;
 use Advert;
 use NewsMerchant;
@@ -501,7 +502,12 @@ class PromotionListAPIController extends PubControllerAPI
                 $pageView = 0;
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
+                $campaignId = '';
                 foreach ($record['_source'] as $key => $value) {
+                    if ($key === 'news_id') {
+                        $campaignId = $value;
+                    }
+
                     if ($key === "name") {
                         $key = "news_name";
                     }
@@ -553,10 +559,6 @@ class PromotionListAPIController extends PubControllerAPI
 
                     // advert type
                     if ($list_type === 'featured') {
-                        if ($key === 'news_id') {
-                            $campaignId = $value;
-                        }
-
                         if (! empty($mallId) && $key === 'featured_mall_type') {
                             $data['placement_type'] = $value;
                             $data['placement_type_orig'] = $value;
@@ -605,6 +607,12 @@ class PromotionListAPIController extends PubControllerAPI
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
+                if (Config::get('page_view.source', 'mysql') === 'redis') {
+                    $redisKey = 'promotion' . '||' . $campaignId . '||' . $locationId;
+                    $redisConnection = Config::get('page_view.redis.connection', '');
+                    $redis = Redis::connection($redisConnection);
+                    $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
+                }
                 $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
