@@ -11334,6 +11334,8 @@ class UploadAPIController extends ControllerAPI
 
             // Application input
             $sponsor_provider_id = OrbitInput::post('sponsor_provider_id');
+            $credit_card_image_ids = OrbitInput::post('credit_card_image_ids');
+            $credit_card_image_ids = (array) $credit_card_image_ids;
             $logo = OrbitInput::files('credit_card_image');
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -11395,33 +11397,42 @@ class UploadAPIController extends ControllerAPI
             // Begin uploading the files
             $uploaded = $uploader->upload($logo);
 
-            // Delete old merchant logo
-            $pastMedia = Media::where('object_id', $sponsorProvider->sponsor_provider_id)
-                              ->where('object_name', 'sponsor_credit_card')
-                              ->where('media_name_id', 'sponsor_credit_card_image');
-
-            // Delete each files
-            $oldMediaFiles = $pastMedia->get();
-            foreach ($oldMediaFiles as $oldMedia) {
-                // No need to check the return status, just delete and forget
-                @unlink($oldMedia->realpath);
-            }
-
-            // Delete from database
-            if (count($oldMediaFiles) > 0) {
-                $pastMedia->delete();
-            }
-
-            // get the id of sponsor credit card
-            $creditCards = SponsorCreditCard::select('sponsor_credit_card_id')
-                                ->where('sponsor_provider_id','=', $sponsorProvider->sponsor_provider_id)
-                                ->get();
-
-            $arrCreditCardId = [];
-            if (!empty($creditCards)) {
-                foreach ($creditCards as $key => $value) {
-                    $arrCreditCardId[] = $creditCards[$key]['sponsor_credit_card_id'];
+            if ($this->calledFrom('sponsorprovider.update')) {
+                // Delete old merchant logo
+                $pastMedia = Media::whereIn('object_id', $credit_card_image_ids)
+                                  ->where('object_name', 'sponsor_credit_card')
+                                  ->where('media_name_id', 'sponsor_credit_card_image');
+                // Delete each files
+                $oldMediaFiles = $pastMedia->get();
+                foreach ($oldMediaFiles as $oldMedia) {
+                    // No need to check the return status, just delete and forget
+                    @unlink($oldMedia->realpath);
                 }
+
+                // Delete from database
+                if (count($oldMediaFiles) > 0) {
+                    $pastMedia->delete();
+                }
+            }
+
+            if ($this->calledFrom('sponsorprovider.new'))
+            {
+                // get the id of sponsor credit card
+                $creditCards = SponsorCreditCard::select('sponsor_credit_card_id')
+                                    ->where('sponsor_provider_id','=', $sponsorProvider->sponsor_provider_id)
+                                    ->get();
+
+                $arrCreditCardId = [];
+                if (!empty($creditCards)) {
+                    foreach ($creditCards as $key => $value) {
+                        $arrCreditCardId[] = $creditCards[$key]['sponsor_credit_card_id'];
+                    }
+                }
+            }
+
+            if ($this->calledFrom('sponsorprovider.update'))
+            {
+                $arrCreditCardId = $credit_card_image_ids;
             }
 
             // Save the files metadata
@@ -11431,7 +11442,7 @@ class UploadAPIController extends ControllerAPI
                 'media_name_id' => 'sponsor_credit_card_image',
                 'modified_by'   => 1
             );
-            //print_r($object); die();
+
             $mediaList = $this->saveMetaDataCreditCard($object, $uploaded);
 
             // Update the `image` field which store the original path of the image

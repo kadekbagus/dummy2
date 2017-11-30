@@ -606,65 +606,121 @@ class SponsorProviderAPIController extends ControllerAPI
             OrbitShopAPI::throwInvalidArgument('Credit Card JSON format not valid');
         }
 
-        $sponsor_provider_id = $newSponsorProvider->sponsor_provider_id;
-
-        // if update delete the old data first
-        if ($scenario === 'update')
-        {
-            $oldCreditCardData = SponsorCreditCard::select('sponsor_credit_card_id')
-                                                ->where('sponsor_provider_id', '=', $sponsor_provider_id)
-                                                ->get();
-            $arrCreditCardId = [];
-            if (!empty($oldCreditCardData)) {
-                foreach ($oldCreditCardData as $key => $value) {
-                    $arrCreditCardId[] = $oldCreditCardData[$key]['sponsor_credit_card_id'];
-                }
-
-                foreach ($arrCreditCardId as $key => $value) {
-                    $oldCreditCardTranslation = SponsorCreditCardTranslation::where('sponsor_credit_card_id', $value);
-                    $oldCreditCardTranslation->delete();
-                }
-
-                $oldCreditCard = SponsorCreditCard::where('sponsor_provider_id', '=', $sponsor_provider_id);
-                $oldCreditCard->delete();
-            }
-        }
-
         $creditCards = [];
         $creditCardTranslation = [];
         $defaultDescription = null;
-        foreach ($data as $key => $creditCardData)
+        $sponsor_provider_id = $newSponsorProvider->sponsor_provider_id;
+
+        // if update
+        if ($scenario === 'update')
         {
-            // find description for default language
-            if (!empty ($creditCardData->description)) {
-                foreach ($creditCardData->description as $key => $value) {
-                    if ($key === $defaultLanguageId) {
-                        $defaultDescription = $value->description;
+            // delete the old translation
+            $oldCreditCardData = SponsorCreditCard::select('sponsor_credit_card_id')
+                                                ->where('sponsor_provider_id', '=', $sponsor_provider_id)
+                                                ->get();
+            $oldCreditCardId = [];
+            if (!empty($oldCreditCardData)) {
+                foreach ($oldCreditCardData as $key => $value) {
+                    $oldCreditCardId[] = $oldCreditCardData[$key]['sponsor_credit_card_id'];
+                }
+
+                foreach ($oldCreditCardId as $key => $value) {
+                    $oldCreditCardTranslation = SponsorCreditCardTranslation::where('sponsor_credit_card_id', $value);
+                    $oldCreditCardTranslation->delete();
+                }
+            }
+
+            foreach ($data as $key => $creditCardData)
+            {
+                // find description for default language
+                if (!empty ($creditCardData->description)) {
+                    foreach ($creditCardData->description as $key => $value) {
+                        if ($key === $defaultLanguageId) {
+                            $defaultDescription = $value->description;
+                        }
+                    }
+                }
+
+                if ($creditCardData->sponsor_credit_card_id !== 0 && !empty($creditCardData->sponsor_credit_card_id)) {
+                    // update credit card
+                    $updateCreditCard = SponsorCreditCard::where('sponsor_credit_card_id', '=', $creditCardData->sponsor_credit_card_id)->first();
+                    $updateCreditCard->name = $creditCardData->card_name;
+                    $updateCreditCard->description = $defaultDescription;
+                    $updateCreditCard->save();
+                    $creditCards[] = $updateCreditCard;
+
+                    // save new credit card translation
+                    if (!empty ($creditCardData->description)) {
+                        foreach ($creditCardData->description as $key => $value) {
+                            $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                            $newCreditCardTranslation->sponsor_credit_card_id = $updateCreditCard->sponsor_credit_card_id;
+                            $newCreditCardTranslation->language_id = $key;
+                            $newCreditCardTranslation->description = $value->description;
+                            $newCreditCardTranslation->save();
+                            $creditCardTranslation[] = $newCreditCardTranslation;
+                        }
+                    }
+                } else if ($creditCardData->sponsor_credit_card_id === 0) {
+                    // save credit card
+                    $newCreditCard = new SponsorCreditCard();
+                    $newCreditCard->name = $creditCardData->card_name;
+                    $newCreditCard->description = $defaultDescription;
+                    $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
+                    $newCreditCard->status = 'active';
+                    $newCreditCard->save();
+                    $creditCards[] = $newCreditCard;
+
+                    // save credit card translation
+                    if (!empty ($creditCardData->description)) {
+                        foreach ($creditCardData->description as $key => $value) {
+                            $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                            $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
+                            $newCreditCardTranslation->language_id = $key;
+                            $newCreditCardTranslation->description = $value->description;
+                            $newCreditCardTranslation->save();
+                            $creditCardTranslation[] = $newCreditCardTranslation;
+                        }
                     }
                 }
             }
+        }
 
-            // save credit card
-            $newCreditCard = new SponsorCreditCard();
-            $newCreditCard->name = $creditCardData->card_name;
-            $newCreditCard->description = $defaultDescription;
-            $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
-            $newCreditCard->status = 'active';
-            $newCreditCard->save();
-            $creditCards[] = $newCreditCard;
+        if ($scenario === 'create')
+        {
+            foreach ($data as $key => $creditCardData)
+            {
+                // find description for default language
+                if (!empty ($creditCardData->description)) {
+                    foreach ($creditCardData->description as $key => $value) {
+                        if ($key === $defaultLanguageId) {
+                            $defaultDescription = $value->description;
+                        }
+                    }
+                }
 
-            // save credit card translation
-            if (!empty ($creditCardData->description)) {
-                foreach ($creditCardData->description as $key => $value) {
-                    $newCreditCardTranslation = new SponsorCreditCardTranslation();
-                    $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
-                    $newCreditCardTranslation->language_id = $key;
-                    $newCreditCardTranslation->description = $value->description;
-                    $newCreditCardTranslation->save();
-                    $creditCardTranslation[] = $newCreditCardTranslation;
+                // save credit card
+                $newCreditCard = new SponsorCreditCard();
+                $newCreditCard->name = $creditCardData->card_name;
+                $newCreditCard->description = $defaultDescription;
+                $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
+                $newCreditCard->status = 'active';
+                $newCreditCard->save();
+                $creditCards[] = $newCreditCard;
+
+                // save credit card translation
+                if (!empty ($creditCardData->description)) {
+                    foreach ($creditCardData->description as $key => $value) {
+                        $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                        $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
+                        $newCreditCardTranslation->language_id = $key;
+                        $newCreditCardTranslation->description = $value->description;
+                        $newCreditCardTranslation->save();
+                        $creditCardTranslation[] = $newCreditCardTranslation;
+                    }
                 }
             }
         }
+
         $newSponsorProvider->credit_cards = $creditCards;
         $newSponsorProvider->credit_card_translations = $creditCardTranslation;
     }
