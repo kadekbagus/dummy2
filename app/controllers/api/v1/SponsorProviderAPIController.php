@@ -609,6 +609,7 @@ class SponsorProviderAPIController extends ControllerAPI
         $creditCards = [];
         $creditCardTranslation = [];
         $defaultDescription = null;
+        $addCreditCard = [];
         $sponsor_provider_id = $newSponsorProvider->sponsor_provider_id;
 
         // if update
@@ -669,6 +670,7 @@ class SponsorProviderAPIController extends ControllerAPI
                     $newCreditCard->status = 'active';
                     $newCreditCard->save();
                     $creditCards[] = $newCreditCard;
+                    $addCreditCard[] = $newCreditCard->sponsor_credit_card_id;
 
                     // save credit card translation
                     if (!empty ($creditCardData->description)) {
@@ -682,6 +684,10 @@ class SponsorProviderAPIController extends ControllerAPI
                         }
                     }
                 }
+            }
+
+            if (!empty($addCreditCard)) {
+                $_POST['add_credit_card'] = $addCreditCard;
             }
         }
 
