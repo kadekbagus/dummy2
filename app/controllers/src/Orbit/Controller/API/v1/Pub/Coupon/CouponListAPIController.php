@@ -619,9 +619,9 @@ class CouponListAPIController extends PubControllerAPI
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
-                if (Config::get('page_view.source', 'mysql') === 'redis') {
-                    $redisKey = 'promotion' . '||' . $campaignId . '||' . $locationId;
-                    $redisConnection = Config::get('page_view.redis.connection', '');
+                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
+                    $redisKey = 'coupon' . '||' . $campaignId . '||' . $locationId;
+                    $redisConnection = Config::get('orbit.page_view.redis.connection', '');
                     $redis = Redis::connection($redisConnection);
                     $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
                 }
