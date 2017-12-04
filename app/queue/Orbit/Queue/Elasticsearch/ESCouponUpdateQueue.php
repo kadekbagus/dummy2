@@ -17,6 +17,9 @@ use Exception;
 use Orbit\FakeJob;
 use Log;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use ObjectSponsor;
+use SponsorCreditCard;
+use ObjectSponsorCreditCard;
 
 class ESCouponUpdateQueue
 {

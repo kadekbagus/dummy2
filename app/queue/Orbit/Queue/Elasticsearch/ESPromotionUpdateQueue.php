@@ -15,6 +15,9 @@ use Exception;
 use Log;
 use Orbit\FakeJob;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use ObjectSponsor;
+use SponsorCreditCard;
+use ObjectSponsorCreditCard;
 
 class ESPromotionUpdateQueue
 {

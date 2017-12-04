@@ -21,6 +21,9 @@ use Orbit\FakeJob;
 use Log;
 use Carbon\Carbon as Carbon;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use ObjectSponsor;
+use SponsorCreditCard;
+use ObjectSponsorCreditCard;
 
 class ESAdvertCouponUpdateQueue
 {
