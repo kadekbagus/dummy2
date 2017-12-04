@@ -386,7 +386,7 @@ class StoreListAPIController extends PubControllerAPI
             $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
 
             // sort by name or location
-            $defaultSort = array('name.raw' => array('order' => 'asc'));
+            $defaultSort = array('lowercase_name' => array('order' => 'asc'));
 
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
