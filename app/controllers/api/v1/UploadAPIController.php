@@ -11336,6 +11336,8 @@ class UploadAPIController extends ControllerAPI
             $sponsor_provider_id = OrbitInput::post('sponsor_provider_id');
             $credit_card_image_ids = OrbitInput::post('credit_card_image_ids');
             $credit_card_image_ids = (array) $credit_card_image_ids;
+            $add_credit_card = OrbitInput::post('add_credit_card');
+            $add_credit_card = (array) $add_credit_card;
             $logo = OrbitInput::files('credit_card_image');
             $messages = array(
                 'nomore.than.one' => Lang::get('validation.max.array', array(
@@ -11432,6 +11434,13 @@ class UploadAPIController extends ControllerAPI
 
             if ($this->calledFrom('sponsorprovider.update'))
             {
+                if (!empty($add_credit_card))
+                {
+                    foreach ($add_credit_card as $key => $value) {
+                        $credit_card_image_ids[] = $value;
+                    }
+                    $credit_card_image_ids = array_diff($credit_card_image_ids, array(0));
+                }
                 $arrCreditCardId = $credit_card_image_ids;
             }
 
