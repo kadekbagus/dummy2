@@ -375,7 +375,7 @@ class ESAdvertCouponUpdateQueue
                 }
 
                 $translations = array();
-                $translationBody['name_default'] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $defaultTranslation['name']));
+                $translationBody['name_default'] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", strtolower($defaultTranslation['name'])));
                 foreach ($coupon->translations as $translationCollection) {
                     $translation = array(
                         'name' => $translationCollection->promotion_name,
@@ -404,7 +404,7 @@ class ESAdvertCouponUpdateQueue
                         $couponDesc = $defaultTranslation['description'];
                     }
 
-                    $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $couponName));
+                    $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", strtolower($couponName)));
                 }
 
                 $total_view_on_gtm = 0;

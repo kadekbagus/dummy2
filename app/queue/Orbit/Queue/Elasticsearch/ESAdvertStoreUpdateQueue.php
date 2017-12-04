@@ -442,7 +442,8 @@ class ESAdvertStoreUpdateQueue
                     'mall_rating'          => $mallRating,
                     'featured_slot_gtm'     => $featuredSlotGTM,
                     'featured_slot_mall'    => $featuredSlotMall,
-                    'base_merchant_id'     => $baseMerchantId
+                    'base_merchant_id'     => $baseMerchantId,
+                    'lowercase_name'       => str_replace(" ", "_", strtolower($store[0]->name))
                 ];
 
                 if ($response_search['hits']['total'] > 0) {
