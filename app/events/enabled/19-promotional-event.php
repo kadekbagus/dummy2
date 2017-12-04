@@ -495,7 +495,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-storenotificati
                              ->with('translations.media')
                              ->first();
 
-            $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl();
+            $launchUrl = LandingPageUrlGenerator::create('promotional-event', $_news->news_id, $_news->news_name)->generateUrl();
             $attachmentPath = null;
             $attachmentRealPath = null;
             $cdnUrl = null;

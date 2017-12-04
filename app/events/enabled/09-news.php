@@ -410,7 +410,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                          ->where('news_id', '=', $news->news_id)
                          ->first();
 
-            $launchUrl = LandingPageUrlGenerator::create('news', $_news->news_id, $_news->news_name)->generateUrl();
+            $launchUrl = LandingPageUrlGenerator::create($_news->object_type , $_news->news_id, $_news->news_name)->generateUrl();
 
             $headings = new stdClass();
             $contents = new stdClass();
