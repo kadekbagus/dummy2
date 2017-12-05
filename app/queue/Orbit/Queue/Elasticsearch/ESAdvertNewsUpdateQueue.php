@@ -421,7 +421,7 @@ class ESAdvertNewsUpdateQueue
 
                 // News sponsor provider
                 // Get sponsor provider wallet
-                $sponsorProviders = ObjectSponsor::select('object_sponsor.object_sponsor_id','sponsor_providers.sponsor_provider_id','media.path','media.cdn_url')
+                $sponsorProviders = ObjectSponsor::select('object_sponsor.object_sponsor_id','sponsor_providers.sponsor_provider_id','media.path','media.cdn_url', 'object_sponsor.is_all_credit_card')
                                                 ->leftJoin('sponsor_providers','sponsor_providers.sponsor_provider_id', '=', 'object_sponsor.sponsor_provider_id')
                                                 ->leftJoin('media', function($q){
                                                         $q->on('media.object_id', '=', 'sponsor_providers.sponsor_provider_id')
@@ -431,7 +431,8 @@ class ESAdvertNewsUpdateQueue
                                                 ->where('sponsor_providers.status', 'active')
                                                 ->where('object_sponsor.object_id', $news->news_id);
 
-                $sponsorProviderWallets = $sponsorProviders->where('sponsor_providers.object_type', 'ewallet')
+                $sponsorProviderWallets = clone $sponsorProviders;
+                $sponsorProviderWallets = $sponsorProviderWallets->where('sponsor_providers.object_type', 'ewallet')
                                                             ->get();
 
                 $sponsorProviderES = array();
@@ -443,8 +444,9 @@ class ESAdvertNewsUpdateQueue
                         $ewallet['bank_id'] = null;
                         $ewallet['logo_url'] = $sponsorProviderWallet->path;
                         $ewallet['logo_cdn_url'] = $sponsorProviderWallet->cdn_url;
+
+                        $sponsorProviderES[] = $ewallet;
                     }
-                    $sponsorProviderES[] = $ewallet;
                 }
 
                 // Get sponsor provider bank
@@ -467,15 +469,16 @@ class ESAdvertNewsUpdateQueue
                         $sponsorProviderCC = $sponsorProviderCC->get();
 
                         if (!$sponsorProviderCC->isEmpty()) {
-                            $cc = array();
+                            $ccArray = array();
                             foreach ($sponsorProviderCC as $cc) {
-                                $cc['sponsor_id'] = $cc->sponsor_credit_card_id;
-                                $cc['sponsor_type'] = 'credit_card';
-                                $cc['bank_id'] = $sponsorProviderBank->sponsor_provider_id;
-                                $cc['logo_url'] = $sponsorProviderBank->path;
-                                $cc['logo_cdn_url'] = $sponsorProviderBank->cdn_url;
+                                $ccArray['sponsor_id'] = $cc->sponsor_credit_card_id;
+                                $ccArray['sponsor_type'] = 'credit_card';
+                                $ccArray['bank_id'] = $sponsorProviderBank->sponsor_provider_id;
+                                $ccArray['logo_url'] = $sponsorProviderBank->path;
+                                $ccArray['logo_cdn_url'] = $sponsorProviderBank->cdn_url;
+
+                                $sponsorProviderES[] = $ccArray;
                             }
-                            $sponsorProviderES[] = $cc;
                         }
                     }
                 }
