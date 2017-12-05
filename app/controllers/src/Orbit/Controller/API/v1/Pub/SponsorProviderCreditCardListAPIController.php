@@ -39,8 +39,6 @@ class SponsorProviderCreditCardListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $user = $this->getUser();
-
             $objectId = OrbitInput::get('object_id', null);
             $objectType = OrbitInput::get('object_type', null);
             $sponsorProviderId = OrbitInput::get('sponsor_provider_id', null);
