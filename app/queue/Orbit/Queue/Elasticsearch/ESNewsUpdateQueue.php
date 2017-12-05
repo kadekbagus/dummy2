@@ -336,8 +336,9 @@ class ESNewsUpdateQueue
                     $ewallet['bank_id'] = null;
                     $ewallet['logo_url'] = $sponsorProviderWallet->path;
                     $ewallet['logo_cdn_url'] = $sponsorProviderWallet->cdn_url;
+
+                    $sponsorProviderES[] = $ewallet;
                 }
-                $sponsorProviderES[] = $ewallet;
             }
 
             // Get sponsor provider bank
@@ -360,15 +361,16 @@ class ESNewsUpdateQueue
                     $sponsorProviderCC = $sponsorProviderCC->get();
 
                     if (!$sponsorProviderCC->isEmpty()) {
-                        $cc = array();
+                        $ccArray = array();
                         foreach ($sponsorProviderCC as $cc) {
-                            $cc['sponsor_id'] = $cc->sponsor_credit_card_id;
-                            $cc['sponsor_type'] = 'credit_card';
-                            $cc['bank_id'] = $sponsorProviderBank->sponsor_provider_id;
-                            $cc['logo_url'] = $sponsorProviderBank->path;
-                            $cc['logo_cdn_url'] = $sponsorProviderBank->cdn_url;
+                            $ccArray['sponsor_id'] = $cc->sponsor_credit_card_id;
+                            $ccArray['sponsor_type'] = 'credit_card';
+                            $ccArray['bank_id'] = $sponsorProviderBank->sponsor_provider_id;
+                            $ccArray['logo_url'] = $sponsorProviderBank->path;
+                            $ccArray['logo_cdn_url'] = $sponsorProviderBank->cdn_url;
+
+                            $sponsorProviderES[] = $ccArray;
                         }
-                        $sponsorProviderES[] = $cc;
                     }
                 }
             }
