@@ -311,10 +311,9 @@ class ESNewsUpdateQueue
                 $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $newsName));
             }
 
-
             // News sponsor provider
             // Get sponsor provider wallet
-            $sponsorProviders = ObjectSponsor::select('object_sponsor.object_sponsor_id','sponsor_providers.sponsor_provider_id','media.path','media.cdn_url')
+            $sponsorProviders = ObjectSponsor::select('object_sponsor.object_sponsor_id','sponsor_providers.sponsor_provider_id','media.path','media.cdn_url', 'object_sponsor.is_all_credit_card')
                                             ->leftJoin('sponsor_providers','sponsor_providers.sponsor_provider_id', '=', 'object_sponsor.sponsor_provider_id')
                                             ->leftJoin('media', function($q){
                                                     $q->on('media.object_id', '=', 'sponsor_providers.sponsor_provider_id')
@@ -324,7 +323,8 @@ class ESNewsUpdateQueue
                                             ->where('sponsor_providers.status', 'active')
                                             ->where('object_sponsor.object_id', $news->news_id);
 
-            $sponsorProviderWallets = $sponsorProviders->where('sponsor_providers.object_type', 'ewallet')
+            $sponsorProviderWallets = clone $sponsorProviders;
+            $sponsorProviderWallets = $sponsorProviderWallets->where('sponsor_providers.object_type', 'ewallet')
                                                         ->get();
 
             $sponsorProviderES = array();
