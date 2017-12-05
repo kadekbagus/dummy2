@@ -634,6 +634,17 @@ class SponsorProviderAPIController extends ControllerAPI
         $addCreditCard = [];
         $sponsor_provider_id = $newSponsorProvider->sponsor_provider_id;
 
+        // credit card name must be unique per bank
+        foreach ($data as $key => $creditCardData)
+        {
+            $cardName[] = $creditCardData->card_name;
+        }
+
+        if(count(array_unique($cardName))<count($cardName))
+        {
+            OrbitShopAPI::throwInvalidArgument('Credit card name must be unique');
+        }
+
         // if update
         if ($scenario === 'update')
         {
