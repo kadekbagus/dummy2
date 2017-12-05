@@ -637,7 +637,7 @@ class SponsorProviderAPIController extends ControllerAPI
         // credit card name must be unique per bank
         foreach ($data as $key => $creditCardData)
         {
-            $cardName[] = $creditCardData->card_name;
+            $cardName[] = strtolower($creditCardData->card_name);
         }
 
         if(count(array_unique($cardName))<count($cardName))
