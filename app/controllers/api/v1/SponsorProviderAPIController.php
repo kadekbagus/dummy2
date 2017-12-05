@@ -78,6 +78,9 @@ class SponsorProviderAPIController extends ControllerAPI
                 )
             );
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -130,11 +133,15 @@ class SponsorProviderAPIController extends ControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -146,12 +153,16 @@ class SponsorProviderAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
+            // Rollback the changes
+            $this->rollBack();
         } catch (Exception $e) {
             $message = $e->getMessage();
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $message;
             $this->response->data = null;
+            // Rollback the changes
+            $this->rollBack();
         }
 
         $output = $this->render($httpCode);
@@ -200,6 +211,9 @@ class SponsorProviderAPIController extends ControllerAPI
                     'status'                => 'in:active,inactive'
                 )
             );
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -269,11 +283,15 @@ class SponsorProviderAPIController extends ControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -285,12 +303,16 @@ class SponsorProviderAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
+            // Rollback the changes
+            $this->rollBack();
         } catch (Exception $e) {
             $message = $e->getMessage();
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $message;
             $this->response->data = null;
+            // Rollback the changes
+            $this->rollBack();
         }
 
         $output = $this->render($httpCode);
