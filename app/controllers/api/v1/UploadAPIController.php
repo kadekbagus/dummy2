@@ -11440,6 +11440,7 @@ class UploadAPIController extends ControllerAPI
                         $credit_card_image_ids[] = $value;
                     }
                     $credit_card_image_ids = array_diff($credit_card_image_ids, array(0));
+                    $credit_card_image_ids = array_values($credit_card_image_ids);
                 }
                 $arrCreditCardId = $credit_card_image_ids;
             }
@@ -11451,7 +11452,6 @@ class UploadAPIController extends ControllerAPI
                 'media_name_id' => 'sponsor_credit_card_image',
                 'modified_by'   => 1
             );
-
             $mediaList = $this->saveMetaDataCreditCard($object, $uploaded);
 
             // Update the `image` field which store the original path of the image
