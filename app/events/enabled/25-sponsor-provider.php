@@ -26,7 +26,7 @@ Event::listen('orbit.sponsorprovider.postnewsponsorprovider.after.save', functio
     $sponsorProvider->media = $response->data;
     $sponsorProvider->image = $response->data[0]->path;
 
-    // // queue for data amazon s3
+    // queue for data amazon s3
     // $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     // if ($usingCdn) {
@@ -39,7 +39,7 @@ Event::listen('orbit.sponsorprovider.postnewsponsorprovider.after.save', functio
     //     }
 
     //     Queue::push($queueFile, [
-    //         'object_id'     => $news->news_id,
+    //         'object_id'     => $sponsorProvider->sponsor_provider_id,
     //         'media_name_id' => $response->data['extras']->mediaNameId,
     //         'old_path'      => $response->data['extras']->oldPath,
     //         'es_type'       => $news->object_type,
