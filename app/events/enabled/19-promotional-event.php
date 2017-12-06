@@ -781,7 +781,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-storenotificati
 
                 if ($updateNotification) {
                     $storeObjectNotificationId = isset($storeObjectNotifications->data->records[0]->_id) ? $storeObjectNotifications->data->records[0]->_id : '';
-                    $bodyUpdateStoreObjectNotifation['notification'] = (object) $bodyUpdateNotification;
+                    $bodyUpdateStoreObjectNotifation['notification'] = $updateNotification->data;
                     $bodyUpdateStoreObjectNotifation['_id'] = $storeObjectNotificationId;
                     $updatepdateStoreObjectNotifation = $mongoClient->setFormParam($bodyUpdateStoreObjectNotifation)
                                                 ->setEndPoint('store-object-notifications')
@@ -860,8 +860,6 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-storenotificati
                     'notification' => $notification->data,
                     'object_id' => $_news->news_id,
                     'object_type' => $objectType,
-                    'user_ids' => json_encode($userIds),
-                    'token' => json_encode($notificationToken),
                     'status' => 'pending',
                     'start_date' => $_news->begin_date,
                     'created_at' => $dateTime
