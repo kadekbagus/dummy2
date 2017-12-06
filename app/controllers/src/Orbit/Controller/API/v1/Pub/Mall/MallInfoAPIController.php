@@ -166,10 +166,10 @@ class MallInfoAPIController extends PubControllerAPI
                     }
 
                     if ($source === 'gtm_page_views') {
-                        if (Config::get('page_view.source', 'mysql') === 'redis') {
+                        if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
                             $locationId = (! empty($mallId)) ? $mallId : 0;
                             $redisKey = 'mall' . '||' . $dt['_id'] . '||' . $locationId;
-                            $redisConnection = Config::get('page_view.redis.connection', '');
+                            $redisConnection = Config::get('orbit.page_view.redis.connection', '');
                             $redis = Redis::connection($redisConnection);
                             $areadata['total_view'] = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : 0;
                         } else {
