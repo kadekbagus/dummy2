@@ -71,8 +71,8 @@ Event::listen('orbit.sponsorprovider.postnewsponsorprovidercreditcard.after.save
     }
     unset($_POST['sponsor_provider_id']);
 
-    $sponsorProvider->setRelation('mediaCreditCard', $response->data);
-    $sponsorProvider->mediaCreditCard = $response->data;
+    //$sponsorProvider->setRelation('mediaCreditCard', $response->data);
+    //$sponsorProvider->mediaCreditCard = $response->data;
     //$sponsorProvider->image = $response->data[0]->path;
 
     // // queue for data amazon s3
@@ -170,8 +170,8 @@ Event::listen('orbit.sponsorprovider.postupdatesponsorprovidercreditcard.after.s
     }
     unset($_POST['sponsor_provider_id']);
 
-    $sponsorProvider->setRelation('mediaCreditCard', $response->data);
-    $sponsorProvider->mediaCreditCard = $response->data;
+    //$sponsorProvider->setRelation('mediaCreditCard', $response->data);
+    //$sponsorProvider->mediaCreditCard = $response->data;
     //$sponsorProvider->image = $response->data[0]->path;
 
     // // queue for data amazon s3

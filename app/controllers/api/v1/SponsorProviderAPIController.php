@@ -124,9 +124,24 @@ class SponsorProviderAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            $sponsorProviders = SponsorProvider::excludeDeleted('sponsor_providers')
+                                   ->with('media', 'translation')
+                                   ->select('sponsor_providers.*', 'countries.name as country')
+                                   ->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                                   ->where('sponsor_provider_id', '=', $newSponsorProvider->sponsor_provider_id)
+                                   ->first();
+
+            $sponsorCreditCard = SponsorCreditCard::with('media','translation')
+                                    ->where('sponsor_provider_id','=', $newSponsorProvider->sponsor_provider_id)
+                                    ->get();
+
+            $data = new stdclass();
+            $data->sponsor_provider = $sponsorProviders;
+            $data->credit_cards = $sponsorCreditCard;
+
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->data = $newSponsorProvider;
+            $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -274,9 +289,24 @@ class SponsorProviderAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            $sponsorProviders = SponsorProvider::excludeDeleted('sponsor_providers')
+                                       ->with('media', 'translation')
+                                       ->select('sponsor_providers.*', 'countries.name as country')
+                                       ->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                                       ->where('sponsor_provider_id', '=', $updatedSponsorProvider->sponsor_provider_id)
+                                       ->first();
+
+            $sponsorCreditCard = SponsorCreditCard::with('media','translation')
+                                        ->where('sponsor_provider_id','=', $updatedSponsorProvider->sponsor_provider_id)
+                                        ->get();
+
+            $data = new stdclass();
+            $data->sponsor_provider = $sponsorProviders;
+            $data->credit_cards = $sponsorCreditCard;
+
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->data = $updatedSponsorProvider;
+            $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -772,8 +802,8 @@ class SponsorProviderAPIController extends ControllerAPI
             }
         }
 
-        $newSponsorProvider->credit_cards = $creditCards;
-        $newSponsorProvider->credit_card_translations = $creditCardTranslation;
+        //$newSponsorProvider->credit_cards = $creditCards;
+        //$newSponsorProvider->credit_card_translations = $creditCardTranslation;
     }
 
 
@@ -812,7 +842,7 @@ class SponsorProviderAPIController extends ControllerAPI
             $newSponsorProviderTranslation->save();
             $dataTranslations[] = $newSponsorProviderTranslation;
         }
-        $newSponsorProvider->translations = $dataTranslations;
+        $newSponsorProvider->translation = $dataTranslations;
     }
 
     protected function registerCustomValidation()
