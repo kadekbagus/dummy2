@@ -83,7 +83,7 @@ class UserNotificationStoreCommand extends Command {
 
                 $localPath = (! empty($storeObjectNotification->notification->attachment_path)) ? $storeObjectNotification->notification->attachment_path : '';
                 $cdnPath = (! empty($storeObjectNotification->notification->cdn_url)) ? $storeObjectNotification->notification->cdn_url : '';
-                $imageUrl = $imgUrl->getImageUrl('', '');
+                $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
 
                 // send to onesignal
                 if (! empty($storeObjectNotification->notification->notification_tokens)) {
