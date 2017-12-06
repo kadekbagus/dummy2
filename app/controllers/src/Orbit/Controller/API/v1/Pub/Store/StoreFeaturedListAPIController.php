@@ -34,6 +34,7 @@ use Orbit\Controller\API\v1\Pub\Store\StoreHelper;
 use Country;
 use Orbit\Helper\Util\FollowStatusChecker;
 use Redis;
+use BaseStore;
 
 class StoreFeaturedListAPIController extends PubControllerAPI
 {
