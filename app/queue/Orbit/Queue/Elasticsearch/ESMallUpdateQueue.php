@@ -180,7 +180,8 @@ class ESMallUpdateQueue
                     'coordinates' => $geofence->area
                 ],
                 'gtm_page_views'  => $totalObjectPageViews,
-                'location_rating' => $locationRating
+                'location_rating' => $locationRating,
+                'lowercase_name'  => str_replace(" ", "_", strtolower($mall->name))
             ];
 
             if (! empty($object_partner)) {

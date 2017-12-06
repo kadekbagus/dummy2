@@ -265,7 +265,7 @@ class MallListAPIController extends PubControllerAPI
             $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
 
             // sort by name or location
-            $sort = array('name.raw' => array('order' => 'asc'));
+            $sort = array('lowercase_name' => array('order' => 'asc'));
             $defaultSort = $sort;
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;
@@ -364,10 +364,10 @@ class MallListAPIController extends PubControllerAPI
                 $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? round($dt['fields']['total_review'][0], 1) : 0;
 
                 $pageView = 0;
-                if (Config::get('page_view.source', 'mysql') === 'redis') {
+                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
                     $redisKeyGTM = 'mall' . '||' . $dt['_id'] . '||0';
                     $redisKeyMall = 'mall' . '||' . $dt['_id'] . '||' . $dt['_id'];
-                    $redisConnection = Config::get('page_view.redis.connection', '');
+                    $redisConnection = Config::get('orbit.page_view.redis.connection', '');
                     $redis = Redis::connection($redisConnection);
                     $pageViewGTM = (! empty($redis->get($redisKeyGTM))) ? $redis->get($redisKeyGTM) : 0;
                     $pageViewMall = (! empty($redis->get($redisKeyMall))) ? $redis->get($redisKeyMall) : 0;

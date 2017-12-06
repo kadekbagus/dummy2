@@ -358,7 +358,8 @@ class ESStoreUpdateQueue
                 'preferred_mall_type'  => $preferredMallType,
                 'location_rating'      => $locationRating,
                 'mall_rating'          => $mallRating,
-                'base_merchant_id'     => $baseMerchantId
+                'base_merchant_id'     => $baseMerchantId,
+                'lowercase_name'       => str_replace(" ", "_", strtolower($store[0]->name))
             ];
 
             $params['body'] = $body;

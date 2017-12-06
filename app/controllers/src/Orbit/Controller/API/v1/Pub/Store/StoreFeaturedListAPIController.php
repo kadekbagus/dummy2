@@ -33,6 +33,8 @@ use PartnerCompetitor;
 use Orbit\Controller\API\v1\Pub\Store\StoreHelper;
 use Country;
 use Orbit\Helper\Util\FollowStatusChecker;
+use Redis;
+use BaseStore;
 
 class StoreFeaturedListAPIController extends PubControllerAPI
 {
@@ -571,7 +573,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 }
             }
 
-            $defaultSort = array('name.raw' => array('order' => 'asc'));
+            $defaultSort = array('lowercase_name' => array('order' => 'asc'));
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
             $sortPage = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
 
@@ -702,6 +704,16 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
+                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
+                    $baseStore = BaseStore::where('base_store_id', $storeId)->first();
+
+                    if (! empty($baseStore)) {
+                        $redisKey = 'tenant' . '||' . $baseStore->base_merchant_id . '||' . $locationId;
+                        $redisConnection = Config::get('orbit.page_view.redis.connection', '');
+                        $redis = Redis::connection($redisConnection);
+                        $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
+                    }
+                }
                 $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];
                 $listOfRec[] = $data;
