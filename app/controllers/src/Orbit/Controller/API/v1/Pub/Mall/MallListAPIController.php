@@ -265,7 +265,7 @@ class MallListAPIController extends PubControllerAPI
             $jsonArea['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
 
             // sort by name or location
-            $sort = array('name.raw' => array('order' => 'asc'));
+            $sort = array('lowercase_name' => array('order' => 'asc'));
             $defaultSort = $sort;
             if ($sort_by === 'location' && $latitude != '' && $longitude != '') {
                 $searchFlag = $searchFlag || TRUE;

@@ -571,7 +571,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
                 }
             }
 
-            $defaultSort = array('name.raw' => array('order' => 'asc'));
+            $defaultSort = array('lowercase_name' => array('order' => 'asc'));
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
             $sortPage = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
 
