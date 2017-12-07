@@ -31,6 +31,7 @@ use Elasticsearch\ClientBuilder;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Country;
+use Redis;
 
 class CouponFeaturedListAPIController extends PubControllerAPI
 {
@@ -594,6 +595,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
                 $data['is_featured'] = false;
+                $campaignId = '';
                 foreach ($record['_source'] as $key => $value) {
                     $campaignId = $record['_source']['promotion_id'];
 
@@ -702,6 +704,12 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
+                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
+                    $redisKey = 'coupon' . '||' . $campaignId . '||' . $locationId;
+                    $redisConnection = Config::get('orbit.page_view.redis.connection', '');
+                    $redis = Redis::connection($redisConnection);
+                    $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
+                }
                 $data['page_view'] = $pageView;
                 $data['owned'] = $isOwned;
                 $data['score'] = $record['_score'];

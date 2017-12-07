@@ -34,6 +34,7 @@ use Elasticsearch\ClientBuilder;
 use Carbon\Carbon as Carbon;
 use stdClass;
 use Country;
+use Redis;
 
 class NewsFeaturedListAPIController extends PubControllerAPI
 {
@@ -600,6 +601,7 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                 $avgGeneralRating = 0;
                 $totalGeneralReviews = 0;
                 $data['is_featured'] = false;
+                $campaignId = '';
                 foreach ($record['_source'] as $key => $value) {
                     $campaignId = $record['_source']['news_id'];
 
@@ -708,6 +710,12 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                     $data['total_review'] = round($totalGeneralReviews, 1);
                 }
 
+                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
+                    $redisKey = 'news' . '||' . $campaignId . '||' . $locationId;
+                    $redisConnection = Config::get('orbit.page_view.redis.connection', '');
+                    $redis = Redis::connection($redisConnection);
+                    $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
+                }
                 $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);

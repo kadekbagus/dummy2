@@ -351,7 +351,7 @@ class ESAdvertPromotionUpdateQueue
                 }
 
                 $translations = array();
-                $translationBody['name_default'] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $defaultTranslation['name']));
+                $translationBody['name_default'] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", strtolower($defaultTranslation['name'])));
                 foreach ($news->translations as $translationCollection) {
                     $translation = array(
                         'name'          => $translationCollection->news_name,
@@ -380,7 +380,7 @@ class ESAdvertPromotionUpdateQueue
                         $newsDesc = $defaultTranslation['description'];
                     }
 
-                    $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", $newsName));
+                    $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", strtolower($newsName)));
                 }
 
                 $total_view_on_gtm = 0;

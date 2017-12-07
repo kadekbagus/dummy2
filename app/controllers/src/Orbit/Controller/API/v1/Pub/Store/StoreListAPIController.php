@@ -393,7 +393,7 @@ class StoreListAPIController extends PubControllerAPI
             $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
 
             // sort by name or location
-            $defaultSort = array('name.raw' => array('order' => 'asc'));
+            $defaultSort = array('lowercase_name' => array('order' => 'asc'));
 
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
@@ -635,12 +635,12 @@ class StoreListAPIController extends PubControllerAPI
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
-                if (Config::get('page_view.source', 'mysql') === 'redis') {
+                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
                     $baseStore = BaseStore::where('base_store_id', $storeId)->first();
 
                     if (! empty($baseStore)) {
                         $redisKey = 'tenant' . '||' . $baseStore->base_merchant_id . '||' . $locationId;
-                        $redisConnection = Config::get('page_view.redis.connection', '');
+                        $redisConnection = Config::get('orbit.page_view.redis.connection', '');
                         $redis = Redis::connection($redisConnection);
                         $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
                     }

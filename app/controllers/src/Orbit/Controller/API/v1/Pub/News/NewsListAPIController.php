@@ -636,9 +636,9 @@ class NewsListAPIController extends PubControllerAPI
                     $data['total_review'] = round($totalGeneralReviews, 1);
                 }
 
-                if (Config::get('page_view.source', 'mysql') === 'redis') {
+                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
                     $redisKey = 'news' . '||' . $campaignId . '||' . $locationId;
-                    $redisConnection = Config::get('page_view.redis.connection', '');
+                    $redisConnection = Config::get('orbit.page_view.redis.connection', '');
                     $redis = Redis::connection($redisConnection);
                     $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
                 }

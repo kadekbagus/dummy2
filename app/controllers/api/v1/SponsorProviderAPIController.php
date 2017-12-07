@@ -124,9 +124,24 @@ class SponsorProviderAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            $sponsorProviders = SponsorProvider::excludeDeleted('sponsor_providers')
+                                   ->with('media', 'translation')
+                                   ->select('sponsor_providers.*', 'countries.name as country')
+                                   ->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                                   ->where('sponsor_provider_id', '=', $newSponsorProvider->sponsor_provider_id)
+                                   ->first();
+
+            $sponsorCreditCard = SponsorCreditCard::with('media','translation')
+                                    ->where('sponsor_provider_id','=', $newSponsorProvider->sponsor_provider_id)
+                                    ->get();
+
+            $data = new stdclass();
+            $data->sponsor_provider = $sponsorProviders;
+            $data->credit_cards = $sponsorCreditCard;
+
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->data = $newSponsorProvider;
+            $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -274,9 +289,24 @@ class SponsorProviderAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            $sponsorProviders = SponsorProvider::excludeDeleted('sponsor_providers')
+                                       ->with('media', 'translation')
+                                       ->select('sponsor_providers.*', 'countries.name as country')
+                                       ->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                                       ->where('sponsor_provider_id', '=', $updatedSponsorProvider->sponsor_provider_id)
+                                       ->first();
+
+            $sponsorCreditCard = SponsorCreditCard::with('media','translation')
+                                        ->where('sponsor_provider_id','=', $updatedSponsorProvider->sponsor_provider_id)
+                                        ->get();
+
+            $data = new stdclass();
+            $data->sponsor_provider = $sponsorProviders;
+            $data->credit_cards = $sponsorCreditCard;
+
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->data = $updatedSponsorProvider;
+            $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -675,50 +705,62 @@ class SponsorProviderAPIController extends ControllerAPI
                     }
                 }
 
-                if ($creditCardData->sponsor_credit_card_id !== 0 && !empty($creditCardData->sponsor_credit_card_id)) {
-                    // update credit card
-                    $updateCreditCard = SponsorCreditCard::where('sponsor_credit_card_id', '=', $creditCardData->sponsor_credit_card_id)->first();
-                    $updateCreditCard->name = $creditCardData->card_name;
-                    $updateCreditCard->description = $defaultDescription;
-                    $updateCreditCard->save();
-                    $creditCards[] = $updateCreditCard;
+                // if flag as delete
+                if (isset($creditCardData->delete) && $creditCardData->delete==='Y') {
+                    if ($creditCardData->sponsor_credit_card_id !== 0 && !empty($creditCardData->sponsor_credit_card_id)) {
+                        $deleteCreditCard = SponsorCreditCard::where('sponsor_credit_card_id', '=', $creditCardData->sponsor_credit_card_id);
+                        $deleteCreditCard->delete();
 
-                    // save new credit card translation
-                    if (!empty ($creditCardData->description)) {
-                        foreach ($creditCardData->description as $key => $value) {
-                            $newCreditCardTranslation = new SponsorCreditCardTranslation();
-                            $newCreditCardTranslation->sponsor_credit_card_id = $updateCreditCard->sponsor_credit_card_id;
-                            $newCreditCardTranslation->language_id = $key;
-                            $newCreditCardTranslation->description = $value->description;
-                            $newCreditCardTranslation->save();
-                            $creditCardTranslation[] = $newCreditCardTranslation;
-                        }
+                        $deleteMedia = Media::where('object_id', '=', $creditCardData->sponsor_credit_card_id)
+                                            ->where('object_name', '=', 'sponsor_credit_card')
+                                            ->where('media_name_id', '=', 'sponsor_credit_card_image');
+                        $deleteMedia->delete();
                     }
-                } else if ($creditCardData->sponsor_credit_card_id === 0) {
-                    // save credit card
-                    $newCreditCard = new SponsorCreditCard();
-                    $newCreditCard->name = $creditCardData->card_name;
-                    $newCreditCard->description = $defaultDescription;
-                    $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
-                    $newCreditCard->status = 'active';
-                    $newCreditCard->save();
-                    $creditCards[] = $newCreditCard;
-                    $addCreditCard[] = $newCreditCard->sponsor_credit_card_id;
+                } else {
+                    // if update
+                    if ($creditCardData->sponsor_credit_card_id !== 0 && !empty($creditCardData->sponsor_credit_card_id)) {
+                        // update credit card
+                        $updateCreditCard = SponsorCreditCard::where('sponsor_credit_card_id', '=', $creditCardData->sponsor_credit_card_id)->first();
+                        $updateCreditCard->name = $creditCardData->card_name;
+                        $updateCreditCard->description = $defaultDescription;
+                        $updateCreditCard->save();
+                        $creditCards[] = $updateCreditCard;
+                        // save new credit card translation
+                        if (!empty ($creditCardData->description)) {
+                            foreach ($creditCardData->description as $key => $value) {
+                                $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                                $newCreditCardTranslation->sponsor_credit_card_id = $updateCreditCard->sponsor_credit_card_id;
+                                $newCreditCardTranslation->language_id = $key;
+                                $newCreditCardTranslation->description = $value->description;
+                                $newCreditCardTranslation->save();
+                                $creditCardTranslation[] = $newCreditCardTranslation;
+                            }
+                        }
+                    } else if ($creditCardData->sponsor_credit_card_id === 0) {
+                        // save credit card
+                        $newCreditCard = new SponsorCreditCard();
+                        $newCreditCard->name = $creditCardData->card_name;
+                        $newCreditCard->description = $defaultDescription;
+                        $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
+                        $newCreditCard->status = 'active';
+                        $newCreditCard->save();
+                        $creditCards[] = $newCreditCard;
+                        $addCreditCard[] = $newCreditCard->sponsor_credit_card_id;
 
-                    // save credit card translation
-                    if (!empty ($creditCardData->description)) {
-                        foreach ($creditCardData->description as $key => $value) {
-                            $newCreditCardTranslation = new SponsorCreditCardTranslation();
-                            $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
-                            $newCreditCardTranslation->language_id = $key;
-                            $newCreditCardTranslation->description = $value->description;
-                            $newCreditCardTranslation->save();
-                            $creditCardTranslation[] = $newCreditCardTranslation;
+                        // save credit card translation
+                        if (!empty ($creditCardData->description)) {
+                            foreach ($creditCardData->description as $key => $value) {
+                                $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                                $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
+                                $newCreditCardTranslation->language_id = $key;
+                                $newCreditCardTranslation->description = $value->description;
+                                $newCreditCardTranslation->save();
+                                $creditCardTranslation[] = $newCreditCardTranslation;
+                            }
                         }
                     }
                 }
             }
-
             if (!empty($addCreditCard)) {
                 $_POST['add_credit_card'] = $addCreditCard;
             }
@@ -760,8 +802,8 @@ class SponsorProviderAPIController extends ControllerAPI
             }
         }
 
-        $newSponsorProvider->credit_cards = $creditCards;
-        $newSponsorProvider->credit_card_translations = $creditCardTranslation;
+        //$newSponsorProvider->credit_cards = $creditCards;
+        //$newSponsorProvider->credit_card_translations = $creditCardTranslation;
     }
 
 
@@ -800,7 +842,7 @@ class SponsorProviderAPIController extends ControllerAPI
             $newSponsorProviderTranslation->save();
             $dataTranslations[] = $newSponsorProviderTranslation;
         }
-        $newSponsorProvider->translations = $dataTranslations;
+        $newSponsorProvider->translation = $dataTranslations;
     }
 
     protected function registerCustomValidation()
