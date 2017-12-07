@@ -75,7 +75,11 @@ class UserNotificationStoreCommand extends Command {
                 }
 
                 $langCampaign = $campaign->select(DB::raw('default_languages.name as default_language_name'))->first();
-                $defaultLangName = $langCampaign->default_language_name;
+
+                $defaultLangName = 'id';
+                if (! empty($langCampaign)) {
+                    $defaultLangName = $langCampaign->default_language_name;
+                }
 
                 // Get image url
                 $cdnConfig = Config::get('orbit.cdn');
@@ -83,7 +87,7 @@ class UserNotificationStoreCommand extends Command {
 
                 $localPath = (! empty($storeObjectNotification->notification->attachment_path)) ? $storeObjectNotification->notification->attachment_path : '';
                 $cdnPath = (! empty($storeObjectNotification->notification->cdn_url)) ? $storeObjectNotification->notification->cdn_url : '';
-                $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
+                $imageUrl = $imgUrl->getImageUrl($localPath, '');
 
                 // send to onesignal
                 if (! empty($storeObjectNotification->notification->notification_tokens)) {
