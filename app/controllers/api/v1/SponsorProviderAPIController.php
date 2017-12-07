@@ -78,6 +78,9 @@ class SponsorProviderAPIController extends ControllerAPI
                 )
             );
 
+            // Begin database transaction
+            $this->beginTransaction();
+
             // Run the validation
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
@@ -121,20 +124,39 @@ class SponsorProviderAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            $sponsorProviders = SponsorProvider::excludeDeleted('sponsor_providers')
+                                   ->with('media', 'translation')
+                                   ->select('sponsor_providers.*', 'countries.name as country')
+                                   ->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                                   ->where('sponsor_provider_id', '=', $newSponsorProvider->sponsor_provider_id)
+                                   ->first();
+
+            $sponsorCreditCard = SponsorCreditCard::with('media','translation')
+                                    ->where('sponsor_provider_id','=', $newSponsorProvider->sponsor_provider_id)
+                                    ->get();
+
+            $data = new stdclass();
+            $data->sponsor_provider = $sponsorProviders;
+            $data->credit_cards = $sponsorCreditCard;
+
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->data = $newSponsorProvider;
+            $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -146,12 +168,16 @@ class SponsorProviderAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
+            // Rollback the changes
+            $this->rollBack();
         } catch (Exception $e) {
             $message = $e->getMessage();
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $message;
             $this->response->data = null;
+            // Rollback the changes
+            $this->rollBack();
         }
 
         $output = $this->render($httpCode);
@@ -200,6 +226,9 @@ class SponsorProviderAPIController extends ControllerAPI
                     'status'                => 'in:active,inactive'
                 )
             );
+
+            // Begin database transaction
+            $this->beginTransaction();
 
             // Run the validation
             if ($validator->fails()) {
@@ -260,20 +289,39 @@ class SponsorProviderAPIController extends ControllerAPI
             // Commit the changes
             $this->commit();
 
+            $sponsorProviders = SponsorProvider::excludeDeleted('sponsor_providers')
+                                       ->with('media', 'translation')
+                                       ->select('sponsor_providers.*', 'countries.name as country')
+                                       ->leftJoin('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                                       ->where('sponsor_provider_id', '=', $updatedSponsorProvider->sponsor_provider_id)
+                                       ->first();
+
+            $sponsorCreditCard = SponsorCreditCard::with('media','translation')
+                                        ->where('sponsor_provider_id','=', $updatedSponsorProvider->sponsor_provider_id)
+                                        ->get();
+
+            $data = new stdclass();
+            $data->sponsor_provider = $sponsorProviders;
+            $data->credit_cards = $sponsorCreditCard;
+
             $this->response->code = 0;
             $this->response->status = 'success';
-            $this->response->data = $updatedSponsorProvider;
+            $this->response->data = $data;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $httpCode = 403;
+            // Rollback the changes
+            $this->rollBack();
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
@@ -285,12 +333,16 @@ class SponsorProviderAPIController extends ControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
+            // Rollback the changes
+            $this->rollBack();
         } catch (Exception $e) {
             $message = $e->getMessage();
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $message;
             $this->response->data = null;
+            // Rollback the changes
+            $this->rollBack();
         }
 
         $output = $this->render($httpCode);
@@ -364,8 +416,8 @@ class SponsorProviderAPIController extends ControllerAPI
 
             // Filter sponsor provider by Ids
             OrbitInput::get('sponsor_provider_ids', function ($sponsorProviderIds) use ($sponsorProviders) {
-                $sponsorProviderIds = (array)$sponsorProviderIds;
-                $sponsorProviders->where('sponsor_providers.sponsor_provider_id', $sponsorProviderIds);
+                $sponsorProviderIds = (array) $sponsorProviderIds;
+                $sponsorProviders->whereIn('sponsor_providers.sponsor_provider_id', $sponsorProviderIds);
             });
 
             // Filter sponsor provider by name
@@ -380,7 +432,8 @@ class SponsorProviderAPIController extends ControllerAPI
 
             // Filter sponsor provider by status
             OrbitInput::get('status', function ($status) use ($sponsorProviders) {
-                $sponsorProviders->where('sponsor_providers.status', $status);
+                $status = (array) $status;
+                $sponsorProviders->whereIn('sponsor_providers.status', $status);
             });
 
             // Add new relation based on request
@@ -605,67 +658,152 @@ class SponsorProviderAPIController extends ControllerAPI
             OrbitShopAPI::throwInvalidArgument('Credit Card JSON format not valid');
         }
 
-        $sponsor_provider_id = $newSponsorProvider->sponsor_provider_id;
-
-        // if update delete the old data first
-        if ($scenario === 'update')
-        {
-            $oldCreditCardData = SponsorCreditCard::select('sponsor_credit_card_id')
-                                                ->where('sponsor_provider_id', '=', $sponsor_provider_id)
-                                                ->get();
-            $arrCreditCardId = [];
-            if (!empty($oldCreditCardData)) {
-                foreach ($oldCreditCardData as $key => $value) {
-                    $arrCreditCardId[] = $oldCreditCardData[$key]['sponsor_credit_card_id'];
-                }
-
-                foreach ($arrCreditCardId as $key => $value) {
-                    $oldCreditCardTranslation = SponsorCreditCardTranslation::where('sponsor_credit_card_id', $value);
-                    $oldCreditCardTranslation->delete();
-                }
-
-                $oldCreditCard = SponsorCreditCard::where('sponsor_provider_id', '=', $sponsor_provider_id);
-                $oldCreditCard->delete();
-            }
-        }
-
         $creditCards = [];
         $creditCardTranslation = [];
         $defaultDescription = null;
+        $addCreditCard = [];
+        $sponsor_provider_id = $newSponsorProvider->sponsor_provider_id;
+
+        // credit card name must be unique per bank
         foreach ($data as $key => $creditCardData)
         {
-            // find description for default language
-            if (!empty ($creditCardData->description)) {
-                foreach ($creditCardData->description as $key => $value) {
-                    if ($key === $defaultLanguageId) {
-                        $defaultDescription = $value->description;
+            $cardName[] = strtolower($creditCardData->card_name);
+        }
+
+        if(count(array_unique($cardName))<count($cardName))
+        {
+            OrbitShopAPI::throwInvalidArgument('Credit card name must be unique');
+        }
+
+        // if update
+        if ($scenario === 'update')
+        {
+            // delete the old translation
+            $oldCreditCardData = SponsorCreditCard::select('sponsor_credit_card_id')
+                                                ->where('sponsor_provider_id', '=', $sponsor_provider_id)
+                                                ->get();
+            $oldCreditCardId = [];
+            if (!empty($oldCreditCardData)) {
+                foreach ($oldCreditCardData as $key => $value) {
+                    $oldCreditCardId[] = $oldCreditCardData[$key]['sponsor_credit_card_id'];
+                }
+
+                foreach ($oldCreditCardId as $key => $value) {
+                    $oldCreditCardTranslation = SponsorCreditCardTranslation::where('sponsor_credit_card_id', $value);
+                    $oldCreditCardTranslation->delete();
+                }
+            }
+
+            foreach ($data as $key => $creditCardData)
+            {
+                // find description for default language
+                if (!empty ($creditCardData->description)) {
+                    foreach ($creditCardData->description as $key => $value) {
+                        if ($key === $defaultLanguageId) {
+                            $defaultDescription = $value->description;
+                        }
+                    }
+                }
+
+                // if flag as delete
+                if (isset($creditCardData->delete) && $creditCardData->delete==='Y') {
+                    if ($creditCardData->sponsor_credit_card_id !== 0 && !empty($creditCardData->sponsor_credit_card_id)) {
+                        $deleteCreditCard = SponsorCreditCard::where('sponsor_credit_card_id', '=', $creditCardData->sponsor_credit_card_id);
+                        $deleteCreditCard->delete();
+
+                        $deleteMedia = Media::where('object_id', '=', $creditCardData->sponsor_credit_card_id)
+                                            ->where('object_name', '=', 'sponsor_credit_card')
+                                            ->where('media_name_id', '=', 'sponsor_credit_card_image');
+                        $deleteMedia->delete();
+                    }
+                } else {
+                    // if update
+                    if ($creditCardData->sponsor_credit_card_id !== 0 && !empty($creditCardData->sponsor_credit_card_id)) {
+                        // update credit card
+                        $updateCreditCard = SponsorCreditCard::where('sponsor_credit_card_id', '=', $creditCardData->sponsor_credit_card_id)->first();
+                        $updateCreditCard->name = $creditCardData->card_name;
+                        $updateCreditCard->description = $defaultDescription;
+                        $updateCreditCard->save();
+                        $creditCards[] = $updateCreditCard;
+                        // save new credit card translation
+                        if (!empty ($creditCardData->description)) {
+                            foreach ($creditCardData->description as $key => $value) {
+                                $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                                $newCreditCardTranslation->sponsor_credit_card_id = $updateCreditCard->sponsor_credit_card_id;
+                                $newCreditCardTranslation->language_id = $key;
+                                $newCreditCardTranslation->description = $value->description;
+                                $newCreditCardTranslation->save();
+                                $creditCardTranslation[] = $newCreditCardTranslation;
+                            }
+                        }
+                    } else if ($creditCardData->sponsor_credit_card_id === 0) {
+                        // save credit card
+                        $newCreditCard = new SponsorCreditCard();
+                        $newCreditCard->name = $creditCardData->card_name;
+                        $newCreditCard->description = $defaultDescription;
+                        $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
+                        $newCreditCard->status = 'active';
+                        $newCreditCard->save();
+                        $creditCards[] = $newCreditCard;
+                        $addCreditCard[] = $newCreditCard->sponsor_credit_card_id;
+
+                        // save credit card translation
+                        if (!empty ($creditCardData->description)) {
+                            foreach ($creditCardData->description as $key => $value) {
+                                $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                                $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
+                                $newCreditCardTranslation->language_id = $key;
+                                $newCreditCardTranslation->description = $value->description;
+                                $newCreditCardTranslation->save();
+                                $creditCardTranslation[] = $newCreditCardTranslation;
+                            }
+                        }
                     }
                 }
             }
+            if (!empty($addCreditCard)) {
+                $_POST['add_credit_card'] = $addCreditCard;
+            }
+        }
 
-            // save credit card
-            $newCreditCard = new SponsorCreditCard();
-            $newCreditCard->name = $creditCardData->card_name;
-            $newCreditCard->description = $defaultDescription;
-            $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
-            $newCreditCard->status = 'active';
-            $newCreditCard->save();
-            $creditCards[] = $newCreditCard;
+        if ($scenario === 'create')
+        {
+            foreach ($data as $key => $creditCardData)
+            {
+                // find description for default language
+                if (!empty ($creditCardData->description)) {
+                    foreach ($creditCardData->description as $key => $value) {
+                        if ($key === $defaultLanguageId) {
+                            $defaultDescription = $value->description;
+                        }
+                    }
+                }
 
-            // save credit card translation
-            if (!empty ($creditCardData->description)) {
-                foreach ($creditCardData->description as $key => $value) {
-                    $newCreditCardTranslation = new SponsorCreditCardTranslation();
-                    $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
-                    $newCreditCardTranslation->language_id = $key;
-                    $newCreditCardTranslation->description = $value->description;
-                    $newCreditCardTranslation->save();
-                    $creditCardTranslation[] = $newCreditCardTranslation;
+                // save credit card
+                $newCreditCard = new SponsorCreditCard();
+                $newCreditCard->name = $creditCardData->card_name;
+                $newCreditCard->description = $defaultDescription;
+                $newCreditCard->sponsor_provider_id = $sponsor_provider_id;
+                $newCreditCard->status = 'active';
+                $newCreditCard->save();
+                $creditCards[] = $newCreditCard;
+
+                // save credit card translation
+                if (!empty ($creditCardData->description)) {
+                    foreach ($creditCardData->description as $key => $value) {
+                        $newCreditCardTranslation = new SponsorCreditCardTranslation();
+                        $newCreditCardTranslation->sponsor_credit_card_id = $newCreditCard->sponsor_credit_card_id;
+                        $newCreditCardTranslation->language_id = $key;
+                        $newCreditCardTranslation->description = $value->description;
+                        $newCreditCardTranslation->save();
+                        $creditCardTranslation[] = $newCreditCardTranslation;
+                    }
                 }
             }
         }
-        $newSponsorProvider->credit_cards = $creditCards;
-        $newSponsorProvider->credit_card_translations = $creditCardTranslation;
+
+        //$newSponsorProvider->credit_cards = $creditCards;
+        //$newSponsorProvider->credit_card_translations = $creditCardTranslation;
     }
 
 
@@ -704,7 +842,7 @@ class SponsorProviderAPIController extends ControllerAPI
             $newSponsorProviderTranslation->save();
             $dataTranslations[] = $newSponsorProviderTranslation;
         }
-        $newSponsorProvider->translations = $dataTranslations;
+        $newSponsorProvider->translation = $dataTranslations;
     }
 
     protected function registerCustomValidation()

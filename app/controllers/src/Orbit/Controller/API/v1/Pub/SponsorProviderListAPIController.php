@@ -36,8 +36,6 @@ class SponsorProviderListAPIController extends PubControllerAPI
     {
         $httpCode = 200;
         try {
-            $user = $this->getUser();
-
             $objectId = OrbitInput::get('object_id', null);
             $objectType = OrbitInput::get('object_type', null);
             $language = OrbitInput::get('language', 'id');

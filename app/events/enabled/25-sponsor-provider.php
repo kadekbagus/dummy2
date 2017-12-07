@@ -26,7 +26,7 @@ Event::listen('orbit.sponsorprovider.postnewsponsorprovider.after.save', functio
     $sponsorProvider->media = $response->data;
     $sponsorProvider->image = $response->data[0]->path;
 
-    // // queue for data amazon s3
+    // queue for data amazon s3
     // $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
     // if ($usingCdn) {
@@ -39,7 +39,7 @@ Event::listen('orbit.sponsorprovider.postnewsponsorprovider.after.save', functio
     //     }
 
     //     Queue::push($queueFile, [
-    //         'object_id'     => $news->news_id,
+    //         'object_id'     => $sponsorProvider->sponsor_provider_id,
     //         'media_name_id' => $response->data['extras']->mediaNameId,
     //         'old_path'      => $response->data['extras']->oldPath,
     //         'es_type'       => $news->object_type,
@@ -71,8 +71,8 @@ Event::listen('orbit.sponsorprovider.postnewsponsorprovidercreditcard.after.save
     }
     unset($_POST['sponsor_provider_id']);
 
-    $sponsorProvider->setRelation('mediaCreditCard', $response->data);
-    $sponsorProvider->mediaCreditCard = $response->data;
+    //$sponsorProvider->setRelation('mediaCreditCard', $response->data);
+    //$sponsorProvider->mediaCreditCard = $response->data;
     //$sponsorProvider->image = $response->data[0]->path;
 
     // // queue for data amazon s3
@@ -151,7 +151,8 @@ Event::listen('orbit.sponsorprovider.postupdatesponsorprovider.after.save', func
 Event::listen('orbit.sponsorprovider.postupdatesponsorprovidercreditcard.after.save', function($controller, $sponsorProvider)
 {
     $files = OrbitInput::files('credit_card_image');
-    if (! $files) {
+    $files_ids = OrbitInput::post('credit_card_image_ids');
+    if (! $files && ! $files_ids) {
         return;
     }
 
@@ -169,8 +170,8 @@ Event::listen('orbit.sponsorprovider.postupdatesponsorprovidercreditcard.after.s
     }
     unset($_POST['sponsor_provider_id']);
 
-    $sponsorProvider->setRelation('mediaCreditCard', $response->data);
-    $sponsorProvider->mediaCreditCard = $response->data;
+    //$sponsorProvider->setRelation('mediaCreditCard', $response->data);
+    //$sponsorProvider->mediaCreditCard = $response->data;
     //$sponsorProvider->image = $response->data[0]->path;
 
     // // queue for data amazon s3

@@ -14,6 +14,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use \URL;
+use Redis;
 use News;
 use Advert;
 use NewsMerchant;
@@ -507,7 +508,12 @@ class NewsListAPIController extends PubControllerAPI
                 $isHavingReward = 'N';
                 $avgGeneralRating = 0;
                 $totalGeneralReviews = 0;
+                $campaignId = '';
                 foreach ($record['_source'] as $key => $value) {
+                    if ($key === 'news_id') {
+                        $campaignId = $value;
+                    }
+
                     if ($key === 'is_having_reward') {
                         $isHavingReward = $value;
                     }
@@ -563,10 +569,6 @@ class NewsListAPIController extends PubControllerAPI
 
                     // advert type
                     if ($list_type === 'featured') {
-                        if ($key === 'news_id') {
-                            $campaignId = $value;
-                        }
-
                         if (! empty($mallId) && $key === 'featured_mall_type') {
                             $data['placement_type'] = $value;
                             $data['placement_type_orig'] = $value;
@@ -627,7 +629,14 @@ class NewsListAPIController extends PubControllerAPI
                     $data['total_review'] = round($totalGeneralReviews, 1);
                 }
 
+                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
+                    $redisKey = 'news' . '||' . $campaignId . '||' . $locationId;
+                    $redisConnection = Config::get('orbit.page_view.redis.connection', '');
+                    $redis = Redis::connection($redisConnection);
+                    $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
+                }
                 $data['page_view'] = $pageView;
+
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;

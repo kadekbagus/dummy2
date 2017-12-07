@@ -17,6 +17,8 @@ use Tenant;
 use Advert;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
+use Redis;
+use BaseStore;
 use DB;
 use Validator;
 use Language;
@@ -391,7 +393,7 @@ class StoreListAPIController extends PubControllerAPI
             $jsonQuery['script_fields'] = array('average_rating' => array('script' => $scriptFieldRating), 'total_review' => array('script' => $scriptFieldReview), 'is_follow' => array('script' => $scriptFieldFollow));
 
             // sort by name or location
-            $defaultSort = array('name.raw' => array('order' => 'asc'));
+            $defaultSort = array('lowercase_name' => array('order' => 'asc'));
 
             if ($sort_by === 'location' && $lat != '' && $lon != '') {
                 $searchFlag = $searchFlag || TRUE;
@@ -544,6 +546,9 @@ class StoreListAPIController extends PubControllerAPI
                 $data['follow_status'] = false;
                 $baseMerchantId = '';
                 foreach ($record['_source'] as $key => $value) {
+                    if ($key === 'merchant_id') {
+                        $storeId = $value;
+                    }
 
                     $localPath = ($key == 'logo') ? $value : $localPath;
                     $cdnPath = ($key == 'logo_cdn') ? $value : $cdnPath;
@@ -578,10 +583,6 @@ class StoreListAPIController extends PubControllerAPI
 
                     // advert type
                     if ($list_type === 'featured') {
-                        if ($key === 'merchant_id') {
-                            $storeId = $value;
-                        }
-
                         if (! empty($mallId) && $key === 'featured_mall_type') {
                             $data['placement_type'] = $value;
                             $data['placement_type_orig'] = $value;
@@ -634,6 +635,16 @@ class StoreListAPIController extends PubControllerAPI
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
+                if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
+                    $baseStore = BaseStore::where('base_store_id', $storeId)->first();
+
+                    if (! empty($baseStore)) {
+                        $redisKey = 'tenant' . '||' . $baseStore->base_merchant_id . '||' . $locationId;
+                        $redisConnection = Config::get('orbit.page_view.redis.connection', '');
+                        $redis = Redis::connection($redisConnection);
+                        $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
+                    }
+                }
                 $data['page_view'] = $pageView;
                 $data['score'] = $record['_score'];
                 $listOfRec[] = $data;

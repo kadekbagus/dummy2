@@ -4009,17 +4009,19 @@ class CouponAPIController extends ControllerAPI
                 $bankGotomalls = null;
                 if (! empty($bank)) {
                     // find bank gotomalls which are the same as merchant bank
-                    $bankGotomalls = BankGotomall::where('bank_id', $bank->bank_id)
-                                                 ->where('payment_provider_id', $paymentProvider)
-                                                 ->where('status', 'active')
+                    $bankGotomalls = BankGotomall::join('banks', 'banks.bank_id', '=', 'banks_gotomalls.bank_id')
+                                                 ->where('banks_gotomalls.bank_id', $bank->bank_id)
+                                                 ->where('banks_gotomalls.payment_provider_id', $paymentProvider)
+                                                 ->where('banks_gotomalls.status', 'active')
                                                  ->first();
                 }
 
                 if (! is_object($bankGotomalls)) {
                     // Falls back to 1 first active gotomalls bank
-                    $bankGotomalls = BankGotomall::where('payment_provider_id', $paymentProvider)
-                                    ->where('status', 'active')
-                                    ->first();
+                    $bankGotomalls = BankGotomall::join('banks', 'banks.bank_id', '=', 'banks_gotomalls.bank_id')
+                                                ->where('banks_gotomalls.payment_provider_id', $paymentProvider)
+                                                ->where('banks_gotomalls.status', 'active')
+                                                ->first();
                 }
 
                 if (empty($bankGotomalls)) {
@@ -4058,7 +4060,7 @@ class CouponAPIController extends ControllerAPI
                 $body['gtm_bank_id'] = $bankGotomalls->bank_id;
                 $body['gtm_bank_account_name'] = $bankGotomalls->account_name;
                 $body['gtm_bank_account_number'] = $bankGotomalls->account_number;
-                $body['gtm_bank_name'] = $bank->bank_name;
+                $body['gtm_bank_name'] = $bankGotomalls->bank_name;
                 $body['gtm_bank_swift_code'] = $bankGotomalls->swift_code;
                 $body['gtm_bank_address'] = $bankGotomalls->bank_address;
                 $body['merchant_bank_id'] = $merchantBankId;
