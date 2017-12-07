@@ -765,6 +765,7 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
         if (! empty($storeObjectNotifications->data->records)) {
             // Update name, description and image
             if ($storeObjectNotifications->data->records[0]->status === 'pending') {
+                $notificationId = isset($storeObjectNotifications->data->records[0]->notification->_id) ? $storeObjectNotifications->data->records[0]->notification->_id : '';
                 $bodyUpdateNotification['title'] = $_news->news_name;
                 $bodyUpdateNotification['launch_url'] = $launchUrl;
                 $bodyUpdateNotification['attachment_path'] = $attachmentPath;
@@ -776,14 +777,17 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
                 $bodyUpdateNotification['contents'] = $contents;
                 $bodyUpdateNotification['mime_type'] = $mimeType;
                 $bodyUpdateNotification['created_at'] = $dateTime;
-                $bodyUpdateNotification['_id'] = $storeObjectNotifications->data->records[0]->notification->_id;
+                $bodyUpdateNotification['_id'] = $notificationId;
                 $updateNotification = $mongoClient->setFormParam($bodyUpdateNotification)
                                             ->setEndPoint('notifications')
                                             ->request('PUT');
 
                 if ($updateNotification) {
+                    $notification = $mongoClient->setEndPoint('notifications/' . $notificationId)
+                                                ->request('GET');
+
                     $storeObjectNotificationId = isset($storeObjectNotifications->data->records[0]->_id) ? $storeObjectNotifications->data->records[0]->_id : '';
-                    $bodyUpdateStoreObjectNotifation['notification'] = $updateNotification->data;
+                    $bodyUpdateStoreObjectNotifation['notification'] = $notification->data;
                     $bodyUpdateStoreObjectNotifation['_id'] = $storeObjectNotificationId;
                     $updatepdateStoreObjectNotifation = $mongoClient->setFormParam($bodyUpdateStoreObjectNotifation)
                                                 ->setEndPoint('store-object-notifications')
