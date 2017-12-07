@@ -766,13 +766,13 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
             // Update name, description and image
             if ($storeObjectNotifications->data->records[0]->status === 'pending') {
                 $notificationId = isset($storeObjectNotifications->data->records[0]->notification->_id) ? $storeObjectNotifications->data->records[0]->notification->_id : '';
-                $bodyUpdateNotification['title'] = $_news->news_name;
+                $bodyUpdateNotification['title'] = $_coupon->promotion_name,
                 $bodyUpdateNotification['launch_url'] = $launchUrl;
                 $bodyUpdateNotification['attachment_path'] = $attachmentPath;
                 $bodyUpdateNotification['attachment_realpath'] = $attachmentRealPath;
                 $bodyUpdateNotification['cdn_url'] = $cdnUrl;
                 $bodyUpdateNotification['cdn_bucket_name'] = $cdnBucketName;
-                $bodyUpdateNotification['default_language'] = $_news->default_language_name;
+                $bodyUpdateNotification['default_language'] = $_coupon->default_language_name;
                 $bodyUpdateNotification['headings'] = $headings;
                 $bodyUpdateNotification['contents'] = $contents;
                 $bodyUpdateNotification['mime_type'] = $mimeType;
