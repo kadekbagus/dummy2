@@ -219,6 +219,13 @@ class PromotionFeaturedListAPIController extends PubControllerAPI
                 }
              });
 
+            OrbitInput::get('sponsor_provider_ids', function($sponsorProviderIds) use (&$jsonQuery) {
+                if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
+                    $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
+                    $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
+                }
+             });
+
             // filter by category_id
             // OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
             //     $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.promotion.category', '');
