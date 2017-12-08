@@ -64,26 +64,65 @@ class UserNotificationStoreCommand extends Command {
             foreach ($storeObjectNotifications->data->records as $key => $storeObjectNotification) {
 
                 $objectType = $storeObjectNotification->object_type;
+                $objectId = $storeObjectNotification->object_id;
+
                 if ($objectType === 'event' || $objectType === 'promotion') {
                     $campaign = News::join('campaign_account', 'campaign_account.user_id', '=', 'news.created_by')
                                      ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
-                                     ->where('news_id', '=', $storeObjectNotification->object_id);
+                                     // Get media with defaul lang
+                                     ->leftJoin('news_translations', function($q){
+                                            $q->on('news_translations.news_id', '=', 'news.news_id')
+                                              ->on('news_translations.merchant_language_id', '=', DB::raw('default_languages.language_id'))
+                                            ;
+                                        })
+                                     ->leftJoin('media', function($r){
+                                            $r->on('media.object_id', '=', 'news_translations.news_translation_id')
+                                              ->on('media.media_name_long', '=', DB::raw("'news_translation_image_orig'"));
+                                        })
+                                     ->where('news.news_id', '=', $objectId);
                 } else if ($objectType === 'coupon') {
                     $campaign = Coupon::join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                                         ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
-                                        ->where('promotions.promotion_id', '=', $storeObjectNotification->object_id);
+                                         // Get media with defaul lang
+                                         ->leftJoin('coupon_translations', function($q){
+                                                $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
+                                                  ->on('coupon_translations.merchant_language_id', '=', DB::raw('default_languages.language_id'))
+                                                ;
+                                            })
+                                         ->leftJoin('media', function($r){
+                                                $r->on('media.object_id', '=', 'coupon_translations.coupon_translation_id')
+                                                  ->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
+                                            })
+                                        ->where('promotions.promotion_id', '=', $objectId);
                 }
 
-                $langCampaign = $campaign->select(DB::raw('default_languages.name as default_language_name'))->first();
-                $defaultLangName = $langCampaign->default_language_name;
+
+                $prefix = DB::getTablePrefix();
+                $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
+                $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+                $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+                $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";
+                if ($usingCdn) {
+                    $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
+                }
+
+                $campaign = $campaign->select(
+                                DB::raw("{$image} as image_url"),
+                                DB::raw('default_languages.language_id as default_language_id'),
+                                DB::raw('default_languages.name as default_language_name')
+                            )->first();
+
+                $defaultLangName = 'id';
+                $imageUrl = '';
+                if (! empty($campaign)) {
+                    $defaultLangName = $campaign->default_language_name;
+                    $imageUrl = $campaign->image_url;
+                }
 
                 // Get image url
                 $cdnConfig = Config::get('orbit.cdn');
                 $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-
-                $localPath = (! empty($storeObjectNotification->notification->attachment_path)) ? $storeObjectNotification->notification->attachment_path : '';
-                $cdnPath = (! empty($storeObjectNotification->notification->cdn_url)) ? $storeObjectNotification->notification->cdn_url : '';
-                $imageUrl = $imgUrl->getImageUrl('', '');
 
                 // send to onesignal
                 if (! empty($storeObjectNotification->notification->notification_tokens)) {
@@ -223,4 +262,9 @@ class UserNotificationStoreCommand extends Command {
         return array();
     }
 
+
+    protected function quote($arg)
+    {
+        return DB::connection()->getPdo()->quote($arg);
+    }
 }

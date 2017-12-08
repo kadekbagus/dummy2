@@ -107,7 +107,7 @@ class SponsorProviderCreditCardListAPIController extends PubControllerAPI
                                     })
                                   ->leftJoin('media', function($q){
                                                 $q->on('media.object_id', '=', 'sponsor_credit_cards.sponsor_credit_card_id')
-                                                  ->on('media.media_name_long', '=', DB::raw('"sponsor_provider_image_orig"'));
+                                                  ->on('media.media_name_long', '=', DB::raw('"sponsor_credit_card_image_orig"'));
                                             })
                                     ->where('sponsor_credit_cards.status', 'active');
 
