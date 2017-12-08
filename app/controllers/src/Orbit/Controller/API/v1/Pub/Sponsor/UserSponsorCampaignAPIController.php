@@ -81,7 +81,7 @@ class UserSponsorCampaignAPIController extends PubControllerAPI
               }
             }
 
-            $userCreditCard = UserSponsor::select('sponsor_providers.sponsor_provider_id as bank_id')
+            $userCreditCard = UserSponsor::select('sponsor_credit_cards.sponsor_credit_card_id as credit_card_id')
                                       ->join('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'user_sponsor.sponsor_id')
                                       ->join('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'sponsor_credit_cards.sponsor_provider_id')
                                       ->where('user_sponsor.sponsor_type', 'credit_card')
@@ -92,7 +92,7 @@ class UserSponsorCampaignAPIController extends PubControllerAPI
 
             if (! $userCreditCard->isEmpty()) {
               foreach ($userCreditCard as $creditCard) {
-                $userSponsor[] = $creditCard->bank_id;
+                $userSponsor[] = $creditCard->credit_card_id;
               }
             }
 
