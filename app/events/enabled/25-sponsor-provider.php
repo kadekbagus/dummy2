@@ -27,26 +27,26 @@ Event::listen('orbit.sponsorprovider.postnewsponsorprovider.after.save', functio
     $sponsorProvider->image = $response->data[0]->path;
 
     // queue for data amazon s3
-    // $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
-    // if ($usingCdn) {
-    //     $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
-    //     $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
 
-    //     $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
-    //     if ($response->data['extras']->isUpdate) {
-    //         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
-    //     }
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
 
-    //     Queue::push($queueFile, [
-    //         'object_id'     => $sponsorProvider->sponsor_provider_id,
-    //         'media_name_id' => $response->data['extras']->mediaNameId,
-    //         'old_path'      => $response->data['extras']->oldPath,
-    //         'es_type'       => $news->object_type,
-    //         'es_id'         => $news->news_id,
-    //         'bucket_name'   => $bucketName
-    //     ], $queueName);
-    // }
+        Queue::push($queueFile, [
+            'object_id'     => $sponsorProvider->sponsor_provider_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => null,
+            'es_id'         => null,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
 });
 
 
@@ -71,31 +71,35 @@ Event::listen('orbit.sponsorprovider.postnewsponsorprovidercreditcard.after.save
     }
     unset($_POST['sponsor_provider_id']);
 
-    //$sponsorProvider->setRelation('mediaCreditCard', $response->data);
-    //$sponsorProvider->mediaCreditCard = $response->data;
-    //$sponsorProvider->image = $response->data[0]->path;
+    $sponsorProvider->setRelation('mediaCreditCard', $response->data);
+    $sponsorProvider->mediaCreditCard = $response->data;
+    $sponsorProvider->image = $response->data[0]->path;
 
-    // // queue for data amazon s3
-    // $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
-    // if ($usingCdn) {
-    //     $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
-    //     $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
 
-    //     $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
-    //     if ($response->data['extras']->isUpdate) {
-    //         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
-    //     }
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
 
-    //     Queue::push($queueFile, [
-    //         'object_id'     => $news->news_id,
-    //         'media_name_id' => $response->data['extras']->mediaNameId,
-    //         'old_path'      => $response->data['extras']->oldPath,
-    //         'es_type'       => $news->object_type,
-    //         'es_id'         => $news->news_id,
-    //         'bucket_name'   => $bucketName
-    //     ], $queueName);
-    // }
+        if (!empty($response->data['extras']->oldPath)) {
+            foreach ($response->data['extras']->oldPath as $key => $value) {
+                Queue::push($queueFile, [
+                    'object_id'     => $response->data['extras']->oldPath[$key]['object_id'],
+                    'media_name_id' => $response->data['extras']->mediaNameId,
+                    'old_path'      => $response->data['extras']->oldPath[$key],
+                    'es_type'       => null,
+                    'es_id'         => null,
+                    'bucket_name'   => $bucketName
+                ], $queueName);
+            }
+        }
+    }
 });
 
 
@@ -124,27 +128,27 @@ Event::listen('orbit.sponsorprovider.postupdatesponsorprovider.after.save', func
     $sponsorProvider->media = $response->data;
     $sponsorProvider->image = $response->data[0]->path;
 
-    // // queue for data amazon s3
-    // $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
-    // if ($usingCdn) {
-    //     $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
-    //     $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
 
-    //     $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
-    //     if ($response->data['extras']->isUpdate) {
-    //         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
-    //     }
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
 
-    //     Queue::push($queueFile, [
-    //         'object_id'     => $news->news_id,
-    //         'media_name_id' => $response->data['extras']->mediaNameId,
-    //         'old_path'      => $response->data['extras']->oldPath,
-    //         'es_type'       => $news->object_type,
-    //         'es_id'         => $news->news_id,
-    //         'bucket_name'   => $bucketName
-    //     ], $queueName);
-    // }
+        Queue::push($queueFile, [
+            'object_id'     => $sponsorProvider->sponsor_provider_id,
+            'media_name_id' => $response->data['extras']->mediaNameId,
+            'old_path'      => $response->data['extras']->oldPath,
+            'es_type'       => null,
+            'es_id'         => null,
+            'bucket_name'   => $bucketName
+        ], $queueName);
+    }
 });
 
 
@@ -170,29 +174,33 @@ Event::listen('orbit.sponsorprovider.postupdatesponsorprovidercreditcard.after.s
     }
     unset($_POST['sponsor_provider_id']);
 
-    //$sponsorProvider->setRelation('mediaCreditCard', $response->data);
-    //$sponsorProvider->mediaCreditCard = $response->data;
-    //$sponsorProvider->image = $response->data[0]->path;
+    $sponsorProvider->setRelation('mediaCreditCard', $response->data);
+    $sponsorProvider->mediaCreditCard = $response->data;
+    $sponsorProvider->image = $response->data[0]->path;
 
-    // // queue for data amazon s3
-    // $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
+    // queue for data amazon s3
+    $usingCdn = Config::get('orbit.cdn.upload_to_cdn', false);
 
-    // if ($usingCdn) {
-    //     $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
-    //     $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
+    if ($usingCdn) {
+        $bucketName = Config::get('orbit.cdn.providers.S3.bucket_name', '');
+        $queueName = Config::get('orbit.cdn.queue_name', 'cdn_upload');
 
-    //     $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
-    //     if ($response->data['extras']->isUpdate) {
-    //         $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
-    //     }
+        $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadNewQueue';
+        if ($response->data['extras']->isUpdate) {
+            $queueFile = 'Orbit\\Queue\\CdnUpload\\CdnUploadUpdateQueue';
+        }
 
-    //     Queue::push($queueFile, [
-    //         'object_id'     => $news->news_id,
-    //         'media_name_id' => $response->data['extras']->mediaNameId,
-    //         'old_path'      => $response->data['extras']->oldPath,
-    //         'es_type'       => $news->object_type,
-    //         'es_id'         => $news->news_id,
-    //         'bucket_name'   => $bucketName
-    //     ], $queueName);
-    // }
+        if (!empty($response->data['extras']->oldPath)) {
+            foreach ($response->data['extras']->oldPath as $key => $value) {
+                Queue::push($queueFile, [
+                    'object_id'     => $response->data['extras']->oldPath[$key]['object_id'],
+                    'media_name_id' => $response->data['extras']->mediaNameId,
+                    'old_path'      => $response->data['extras']->oldPath[$key],
+                    'es_type'       => null,
+                    'es_id'         => null,
+                    'bucket_name'   => $bucketName
+                ], $queueName);
+            }
+        }
+    }
 });
