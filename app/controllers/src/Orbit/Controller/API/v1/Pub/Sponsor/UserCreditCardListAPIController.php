@@ -82,7 +82,7 @@ class UserCreditCardListAPIController extends PubControllerAPI
                                         })
                                       ->leftJoin('media as credit_card_media', function ($q) use ($prefix){
                                             $q->on(DB::raw("credit_card_media.object_id"), '=', 'sponsor_credit_cards.sponsor_credit_card_id')
-                                              ->on(DB::raw("credit_card_media.media_name_long"), '=', DB::raw("'sponsor_provider_image_orig'"));
+                                              ->on(DB::raw("credit_card_media.media_name_long"), '=', DB::raw("'sponsor_credit_card_image_orig'"));
                                         })
                                       ->where('user_sponsor.sponsor_type', 'credit_card')
                                       ->where('sponsor_credit_cards.status', 'active')
