@@ -471,7 +471,9 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-mallnotificatio
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                         ->where('news.news_id', $news->news_id)
-                        ->groupBy('mall_id')
+                        ->groupBy(DB::raw("CASE WHEN {$prefix}merchants.object_type ='tenant'
+                                            THEN {$prefix}merchants.parent_id
+                                            ELSE {$prefix}merchants.merchant_id END"))
                         ->get();
 
         if (!empty($malls))
