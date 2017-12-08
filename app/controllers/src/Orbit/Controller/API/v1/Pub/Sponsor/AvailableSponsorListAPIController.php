@@ -84,7 +84,7 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                 $sponsor = SponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id as sponsor_id', 'sponsor_providers.name', DB::raw("({$image}) as image_url"))
                                             ->leftJoin('media', function ($q) use ($prefix){
                                                 $q->on('media.object_id', '=', 'sponsor_credit_cards.sponsor_credit_card_id')
-                                                  ->on('media.media_name_long', '=', DB::raw("'sponsor_provider_image_orig'"));
+                                                  ->on('media.media_name_long', '=', DB::raw("'sponsor_credit_card_image_orig'"));
                                             })
                                             ->where('sponsor_credit_cards.sponsor_provider_id', $bankId)
                                             ->where('sponsor_credit_cards.status', 'active')
@@ -234,7 +234,7 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                 $creditCards = SponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id as credit_card_id', 'sponsor_credit_cards.name', DB::raw("({$image}) as image_url"))
                                             ->leftJoin('media', function ($q) use ($prefix){
                                                 $q->on('media.object_id', '=', 'sponsor_credit_cards.sponsor_credit_card_id')
-                                                  ->on('media.media_name_long', '=', DB::raw("'sponsor_provider_image_orig'"));
+                                                  ->on('media.media_name_long', '=', DB::raw("'sponsor_credit_card_image_orig'"));
                                             })
                                             ->where('sponsor_credit_cards.sponsor_provider_id', $bank->bank_id)
                                             ->where('sponsor_credit_cards.status', 'active')
