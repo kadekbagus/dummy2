@@ -115,3 +115,13 @@ Route::post('/api/v1/pub/user-sponsor/update', function()
 });
 
 Route::post('/app/v1/pub/user-sponsor/update', ['as' => 'pub-user-sponsor-update', 'uses' => 'IntermediatePubAuthController@Sponsor\UserSponsorUpdate_postUserSponsor']);
+
+/**
+ * get total campaign that link to user sponsor
+ */
+Route::get('/api/v1/pub/user-sponsor/campaign', function()
+{
+    return Orbit\Controller\API\v1\Pub\Sponsor\UserSponsorCampaignAPIController::create()->getUserSponsorCampaign();
+});
+
+Route::get('/app/v1/pub/user-sponsor/campaign', ['as' => 'pub-user-sponsor-campaign', 'uses' => 'IntermediatePubAuthController@Sponsor\UserSponsorCampaign_getUserSponsorCampaign']);
