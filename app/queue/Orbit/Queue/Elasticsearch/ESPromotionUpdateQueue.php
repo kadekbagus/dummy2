@@ -289,7 +289,8 @@ class ESPromotionUpdateQueue
                     $total_view_on_gtm = $total_page_view->total_view;
                 }
             }
-            // Config image
+
+            // Get url prefix
             $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
             $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 

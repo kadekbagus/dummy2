@@ -397,7 +397,7 @@ class ESAdvertPromotionUpdateQueue
                     }
                 }
 
-                // Config image
+                // Get url prefix
                 $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
                 $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
