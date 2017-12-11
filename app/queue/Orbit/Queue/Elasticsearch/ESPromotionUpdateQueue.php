@@ -289,6 +289,9 @@ class ESPromotionUpdateQueue
                     $total_view_on_gtm = $total_page_view->total_view;
                 }
             }
+            // Config image
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
             // promotion sponsor provider
             // Get sponsor provider wallet
@@ -310,19 +313,21 @@ class ESPromotionUpdateQueue
             if (!$sponsorProviderWallets->isEmpty()){
                 $ewallet = array();
                 foreach ($sponsorProviderWallets as $sponsorProviderWallet) {
+                    $logoUrl = $sponsorProviderWallet->path;
+                    $logoCdnUrl = $sponsorProviderWallet->cdn_url;
+                    if ($logoCdnUrl === null && $logoUrl != null) {
+                        $logoCdnUrl = $urlPrefix . $logoUrl;
+                    }
+
                     $ewallet['sponsor_id'] = $sponsorProviderWallet->sponsor_provider_id;
                     $ewallet['sponsor_type'] = 'ewallet';
                     $ewallet['bank_id'] = null;
-                    $ewallet['logo_url'] = $sponsorProviderWallet->path;
-                    $ewallet['logo_cdn_url'] = $sponsorProviderWallet->cdn_url;
+                    $ewallet['logo_url'] = $logoUrl;
+                    $ewallet['logo_cdn_url'] = $logoCdnUrl;
 
                     $sponsorProviderES[] = $ewallet;
                 }
             }
-
-            // Config image
-            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
-            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
 
             // Get sponsor provider bank
             $sponsorProviderBanks = $sponsorProviders->where('sponsor_providers.object_type', 'bank')
@@ -346,18 +351,17 @@ class ESPromotionUpdateQueue
                     if (!$sponsorProviderCC->isEmpty()) {
                         $ccArray = array();
                         foreach ($sponsorProviderCC as $cc) {
-
-                            $cdnUrl = $sponsorProviderBank->cdn_url;
                             $logoUrl = $sponsorProviderBank->path;
-                            if ($cdnUrl === null && $logoUrl != null) {
-                                $cdnUrl = $urlPrefix . $logoUrl;
+                            $logoCdnUrl = $sponsorProviderBank->cdn_url;
+                            if ($logoCdnUrl === null && $logoUrl != null) {
+                                $logoCdnUrl = $urlPrefix . $logoUrl;
                             }
 
                             $ccArray['sponsor_id'] = $cc->sponsor_credit_card_id;
                             $ccArray['sponsor_type'] = 'credit_card';
                             $ccArray['bank_id'] = $sponsorProviderBank->sponsor_provider_id;
                             $ccArray['logo_url'] = $logoUrl;
-                            $ccArray['logo_cdn_url'] = $cdnUrl;
+                            $ccArray['logo_cdn_url'] = $logoCdnUrl;
 
                             $sponsorProviderES[] = $ccArray;
                         }
