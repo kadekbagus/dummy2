@@ -46,8 +46,6 @@ class UserNotificationMallCommand extends Command {
         $contents = null;
         $newUrl = null;
         $imageUrl = null;
-        $userIds = null;
-        $notificationTokens = null;
         $mongoNotifId = null;
         $attachmentPath = null;
         $cdnUrl = null;
@@ -68,6 +66,10 @@ class UserNotificationMallCommand extends Command {
         {
             foreach ($mallObjectNotifications->data->records as $key => $mallObjectNotification)
             {
+                $user_ids = null;
+                $userIds = null;
+                $notification_token = null;
+                $notificationTokens = null;
                 $mallId = $mallObjectNotification->mall_id;
                 $mallObjectNotificationId = $mallObjectNotification->_id;
                 $mall = Mall::excludeDeleted('merchants')
@@ -88,7 +90,7 @@ class UserNotificationMallCommand extends Command {
                         foreach ($userFollow->data->records as $key => $value) {
                             $user_ids[] = $value->user_id;
                         }
-                        $userIds = array_unique($user_ids);
+                        $userIds = array_values(array_unique($user_ids));
                     }
 
                     // Get notification tokens
