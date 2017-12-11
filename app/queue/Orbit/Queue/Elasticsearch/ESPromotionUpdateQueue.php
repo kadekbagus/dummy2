@@ -320,6 +320,10 @@ class ESPromotionUpdateQueue
                 }
             }
 
+            // Config image
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
             // Get sponsor provider bank
             $sponsorProviderBanks = $sponsorProviders->where('sponsor_providers.object_type', 'bank')
                                                      ->get();
@@ -342,11 +346,18 @@ class ESPromotionUpdateQueue
                     if (!$sponsorProviderCC->isEmpty()) {
                         $ccArray = array();
                         foreach ($sponsorProviderCC as $cc) {
+
+                            $cdnUrl = $sponsorProviderBank->cdn_url;
+                            $logoUrl = $sponsorProviderBank->path;
+                            if ($cdnUrl === null && $logoUrl != null) {
+                                $cdnUrl = $urlPrefix . $logoUrl;
+                            }
+
                             $ccArray['sponsor_id'] = $cc->sponsor_credit_card_id;
                             $ccArray['sponsor_type'] = 'credit_card';
                             $ccArray['bank_id'] = $sponsorProviderBank->sponsor_provider_id;
-                            $ccArray['logo_url'] = $sponsorProviderBank->path;
-                            $ccArray['logo_cdn_url'] = $sponsorProviderBank->cdn_url;
+                            $ccArray['logo_url'] = $logoUrl;
+                            $ccArray['logo_cdn_url'] = $cdnUrl;
 
                             $sponsorProviderES[] = $ccArray;
                         }
