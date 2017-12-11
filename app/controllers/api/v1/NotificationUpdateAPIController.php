@@ -199,13 +199,12 @@ class NotificationUpdateAPIController extends ControllerAPI
 
                 $localPath = "";
                 $cdnPath = "";
-                if ($files) {
-                    $cdnConfig = Config::get('orbit.cdn');
-                    $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-                    $localPath = $notif->data->attachment_path;
-                    $cdnPath = $notif->data->cdn_url;
-                    $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
-                }
+
+                $cdnConfig = Config::get('orbit.cdn');
+                $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+                $localPath = $notif->data->attachment_path;
+                $cdnPath = $notif->data->cdn_url;
+                $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
 
                 // send to onesignal
                 if (! empty($notificationTokens)) {
@@ -243,7 +242,7 @@ class NotificationUpdateAPIController extends ControllerAPI
                             'is_viewed'     => false,
                             'is_read'       => false,
                             'created_at'    => $dateTime,
-                            'image_url'     => $imageUrl
+                            'image_url'     => $imageUrl,
                         ];
 
                         $inApps = $mongoClient->setFormParam($bodyInApps)
