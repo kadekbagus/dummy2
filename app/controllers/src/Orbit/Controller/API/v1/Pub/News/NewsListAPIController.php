@@ -104,6 +104,7 @@ class NewsListAPIController extends PubControllerAPI
             $withCache = TRUE;
             $partnerToken = OrbitInput::get('token', null);
             $viewType = OrbitInput::get('view_type', 'grid');
+            $myCCFilter = OrbitInput::get('my_cc_filter', false);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -222,12 +223,55 @@ class NewsListAPIController extends PubControllerAPI
                 }
              });
 
-            OrbitInput::get('sponsor_provider_ids', function($sponsorProviderIds) use (&$jsonQuery) {
-                if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
-                    $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
-                    $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
+            // Filter by my credit card or choose manually
+            if ($myCCFilter) {
+                $role = $user->role->role_name;
+                if (strtolower($role) === 'consumer') {
+                    $userId = $user->user_id;
+                    $sponsorProviderIds = array();
+
+                    // get user ewallet
+                    $userEwallet = UserSponsor::select('sponsor_providers.sponsor_provider_id as ewallet_id')
+                                              ->join('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'user_sponsor.sponsor_id')
+                                              ->where('user_sponsor.sponsor_type', 'ewallet')
+                                              ->where('sponsor_providers.status', 'active')
+                                              ->where('user_sponsor.user_id', $userId)
+                                              ->get();
+
+                    if (! $userEwallet->isEmpty()) {
+                      foreach ($userEwallet as $ewallet) {
+                        $sponsorProviderIds[] = $ewallet->ewallet_id;
+                      }
+                    }
+
+                    $userCreditCard = UserSponsor::select('sponsor_credit_cards.sponsor_credit_card_id as credit_card_id')
+                                              ->join('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'user_sponsor.sponsor_id')
+                                              ->join('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'sponsor_credit_cards.sponsor_provider_id')
+                                              ->where('user_sponsor.sponsor_type', 'credit_card')
+                                              ->where('sponsor_credit_cards.status', 'active')
+                                              ->where('sponsor_providers.status', 'active')
+                                              ->where('user_sponsor.user_id', $userId)
+                                              ->get();
+
+                    if (! $userCreditCard->isEmpty()) {
+                      foreach ($userCreditCard as $creditCard) {
+                        $sponsorProviderIds[] = $creditCard->credit_card_id;
+                      }
+                    }
+
+                    if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
+                        $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
+                        $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
+                    }
                 }
-             });
+            } else {
+                OrbitInput::get('sponsor_provider_ids', function($sponsorProviderIds) use (&$jsonQuery) {
+                    if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
+                        $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
+                        $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
+                    }
+                 });
+            }
 
             // filter by category_id
             OrbitInput::get('category_id', function($categoryIds) use (&$jsonQuery, &$searchFlag) {
