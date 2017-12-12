@@ -290,6 +290,10 @@ class ESPromotionUpdateQueue
                 }
             }
 
+            // Get url prefix
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
             // promotion sponsor provider
             // Get sponsor provider wallet
             $sponsorProviders = ObjectSponsor::select('object_sponsor.object_sponsor_id','sponsor_providers.sponsor_provider_id','media.path','media.cdn_url', 'object_sponsor.is_all_credit_card')
@@ -310,11 +314,17 @@ class ESPromotionUpdateQueue
             if (!$sponsorProviderWallets->isEmpty()){
                 $ewallet = array();
                 foreach ($sponsorProviderWallets as $sponsorProviderWallet) {
+                    $logoUrl = $sponsorProviderWallet->path;
+                    $logoCdnUrl = $sponsorProviderWallet->cdn_url;
+                    if ($logoCdnUrl === null && $logoUrl != null) {
+                        $logoCdnUrl = $urlPrefix . $logoUrl;
+                    }
+
                     $ewallet['sponsor_id'] = $sponsorProviderWallet->sponsor_provider_id;
                     $ewallet['sponsor_type'] = 'ewallet';
                     $ewallet['bank_id'] = null;
-                    $ewallet['logo_url'] = $sponsorProviderWallet->path;
-                    $ewallet['logo_cdn_url'] = $sponsorProviderWallet->cdn_url;
+                    $ewallet['logo_url'] = $logoUrl;
+                    $ewallet['logo_cdn_url'] = $logoCdnUrl;
 
                     $sponsorProviderES[] = $ewallet;
                 }
@@ -342,11 +352,17 @@ class ESPromotionUpdateQueue
                     if (!$sponsorProviderCC->isEmpty()) {
                         $ccArray = array();
                         foreach ($sponsorProviderCC as $cc) {
+                            $logoUrl = $sponsorProviderBank->path;
+                            $logoCdnUrl = $sponsorProviderBank->cdn_url;
+                            if ($logoCdnUrl === null && $logoUrl != null) {
+                                $logoCdnUrl = $urlPrefix . $logoUrl;
+                            }
+
                             $ccArray['sponsor_id'] = $cc->sponsor_credit_card_id;
                             $ccArray['sponsor_type'] = 'credit_card';
                             $ccArray['bank_id'] = $sponsorProviderBank->sponsor_provider_id;
-                            $ccArray['logo_url'] = $sponsorProviderBank->path;
-                            $ccArray['logo_cdn_url'] = $sponsorProviderBank->cdn_url;
+                            $ccArray['logo_url'] = $logoUrl;
+                            $ccArray['logo_cdn_url'] = $logoCdnUrl;
 
                             $sponsorProviderES[] = $ccArray;
                         }

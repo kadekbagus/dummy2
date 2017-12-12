@@ -32,6 +32,7 @@ use Elasticsearch\ClientBuilder;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Country;
+use UserSponsor;
 
 class CouponListAPIController extends PubControllerAPI
 {
