@@ -415,7 +415,7 @@ class TargetAudienceAPIController extends ControllerAPI
             $targetAudienceName = OrbitInput::post('target_audience_name');
             $targetAudienceDescription = OrbitInput::post('target_audience_description');
             $notificationTokens = OrbitInput::post('notification_token');
-            $notificationUserId = OrbitInput::post('notification_user_id');
+            $notificationUserIds = OrbitInput::post('notification_user_id');
             $status = OrbitInput::post('status');
 
             $validator = Validator::make(
@@ -437,10 +437,6 @@ class TargetAudienceAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            if (count($notificationTokens) !== count(array_unique($notificationTokens))) {
-                OrbitShopAPI::throwInvalidArgument('Duplicate token in Notification Tokens');
             }
 
             $mongoConfig = Config::get('database.mongodb');
