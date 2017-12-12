@@ -36,6 +36,7 @@ use Elasticsearch\ClientBuilder;
 use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Country;
+use UserSponsor;
 
 class PromotionListAPIController extends PubControllerAPI
 {
