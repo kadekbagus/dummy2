@@ -45,7 +45,6 @@ use Orbit\Helper\Net\SignInRecorder;
 use Orbit\Controller\API\v1\Pub\ActivationAPIController;
 use Event;
 use Orbit\Helper\PromotionalEvent\PromotionalEventProcessor;
-use UserSponsor;
 
 class LoginAPIController extends IntermediateBaseController
 {
@@ -113,19 +112,6 @@ class LoginAPIController extends IntermediateBaseController
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $isHavingEwalletCC = false;
-            $userSponsor = UserSponsor::select('sponsor_providers.sponsor_provider_id as bank_id')
-                                      ->join('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'user_sponsor.sponsor_id')
-                                      ->join('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'sponsor_credit_cards.sponsor_provider_id')
-                                      ->where('sponsor_credit_cards.status', 'activesa')
-                                      ->where('sponsor_providers.status', 'activesa')
-                                      ->where('user_sponsor.user_id', $user->user_id)
-                                      ->first();
-
-            if (! empty($userSponsor)) {
-                $isHavingEwalletCC = true;
-            }
-
             try {
                 $this->session->start(array(), 'no-session-creation');
                 // get the session data
@@ -138,7 +124,6 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['visited_location'] = [];
                 $sessionData['coupon_location'] = [];
                 $sessionData['status'] = $user->status;
-                $sessionData['is_having_ewallet_cc'] = $isHavingEwalletCC;
 
                 $guest_id = $this->session->read('guest_user_id');
 
@@ -178,7 +163,6 @@ class LoginAPIController extends IntermediateBaseController
                 $sessionData['role'] = $user->role->role_name;
                 $sessionData['fullname'] = $user->getFullName();
                 $sessionData['status'] = $user->status;
-                $sessionData['is_having_ewallet_cc'] = false;
 
                 $this->session->enableForceNew()->start($sessionData);
 

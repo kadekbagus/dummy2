@@ -267,6 +267,8 @@ class CouponListAPIController extends PubControllerAPI
                 OrbitInput::get('sponsor_provider_ids', function($sponsorProviderIds) use (&$jsonQuery, &$cacheKey) {
                     $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
                     if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
+                        // re index key array, have issue ES when sent key [1]
+                        $sponsorProviderIds = array_values($sponsorProviderIds);
                         $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
                         $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
                     }
