@@ -133,6 +133,7 @@ class PromotionListAPIController extends PubControllerAPI
                 'no_total_record' => $no_total_records,
                 'take' => $take, 'skip' => $skip,
                 'country' => $countryFilter, 'cities' => $cityFilters,
+                'my_cc_filter' => $myCCFilter
             ];
 
             // Run the validation
@@ -259,12 +260,14 @@ class PromotionListAPIController extends PubControllerAPI
                     }
 
                     if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
+                        $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
                         $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
                         $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
                     }
                 }
             } else {
-                OrbitInput::get('sponsor_provider_ids', function($sponsorProviderIds) use (&$jsonQuery) {
+                OrbitInput::get('sponsor_provider_ids', function($sponsorProviderIds) use (&$jsonQuery, &$cacheKey) {
+                    $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
                     if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
                         $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
                         $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
