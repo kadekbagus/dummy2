@@ -6313,6 +6313,60 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // user click credit card trigger on
+            '159' => array(
+                'name' => 'click_cc_trigger_on',
+                'name_long' => 'Click My Credit Card Trigger On',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click credit card trigger off
+            '160' => array(
+                'name' => 'click_cc_trigger_off',
+                'name_long' => 'Click My Credit Card Trigger Off',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user view my credit card page
+            '161' => array(
+                'name' => 'view_my_credit_card_page',
+                'name_long' => 'View My Credit Card/E-Wallet Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click submit my credit card
+            '162' => array(
+                'name' => 'click_submit_my_credit_card',
+                'name_long' => 'Click Submit My Credit Card/E-Wallet',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user view my credit card popup
+            '163' => array(
+                'name' => 'view_my_credit_card_popup',
+                'name_long' => 'View My Credit Card/E-Wallet Popup',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click my credit card popup icon
+            '164' => array(
+                'name' => 'click_my_credit_card_popup_icon',
+                'name_long' => 'Click My Credit Card/E-Wallet Popup',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
