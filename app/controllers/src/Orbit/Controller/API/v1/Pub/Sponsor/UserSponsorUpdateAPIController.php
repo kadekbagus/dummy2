@@ -81,12 +81,14 @@ class UserSponsorUpdateAPIController extends PubControllerAPI
                                         ->delete(true);
 
             // insert new
-            foreach ($sponsorIds as $sponsorId) {
-              $userSponsor = new UserSponsor();
-              $userSponsor->user_id = $userId;
-              $userSponsor->sponsor_id = $sponsorId;
-              $userSponsor->sponsor_type = $sponsorType;
-              $userSponsor->save();
+            if (is_array($sponsorIds)) {
+                foreach ($sponsorIds as $sponsorId) {
+                    $userSponsor = new UserSponsor();
+                    $userSponsor->user_id = $userId;
+                    $userSponsor->sponsor_id = $sponsorId;
+                    $userSponsor->sponsor_type = $sponsorType;
+                    $userSponsor->save();
+                }
             }
 
             $this->response->code = 0;
