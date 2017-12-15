@@ -101,7 +101,7 @@ class UserSponsorCampaignAPIController extends PubControllerAPI
             $listOfRec['coupons'] = 0;
             $listOfRec['news'] = 0;
 
-            if ((! strtolower($role) === 'consumer') && (! empty($userSponsor))) {
+            if ((strtolower($role) === 'consumer') && (! empty($userSponsor))) {
               $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                       ->setHosts($host['hosts']) // Set the hosts
                       ->build();
