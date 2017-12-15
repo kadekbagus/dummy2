@@ -200,11 +200,13 @@ class NotificationUpdateAPIController extends ControllerAPI
                 $localPath = "";
                 $cdnPath = "";
 
-                $cdnConfig = Config::get('orbit.cdn');
-                $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-                $localPath = $notif->data->attachment_path;
-                $cdnPath = $notif->data->cdn_url;
-                $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
+                if ($files || (empty($imageUrl) && $notif->data->attachment_path != '')) {
+                    $cdnConfig = Config::get('orbit.cdn');
+                    $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+                    $localPath = $notif->data->attachment_path;
+                    $cdnPath = $notif->data->cdn_url;
+                    $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
+                }
 
                 // send to onesignal
                 if (! empty($notificationTokens)) {
