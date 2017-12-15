@@ -52,7 +52,6 @@ class StoreSynchronization
      */
     public function fire($job, $data)
     {
-
         $type = $data['sync_type'];
 
         switch ($type) {
@@ -73,6 +72,7 @@ class StoreSynchronization
     }
 
     protected function syncStore($data, $type, $job) {
+
         try {
             $prefix = DB::getTablePrefix();
             $sync_data = $data['sync_data'];
@@ -167,35 +167,7 @@ class StoreSynchronization
                         $tenant = new Tenant;
                     }
 
-                    //country
-                    $countryId = $store->country_id;
-                    $countryNames = Country::where('country_id', $countryId)->first();
-
-                    $storeName = $store->name;
-                    $countryName = $countryNames->name;
-
-                    $tenant->merchant_id = $base_store_id;
-                    $tenant->name = $store->name;
-                    $tenant->description = $store->description;
-                    $tenant->country_id = $countryId;
-                    $tenant->country = $countryName;
-                    $tenant->status = $store->status;
-                    $tenant->logo = $store->path;
-                    $tenant->object_type = 'tenant';
-                    $tenant->parent_id = $store->merchant_id;
-                    $tenant->is_mall = 'no';
-                    $tenant->is_subscribed = 'Y';
-                    $tenant->url = $store->url;
-                    $tenant->floor_id = empty($store->floor_id) ? 0 : $store->floor_id;
-                    $tenant->floor = $store->object_name;
-                    $tenant->unit = $store->unit;
-                    $tenant->phone = $store->phone;
-                    $tenant->masterbox_number = $store->verification_number;
-                    $tenant->mobile_default_language = $store->mobile_default_language;
-                    $tenant->is_payment_acquire = $store->is_payment_acquire;
-                    $tenant->save();
-
-                    // mall notification
+                    // mall notification for new store
                     $activeStore = Tenant::where('merchant_id', $base_store_id)->where('status', 'active')->first();
                     if (!is_object($activeStore))
                     {
@@ -329,6 +301,35 @@ class StoreSynchronization
                             }
                         }
                     }
+
+                    //country
+                    $countryId = $store->country_id;
+                    $countryNames = Country::where('country_id', $countryId)->first();
+
+                    $storeName = $store->name;
+                    $countryName = $countryNames->name;
+
+                    $tenant->merchant_id = $base_store_id;
+                    $tenant->name = $store->name;
+                    $tenant->description = $store->description;
+                    $tenant->country_id = $countryId;
+                    $tenant->country = $countryName;
+                    $tenant->status = $store->status;
+                    $tenant->logo = $store->path;
+                    $tenant->object_type = 'tenant';
+                    $tenant->parent_id = $store->merchant_id;
+                    $tenant->is_mall = 'no';
+                    $tenant->is_subscribed = 'Y';
+                    $tenant->url = $store->url;
+                    $tenant->floor_id = empty($store->floor_id) ? 0 : $store->floor_id;
+                    $tenant->floor = $store->object_name;
+                    $tenant->unit = $store->unit;
+                    $tenant->phone = $store->phone;
+                    $tenant->masterbox_number = $store->verification_number;
+                    $tenant->mobile_default_language = $store->mobile_default_language;
+                    $tenant->is_payment_acquire = $store->is_payment_acquire;
+                    $tenant->save();
+
 
                     // Insert the payment acquire, only chech if payment acquire = Y
                     if ($tenant->is_payment_acquire == 'Y') {

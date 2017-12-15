@@ -469,7 +469,9 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                         ->where('promotions.promotion_id', $coupon->promotion_id)
-                        ->groupBy('mall_id')
+                        ->groupBy(DB::raw("CASE WHEN {$prefix}merchants.object_type ='tenant'
+                                            THEN {$prefix}merchants.parent_id
+                                            ELSE {$prefix}merchants.merchant_id END"))
                         ->get();
 
         if (!empty($malls))
