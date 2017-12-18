@@ -199,7 +199,8 @@ class NotificationUpdateAPIController extends ControllerAPI
 
                 $localPath = "";
                 $cdnPath = "";
-                if ($files) {
+
+                if ($files || (empty($imageUrl) && $notif->data->attachment_path != '')) {
                     $cdnConfig = Config::get('orbit.cdn');
                     $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
                     $localPath = $notif->data->attachment_path;
@@ -243,7 +244,7 @@ class NotificationUpdateAPIController extends ControllerAPI
                             'is_viewed'     => false,
                             'is_read'       => false,
                             'created_at'    => $dateTime,
-                            'image_url'     => $imageUrl
+                            'image_url'     => $imageUrl,
                         ];
 
                         $inApps = $mongoClient->setFormParam($bodyInApps)

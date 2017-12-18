@@ -190,6 +190,7 @@ class NotificationNewAPIController extends ControllerAPI
 
                 $localPath = "";
                 $cdnPath = "";
+                
                 if ($files) {
                     $cdnConfig = Config::get('orbit.cdn');
                     $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');

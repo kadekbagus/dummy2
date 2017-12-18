@@ -10942,14 +10942,14 @@ class UploadAPIController extends ControllerAPI
             // delete existing notification image
             $isUpdate = false;
             $oldPath = array();
-            if (! empty($notif->data->attachment_url_realpath)) {
+            if (! empty($notif->data->attachment_realpath)) {
                 $isUpdate = true;
                 //get old path before delete
-                $oldPath['path'] = $oldMedia->path;
-                $oldPath['cdn_url'] = $oldMedia->cdn_url;
-                $oldPath['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+                $oldPath[0]['path'] = $notif->data->attachment_path;
+                $oldPath[0]['cdn_url'] = $notif->data->cdn_url;
+                $oldPath[0]['cdn_bucket_name'] = $notif->data->cdn_bucket_name;
 
-                @unlink($notif->data->attachment_url_realpath);
+                @unlink($notif->data->attachment_realpath);
             }
 
             // update mongodb
