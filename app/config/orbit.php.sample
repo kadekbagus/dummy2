@@ -4570,6 +4570,112 @@ return array(
             ),
 
         ),
+
+        // -------------------------------------------------------------------//
+        // Sponsor Provider Related Uploads
+        // -------------------------------------------------------------------//
+        'sponsor_provider'  => array(
+            'logo' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 90000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/sponsor_provider/logo',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+            ),
+        ),
+
+
+        // -------------------------------------------------------------------//
+        // Sponsor Credit Card Related Uploads
+        // -------------------------------------------------------------------//
+        'sponsor_credit_card'  => array(
+            'image' => array(
+                // Allowed Extension
+                'file_type'     => array('jpg', 'png', 'jpeg', 'gif'),
+
+                // Allowed Mimetype
+                'mime_type'     => array('image/jpeg', 'image/png', 'image/gif'),
+
+                // Maximum file size allowed in bytes
+                'file_size'     => 90000,
+
+                // The target path which file to be stored
+                'path'          => 'uploads/sponsor_creditcard/images',
+
+                // Default HTML element name
+                'name'          => 'images',
+
+                // Force create directory when not exists
+                'create_directory'  => TRUE,
+
+                // Append year and month to the path
+                'append_year_month' => TRUE,
+
+                // Keeping the aspect ratio
+                'keep_aspect_ratio' => TRUE,
+
+                // Resize the image
+                'resize_image'      => TRUE,
+
+                // Crop the image
+                'crop_image'        => TRUE,
+
+                // Scale the image
+                'scale_image'       => FALSE,
+
+                // Name suffix of the generated image
+                'suffix'            => '',
+
+                // Resize the image
+                'resize'        => array(
+                    // Profile name
+                    'default'   => array(
+                        'width'     => 200,
+                        'height'    => 200
+                    )
+                ),
+            ),
+        ),
+
     ),
 
     'devices'  => array(
@@ -6203,6 +6309,60 @@ return array(
                 'name' => 'click_delete_all_notification',
                 'name_long' => 'Click Delete All Notification',
                 'module_name' => 'Notification',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click credit card trigger on
+            '159' => array(
+                'name' => 'click_cc_trigger_on',
+                'name_long' => 'Click My Credit Card Trigger On',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click credit card trigger off
+            '160' => array(
+                'name' => 'click_cc_trigger_off',
+                'name_long' => 'Click My Credit Card Trigger Off',
+                'module_name' => 'Filter',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user view my credit card page
+            '161' => array(
+                'name' => 'view_my_credit_card_page',
+                'name_long' => 'View My Credit Card/E-Wallet Page',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click submit my credit card
+            '162' => array(
+                'name' => 'click_submit_my_credit_card',
+                'name_long' => 'Click Submit My Credit Card/E-Wallet',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user view my credit card popup
+            '163' => array(
+                'name' => 'view_my_credit_card_popup',
+                'name_long' => 'View My Credit Card/E-Wallet Popup',
+                'module_name' => 'Application',
+                'type' => 'view',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user click my credit card popup icon
+            '164' => array(
+                'name' => 'click_my_credit_card_popup_icon',
+                'name_long' => 'Click My Credit Card/E-Wallet Popup',
+                'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => null,
                 'parameter_name' => null

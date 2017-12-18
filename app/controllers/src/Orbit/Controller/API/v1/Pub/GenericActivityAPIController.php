@@ -22,6 +22,7 @@ use Lang;
 use Mall;
 use App;
 use Illuminate\Database\Eloquent\Model;
+use UserSponsor;
 
 class GenericActivityAPIController extends PubControllerAPI
 {
@@ -257,6 +258,8 @@ class GenericActivityAPIController extends PubControllerAPI
                 } else {
                     $notes = 'Guest user';
                 }
+            } elseif ($activityName === 'click_cc_trigger_on') {
+                $notes = $this->getBankCreditCardEwallet($user->user_id);
             } elseif (in_array($activityName, $objectNotifName)) {
                 $notes = OrbitInput::post('object_id', null);
                 $activity->setObjectName('Notification');
@@ -352,5 +355,66 @@ class GenericActivityAPIController extends PubControllerAPI
         return $this->render($httpCode);
     }
 
+    public function getBankCreditCardEwallet($userId)
+    {
+        $str = '';
+        $userSponsor = UserSponsor::select('sponsor_providers.name as bank_name', 'sponsor_credit_cards.name as credit_card_name')
+                                ->join('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'user_sponsor.sponsor_id')
+                                ->join('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'sponsor_credit_cards.sponsor_provider_id')
+                                ->where('user_sponsor.sponsor_type', 'credit_card')
+                                ->where('sponsor_credit_cards.status', 'active')
+                                ->where('sponsor_providers.status', 'active')
+                                ->where('user_sponsor.user_id', $userId)
+                                ->orderBy('bank_name', 'asc')
+                                ->orderBy('credit_card_name', 'asc')
+                                ->get();
 
+        $ewallet = UserSponsor::select('sponsor_providers.name as ewallet_name')
+                              ->join('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'user_sponsor.sponsor_id')
+                              ->where('user_sponsor.sponsor_type', 'ewallet')
+                              ->where('sponsor_providers.status', 'active')
+                              ->where('user_sponsor.user_id', $userId)
+                              ->orderBy('ewallet_name', 'asc')
+                              ->get();
+
+        $bank = [];
+        if (!empty($userSponsor))
+        {
+            foreach($userSponsor as $key => $value) {
+                $bank[$value->bank_name][] = $value->credit_card_name;
+            }
+        }
+
+        if (!empty($bank))
+        {
+            foreach($bank as $key => $value) {
+                if ($str === '') {
+                    $str = $str.$key."(";
+                } else {
+                    $str = $str.','.$key."(";
+                }
+                foreach($value as $key1 =>$value1) {
+                    if($key1+1 === count($value)){
+                        $str = $str.$value1;
+                    } else {
+                        $str = $str.$value1.", ";
+                    }
+                }
+                $str = $str.")";
+            }
+        }
+
+        if (!empty($ewallet))
+        {
+            foreach ($ewallet as $val) {
+                if($str !== '') {
+                    $str = $str.','.$val->ewallet_name;
+                } else {
+                    $str = $str.$val->ewallet_name;
+                }
+            }
+        }
+
+        return $str;
+    }
 }

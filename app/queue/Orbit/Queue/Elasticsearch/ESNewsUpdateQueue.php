@@ -15,6 +15,9 @@ use Exception;
 use Log;
 use Orbit\FakeJob;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use ObjectSponsor;
+use SponsorCreditCard;
+use ObjectSponsorCreditCard;
 
 class ESNewsUpdateQueue
 {
@@ -308,6 +311,87 @@ class ESNewsUpdateQueue
                 $translationBody['name_' . $translationCollection->name] = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(" ", "_", strtolower($newsName)));
             }
 
+            // Get url prefix
+            $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
+            $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
+
+            // News sponsor provider
+            // Get sponsor provider wallet
+            $sponsorProviders = ObjectSponsor::select('object_sponsor.object_sponsor_id','sponsor_providers.sponsor_provider_id','media.path','media.cdn_url', 'object_sponsor.is_all_credit_card')
+                                            ->leftJoin('sponsor_providers','sponsor_providers.sponsor_provider_id', '=', 'object_sponsor.sponsor_provider_id')
+                                            ->leftJoin('media', function($q){
+                                                    $q->on('media.object_id', '=', 'sponsor_providers.sponsor_provider_id')
+                                                      ->on('media.media_name_long', '=', DB::raw('"sponsor_provider_logo_orig"'));
+                                              })
+                                            ->where('object_sponsor.object_type', 'news')
+                                            ->where('sponsor_providers.status', 'active')
+                                            ->where('object_sponsor.object_id', $news->news_id);
+
+            $sponsorProviderWallets = clone $sponsorProviders;
+            $sponsorProviderWallets = $sponsorProviderWallets->where('sponsor_providers.object_type', 'ewallet')
+                                                        ->get();
+
+            $sponsorProviderES = array();
+            if (!$sponsorProviderWallets->isEmpty()){
+                $ewallet = array();
+                foreach ($sponsorProviderWallets as $sponsorProviderWallet) {
+                    $logoUrl = $sponsorProviderWallet->path;
+                    $logoCdnUrl = $sponsorProviderWallet->cdn_url;
+                    if ($logoCdnUrl === null && $logoUrl != null) {
+                        $logoCdnUrl = $urlPrefix . $logoUrl;
+                    }
+
+                    $ewallet['sponsor_id'] = $sponsorProviderWallet->sponsor_provider_id;
+                    $ewallet['sponsor_type'] = 'ewallet';
+                    $ewallet['bank_id'] = null;
+                    $ewallet['logo_url'] = $logoUrl;
+                    $ewallet['logo_cdn_url'] = $logoCdnUrl;
+
+                    $sponsorProviderES[] = $ewallet;
+                }
+            }
+
+            // Get sponsor provider bank
+            $sponsorProviderBanks = $sponsorProviders->where('sponsor_providers.object_type', 'bank')
+                                                     ->get();
+
+            if (!$sponsorProviderBanks->isEmpty()){
+                foreach ($sponsorProviderBanks as $sponsorProviderBank) {
+                    if ($sponsorProviderBank->is_all_credit_card === 'Y') {
+                        // get all credit_card
+                        $sponsorProviderCC = SponsorCreditCard::select('sponsor_credit_card_id')
+                                                              ->where('sponsor_provider_id', '=', $sponsorProviderBank->sponsor_provider_id);
+                    } elseif ($sponsorProviderBank->is_all_credit_card === 'N') {
+                        // get credit_card id by user selection
+                        $sponsorProviderCC = ObjectSponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id')
+                                                                    ->leftJoin('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'object_sponsor_credit_card.sponsor_credit_card_id')
+                                                                    ->where('object_sponsor_credit_card.object_sponsor_id', $sponsorProviderBank->object_sponsor_id);
+                    }
+
+                    $sponsorProviderCC = $sponsorProviderCC->get();
+
+                    if (!$sponsorProviderCC->isEmpty()) {
+                        $ccArray = array();
+                        foreach ($sponsorProviderCC as $cc) {
+                            $logoUrl = $sponsorProviderBank->path;
+                            $logoCdnUrl = $sponsorProviderBank->cdn_url;
+                            if ($logoCdnUrl === null && $logoUrl != null) {
+                                $logoCdnUrl = $urlPrefix . $logoUrl;
+                            }
+
+                            $ccArray['sponsor_id'] = $cc->sponsor_credit_card_id;
+                            $ccArray['sponsor_type'] = 'credit_card';
+                            $ccArray['bank_id'] = $sponsorProviderBank->sponsor_provider_id;
+                            $ccArray['logo_url'] = $logoUrl;
+                            $ccArray['logo_cdn_url'] = $logoCdnUrl;
+
+                            $sponsorProviderES[] = $ccArray;
+                        }
+                    }
+                }
+            }
+
+            // Total view
             $total_view_on_gtm = 0;
             $total_view_on_mall = array();
             foreach ($news->total_page_views as $key => $total_page_view) {
@@ -323,14 +407,14 @@ class ESNewsUpdateQueue
             }
 
             $body = [
-                'news_id'              => $news->news_id,
-                'name'                 => $news->news_name,
-                'description'          => $news->description,
-                'object_type'          => $news->object_type,
-                'begin_date'           => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
-                'end_date'             => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z',
-                'updated_at'           => date('Y-m-d', strtotime($news->updated_at)) . 'T' . date('H:i:s', strtotime($news->updated_at)) . 'Z',
-                'status'               => $news->status,
+                'news_id'               => $news->news_id,
+                'name'                  => $news->news_name,
+                'description'           => $news->description,
+                'object_type'           => $news->object_type,
+                'begin_date'            => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
+                'end_date'              => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z',
+                'updated_at'            => date('Y-m-d', strtotime($news->updated_at)) . 'T' . date('H:i:s', strtotime($news->updated_at)) . 'Z',
+                'status'                => $news->status,
                 'campaign_status'       => $news->campaign_status,
                 'is_all_gender'         => $news->is_all_gender,
                 'is_all_age'            => $news->is_all_age,
@@ -359,7 +443,8 @@ class ESNewsUpdateQueue
                 'location_rating'       => $locationRating,
                 'mall_rating'           => $mallRating,
                 'avg_general_rating'    => $averageGeneralRating,
-                'total_general_reviews' => $totalGeneralReviews
+                'total_general_reviews' => $totalGeneralReviews,
+                'sponsor_provider'      => $sponsorProviderES
             ];
 
             $body = array_merge($body, $translationBody);

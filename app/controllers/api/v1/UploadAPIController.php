@@ -128,6 +128,56 @@ class UploadAPIController extends ControllerAPI
         return $result;
     }
 
+    public function saveMetaDataCreditCard($object, $metadata)
+    {
+        $result = array();
+        foreach ($metadata as $i=>$file) {
+            // Save original file meta data into Media table
+            if (isset($object['id'][$i]))
+            {
+                $media = new Media();
+                $media->object_id = $object['id'][$i];
+                $media->object_name = $object['name'];
+                $media->media_name_id = $object['media_name_id'];
+                $media->media_name_long = sprintf('%s_orig', $object['media_name_id']);
+                $media->file_name = $file['file_name'];
+                $media->file_extension = $file['file_ext'];
+                $media->file_size = $file['file_size'];
+                $media->mime_type = $file['mime_type'];
+                $media->path = $file['path'];
+                $media->realpath = $file['realpath'];
+                $media->metadata = 'order-' . $i;
+                $media->modified_by = $object['modified_by'];
+                $media->save();
+                $result[] = $media;
+
+                // Save the cropped, resized and scaled if any
+                foreach (array('resized', 'cropped', 'scaled') as $variant) {
+                    // Save each profile
+                    foreach ($file[$variant] as $profile=>$finfo) {
+                        $media = new Media();
+                        $media->object_id = $object['id'][$i];
+                        $media->object_name = $object['name'];
+                        $media->media_name_id = $object['media_name_id'];
+                        $media->media_name_long = sprintf('%s_%s_%s', $object['media_name_id'], $variant, $profile);
+                        $media->file_name = $finfo['file_name'];
+                        $media->file_extension = $file['file_ext'];
+                        $media->file_size = $finfo['file_size'];
+                        $media->mime_type = $file['mime_type'];
+                        $media->path = $finfo['path'];
+                        $media->realpath = $finfo['realpath'];
+                        $media->metadata = 'order-' . $i;
+                        $media->modified_by = $object['modified_by'];
+                        $media->save();
+                        $result[] = $media;
+                    }
+                }
+            }
+        }
+
+        return $result;
+    }
+
     /**
      * Upload logo for Merchant.
      *
@@ -11027,6 +11077,494 @@ class UploadAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * Upload logo for Sponsor Provider.
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `payment_provider_id`       (required) - ID of the wallet operator
+     * @param file|array `logo`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadSponsorProviderLogo()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadsponsorproviderlogo.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('edit_merchant')) {
+                    Event::fire('orbit.upload.postuploadsponsorproviderlogo.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $sponsor_provider_id = OrbitInput::post('sponsor_provider_id');
+            $logo = OrbitInput::files('logo');
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+
+            $validator = Validator::make(
+                array(
+                    'sponsor_provider_id' => $sponsor_provider_id,
+                    'logo'                => $logo,
+                ),
+                array(
+                    'sponsor_provider_id' => 'required|orbit.empty.sponsorprovider',
+                    'logo'                => 'required|nomore.than.one',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.validation', array($this, $validator));
+
+            // We already had Merchant instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $sponsorProvider = App::make('orbit.empty.sponsorprovider');
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($sponsorProvider)
+            {
+                $sponsor_provider_id = $sponsorProvider->sponsor_provider_id;
+                $slug = Str::slug($sponsorProvider->name);
+                $file['new']->name = sprintf('%s-%s-%s', $sponsor_provider_id, $slug, time());
+            };
+
+            // Load the orbit configuration for merchant upload logo
+            $uploadLogoConfig = Config::get('orbit.upload.sponsor_provider.logo');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLogoConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.before.save', array($this, $sponsorProvider, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($logo);
+
+            // Delete old merchant logo
+            $pastMedia = Media::where('object_id', $sponsorProvider->sponsor_provider_id)
+                              ->where('object_name', 'sponsor_provider')
+                              ->where('media_name_id', 'sponsor_provider_logo');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
+            foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            $isUpdate = false;
+            if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
+                $pastMedia->delete();
+            }
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $sponsorProvider->sponsor_provider_id,
+                'name'          => 'sponsor_provider',
+                'media_name_id' => 'sponsor_provider_logo',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetadata($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            // if (isset($uploaded[0])) {
+            //     $merchant->logo = $uploaded[0]['path'];
+            //     $merchant->save();
+            // }
+
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.save', array($this, $sponsorProvider, $uploader));
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'sponsor_provider_logo';
+            $mediaList['extras'] = $extras;
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.merchant.logo');
+
+            // Commit the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.after.commit', array($this, $sponsorProvider, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadsponsorproviderlogo.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadsponsorproviderlogo.before.render', array($this, $output));
+
+        return $output;
+    }
+
+    /**
+     * Upload image for Credit Card.
+     *
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param integer    `payment_provider_id`       (required) - ID of the wallet operator
+     * @param file|array `logo`                      (required) - Images of the logo
+     * @return Illuminate\Support\Facades\Response
+     */
+    public function postUploadCreditCardImage()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.upload.postuploadcreditcardimage.before.auth', array($this));
+
+            // Require authentication
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->checkAuth();
+
+                Event::fire('orbit.upload.postuploadcreditcardimage.after.auth', array($this));
+
+                // Try to check access control list, does this merchant allowed to
+                // perform this action
+                $user = $this->api->user;
+                Event::fire('orbit.upload.postuploadcreditcardimage.before.authz', array($this, $user));
+
+                if (! ACL::create($user)->isAllowed('edit_merchant')) {
+                    Event::fire('orbit.upload.postuploadcreditcardimage.authz.notallowed', array($this, $user));
+                    $editMerchantLang = Lang::get('validation.orbit.actionlist.update_merchant');
+                    $message = Lang::get('validation.orbit.access.forbidden', array('action' => $editMerchantLang));
+                    ACL::throwAccessForbidden($message);
+                }
+                Event::fire('orbit.upload.postuploadcreditcardimage.after.authz', array($this, $user));
+            }
+
+            // Register custom validation
+            $this->registerCustomValidation();
+
+            // Application input
+            $sponsor_provider_id = OrbitInput::post('sponsor_provider_id');
+            $credit_card_image_ids = OrbitInput::post('credit_card_image_ids');
+            $credit_card_image_ids = (array) $credit_card_image_ids;
+            $add_credit_card = OrbitInput::post('add_credit_card');
+            $add_credit_card = (array) $add_credit_card;
+            $logo = OrbitInput::files('credit_card_image');
+            $messages = array(
+                'nomore.than.one' => Lang::get('validation.max.array', array(
+                    'max' => 1
+                ))
+            );
+            //print_r($logo); die();
+            $validator = Validator::make(
+                array(
+                    'sponsor_provider_id' => $sponsor_provider_id,
+                    'logo'                => $logo,
+                ),
+                array(
+                    'sponsor_provider_id' => 'required|orbit.empty.sponsorprovider',
+                    'logo'                => 'required',
+                ),
+                $messages
+            );
+
+            Event::fire('orbit.upload.postuploadcreditcardimage.before.validation', array($this, $validator));
+
+            // Begin database transaction
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->beginTransaction();
+            }
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            Event::fire('orbit.upload.postuploadcreditcardimage.after.validation', array($this, $validator));
+
+            // We already had Merchant instance on the RegisterCustomValidation
+            // get it from there no need to re-query the database
+            $sponsorProvider = App::make('orbit.empty.sponsorprovider');
+
+            // Callback to rename the file, we will format it as follow
+            // [MERCHANT_ID]-[MERCHANT_NAME_SLUG]
+            $renameFile = function($uploader, &$file, $dir) use ($sponsorProvider)
+            {
+                $sponsor_provider_id = $sponsorProvider->sponsor_provider_id;
+                $slug = Str::slug($sponsorProvider->name);
+                $file['new']->name = sprintf('%s-%s-%s', $sponsor_provider_id, $slug, time());
+            };
+
+            // Load the orbit configuration for merchant upload logo
+            $uploadLogoConfig = Config::get('orbit.upload.sponsor_credit_card.image');
+
+            $message = new UploaderMessage([]);
+            $config = new UploaderConfig($uploadLogoConfig);
+            $config->setConfig('before_saving', $renameFile);
+
+            // Create the uploader object
+            $uploader = new Uploader($config, $message);
+
+            Event::fire('orbit.upload.postuploadcreditcardimage.before.save', array($this, $sponsorProvider, $uploader));
+
+            // Begin uploading the files
+            $uploaded = $uploader->upload($logo);
+
+            // Delete old merchant logo
+            $pastMedia = Media::whereIn('object_id', $credit_card_image_ids)
+                              ->where('object_name', 'sponsor_credit_card')
+                              ->where('media_name_id', 'sponsor_credit_card_image');
+
+            // Delete each files
+            $oldMediaFiles = $pastMedia->get();
+            $oldPath = array();
+            foreach ($oldMediaFiles as $oldMedia) {
+                //get old path before delete
+                $oldPath[$oldMedia->media_id]['path'] = $oldMedia->path;
+                $oldPath[$oldMedia->media_id]['cdn_url'] = $oldMedia->cdn_url;
+                $oldPath[$oldMedia->media_id]['cdn_bucket_name'] = $oldMedia->cdn_bucket_name;
+                $oldPath[$oldMedia->media_id]['object_id'] = $oldMedia->object_id;
+                // No need to check the return status, just delete and forget
+                @unlink($oldMedia->realpath);
+            }
+
+            // Delete from database
+            $isUpdate = false;
+            if (count($oldMediaFiles) > 0) {
+                $isUpdate = true;
+                $pastMedia->delete();
+            }
+
+            if ($this->calledFrom('sponsorprovider.new'))
+            {
+                // get the id of sponsor credit card
+                $creditCards = SponsorCreditCard::select('sponsor_credit_card_id')
+                                    ->where('sponsor_provider_id','=', $sponsorProvider->sponsor_provider_id)
+                                    ->get();
+
+                $arrCreditCardId = [];
+                if (!empty($creditCards)) {
+                    foreach ($creditCards as $key => $value) {
+                        $arrCreditCardId[] = $creditCards[$key]['sponsor_credit_card_id'];
+                    }
+                }
+            }
+
+            if ($this->calledFrom('sponsorprovider.update'))
+            {
+                if (!empty($add_credit_card))
+                {
+                    foreach ($add_credit_card as $key => $value) {
+                        $credit_card_image_ids[] = $value;
+                    }
+                    $credit_card_image_ids = array_diff($credit_card_image_ids, array(0));
+                    $credit_card_image_ids = array_values($credit_card_image_ids);
+                }
+                $arrCreditCardId = $credit_card_image_ids;
+            }
+
+            // Save the files metadata
+            $object = array(
+                'id'            => $arrCreditCardId,
+                'name'          => 'sponsor_credit_card',
+                'media_name_id' => 'sponsor_credit_card_image',
+                'modified_by'   => 1
+            );
+            $mediaList = $this->saveMetaDataCreditCard($object, $uploaded);
+
+            // Update the `image` field which store the original path of the image
+            // This is temporary since right know the business rules actually
+            // only allows one image per product
+            // if (isset($uploaded[0])) {
+            //     $merchant->logo = $uploaded[0]['path'];
+            //     $merchant->save();
+            // }
+
+            Event::fire('orbit.upload.postuploadcreditcardimage.after.save', array($this, $sponsorProvider, $uploader));
+
+            $extras = new \stdClass();
+            $extras->isUpdate = $isUpdate;
+            $extras->oldPath = $oldPath;
+            $extras->mediaNameId = 'sponsor_credit_card_image';
+            $mediaList['extras'] = $extras;
+
+            $this->response->data = $mediaList;
+            $this->response->message = Lang::get('statuses.orbit.uploaded.merchant.logo');
+
+            // Commit the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->commit();
+            }
+
+            Event::fire('orbit.upload.postuploadcreditcardimage.after.commit', array($this, $sponsorProvider, $uploader));
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.upload.postuploadcreditcardimage.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.upload.postuploadcreditcardimage.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        } catch (QueryException $e) {
+            Event::fire('orbit.upload.postuploadcreditcardimage.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        } catch (Exception $e) {
+            Event::fire('orbit.upload.postuploadcreditcardimage.general.exception', array($this, $e));
+
+            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+
+            // Rollback the changes
+            if (! $this->calledFrom('sponsorprovider.new, sponsorprovider.update')) {
+                $this->rollBack();
+            }
+        }
+
+        $output = $this->render($httpCode);
+        Event::fire('orbit.upload.postuploadcreditcardimage.before.render', array($this, $output));
+
+        return $output;
+    }
+
     protected function registerCustomValidation()
     {
         if ($this->calledFrom('default')) {
@@ -11281,6 +11819,20 @@ class UploadAPIController extends ControllerAPI
             }
 
             App::instance('orbit.empty.walletoperator', $walletOperator);
+
+            return TRUE;
+        });
+
+        Validator::extend('orbit.empty.sponsorprovider', function ($attribute, $value, $parameters) {
+            $sponsorProvider = SponsorProvider::excludeDeleted()
+                                        ->where('sponsor_provider_id', $value)
+                                        ->first();
+
+            if (empty($sponsorProvider)) {
+                return FALSE;
+            }
+
+            App::instance('orbit.empty.sponsorprovider', $sponsorProvider);
 
             return TRUE;
         });
