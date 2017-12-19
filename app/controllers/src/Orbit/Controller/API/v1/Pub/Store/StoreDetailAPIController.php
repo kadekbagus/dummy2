@@ -257,7 +257,7 @@ class StoreDetailAPIController extends PubControllerAPI
                     $followed = true;
                 }
             }
-            $store->followed = $followed;
+            $store->follow_status = $followed;
 
             // ---- START RATING ----
             $storeIds = [];
