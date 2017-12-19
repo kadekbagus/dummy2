@@ -246,6 +246,19 @@ class StoreDetailAPIController extends PubControllerAPI
             }
             $store->total_view = $totalPageViews;
 
+            // Get status followed
+            $role = $user->role->role_name;
+            $objectFollow = [];
+            $followed = false;
+            if (strtolower($role) === 'consumer') {
+                $objectFollow = $this->getUserFollow($user, $baseMerchantId, $location, $cityFilters); // return
+
+                if (! empty($objectFollow)) {
+                    $followed = true;
+                }
+            }
+            $store->followed = $followed;
+
             // ---- START RATING ----
             $storeIds = [];
             $storeIdList = Tenant::select('merchants.merchant_id')
@@ -382,6 +395,32 @@ class StoreDetailAPIController extends PubControllerAPI
     protected function quote($arg)
     {
         return DB::connection()->getPdo()->quote($arg);
+    }
+
+    // check user follow
+    public function getUserFollow($user, $merchantId, $mallId, $city=array())
+    {
+        $follow = FollowStatusChecker::create()
+                                    ->setUserId($user->user_id)
+                                    ->setObjectType('store');
+        if (! empty($merchantId)) {
+            $follow = $follow->setObjectId($merchantId);
+        }
+
+        if (! empty($mallId)) {
+            $follow = $follow->setMallId($mallId);
+        }
+
+        if (! empty($city)) {
+            if (! is_array($city)) {
+                $city = (array) $city;
+            }
+            $follow = $follow->setCity($city);
+        }
+
+        $follow = $follow->getFollowStatus();
+
+        return $follow;
     }
 
 }
