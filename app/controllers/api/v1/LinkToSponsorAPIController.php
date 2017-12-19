@@ -51,7 +51,11 @@ class LinkToSponsorAPIController extends ControllerAPI
             $objectId = OrbitInput::get('object_id');
             $objectType = OrbitInput::get('object_type');
 
-            $sponsorProviders = SponsorProvider::where('status', 'active')->orderBy('name', 'asc');
+            $userDetail = UserDetail::where('user_id', '=', $user->user_id)->first();
+
+            $sponsorProviders = SponsorProvider::where('status', 'active')
+                                            ->where('country_id', '=', $userDetail->country_id)
+                                            ->orderBy('name', 'asc');
 
             $_sponsorProviders = clone $sponsorProviders;
             $sponsorProviders = $sponsorProviders->get();
