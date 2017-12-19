@@ -118,7 +118,7 @@ class UserFollowListAPIController extends PubControllerAPI
                                 ->excludeDeleted();
             } else if ($objectType === 'store') {
                 $prefix = DB::getTablePrefix();
-                $follows = Tenant::select('merchants.merchant_id', DB::raw("parent.merchant_id as mall_id"), DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"), 'media.cdn_url', 'media.path', DB::raw("{$image} AS logo"), DB::raw("{$prefix}merchants.name as store_name"), DB::raw("COUNT({$prefix}merchants.name) as total_follow"))
+                $follows = Tenant::select('merchants.merchant_id', DB::raw("parent.merchant_id as mall_id"), DB::raw("CONCAT({$prefix}merchants.name,' at ', parent.name) as name"), DB::raw("{$image} AS cdn_url"), DB::raw("{$prefix}merchants.name as store_name"), DB::raw("COUNT({$prefix}merchants.name) as total_follow"))
                                 ->leftJoin('media', function ($q) {
                                                                     $q->on('media.object_id', '=', 'merchants.merchant_id')
                                                                     ->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
