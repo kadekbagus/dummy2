@@ -217,8 +217,8 @@ class StoreSynchronization
                                 foreach ($tokenData->data->records as $key => $value) {
                                     $tokens[] = $value->notification_token;
                                 }
+                                $tokens = array_values(array_unique($tokens));
                             }
-                            $tokens = array_values(array_unique($tokens));
 
                             $launchUrl = LandingPageUrlGenerator::create('store', $base_store_id, $baseMerchant->name)->generateUrl();
 
@@ -282,28 +282,35 @@ class StoreSynchronization
                                                                           ->setEndPoint('mall-object-notifications')
                                                                           ->request('POST');
                                 } else {
-                                    // update data if exist
+                                    $_tokens = null;
+                                    $_userIds = null;
                                     $_notificationIds = (array) $mallObjectNotificationSearch->data->records[0]->notification_ids;
                                     $_userIds = (array) $mallObjectNotificationSearch->data->records[0]->user_ids;
                                     $_tokens = (array) $mallObjectNotificationSearch->data->records[0]->tokens;
                                     $_notificationIds[] = $notificationId;
-                                    foreach ($userIds as $key => $uservalue) {
-                                        $_userIds[] = $uservalue;
+                                    if (!empty($userIds)) {
+                                       foreach ($userIds as $key => $uservalue) {
+                                           $_userIds[] = $uservalue;
+                                       }
+                                       $_userIds = array_values(array_unique($_userIds));
                                     }
-                                    foreach ($tokens as $key => $tokenvalue) {
-                                        $_tokens[] = $tokenvalue;
+                                    if (!empty($tokens)) {
+                                       foreach ($tokens as $key => $tokenvalue) {
+                                           $_tokens[] = $tokenvalue;
+                                       }
+                                       $_tokens = array_values(array_unique($_tokens));
                                     }
                                     $updateMallObjectNotification = [
-                                        '_id' => $mallObjectNotificationSearch->data->records[0]->_id,
-                                        'notification_ids' => array_values(array_unique($_notificationIds)),
-                                        'mall_id' => $store->merchant_id,
-                                        'user_ids' => json_encode(array_values(array_unique($_userIds))),
-                                        'tokens' => json_encode(array_values(array_unique($_tokens))),
+                                       '_id' => $mallObjectNotificationSearch->data->records[0]->_id,
+                                       'notification_ids' => array_values(array_unique($_notificationIds)),
+                                       'mall_id' => $mallvalue,
+                                       'user_ids' => json_encode($_userIds),
+                                       'tokens' => json_encode($_tokens),
                                     ];
 
                                     $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
-                                                                          ->setEndPoint('mall-object-notifications')
-                                                                          ->request('PUT');
+                                                                         ->setEndPoint('mall-object-notifications')
+                                                                         ->request('PUT');
                                 }
                             }
                         }
