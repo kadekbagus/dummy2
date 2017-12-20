@@ -260,7 +260,6 @@ class CouponRedemptionPageAPIController extends PubControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            dd($e->getTraceAsString());
             $activityNotes = sprintf('Failed view redemption page. Error: %s', $e->getMessage());
             $activity->setUser($user)
                 ->setActivityName('view_redemption_page')

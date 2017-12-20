@@ -800,6 +800,7 @@ class ActivityAPIController extends ControllerAPI
             } else {
                 $this->response->data = null;
             }
+            $httpCode = 500;
         }
 
         $output = $this->render($httpCode);
