@@ -265,46 +265,46 @@ class StoreSynchronization
                                                                             ->setEndPoint('mall-object-notifications')
                                                                             ->request('GET');
 
-                                    if (count($mallObjectNotificationSearch->data->records) === 0)
-                                    {
-                                        // insert data if not exist
-                                        $insertMallObjectNotification = [
-                                            'notification_ids' => (array)$notificationId,
-                                            'mall_id' => $store->merchant_id,
-                                            'user_ids' => $userIds,
-                                            'tokens' => $tokens,
-                                            'status' => 'pending',
-                                            'start_at' => null,
-                                            'created_at' => $dateTime
-                                        ];
+                                if (count($mallObjectNotificationSearch->data->records) === 0)
+                                {
+                                    // insert data if not exist
+                                    $insertMallObjectNotification = [
+                                        'notification_ids' => (array)$notificationId,
+                                        'mall_id' => $store->merchant_id,
+                                        'user_ids' => $userIds,
+                                        'tokens' => $tokens,
+                                        'status' => 'pending',
+                                        'start_at' => null,
+                                        'created_at' => $dateTime
+                                    ];
 
-                                        $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
-                                                                              ->setEndPoint('mall-object-notifications')
-                                                                              ->request('POST');
-                                    } else {
-                                        // update data if exist
-                                        $_notificationIds = (array) $mallObjectNotif->data->records[0]->notification_ids;
-                                        $_userIds = (array) $mallObjectNotif->data->records[0]->user_ids;
-                                        $_tokens = (array) $mallObjectNotif->data->records[0]->tokens;
-                                        $_notificationIds[] = $notificationId;
-                                        foreach ($userIds as $key => $uservalue) {
-                                            $_userIds[] = $uservalue;
-                                        }
-                                        foreach ($tokens as $key => $tokenvalue) {
-                                            $_tokens[] = $tokenvalue;
-                                        }
-                                        $updateMallObjectNotification = [
-                                            '_id' => $mallObjectNotif->data->records[0]->_id,
-                                            'notification_ids' => array_values(array_unique($_notificationIds)),
-                                            'mall_id' => $store->merchant_id,
-                                            'user_ids' => json_encode(array_values(array_unique($_userIds))),
-                                            'tokens' => json_encode(array_values(array_unique($_tokens))),
-                                        ];
-
-                                        $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
-                                                                              ->setEndPoint('mall-object-notifications')
-                                                                              ->request('PUT');
+                                    $mallObjectNotification = $mongoClient->setFormParam($insertMallObjectNotification)
+                                                                          ->setEndPoint('mall-object-notifications')
+                                                                          ->request('POST');
+                                } else {
+                                    // update data if exist
+                                    $_notificationIds = (array) $mallObjectNotificationSearch->data->records[0]->notification_ids;
+                                    $_userIds = (array) $mallObjectNotificationSearch->data->records[0]->user_ids;
+                                    $_tokens = (array) $mallObjectNotificationSearch->data->records[0]->tokens;
+                                    $_notificationIds[] = $notificationId;
+                                    foreach ($userIds as $key => $uservalue) {
+                                        $_userIds[] = $uservalue;
                                     }
+                                    foreach ($tokens as $key => $tokenvalue) {
+                                        $_tokens[] = $tokenvalue;
+                                    }
+                                    $updateMallObjectNotification = [
+                                        '_id' => $mallObjectNotificationSearch->data->records[0]->_id,
+                                        'notification_ids' => array_values(array_unique($_notificationIds)),
+                                        'mall_id' => $store->merchant_id,
+                                        'user_ids' => json_encode(array_values(array_unique($_userIds))),
+                                        'tokens' => json_encode(array_values(array_unique($_tokens))),
+                                    ];
+
+                                    $mallObjectNotification = $mongoClient->setFormParam($updateMallObjectNotification)
+                                                                          ->setEndPoint('mall-object-notifications')
+                                                                          ->request('PUT');
+                                }
                             }
                         }
                     }
