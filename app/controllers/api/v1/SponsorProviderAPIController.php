@@ -236,6 +236,14 @@ class SponsorProviderAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // Checking related to campaign, triger : bank image changing
+            if (isset($_FILES['logo']) || $status == 'inactive') {
+                $checkExistRelatedCampaign = ObjectSponsor::where('sponsor_provider_id', $sponsorProviderId)->first();
+                if (! empty($checkExistRelatedCampaign)) {
+                    OrbitShopAPI::throwInvalidArgument('Cannot change image or status to inactive, because there is campaign linked');
+                }
+            }
+
             $translations = @json_decode($translation);
             if (json_last_error() != JSON_ERROR_NONE) {
                 OrbitShopAPI::throwInvalidArgument('translation JSON is not valid');
