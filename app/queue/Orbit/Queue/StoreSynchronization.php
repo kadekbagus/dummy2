@@ -303,7 +303,7 @@ class StoreSynchronization
                                     $updateMallObjectNotification = [
                                        '_id' => $mallObjectNotificationSearch->data->records[0]->_id,
                                        'notification_ids' => array_values(array_unique($_notificationIds)),
-                                       'mall_id' => $mallvalue,
+                                       'mall_id' => $store->merchant_id,
                                        'user_ids' => json_encode($_userIds),
                                        'tokens' => json_encode($_tokens),
                                     ];
