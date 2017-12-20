@@ -211,6 +211,7 @@ class SponsorProviderAPIController extends ControllerAPI
             $objectType = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
             $defaultLanguageId = OrbitInput::post('default_language_id');
+            $creditCards = OrbitInput::post('credit_cards');
 
             $validator = Validator::make(
                 array(
@@ -243,6 +244,9 @@ class SponsorProviderAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument('Cannot change image or status to inactive, because there is campaign linked');
                 }
             }
+
+            // checking credit card data
+            $this->checkLinkedCreditCard($sponsorProviderId, $creditCards);
 
             $translations = @json_decode($translation);
             if (json_last_error() != JSON_ERROR_NONE) {
@@ -851,6 +855,47 @@ class SponsorProviderAPIController extends ControllerAPI
             $dataTranslations[] = $newSponsorProviderTranslation;
         }
         $newSponsorProvider->translation = $dataTranslations;
+    }
+
+    private function checkLinkedCreditCard($sponsorProviderId, $credit_cards_json_string)
+    {
+        $data = @json_decode($credit_cards_json_string);
+
+        if (json_last_error() != JSON_ERROR_NONE) {
+            OrbitShopAPI::throwInvalidArgument('Credit Card JSON format not valid');
+        }
+
+        foreach ($data as $key => $creditCardData)
+        {
+            if (isset($creditCardData->delete) && $creditCardData->delete==='Y') {
+                if ($creditCardData->sponsor_credit_card_id !== 0 && !empty($creditCardData->sponsor_credit_card_id)) {
+                    // check the credit card id
+                    $prefix = DB::getTablePrefix();
+                    $creditCardLink = SponsorProvider::select(
+                                                   'object_sponsor.object_sponsor_id',
+                                                   'object_sponsor.is_all_credit_card',
+                                                   'object_sponsor_credit_card.*',
+                                                   'sponsor_credit_cards.*',
+                                                   DB::raw("
+                                                            CASE WHEN {$prefix}object_sponsor.is_all_credit_card = 'Y'
+                                                                    THEN {$prefix}sponsor_credit_cards.sponsor_credit_card_id
+                                                                ELSE {$prefix}object_sponsor_credit_card.sponsor_credit_card_id
+                                                            END as credit_card_id
+                                                        ")
+                                                    )
+                                                ->leftJoin('object_sponsor','object_sponsor.sponsor_provider_id', '=', 'sponsor_providers.sponsor_provider_id')
+                                                ->leftJoin('object_sponsor_credit_card','object_sponsor_credit_card.object_sponsor_id', '=', 'object_sponsor.object_sponsor_id')
+                                                ->leftJoin('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_provider_id', '=', 'sponsor_providers.sponsor_provider_id')
+                                                ->having('credit_card_id', '=', $creditCardData->sponsor_credit_card_id)
+                                                ->where('sponsor_providers.sponsor_provider_id','=', $sponsorProviderId)
+                                                ->get();
+
+                    if (count($creditCardLink) > 0) {
+                        OrbitShopAPI::throwInvalidArgument('Cannot delete credit card, because there is campaign linked');
+                    }
+                }
+            }
+        }
     }
 
     protected function registerCustomValidation()
