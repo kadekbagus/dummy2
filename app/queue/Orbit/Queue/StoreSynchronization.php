@@ -171,6 +171,13 @@ class StoreSynchronization
                     $activeStore = Tenant::where('merchant_id', $base_store_id)->where('status', 'active')->first();
                     if (!is_object($activeStore))
                     {
+                        $baseMerchant = BaseMerchant::where('base_merchant_id', $base_merchant_id)->first();
+
+                        if (! is_object($baseMerchant)) {
+                            $baseMerchant = new stdclass();
+                            $baseMerchant->name = 'store';
+                        }
+
                         $mongoConfig = Config::get('database.mongodb');
                         $mongoClient = MongoClient::create($mongoConfig);
                         $timestamp = date("Y-m-d H:i:s");
@@ -213,10 +220,10 @@ class StoreSynchronization
                             }
                             $tokens = array_values(array_unique($tokens));
 
-                            $launchUrl = LandingPageUrlGenerator::create('store', $activeStore->merchant_id, $activeStore->name)->generateUrl();
+                            $launchUrl = LandingPageUrlGenerator::create('store', $base_store_id, $baseMerchant->name)->generateUrl();
 
                             $dataNotification = [
-                                'title' => $activeStore->name,
+                                'title' => $baseMerchant->name,
                                 'launch_url' => $launchUrl,
                                 'attachment_path' => $attachmentPath,
                                 'attachment_realpath' => $attachmentRealPath,
@@ -239,7 +246,7 @@ class StoreSynchronization
                             ];
 
                             // check notification exist or not
-                            $dataNotificationSearch = ['title' => $activeStore->name, 'launch_url' => $launchUrl, 'type' => 'store'];
+                            $dataNotificationSearch = ['title' => $baseMerchant->name, 'launch_url' => $launchUrl, 'type' => 'store'];
                             $notificationSearch = $mongoClient->setQueryString($dataNotificationSearch)
                                                               ->setEndPoint('notifications')
                                                               ->request('GET');
