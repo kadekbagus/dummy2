@@ -211,7 +211,7 @@ class SponsorProviderAPIController extends ControllerAPI
             $objectType = OrbitInput::post('object_type');
             $status = OrbitInput::post('status');
             $defaultLanguageId = OrbitInput::post('default_language_id');
-            $creditCards = OrbitInput::post('credit_cards');
+            $creditCards = OrbitInput::post('credit_cards', null);
 
             $validator = Validator::make(
                 array(
@@ -245,8 +245,11 @@ class SponsorProviderAPIController extends ControllerAPI
                 }
             }
 
+
             // checking credit card data
-            $this->checkLinkedCreditCard($sponsorProviderId, $creditCards);
+            if (!empty($creditCards)) {
+                $this->checkLinkedCreditCard($sponsorProviderId, $creditCards);
+            }
 
             $translations = @json_decode($translation);
             if (json_last_error() != JSON_ERROR_NONE) {
