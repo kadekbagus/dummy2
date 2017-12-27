@@ -1,4 +1,4 @@
-<?php namespace Orbit\Controller\API\v1\Pub;
+<?php namespace Orbit\Controller\API\v1\Pub\Sponsor;
 /**
  * API for getting sponsor provider credit card per each bank
  * @author firmansyah <firmansyah@dominopos.com>
