@@ -189,6 +189,11 @@ class NotificationUpdateAPIController extends ControllerAPI
                 'target_audience_ids' => $targetAudience,
             ];
 
+            // Update notification with new data.
+            $response = $mongoClient->setFormParam($body)
+                                    ->setEndPoint('notifications') // express endpoint
+                                    ->request('PUT');
+
             Event::fire('orbit.notification.postnotification.after.save', array($this, $notificationId));
 
             if ($status !== 'draft') {
