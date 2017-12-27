@@ -883,6 +883,7 @@ return array(
             'admin_portal' => 'X-OMS-Admin',
             'mdm_portal' => 'X-OMS-MDM',
             'mt_portal' => 'X-OMS-MT',
+            'rrp_portal' => 'X-OMS-RRP',
         ],
 
         /**
@@ -900,6 +901,7 @@ return array(
             'admin_portal' => '7',
             'mdm_portal' => '8',
             'mt_portal' => '9',
+            'rrp_portal' => '10',
         ],
 
         /**
@@ -1328,6 +1330,33 @@ return array(
                     // secure transfer via HTTPS only
                     'secure'    => FALSE,
 
+                    // Deny access from client side script
+                    'httponly'  => TRUE
+                ),
+            ),
+
+            'rrp_portal' => array(
+                'expire' => 3600,   // 1 hour
+                // From HTTP Headers
+                'header'  => array(
+                    'name'      => 'X-OMS-RRP'
+                ),
+                // From Query String
+                'query_string' => array(
+                    'name'      => 'X-OMS-RRP'
+                ),
+                // From Cookie
+                'cookie'    => array(
+                    'name'      => 'X-OMS-RRP',
+                    // Expire time, should be set equals or higher than
+                    // SessionConifg.expire
+                    'expire' => 62208000,   // two years
+                    // Path of the cookie
+                    'path'      => '/',
+                    // domain
+                    'domain'    => NULL,
+                    // secure transfer via HTTPS only
+                    'secure'    => FALSE,
                     // Deny access from client side script
                     'httponly'  => TRUE
                 ),
