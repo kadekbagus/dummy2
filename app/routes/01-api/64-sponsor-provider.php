@@ -125,3 +125,13 @@ Route::get('/api/v1/pub/user-sponsor/campaign', function()
 });
 
 Route::get('/app/v1/pub/user-sponsor/campaign', ['as' => 'pub-user-sponsor-campaign', 'uses' => 'IntermediatePubAuthController@Sponsor\UserSponsorCampaign_getUserSponsorCampaign']);
+
+/**
+ * sponsor list
+ */
+Route::get('/api/v1/pub/country-sponsor/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Sponsor\CountrySponsorListAPIController::create()->getCountrySponsorList();
+});
+
+Route::get('/app/v1/pub/country-sponsor/list', ['as' => 'pub-country-sponsor-list', 'uses' => 'IntermediatePubAuthController@Sponsor\CountrySponsorList_getCountrySponsorList']);
