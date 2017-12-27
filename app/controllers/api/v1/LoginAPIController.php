@@ -1710,13 +1710,13 @@ class LoginAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $roles = ['Merchant Review Admin'];
+            $roles = ['Merchant Review Admin', 'Master Review Admin'];
 
-            $user = User::select('users.*', 'roles.*', 'user_merchant_transactions.object_type as user_mtp_type')
+            $user = User::select('users.*', 'roles.*', 'user_merchant_reviews.object_type as user_rrp_type')
                         ->with('role')
                         ->active()
                         ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
-                        ->join('user_merchant_transactions', 'users.user_id', '=', 'user_merchant_transactions.user_id')
+                        ->leftJoin('user_merchant_reviews', 'users.user_id', '=', 'user_merchant_reviews.user_id')
                         ->where('user_email', $email)
                         ->whereIn('roles.role_name', $roles)
                         ->first();
