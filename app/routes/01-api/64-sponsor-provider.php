@@ -63,7 +63,7 @@ Route::get('/api/v1/pub/sponsor-provider/list', function()
     return Orbit\Controller\API\v1\Pub\Sponsor\SponsorProviderListAPIController::create()->getSponsorProviderList();
 });
 
-Route::get('/app/v1/pub/sponsor-provider/list', ['as' => 'pub-sponsor-provider-list', 'uses' => 'IntermediatePubAuthController@SponsorProviderList_getSponsorProviderList']);
+Route::get('/app/v1/pub/sponsor-provider/list', ['as' => 'pub-sponsor-provider-list', 'uses' => 'IntermediatePubAuthController@Sponsor\SponsorProviderList_getSponsorProviderList']);
 
 
 /**
@@ -74,7 +74,7 @@ Route::get('/api/v1/pub/sponsor-provider-cc/list', function()
     return Orbit\Controller\API\v1\Pub\Sponsor\SponsorProviderCreditCardListAPIController::create()->getSponsorProviderCreditcardList();
 });
 
-Route::get('/app/v1/pub/sponsor-provider-cc/list', ['as' => 'pub-sponsor-provider-cc-list', 'uses' => 'IntermediatePubAuthController@SponsorProviderCreditCardList_getSponsorProviderCreditcardList']);
+Route::get('/app/v1/pub/sponsor-provider-cc/list', ['as' => 'pub-sponsor-provider-cc-list', 'uses' => 'IntermediatePubAuthController@Sponsor\SponsorProviderCreditCardList_getSponsorProviderCreditcardList']);
 
 /**
  * user credit card list
@@ -127,7 +127,7 @@ Route::get('/api/v1/pub/user-sponsor/campaign', function()
 Route::get('/app/v1/pub/user-sponsor/campaign', ['as' => 'pub-user-sponsor-campaign', 'uses' => 'IntermediatePubAuthController@Sponsor\UserSponsorCampaign_getUserSponsorCampaign']);
 
 /**
- * sponsor list
+ * Country of sponsor provider
  */
 Route::get('/api/v1/pub/country-sponsor/list', function()
 {
