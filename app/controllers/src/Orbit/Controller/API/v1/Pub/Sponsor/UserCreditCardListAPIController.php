@@ -26,6 +26,7 @@ class UserCreditCardListAPIController extends PubControllerAPI
      * GET - Get user credit card list
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -90,6 +91,13 @@ class UserCreditCardListAPIController extends PubControllerAPI
                                       ->where('user_sponsor.user_id', $userId)
                                       ->orderBy('bank_name', 'asc')
                                       ->orderBy('credit_card_name', 'asc');
+
+            // Filter by country
+            OrbitInput::get('country', function($country) use ($userSponsor)
+            {
+                $userSponsor->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                        ->where('countries.name', $country);
+            });
 
             $_userSponsor = $userSponsor;
 

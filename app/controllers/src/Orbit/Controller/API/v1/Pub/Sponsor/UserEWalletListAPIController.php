@@ -26,6 +26,7 @@ class UserEWalletListAPIController extends PubControllerAPI
      * GET - Get user e-wallet list
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -78,6 +79,13 @@ class UserEWalletListAPIController extends PubControllerAPI
                                       ->where('sponsor_providers.status', 'active')
                                       ->where('user_sponsor.user_id', $userId)
                                       ->orderBy('ewallet_name', 'asc');
+
+            // Filter by country
+            OrbitInput::get('country', function($country) use ($userSponsor)
+            {
+                $userSponsor->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                        ->where('countries.name', $country);
+            });
 
             $_userSponsor = $userSponsor;
 

@@ -49,7 +49,7 @@ Route::get('/api/v1/link-to-sponsor/list', function()
  */
 Route::get('/api/v1/pub/available-sponsor/list', function()
 {
-    return Orbit\Controller\API\v1\Pub\Sponsor\AvailableSponsorListAPIController::create()->getSponsorList();
+    return Orbit\Controller\API\v1\Pub\Sponsor\AvailableSponsorListAPIController::create()->getAvailableSponsorList();
 });
 
 Route::get('/app/v1/pub/available-sponsor/list', ['as' => 'pub-user-sponsor-list', 'uses' => 'IntermediatePubAuthController@Sponsor\AvailableSponsorList_getAvailableSponsorList']);
