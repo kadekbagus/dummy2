@@ -7108,8 +7108,16 @@ return array(
     ],
 
     'page_view' => [
+        // enable update total page views
+        // FALSE: disabled, depends on daily scripts to update total pageview in DB and ES
+        // TRUE: enabled, script to update can be turned off, but comes with dire consequences
+        //     (MySQL Table deadlock, Redis connection timeout, High ES server utility)
+        'enable_update_total_page_views' => FALSE,
+
+        // total page view temporary storage
         'source' => 'redis',
 
+        // total page view cache redis connection
         'redis' => [
             'connection' => 'page_view'
         ],
