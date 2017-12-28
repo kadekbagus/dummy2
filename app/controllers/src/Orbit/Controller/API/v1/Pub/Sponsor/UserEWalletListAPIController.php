@@ -26,6 +26,7 @@ class UserEWalletListAPIController extends PubControllerAPI
      * GET - Get user e-wallet list
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -67,6 +68,7 @@ class UserEWalletListAPIController extends PubControllerAPI
 
             $userSponsor = UserSponsor::select('sponsor_providers.sponsor_provider_id as ewallet_id',
                                                'sponsor_providers.name as ewallet_name',
+                                               'countries.name as country_name',
                                                DB::raw("{$image} as ewallet_image")
                                         )
                                       ->join('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'user_sponsor.sponsor_id')
@@ -74,10 +76,17 @@ class UserEWalletListAPIController extends PubControllerAPI
                                             $q->on('media.object_id', '=', 'sponsor_providers.sponsor_provider_id')
                                               ->on('media.media_name_long', '=', DB::raw("'sponsor_provider_logo_orig'"));
                                         })
+                                      ->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
                                       ->where('user_sponsor.sponsor_type', 'ewallet')
                                       ->where('sponsor_providers.status', 'active')
                                       ->where('user_sponsor.user_id', $userId)
                                       ->orderBy('ewallet_name', 'asc');
+
+            // Filter by country
+            OrbitInput::get('country', function($country) use ($userSponsor)
+            {
+                $userSponsor->where('countries.name', $country);
+            });
 
             $_userSponsor = $userSponsor;
 

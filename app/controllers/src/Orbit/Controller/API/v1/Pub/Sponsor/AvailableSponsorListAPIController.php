@@ -28,6 +28,7 @@ class AvailableSponsorListAPIController extends PubControllerAPI
      * GET - Get active sponsor list (all)
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -60,11 +61,12 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                     $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
                 }
 
-                $sponsor = SponsorProvider::select('sponsor_providers.sponsor_provider_id as sponsor_id', 'sponsor_providers.name', DB::raw("({$image}) as image_url"))
+                $sponsor = SponsorProvider::select('sponsor_providers.sponsor_provider_id as sponsor_id', 'sponsor_providers.name', 'countries.name as country_name', DB::raw("({$image}) as image_url"))
                                        ->leftJoin('media', function ($q) use ($prefix){
                                                 $q->on('media.object_id', '=', 'sponsor_providers.sponsor_provider_id')
                                                   ->on('media.media_name_long', '=', DB::raw("'sponsor_provider_logo_orig'"));
                                             })
+                                       ->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
                                        ->where('object_type', $objectType)
                                        ->where('status', 'active')
                                        ->orderBy('sponsor_providers.name', 'asc');
@@ -81,15 +83,22 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                     $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
                 }
 
-                $sponsor = SponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id as sponsor_id', 'sponsor_providers.name', DB::raw("({$image}) as image_url"))
+                $sponsor = SponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id as sponsor_id', 'sponsor_providers.name', 'countries.name as country_name', DB::raw("({$image}) as image_url"))
                                             ->leftJoin('media', function ($q) use ($prefix){
                                                 $q->on('media.object_id', '=', 'sponsor_credit_cards.sponsor_credit_card_id')
                                                   ->on('media.media_name_long', '=', DB::raw("'sponsor_credit_card_image_orig'"));
                                             })
+                                            ->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
                                             ->where('sponsor_credit_cards.sponsor_provider_id', $bankId)
                                             ->where('sponsor_credit_cards.status', 'active')
                                             ->orderBy('sponsor_credit_cards.name', 'asc');
             }
+
+            // Filter by country
+            OrbitInput::get('country', function($country) use ($sponsor)
+            {
+                $sponsor->where('countries.name', $country);
+            });
 
             $_sponsor = $sponsor;
 
@@ -171,6 +180,7 @@ class AvailableSponsorListAPIController extends PubControllerAPI
      * GET - Get active sponsor list (bank)
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -205,14 +215,21 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                 $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
             }
 
-            $sponsor = SponsorProvider::select('sponsor_providers.sponsor_provider_id as bank_id', 'sponsor_providers.name', DB::raw("({$image}) as image_url"))
+            $sponsor = SponsorProvider::select('sponsor_providers.sponsor_provider_id as bank_id', 'sponsor_providers.name', 'countries.name as country_name', DB::raw("({$image}) as image_url"))
                                    ->leftJoin('media', function ($q) use ($prefix){
                                             $q->on('media.object_id', '=', 'sponsor_providers.sponsor_provider_id')
                                               ->on('media.media_name_long', '=', DB::raw("'sponsor_provider_logo_orig'"));
                                         })
+                                   ->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
                                    ->where('object_type', 'bank')
                                    ->where('status', 'active')
                                    ->orderBy('sponsor_providers.name', 'asc');
+
+            // Filter by country
+            OrbitInput::get('country', function($country) use ($sponsor)
+            {
+                $sponsor->where('countries.name', $country);
+            });
 
             $_sponsor = $sponsor;
 
