@@ -28,6 +28,7 @@ class AvailableSponsorListAPIController extends PubControllerAPI
      * GET - Get active sponsor list (all)
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -90,6 +91,13 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                                             ->where('sponsor_credit_cards.status', 'active')
                                             ->orderBy('sponsor_credit_cards.name', 'asc');
             }
+
+            // Filter by country
+            OrbitInput::get('country', function($country) use ($sponsor)
+            {
+                $sponsor->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                        ->where('countries.name', $country);
+            });
 
             $_sponsor = $sponsor;
 
@@ -171,6 +179,7 @@ class AvailableSponsorListAPIController extends PubControllerAPI
      * GET - Get active sponsor list (bank)
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -213,6 +222,13 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                                    ->where('object_type', 'bank')
                                    ->where('status', 'active')
                                    ->orderBy('sponsor_providers.name', 'asc');
+
+            // Filter by country
+            OrbitInput::get('country', function($country) use ($sponsor)
+            {
+                $sponsor->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                        ->where('countries.name', $country);
+            });
 
             $_sponsor = $sponsor;
 
