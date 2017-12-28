@@ -202,14 +202,23 @@ class NotificationUpdateAPIController extends ControllerAPI
                 $imageUrl = $attachmentUrl;
                 $notif = $mongoClient->setEndPoint("notifications/$notificationId")->request('GET');
 
-                $localPath = "";
-                $cdnPath = "";
+                $localPath = '';
+                $cdnPath = '';
 
-                if ($files || (empty($imageUrl) && $notif->data->attachment_path != '')) {
+                if ($files || ! empty($notif->data->attachment_path)) {
                     $cdnConfig = Config::get('orbit.cdn');
                     $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
                     $localPath = $notif->data->attachment_path;
-                    $cdnPath = $notif->data->cdn_url;
+                    $cdnPath = $notif->data->cdn_url; 
+
+                    // If cdnPath is the old one/not match with the latest (being uploaded)
+                    // then use local path (by setting cdnPath to '')
+                    if (! empty($cdnPath)) {
+                        if (stripos($cdnPath, $localPath) === false) {
+                            $cdnPath = '';
+                        }
+                    }
+
                     $imageUrl = $imgUrl->getImageUrl($localPath, $cdnPath);
                 }
 
