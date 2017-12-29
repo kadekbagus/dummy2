@@ -73,6 +73,7 @@ class UserCreditCardListAPIController extends PubControllerAPI
                                                DB::raw("{$imageBank} as bank_image"),
                                                'sponsor_credit_cards.sponsor_credit_card_id as credit_card_id',
                                                'sponsor_credit_cards.name as credit_card_name',
+                                               'countries.name as country_name',
                                                DB::raw("{$imageCC} as credit_card_image")
                                         )
                                       ->join('sponsor_credit_cards', 'sponsor_credit_cards.sponsor_credit_card_id', '=', 'user_sponsor.sponsor_id')
@@ -85,6 +86,7 @@ class UserCreditCardListAPIController extends PubControllerAPI
                                             $q->on(DB::raw("credit_card_media.object_id"), '=', 'sponsor_credit_cards.sponsor_credit_card_id')
                                               ->on(DB::raw("credit_card_media.media_name_long"), '=', DB::raw("'sponsor_credit_card_image_orig'"));
                                         })
+                                      ->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
                                       ->where('user_sponsor.sponsor_type', 'credit_card')
                                       ->where('sponsor_credit_cards.status', 'active')
                                       ->where('sponsor_providers.status', 'active')
@@ -95,8 +97,7 @@ class UserCreditCardListAPIController extends PubControllerAPI
             // Filter by country
             OrbitInput::get('country', function($country) use ($userSponsor)
             {
-                $userSponsor->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
-                        ->where('countries.name', $country);
+                $userSponsor->where('countries.name', $country);
             });
 
             $_userSponsor = $userSponsor;
