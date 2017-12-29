@@ -42,3 +42,17 @@ Route::get('/api/v1/pub/rating/user/list', function()
 });
 
 Route::get('/app/v1/pub/rating/user/list', ['as' => 'user-rating-list', 'uses' => 'IntermediatePubAuthController@Rating\UserRatingList_getUserRatingList']);
+
+
+/**
+ * Get search review for rating and review portal
+ */
+Route::get('/api/v1/review/list', function()
+{
+    return ReviewRatingAPIController::create()->getReviewList();
+});
+
+/**
+ * Get search review for rating and review portal
+ */
+Route::get('/app/v1/review/list', 'IntermediateAuthController@ReviewRating_getReviewList');
