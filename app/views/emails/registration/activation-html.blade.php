@@ -305,10 +305,9 @@
                                         <tr>
                                             <td style="word-break:break-word;font-size:0px;padding:10px 25px;" align="center">
                                                 <div style="cursor:auto;color:#000000;font-family:Ubuntu, Helvetica, Arial, sans-serif;font-size:13px;line-height:22px;">
-                                                    <p align="justify" style="margin:0">
-                                                        {{ $greeting }} {{{ $first_name or $email }}},
-                                                        <br \> {{ $message_part1 }} {{ $message_part2 }}
-                                                    </p>
+                                                    <p align="justify" style="margin:0"> {{ $greeting }} {{{ $first_name or $email }}}, </p><p></p>
+                                                    <p align="justify" style="margin:0"> {{ $message_part1 }} </p><p></p>
+                                                    <p align="justify" style="margin:0"> {{ $message_part2 }} </p>
                                                 </div>
                                             </td>
                                         </tr>
@@ -337,6 +336,8 @@
                                                         <li style="text-align:left;">{{ $list_1 }}</li>
                                                         <li style="text-align:left;">{{ $list_2 }}</li>
                                                         <li style="text-align:left;">{{ $list_3 }}</li>
+                                                        <li style="text-align:left;">{{ $list_4 }}</li>
+                                                        <li style="text-align:left;">{{ $list_5 }}</li>
                                                       </ol>
                                                     <p align="justify" style="margin:0">{{ $message_part4 }}</p><br/>
                                                     <p align="justify" style="margin:0"><b>{{ $team_name }}</b></p>

@@ -196,6 +196,8 @@ class RegistrationMail
             'list_1'            => Lang::get('email.activation.list_1'),
             'list_2'            => Lang::get('email.activation.list_2'),
             'list_3'            => Lang::get('email.activation.list_3'),
+            'list_4'            => Lang::get('email.activation.list_4'),
+            'list_5'            => Lang::get('email.activation.list_5'),
             'message_part4'     => Lang::get('email.activation.message_part4'),
             'team_name'         => Lang::get('email.activation.team_name')
         );
