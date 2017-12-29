@@ -41,4 +41,32 @@ Route::get('/api/v1/pub/rating/user/list', function()
     return Orbit\Controller\API\v1\Pub\Rating\UserRatingListAPIController::create()->getUserRatingList();
 });
 
-Route::get('/app/v1/pub/rating/user/list', ['as' => 'user-rating-list', 'uses' => 'IntermediatePubAuthController@Rating\UserRatingList_getUserRatingList']);
+/**
+ * Get search review for rating and review portal
+ */
+Route::get('/api/v1/review/list', function()
+{
+    return ReviewRatingAPIController::create()->getReviewList();
+});
+
+/**
+ * Get search review for rating and review portal
+ */
+Route::get('/app/v1/review/list', 'IntermediateAuthController@ReviewRating_getReviewList');
+
+/**
+ * Rating detail and replies
+ */
+Route::get('/api/v1/review/detail', function()
+{
+    return RatingDetailAPIController::create()->getRatingDetail();
+});
+
+Route::get('/app/v1/review/detail', 'IntermediateAuthController@RatingDetail_getRatingDetail');
+
+Route::get('/api/v1/review/detail/replies', function()
+{
+    return RatingDetailAPIController::create()->getRatingReplies();
+});
+
+Route::get('/app/v1/review/detail/replies', 'IntermediateAuthController@RatingDetail_getRatingReplies');
