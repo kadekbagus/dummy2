@@ -26,7 +26,7 @@ use News;
 class RatingNewAPIController extends PubControllerAPI
 {
     /**
-     * POST - New Rating
+     * POST - New Rating Review and Reply the Review
      *
      * @param string object_id
      * @param string object_type
@@ -36,6 +36,7 @@ class RatingNewAPIController extends PubControllerAPI
      * @return Illuminate\Support\Facades\Response
      *
      * @author shelgi <shelgi@dominopos.com>
+     * @author firmansyah <firmansyah@dominopos.com>
      */
     public function postNewRating()
     {
@@ -54,6 +55,16 @@ class RatingNewAPIController extends PubControllerAPI
         $status = OrbitInput::post('status', 'active');
         $approvalStatus = OrbitInput::post('approval_status', 'approved');
         $mongoConfig = Config::get('database.mongodb');
+
+        // For Reply
+        $isReply = OrbitInput::post('is_reply', false);
+        $parentId = OrbitInput::post('parent_id', NULL);
+        $userIdReplied = OrbitInput::post('user_id_replied', NULL);
+        $reviewIdReplied = OrbitInput::post('review_id_replied', NULL);
+        if ($isReply) {
+            //No rating when reply, so need overide the rating
+            $rating = 0;
+        }
 
         try {
             $user = $this->getUser();
@@ -80,6 +91,17 @@ class RatingNewAPIController extends PubControllerAPI
                             'rating'      => 'required',
                             'location_id' => 'required'
                         );
+
+            // Add validation rule for reply review
+            if ($isReply) {
+                $validatorColumn['parent_id']  = $parentId;
+                $validatorColumn['user_id_replied']  = $userIdReplied;
+                $validatorColumn['review_id_replied']  = $reviewIdReplied;
+
+                $validation['parent_id'] = 'required';
+                $validation['user_id_replied'] = 'required';
+                $validation['review_id_replied'] = 'required';
+            }
 
             // check if object_id is promotional event, no nedd to check location_id
             $isPromotionalEvent = 'N';
@@ -121,8 +143,17 @@ class RatingNewAPIController extends PubControllerAPI
                 'status'          => $status,
                 'approval_status' => $approvalStatus,
                 'created_at'      => $dateTime,
-                'updated_at'      => $dateTime
+                'updated_at'      => $dateTime,
+                'is_reply'        => 'n',
             ];
+
+            // Adding new parameter for reply
+            if ($isReply) {
+                $body['is_reply'] = 'y';
+                $body['parent_id'] = $parentId;
+                $body['user_id_replied'] = $userIdReplied;
+                $body['review_id_replied'] = $reviewIdReplied;
+            }
 
             $bodyLocation = array();
             if ($isPromotionalEvent === 'N') {
