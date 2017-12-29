@@ -120,6 +120,8 @@ class ReviewRatingAPIController extends ControllerAPI
                 }
             });
 
+            $emptyStore = false;
+
             // for user merchant (show only review for that merchant)
             if ($role->role_name == 'Merchant Review Admin') {
                 $storeIds = [];
@@ -134,6 +136,8 @@ class ReviewRatingAPIController extends ControllerAPI
                     foreach($stores as $key => $value) {
                         $storeIds[] = $value->base_store_id;
                     }
+                } else {
+                    $emptyStore = true;
                 }
 
                 $queryString = [
@@ -163,7 +167,8 @@ class ReviewRatingAPIController extends ControllerAPI
 
             $listOfRec = $response->data;
 
-            foreach ($listOfRec->records as $key => $value) {
+            foreach ($listOfRec->records as $key => $value)
+            {
                 $userId = $listOfRec->records[$key]->user_id;
                 $objectId = $listOfRec->records[$key]->object_id;
                 $objectType = $listOfRec->records[$key]->object_type;
@@ -196,13 +201,14 @@ class ReviewRatingAPIController extends ControllerAPI
                 $listOfRec->records[$key]->object_name = $objectName;
             }
 
-            // print_r($listOfRec);
-            // die();
-
-            $data = new \stdclass();
-            $data->returned_records = $listOfRec->returned_records;
-            $data->total_records = $listOfRec->total_records;
-            $data->records = $listOfRec->records;
+            if (count($listOfRec->records) === 0 || $emptyStore) {
+                $data = null;
+            } else {
+                $data = new \stdclass();
+                $data->returned_records = $listOfRec->returned_records;
+                $data->total_records = $listOfRec->total_records;
+                $data->records = $listOfRec->records;
+            }
 
             $this->response->data = $data;
             $this->response->code = 0;
