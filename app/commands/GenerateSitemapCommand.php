@@ -64,7 +64,7 @@ class GenerateSitemapCommand extends Command
     protected $sleep = 0;
 
     /**
-     * Url template: http://www.gotomalls.com/#!/%s
+     * Url template: http://www.gotomalls.com
      *
      * @var string
      */
@@ -99,6 +99,9 @@ class GenerateSitemapCommand extends Command
 
             // Do not save all activity for this request
             Config::set('memory:do_not_save_activity', TRUE);
+
+            // Disable read pageview count to redis
+            Config::set('orbit.page_view.source', NULL);
 
             $this->user = User::with('apikey')
                 ->leftJoin('roles', 'users.user_role_id', '=', 'roles.role_id')
@@ -164,11 +167,10 @@ class GenerateSitemapCommand extends Command
                     $this->generateMiscListSitemap();
                     $this->generateAllListSitemap();
                     $this->generateAllDetailSitemap();
-
                     break;
             }
         } catch (\Exception $e) {
-            return print_r([$e->getMessage(), $e->getLine(), $e->getFile()]);
+            return print_r([$e->getMessage(), $e->getLine(), $e->getFile(), $e->getTraceAsString()]);
         }
 
         $xmlFooter = '</urlset>';
@@ -184,63 +186,16 @@ class GenerateSitemapCommand extends Command
     {
         $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
         foreach ($listUris as $key => $uri) {
-            $response = null;
-            $_GET['sortby'] = 'updated_date';
-            $_GET['sortmode'] = 'desc';
-            $_GET['list_type'] = 'preferred';
-            if (! empty($this->country)) {
-                $_GET['country'] = $this->country;
-            }
-
-            $_GET['take'] = 1;
-            $_GET['skip'] = 0;
+            $updatedAt = time();
             if (! empty($mall_id)) {
-                $_GET['mall_id'] = $mall_id;
+                // from mall detail
+                $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                $listUrlTemplate = sprintf($this->urlTemplate, $mallUri['uri']) . '/%s';
+                $this->urlStringPrinter(sprintf($listUrlTemplate, $mall_id, $mall_slug, $uri['uri']), date('c', $updatedAt), $uri['changefreq']);
+            } else {
+                $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c', $updatedAt), $uri['changefreq']);
             }
 
-            switch ($key) {
-                case 'promotion':
-                    $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getSearchPromotion();
-                    break;
-
-                case 'event':
-                    $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getSearchNews();
-                    break;
-
-                case 'coupon':
-                    $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getCouponList();
-                    break;
-
-                case 'store':
-                    $response = Orbit\Controller\API\v1\Pub\Store\StoreListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getStoreList();
-                    break;
-
-                case 'mall':
-                    if (! empty($mall_id)) {
-                        $response = null;
-                    } else {
-                        $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->setWithOutScore()->getMallList();
-                    }
-                    break;
-
-                default:
-                    # code...
-                    break;
-            }
-
-            if ($this->responseCheck($response)) {
-                if (! empty($response->data->total_records)) {
-                    $updatedAt = (isset($response->data->records[0]) && ! is_object($response->data->records[0]) && isset($response->data->records[0]['updated_at']) && ! empty($response->data->records[0]['updated_at'])) ? strtotime($response->data->records[0]['updated_at']) : time();
-                    if (! empty($mall_id)) {
-                        // from mall detail
-                        $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-                        $listUrlTemplate = sprintf($this->urlTemplate, $mallUri['uri']) . '/%s';
-                        $this->urlStringPrinter(sprintf($listUrlTemplate, $mall_id, $mall_slug, $uri['uri']), date('c', $updatedAt), $uri['changefreq']);
-                    } else {
-                        $this->urlStringPrinter(sprintf($this->urlTemplate, $uri['uri']), date('c', $updatedAt), $uri['changefreq']);
-                    }
-                }
-            }
         }
     }
 
@@ -574,9 +529,10 @@ class GenerateSitemapCommand extends Command
      * @param $xml DOMDocument
      * @return void
      */
-    protected function detailAppender($records, $type, $urlTemplate, $detailUri, $mall_id = null, $mall_slug = null)
+    protected function detailAppender($records, $type, $urlTemplate, $origDetailUri, $mall_id = null, $mall_slug = null)
     {
         foreach ($records as $record) {
+            $detailUri = $origDetailUri;
             $updatedAt = (! is_object($record) && isset($record['updated_at']) && ! empty($record['updated_at'])) ? strtotime($record['updated_at']) : time();
 
             switch ($type) {
@@ -584,6 +540,10 @@ class GenerateSitemapCommand extends Command
                 case 'event':
                     $id = $record['news_id'];
                     $name = $record['news_name'];
+
+                    if ($type === 'event' && isset($record['is_having_reward']) && $record['is_having_reward'] === 'Y') {
+                        $detailUri = Config::get('orbit.sitemap.uri_properties.detail.promotional-event', []);
+                    }
                     break;
 
                 case 'coupon':
