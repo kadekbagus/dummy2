@@ -1,7 +1,7 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Rating;
 /**
  * @author firmansyah <firmansyah@dominopos.com>
- * @desc Controller for get rating review list
+ * @desc Controller for get reply rating review list
  */
 
 use OrbitShop\API\v1\PubControllerAPI;
@@ -25,26 +25,27 @@ use Country;
 use Tenant;
 use News;
 
-class RatingListAPIController extends PubControllerAPI
+class ReplyRatingReviewListAPIController extends PubControllerAPI
 {
     protected $withoutScore = FALSE;
 
     /**
-     * GET - get rating review list
+     * GET - get reply rating review list
      *
      * @author Firmansyayh <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
-     * @param string object_id
-     * @param string object_type
-     * @param string cities
-     * @param string country
-     * @param string mall_id
+     * @param string sortby
+     * @param string sortmode
+     * @param string take
+     * @param string skip
+     * @param string keyword
+     * @param string filter_name
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getRatingList()
+    public function getReplyRatingReviewList()
     {
         $httpCode = 200;
 
@@ -58,6 +59,7 @@ class RatingListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $mongoConfig = Config::get('database.mongodb');
             $mallId = OrbitInput::get('mall_id', null);
+            $parentId = OrbitInput::get('parent_id', null);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -84,6 +86,7 @@ class RatingListAPIController extends PubControllerAPI
                 'object_type' => $objectType,
                 'take'        => $take,
                 'skip'        => $skip,
+                'parent_id'   => $parentId,
                 'sortBy'      => 'updated_at',
                 'sortMode'    => 'desc'
             ];
@@ -155,8 +158,10 @@ class RatingListAPIController extends PubControllerAPI
 
             if (! empty($listOfRec->records)) {
                 $userIds = array();
+                $userIdReplies = array();
                 foreach ($listOfRec->records as $rating) {
                     $userIds[] = $rating->user_id;
+                    $userIdReplies[] = $rating->user_id_replied;
                 }
 
                 // get user name and photo
@@ -179,10 +184,19 @@ class RatingListAPIController extends PubControllerAPI
                                   ->groupBy('users.user_id')
                                   ->get();
 
+                $userRepliedList = User::select('users.user_id', DB::raw("(CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname)) as user_name_replied"))
+                                  ->whereIn('users.user_id', $userIdReplies)
+                                  ->get();
+
                 $userRating = array();
                 foreach ($userList as $list) {
                     $userRating[$list->user_id]['user_name'] = $list->user_name;
                     $userRating[$list->user_id]['user_picture'] = $list->user_picture;
+                }
+
+                $userRatingReplied = array();
+                foreach ($userRepliedList as $userReplied) {
+                    $userRatingReplied[$userReplied->user_id]['user_name_replied'] = $userReplied->user_name_replied;
                 }
 
                 foreach ($listOfRec->records as $rating) {
@@ -194,6 +208,11 @@ class RatingListAPIController extends PubControllerAPI
                     $rating->user_picture = '';
                     if (! empty($userRating[$rating->user_id]['user_picture'])) {
                         $rating->user_picture = $userRating[$rating->user_id]['user_picture'];
+                    }
+
+                    $rating->user_name_replied = '';
+                    if (! empty($userRatingReplied[$rating->user_id_replied]['user_name_replied'])) {
+                        $rating->user_name_replied = $userRatingReplied[$rating->user_id_replied]['user_name_replied'];
                     }
                 }
             }
