@@ -81,19 +81,24 @@ class RatingDetailAPIController extends ControllerAPI
             // Get object being reviewed.
             $objectId = $rating->data->object_id;
             $objectType = $rating->data->object_type;
+            $mediaNameLong = '';
 
             switch(strtolower($objectType)) {
                 case 'coupon':
                     $object = Coupon::select('promotion_name as object_name')->where('promotion_id', '=', $objectId)->first();
+                    $mediaNameLong = 'coupon_translation_image_orig';
                     break;
                 case 'store':
                     $object = Tenant::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
+                    $mediaNameLong = 'retailer_image_orig';
                     break;
                 case 'mall':
                     $object = Mall::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
+                    $mediaNameLong = 'mall_logo_orig';
                     break;
                 default:
                     $object = News::select('news_name as object_name')->where('news_id', '=', $objectId)->first();
+                    $mediaNameLong = 'news_translation_image_orig';
             }
 
             if ($object != null) {
@@ -102,7 +107,7 @@ class RatingDetailAPIController extends ControllerAPI
 
                 // @todo should use eager loading.
                 $media = Media::where('object_id', 'like', '%' . $objectId . '%')
-                    ->where('media_name_long', 'news_translation_image_orig')->first();
+                    ->where('media_name_long', $mediaNameLong)->first();
                 
                 if ($media != null) {
                     $rating->data->object_picture = $urlPrefix . $media->path;
