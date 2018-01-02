@@ -41,6 +41,8 @@ Route::get('/api/v1/pub/rating/user/list', function()
     return Orbit\Controller\API\v1\Pub\Rating\UserRatingListAPIController::create()->getUserRatingList();
 });
 
+Route::get('/app/v1/pub/rating/user/list', ['as' => 'user-rating-list', 'uses' => 'IntermediatePubAuthController@Rating\UserRatingList_getUserRatingList']);
+
 /**
  * Get search review for rating and review portal
  */
