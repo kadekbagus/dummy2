@@ -95,6 +95,9 @@ class ReviewRatingAPIController extends ControllerAPI
                 $skip = $_skip;
             });
 
+            $beginDate = OrbitInput::get('begin_date', null);
+            $endDate = OrbitInput::get('end_date', null);
+
             // Default sort by
             $sortBy = 'created_at';
             // Default sort mode
@@ -121,6 +124,7 @@ class ReviewRatingAPIController extends ControllerAPI
             });
 
             $emptyStore = false;
+            $queryString = [];
 
             // for user merchant (show only review for that merchant)
             if ($role->role_name == 'Merchant Review Admin') {
@@ -157,6 +161,12 @@ class ReviewRatingAPIController extends ControllerAPI
                     'sortBy'       => $sortBy,
                     'sortMode'     => $sortMode,
                 ];
+            }
+
+            // filter date
+            if (!empty($beginDate) && !empty($endDate)) {
+                $queryString['begin_date'] = $beginDate;
+                $queryString['end_date'] = $endDate;
             }
 
             $mongoConfig = Config::get('database.mongodb');
