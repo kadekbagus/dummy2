@@ -16,11 +16,11 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 
-class ReviewRatingAPIController extends ControllerAPI
+class RatingReviewAPIController extends ControllerAPI
 {
     protected $viewRoles = ['merchant review admin', 'master review admin'];
     /**
-     * GET - review rating list
+     * GET - rating review list for portal
      * @author kadek <kadek@dominopos.com>
      *
      * List of API Parameters
@@ -225,16 +225,12 @@ class ReviewRatingAPIController extends ControllerAPI
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
         } catch (ACLForbiddenException $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.access.forbidden', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.invalid.arguments', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -245,8 +241,6 @@ class ReviewRatingAPIController extends ControllerAPI
             $this->response->data = $result;
             $httpCode = 403;
         } catch (QueryException $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.query.error', array($this, $e));
-
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
 
@@ -259,8 +253,6 @@ class ReviewRatingAPIController extends ControllerAPI
             $this->response->data = null;
             $httpCode = 500;
         } catch (Exception $e) {
-            Event::fire('orbit.mall.getsearchmallcountry.general.exception', array($this, $e));
-
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -268,13 +260,104 @@ class ReviewRatingAPIController extends ControllerAPI
         }
 
         $output = $this->render($httpCode);
-        Event::fire('orbit.mall.getsearchmallcountry.before.render', array($this, &$output));
 
         return $output;
     }
 
-    protected function quote($arg)
+    public function postUpdateReply()
     {
-        return DB::connection()->getPdo()->quote($arg);
+        try {
+            $httpCode = 200;
+
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $reviewId = OrbitInput::post('id');
+            $review = OrbitInput::post('review');
+
+            $validator = Validator::make(
+                array(
+                    'reviewId' => $reviewId
+                ),
+                array(
+                    'reviewId' => 'required'
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $mongoConfig = Config::get('database.mongodb');
+            $mongoClient = MongoClient::create($mongoConfig);
+
+            $updateDataReview = [
+                '_id' => $reviewId,
+                'review' => $review,
+            ];
+
+            $updateReview = $mongoClient->setFormParam($updateDataReview)
+                                        ->setEndPoint('reviews')
+                                        ->request('PUT');
+
+            $getReview = $mongoClient->setEndPoint("reviews/$reviewId")->request('GET');
+
+            $this->response->data = $getReview->data;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request Ok';
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 50;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
     }
+
 }

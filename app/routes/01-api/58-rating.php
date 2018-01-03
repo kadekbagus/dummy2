@@ -58,13 +58,13 @@ Route::get('/app/v1/pub/rating/user/list', ['as' => 'user-rating-list', 'uses' =
  */
 Route::get('/api/v1/review/list', function()
 {
-    return ReviewRatingAPIController::create()->getReviewList();
+    return RatingReviewAPIController::create()->getReviewList();
 });
 
 /**
  * Get search review for rating and review portal
  */
-Route::get('/app/v1/review/list', 'IntermediateAuthController@ReviewRating_getReviewList');
+Route::get('/app/v1/review/list', 'IntermediateAuthController@RatingReview_getReviewList');
 
 /**
  * Rating detail and replies
@@ -82,3 +82,11 @@ Route::get('/api/v1/review/detail/replies', function()
 });
 
 Route::get('/app/v1/review/detail/replies', 'IntermediateAuthController@RatingDetail_getRatingReplies');
+
+
+Route::post('/api/v1/rating-review/reply/update', function()
+{
+    return RatingReviewAPIController::create()->postUpdateReply();
+});
+
+Route::post('/app/v1/rating-review/reply/update', 'IntermediateAuthController@RatingReview_postUpdateReply');
