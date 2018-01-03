@@ -135,3 +135,25 @@ Route::get('/api/v1/pub/country-sponsor/list', function()
 });
 
 Route::get('/app/v1/pub/country-sponsor/list', ['as' => 'pub-country-sponsor-list', 'uses' => 'IntermediatePubAuthController@Sponsor\CountrySponsorList_getCountrySponsorList']);
+
+
+/**
+ * Save allowed user notification by cities of cc/wallet user choosen
+ */
+Route::post('/api/v1/pub/user-sponsor-allowed-notification-cities', function()
+{
+    return Orbit\Controller\API\v1\Pub\Sponsor\UserSponsorAllowedNotificationCitiesNewAPIController::create()->postNewUserSponsorAllowedNotificationCities();
+});
+
+Route::post('/app/v1/pub/user-sponsor-allowed-notification-cities', ['as' => 'pub-user-sponsor-allowed-notification-cities', 'uses' => 'IntermediatePubAuthController@Sponsor\UserSponsorAllowedNotificationCitiesNew_postNewUserSponsorAllowedNotificationCities']);
+
+
+/**
+ * List of cc/wallet cities by user choosen
+ */
+Route::get('/api/v1/pub/user-sponsor-allowed-notification-cities/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Sponsor\UserSponsorAllowedNotificationCitiesListAPIController::create()->getUserSponsorAllowedNotificationCities();
+});
+
+Route::get('/app/v1/pub/user-sponsor-allowed-notification-cities/list', ['as' => 'pub-user-sponsor-allowed-notification-cities', 'uses' => 'IntermediatePubAuthController@Sponsor\UserSponsorAllowedNotificationCitiesList_getUserSponsorAllowedNotificationCities']);
