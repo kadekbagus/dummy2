@@ -78,6 +78,16 @@ class RatingDetailAPIController extends ControllerAPI
             // Get main review...
             $rating = $mongoClient->setEndPoint("reviews/$ratingId")->request('GET');
 
+            $userWhoReplied = User::select('user_firstname', 'user_lastname')
+                ->where('user_id', $rating->data->user_id)->first();
+
+            if (empty($userWhoReplied)) {
+                $errorMessage = 'User not found.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $rating->data->user_name = $userWhoReplied->user_firstname . ' ' . $userWhoReplied->user_lastname;
+
             // Get object being reviewed.
             $objectId = $rating->data->object_id;
             $objectType = $rating->data->object_type;
@@ -101,7 +111,7 @@ class RatingDetailAPIController extends ControllerAPI
                     $mediaNameLong = 'news_translation_image_orig';
             }
 
-            if ($object != null) {
+            if (! empty($object)) {
                 $rating->data->object_name = $object->object_name;
                 $rating->data->object_picture = '';
 
@@ -109,7 +119,7 @@ class RatingDetailAPIController extends ControllerAPI
                 $media = Media::where('object_id', 'like', '%' . $objectId . '%')
                     ->where('media_name_long', $mediaNameLong)->first();
                 
-                if ($media != null) {
+                if (! empty($media)) {
                     $rating->data->object_picture = $urlPrefix . $media->path;
 
                     if ($usingCdn && ! empty($media->cdn_url)) {
