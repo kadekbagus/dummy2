@@ -83,10 +83,23 @@ Route::get('/api/v1/review/detail/replies', function()
 
 Route::get('/app/v1/review/detail/replies', 'IntermediateAuthController@RatingDetail_getRatingReplies');
 
+/**
+ * Reply to a Review
+ */
+Route::post('/api/v1/review/reply', function()
+{
+    return ReviewRatingReplyAPIController::create()->postReplyReviewRating();
+});
 
-Route::post('/api/v1/rating-review/reply/update', function()
+Route::post('/app/v1/review/reply', 'IntermediateAuthController@ReviewRatingReply_postReplyReviewRating');
+
+
+/**
+ * Update Reply
+ */
+Route::post('/api/v1/review/reply/update', function()
 {
     return RatingReviewAPIController::create()->postUpdateReply();
 });
 
-Route::post('/app/v1/rating-review/reply/update', 'IntermediateAuthController@RatingReview_postUpdateReply');
+Route::post('/app/v1/review/reply/update', 'IntermediateAuthController@RatingReview_postUpdateReply');
