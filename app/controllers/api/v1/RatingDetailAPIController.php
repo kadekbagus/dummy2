@@ -302,30 +302,33 @@ class RatingDetailAPIController extends ControllerAPI
 
         $usersWhoReplied = $replies->data->user_ids;
 
-        // Get list of user's name who replied..
-        $usersList = User::select('user_id', 'user_firstname', 'user_lastname')
-            // ->with([
-            //     'media' => function($query) {
-            //         $query->where('media_name_long', 'user_profile_picture_orig');
-            //     }
-            // ])
-            ->whereIn('user_id', $usersWhoReplied)->get();
-
         $users = [];
-        foreach($usersList as $user) {
-            $users[$user->user_id]['name'] = $user->user_firstname . ' ' . 
-                $user->user_lastname;
+        if (count($usersWhoReplied) > 0) {
+            // Get list of user's name who replied..
+            $usersList = User::select('user_id', 'user_firstname', 'user_lastname')
+                // ->with([
+                //     'media' => function($query) {
+                //         $query->where('media_name_long', 'user_profile_picture_orig');
+                //     }
+                // ])
+                ->whereIn('user_id', $usersWhoReplied)->get();
 
-            // $media = $user->media->first();
-            // $users[$user->user_id]['picture'] = '';
+            
+            foreach($usersList as $user) {
+                $users[$user->user_id]['name'] = $user->user_firstname . ' ' . 
+                    $user->user_lastname;
 
-            // if ($media != null) {
-            //     $users[$user->user_id]['picture'] = $urlPrefix . $media->path;
+                // $media = $user->media->first();
+                // $users[$user->user_id]['picture'] = '';
 
-            //     if ($usingCdn && ! empty($media->cdn_url)) {
-            //        $users[$user->user_id]['picture'] = $media->cdn_url;
-            //     }
-            // }
+                // if ($media != null) {
+                //     $users[$user->user_id]['picture'] = $urlPrefix . $media->path;
+
+                //     if ($usingCdn && ! empty($media->cdn_url)) {
+                //        $users[$user->user_id]['picture'] = $media->cdn_url;
+                //     }
+                // }
+            }
         }
 
         foreach($replies->data->replies as $reply) {
