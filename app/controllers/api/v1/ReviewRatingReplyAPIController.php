@@ -54,15 +54,12 @@ class ReviewRatingReplyAPIController extends ControllerAPI
             
             // Set logged in user as review admin for testing purpose
             // Should be removed when committing to remote, and use auth lines above.
-            // $user = User::where('user_id', 'K_QTs_LOVMF0NSWR')->first();
+            // $user = User::where('user_id', 'LZBVROXoxP0tlX5Y')->first();
 
-            $objectId = OrbitInput::post('object_id', NULL);
-            $objectType = OrbitInput::post('object_type', NULL);
-            $locationId = OrbitInput::post('location_id', NULL);
             $rating = 0;
             $review = OrbitInput::post('review', NULL);
-            $status = OrbitInput::post('status', 'active');
-            $approvalStatus = OrbitInput::post('approval_status', 'approved');
+            $status = 'active';
+            $approvalStatus = 'approved';
 
             // For Reply
             $parentId = OrbitInput::post('parent_id', NULL);
@@ -70,36 +67,18 @@ class ReviewRatingReplyAPIController extends ControllerAPI
             $reviewIdReplied = OrbitInput::post('review_id_replied', NULL);
 
             $validatorColumn = array(
-                                'object_id'   => $objectId,
-                                'object_type' => $objectType,
-                                'rating'      => $rating,
-                                'location_id' => $locationId,
+                                'review' => $review,
                                 'parent_id'   => $parentId,
                                 'user_id_replied' => $userIdReplied,
                                 'review_id_replied' => $reviewIdReplied,
                             );
 
             $validation = array(
-                            'object_id'   => 'required',
-                            'object_type' => 'required',
-                            'rating'      => 'required',
-                            'location_id' => 'required',
+                            'review' => 'required',
                             'parent_id'   => 'required',
                             'user_id_replied' => 'required',
                             'review_id_replied' => 'required',
                         );
-
-            // check if object_id is promotional event, no nedd to check location_id
-            $isPromotionalEvent = 'N';
-            if ($objectType === 'news') {
-                $news = News::where('news_id', $objectId)->first();
-                $isPromotionalEvent = $news->is_having_reward;
-
-                if ($isPromotionalEvent === 'Y') {
-                    unset($validatorColumn['location_id']);
-                    unset($validation['location_id']);
-                }
-            }
 
             $validator = Validator::make($validatorColumn, $validation);
 
@@ -115,8 +94,6 @@ class ReviewRatingReplyAPIController extends ControllerAPI
             $dateTime = $date->toDateTimeString();
 
             $body = [
-                'object_id'       => $objectId,
-                'object_type'     => $objectType,
                 'user_id'         => $user->user_id,
                 'rating'          => $rating,
                 'review'          => $review,
@@ -131,26 +108,41 @@ class ReviewRatingReplyAPIController extends ControllerAPI
             ];
 
             $bodyLocation = array();
-            if ($isPromotionalEvent === 'N') {
-                $location = CampaignLocation::select('merchants.name', 'merchants.country', 'merchants.object_type', DB::raw("IF({$prefix}merchants.object_type = 'tenant', oms.merchant_id, {$prefix}merchants.merchant_id) as location_id, IF({$prefix}merchants.object_type = 'tenant', {$prefix}merchants.name, '') as store_name, IF({$prefix}merchants.object_type = 'tenant', oms.name, {$prefix}merchants.name) as mall_name, IF({$prefix}merchants.object_type = 'tenant', oms.city, {$prefix}merchants.city) as city, IF({$prefix}merchants.object_type = 'tenant', oms.country_id, {$prefix}merchants.country_id) as country_id"))
-                                          ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                                          ->where('merchants.merchant_id', '=', $locationId)
-                                          ->first();
-
-                if (! empty($location)) {
-                    $bodyLocation = [
-                        'location_id'     => $location->location_id,
-                        'store_id'        => $locationId,
-                        'store_name'      => $location->store_name,
-                        'mall_name'       => $location->mall_name,
-                        'city'            => $location->city,
-                        'country_id'      => $location->country_id,
-                    ];
-                }
-            }
 
             $mongoConfig = Config::get('database.mongodb');
             $mongoClient = MongoClient::create($mongoConfig);
+
+            // Get parent review.
+            $mainReview = $mongoClient->setEndPoint('reviews/' . $parentId)->request('GET');
+
+            if (! is_object($mainReview)) {
+                $errorMessage = 'Main Review (' . $parentId . ') not found.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+            
+            $objectId = $mainReview->data->object_id;
+            $objectType = $mainReview->data->object_type;
+
+            $body['object_id'] = $objectId;
+            $body['object_type'] = $objectType;
+
+            // check if object_id is promotional event, no nedd to check location_id
+            $isPromotionalEvent = 'N';
+            if ($objectType === 'news') {
+                $news = News::where('news_id', $objectId)->first();
+                $isPromotionalEvent = $news->is_having_reward;
+            }
+
+            if ($isPromotionalEvent === 'N') {
+                $bodyLocation = [
+                    'location_id'     => $mainReview->data->location_id,
+                    'store_id'        => $mainReview->data->store_id,
+                    'store_name'      => $mainReview->data->store_name,
+                    'mall_name'       => $mainReview->data->mall_name,
+                    'city'            => $mainReview->data->city,
+                    'country_id'      => $mainReview->data->country_id,
+                ];
+            }
 
             // Reply...
             $response = $mongoClient->setFormParam($body + $bodyLocation)
