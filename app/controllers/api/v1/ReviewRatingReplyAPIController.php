@@ -149,6 +149,8 @@ class ReviewRatingReplyAPIController extends ControllerAPI
                                     ->setEndPoint('reviews') // express endpoint
                                     ->request('POST');
 
+            $response->data->user_name = $user->user_firstname . ' ' . $user->user_lastname;
+
             $this->response->data = $response->data;
             $this->response->code = 0;
             $this->response->status = 'success';
