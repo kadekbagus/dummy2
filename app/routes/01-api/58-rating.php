@@ -34,6 +34,16 @@ Route::get('/api/v1/pub/rating/list', function()
 Route::get('/app/v1/pub/rating/list', ['as' => 'rating-list', 'uses' => 'IntermediatePubAuthController@Rating\RatingList_getRatingList']);
 
 /**
+ * List reply of rating and review
+ */
+Route::get('/api/v1/pub/reply-rating-review/list', function()
+{
+    return Orbit\Controller\API\v1\Pub\Rating\ReplyRatingReviewListAPIController::create()->getReplyRatingReviewList();
+});
+
+Route::get('/app/v1/pub/reply-rating-review/list', ['as' => 'reply-rating-review-list', 'uses' => 'IntermediatePubAuthController@Rating\ReplyRatingReviewList_getReplyRatingReviewList']);
+
+/**
  * List rating and review
  */
 Route::get('/api/v1/pub/rating/user/list', function()
@@ -42,3 +52,54 @@ Route::get('/api/v1/pub/rating/user/list', function()
 });
 
 Route::get('/app/v1/pub/rating/user/list', ['as' => 'user-rating-list', 'uses' => 'IntermediatePubAuthController@Rating\UserRatingList_getUserRatingList']);
+
+/**
+ * Get search review for rating and review portal
+ */
+Route::get('/api/v1/review/list', function()
+{
+    return RatingReviewAPIController::create()->getReviewList();
+});
+
+/**
+ * Get search review for rating and review portal
+ */
+Route::get('/app/v1/review/list', 'IntermediateAuthController@RatingReview_getReviewList');
+
+/**
+ * Rating detail and replies
+ */
+Route::get('/api/v1/review/detail', function()
+{
+    return RatingDetailAPIController::create()->getRatingDetail();
+});
+
+Route::get('/app/v1/review/detail', 'IntermediateAuthController@RatingDetail_getRatingDetail');
+
+Route::get('/api/v1/review/detail/replies', function()
+{
+    return RatingDetailAPIController::create()->getRatingReplies();
+});
+
+Route::get('/app/v1/review/detail/replies', 'IntermediateAuthController@RatingDetail_getRatingReplies');
+
+/**
+ * Reply to a Review
+ */
+Route::post('/api/v1/review/reply', function()
+{
+    return ReviewRatingReplyAPIController::create()->postReplyReviewRating();
+});
+
+Route::post('/app/v1/review/reply', 'IntermediateAuthController@ReviewRatingReply_postReplyReviewRating');
+
+
+/**
+ * Update Reply
+ */
+Route::post('/api/v1/review/reply/update', function()
+{
+    return RatingReviewAPIController::create()->postUpdateReply();
+});
+
+Route::post('/app/v1/review/reply/update', 'IntermediateAuthController@RatingReview_postUpdateReply');
