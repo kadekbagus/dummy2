@@ -234,17 +234,15 @@ class AdvertUpdateQueue
             $advertLocation = AdvertLocation::where('advert_id', $advert->advert_id)->get();
             $mallCountry = Mall::select('country');
             $mallIds = array();
-            $allLocation = FALSE;
+            $allLocation = TRUE;
             foreach ($advertLocation as $location) {
-                if ($location->location_id === '0') {
-                    $allLocation = TRUE;
-                    break;
-                } else {
+                if ($location->location_id !== '0') {
+                    $allLocation = FALSE;
                     $mallIds[] = $location->location_id;
                 }
             }
 
-            if (! $allLocation) {
+            if (! $allLocation && ! empty($mallIds)) {
                 $mallCountry = $mallCountry->whereIn('merchant_id', $mallIds);
             }
             $mallCountry =  $mallCountry->groupBy('country')->get();
