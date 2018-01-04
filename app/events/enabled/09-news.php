@@ -655,6 +655,7 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
             }
         }
 
+        // get the user that using credit-card/ewallet that link to campaign and has the same city as the campaign
         $objectSponsorUser = ObjectSponsor::select('user_sponsor.user_id')
                             ->join('user_sponsor', 'user_sponsor.sponsor_id', '=', 'object_sponsor.sponsor_provider_id')
                             ->join('user_sponsor_allowed_notification', 'user_sponsor_allowed_notification.user_id', '=', 'user_sponsor.user_id')
@@ -829,7 +830,6 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
 
             // If there is no follower but there is user linked to credit-card/ewallet
             if (count($userFollows->data->returned_records) === 0 && !empty($userSponsor)) {
-
                 $userIds = $userSponsor;
                 $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
 
