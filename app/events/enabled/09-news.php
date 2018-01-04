@@ -591,6 +591,7 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
     $mongoConfig = Config::get('database.mongodb');
     $mongoClient = MongoClient::create($mongoConfig);
     $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
+    $table_prefix = DB::getTablePrefix();
 
     if ($updatednews->status === 'active') {
 
@@ -619,6 +620,56 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
         $_news = $newsMain->select('news.*', DB::raw('default_languages.name as default_language_name'), DB::raw('default_languages.language_id as default_language_id'))
                          ->with('translations.media')
                          ->first();
+
+        // Notification Credit Card & E-wallet
+        // get campaign cities
+        $cities = News::select('news.news_name',
+                                DB::raw("CASE WHEN m1.object_type = 'tenant' THEN m2.city
+                                              WHEN m1.object_type = 'mall' THEN m1.city
+                                        END as city"),
+                                DB::raw("CASE WHEN m1.object_type = 'tenant' THEN mc2.mall_city_id
+                                              WHEN m1.object_type = 'mall' THEN mc1.mall_city_id
+                                        END as city_id")
+                                )
+                          ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                          ->leftJoin(DB::raw("{$table_prefix}merchants as m1"), function($join) {
+                                $join->on(DB::raw('m1.merchant_id'), '=', 'news_merchant.merchant_id');
+                            })
+                          ->leftJoin(DB::raw("{$table_prefix}merchants as m2"), function($join) {
+                                $join->on(DB::raw('m2.merchant_id'), '=', DB::raw('m1.parent_id'));
+                            })
+                          ->leftJoin(DB::raw("{$table_prefix}mall_cities as mc1"), function($join) {
+                                $join->on(DB::raw('mc1.city'), '=', DB::raw('m1.city'));
+                            })
+                          ->leftJoin(DB::raw("{$table_prefix}mall_cities as mc2"), function($join) {
+                                $join->on(DB::raw('mc2.city'), '=', DB::raw('m2.city'));
+                            })
+                          ->where('news.news_id', '=', $updatednews->news_id)
+                          ->groupBy('city_id')
+                          ->get();
+
+        $campaignCities = [];
+        if (!empty($cities)) {
+            foreach($cities as $key => $value) {
+                $campaignCities [] = $value->city_id;
+            }
+        }
+
+        $objectSponsorUser = ObjectSponsor::select('user_sponsor.user_id')
+                            ->join('user_sponsor', 'user_sponsor.sponsor_id', '=', 'object_sponsor.sponsor_provider_id')
+                            ->join('user_sponsor_allowed_notification', 'user_sponsor_allowed_notification.user_id', '=', 'user_sponsor.user_id')
+                            ->join('user_sponsor_allowed_notification_cities', 'user_sponsor_allowed_notification_cities.user_id', '=', 'user_sponsor_allowed_notification.user_id')
+                            ->where('object_sponsor.object_id', '=', $updatednews->news_id)
+                            ->whereIn('user_sponsor_allowed_notification_cities.mall_city_id', $campaignCities)
+                            ->groupBy('user_sponsor.user_id')
+                            ->get();
+
+        $userSponsor = [];
+        if (!empty($objectSponsorUser)) {
+            foreach($objectSponsorUser as $key => $value) {
+                $userSponsor [] = $value->user_id;
+            }
+        }
 
         $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl();
         $attachmentPath = null;
