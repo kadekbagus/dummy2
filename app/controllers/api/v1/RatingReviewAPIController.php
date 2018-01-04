@@ -264,6 +264,18 @@ class RatingReviewAPIController extends ControllerAPI
         return $output;
     }
 
+    /**
+     * POST - update reply
+     * @author kadek <kadek@dominopos.com>
+     *
+     * List of API Parameters
+     * ----------------------
+     * @param string     `id`                       (required) - id of the mongo db review
+     * @param string     `review`                   (required) - the review or reply (same thing)
+     *
+     * @return Illuminate\Support\Facades\Response
+     *
+     */
     public function postUpdateReply()
     {
         try {
@@ -287,12 +299,19 @@ class RatingReviewAPIController extends ControllerAPI
             $reviewId = OrbitInput::post('id');
             $review = OrbitInput::post('review');
 
+            $this->registerCustomValidation();
+
             $validator = Validator::make(
                 array(
-                    'reviewId' => $reviewId
+                    'reviewId' => $reviewId,
+                    'review'   => $review
                 ),
                 array(
-                    'reviewId' => 'required'
+                    'reviewId' => 'required|orbit.exist.review',
+                    'review'   => 'required'
+                ),
+                array(
+                    'orbit.exist.review' => 'reply not found'
                 )
             );
 
@@ -330,16 +349,11 @@ class RatingReviewAPIController extends ControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
+            $this->response->data = null;
             $httpCode = 403;
         } catch (QueryException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-
             // Only shows full query error when we are in debug mode
             if (Config::get('app.debug')) {
                 $this->response->message = $e->getMessage();
@@ -360,4 +374,26 @@ class RatingReviewAPIController extends ControllerAPI
         return $output;
     }
 
+    protected function registerCustomValidation()
+    {
+        // Check the existance of review id in mongodb
+        Validator::extend('orbit.exist.review', function ($attribute, $value, $parameters) {
+            // check string object id valid or not
+            if (!preg_match('/^[a-f\d]{24}$/i', $value)) {
+                return false;
+            }
+
+            $mongoConfig = Config::get('database.mongodb');
+            $mongoClient = MongoClient::create($mongoConfig);
+            $review = $mongoClient->setEndPoint("reviews/$value")->request('GET');
+
+            if (empty($review->data)) {
+                return false;
+            }
+
+            App::instance('orbit.exist.review', $review);
+
+            return true;
+        });
+    }
 }
