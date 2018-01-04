@@ -101,6 +101,9 @@ class RatingNewAPIController extends PubControllerAPI
                 $validation['parent_id'] = 'required';
                 $validation['user_id_replied'] = 'required';
                 $validation['review_id_replied'] = 'required';
+
+                unset($validatorColumn['location_id']);
+                unset($validation['location_id']);
             }
 
             // check if object_id is promotional event, no nedd to check location_id
@@ -161,15 +164,16 @@ class RatingNewAPIController extends PubControllerAPI
                                           ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
                                           ->where('merchants.merchant_id', '=', $locationId)
                                           ->first();
-
-                $bodyLocation = [
-                    'location_id'     => $location->location_id,
-                    'store_id'        => $locationId,
-                    'store_name'      => $location->store_name,
-                    'mall_name'       => $location->mall_name,
-                    'city'            => $location->city,
-                    'country_id'      => $location->country_id,
-                ];
+                if (! empty($location)) {
+                    $bodyLocation = [
+                        'location_id'     => $location->location_id,
+                        'store_id'        => $locationId,
+                        'store_name'      => $location->store_name,
+                        'mall_name'       => $location->mall_name,
+                        'city'            => $location->city,
+                        'country_id'      => $location->country_id,
+                    ];
+                }
             }
 
             $mongoClient = MongoClient::create($mongoConfig)->setFormParam($body + $bodyLocation);
@@ -184,7 +188,7 @@ class RatingNewAPIController extends PubControllerAPI
                 $this->response->data = NULL;
             }
 
-            if ($isPromotionalEvent === 'N') {
+            if ($isPromotionalEvent === 'N' && ! empty($location)) {
                 $body['merchant_name'] = $location->name;
                 $body['country'] = $location->country;
             }
