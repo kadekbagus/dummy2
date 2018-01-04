@@ -762,6 +762,75 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
             // If there is any followed by user
             if ($userFollows->data->returned_records > 0) {
                 $userIds = $userFollows->data->records;
+
+                // add user_id from credit-card/ewallet (if any)
+                if (!empty($userSponsor)) {
+                    foreach ($userSponsor as $key => $value) {
+                        $userIds[] = $value;
+                    }
+                    $userIds = array_values(array_unique($userIds));
+                }
+
+                $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
+
+                $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                                    ->setEndPoint('user-notification-tokens')
+                                    ->request('GET');
+
+                if ($notificationTokens->data->total_records > 0) {
+                    foreach ($notificationTokens->data->records as $key => $val) {
+                        $notificationToken[] = $val->notification_token;
+                    }
+                }
+
+                // save to notifications collection in mongodb
+                $dataNotification = [
+                    'title' => $_news->news_name,
+                    'launch_url' => $launchUrl,
+                    'attachment_path' => $attachmentPath,
+                    'attachment_realpath' => $attachmentRealPath,
+                    'cdn_url' => $cdnUrl,
+                    'cdn_bucket_name' => $cdnBucketName,
+                    'default_language' => $_news->default_language_name,
+                    'headings' => $headings,
+                    'contents' => $contents,
+                    'type' => $objectType,
+                    'status' => 'pending',
+                    'sent_at' => null,
+                    'notification_tokens' => json_encode($notificationToken),
+                    'user_ids' => json_encode($userIds),
+                    'vendor_notification_id' => null,
+                    'vendor_type' => Config::get('orbit.vendor_push_notification.default'),
+                    'is_automatic' => true,
+                    'mime_type' => $mimeType,
+                    'target_audience_ids' => null,
+                    'created_at' => $dateTime
+                ];
+
+                $notification = $mongoClient->setFormParam($dataNotification)
+                                            ->setEndPoint('notifications')
+                                            ->request('POST');
+                $notificationId = $notification->data->_id;
+
+                // save to store_object_notifications collection in mongodb
+                $bodyStoreObjectNotifications = [
+                    'notification' => $notification->data,
+                    'object_id' => $_news->news_id,
+                    'object_type' => $objectType,
+                    'status' => 'pending',
+                    'start_date' => $_news->begin_date,
+                    'created_at' => $dateTime
+                ];
+
+                $storeObjectNotif = $mongoClient->setFormParam($bodyStoreObjectNotifications)
+                                                ->setEndPoint('store-object-notifications')
+                                                ->request('POST');
+            }
+
+            // If there is no follower but there is user linked to credit-card/ewallet
+            if (count($userFollows->data->returned_records) === 0 && !empty($userSponsor)) {
+
+                $userIds = $userSponsor;
                 $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
 
                 $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
