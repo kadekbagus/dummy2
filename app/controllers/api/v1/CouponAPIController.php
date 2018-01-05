@@ -4145,15 +4145,18 @@ class CouponAPIController extends ControllerAPI
             $this->rollBack();
 
             // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
-                    ->setObject($issuedcoupon)
-                    ->setNotes($e->getMessage())
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->responseFailed()
-                    ->save();
+            if ($paymentProvider === '0') {
+                $activity->setUser($user)
+                        ->setActivityName('redeem_coupon')
+                        ->setActivityNameLong('Coupon Redemption (Failed)')
+                        ->setObject($issuedcoupon)
+                        ->setNotes($e->getMessage())
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->responseFailed()
+                        ->save();
+            }
+
         } catch (InvalidArgsException $e) {
             Event::fire('orbit.coupon.redeemcoupon.invalid.arguments', array($this, $e));
 
@@ -4167,15 +4170,18 @@ class CouponAPIController extends ControllerAPI
             $this->rollBack();
 
             // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
-                    ->setObject($issuedcoupon)
-                    ->setNotes($e->getMessage())
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->responseFailed()
-                    ->save();
+            if ($paymentProvider === '0') {
+                $activity->setUser($user)
+                        ->setActivityName('redeem_coupon')
+                        ->setActivityNameLong('Coupon Redemption (Failed)')
+                        ->setObject($issuedcoupon)
+                        ->setNotes($e->getMessage())
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->responseFailed()
+                        ->save();
+            }
+
         } catch (QueryException $e) {
             Event::fire('orbit.coupon.redeemcoupon.query.error', array($this, $e));
 
@@ -4195,15 +4201,18 @@ class CouponAPIController extends ControllerAPI
             $this->rollBack();
 
             // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('redeem_coupon')
-                    ->setActivityNameLong('Coupon Redemption (Failed)')
-                    ->setObject($issuedcoupon)
-                    ->setNotes($e->getMessage())
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->responseFailed()
-                    ->save();
+            if ($paymentProvider === '0') {
+                $activity->setUser($user)
+                        ->setActivityName('redeem_coupon')
+                        ->setActivityNameLong('Coupon Redemption (Failed)')
+                        ->setObject($issuedcoupon)
+                        ->setNotes($e->getMessage())
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->responseFailed()
+                        ->save();
+            }
+
         } catch (Exception $e) {
             Event::fire('orbit.coupon.redeemcoupon.general.exception', array($this, $e));
 
@@ -4216,15 +4225,17 @@ class CouponAPIController extends ControllerAPI
             $this->rollBack();
 
             // Deletion failed Activity log
-            $activity->setUser($user)
-                    ->setActivityName('delete_coupon')
-                    ->setActivityNameLong('Delete Coupon Failed')
-                    ->setObject($issuedcoupon)
-                    ->setNotes($e->getMessage())
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->responseFailed()
-                    ->save();
+            if ($paymentProvider === '0') {
+                $activity->setUser($user)
+                        ->setActivityName('delete_coupon')
+                        ->setActivityNameLong('Delete Coupon Failed')
+                        ->setObject($issuedcoupon)
+                        ->setNotes($e->getMessage())
+                        ->setLocation($mall)
+                        ->setModuleName('Coupon')
+                        ->responseFailed()
+                        ->save();
+            }
         }
 
         $output = $this->render($httpCode);
