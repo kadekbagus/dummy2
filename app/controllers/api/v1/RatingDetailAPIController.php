@@ -345,6 +345,9 @@ class RatingDetailAPIController extends ControllerAPI
             $reply->user_name = isset($users[$reply->user_id]) ? 
                 $users[$reply->user_id]['name'] : '';
 
+            $reply->user_name_replied = isset($users[$reply->user_id_replied]) ?
+                $users[$reply->user_id_replied]['name'] : '';
+
             // $reply->user_picture = isset($users[$reply->user_id]) ?
             //     $users[$reply->user_id]['picture'] : '';
         }
