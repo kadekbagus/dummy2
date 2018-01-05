@@ -731,6 +731,57 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
                              ->with('translations.media')
                              ->first();
 
+        // Notification Credit Card & E-wallet
+        // get campaign cities
+        $cities = Coupon::select('promotions.promotion_name',
+                                DB::raw("CASE WHEN m1.object_type = 'tenant' THEN m2.city
+                                              WHEN m1.object_type = 'mall' THEN m1.city
+                                        END as city"),
+                                DB::raw("CASE WHEN m1.object_type = 'tenant' THEN mc2.mall_city_id
+                                              WHEN m1.object_type = 'mall' THEN mc1.mall_city_id
+                                        END as city_id")
+                                )
+                          ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                          ->leftJoin(DB::raw("{$table_prefix}merchants as m1"), function($join) {
+                                $join->on(DB::raw('m1.merchant_id'), '=', 'promotion_retailer.retailer_id');
+                            })
+                          ->leftJoin(DB::raw("{$table_prefix}merchants as m2"), function($join) {
+                                $join->on(DB::raw('m2.merchant_id'), '=', DB::raw('m1.parent_id'));
+                            })
+                          ->leftJoin(DB::raw("{$table_prefix}mall_cities as mc1"), function($join) {
+                                $join->on(DB::raw('mc1.city'), '=', DB::raw('m1.city'));
+                            })
+                          ->leftJoin(DB::raw("{$table_prefix}mall_cities as mc2"), function($join) {
+                                $join->on(DB::raw('mc2.city'), '=', DB::raw('m2.city'));
+                            })
+                          ->where('promotions.promotion_id', '=', $updatedcoupon->promotion_id)
+                          ->groupBy('city_id')
+                          ->get();
+
+        $campaignCities = [];
+        if (!empty($cities)) {
+            foreach($cities as $key => $value) {
+                $campaignCities [] = $value->city_id;
+            }
+        }
+
+        // get the user that using credit-card/ewallet that link to campaign and has the same city as the campaign
+        $objectSponsorUser = ObjectSponsor::select('user_sponsor.user_id')
+                            ->join('user_sponsor', 'user_sponsor.sponsor_id', '=', 'object_sponsor.sponsor_provider_id')
+                            ->join('user_sponsor_allowed_notification', 'user_sponsor_allowed_notification.user_id', '=', 'user_sponsor.user_id')
+                            ->join('user_sponsor_allowed_notification_cities', 'user_sponsor_allowed_notification_cities.user_id', '=', 'user_sponsor_allowed_notification.user_id')
+                            ->where('object_sponsor.object_id', '=', $updatedcoupon->promotion_id)
+                            ->whereIn('user_sponsor_allowed_notification_cities.mall_city_id', $campaignCities)
+                            ->groupBy('user_sponsor.user_id')
+                            ->get();
+
+        $userSponsor = [];
+        if (!empty($objectSponsorUser)) {
+            foreach($objectSponsorUser as $key => $value) {
+                $userSponsor [] = $value->user_id;
+            }
+        }
+
         $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl();
         $attachmentPath = null;
         $attachmentRealPath = null;
@@ -821,6 +872,74 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
             // If there is any followed by user
             if ($userFollows->data->returned_records > 0) {
                 $userIds = $userFollows->data->records;
+
+                // add user_id from credit-card/ewallet (if any)
+                if (!empty($userSponsor)) {
+                    foreach ($userSponsor as $key => $value) {
+                        $userIds[] = $value;
+                    }
+                    $userIds = array_values(array_unique($userIds));
+                }
+
+                $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
+
+                $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
+                                    ->setEndPoint('user-notification-tokens')
+                                    ->request('GET');
+
+                if ($notificationTokens->data->total_records > 0) {
+                    foreach ($notificationTokens->data->records as $key => $val) {
+                        $notificationToken[] = $val->notification_token;
+                    }
+                }
+
+                // save to notifications collection in mongodb
+                $dataNotification = [
+                    'title' => $_coupon->promotion_name,
+                    'launch_url' => $launchUrl,
+                    'attachment_path' => $attachmentPath,
+                    'attachment_realpath' => $attachmentRealPath,
+                    'cdn_url' => $cdnUrl,
+                    'cdn_bucket_name' => $cdnBucketName,
+                    'default_language' => $_coupon->default_language_name,
+                    'headings' => $headings,
+                    'contents' => $contents,
+                    'type' => $objectType,
+                    'status' => 'pending',
+                    'sent_at' => null,
+                    'notification_tokens' => json_encode($notificationToken),
+                    'user_ids' => json_encode($userIds),
+                    'vendor_notification_id' => null,
+                    'vendor_type' => Config::get('orbit.vendor_push_notification.default'),
+                    'is_automatic' => true,
+                    'mime_type' => $mimeType,
+                    'target_audience_ids' => null,
+                    'created_at' => $dateTime
+                ];
+
+                $notification = $mongoClient->setFormParam($dataNotification)
+                                            ->setEndPoint('notifications')
+                                            ->request('POST');
+                $notificationId = $notification->data->_id;
+
+                // save to store_object_notifications collection in mongodb
+                $bodyStoreObjectNotifications = [
+                    'notification' => $notification->data,
+                    'object_id' => $_coupon->promotion_id,
+                    'object_type' => $objectType,
+                    'status' => 'pending',
+                    'start_date' => $_coupon->begin_date,
+                    'created_at' => $dateTime
+                ];
+
+                $storeObjectNotif = $mongoClient->setFormParam($bodyStoreObjectNotifications)
+                                                ->setEndPoint('store-object-notifications')
+                                                ->request('POST');
+            }
+
+            // If there is no follower but there is user linked to credit-card/ewallet
+            if (count($userFollows->data->returned_records) === 0 && !empty($userSponsor)) {
+                $userIds = $userSponsor;
                 $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
 
                 $notificationTokens = $mongoClient->setQueryString($queryStringUserNotifToken)
