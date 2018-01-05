@@ -100,11 +100,11 @@ class PaymentActivityAPIController extends PubControllerAPI
 
             if ($transaction->status === 'success') {
 
-                $activityNotes = sprintf('Coupon Redemeed using %s: %s, %s, %s', 
-                    $transaction->payment_method, 
-                    $issuedCoupon->coupon->promotion_name,
-                    $transaction->payment_amount,
-                    $transaction->notes
+                $activityNotes = sprintf('%s, %s, %s, %s', 
+                    $transaction->object_name,
+                    $transaction->amount,
+                    $transaction->notes,
+                    $transaction->payment_method
                 );
 
                 $activity->setUser($user)
@@ -127,6 +127,7 @@ class PaymentActivityAPIController extends PubControllerAPI
                             ->setActivityName('payment_transaction_successful')
                             ->setActivityNameLong('Payment Transaction Successful')
                             ->setObject($transaction)
+                            ->setObjectDisplayName($transaction->object_name)
                             ->setNotes($activityNotes)
                             ->setLocation(null)
                             ->setModuleName('Transaction')
@@ -138,11 +139,11 @@ class PaymentActivityAPIController extends PubControllerAPI
             }
             else if ($transaction->status === 'failed') {
 
-                $activityNotes = sprintf('Coupon Redemeed Failed using %s: %s, %s, %s', 
-                    $transaction->payment_method, 
-                    $issuedCoupon->coupon->promotion_name,
+                $activityNotes = sprintf('%s, %s, %s, %s',  
+                    $transaction->object_name,
                     $transaction->amount,
-                    $transaction->notes
+                    $transaction->notes,
+                    $transaction->payment_method
                 );
 
                 $activity->setUser($user)
@@ -162,6 +163,7 @@ class PaymentActivityAPIController extends PubControllerAPI
                             ->setActivityName('payment_transaction_failed')
                             ->setActivityNameLong('Payment Transaction Failed')
                             ->setObject($transaction)
+                            ->setObjectDisplayName($transaction->object_name)
                             ->setNotes($activityNotes)
                             ->setLocation(null)
                             ->setModuleName('Transaction')
