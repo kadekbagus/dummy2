@@ -97,6 +97,9 @@ class RatingReviewAPIController extends ControllerAPI
 
             $beginDate = OrbitInput::get('begin_date', null);
             $endDate = OrbitInput::get('end_date', null);
+            $rating = OrbitInput::get('rating', null);
+            $review = OrbitInput::get('review', null);
+            $type = OrbitInput::get('type', null);
 
             // Default sort by
             $sortBy = 'created_at';
@@ -169,6 +172,21 @@ class RatingReviewAPIController extends ControllerAPI
                 $queryString['end_date'] = $endDate;
             }
 
+            // filter rating
+            if (!empty($rating)) {
+                $queryString['rating_portal'] = $rating;
+            }
+
+            // filter review
+            if (!empty($review)) {
+                $queryString['review_portal'] = $review;
+            }
+
+            // filter type
+            if (!empty($type)) {
+                $queryString['object_type_portal'] = $type;
+            }
+
             $mongoConfig = Config::get('database.mongodb');
             $mongoClient = MongoClient::create($mongoConfig);
             $response = $mongoClient->setQueryString($queryString)
@@ -177,38 +195,40 @@ class RatingReviewAPIController extends ControllerAPI
 
             $listOfRec = $response->data;
 
-            foreach ($listOfRec->records as $key => $value)
-            {
-                $userId = $listOfRec->records[$key]->user_id;
-                $objectId = $listOfRec->records[$key]->object_id;
-                $objectType = $listOfRec->records[$key]->object_type;
+            // get username and object name from mysql
+            if (!empty($listOfRec->records)) {
+                foreach ($listOfRec->records as $key => $value) {
+                    $userId = $listOfRec->records[$key]->user_id;
+                    $objectId = $listOfRec->records[$key]->object_id;
+                    $objectType = $listOfRec->records[$key]->object_type;
 
-                $userName = '';
-                $objectName = '';
-                $user = User::select('user_firstname', 'user_lastname')->where('user_id', '=', $userId)->first();
-                if (is_object($user)) {
-                    $userName = $user->user_firstname.' '.$user->user_lastname;
-                }
-                $listOfRec->records[$key]->user_name = $userName;
+                    $userName = '';
+                    $objectName = '';
+                    $user = User::select('user_firstname', 'user_lastname')->where('user_id', '=', $userId)->first();
+                    if (is_object($user)) {
+                        $userName = $user->user_firstname.' '.$user->user_lastname;
+                    }
+                    $listOfRec->records[$key]->user_name = $userName;
 
-                switch(strtolower($objectType)) {
-                    case 'coupon':
-                        $object = Coupon::select('promotion_name as object_name')->where('promotion_id', '=', $objectId)->first();
-                        break;
-                    case 'store':
-                        $object = Tenant::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
-                        break;
-                    case 'mall':
-                        $object = Mall::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
-                        break;
-                    default:
-                        $object = News::select('news_name as object_name')->where('news_id', '=', $objectId)->first();
-                }
+                    switch(strtolower($objectType)) {
+                        case 'coupon':
+                            $object = Coupon::select('promotion_name as object_name')->where('promotion_id', '=', $objectId)->first();
+                            break;
+                        case 'store':
+                            $object = Tenant::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
+                            break;
+                        case 'mall':
+                            $object = Mall::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
+                            break;
+                        default:
+                            $object = News::select('news_name as object_name')->where('news_id', '=', $objectId)->first();
+                    }
 
-                if (is_object($object)) {
-                    $objectName = $object->object_name;
+                    if (is_object($object)) {
+                        $objectName = $object->object_name;
+                    }
+                    $listOfRec->records[$key]->object_name = $objectName;
                 }
-                $listOfRec->records[$key]->object_name = $objectName;
             }
 
             if (count($listOfRec->records) === 0 || $emptyStore) {
