@@ -700,6 +700,7 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
     $mongoConfig = Config::get('database.mongodb');
     $mongoClient = MongoClient::create($mongoConfig);
     $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
+    $table_prefix = DB::getTablePrefix();
 
     if ($updatedcoupon->status === 'active') {
 
@@ -766,14 +767,44 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
         }
 
         // get the user that using credit-card/ewallet that link to campaign and has the same city as the campaign
-        $objectSponsorUser = ObjectSponsor::select('user_sponsor.user_id')
-                            ->join('user_sponsor', 'user_sponsor.sponsor_id', '=', 'object_sponsor.sponsor_provider_id')
-                            ->join('user_sponsor_allowed_notification', 'user_sponsor_allowed_notification.user_id', '=', 'user_sponsor.user_id')
-                            ->join('user_sponsor_allowed_notification_cities', 'user_sponsor_allowed_notification_cities.user_id', '=', 'user_sponsor_allowed_notification.user_id')
-                            ->where('object_sponsor.object_id', '=', $updatedcoupon->promotion_id)
-                            ->whereIn('user_sponsor_allowed_notification_cities.mall_city_id', $campaignCities)
-                            ->groupBy('user_sponsor.user_id')
-                            ->get();
+        // get ewallet id
+        $sponsorId = [];
+        $sponsorProviderEwallet = ObjectSponsor::select('sponsor_providers.sponsor_provider_id')
+                                                ->join('sponsor_providers','sponsor_providers.sponsor_provider_id', '=', 'object_sponsor.sponsor_provider_id')
+                                                ->where('sponsor_providers.status', 'active')
+                                                ->where('sponsor_providers.object_type', 'ewallet')
+                                                ->where('object_sponsor.object_id', $updatedcoupon->promotion_id)
+                                                ->get();
+
+        if (!empty($sponsorProviderEwallet)) {
+            foreach ($sponsorProviderEwallet as $key => $value) {
+                $sponsorId [] = $value->sponsor_provider_id;
+            }
+        }
+
+        // get credit card id
+        $sponsorProviderCreditCard = ObjectSponsor::select('sponsor_credit_cards.sponsor_credit_card_id', 'sponsor_providers.sponsor_provider_id', 'object_sponsor.is_all_credit_card')
+                                                ->join('sponsor_providers','sponsor_providers.sponsor_provider_id', '=', 'object_sponsor.sponsor_provider_id')
+                                                ->join('sponsor_credit_cards','sponsor_credit_cards.sponsor_provider_id', '=', 'sponsor_providers.sponsor_provider_id')
+                                                ->where('sponsor_providers.status', 'active')
+                                                ->where('sponsor_providers.object_type', 'bank')
+                                                ->where('object_sponsor.object_id', $updatedcoupon->promotion_id)
+                                                ->get();
+
+        if (!empty($sponsorProviderCreditCard)) {
+            foreach ($sponsorProviderCreditCard as $key => $value) {
+                $sponsorId [] = $value->sponsor_credit_card_id;
+            }
+        }
+
+        // get the user id that match criteria
+        $objectSponsorUser = UserSponsor::select('user_sponsor.user_id')
+                                        ->join('user_sponsor_allowed_notification', 'user_sponsor_allowed_notification.user_id', '=', 'user_sponsor.user_id')
+                                        ->join('user_sponsor_allowed_notification_cities', 'user_sponsor_allowed_notification_cities.user_id', '=', 'user_sponsor_allowed_notification.user_id')
+                                        ->whereIn('user_sponsor.sponsor_id', $sponsorId)
+                                        ->whereIn('user_sponsor_allowed_notification_cities.mall_city_id', $campaignCities)
+                                        ->groupBy('user_sponsor.user_id')
+                                        ->get();
 
         $userSponsor = [];
         if (!empty($objectSponsorUser)) {
