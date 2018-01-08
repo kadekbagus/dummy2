@@ -382,7 +382,7 @@ class RatingReviewAPIController extends ControllerAPI
      * 
      * @return [type] [description]
      */
-    public function getDeleteReply()
+    public function postDeleteReply()
     {
         try {
             $httpCode = 200;
@@ -402,7 +402,7 @@ class RatingReviewAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $reviewId = OrbitInput::get('id');
+            $reviewId = OrbitInput::post('id');
 
             $this->registerCustomValidation();
 
