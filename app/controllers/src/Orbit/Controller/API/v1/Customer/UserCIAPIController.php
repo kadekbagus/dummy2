@@ -74,7 +74,6 @@ class UserCIAPIController extends BaseAPIController
             $data->phone = $user->phone;
             $data->role = $role->role_name;
             $data->image = $image;
-            $data->user_status = $user->status;
             $data->phone = $userDetail->userdetail->phone;
 
             $this->response->data = $data;

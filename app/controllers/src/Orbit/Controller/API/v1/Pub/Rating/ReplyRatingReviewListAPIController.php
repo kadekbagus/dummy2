@@ -221,6 +221,7 @@ class ReplyRatingReviewListAPIController extends PubControllerAPI
             $data->returned_records = $listOfRec->returned_records;
             $data->total_records = $listOfRec->total_records;
             $data->records = $listOfRec->records;
+            $data->user_status = $user->status;
 
             $this->response->data = $data;
             $this->response->code = 0;
