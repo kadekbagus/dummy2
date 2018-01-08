@@ -103,3 +103,13 @@ Route::post('/api/v1/review/reply/update', function()
 });
 
 Route::post('/app/v1/review/reply/update', 'IntermediateAuthController@RatingReview_postUpdateReply');
+
+/**
+ * Delete Reply
+ */
+Route::get('/api/v1/review/reply/delete', function()
+{
+    return RatingReviewAPIController::create()->getDeleteReply();
+});
+
+Route::get('/app/v1/review/reply/delete', 'IntermediateAuthController@RatingReview_getDeleteReply');
