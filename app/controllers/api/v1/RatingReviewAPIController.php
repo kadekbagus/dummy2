@@ -199,9 +199,9 @@ class RatingReviewAPIController extends ControllerAPI
             // get username and object name from mysql
             if (!empty($listOfRec->records)) {
                 foreach ($listOfRec->records as $key => $value) {
-                    $userId = $listOfRec->records[$key]->user_id;
-                    $objectId = $listOfRec->records[$key]->object_id;
-                    $objectType = $listOfRec->records[$key]->object_type;
+                    $userId = isset($listOfRec->records[$key]->user_id) ? $listOfRec->records[$key]->user_id : null;
+                    $objectId = isset($listOfRec->records[$key]->object_id) ? $listOfRec->records[$key]->object_id : null;
+                    $objectType = isset($listOfRec->records[$key]->object_type) ? $listOfRec->records[$key]->object_type : null;
 
                     $userName = '';
                     $objectName = '';
@@ -232,7 +232,7 @@ class RatingReviewAPIController extends ControllerAPI
                 }
             }
 
-            if (count($listOfRec->records) === 0 || $emptyStore) {
+            if ((count($listOfRec->records) === 0 || $emptyStore) && $role->role_name === 'Merchant Review Admin') {
                 $data = null;
             } else {
                 $data = new \stdclass();
@@ -248,13 +248,13 @@ class RatingReviewAPIController extends ControllerAPI
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage().' '.$e->getLine();
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage().' '.$e->getLine();
             $result['total_records'] = 0;
             $result['returned_records'] = 0;
             $result['records'] = null;
@@ -267,7 +267,7 @@ class RatingReviewAPIController extends ControllerAPI
 
             // Only shows full query error when we are in debug mode
             if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
+                $this->response->message = $e->getMessage().' '.$e->getLine();
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
@@ -276,7 +276,7 @@ class RatingReviewAPIController extends ControllerAPI
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage().' '.$e->getLine();
             $this->response->data = null;
         }
 
@@ -399,7 +399,7 @@ class RatingReviewAPIController extends ControllerAPI
      * Delete my reply.
      *
      * @author  budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function postDeleteReply()
