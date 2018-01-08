@@ -102,7 +102,7 @@ class CreateUserMerchantReviewCommand extends Command {
                     'last_name'            => 'required',
                     'password'             => 'required|min:6',
                     'role'                 => 'required|orbit.exist.role_id',
-                    'object_type'          => 'required|in:merchant,store,admin',
+                    'object_type'          => 'required|in:merchant,store,gtm,mall',
                     'merchant_or_store_id' => 'required|orbit.exist.merchant_or_store_id:' . $object_type . ',' . $merchant_or_store_id . ',' . $role,
                 ),
                 array(
@@ -126,6 +126,8 @@ class CreateUserMerchantReviewCommand extends Command {
 
             $newuser = new User();
             $newuser->username = $email;
+            $newuser->user_firstname = $first_name;
+            $newuser->user_lastname = $last_name;
             $newuser->user_email = $email;
             $newuser->status = 'active';
             $newuser->user_role_id = $checkRole->role_id;
@@ -145,13 +147,11 @@ class CreateUserMerchantReviewCommand extends Command {
             $apikey->user_id = $newuser->user_id;
             $apikey = $newuser->apikey()->save($apikey);
 
-            if ($role !== 'Master Review Admin') {
-                $usermerchantreview = new UserMerchantReview();
-                $usermerchantreview->merchant_id = $merchant_or_store_id;
-                $usermerchantreview->user_id = $newuser->user_id;
-                $usermerchantreview->object_type = $object_type;
-                $usermerchantreview->save();
-            }
+            $usermerchantreview = new UserMerchantReview();
+            $usermerchantreview->merchant_id = $merchant_or_store_id;
+            $usermerchantreview->user_id = $newuser->user_id;
+            $usermerchantreview->object_type = $object_type;
+            $usermerchantreview->save();
 
             $newuser->setRelation('apikey', $apikey);
             $newuser->apikey = $apikey;
@@ -204,6 +204,8 @@ class CreateUserMerchantReviewCommand extends Command {
                 $checkMerchantOrStore = BaseMerchant::where('base_merchant_id', $value)->first();
             } else if ($object_type === 'store') {
                 $checkMerchantOrStore = BaseStore::where('base_store_id', $value)->first();
+            } else if ($object_type === 'mall') {
+                $checkMerchantOrStore = Mall::where('merchant_id', $value)->first();
             }
 
             if (empty($checkMerchantOrStore)) {

@@ -22,6 +22,7 @@ class RatingReviewAPIController extends ControllerAPI
     /**
      * GET - rating review list for portal
      * @author kadek <kadek@dominopos.com>
+     * @author budi <budi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -97,6 +98,9 @@ class RatingReviewAPIController extends ControllerAPI
 
             $beginDate = OrbitInput::get('begin_date', null);
             $endDate = OrbitInput::get('end_date', null);
+            $rating = OrbitInput::get('rating', null);
+            $review = OrbitInput::get('review', null);
+            $type = OrbitInput::get('type', null);
 
             // Default sort by
             $sortBy = 'created_at';
@@ -169,6 +173,21 @@ class RatingReviewAPIController extends ControllerAPI
                 $queryString['end_date'] = $endDate;
             }
 
+            // filter rating
+            if (!empty($rating)) {
+                $queryString['rating_portal'] = $rating;
+            }
+
+            // filter review
+            if (!empty($review)) {
+                $queryString['review_portal'] = $review;
+            }
+
+            // filter type
+            if (!empty($type)) {
+                $queryString['object_type_portal'] = $type;
+            }
+
             $mongoConfig = Config::get('database.mongodb');
             $mongoClient = MongoClient::create($mongoConfig);
             $response = $mongoClient->setQueryString($queryString)
@@ -177,41 +196,43 @@ class RatingReviewAPIController extends ControllerAPI
 
             $listOfRec = $response->data;
 
-            foreach ($listOfRec->records as $key => $value)
-            {
-                $userId = $listOfRec->records[$key]->user_id;
-                $objectId = $listOfRec->records[$key]->object_id;
-                $objectType = $listOfRec->records[$key]->object_type;
+            // get username and object name from mysql
+            if (!empty($listOfRec->records)) {
+                foreach ($listOfRec->records as $key => $value) {
+                    $userId = isset($listOfRec->records[$key]->user_id) ? $listOfRec->records[$key]->user_id : null;
+                    $objectId = isset($listOfRec->records[$key]->object_id) ? $listOfRec->records[$key]->object_id : null;
+                    $objectType = isset($listOfRec->records[$key]->object_type) ? $listOfRec->records[$key]->object_type : null;
 
-                $userName = '';
-                $objectName = '';
-                $user = User::select('user_firstname', 'user_lastname')->where('user_id', '=', $userId)->first();
-                if (is_object($user)) {
-                    $userName = $user->user_firstname.' '.$user->user_lastname;
-                }
-                $listOfRec->records[$key]->user_name = $userName;
+                    $userName = '';
+                    $objectName = '';
+                    $user = User::select('user_firstname', 'user_lastname')->where('user_id', '=', $userId)->first();
+                    if (is_object($user)) {
+                        $userName = $user->user_firstname.' '.$user->user_lastname;
+                    }
+                    $listOfRec->records[$key]->user_name = $userName;
 
-                switch(strtolower($objectType)) {
-                    case 'coupon':
-                        $object = Coupon::select('promotion_name as object_name')->where('promotion_id', '=', $objectId)->first();
-                        break;
-                    case 'store':
-                        $object = Tenant::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
-                        break;
-                    case 'mall':
-                        $object = Mall::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
-                        break;
-                    default:
-                        $object = News::select('news_name as object_name')->where('news_id', '=', $objectId)->first();
-                }
+                    switch(strtolower($objectType)) {
+                        case 'coupon':
+                            $object = Coupon::select('promotion_name as object_name')->where('promotion_id', '=', $objectId)->first();
+                            break;
+                        case 'store':
+                            $object = Tenant::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
+                            break;
+                        case 'mall':
+                            $object = Mall::select('name as object_name')->where('merchant_id', '=', $objectId)->first();
+                            break;
+                        default:
+                            $object = News::select('news_name as object_name')->where('news_id', '=', $objectId)->first();
+                    }
 
-                if (is_object($object)) {
-                    $objectName = $object->object_name;
+                    if (is_object($object)) {
+                        $objectName = $object->object_name;
+                    }
+                    $listOfRec->records[$key]->object_name = $objectName;
                 }
-                $listOfRec->records[$key]->object_name = $objectName;
             }
 
-            if (count($listOfRec->records) === 0 || $emptyStore) {
+            if ((count($listOfRec->records) === 0 || $emptyStore) && $role->role_name === 'Merchant Review Admin') {
                 $data = null;
             } else {
                 $data = new \stdclass();
@@ -227,13 +248,13 @@ class RatingReviewAPIController extends ControllerAPI
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage().' '.$e->getLine();
             $this->response->data = null;
             $httpCode = 403;
         } catch (InvalidArgsException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage().' '.$e->getLine();
             $result['total_records'] = 0;
             $result['returned_records'] = 0;
             $result['records'] = null;
@@ -246,7 +267,7 @@ class RatingReviewAPIController extends ControllerAPI
 
             // Only shows full query error when we are in debug mode
             if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
+                $this->response->message = $e->getMessage().' '.$e->getLine();
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
@@ -255,7 +276,7 @@ class RatingReviewAPIController extends ControllerAPI
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getMessage().' '.$e->getLine();
             $this->response->data = null;
         }
 
@@ -336,6 +357,109 @@ class RatingReviewAPIController extends ControllerAPI
             $getReview = $mongoClient->setEndPoint("reviews/$reviewId")->request('GET');
 
             $this->response->data = $getReview->data;
+            $this->response->code = 0;
+            $this->response->status = 'success';
+            $this->response->message = 'Request Ok';
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 50;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+
+        return $output;
+    }
+
+    /**
+     * Delete my reply.
+     *
+     * @author  budi <budi@dominopos.com>
+     *
+     * @return [type] [description]
+     */
+    public function postDeleteReply()
+    {
+        try {
+            $httpCode = 200;
+
+            // Require authentication
+            $this->checkAuth();
+
+            // Try to check access control list, does this user allowed to
+            // perform this action
+            $user = $this->api->user;
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = $this->viewRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $reviewId = OrbitInput::post('id');
+
+            $this->registerCustomValidation();
+
+            $validator = Validator::make(
+                array(
+                    'reviewId' => $reviewId,
+                ),
+                array(
+                    'reviewId' => 'required|orbit.exist.review',
+                ),
+                array(
+                    'orbit.exist.review' => 'reply not found'
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $mongoConfig = Config::get('database.mongodb');
+            $mongoClient = MongoClient::create($mongoConfig);
+
+            $reply = $mongoClient->setEndPoint('reviews/' . $reviewId)
+                                    ->request('GET');
+
+            // Make sure user has the right to delete the reply.
+            if ($reply->data->user_id !== $user->user_id) {
+                $errorMessage = 'You do not have right to delete the reply.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            $deleteReply = $mongoClient->setEndPoint('reviews/' . $reviewId)
+                                        ->request('DELETE');
+
+            $this->response->data = $reply->data;
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
