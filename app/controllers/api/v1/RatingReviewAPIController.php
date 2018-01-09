@@ -194,8 +194,8 @@ class RatingReviewAPIController extends ControllerAPI
 
             // filter date
             if (!empty($beginDate) && !empty($endDate)) {
-                $queryString['begin_date'] = $beginDate;
-                $queryString['end_date'] = $endDate;
+                $queryString['begin_date'] = $beginDate.' 00:00:00';
+                $queryString['end_date'] = $endDate.' 23:59:59';
             }
 
             // filter rating
