@@ -225,7 +225,7 @@ class PaymentActivityAPIController extends PubControllerAPI
             $this->response->data = null;
             $httpCode = 500;
 
-            \Log::debug('PaymentActivity: (ERR) ' . $e->getMessage());
+            // \Log::debug('PaymentActivity: (ERR) ' . $e->getMessage());
         }
 
         return $this->render($httpCode);
