@@ -68,3 +68,11 @@ Route::get('/api/v1/server-time', function()
 {
     return DummyAPIController::create()->getServerTime();
 });
+
+/**
+ * Get sitemap
+ */
+Route::get('/api/v1/pub/sitemap', function()
+{
+    return Orbit\Controller\API\v1\Pub\SitemapReaderAPIController::create()->getSitemap();
+});
