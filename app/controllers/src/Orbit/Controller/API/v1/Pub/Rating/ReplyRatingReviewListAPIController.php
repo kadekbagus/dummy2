@@ -175,11 +175,12 @@ class ReplyRatingReviewListAPIController extends PubControllerAPI
                     $image = "(CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END) as user_picture";
                 }
 
-                $userList = User::select('users.user_id', DB::raw("(CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname)) as user_name"), DB::raw($image))
+                $userList = User::select('users.user_id', 'roles.role_name', DB::raw("(CONCAT({$prefix}users.user_firstname, ' ', {$prefix}users.user_lastname)) as user_name"), DB::raw($image))
                                   ->leftJoin('media', function ($q) {
                                         $q->on('media.object_id', '=', 'users.user_id')
                                           ->on('media.media_name_long', '=', DB::raw("'user_profile_picture_orig'"));
                                     })
+                                  ->join('roles', 'roles.role_id', '=', 'users.user_role_id')
                                   ->whereIn('users.user_id', $userIds)
                                   ->groupBy('users.user_id')
                                   ->get();
@@ -188,10 +189,17 @@ class ReplyRatingReviewListAPIController extends PubControllerAPI
                                   ->whereIn('users.user_id', $userIdReplies)
                                   ->get();
 
+                $roleOfficial = ['Merchant Review Admin', 'Master Review Admin'];
+                $isOfficialUser = 'n';
                 $userRating = array();
                 foreach ($userList as $list) {
                     $userRating[$list->user_id]['user_name'] = $list->user_name;
                     $userRating[$list->user_id]['user_picture'] = $list->user_picture;
+
+                    if (in_array($list->role_name, $roleOfficial)) {
+                        $isOfficialUser = 'y';
+                    }
+                    $userRating[$list->user_id]['is_official_user'] = $isOfficialUser;
                 }
 
                 $userRatingReplied = array();
@@ -213,6 +221,11 @@ class ReplyRatingReviewListAPIController extends PubControllerAPI
                     $rating->user_name_replied = '';
                     if (! empty($userRatingReplied[$rating->user_id_replied]['user_name_replied'])) {
                         $rating->user_name_replied = $userRatingReplied[$rating->user_id_replied]['user_name_replied'];
+                    }
+
+                    $rating->is_official_user = '';
+                    if (! empty($userRating[$rating->user_id]['is_official_user'])) {
+                        $rating->is_official_user = $userRating[$rating->user_id]['is_official_user'];
                     }
                 }
             }
