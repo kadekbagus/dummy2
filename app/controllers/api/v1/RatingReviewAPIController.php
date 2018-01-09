@@ -144,7 +144,7 @@ class RatingReviewAPIController extends ControllerAPI
             }
 
             // for user merchant (show only review for that merchant)
-            if ($role->role_name == 'Merchant Review Admin' && $userType = 'merchant') {
+            if ($role->role_name === 'Merchant Review Admin' && $userType === 'merchant') {
                 $storeIds = [];
                 $stores = User::select('base_stores.base_store_id')
                              ->join('user_merchant_reviews', 'user_merchant_reviews.user_id', '=', 'users.user_id')
@@ -171,7 +171,7 @@ class RatingReviewAPIController extends ControllerAPI
             }
 
             // for user mall (show only review for that mall)
-            if ($role->role_name == 'Merchant Review Admin' && $userType = 'mall' && !empty($linkMerchantId)) {
+            if ($role->role_name === 'Merchant Review Admin' && $userType === 'mall' && !empty($linkMerchantId)) {
                 $mallExist = Mall::where('merchant_id', '=', $linkMerchantId)->first();
                 $queryString = [
                     'take'         => $take,
@@ -183,7 +183,7 @@ class RatingReviewAPIController extends ControllerAPI
             }
 
             // for user gotomalls (show all review)
-            if ($role->role_name == 'Master Review Admin' && $userType = 'gtm') {
+            if ($role->role_name === 'Master Review Admin' && $userType === 'gtm') {
                 $queryString = [
                     'take'         => $take,
                     'skip'         => $skip,
