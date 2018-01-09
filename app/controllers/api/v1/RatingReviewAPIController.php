@@ -96,7 +96,7 @@ class RatingReviewAPIController extends ControllerAPI
                 $skip = $_skip;
             });
 
-            $beginDate = OrbitInput::get('begin_date', null);
+            $beginDate = OrbitInput::get('start_date', null);
             $endDate = OrbitInput::get('end_date', null);
             $rating = OrbitInput::get('rating', null);
             $review = OrbitInput::get('review', null);
