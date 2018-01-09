@@ -70,6 +70,7 @@ class UserNotificationMallCommand extends Command {
                 $userIds = null;
                 $notification_token = null;
                 $notificationTokens = null;
+                $vendorNotificationId = null;
                 $mallId = $mallObjectNotification->mall_id;
                 $mallObjectNotificationId = $mallObjectNotification->_id;
                 $mall = Mall::excludeDeleted('merchants')

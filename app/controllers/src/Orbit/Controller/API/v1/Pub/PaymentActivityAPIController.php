@@ -68,6 +68,7 @@ class PaymentActivityAPIController extends PubControllerAPI
             }
 
             $transaction = PaymentTransaction::where('payment_transaction_id', $transactionId)->first();
+            
             if (! is_object($transaction)) {
                 $errorMessage = 'Transaction ' . $transactionId . ' not found';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
@@ -84,11 +85,11 @@ class PaymentActivityAPIController extends PubControllerAPI
 
             $issuedCoupon = IssuedCoupon::with(['coupon'])
                                         ->where('issued_coupon_id', $transaction->issued_coupon_id)
-                                        ->where('status', 'issued')
+                                        ->whereIn('status', ['issued', 'redeemed'])
                                         ->first();
 
             if (! is_object($issuedCoupon)) {
-                $errorMessage = 'Can not find related Issued Coupon for Transaction ' . 
+                $errorMessage = 'Can not find related Issued Coupon #' . $transaction->issued_coupon_id . ' for Transaction #' . 
                     $transaction->payment_transaction_id .'';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
@@ -100,11 +101,11 @@ class PaymentActivityAPIController extends PubControllerAPI
 
             if ($transaction->status === 'success') {
 
-                $activityNotes = sprintf('Coupon Redemeed using %s: %s, %s, %s', 
-                    $transaction->payment_method, 
-                    $issuedCoupon->coupon->promotion_name,
-                    $transaction->payment_amount,
-                    $transaction->notes
+                $activityNotes = sprintf('%s, %s, %s, %s', 
+                    $transaction->object_name,
+                    $transaction->amount,
+                    $transaction->notes,
+                    $transaction->payment_method
                 );
 
                 $activity->setUser($user)
@@ -127,6 +128,7 @@ class PaymentActivityAPIController extends PubControllerAPI
                             ->setActivityName('payment_transaction_successful')
                             ->setActivityNameLong('Payment Transaction Successful')
                             ->setObject($transaction)
+                            ->setObjectDisplayName($transaction->object_name)
                             ->setNotes($activityNotes)
                             ->setLocation(null)
                             ->setModuleName('Transaction')
@@ -138,11 +140,11 @@ class PaymentActivityAPIController extends PubControllerAPI
             }
             else if ($transaction->status === 'failed') {
 
-                $activityNotes = sprintf('Coupon Redemeed Failed using %s: %s, %s, %s', 
-                    $transaction->payment_method, 
-                    $issuedCoupon->coupon->promotion_name,
+                $activityNotes = sprintf('%s, %s, %s, %s',  
+                    $transaction->object_name,
                     $transaction->amount,
-                    $transaction->notes
+                    $transaction->notes,
+                    $transaction->payment_method
                 );
 
                 $activity->setUser($user)
@@ -152,8 +154,12 @@ class PaymentActivityAPIController extends PubControllerAPI
                     ->setNotes($activityNotes)
                     ->setLocation(null)
                     ->setModuleName('Coupon')
-                    ->responseFailed()
-                    ->save();
+                    ->responseFailed();
+
+                $activity->coupon_id = $issuedCoupon->promotion_id;
+                $activity->coupon_name = $issuedCoupon->coupon->promotion_name;
+
+                $activity->save();
 
                 // payment transaction failed
                 $activity = Activity::mobileci()
@@ -162,6 +168,7 @@ class PaymentActivityAPIController extends PubControllerAPI
                             ->setActivityName('payment_transaction_failed')
                             ->setActivityNameLong('Payment Transaction Failed')
                             ->setObject($transaction)
+                            ->setObjectDisplayName($transaction->object_name)
                             ->setNotes($activityNotes)
                             ->setLocation(null)
                             ->setModuleName('Transaction')
@@ -217,6 +224,8 @@ class PaymentActivityAPIController extends PubControllerAPI
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
+
+            // \Log::debug('PaymentActivity: (ERR) ' . $e->getMessage());
         }
 
         return $this->render($httpCode);
