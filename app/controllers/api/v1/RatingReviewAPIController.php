@@ -96,7 +96,7 @@ class RatingReviewAPIController extends ControllerAPI
                 $skip = $_skip;
             });
 
-            $beginDate = OrbitInput::get('begin_date', null);
+            $beginDate = OrbitInput::get('start_date', null);
             $endDate = OrbitInput::get('end_date', null);
             $rating = OrbitInput::get('rating', null);
             $review = OrbitInput::get('review', null);
@@ -129,9 +129,22 @@ class RatingReviewAPIController extends ControllerAPI
 
             $emptyStore = false;
             $queryString = [];
+            $userType = null;
+            $linkMerchantId = null;
+
+            // get user type: merchant, mall, or gtm
+            $userMerchantReview = User::select('user_merchant_reviews.merchant_id', 'user_merchant_reviews.object_type')
+                                     ->join('user_merchant_reviews', 'user_merchant_reviews.user_id', '=', 'users.user_id')
+                                     ->where('users.user_id','=', $user->user_id)
+                                     ->first();
+
+            if (is_object($userMerchantReview)) {
+                $userType = isset($userMerchantReview->object_type) ? $userMerchantReview->object_type : null;
+                $linkMerchantId = isset($userMerchantReview->merchant_id) ? $userMerchantReview->merchant_id : null;
+            }
 
             // for user merchant (show only review for that merchant)
-            if ($role->role_name == 'Merchant Review Admin') {
+            if ($role->role_name === 'Merchant Review Admin' && $userType === 'merchant') {
                 $storeIds = [];
                 $stores = User::select('base_stores.base_store_id')
                              ->join('user_merchant_reviews', 'user_merchant_reviews.user_id', '=', 'users.user_id')
@@ -157,8 +170,20 @@ class RatingReviewAPIController extends ControllerAPI
                 ];
             }
 
+            // for user mall (show only review for that mall)
+            if ($role->role_name === 'Merchant Review Admin' && $userType === 'mall' && !empty($linkMerchantId)) {
+                $mallExist = Mall::where('merchant_id', '=', $linkMerchantId)->first();
+                $queryString = [
+                    'take'         => $take,
+                    'skip'         => $skip,
+                    'sortBy'       => $sortBy,
+                    'sortMode'     => $sortMode,
+                    'location_id'  => $linkMerchantId
+                ];
+            }
+
             // for user gotomalls (show all review)
-            if ($role->role_name == 'Master Review Admin') {
+            if ($role->role_name === 'Master Review Admin' && $userType === 'gtm') {
                 $queryString = [
                     'take'         => $take,
                     'skip'         => $skip,
@@ -169,8 +194,8 @@ class RatingReviewAPIController extends ControllerAPI
 
             // filter date
             if (!empty($beginDate) && !empty($endDate)) {
-                $queryString['begin_date'] = $beginDate;
-                $queryString['end_date'] = $endDate;
+                $queryString['begin_date'] = $beginDate.' 00:00:00';
+                $queryString['end_date'] = $endDate.' 23:59:59';
             }
 
             // filter rating
@@ -232,8 +257,24 @@ class RatingReviewAPIController extends ControllerAPI
                 }
             }
 
-            if ((count($listOfRec->records) === 0 || $emptyStore) && $role->role_name === 'Merchant Review Admin') {
-                $data = null;
+            if ($role->role_name === 'Merchant Review Admin') {
+                if ($userType === 'merchant' && (count($listOfRec->records) === 0 || $emptyStore)) {
+                    $data = null;
+                } else {
+                    $data = new \stdclass();
+                    $data->returned_records = $listOfRec->returned_records;
+                    $data->total_records = $listOfRec->total_records;
+                    $data->records = $listOfRec->records;
+                }
+
+                if ($userType === 'mall' && !is_object($mallExist)) {
+                    $data = null;
+                } else {
+                    $data = new \stdclass();
+                    $data->returned_records = $listOfRec->returned_records;
+                    $data->total_records = $listOfRec->total_records;
+                    $data->records = $listOfRec->records;
+                }
             } else {
                 $data = new \stdclass();
                 $data->returned_records = $listOfRec->returned_records;

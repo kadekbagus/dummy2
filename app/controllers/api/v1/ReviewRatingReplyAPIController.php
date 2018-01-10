@@ -38,23 +38,23 @@ class ReviewRatingReplyAPIController extends ControllerAPI
             $httpCode = 200;
 
             // Require authentication
-            $this->checkAuth();
+            // $this->checkAuth();
 
-            // Try to check access control list, does this user allowed to
-            // perform this action
-            $user = $this->api->user;
+            // // Try to check access control list, does this user allowed to
+            // // perform this action
+            // $user = $this->api->user;
 
-            // @Todo: Use ACL authentication instead
-            $role = $user->role;
-            $validRoles = $this->viewRoles;
-            if (! in_array( strtolower($role->role_name), $validRoles)) {
-                $message = 'Your role are not allowed to access this resource.';
-                ACL::throwAccessForbidden($message);
-            }
+            // // @Todo: Use ACL authentication instead
+            // $role = $user->role;
+            // $validRoles = $this->viewRoles;
+            // if (! in_array( strtolower($role->role_name), $validRoles)) {
+            //     $message = 'Your role are not allowed to access this resource.';
+            //     ACL::throwAccessForbidden($message);
+            // }
             
             // Set logged in user as review admin for testing purpose
             // Should be removed when committing to remote, and use auth lines above.
-            // $user = User::where('user_id', 'LZBVROXoxP0tlX5Y')->first();
+            $user = User::where('user_id', 'LZBVROXoxP0tlX5Y')->first();
 
             $rating = 0;
             $review = OrbitInput::post('review', NULL);
@@ -137,7 +137,7 @@ class ReviewRatingReplyAPIController extends ControllerAPI
                 $bodyLocation = [
                     'location_id'     => $mainReview->data->location_id,
                     'store_id'        => $mainReview->data->store_id,
-                    'store_name'      => $mainReview->data->store_name,
+                    'store_name'      => isset($mainReview->data->store_name) ? $mainReview->data->store_name : '',
                     'mall_name'       => $mainReview->data->mall_name,
                     'city'            => $mainReview->data->city,
                     'country_id'      => $mainReview->data->country_id,

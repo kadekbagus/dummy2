@@ -1,6 +1,8 @@
 <?php
 /**
- * Command to generate sitemap file
+ * Command to print out sitemap
+ * usage: php artisan generate:sitemap > app/storage/sitemap.xml
+ * use crontab to generate sitemap file daily / weekly / monthly
  *
  * @author Ahmad <ahmad@dominopos.com>
  */

@@ -6894,7 +6894,12 @@ return array(
      * Sitemap generator config
      */
     'sitemap' => array(
-        'hashbang' => TRUE,
+        // file name, make sure it is the same file name as when you generate in
+        // artisan command: php artisan generate:sitemap > app/storage/sitemap.xml
+        'filename' => 'sitemap.xml',
+        // old config, for version 3.x angular based frontend app
+        'hashbang' => FALSE,
+        // URI mapping for each type of URLs
         'uri_properties' => array(
             'list' => array(
                 'promotion' => array(
