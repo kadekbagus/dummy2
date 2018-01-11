@@ -52,8 +52,9 @@ class UserSponsorAllowedNotificationCitiesListAPIController extends PubControlle
             $cities = OrbitInput::post('cities', []);
             $userId = $user->user_id;
 
-            $userSponsorAllowedNotificationCities = UserSponsorAllowedNotificationCities::select('city', 'country_id')
+            $userSponsorAllowedNotificationCities = UserSponsorAllowedNotificationCities::select('city', 'countries.name as country_name')
                                                             ->join('mall_cities', 'mall_cities.mall_city_id', '=', 'user_sponsor_allowed_notification_cities.mall_city_id')
+                                                            ->join('countries', 'countries.country_id', '=', 'mall_cities.country_id')
                                                             ->where('user_id', $userId);
 
             $_userSponsorAllowedNotificationCities = $userSponsorAllowedNotificationCities;
