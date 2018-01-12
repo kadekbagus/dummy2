@@ -40,11 +40,11 @@ class ReviewRatingReplyAPIController extends ControllerAPI
             // Require authentication
             $this->checkAuth();
 
-            // Try to check access control list, does this user allowed to
-            // perform this action
+            // // Try to check access control list, does this user allowed to
+            // // perform this action
             $user = $this->api->user;
 
-            // @Todo: Use ACL authentication instead
+            // // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->viewRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
@@ -137,7 +137,7 @@ class ReviewRatingReplyAPIController extends ControllerAPI
                 $bodyLocation = [
                     'location_id'     => $mainReview->data->location_id,
                     'store_id'        => $mainReview->data->store_id,
-                    'store_name'      => $mainReview->data->store_name,
+                    'store_name'      => isset($mainReview->data->store_name) ? $mainReview->data->store_name : '',
                     'mall_name'       => $mainReview->data->mall_name,
                     'city'            => $mainReview->data->city,
                     'country_id'      => $mainReview->data->country_id,

@@ -50,3 +50,5 @@ Route::get('/app/v1/session-info', [
     'as'    => 'session-info',
     'uses'  => 'IntermediateLoginController@getSessionLoginInfo'
 ]);
+
+Route::get('/app/v1/pub/sitemap', ['as' => 'sitemap-reader', 'uses' => 'IntermediatePubAuthController@SitemapReader_getSitemap']);

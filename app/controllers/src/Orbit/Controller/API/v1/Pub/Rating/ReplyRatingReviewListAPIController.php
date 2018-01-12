@@ -88,7 +88,7 @@ class ReplyRatingReviewListAPIController extends PubControllerAPI
                 'skip'        => $skip,
                 'parent_id'   => $parentId,
                 'sortBy'      => 'updated_at',
-                'sortMode'    => 'asc'
+                'sortMode'    => 'desc'
             ];
 
             $arrayQuery = '';

@@ -6894,7 +6894,12 @@ return array(
      * Sitemap generator config
      */
     'sitemap' => array(
-        'hashbang' => TRUE,
+        // file name, make sure it is the same file name as when you generate in
+        // artisan command: php artisan generate:sitemap > app/storage/sitemap.xml
+        'filename' => 'sitemap.xml',
+        // old config, for version 3.x angular based frontend app
+        'hashbang' => FALSE,
+        // URI mapping for each type of URLs
         'uri_properties' => array(
             'list' => array(
                 'promotion' => array(
@@ -6927,6 +6932,10 @@ return array(
                     'uri' => 'events/%s/%s',
                     'changefreq' => 'monthly',
                 ),
+                'promotional-event' => array(
+                    'uri' => 'promotional-events/%s/%s',
+                    'changefreq' => 'monthly',
+                ),
                 'coupon' => array(
                     'uri' => 'coupons/%s/%s',
                     'changefreq' => 'monthly',
@@ -6953,12 +6962,20 @@ return array(
                     'uri' => 'about-us',
                     'changefreq' => 'monthly',
                 ),
-                'discover' => array(
-                    'uri' => 'discover',
+                'advertise-with-us' => array(
+                    'uri' => 'advertise-with-us',
+                    'changefreq' => 'monthly',
+                ),
+                'feedback' => array(
+                    'uri' => 'feedback',
+                    'changefreq' => 'monthly',
+                ),
+                'blog' => array(
+                    'uri' => 'blog',
                     'changefreq' => 'monthly',
                 ),
                 'map' => array(
-                    'uri' => 'map',
+                    'uri' => 'maps',
                     'changefreq' => 'weekly',
                 ),
             ),
@@ -7137,8 +7154,16 @@ return array(
     ],
 
     'page_view' => [
+        // enable update total page views
+        // FALSE: disabled, depends on daily scripts to update total pageview in DB and ES
+        // TRUE: enabled, script to update can be turned off, but comes with dire consequences
+        //     (MySQL Table deadlock, Redis connection timeout, High ES server utility)
+        'enable_update_total_page_views' => FALSE,
+
+        // total page view temporary storage
         'source' => 'redis',
 
+        // total page view cache redis connection
         'redis' => [
             'connection' => 'page_view'
         ],

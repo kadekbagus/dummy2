@@ -262,14 +262,11 @@ class FollowAPIController extends PubControllerAPI
                             }
 
                         } else {
+                            $stores = null;
                             // gtm level
-                            $baseStore = BaseStore::select('merchants.country_id', 'base_stores.base_merchant_id', 'base_merchants.name')
-                                              ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
-                                              ->leftJoin('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
-                                              ->where('base_stores.base_store_id', '=', $object_id)
-                                              ->first();
-
-                            if (is_object($baseStore)) {
+                            if (is_array($object_id) && ! empty($object_id)) {
+                                // support unfollow using array of merchant_id
+                                // case of more than one store in a single mall
                                 $stores = Tenant::select('merchants.merchant_id as store_id',
                                                          'merchants.name as store_name',
                                                          DB::raw('parent.merchant_id as mall_id'),
@@ -278,16 +275,38 @@ class FollowAPIController extends PubControllerAPI
                                                         )
                                                 ->excludeDeleted('merchants')
                                                 ->leftJoin('merchants as parent', 'merchants.parent_id', '=', DB::raw('parent.merchant_id'))
-                                                ->where('merchants.name', '=', $baseStore->name)
                                                 ->where('merchants.status', '=', 'active')
                                                 ->where(DB::raw('parent.status'), '=', 'active')
-                                                ->where(DB::raw('parent.country_id'), '=', $baseStore->country_id);
+                                                ->whereIn('merchant_id', $object_id)
+                                                ->get();
+                            } else {
+                                // unfollow using single merchant_id
+                                $baseStore = BaseStore::select('merchants.country_id', 'base_stores.base_merchant_id', 'base_merchants.name')
+                                                  ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                                                  ->leftJoin('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
+                                                  ->where('base_stores.base_store_id', '=', $object_id)
+                                                  ->first();
 
-                                if (! empty($city)) {
-                                    $stores = $stores->whereIn(DB::raw('parent.city'), $city);
+                                if (is_object($baseStore)) {
+                                    $stores = Tenant::select('merchants.merchant_id as store_id',
+                                                             'merchants.name as store_name',
+                                                             DB::raw('parent.merchant_id as mall_id'),
+                                                             DB::raw('parent.city as city'),
+                                                             DB::raw('parent.country_id as country_id')
+                                                            )
+                                                    ->excludeDeleted('merchants')
+                                                    ->leftJoin('merchants as parent', 'merchants.parent_id', '=', DB::raw('parent.merchant_id'))
+                                                    ->where('merchants.name', '=', $baseStore->name)
+                                                    ->where('merchants.status', '=', 'active')
+                                                    ->where(DB::raw('parent.status'), '=', 'active')
+                                                    ->where(DB::raw('parent.country_id'), '=', $baseStore->country_id);
+
+                                    if (! empty($city)) {
+                                        $stores = $stores->whereIn(DB::raw('parent.city'), $city);
+                                    }
+
+                                    $stores = $stores->get();
                                 }
-
-                                $stores = $stores->get();
                             }
 
                             if (!empty($stores))
