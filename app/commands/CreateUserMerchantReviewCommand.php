@@ -90,7 +90,6 @@ class CreateUserMerchantReviewCommand extends Command {
                 array(
                     'email'                => $email,
                     'first_name'           => $first_name,
-                    'last_name'            => $last_name,
                     'password'             => $password,
                     'role'                 => $role,
                     'object_type'          => $object_type,
@@ -99,7 +98,6 @@ class CreateUserMerchantReviewCommand extends Command {
                 array(
                     'email'                => 'required|orbit.exist.email',
                     'first_name'           => 'required',
-                    'last_name'            => 'required',
                     'password'             => 'required|min:6',
                     'role'                 => 'required|orbit.exist.role_id',
                     'object_type'          => 'required|in:merchant,store,gtm,mall',
