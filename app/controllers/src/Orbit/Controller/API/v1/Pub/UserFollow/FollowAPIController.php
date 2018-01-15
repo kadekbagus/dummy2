@@ -245,20 +245,22 @@ class FollowAPIController extends PubControllerAPI
                     {
                         if (!empty($mall_id)) {
                             // mall level
-                            $queryString = [
-                                'user_id'     => $user->user_id,
-                                'object_id'   => $object_id,
-                                'object_type' => $object_type
-                            ];
+                            foreach ((array) $object_id as $objectId) {
+                                $queryString = [
+                                    'user_id'     => $user->user_id,
+                                    'object_id'   => $objectId,
+                                    'object_type' => $object_type
+                                ];
 
-                            $existingData = $mongoClient->setQueryString($queryString)
-                                                 ->setEndPoint('user-follows')
-                                                 ->request('GET');
+                                $existingData = $mongoClient->setQueryString($queryString)
+                                                     ->setEndPoint('user-follows')
+                                                     ->request('GET');
 
-                            if (count($existingData->data->records) !== 0) {
-                                $id = $existingData->data->records[0]->_id;
-                                $response = $mongoClient->setEndPoint("user-follows/$id")
-                                                        ->request('DELETE');
+                                if (count($existingData->data->records) !== 0) {
+                                    $id = $existingData->data->records[0]->_id;
+                                    $response = $mongoClient->setEndPoint("user-follows/$id")
+                                                            ->request('DELETE');
+                                }
                             }
 
                         } else {
