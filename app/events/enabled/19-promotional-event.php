@@ -703,6 +703,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-storenotificati
     $mongoConfig = Config::get('database.mongodb');
     $mongoClient = MongoClient::create($mongoConfig);
     $oneSignalConfig = Config::get('orbit.vendor_push_notification.onesignal');
+    $table_prefix = DB::getTablePrefix();
 
     if ($updatedPromotionalEvent->status === 'active') {
 
