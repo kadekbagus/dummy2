@@ -136,29 +136,51 @@ class FollowAPIController extends PubControllerAPI
                     {
                         if (!empty($mall_id)) {
                             // mall level
-                            $baseStore = BaseStore::select('merchants.city', 'merchants.country_id', 'base_merchants.base_merchant_id')
-                                              ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
-                                              ->leftJoin('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
-                                              ->where('base_stores.base_store_id', '=', $object_id)
-                                              ->where('base_stores.merchant_id', '=', $mall_id)
-                                              ->first();
 
-                            if (is_object($baseStore)) {
-                                $dataInsert = [
-                                    'user_id'          => $user->user_id,
-                                    'object_id'        => $object_id,
-                                    'object_type'      => $object_type,
-                                    'city'             => $baseStore->city,
-                                    'country_id'       => $baseStore->country_id,
-                                    'base_merchant_id' => $baseStore->base_merchant_id,
-                                    'mall_id'          => $mall_id,
-                                    'created_at'       => $dateTime
-                                ];
+                            // User will follow all store in mall,  when store have more than one store in same mall
+                            // Get store name,city and country
+                            $storeInfo = Tenant::select('merchants.merchant_id', 'merchants.name', DB::raw('parent.city as city'), DB::raw('parent.country_id as country_id'), 'base_stores.base_merchant_id')
+                                                ->leftJoin('merchants as parent', DB::raw('parent.merchant_id'), '=', 'merchants.parent_id')
+                                                ->leftJoin('base_stores', 'base_stores.base_store_id', '=', 'merchants.merchant_id')
+                                                ->where('merchants.merchant_id', $object_id)
+                                                ->where('merchants.parent_id',  $mall_id)
+                                                ->excludeDeleted('merchants')
+                                                ->first();
 
-                                $response = $mongoClient->setFormParam($dataInsert)
-                                                    ->setEndPoint('user-follows')
-                                                    ->request('POST');
+                            if (! empty($storeInfo)) {
+                                $stores = Tenant::select('name', 'merchant_id as store_id')
+                                                    ->where('name', $storeInfo->name)
+                                                    ->where('parent_id',  $mall_id)
+                                                    ->excludeDeleted()
+                                                    ->get();
+
+                                if (count($stores) > 0) {
+                                    $dataStoresInsert = array();
+                                    foreach ($stores as $key => $stores) {
+                                        $dataStoresInsert[] = [
+                                            'user_id'          => $user->user_id,
+                                            'object_id'        => $stores->store_id,
+                                            'object_type'      => $object_type,
+                                            'city'             => $storeInfo->city,
+                                            'country_id'       => $storeInfo->country_id,
+                                            'base_merchant_id' => $storeInfo->base_merchant_id,
+                                            'mall_id'          => $mall_id,
+                                            'created_at'       => $dateTime
+                                        ];
+                                    }
+
+                                    // Bulk Insert
+                                    if(!empty($dataStoresInsert)) {
+                                        $dataInsert = ['bulk_insert' => $dataStoresInsert];
+
+                                        // insert new data
+                                        $response = $mongoClient->setFormParam($dataInsert)
+                                                                ->setEndPoint('user-follows')
+                                                                ->request('POST');
+                                    }
+                                }
                             }
+
 
                         } else {
                             // gtm level
@@ -245,20 +267,50 @@ class FollowAPIController extends PubControllerAPI
                     {
                         if (!empty($mall_id)) {
                             // mall level
-                            $queryString = [
-                                'user_id'     => $user->user_id,
-                                'object_id'   => $object_id,
-                                'object_type' => $object_type
-                            ];
 
-                            $existingData = $mongoClient->setQueryString($queryString)
-                                                 ->setEndPoint('user-follows')
-                                                 ->request('GET');
+                            // Get all store in this specific mall
+                            $storeInfo = Tenant::select('merchants.name')
+                                                ->where('merchants.merchant_id', $object_id)
+                                                ->where('merchants.parent_id',  $mall_id)
+                                                ->excludeDeleted('merchants')
+                                                ->first();
 
-                            if (count($existingData->data->records) !== 0) {
-                                $id = $existingData->data->records[0]->_id;
-                                $response = $mongoClient->setEndPoint("user-follows/$id")
-                                                        ->request('DELETE');
+                            if (! empty($storeInfo)) {
+                                $stores = Tenant::select('merchants.merchant_id as store_id')
+                                                    ->where('name', $storeInfo->name)
+                                                    ->where('parent_id',  $mall_id)
+                                                    ->excludeDeleted()
+                                                    ->get()
+                                                    ;
+
+
+                                if (count($stores) > 0) {
+                                    $dataStoresInsert = array();
+                                    foreach ($stores as $key => $store) {
+
+                                        $dataStoresSearch = [
+                                            'user_id'          => $user->user_id,
+                                            'object_id'        => $store->store_id,
+                                            'object_type'      => $object_type,
+                                            'mall_id'          => $mall_id
+                                        ];
+
+                                        $existingData = $mongoClient->setQueryString($dataStoresSearch)
+                                                                    ->setEndPoint('user-follows')
+                                                                    ->request('GET');
+
+                                        if (count($existingData->data->records) !== 0) {
+                                            $existingIds[] = $existingData->data->records[0]->_id;
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (! empty($existingIds)) {
+                                foreach ($existingIds as $key => $value) {
+                                    $response = $mongoClient->setEndPoint("user-follows/$value")
+                                                          ->request('DELETE');
+                                }
                             }
 
                         } else {
