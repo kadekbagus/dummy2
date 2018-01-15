@@ -267,40 +267,48 @@ class FollowAPIController extends PubControllerAPI
                         if (!empty($mall_id)) {
                             // mall level
 
-                            // Get all store in this specific mall
-                            $storeInfo = Tenant::select('merchants.name')
-                                                ->where('merchants.merchant_id', $object_id)
-                                                ->where('merchants.parent_id',  $mall_id)
-                                                ->excludeDeleted('merchants')
-                                                ->first();
-
-                            if (! empty($storeInfo)) {
+                            $stores = array();
+                            if (is_array($object_id) && ! empty($object_id)) {
+                                // Get store by multiple object_id
                                 $stores = Tenant::select('merchants.merchant_id as store_id')
-                                                    ->where('name', $storeInfo->name)
+                                                    ->whereIn('merchant_id', $object_id)
                                                     ->where('parent_id',  $mall_id)
                                                     ->excludeDeleted()
-                                                    ->get()
-                                                    ;
+                                                    ->get();
+                            } else {
+                                // Get store by single object_id
+                                $storeInfo = Tenant::select('merchants.name')
+                                                    ->where('merchants.merchant_id', $object_id)
+                                                    ->where('merchants.parent_id',  $mall_id)
+                                                    ->excludeDeleted('merchants')
+                                                    ->first();
 
+                                if (! empty($storeInfo)) {
+                                    $stores = Tenant::select('merchants.merchant_id as store_id')
+                                                        ->where('name', $storeInfo->name)
+                                                        ->where('parent_id',  $mall_id)
+                                                        ->excludeDeleted()
+                                                        ->get();
+                                }
+                            }
 
-                                if (count($stores) > 0) {
-                                    $dataStoresInsert = array();
-                                    foreach ($stores as $key => $store) {
+                            $existingIds = array();
+                            if (count($stores) > 0) {
+                                foreach ($stores as $key => $store) {
 
-                                        $dataStoresSearch = [
-                                            'user_id'          => $user->user_id,
-                                            'object_id'        => $store->store_id,
-                                            'object_type'      => $object_type,
-                                            'mall_id'          => $mall_id
-                                        ];
+                                    $dataStoresSearch = [
+                                        'user_id'          => $user->user_id,
+                                        'object_id'        => $store->store_id,
+                                        'object_type'      => $object_type,
+                                        'mall_id'          => $mall_id
+                                    ];
 
-                                        $existingData = $mongoClient->setQueryString($dataStoresSearch)
-                                                                    ->setEndPoint('user-follows')
-                                                                    ->request('GET');
+                                    $existingData = $mongoClient->setQueryString($dataStoresSearch)
+                                                                ->setEndPoint('user-follows')
+                                                                ->request('GET');
 
-                                        if (count($existingData->data->records) !== 0) {
-                                            $existingIds[] = $existingData->data->records[0]->_id;
-                                        }
+                                    if (count($existingData->data->records) !== 0) {
+                                        $existingIds[] = $existingData->data->records[0]->_id;
                                     }
                                 }
                             }
