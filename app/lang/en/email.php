@@ -42,7 +42,7 @@ return array(
         'label_events'      => 'Events',
         'subject'           => 'Welcome to Gotomalls!',
         'greeting'          => 'Hi',
-        'message_part1'     => 'Thank you for joining with Gotomalls!',
+        'message_part1'     => 'Thank you for joining Gotomalls!',
         'message_part2'     => 'To activate your account, please click the button below.',
         'button_activation' => 'Activate Account',
         'message_part3'     => 'You can access Gotomalls on difference devices with the same account:',
