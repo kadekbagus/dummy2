@@ -324,6 +324,12 @@ class FollowAPIController extends PubControllerAPI
                             $stores = null;
                             // gtm level
                             if (is_array($object_id) && ! empty($object_id)) {
+                                $baseStore = BaseStore::select('merchants.country_id', 'base_stores.base_merchant_id', 'base_merchants.name')
+                                                  ->leftJoin('base_merchants', 'base_merchants.base_merchant_id', '=', 'base_stores.base_merchant_id')
+                                                  ->leftJoin('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
+                                                  ->where('base_stores.base_store_id', '=', $object_id[0])
+                                                  ->first();
+
                                 // support unfollow using array of merchant_id
                                 // case of more than one store in a single mall
                                 $stores = Tenant::select('merchants.merchant_id as store_id',
@@ -336,7 +342,7 @@ class FollowAPIController extends PubControllerAPI
                                                 ->leftJoin('merchants as parent', 'merchants.parent_id', '=', DB::raw('parent.merchant_id'))
                                                 ->where('merchants.status', '=', 'active')
                                                 ->where(DB::raw('parent.status'), '=', 'active')
-                                                ->whereIn('merchant_id', $object_id)
+                                                ->whereIn('merchants.merchant_id', $object_id)
                                                 ->get();
                             } else {
                                 // unfollow using single merchant_id
