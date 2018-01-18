@@ -971,7 +971,7 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
             }
 
             // If there is no follower but there is user linked to credit-card/ewallet
-            if (count($userFollows->data->returned_records) === 0 && !empty($userSponsor)) {
+            if ($userFollows->data->returned_records === 0 && !empty($userSponsor)) {
                 $userIds = $userSponsor;
                 $queryStringUserNotifToken['user_ids'] = json_encode($userIds);
 
