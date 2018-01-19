@@ -57,11 +57,9 @@ class MenuCounterAPIController extends PubControllerAPI
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
         $keyword = null;
-        $user = null;
         $mall = null;
 
         try {
-            $user = $this->getUser();
             $host = Config::get('orbit.elasticsearch');
             $location = OrbitInput::get('location', null);
             $cityFilters = OrbitInput::get('cities', null);
@@ -283,34 +281,6 @@ class MenuCounterAPIController extends PubControllerAPI
             $data->returned_records = count($listOfRec);
             $data->total_records = count($listOfRec);
             $data->records = $listOfRec;
-
-            if (OrbitInput::get('from_homepage', '') !== 'y') {
-                if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
-                    if (is_object($mall)) {
-                        $activityNotes = sprintf('Page viewed: View mall event list');
-                        $activity->setUser($user)
-                            ->setActivityName('view_mall_event_list')
-                            ->setActivityNameLong('View mall event list')
-                            ->setObject(null)
-                            ->setLocation($mall)
-                            ->setModuleName('News')
-                            ->setNotes($activityNotes)
-                            ->responseOK()
-                            ->save();
-                    } else {
-                        $activityNotes = sprintf('Page viewed: News list');
-                        $activity->setUser($user)
-                            ->setActivityName('view_news_main_page')
-                            ->setActivityNameLong('View News Main Page')
-                            ->setObject(null)
-                            ->setLocation($mall)
-                            ->setModuleName('News')
-                            ->setNotes($activityNotes)
-                            ->responseOK()
-                            ->save();
-                    }
-                }
-            }
 
             $this->response->data = $data;
             $this->response->code = 0;
