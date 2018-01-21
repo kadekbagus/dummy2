@@ -127,66 +127,69 @@ class ObjectPageViewActivityQueue
                     $object_page_view->activity_id = $activity->activity_id;
                     $object_page_view->save();
 
-                    $keyRedis = strtolower($activity->object_name) . '||' . $object_id . '||' . $activity->location_id;
-                    $redis = Redis::connection('page_view');
+                    if (Config::get('orbit.page_view.enable_update_total_page_views', FALSE)) {
+                        $keyRedis = strtolower($activity->object_name) . '||' . $object_id . '||' . $activity->location_id;
+                        $redis = Redis::connection('page_view');
 
-                    $totalPageView = $redis->get($keyRedis);
-                    $totalView = 1;
-                    if (empty($totalPageView)) {
-                        $total_object_page_view = TotalObjectPageView::where('object_type', strtolower($activity->object_name))
-                                                                     ->where('object_id', $object_id)
-                                                                     ->where('location_id', $activity->location_id)
-                                                                     ->first();
+                        $totalPageView = $redis->get($keyRedis);
+                        $totalView = 1;
+                        if (empty($totalPageView)) {
+                            $total_object_page_view = TotalObjectPageView::where('object_type', strtolower($activity->object_name))
+                                                                         ->where('object_id', $object_id)
+                                                                         ->where('location_id', $activity->location_id)
+                                                                         ->first();
 
-                        if (! empty($total_object_page_view->total_view)) {
-                            $totalView = (int) $total_object_page_view->total_view + 1;
-                            $redis->set($keyRedis, $totalView);
+                            if (! empty($total_object_page_view->total_view)) {
+                                $totalView = (int) $total_object_page_view->total_view + 1;
+                                $redis->set($keyRedis, $totalView);
+                            } else {
+                                $redis->set($keyRedis, $totalView);
+                            }
                         } else {
+                            $totalView = $totalPageView + 1;
                             $redis->set($keyRedis, $totalView);
                         }
-                    } else {
-                        $totalView = $totalPageView + 1;
-                        $redis->set($keyRedis, $totalView);
+
+
+                        // update elastic search
+                        $fakeJob = new FakeJob();
+                        $message = sprintf('[Job ID: `%s`] Object Page View Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
+                                $fakeJob->getJobId(),
+                                $activity->activity_id,
+                                $activity->activity_name_long);
+
+                        if ($activity->object_name === 'Coupon') {
+                            $data = [
+                                'coupon_id' => $object_id
+                            ];
+
+                            $esQueue = new ESCouponUpdateQueue();
+                        } elseif ($activity->object_name === 'Promotion'){
+                            $data = [
+                                'news_id' => $object_id
+                            ];
+
+                            $esQueue = new ESPromotionUpdateQueue();
+                        } elseif ($activity->object_name === 'News'){
+                            $data = [
+                                'news_id' => $object_id
+                            ];
+
+                            $esQueue = new ESNewsUpdateQueue();
+                        } elseif ($activity->object_name === 'Mall'){
+                            $data = [
+                                'mall_id' => $object_id
+                            ];
+
+                            $esQueue = new ESMallUpdateQueue();
+                        }
+
+                        if (! empty($data)) {
+                            $response = $esQueue->fire($fakeJob, $data);
+                        }
+
+                        $fakeJob->delete();
                     }
-
-                    // update elastic search
-                    $fakeJob = new FakeJob();
-                    $message = sprintf('[Job ID: `%s`] Object Page View Activity Queue; Status: OK; Activity ID: %s; Activity Name: %s',
-                            $fakeJob->getJobId(),
-                            $activity->activity_id,
-                            $activity->activity_name_long);
-
-                    if ($activity->object_name === 'Coupon') {
-                        $data = [
-                            'coupon_id' => $object_id
-                        ];
-
-                        $esQueue = new ESCouponUpdateQueue();
-                    } elseif ($activity->object_name === 'Promotion'){
-                        $data = [
-                            'news_id' => $object_id
-                        ];
-
-                        $esQueue = new ESPromotionUpdateQueue();
-                    } elseif ($activity->object_name === 'News'){
-                        $data = [
-                            'news_id' => $object_id
-                        ];
-
-                        $esQueue = new ESNewsUpdateQueue();
-                    } elseif ($activity->object_name === 'Mall'){
-                        $data = [
-                            'mall_id' => $object_id
-                        ];
-
-                        $esQueue = new ESMallUpdateQueue();
-                    }
-
-                    if (! empty($data)) {
-                        $response = $esQueue->fire($fakeJob, $data);
-                    }
-
-                    $fakeJob->delete();
                     break;
             }
 
