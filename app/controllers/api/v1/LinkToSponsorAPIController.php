@@ -53,12 +53,12 @@ class LinkToSponsorAPIController extends ControllerAPI
 
             $userDetail = UserDetail::where('user_id', '=', $user->user_id)->first();
 
-            $sponsorProviders = SponsorProvider::where('status', 'active')
-                                            ->where('country_id', '=', $userDetail->country_id)
-                                            ->orderBy('name', 'asc');
-
-            $_sponsorProviders = clone $sponsorProviders;
-            $sponsorProviders = $sponsorProviders->get();
+            $prefix = DB::getTablePrefix();
+            $sponsorProviders = SponsorProvider::select('sponsor_providers.*', DB::raw("CONCAT({$prefix}sponsor_providers.name, ' (', {$prefix}countries.name, ')') as name"))
+                                            ->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
+                                            ->where('status', 'active')
+                                            ->orderBy('sponsor_providers.name', 'asc')
+                                            ->get();
 
             if (! empty($objectId) && ! empty($objectType)) {
                 $objectSponsors = ObjectSponsor::select('sponsor_providers.*', 'object_sponsor.is_all_credit_card', 'object_sponsor.object_sponsor_id')
@@ -67,7 +67,6 @@ class LinkToSponsorAPIController extends ControllerAPI
                                               ->where('object_sponsor.object_type', $objectType)
                                               ->where('object_sponsor.object_id', $objectId)
                                               ->get();
-
                 $selectedSponsor = array();
                 $isAllCreditCard = array();
                 $haveObjectSponsor = array();
@@ -132,7 +131,6 @@ class LinkToSponsorAPIController extends ControllerAPI
                                                        ->where('sponsor_provider_id', $sponsorProvider->sponsor_provider_id)
                                                        ->orderBy('name', 'asc')
                                                        ->get();
-
                         if (! $creditCards->isEmpty()) {
                             foreach ($creditCards as $creditCard) {
                                 $creditCard->is_selected = 'N';
@@ -143,12 +141,11 @@ class LinkToSponsorAPIController extends ControllerAPI
                 }
             }
 
-            $totalObjectSponsor = RecordCounter::create($_sponsorProviders)->count();
-            $totalReturnedRecords = count($sponsorProviders);
+            $totalObjectSponsor = count($sponsorProviders);
 
             $data = new stdclass();
             $data->total_records = $totalObjectSponsor;
-            $data->returned_records = $totalReturnedRecords;
+            $data->returned_records = $totalObjectSponsor;
             $data->records = $sponsorProviders;
             $this->response->data = $data;
 
