@@ -1048,7 +1048,26 @@ class MallAPIController extends ControllerAPI
 
             $malls = Mall::excludeDeleted('merchants')
                                 ->select(
-                                        'merchants.*',
+                                        'merchants.name',
+                                        'merchants.merchant_id',
+                                        'merchants.country',
+                                        'merchants.is_subscribed',
+                                        'merchants.status',
+                                        'merchants.description',
+                                        'merchants.operating_hours',
+                                        'merchants.email',
+                                        'merchants.postal_code',
+                                        'merchants.city',
+                                        'merchants.province',
+                                        'merchants.phone',
+                                        'merchants.url',
+                                        'merchants.contact_person_email',
+                                        'merchants.contact_person_firstname',
+                                        'merchants.contact_person_lastname',
+                                        'merchants.contact_person_position',
+                                        'merchants.contact_person_phone',
+                                        'merchants.start_date_activity',
+                                        'merchants.end_date_activity',
                                         'countries.code as country_code',
                                         DB::raw("TRIM(TRAILING {$this->quote($subdomain)} FROM {$prefix}merchants.ci_domain) as subdomain"),
                                         DB::raw('count(tenant.merchant_id) AS total_tenant'),
@@ -1352,6 +1371,15 @@ class MallAPIController extends ControllerAPI
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($malls) {
                 $with = (array) $with;
+
+                // exclude unused with relation that still called by the frontend
+                $validWith = [];
+                 foreach ($with as $key => $value) {
+                    if ($value !== 'widget_free_wifi' && $value !== 'mallCampaignBasePrices' && $value !== 'mallCategories' && $value !== 'mallCategoryTranslations') {
+                      $validWith[] = $value;
+                    }
+                }
+                $with = $validWith;
 
                 if (in_array('settings', $with)) {
                     $malls->addSelect('media.path as mall_image');
