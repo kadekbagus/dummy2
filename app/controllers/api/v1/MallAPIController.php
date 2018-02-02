@@ -1068,6 +1068,7 @@ class MallAPIController extends ControllerAPI
                                         'merchants.contact_person_phone',
                                         'merchants.start_date_activity',
                                         'merchants.end_date_activity',
+                                        'merchants.timezone_id',
                                         'countries.code as country_code',
                                         DB::raw("TRIM(TRAILING {$this->quote($subdomain)} FROM {$prefix}merchants.ci_domain) as subdomain"),
                                         DB::raw('count(tenant.merchant_id) AS total_tenant'),
