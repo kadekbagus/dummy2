@@ -854,19 +854,18 @@ class CampaignReportAPIController extends ControllerAPI
             $campaign_type = OrbitInput::get('campaign_type');
             $current_mall = OrbitInput::get('current_mall');
 
-            $campaign = CampaignPageView::select(DB::raw("
-                            DATE({$tablePrefix}campaign_page_views.created_at) as campaign_date,
-                            count(campaign_page_view_id) as campaign_pages_views,
+            $campaign = ObjectPageView::select(DB::raw("
+                            DATE({$tablePrefix}object_page_views.created_at) as campaign_date,
+                            count(object_page_view_id) as campaign_pages_views,
                             ifnull(total_click, 0) as popup_clicks,
                             ifnull(unique_users, 0) as unique_users,
                             {$this->quote($totalLinkToLocation)} AS total_location,
                             'N/A' as spending,
-                            IFNULL(ROUND((count(campaign_page_view_id) / ifnull(unique_users, 0)) * 100, 2), 0) as campaign_pages_view_rate,
-                            {$tablePrefix}campaign_page_views.*,
+                            IFNULL(ROUND((count(object_page_view_id) / ifnull(unique_users, 0)) * 100, 2), 0) as campaign_pages_view_rate,
+                            {$tablePrefix}object_page_views.*,
                             " . $locationNames .",
                             '" . $campaign_type ."' as campaign_type
                         "))
-                        ->join('campaign_group_names','campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
                         ->leftJoin(
                                 DB::raw("
                                 (
@@ -875,7 +874,7 @@ class CampaignReportAPIController extends ControllerAPI
                                     group by DATE(created_at)
                                 ) AS user_signin"),
                                 // On
-                                DB::raw("user_signin.signin_date"), '=', DB::raw("DATE({$tablePrefix}campaign_page_views.created_at)")
+                                DB::raw("user_signin.signin_date"), '=', DB::raw("DATE({$tablePrefix}object_page_views.created_at)")
                             )
                         ->leftJoin(
                                 DB::raw("
@@ -888,11 +887,11 @@ class CampaignReportAPIController extends ControllerAPI
                                     group by click_date
                                 ) AS campaign_click"),
                                 // On
-                                DB::raw("campaign_click.click_date"), '=', DB::raw("DATE({$tablePrefix}campaign_page_views.created_at)")
+                                DB::raw("campaign_click.click_date"), '=', DB::raw("DATE({$tablePrefix}object_page_views.created_at)")
                             )
-                        ->where('campaign_id', $campaign_id)
-                        ->where('campaign_group_name', $campaign_type)
-                        ->groupBy(DB::raw("DATE({$tablePrefix}campaign_page_views.created_at)"));
+                        ->where('object_id', $campaign_id)
+                        ->where('object_page_views.object_type', $campaign_type)
+                        ->groupBy(DB::raw("DATE({$tablePrefix}object_page_views.created_at)"));
 
             // Filter by mall name
             OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
@@ -905,7 +904,7 @@ class CampaignReportAPIController extends ControllerAPI
             });
 
             if ($start_date != '' && $end_date != ''){
-                $campaign->whereRaw("DATE({$tablePrefix}campaign_page_views.created_at) between ? and ?", [$start_date, $end_date]);
+                $campaign->whereRaw("DATE({$tablePrefix}object_page_views.created_at) between ? and ?", [$start_date, $end_date]);
             }
 
             // Clone the query builder which still does not include the take,
