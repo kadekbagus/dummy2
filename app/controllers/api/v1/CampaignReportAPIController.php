@@ -855,6 +855,7 @@ class CampaignReportAPIController extends ControllerAPI
             $current_mall = OrbitInput::get('current_mall');
 
             $campaign = ObjectPageView::select(DB::raw("
+                            {$tablePrefix}object_page_views.object_id as campaign_id,
                             DATE({$tablePrefix}object_page_views.created_at) as campaign_date,
                             count(object_page_view_id) as campaign_pages_views,
                             ifnull(total_click, 0) as popup_clicks,
