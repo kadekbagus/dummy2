@@ -177,23 +177,6 @@ class CouponReportAPIController extends ControllerAPI
             // get prefix DB
             $prefix = DB::getTablePrefix();
 
-            // Get id add_tenant and delete_tenant for counting total tenant percampaign
-            $campaignHistoryAction = DB::table('campaign_history_actions')
-                            ->select('campaign_history_action_id','action_name')
-                            ->where('action_name','add_tenant')
-                            ->orWhere('action_name','delete_tenant')
-                            ->get();
-
-            $idAddTenant = '';
-            $idDeleteTenant = '';
-            foreach ($campaignHistoryAction as $key => $value) {
-                if ($value->action_name === 'add_tenant') {
-                    $idAddTenant = $value->campaign_history_action_id;
-                } elseif ($value->action_name === 'delete_tenant') {
-                    $idDeleteTenant = $value->campaign_history_action_id;
-                }
-            }
-
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')->select(
                                         'promotions.promotion_id',
                                         'promotions.promotion_id as campaign_id',
