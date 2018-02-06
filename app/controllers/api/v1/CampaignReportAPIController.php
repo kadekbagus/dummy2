@@ -174,11 +174,10 @@ class CampaignReportAPIController extends ControllerAPI
                         // Join for get total page views
                         ->leftJoin(DB::raw("
                             (
-                                SELECT campaign_id, campaign_page_view_id, count(campaign_page_view_id) as page_views
-                                FROM {$tablePrefix}campaign_page_views ocpv
-                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                                WHERE ocgn.campaign_group_name = 'News'
-                                group by campaign_id
+                                SELECT object_id as campaign_id, sum(total_view) as page_views
+                                FROM {$tablePrefix}total_object_page_views ocpv
+                                WHERE ocpv.object_type = 'news'
+                                GROUP BY object_id
                             ) AS ocpv
                         "),
                         // On
@@ -261,11 +260,10 @@ class CampaignReportAPIController extends ControllerAPI
                         // Join for get total page views
                         ->leftJoin(DB::raw("
                             (
-                                SELECT campaign_id, campaign_page_view_id, count(campaign_page_view_id) as page_views
-                                FROM {$tablePrefix}campaign_page_views ocpv
-                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                                WHERE ocgn.campaign_group_name = 'Promotion'
-                                group by campaign_id
+                                SELECT object_id as campaign_id, sum(total_view) as page_views
+                                FROM {$tablePrefix}total_object_page_views ocpv
+                                WHERE ocpv.object_type = 'promotion'
+                                GROUP BY object_id
                             ) AS ocpv
                         "),
                         // On
@@ -349,11 +347,10 @@ class CampaignReportAPIController extends ControllerAPI
                         // Join for get total page views
                         ->leftJoin(DB::raw("
                             (
-                                SELECT campaign_id, campaign_page_view_id, count(campaign_page_view_id) as page_views
-                                FROM {$tablePrefix}campaign_page_views ocpv
-                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                                WHERE ocgn.campaign_group_name = 'Coupon'
-                                group by campaign_id
+                                SELECT object_id as campaign_id, sum(total_view) as page_views
+                                FROM {$tablePrefix}total_object_page_views ocpv
+                                WHERE ocpv.object_type = 'coupon'
+                                GROUP BY object_id
                             ) AS ocpv
                         "),
                         // On
