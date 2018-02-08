@@ -177,7 +177,7 @@ class News extends Eloquent
     public function product_tags()
     {
         return $this->hasMany('ProductTagObject', 'object_id', 'news_id')
-                    ->join('product_tag', 'product_tag.product_tag', '=', 'product_tag_object.product_tag')
+                    ->join('product_tags', 'product_tags.product_tag_id', '=', 'product_tag_object.product_tag_id')
                     ->groupBy('product_tag');
     }
 
