@@ -187,6 +187,9 @@ class NewsDetailAPIController extends PubControllerAPI
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
                             }])
+                        ->with(['product_tags' => function ($pt) {
+                                $pt->addSelect('product_tag', 'object_id');
+                            }])
                         ->first();
 
             // Config page_views
