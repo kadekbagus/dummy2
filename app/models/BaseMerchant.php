@@ -79,6 +79,12 @@ class BaseMerchant extends Eloquent
                     ->join('keywords', 'keywords.keyword_id', '=', 'base_merchant_keyword.keyword_id');
     }
 
+    public function productTags()
+    {
+        return $this->hasMany('BaseMerchantProductTag', 'base_merchant_id', 'base_merchant_id')
+                    ->join('product_tags', 'product_tags.product_tag_id', '=', 'base_merchant_product_tag.product_tag_id');
+    }
+
     public function country()
     {
         return $this->hasOne('Country', 'country_id', 'country_id');
