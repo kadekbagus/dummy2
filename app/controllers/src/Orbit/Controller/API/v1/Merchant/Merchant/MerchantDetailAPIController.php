@@ -77,7 +77,8 @@ class MerchantDetailAPIController extends ControllerAPI
                                                     'supportedLanguage',
                                                     'bank',
                                                     'financialContactDetail',
-                                                    'paymentProvider'
+                                                    'paymentProvider',
+                                                    'productTags'
                                                 )
                                     ->where('base_merchant_id', '=', $baseMerchantId)
                                     ->first();

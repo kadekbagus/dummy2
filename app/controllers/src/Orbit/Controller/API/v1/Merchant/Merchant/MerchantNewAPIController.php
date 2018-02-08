@@ -22,6 +22,9 @@ use Category;
 use ObjectBank;
 use ObjectFinancialDetail;
 use MerchantStorePaymentProvider;
+use ProductTag;
+use ProductTagObject;
+use BaseMerchantProductTag;
 
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 
