@@ -79,6 +79,8 @@ class MerchantNewAPIController extends ControllerAPI
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $phone = OrbitInput::post('phone');
             $email = OrbitInput::post('email');
+            $productTags = OrbitInput::post('product_tags');
+            $productTags = (array) $productTags;
 
             // Payment_acquire
             $paymentAcquire = OrbitInput::post('payment_acquire', 'N'); // Y or N
@@ -390,6 +392,40 @@ class MerchantNewAPIController extends ControllerAPI
 
             }
             $newBaseMerchant->keywords = $tenantKeywords;
+
+
+            // save product tag
+            $tenantProductTags = array();
+            foreach ($productTags as $productTag) {
+                $product_tag_id = null;
+
+                $existProductTag = ProductTag::excludeDeleted()
+                    ->where('product_tag', '=', $productTag)
+                    ->first();
+
+                if (empty($existProductTag)) {
+                    $newProductTag = new ProductTag();
+                    $newProductTag->merchant_id = '0';
+                    $newProductTag->product_tag = $productTag;
+                    $newProductTag->status = 'active';
+                    $newProductTag->created_by = $user->user_id;
+                    $newProductTag->modified_by = $user->user_id;
+                    $newProductTag->save();
+
+                    $product_tag_id = $newProductTag->product_tag_id;
+                    $tenantProductTags[] = $newProductTag;
+                } else {
+                    $product_tag_id = $existProductTag->product_tag_id;
+                    $tenantProductTags[] = $existProductTag;
+                }
+
+                $newKeywordObject = new BaseMerchantProductTag();
+                $newKeywordObject->base_merchant_id = $newBaseMerchant->base_merchant_id;
+                $newKeywordObject->product_tag_id = $product_tag_id;
+                $newKeywordObject->save();
+
+            }
+            $newBaseMerchant->product_tags = $tenantProductTags;
 
             //save to base object partner
             if (! empty($partnerIds)) {
