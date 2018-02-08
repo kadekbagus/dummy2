@@ -176,6 +176,8 @@ class CouponAPIController extends ControllerAPI
             $keywords = OrbitInput::post('keywords');
             $translations = OrbitInput::post('translations');
             $keywords = (array) $keywords;
+            $productTags = OrbitInput::post('product_tags');
+            $productTags = (array) $productTags;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
             $sticky_order = OrbitInput::post('sticky_order');
@@ -957,6 +959,42 @@ class CouponAPIController extends ControllerAPI
                 }
             }
             $newcoupon->keywords = $couponKeywords;
+
+            // Save product tags
+            $couponProductTags = array();
+            foreach ($productTags as $productTag) {
+                $product_tag_id = null;
+
+                foreach ($mallid as $mall) {
+                    $existProductTag = ProductTag::excludeDeleted()
+                        ->where('product_tag', '=', $productTag)
+                        ->where('merchant_id', '=', $mall)
+                        ->first();
+
+                    if (empty($existProductTag)) {
+                        $newKeyword = new ProductTag();
+                        $newKeyword->merchant_id = $mall;
+                        $newKeyword->product_tag = $productTag;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $this->api->user->user_id;
+                        $newKeyword->modified_by = $this->api->user->user_id;
+                        $newKeyword->save();
+
+                        $product_tag_id = $newKeyword->product_tag_id;
+                        $couponProductTags[] = $newKeyword;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $couponProductTags[] = $existProductTag;
+                    }
+
+                    $newKeywordObject = new ProductTagObject();
+                    $newKeywordObject->product_tag_id = $product_tag_id;
+                    $newKeywordObject->object_id = $newcoupon->news_id;
+                    $newKeywordObject->object_type = $object_type;
+                    $newKeywordObject->save();
+                }
+            }
+            $newcoupon->product_tags = $couponProductTags;
 
             // save ObjectPartner (link to partner)
             $objectPartners = array();
@@ -1744,6 +1782,7 @@ class CouponAPIController extends ControllerAPI
                                             'ages.ageRange',
                                             'genders',
                                             'keywords',
+                                            'product_tag',
                                             'campaign_status',
                                             'tenants' => function($q) use($prefix) {
                                                 $q->addSelect(DB::raw("CONCAT ({$prefix}merchants.name, ' at ', malls.name) as name"));
@@ -2633,6 +2672,51 @@ class CouponAPIController extends ControllerAPI
                     }
                 }
                 $updatedcoupon->keywords = $couponKeywords;
+            });
+
+
+            // Update product tags
+            $deleted_product_tags_object = ProductTagObject::where('object_id', '=', $news_id)
+                                                    ->where('object_type', '=', 'coupon');
+            $deleted_product_tags_object->delete();
+
+            OrbitInput::post('product_tags', function($productTags) use ($updatedcoupon, $merchant_id, $user, $promotion_id, $mallid) {
+                // Insert new data
+                $couponProductTags = array();
+                foreach ($productTags as $productTag) {
+                    $product_tag_id = null;
+
+                    foreach ($mallid as $mall) {
+                        $existProductTag = ProductTag::excludeDeleted()
+                            ->where('product_tag', '=', $productTag)
+                            ->where('merchant_id', '=', $mall)
+                            ->first();
+
+                        if (empty($existProductTag)) {
+                            $newKeyword = new ProductTag();
+                            $newKeyword->merchant_id = $mall;
+                            $newKeyword->product_tag = $productTag;
+                            $newKeyword->status = 'active';
+                            $newKeyword->created_by = $user->user_id;
+                            $newKeyword->modified_by = $user->user_id;
+                            $newKeyword->save();
+
+                            $product_tag_id = $newKeyword->product_tag_id;
+                            $couponProductTags[] = $newKeyword;
+                        } else {
+                            $product_tag_id = $existProductTag->product_tag_id;
+                            $couponProductTags[] = $existProductTag;
+                        }
+
+                        $newKeywordObject = new ProductTagObject();
+                        $newKeywordObject->product_tag_id = $product_tag_id;
+                        $newKeywordObject->object_id = $promotion_id;
+                        $newKeywordObject->object_type = 'coupon';
+                        $newKeywordObject->save();
+                    }
+
+                }
+                $updatedcoupon->product_tags = $couponProductTags;
             });
 
             $tempContent = new TemporaryContent();
