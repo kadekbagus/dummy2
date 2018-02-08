@@ -22,6 +22,9 @@ use Category;
 use ObjectBank;
 use ObjectFinancialDetail;
 use MerchantStorePaymentProvider;
+use ProductTag;
+use ProductTagObject;
+use BaseMerchantProductTag;
 
 use Orbit\Controller\API\v1\Merchant\Merchant\MerchantHelper;
 
@@ -286,6 +289,45 @@ class MerchantUpdateAPIController extends ControllerAPI
                 }
 
                 $updatedBaseMerchant->keywords = $merchantKeywords;
+            });
+
+
+            OrbitInput::post('product_tags', function($productTags) use ($updatedBaseMerchant, $user, $baseMerchantId) {
+                // Delete old data
+                $deleted_product_tag_object = BaseMerchantProductTag::where('base_merchant_id', '=', $baseMerchantId)->delete();
+
+                // save Keyword
+                $merchantProductTags = array();
+                foreach ($productTags as $product_tag) {
+                    $product_tag_id = null;
+
+                    $existProductTag = ProductTag::excludeDeleted()
+                                        ->where('product_tag', '=', $product_tag)
+                                        ->first();
+
+                    if (empty($existProductTag)) {
+                        $newProductTag = new ProductTag();
+                        $newProductTag->merchant_id = '0';
+                        $newProductTag->product_tag = $product_tag;
+                        $newProductTag->status = 'active';
+                        $newProductTag->created_by = $user->user_id;
+                        $newProductTag->modified_by = $user->user_id;
+                        $newProductTag->save();
+
+                        $product_tag_id = $newProductTag->product_tag_id;
+                        $merchantProductTags[] = $newProductTag;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $merchantProductTags[] = $existProductTag;
+                    }
+
+                    $newProductTagObject = new BaseMerchantProductTag();
+                    $newProductTagObject->base_merchant_id = $baseMerchantId;
+                    $newProductTagObject->product_tag_id = $product_tag_id;
+                    $newProductTagObject->save();
+                }
+
+                $updatedBaseMerchant->productTags = $merchantProductTags;
             });
 
             // update link to partner - base opject partner table
