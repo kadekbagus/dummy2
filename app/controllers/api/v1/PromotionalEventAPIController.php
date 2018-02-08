@@ -2190,6 +2190,8 @@ class PromotionalEventAPIController extends ControllerAPI
                         $promotionalevent->with('ages');
                     } elseif ($relation === 'keywords') {
                         $promotionalevent->with('keywords');
+                    } elseif ($relation === 'product_tags') {
+                        $news->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $promotionalevent->with('campaignObjectPartners');
                     } elseif ($relation === 'rewardDetail') {

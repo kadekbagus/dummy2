@@ -3725,6 +3725,8 @@ class CouponAPIController extends ControllerAPI
                         $coupons->with('ages');
                     } elseif ($relation === 'keywords') {
                         $coupons->with('keywords');
+                    } elseif ($relation === 'product_tags') {
+                        $news->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $coupons->with('campaignObjectPartners');
                     }
