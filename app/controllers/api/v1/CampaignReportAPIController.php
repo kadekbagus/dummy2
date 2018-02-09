@@ -131,23 +131,6 @@ class CampaignReportAPIController extends ControllerAPI
             // Builder object
             $tablePrefix = DB::getTablePrefix();
 
-            // Get id add_tenant and delete_tenant for counting total tenant percampaign
-            $campaignHistoryAction = DB::table('campaign_history_actions')
-                            ->select('campaign_history_action_id','action_name')
-                            ->where('action_name','add_tenant')
-                            ->orWhere('action_name','delete_tenant')
-                            ->get();
-
-            $idAddTenant = '';
-            $idDeleteTenant = '';
-            foreach ($campaignHistoryAction as $key => $value) {
-                if ($value->action_name === 'add_tenant') {
-                    $idAddTenant = $value->campaign_history_action_id;
-                } elseif ($value->action_name === 'delete_tenant') {
-                    $idDeleteTenant = $value->campaign_history_action_id;
-                }
-            }
-
             // Get data all campaign (news, promotions, coupons), and then use union to join all campaign
             $news = DB::table('news')->selectraw(DB::raw("{$tablePrefix}news.news_id AS campaign_id,
                 {$tablePrefix}news.news_name as campaign_name,
@@ -174,11 +157,10 @@ class CampaignReportAPIController extends ControllerAPI
                         // Join for get total page views
                         ->leftJoin(DB::raw("
                             (
-                                SELECT campaign_id, campaign_page_view_id, count(campaign_page_view_id) as page_views
-                                FROM {$tablePrefix}campaign_page_views ocpv
-                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                                WHERE ocgn.campaign_group_name = 'News'
-                                group by campaign_id
+                                SELECT object_id as campaign_id, sum(total_view) as page_views
+                                FROM {$tablePrefix}total_object_page_views ocpv
+                                WHERE ocpv.object_type = 'news'
+                                GROUP BY object_id
                             ) AS ocpv
                         "),
                         // On
@@ -261,11 +243,10 @@ class CampaignReportAPIController extends ControllerAPI
                         // Join for get total page views
                         ->leftJoin(DB::raw("
                             (
-                                SELECT campaign_id, campaign_page_view_id, count(campaign_page_view_id) as page_views
-                                FROM {$tablePrefix}campaign_page_views ocpv
-                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                                WHERE ocgn.campaign_group_name = 'Promotion'
-                                group by campaign_id
+                                SELECT object_id as campaign_id, sum(total_view) as page_views
+                                FROM {$tablePrefix}total_object_page_views ocpv
+                                WHERE ocpv.object_type = 'promotion'
+                                GROUP BY object_id
                             ) AS ocpv
                         "),
                         // On
@@ -349,11 +330,10 @@ class CampaignReportAPIController extends ControllerAPI
                         // Join for get total page views
                         ->leftJoin(DB::raw("
                             (
-                                SELECT campaign_id, campaign_page_view_id, count(campaign_page_view_id) as page_views
-                                FROM {$tablePrefix}campaign_page_views ocpv
-                                INNER JOIN {$tablePrefix}campaign_group_names ocgn ON ocgn.campaign_group_name_id = ocpv.campaign_group_name_id
-                                WHERE ocgn.campaign_group_name = 'Coupon'
-                                group by campaign_id
+                                SELECT object_id as campaign_id, sum(total_view) as page_views
+                                FROM {$tablePrefix}total_object_page_views ocpv
+                                WHERE ocpv.object_type = 'coupon'
+                                GROUP BY object_id
                             ) AS ocpv
                         "),
                         // On
@@ -854,19 +834,19 @@ class CampaignReportAPIController extends ControllerAPI
             $campaign_type = OrbitInput::get('campaign_type');
             $current_mall = OrbitInput::get('current_mall');
 
-            $campaign = CampaignPageView::select(DB::raw("
-                            DATE({$tablePrefix}campaign_page_views.created_at) as campaign_date,
-                            count(campaign_page_view_id) as campaign_pages_views,
+            $campaign = ObjectPageView::select(DB::raw("
+                            {$tablePrefix}object_page_views.object_id as campaign_id,
+                            DATE({$tablePrefix}object_page_views.created_at) as campaign_date,
+                            count(object_page_view_id) as campaign_pages_views,
                             ifnull(total_click, 0) as popup_clicks,
                             ifnull(unique_users, 0) as unique_users,
                             {$this->quote($totalLinkToLocation)} AS total_location,
                             'N/A' as spending,
-                            IFNULL(ROUND((count(campaign_page_view_id) / ifnull(unique_users, 0)) * 100, 2), 0) as campaign_pages_view_rate,
-                            {$tablePrefix}campaign_page_views.*,
+                            IFNULL(ROUND((count(object_page_view_id) / ifnull(unique_users, 0)) * 100, 2), 0) as campaign_pages_view_rate,
+                            {$tablePrefix}object_page_views.*,
                             " . $locationNames .",
                             '" . $campaign_type ."' as campaign_type
                         "))
-                        ->join('campaign_group_names','campaign_group_names.campaign_group_name_id', '=', 'campaign_page_views.campaign_group_name_id')
                         ->leftJoin(
                                 DB::raw("
                                 (
@@ -875,7 +855,7 @@ class CampaignReportAPIController extends ControllerAPI
                                     group by DATE(created_at)
                                 ) AS user_signin"),
                                 // On
-                                DB::raw("user_signin.signin_date"), '=', DB::raw("DATE({$tablePrefix}campaign_page_views.created_at)")
+                                DB::raw("user_signin.signin_date"), '=', DB::raw("DATE({$tablePrefix}object_page_views.created_at)")
                             )
                         ->leftJoin(
                                 DB::raw("
@@ -888,11 +868,11 @@ class CampaignReportAPIController extends ControllerAPI
                                     group by click_date
                                 ) AS campaign_click"),
                                 // On
-                                DB::raw("campaign_click.click_date"), '=', DB::raw("DATE({$tablePrefix}campaign_page_views.created_at)")
+                                DB::raw("campaign_click.click_date"), '=', DB::raw("DATE({$tablePrefix}object_page_views.created_at)")
                             )
-                        ->where('campaign_id', $campaign_id)
-                        ->where('campaign_group_name', $campaign_type)
-                        ->groupBy(DB::raw("DATE({$tablePrefix}campaign_page_views.created_at)"));
+                        ->where('object_id', $campaign_id)
+                        ->where('object_page_views.object_type', $campaign_type)
+                        ->groupBy(DB::raw("DATE({$tablePrefix}object_page_views.created_at)"));
 
             // Filter by mall name
             OrbitInput::get('mall_name', function($mall_name) use ($campaign) {
@@ -905,7 +885,7 @@ class CampaignReportAPIController extends ControllerAPI
             });
 
             if ($start_date != '' && $end_date != ''){
-                $campaign->whereRaw("DATE({$tablePrefix}campaign_page_views.created_at) between ? and ?", [$start_date, $end_date]);
+                $campaign->whereRaw("DATE({$tablePrefix}object_page_views.created_at) between ? and ?", [$start_date, $end_date]);
             }
 
             // Clone the query builder which still does not include the take,

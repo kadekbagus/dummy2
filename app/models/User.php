@@ -254,12 +254,6 @@ class User extends Eloquent implements UserInterface
         $guest_user->user_ip = $guest_ip;
         $guest_user->save();
 
-        $user_detail = new UserDetail;
-        $user_detail->user_id = $guest_user->user_id;
-        $user_detail->save();
-
-        $guest_user->load('userdetail', 'role');
-
         return $guest_user;
     }
 
