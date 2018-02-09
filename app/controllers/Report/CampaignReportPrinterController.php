@@ -40,8 +40,6 @@ class CampaignReportPrinterController extends DataPrinterController
         $campaign = $response['builder'];
         $totalRecord = $response['count'];
         $totalPageViews = $response['totalPageViews'];
-        $totalEstimatedCost = $response['totalEstimatedCost'];
-        $totalSpending = $response['totalSpending'];
 
         $pdo = DB::Connection()->getPdo();
 
@@ -77,13 +75,6 @@ class CampaignReportPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Number of Campaigns', $totalRecord, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Page Views', $totalPageViews, '', '', '','');
-
-                // handle N/A value
-                $_totalEstimatedCost = $totalEstimatedCost == 'N/A'? $totalEstimatedCost: number_format($totalEstimatedCost, 0, '', '');
-                $_totalSpending = $totalSpending == 'N/A'? $totalSpending: number_format($totalSpending, 0, '', '');
-
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Estimated Total Cost (IDR)',  $_totalEstimatedCost, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)',  $_totalSpending, '', '', '','');
 
                 // Filtering
                 if ($startDate != '' && $endDate != ''){
@@ -129,18 +120,12 @@ class CampaignReportPrinterController extends DataPrinterController
                 }
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Location(s)', 'Campaign Dates', 'Page Views', 'Pop Up Clicks', 'Daily Cost (IDR)', 'Estimated Total Cost (IDR)', 'Spending (IDR)', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", 'No', 'Campaign Name', 'Campaign Type', 'Location(s)', 'Campaign Dates', 'Page Views', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-
-                        // handle N/A value
-                        $daily = $row->daily == 'N/A'? $row->daily: number_format($row->daily, 0, '', '');
-                        $estimated_total = $row->estimated_total == 'N/A'? $row->estimated_total: number_format($row->estimated_total, 0, '', '');
-                        $spending = $row->spending == 'N/A'? $row->estimated_total: number_format($row->spending, 0, '', '');
-
-                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s - %s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->campaign_name,
                             $row->campaign_type,
@@ -148,10 +133,6 @@ class CampaignReportPrinterController extends DataPrinterController
                             date('d M Y', strtotime($row->begin_date)),
                             date('d M Y', strtotime($row->end_date)),
                             $row->page_views,
-                            $row->popup_clicks,
-                            $daily,
-                            $estimated_total,
-                            $spending,
                             $row->campaign_status
                     );
                     $count++;
@@ -189,8 +170,6 @@ class CampaignReportPrinterController extends DataPrinterController
         $campaign = $response['builder'];
         $totalCampaign = $response['count'];
         $totalPageViews = $response['totalPageViews'];
-        $totalPopupClicks = $response['totalPopupClicks'];
-        $totalSpending = $response['totalSpending'];
         $campaignName = $response['campaignName'];
 
         $pdo = DB::Connection()->getPdo();
@@ -224,8 +203,6 @@ class CampaignReportPrinterController extends DataPrinterController
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active Campaign Days', $totalCampaign, '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Page Views', $totalPageViews, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Pop Up Clicks', $totalPopupClicks, '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Spending (IDR)', $totalSpending, '', '', '','');
 
                 // Filtering
                 if ($startDate != '' && $endDate != ''){
@@ -252,15 +229,13 @@ class CampaignReportPrinterController extends DataPrinterController
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $this->printDateTime($row->campaign_date . '00:00:00', $timezone, 'd M Y'),
                             str_replace(', ', "\n", $this->printUtf8($row->campaign_location_names)),
                             $row->unique_users,
                             $row->campaign_pages_views,
-                            round($row->campaign_pages_view_rate, 2),
-                            $row->popup_clicks,
-                            round($row->spending, 2)
+                            round($row->campaign_pages_view_rate, 2)
                     );
                     $count++;
                 }
