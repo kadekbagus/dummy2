@@ -71,7 +71,7 @@ class ESCouponUpdateQueue
                                     $q->groupBy('keyword');
                                 }])
                         ->with (['product_tags' => function ($q) {
-                                    $q->groupBy('product_tags');
+                                    $q->groupBy('product_tag');
                                 }])
                         ->select(DB::raw("
                             {$prefix}promotions.*,

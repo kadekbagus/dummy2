@@ -1782,7 +1782,7 @@ class CouponAPIController extends ControllerAPI
                                             'ages.ageRange',
                                             'genders',
                                             'keywords',
-                                            'product_tag',
+                                            'product_tags',
                                             'campaign_status',
                                             'tenants' => function($q) use($prefix) {
                                                 $q->addSelect(DB::raw("CONCAT ({$prefix}merchants.name, ' at ', malls.name) as name"));
