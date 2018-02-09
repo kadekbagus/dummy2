@@ -99,6 +99,7 @@ class StoreUpdateAPIController extends ControllerAPI
             $accountNumbers = OrbitInput::post('account_numbers',[]);
             $bankAddress = OrbitInput::post('bank_address',[]);
             $swiftCodes = OrbitInput::post('swift_codes',[]);
+            $productTags = OrbitInput::post('product_tags', []);
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -192,6 +193,50 @@ class StoreUpdateAPIController extends ControllerAPI
             });
 
             $updatestore->save();
+
+            OrbitInput::post('product_tags', function($productTags) use ($updatestore, $user, $baseStoreId) {
+                // Delete old data
+                $deleted_product_tag_object = BaseStoreProductTag::where('base_store_id', '=', $baseStoreId)->delete();
+
+                // save Keyword
+                $storeProductTags = array();
+                foreach ($productTags as $product_tag) {
+                    $product_tag_id = null;
+
+                    $existProductTag = ProductTag::excludeDeleted()
+                                        ->where('product_tag', '=', $product_tag)
+                                        ->first();
+
+                    if (empty($existProductTag)) {
+                        $newProductTag = new ProductTag();
+                        $newProductTag->merchant_id = '0';
+                        $newProductTag->product_tag = $product_tag;
+                        $newProductTag->status = 'active';
+                        $newProductTag->created_by = $user->user_id;
+                        $newProductTag->modified_by = $user->user_id;
+                        $newProductTag->save();
+
+                        $product_tag_id = $newProductTag->product_tag_id;
+                        $storeProductTags[] = $newProductTag;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $storeProductTags[] = $existProductTag;
+                    }
+
+                    $newProductTagObject = new BaseStoreProductTag();
+                    $newProductTagObject->base_store_id = $baseStoreId;
+                    $newProductTagObject->product_tag_id = $product_tag_id;
+                    $newProductTagObject->save();
+                }
+
+                $updatestore->productTags = $storeProductTags;
+            });
+
+            // delete product_tag when empty array send
+            if (empty($productTags)) {
+                $deleted_product_tag_object = BaseStoreProductTag::where('base_store_id', '=', $baseStoreId)->delete();
+                $updatestore->productTags = [];
+            }
 
             // Validate the payment acquire, only chech if payment acquire = Y
             $objectType = 'base_store';

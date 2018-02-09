@@ -255,4 +255,10 @@ class BaseStore extends Eloquent
                     ->where('merchant_store_payment_provider.object_type', '=', 'base_store');
     }
 
+    public function productTags()
+    {
+        return $this->hasMany('BaseStoreProductTag', 'base_store_id', 'base_store_id')
+                    ->join('product_tags', 'product_tags.product_tag_id', '=', 'base_store_product_tag.product_tag_id');
+    }
+
 }
