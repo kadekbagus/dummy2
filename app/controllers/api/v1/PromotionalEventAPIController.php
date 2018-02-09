@@ -1992,7 +1992,7 @@ class PromotionalEventAPIController extends ControllerAPI
                     } elseif ($relation === 'keywords') {
                         $promotionalevent->with('keywords');
                     } elseif ($relation === 'product_tags') {
-                        $news->with('product_tags');
+                        $promotionalevent->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $promotionalevent->with('campaignObjectPartners');
                     } elseif ($relation === 'rewardDetail') {
