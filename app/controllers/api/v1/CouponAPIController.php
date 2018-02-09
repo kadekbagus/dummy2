@@ -989,7 +989,7 @@ class CouponAPIController extends ControllerAPI
 
                     $newProductTagObject = new ProductTagObject();
                     $newProductTagObject->product_tag_id = $product_tag_id;
-                    $newProductTagObject->object_id = $newcoupon->news_id;
+                    $newProductTagObject->object_id = $newcoupon->promotion_id;
                     $newProductTagObject->object_type = $object_type;
                     $newProductTagObject->save();
                 }
@@ -2475,7 +2475,7 @@ class CouponAPIController extends ControllerAPI
 
 
             // Update product tags
-            $deleted_product_tags_object = ProductTagObject::where('object_id', '=', $news_id)
+            $deleted_product_tags_object = ProductTagObject::where('object_id', '=', $promotion_id)
                                                     ->where('object_type', '=', 'coupon');
             $deleted_product_tags_object->delete();
 
@@ -3518,7 +3518,7 @@ class CouponAPIController extends ControllerAPI
                     } elseif ($relation === 'keywords') {
                         $coupons->with('keywords');
                     } elseif ($relation === 'product_tags') {
-                        $news->with('product_tags');
+                        $coupons->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $coupons->with('campaignObjectPartners');
                     }
