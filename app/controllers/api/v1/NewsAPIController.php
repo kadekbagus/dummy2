@@ -106,6 +106,8 @@ class NewsAPIController extends ControllerAPI
             $age_range_ids = (array) $age_range_ids;
             $keywords = OrbitInput::post('keywords');
             $keywords = (array) $keywords;
+            $productTags = OrbitInput::post('product_tags');
+            $productTags = (array) $productTags;
             $translations = OrbitInput::post('translations');
             $sticky_order = OrbitInput::post('sticky_order');
             $partner_ids = OrbitInput::post('partner_ids');
@@ -368,6 +370,42 @@ class NewsAPIController extends ControllerAPI
                 }
             }
             $newnews->keywords = $newsKeywords;
+
+            // Save product tags
+            $newsProductTags = array();
+            foreach ($productTags as $productTag) {
+                $product_tag_id = null;
+
+                foreach ($mallid as $mall) {
+                    $existProductTag = ProductTag::excludeDeleted()
+                        ->where('product_tag', '=', $productTag)
+                        ->where('merchant_id', '=', $mall)
+                        ->first();
+
+                    if (empty($existProductTag)) {
+                        $newKeyword = new ProductTag();
+                        $newKeyword->merchant_id = $mall;
+                        $newKeyword->product_tag = $productTag;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $this->api->user->user_id;
+                        $newKeyword->modified_by = $this->api->user->user_id;
+                        $newKeyword->save();
+
+                        $product_tag_id = $newKeyword->product_tag_id;
+                        $newsProductTags[] = $newKeyword;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $newsProductTags[] = $existProductTag;
+                    }
+
+                    $newKeywordObject = new ProductTagObject();
+                    $newKeywordObject->product_tag_id = $product_tag_id;
+                    $newKeywordObject->object_id = $newnews->news_id;
+                    $newKeywordObject->object_type = $object_type;
+                    $newKeywordObject->save();
+                }
+            }
+            $newnews->product_tags = $newsProductTags;
 
             Event::fire('orbit.news.postnewnews.after.save', array($this, $newnews));
 
@@ -812,7 +850,7 @@ class NewsAPIController extends ControllerAPI
             // this is for send email to marketing, before and after list
             $beforeUpdatedNews = News::selectRaw("{$prefix}news.*,
                                                         DATE_FORMAT({$prefix}news.end_date, '%d/%m/%Y %H:%i') as end_date")
-                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'campaign_status')
+                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'product_tag', 'campaign_status')
                                     ->excludeDeleted()
                                     ->where('news_id', $news_id)
                                     ->first();
@@ -1195,14 +1233,13 @@ class NewsAPIController extends ControllerAPI
                                                     ->where('object_type', '=', $object_type);
             $deleted_keyword_object->delete();
 
-            OrbitInput::post('keywords', function($keywords) use ($updatednews, $mall_id, $user, $news_id, $object_type, $mallid) {
+            OrbitInput::post('keywords', function($keywords) use ($updatednews,$user, $news_id, $object_type, $mallid) {
                 // Insert new data
                 $newsKeywords = array();
                 foreach ($keywords as $keyword) {
                     $keyword_id = null;
 
                     foreach ($mallid as $mall) {
-
                         $existKeyword = Keyword::excludeDeleted()
                             ->where('keyword', '=', $keyword)
                             ->where('merchant_id', '=', $mall)
@@ -1234,6 +1271,50 @@ class NewsAPIController extends ControllerAPI
 
                 }
                 $updatednews->keywords = $newsKeywords;
+            });
+
+            // Update product tags
+            $deleted_product_tags_object = ProductTagObject::where('object_id', '=', $news_id)
+                                                    ->where('object_type', '=', $object_type);
+            $deleted_product_tags_object->delete();
+
+            OrbitInput::post('product_tags', function($productTags) use ($updatednews, $user, $news_id, $object_type, $mallid) {
+                // Insert new data
+                $newsProductTags = array();
+                foreach ($productTags as $productTag) {
+                    $product_tag_id = null;
+
+                    foreach ($mallid as $mall) {
+                        $existProductTag = ProductTag::excludeDeleted()
+                            ->where('product_tag', '=', $productTag)
+                            ->where('merchant_id', '=', $mall)
+                            ->first();
+
+                        if (empty($existProductTag)) {
+                            $newKeyword = new ProductTag();
+                            $newKeyword->merchant_id = $mall;
+                            $newKeyword->product_tag = $productTag;
+                            $newKeyword->status = 'active';
+                            $newKeyword->created_by = $user->user_id;
+                            $newKeyword->modified_by = $user->user_id;
+                            $newKeyword->save();
+
+                            $product_tag_id = $newKeyword->product_tag_id;
+                            $newsProductTags[] = $newKeyword;
+                        } else {
+                            $product_tag_id = $existProductTag->product_tag_id;
+                            $newsProductTags[] = $existProductTag;
+                        }
+
+                        $newKeywordObject = new ProductTagObject();
+                        $newKeywordObject->product_tag_id = $product_tag_id;
+                        $newKeywordObject->object_id = $news_id;
+                        $newKeywordObject->object_type = $object_type;
+                        $newKeywordObject->save();
+                    }
+
+                }
+                $updatednews->product_tags = $newsProductTags;
             });
 
             //save campaign histories (status)
@@ -2070,6 +2151,8 @@ class NewsAPIController extends ControllerAPI
                         $news->with('ages');
                     } elseif ($relation === 'keywords') {
                         $news->with('keywords');
+                    } elseif ($relation === 'product_tags') {
+                        $news->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $news->with('campaignObjectPartners');
                     }

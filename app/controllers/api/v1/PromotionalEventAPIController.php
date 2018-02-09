@@ -106,6 +106,7 @@ class PromotionalEventAPIController extends ControllerAPI
             $partner_ids            = (array) OrbitInput::post('partner_ids', []);
             $is_exclusive           = OrbitInput::post('is_exclusive', 'N');
             $keywords               = (array) OrbitInput::post('keywords', []);
+            $productTags            = (array) OrbitInput::post('productTags', []);
             $is_all_gender          = OrbitInput::post('is_all_gender', 'Y');
             $gender_ids             = (array) OrbitInput::post('gender_ids', []);
             $is_all_age             = OrbitInput::post('is_all_age', 'Y');
@@ -416,6 +417,42 @@ class PromotionalEventAPIController extends ControllerAPI
                 }
             }
             $newpromotional_event->keywords = $promotional_event_keywords;
+
+            // Save product tags
+            $promotionalEventProductTags = array();
+            foreach ($productTags as $productTag) {
+                $product_tag_id = null;
+
+                foreach ($mallid as $mall) {
+                    $existProductTag = ProductTag::excludeDeleted()
+                        ->where('product_tag', '=', $productTag)
+                        ->where('merchant_id', '=', $mall)
+                        ->first();
+
+                    if (empty($existProductTag)) {
+                        $newKeyword = new ProductTag();
+                        $newKeyword->merchant_id = $mall;
+                        $newKeyword->product_tag = $productTag;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $this->api->user->user_id;
+                        $newKeyword->modified_by = $this->api->user->user_id;
+                        $newKeyword->save();
+
+                        $product_tag_id = $newKeyword->product_tag_id;
+                        $promotionalEventProductTags[] = $newKeyword;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $promotionalEventProductTags[] = $existProductTag;
+                    }
+
+                    $newKeywordObject = new ProductTagObject();
+                    $newKeywordObject->product_tag_id = $product_tag_id;
+                    $newKeywordObject->object_id = $newpromotional_event->news_id;
+                    $newKeywordObject->object_type = $object_type;
+                    $newKeywordObject->save();
+                }
+            }
+            $newpromotional_event->product_tags = $promotionalEventProductTags;
 
             Event::fire('orbit.promotionalevent.postnewpromotionalevent.after.save', array($this, $newpromotional_event));
 
@@ -865,7 +902,7 @@ class PromotionalEventAPIController extends ControllerAPI
             // this is for send email to marketing, before and after list
             $beforeUpdatedPromotionalEvent = News::selectRaw("{$prefix}news.*,
                                                         DATE_FORMAT({$prefix}news.end_date, '%d/%m/%Y %H:%i') as end_date")
-                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'campaign_status')
+                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'product_tags', 'campaign_status')
                                     ->excludeDeleted()
                                     ->where('news_id', $promotional_event_id)
                                     ->first();
@@ -1302,6 +1339,50 @@ class PromotionalEventAPIController extends ControllerAPI
 
                 }
                 $updatedpromotional_event->keywords = $promotional_event_keywords;
+            });
+
+            // Update product tags
+            $deleted_product_tags_object = ProductTagObject::where('object_id', '=', $promotional_event_id)
+                                                    ->where('object_type', '=', $object_type);
+            $deleted_product_tags_object->delete();
+
+            OrbitInput::post('product_tags', function($productTags) use ($updatedpromotional_event, $user, $promotional_event_id, $object_type, $mallid) {
+                // Insert new data
+                $promotionalEventProductTags = array();
+                foreach ($productTags as $productTag) {
+                    $product_tag_id = null;
+
+                    foreach ($mallid as $mall) {
+                        $existProductTag = ProductTag::excludeDeleted()
+                            ->where('product_tag', '=', $productTag)
+                            ->where('merchant_id', '=', $mall)
+                            ->first();
+
+                        if (empty($existProductTag)) {
+                            $newKeyword = new ProductTag();
+                            $newKeyword->merchant_id = $mall;
+                            $newKeyword->product_tag = $productTag;
+                            $newKeyword->status = 'active';
+                            $newKeyword->created_by = $user->user_id;
+                            $newKeyword->modified_by = $user->user_id;
+                            $newKeyword->save();
+
+                            $product_tag_id = $newKeyword->product_tag_id;
+                            $promotionalEventProductTags[] = $newKeyword;
+                        } else {
+                            $product_tag_id = $existProductTag->product_tag_id;
+                            $promotionalEventProductTags[] = $existProductTag;
+                        }
+
+                        $newKeywordObject = new ProductTagObject();
+                        $newKeywordObject->product_tag_id = $product_tag_id;
+                        $newKeywordObject->object_id = $promotional_event_id;
+                        $newKeywordObject->object_type = $object_type;
+                        $newKeywordObject->save();
+                    }
+
+                }
+                $updatedpromotional_event->product_tags = $promotionalEventProductTags;
             });
 
             //save campaign histories (status)
@@ -2109,6 +2190,8 @@ class PromotionalEventAPIController extends ControllerAPI
                         $promotionalevent->with('ages');
                     } elseif ($relation === 'keywords') {
                         $promotionalevent->with('keywords');
+                    } elseif ($relation === 'product_tags') {
+                        $news->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $promotionalevent->with('campaignObjectPartners');
                     } elseif ($relation === 'rewardDetail') {

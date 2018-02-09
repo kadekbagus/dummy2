@@ -174,6 +174,13 @@ class News extends Eloquent
                     ->groupBy('keyword');
     }
 
+    public function product_tags()
+    {
+        return $this->hasMany('ProductTagObject', 'object_id', 'news_id')
+                    ->join('product_tags', 'product_tags.product_tag_id', '=', 'product_tag_object.product_tag_id')
+                    ->groupBy('product_tag');
+    }
+
     public function campaign_status()
     {
         return $this->belongsTo('CampaignStatus', 'campaign_status_id', 'campaign_status_id');
