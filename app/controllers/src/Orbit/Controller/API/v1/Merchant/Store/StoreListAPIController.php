@@ -82,7 +82,7 @@ class StoreListAPIController extends ControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
-            $store = BaseStore::with('bank', 'objectContact', 'financialContactDetail', 'paymentProvider')
+            $store = BaseStore::with('bank', 'objectContact', 'financialContactDetail', 'paymentProvider', 'productTags')
                             ->excludeDeleted('base_stores')
                             ->select('base_merchants.base_merchant_id', 'base_merchants.country_id',
                                 DB::raw("{$prefix}base_merchants.name AS merchant"),
