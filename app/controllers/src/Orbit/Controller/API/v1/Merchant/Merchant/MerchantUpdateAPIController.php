@@ -75,12 +75,13 @@ class MerchantUpdateAPIController extends ControllerAPI
             $translations = OrbitInput::post('translations');
             $language = OrbitInput::get('language', 'en');
             $countryId = OrbitInput::post('country_id');
-            $keywords = OrbitInput::post('keywords');
+            $keywords = OrbitInput::post('keywords', []);
             $keywords = (array) $keywords;
             $languages = OrbitInput::post('languages', []);
             $mobile_default_language = OrbitInput::post('mobile_default_language');
             $phone = OrbitInput::post('phone');
             $email = OrbitInput::post('email');
+            $productTags = OrbitInput::post('product_tags', []);
 
             // Payment_acquire
             $paymentAcquire = OrbitInput::post('payment_acquire', 'N'); // Y or N
@@ -350,6 +351,17 @@ class MerchantUpdateAPIController extends ControllerAPI
                 }
             });
 
+            // delete product_tag when empty array send
+            if (empty($productTags)) {
+                $deleted_product_tag_object = BaseMerchantProductTag::where('base_merchant_id', '=', $baseMerchantId)->delete();
+                $updatedBaseMerchant->productTags = [];
+            }
+
+            // delete keyword when empty array send
+            if (empty($keywords)) {
+                $deleted_keyword_object = BaseMerchantKeyword::where('base_merchant_id', '=', $baseMerchantId)->delete();
+                $updatedBaseMerchant->keywords = [];
+            }
 
             // Payment Acquire
             $objectType = 'base_merchant';
