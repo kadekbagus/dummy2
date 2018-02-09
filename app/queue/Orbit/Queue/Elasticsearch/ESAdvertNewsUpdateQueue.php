@@ -97,6 +97,9 @@ class ESAdvertNewsUpdateQueue
                     ->with (['keywords' => function ($q) {
                                 $q->groupBy('keyword');
                             }])
+                    ->with (['product_tags' => function ($q) {
+                                $q->groupBy('product_tag');
+                            }])
                     ->select(DB::raw("
                         {$prefix}news.*,
                         {$prefix}campaign_account.mobile_default_language,
@@ -358,6 +361,11 @@ class ESAdvertNewsUpdateQueue
                     $keywords[] = $keyword->keyword;
                 }
 
+                $productTags = array();
+                foreach ($news->product_tags as $product_tag) {
+                    $productTags[] = $product_tag->product_tag;
+                }
+
                 $partnerIds = array();
                 $partnerTokens = array();
                 foreach ($news->campaignObjectPartners as $campaignObjectPartner) {
@@ -534,6 +542,7 @@ class ESAdvertNewsUpdateQueue
                     'default_lang'          => $news->mobile_default_language,
                     'translation'           => $translations,
                     'keywords'              => $keywords,
+                    'product_tags'          => $productTags,
                     'partner_ids'           => $partnerIds,
                     'partner_tokens'        => $partnerTokens,
                     'advert_ids'            => $advertIds,

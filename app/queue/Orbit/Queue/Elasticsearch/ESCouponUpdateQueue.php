@@ -70,6 +70,9 @@ class ESCouponUpdateQueue
                         ->with (['keywords' => function ($q) {
                                     $q->groupBy('keyword');
                                 }])
+                        ->with (['product_tags' => function ($q) {
+                                    $q->groupBy('product_tag');
+                                }])
                         ->select(DB::raw("
                             {$prefix}promotions.*,
                             {$prefix}campaign_account.mobile_default_language,
@@ -239,6 +242,11 @@ class ESCouponUpdateQueue
             $keywords = array();
             foreach ($coupon->keywords as $keyword) {
                 $keywords[] = $keyword->keyword;
+            }
+
+            $productTags = array();
+            foreach ($news->product_tags as $product_tag) {
+                $productTags[] = $product_tag->product_tag;
             }
 
             $partnerIds = array();
@@ -441,6 +449,7 @@ class ESCouponUpdateQueue
                 'category_ids'            => $categoryIds,
                 'translation'             => $translations,
                 'keywords'                => $keywords,
+                'product_tags'            => $productTags,
                 'partner_ids'             => $partnerIds,
                 'partner_tokens'          => $partnerTokens,
                 'advert_ids'              => $advertIds,
