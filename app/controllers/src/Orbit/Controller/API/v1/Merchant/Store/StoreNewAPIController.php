@@ -95,6 +95,8 @@ class StoreNewAPIController extends ControllerAPI
             $accountNumbers = OrbitInput::post('account_numbers',[]);
             $bankAddress = OrbitInput::post('bank_address',[]);
             $swiftCodes = OrbitInput::post('swift_codes',[]);
+            $productTags = OrbitInput::post('product_tags');
+            $productTags = (array) $productTags;
 
             $storeHelper = StoreHelper::create();
             $storeHelper->storeCustomValidator();
@@ -163,6 +165,40 @@ class StoreNewAPIController extends ControllerAPI
             $newstore->verification_number = $verification_number;
             $newstore->is_payment_acquire = $paymentAcquire;
             $newstore->save();
+
+            // save product tag
+            $tenantProductTags = array();
+            foreach ($productTags as $productTag) {
+                $product_tag_id = null;
+
+                $existProductTag = ProductTag::excludeDeleted()
+                    ->where('product_tag', '=', $productTag)
+                    ->first();
+
+                if (empty($existProductTag)) {
+                    $newProductTag = new ProductTag();
+                    $newProductTag->merchant_id = '0';
+                    $newProductTag->product_tag = $productTag;
+                    $newProductTag->status = 'active';
+                    $newProductTag->created_by = $user->user_id;
+                    $newProductTag->modified_by = $user->user_id;
+                    $newProductTag->save();
+
+                    $product_tag_id = $newProductTag->product_tag_id;
+                    $tenantProductTags[] = $newProductTag;
+                } else {
+                    $product_tag_id = $existProductTag->product_tag_id;
+                    $tenantProductTags[] = $existProductTag;
+                }
+
+                $newKeywordObject = new BaseStoreProductTag();
+                $newKeywordObject->base_store_id = $newstore->base_store_id;
+                $newKeywordObject->product_tag_id = $product_tag_id;
+                $newKeywordObject->save();
+
+            }
+            $newstore->product_tags = $tenantProductTags;
+
 
             // Validate the payment acquire, only chech if payment acquire = Y
             if ($paymentAcquire === 'Y') {
