@@ -10,7 +10,6 @@ use Activity;
 use User;
 use Config;
 use Orbit\Helper\Util\JobBurier;
-use CampaignPageView;
 use Exception;
 use CampaignPopupView;
 use CampaignClicks;
@@ -63,7 +62,6 @@ class AdditionalActivityQueue
                 ];
             }
 
-            $this->saveToCampaignPageViews($activity);
             $this->saveToCampaignPopUpView($activity);
             $this->saveToCampaignPopUpClick($activity);
             $this->saveToMerchantPageView($activity);
@@ -111,41 +109,6 @@ class AdditionalActivityQueue
             'status' => 'fail',
             'message' => $message
         ];
-    }
-
-    /**
-     * Save to merchant_page_views table
-     *
-     * @param Activity $activity Object of Activity
-     * @return void | NULL
-     */
-    protected function saveToCampaignPageViews(Activity $activity)
-    {
-        if (empty($activity->object_id)) {
-            return;
-        }
-        // Save also the activity to particular `campaign_xyz` table
-        switch ($activity->activity_name) {
-            case 'view_promotion':
-            case 'view_coupon':
-            case 'view_lucky_draw':
-            case 'view_event':
-            case 'view_news':
-            case 'view_landing_page_coupon_detail':
-            case 'view_landing_page_news_detail':
-            case 'view_landing_page_promotion_detail':
-            case 'view_mall_event_detail':
-            case 'view_mall_promotion_detail':
-            case 'view_mall_coupon_detail':
-                $campaign = new CampaignPageView();
-                $campaign->campaign_id = $activity->object_id;
-                $campaign->user_id = $activity->user_id;
-                $campaign->location_id = ! empty($activity->location_id) ? $activity->location_id : 0;
-                $campaign->activity_id = $activity->activity_id;
-                $campaign->campaign_group_name_id = $this->campaignGroupNameIdFromActivityName($activity->activity_name);
-                $campaign->save();
-                break;
-        }
     }
 
     /**

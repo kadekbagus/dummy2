@@ -29,7 +29,8 @@ class CdnUrlGenerator
 	                // Name of the bucket or directory
 	                'bucket_name' => NULL,
 
-	                'url_prefix' => 'https://mall-api.gotomalls.cool'
+	                // 'url_prefix' => 'https://mall-api.gotomalls.cool'
+                    'url_prefix' => 'https://mall-api-v44.gotomalls.cool'
 	            ],
 
 	            // AWS S3

@@ -107,10 +107,6 @@ class PromotionalEventAPIController extends ControllerAPI
             $is_exclusive           = OrbitInput::post('is_exclusive', 'N');
             $keywords               = (array) OrbitInput::post('keywords', []);
             $productTags            = (array) OrbitInput::post('productTags', []);
-            $is_all_gender          = OrbitInput::post('is_all_gender', 'Y');
-            $gender_ids             = (array) OrbitInput::post('gender_ids', []);
-            $is_all_age             = OrbitInput::post('is_all_age', 'Y');
-            $age_range_ids          = (array) OrbitInput::post('age_range_ids', []);
             $campaign_status        = OrbitInput::post('campaign_status');
             $id_language_default    = OrbitInput::post('id_language_default');
             $translations           = OrbitInput::post('translations');
@@ -142,8 +138,6 @@ class PromotionalEventAPIController extends ControllerAPI
                 'reward_codes'                => $reward_codes,
                 'retailer_ids'                => $retailer_ids,
                 'id_language_default'         => $id_language_default,
-                'is_all_gender'               => $is_all_gender,
-                'is_all_age'                  => $is_all_age,
                 'status'                      => $status,
                 'is_new_user_only'            => $is_new_user_only,
             ];
@@ -159,8 +153,6 @@ class PromotionalEventAPIController extends ControllerAPI
                 'reward_codes'                => 'required',
                 'retailer_ids'                => 'required|array',
                 'id_language_default'         => 'required|orbit.empty.language_default',
-                'is_all_gender'               => 'required|orbit.empty.is_all_gender',
-                'is_all_age'                  => 'required|orbit.empty.is_all_age',
                 'status'                      => 'required|orbit.empty.promotional_event_status',
                 'is_new_user_only'            => 'in:Y,N',
             ];
@@ -191,50 +183,6 @@ class PromotionalEventAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            // validation gender
-            foreach ($gender_ids as $gender_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'gender_id'   => $gender_id_check,
-                    ),
-                    array(
-                        'gender_id'   => 'orbit.empty.gender',
-                    )
-                );
-
-                Event::fire('orbit.promotionalevent.postnewpromotionalevent.before.gendervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.promotionalevent.postnewpromotionalevent.after.retailervalidation', array($this, $validator));
-            }
-
-            // validation age range
-            foreach ($age_range_ids as $age_range_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'age_range_id'   => $age_range_id_check,
-                    ),
-                    array(
-                        'age_range_id'   => 'orbit.empty.age',
-                    )
-                );
-
-                Event::fire('orbit.promotionalevent.postnewpromotionalevent.before.retailervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.promotionalevent.postnewpromotionalevent.after.retailervalidation', array($this, $validator));
-            }
-
             $sponsorIds = array();
             if ($is_sponsored === 'Y') {
                 $sponsorIds = @json_decode($sponsor_ids);
@@ -258,8 +206,8 @@ class PromotionalEventAPIController extends ControllerAPI
             $newpromotional_event->begin_date = $begin_date;
             $newpromotional_event->end_date = $end_date;
             $newpromotional_event->link_object_type = $link_object_type;
-            $newpromotional_event->is_all_age = $is_all_age;
-            $newpromotional_event->is_all_gender = $is_all_gender;
+            $newpromotional_event->is_all_age = 'Y';
+            $newpromotional_event->is_all_gender = 'Y';
             $newpromotional_event->is_having_reward = 'Y';
             $newpromotional_event->created_by = $this->api->user->user_id;
             $newpromotional_event->sticky_order = $sticky_order;
@@ -357,31 +305,6 @@ class PromotionalEventAPIController extends ControllerAPI
             $user_campaign->campaign_type = 'news';
             $user_campaign->save();
 
-            // save CampaignAge
-            $promotional_event_ages = array();
-            foreach ($age_range_ids as $age_range) {
-                $promotional_event_age = new CampaignAge();
-                $promotional_event_age->campaign_type = $object_type;
-                $promotional_event_age->campaign_id = $newpromotional_event->news_id;
-                $promotional_event_age->age_range_id = $age_range;
-                $promotional_event_age->save();
-                $promotional_event_ages[] = $promotional_event_age;
-            }
-            $newpromotional_event->age = $promotional_event_ages;
-
-            // save CampaignGender
-            $promotional_event_genders = array();
-            foreach ($gender_ids as $gender) {
-                $promotional_event_gender = new CampaignGender();
-                $promotional_event_gender->campaign_type = $object_type;
-                $promotional_event_gender->campaign_id = $newpromotional_event->news_id;
-                $promotional_event_gender->gender_value = $gender;
-                $promotional_event_gender->save();
-                $gender_name = null;
-                $promotional_event_genders[] = $promotional_event_gender;
-            }
-            $newpromotional_event->gender = $promotional_event_genders;
-
             // save Keyword
             $promotional_event_keywords = array();
             foreach ($keywords as $keyword) {
@@ -430,101 +353,31 @@ class PromotionalEventAPIController extends ControllerAPI
                         ->first();
 
                     if (empty($existProductTag)) {
-                        $newKeyword = new ProductTag();
-                        $newKeyword->merchant_id = $mall;
-                        $newKeyword->product_tag = $productTag;
-                        $newKeyword->status = 'active';
-                        $newKeyword->created_by = $this->api->user->user_id;
-                        $newKeyword->modified_by = $this->api->user->user_id;
-                        $newKeyword->save();
+                        $newProductTag = new ProductTag();
+                        $newProductTag->merchant_id = $mall;
+                        $newProductTag->product_tag = $productTag;
+                        $newProductTag->status = 'active';
+                        $newProductTag->created_by = $this->api->user->user_id;
+                        $newProductTag->modified_by = $this->api->user->user_id;
+                        $newProductTag->save();
 
-                        $product_tag_id = $newKeyword->product_tag_id;
-                        $promotionalEventProductTags[] = $newKeyword;
+                        $product_tag_id = $newProductTag->product_tag_id;
+                        $promotionalEventProductTags[] = $newProductTag;
                     } else {
                         $product_tag_id = $existProductTag->product_tag_id;
                         $promotionalEventProductTags[] = $existProductTag;
                     }
 
-                    $newKeywordObject = new ProductTagObject();
-                    $newKeywordObject->product_tag_id = $product_tag_id;
-                    $newKeywordObject->object_id = $newpromotional_event->news_id;
-                    $newKeywordObject->object_type = $object_type;
-                    $newKeywordObject->save();
+                    $newProductTagObject = new ProductTagObject();
+                    $newProductTagObject->product_tag_id = $product_tag_id;
+                    $newProductTagObject->object_id = $newpromotional_event->news_id;
+                    $newProductTagObject->object_type = $object_type;
+                    $newProductTagObject->save();
                 }
             }
             $newpromotional_event->product_tags = $promotionalEventProductTags;
 
             Event::fire('orbit.promotionalevent.postnewpromotionalevent.after.save', array($this, $newpromotional_event));
-
-            //save campaign price
-            $campaignbaseprice = CampaignBasePrice::where('merchant_id', '=', $newpromotional_event->mall_id)
-                                            ->where('campaign_type', '=', $object_type)
-                                            ->first();
-
-            $baseprice = 0;
-            if (! empty($campaignbaseprice->price)) {
-                $baseprice = $campaignbaseprice->price;
-            }
-
-            $campaignprice = new CampaignPrice();
-            $campaignprice->base_price = $baseprice;
-            $campaignprice->campaign_type = $object_type;
-            $campaignprice->campaign_id = $newpromotional_event->news_id;
-            $campaignprice->save();
-
-            // get action id for campaign history
-            $actionstatus = 'activate';
-            if ($status === 'inactive') {
-                $actionstatus = 'deactivate';
-            }
-            $activeid = CampaignHistoryAction::getIdFromAction($actionstatus);
-            $addtenantid = CampaignHistoryAction::getIdFromAction('add_tenant');
-
-            // campaign history status
-            $campaignhistory = new CampaignHistory();
-            $campaignhistory->campaign_type = $object_type;
-            $campaignhistory->campaign_id = $newpromotional_event->news_id;
-            $campaignhistory->campaign_history_action_id = $activeid;
-            $campaignhistory->number_active_tenants = 0;
-            $campaignhistory->campaign_cost = 0;
-            $campaignhistory->created_by = $this->api->user->user_id;
-            $campaignhistory->modified_by = $this->api->user->user_id;
-            $campaignhistory->save();
-
-            //save campaign histories (tenant)
-            $withSpending = array('mall' => 'N', 'tenant' => 'Y');
-            foreach ($retailer_ids as $retailer_id) {
-                $type = 'tenant';
-                $data = @json_decode($retailer_id);
-                $tenant_id = $data->tenant_id;
-                $mall_id = $data->mall_id;
-                // insert tenant/merchant to campaign history
-                $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $tenant_id)->first();
-                $spendingrule = SpendingRule::select('with_spending')->where('object_id', $tenant_id)->first();
-
-                if ($tenantstatus->object_type === 'mall') {
-                    $type = 'mall';
-                }
-
-                if ($spendingrule) {
-                    $spending = $spendingrule->with_spending;
-                } else {
-                    $spending = $withSpending[$type];
-                }
-
-                if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
-                    $addtenant = new CampaignHistory();
-                    $addtenant->campaign_type = $object_type;
-                    $addtenant->campaign_id = $newpromotional_event->news_id;
-                    $addtenant->campaign_external_value = $tenant_id;
-                    $addtenant->campaign_history_action_id = $addtenantid;
-                    $addtenant->number_active_tenants = 0;
-                    $addtenant->created_by = $this->api->user->user_id;
-                    $addtenant->modified_by = $this->api->user->user_id;
-                    $addtenant->campaign_cost = 0;
-                    $addtenant->save();
-                }
-            }
 
             // translation for promotional event
             OrbitInput::post('translations', function($promotional_event_translations) use ($newpromotional_event) {
@@ -629,12 +482,6 @@ class PromotionalEventAPIController extends ControllerAPI
 
             // Commit the changes
             $this->commit();
-
-            // queue for campaign spending promotionalevent & promotion
-            Queue::push('Orbit\\Queue\\SpendingCalculation', [
-                'campaign_id' => $newpromotional_event->news_id,
-                'campaign_type' => $object_type,
-            ]);
 
             // Successfull Creation
             $activityNotes = sprintf('PromotionalEvent Created: %s', $newpromotional_event->promotionalevent_name);
@@ -809,8 +656,6 @@ class PromotionalEventAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $begin_date = OrbitInput::post('begin_date');
             $id_language_default = OrbitInput::post('id_language_default');
-            $is_all_gender = OrbitInput::post('is_all_gender');
-            $is_all_age = OrbitInput::post('is_all_age');
             $translations = OrbitInput::post('translations');
             $reward_translations = OrbitInput::post('reward_translations');
             $retailer_ids = (array) OrbitInput::post('retailer_ids');
@@ -835,8 +680,6 @@ class PromotionalEventAPIController extends ControllerAPI
                 'link_object_type'     => $link_object_type,
                 'end_date'             => $end_date,
                 'id_language_default'  => $id_language_default,
-                'is_all_gender'        => $is_all_gender,
-                'is_all_age'           => $is_all_age,
                 'partner_exclusive'    => $is_exclusive,
                 'is_new_user_only'     => $is_new_user_only,
             );
@@ -857,8 +700,6 @@ class PromotionalEventAPIController extends ControllerAPI
                     'link_object_type'       => 'orbit.empty.link_object_type',
                     'end_date'               => 'date||orbit.empty.hour_format',
                     'id_language_default'    => 'required|orbit.empty.language_default',
-                    'is_all_gender'          => 'required|orbit.empty.is_all_gender',
-                    'is_all_age'             => 'required|orbit.empty.is_all_age',
                     'partner_exclusive'      => 'in:Y,N|orbit.empty.exclusive_partner',
                     'is_new_user_only'       => 'in:Y,N',
                 ),
@@ -955,13 +796,6 @@ class PromotionalEventAPIController extends ControllerAPI
                 $updatedpromotional_event->end_date = $end_date;
             });
 
-            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatedpromotional_event) {
-                $updatedpromotional_event->is_all_gender = $is_all_gender;
-            });
-
-            OrbitInput::post('is_all_age', function($is_all_age) use ($updatedpromotional_event) {
-                $updatedpromotional_event->is_all_age = $is_all_age;
-            });
 
             OrbitInput::post('is_popup', function($is_popup) use ($updatedpromotional_event) {
                 $updatedpromotional_event->is_popup = $is_popup;
@@ -1134,23 +968,6 @@ class PromotionalEventAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatedpromotional_event, $promotional_event_id, $object_type) {
-                $updatedpromotional_event->is_all_gender = $is_all_gender;
-                if ($is_all_gender == 'Y') {
-                    $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $promotional_event_id)
-                                                            ->where('campaign_type', '=', $object_type);
-                    $deleted_campaign_genders->delete();
-                }
-            });
-
-            OrbitInput::post('is_all_age', function($is_all_age) use ($updatedpromotional_event, $promotional_event_id, $object_type) {
-                $updatedpromotional_event->is_all_age = $is_all_age;
-                if ($is_all_age == 'Y') {
-                    $deleted_campaign_ages = CampaignAge::where('campaign_id', '=', $promotional_event_id)
-                                                            ->where('campaign_type', '=', $object_type);
-                    $deleted_campaign_ages->delete();
-                }
-            });
 
             OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatedpromotional_event, $promotional_event_id, $mallid) {
                 // validate retailer_ids
@@ -1207,92 +1024,6 @@ class PromotionalEventAPIController extends ControllerAPI
                     }
                 }
                 $updatedpromotional_event->partners = $object_partners;
-            });
-
-            OrbitInput::post('gender_ids', function($gender_ids) use ($updatedpromotional_event, $promotional_event_id, $object_type) {
-                // validate gender_ids
-                $gender_ids = (array) $gender_ids;
-                foreach ($gender_ids as $gender_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'gender_id'   => $gender_id_check,
-                        ),
-                        array(
-                            'gender_id'   => 'orbit.empty.gender',
-                        )
-                    );
-
-                    Event::fire('orbit.promotionalevent.postupdatepromotionalevent.before.gendervalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.promotionalevent.postupdatepromotionalevent.after.gendervalidation', array($this, $validator));
-                }
-
-                // Delete old data
-                $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $promotional_event_id)
-                                                        ->where('campaign_type', '=', $object_type);
-                $deleted_campaign_genders->delete();
-
-                // Insert new data
-                $promotional_event_genders = array();
-                foreach ($gender_ids as $gender) {
-                    $promotional_event_gender = new CampaignGender();
-                    $promotional_event_gender->campaign_type = $object_type;
-                    $promotional_event_gender->campaign_id = $promotional_event_id;
-                    $promotional_event_gender->gender_value = $gender;
-                    $promotional_event_gender->save();
-                    $promotional_event_genders[] = $promotional_event_genders;
-                }
-                $updatedpromotional_event->gender = $promotional_event_genders;
-
-            });
-
-            OrbitInput::post('age_range_ids', function($age_range_ids) use ($updatedpromotional_event, $promotional_event_id, $object_type) {
-                // validate age_range_ids
-                $age_range_ids = (array) $age_range_ids;
-                foreach ($age_range_ids as $age_range_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'age_range_id'   => $age_range_id_check,
-                        ),
-                        array(
-                            'age_range_id'   => 'orbit.empty.age',
-                        )
-                    );
-
-                    Event::fire('orbit.promotionalevent.postupdatepromotionalevent.before.agevalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.promotionalevent.postupdatepromotionalevent.after.agevalidation', array($this, $validator));
-                }
-
-                // Delete old data
-                $deleted_campaign_ages = CampaignAge::where('campaign_id', '=', $promotional_event_id)
-                                                        ->where('campaign_type', '=', $object_type);
-                $deleted_campaign_ages->delete();
-
-                // Insert new data
-                $promotional_event_ages = array();
-                foreach ($age_range_ids as $age_range) {
-                    $promotional_event_age = new CampaignAge();
-                    $promotional_event_age->campaign_type = $object_type;
-                    $promotional_event_age->campaign_id = $promotional_event_id;
-                    $promotional_event_age->age_range_id = $age_range;
-                    $promotional_event_age->save();
-                    $promotional_event_ages[] = $promotional_event_ages;
-                }
-                $updatedpromotional_event->age = $promotional_event_ages;
-
             });
 
             // Delete old data
@@ -1359,148 +1090,31 @@ class PromotionalEventAPIController extends ControllerAPI
                             ->first();
 
                         if (empty($existProductTag)) {
-                            $newKeyword = new ProductTag();
-                            $newKeyword->merchant_id = $mall;
-                            $newKeyword->product_tag = $productTag;
-                            $newKeyword->status = 'active';
-                            $newKeyword->created_by = $user->user_id;
-                            $newKeyword->modified_by = $user->user_id;
-                            $newKeyword->save();
+                            $newProductTag = new ProductTag();
+                            $newProductTag->merchant_id = $mall;
+                            $newProductTag->product_tag = $productTag;
+                            $newProductTag->status = 'active';
+                            $newProductTag->created_by = $user->user_id;
+                            $newProductTag->modified_by = $user->user_id;
+                            $newProductTag->save();
 
-                            $product_tag_id = $newKeyword->product_tag_id;
-                            $promotionalEventProductTags[] = $newKeyword;
+                            $product_tag_id = $newProductTag->product_tag_id;
+                            $promotionalEventProductTags[] = $newProductTag;
                         } else {
                             $product_tag_id = $existProductTag->product_tag_id;
                             $promotionalEventProductTags[] = $existProductTag;
                         }
 
-                        $newKeywordObject = new ProductTagObject();
-                        $newKeywordObject->product_tag_id = $product_tag_id;
-                        $newKeywordObject->object_id = $promotional_event_id;
-                        $newKeywordObject->object_type = $object_type;
-                        $newKeywordObject->save();
+                        $newProductTagObject = new ProductTagObject();
+                        $newProductTagObject->product_tag_id = $product_tag_id;
+                        $newProductTagObject->object_id = $promotional_event_id;
+                        $newProductTagObject->object_type = $object_type;
+                        $newProductTagObject->save();
                     }
 
                 }
                 $updatedpromotional_event->product_tags = $promotionalEventProductTags;
             });
-
-            //save campaign histories (status)
-            $action_history = '';
-            if ($statusdb != $status) {
-                // get action id for campaign history
-                $action_status = 'activate';
-                if ($status === 'inactive') {
-                    $action_status = 'deactivate';
-                }
-                $active_id = CampaignHistoryAction::getIdFromAction($action_status);
-
-                $campaign_history = new CampaignHistory();
-                $campaign_history->campaign_type = $object_type;
-                $campaign_history->campaign_id = $promotional_event_id;
-                $campaign_history->campaign_history_action_id = $active_id;
-                $campaign_history->number_active_tenants = 0;
-                $campaign_history->campaign_cost = 0;
-                $campaign_history->created_by = $this->api->user->user_id;
-                $campaign_history->modified_by = $this->api->user->user_id;
-                $campaign_history->save();
-
-            } else {
-                //check for first time insert for that day
-                $utcNow = Carbon::now();
-                $checkFirst = CampaignHistory::where('campaign_id', '=', $promotional_event_id)->where('created_at', 'like', $utcNow->toDateString().'%')->count();
-                if ($checkFirst === 0){
-                    $action_status = 'activate';
-                    if ($statusdb === 'inactive') {
-                        $action_status = 'deactivate';
-                    }
-                    $active_id = CampaignHistoryAction::getIdFromAction($action_status);
-                    $campaign_history = new CampaignHistory();
-                    $campaign_history->campaign_type = $object_type;
-                    $campaign_history->campaign_id = $promotional_event_id;
-                    $campaign_history->campaign_history_action_id = $active_id;
-                    $campaign_history->number_active_tenants = 0;
-                    $campaign_history->campaign_cost = 0;
-                    $campaign_history->created_by = $this->api->user->user_id;
-                    $campaign_history->modified_by = $this->api->user->user_id;
-                    $campaign_history->save();
-
-                }
-            }
-
-            //check for add/remove tenant
-            $remove_tenant = array_diff($merchantdb, $retailernew);
-            $addtenant = array_diff($retailernew, $merchantdb);
-            $withSpending = array('mall' => 'N', 'tenant' => 'Y');
-            if (! empty($remove_tenant)) {
-                $action_history = 'delete';
-                $addtenantid = CampaignHistoryAction::getIdFromAction('delete_tenant');
-                //save campaign histories (tenant)
-                foreach ($remove_tenant as $retailer_id) {
-                    // insert tenant/merchant to campaign history
-                    $type = 'tenant';
-                    $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $retailer_id)->first();
-                    $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
-
-                    if ($tenantstatus->object_type === 'mall') {
-                        $type = 'mall';
-                    }
-
-                    if ($spendingrule) {
-                        $spending = $spendingrule->with_spending;
-                    } else {
-                        $spending = $withSpending[$type];
-                    }
-
-                    if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
-                        $tenanthistory = new CampaignHistory();
-                        $tenanthistory->campaign_type = $object_type;
-                        $tenanthistory->campaign_id = $promotional_event_id;
-                        $tenanthistory->campaign_external_value = $retailer_id;
-                        $tenanthistory->campaign_history_action_id = $addtenantid;
-                        $tenanthistory->number_active_tenants = 0;
-                        $tenanthistory->campaign_cost = 0;
-                        $tenanthistory->created_by = $this->api->user->user_id;
-                        $tenanthistory->modified_by = $this->api->user->user_id;
-                        $tenanthistory->save();
-
-                    }
-                }
-            }
-            if (! empty($addtenant)) {
-                $action_history = 'add';
-                $addtenantid = CampaignHistoryAction::getIdFromAction('add_tenant');
-                //save campaign histories (tenant)
-                foreach ($addtenant as $retailer_id) {
-                    // insert tenant/merchant to campaign history
-                    $type = 'tenant';
-                    $tenantstatus = CampaignLocation::select('status', 'object_type')->where('merchant_id', $retailer_id)->first();
-                    $spendingrule = SpendingRule::select('with_spending')->where('object_id', $retailer_id)->first();
-
-                    if ($tenantstatus->object_type === 'mall') {
-                        $type = 'mall';
-                    }
-
-                    if ($spendingrule) {
-                        $spending = $spendingrule->with_spending;
-                    } else {
-                        $spending = $withSpending[$type];
-                    }
-
-                    if (($tenantstatus->status === 'active') && ($spending === 'Y')) {
-                        $tenanthistory = new CampaignHistory();
-                        $tenanthistory->campaign_type = $object_type;
-                        $tenanthistory->campaign_id = $promotional_event_id;
-                        $tenanthistory->campaign_external_value = $retailer_id;
-                        $tenanthistory->campaign_history_action_id = $addtenantid;
-                        $tenanthistory->number_active_tenants = 0;
-                        $tenanthistory->campaign_cost = 0;
-                        $tenanthistory->created_by = $this->api->user->user_id;
-                        $tenanthistory->modified_by = $this->api->user->user_id;
-                        $tenanthistory->save();
-                    }
-                }
-            }
 
             $tempContent = new TemporaryContent();
             $tempContent->contents = serialize($beforeUpdatedPromotionalEvent);
@@ -1532,12 +1146,6 @@ class PromotionalEventAPIController extends ControllerAPI
 
             // Push notification
             Event::fire('orbit.promotionalevent.postupdatepromotionalevent-storenotificationupdate.after.commit', array($this, $updatedpromotional_event));
-
-            // queue for campaign spending promotionalevent & promotion
-            Queue::push('Orbit\\Queue\\SpendingCalculation', [
-                'campaign_id' => $promotional_event_id,
-                'campaign_type' => $object_type,
-            ]);
 
             // Successfull Update
             $activityNotes = sprintf('PromotionalEvent updated: %s', $updatedpromotional_event->news_name);
@@ -2191,7 +1799,7 @@ class PromotionalEventAPIController extends ControllerAPI
                     } elseif ($relation === 'keywords') {
                         $promotionalevent->with('keywords');
                     } elseif ($relation === 'product_tags') {
-                        $news->with('product_tags');
+                        $promotionalevent->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $promotionalevent->with('campaignObjectPartners');
                     } elseif ($relation === 'rewardDetail') {
