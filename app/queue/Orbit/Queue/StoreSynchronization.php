@@ -38,6 +38,8 @@ use MerchantStorePaymentProvider;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use Exception;
+use ProductTagObject;
+use BaseStoreProductTag;
 
 class StoreSynchronization
 {
