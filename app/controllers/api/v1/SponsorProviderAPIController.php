@@ -392,7 +392,7 @@ class SponsorProviderAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:sponsor_name,country,status',
+                    'sort_by' => 'in:sponsor_name,country,status,type',
                 )
             );
             // Run the validation
