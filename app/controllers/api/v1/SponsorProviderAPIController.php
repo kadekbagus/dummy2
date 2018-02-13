@@ -451,6 +451,12 @@ class SponsorProviderAPIController extends ControllerAPI
                 $sponsorProviders->whereIn('sponsor_providers.status', $status);
             });
 
+            // Filter sponsor provider by type (object type)
+            OrbitInput::get('type', function($type) use ($sponsorProviders) {
+                $type = (array) $type;
+                $sponsorProviders->whereIn('sponsor_providers.object_type', $type);
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($sponsorProviders) {
                 $with = (array) $with;
