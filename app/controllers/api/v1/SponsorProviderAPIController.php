@@ -509,6 +509,7 @@ class SponsorProviderAPIController extends ControllerAPI
                     'sponsor_name' => 'sponsor_providers.name',
                     'country'      => 'country',
                     'status'       => 'sponsor_providers.status',
+                    'type'         => 'sponsor_providers.object_type',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
