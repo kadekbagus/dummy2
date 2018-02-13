@@ -2238,6 +2238,11 @@ class TenantAPIController extends ControllerAPI
             $merchant_id = OrbitInput::get('merchant_id');
             $object_type = (array) OrbitInput::get('object_type', ['mall', 'tenant']);
             $keywords = OrbitInput::get('keywords');
+            $store_name = OrbitInput::get('store_name');
+            $mall_name = OrbitInput::get('mall_name');
+            $city = OrbitInput::get('city');
+            $city = (array) $city;
+            $parent = null;
 
             $validator = Validator::make(
                 array(
@@ -2266,11 +2271,22 @@ class TenantAPIController extends ControllerAPI
 
             $prefix = DB::getTablePrefix();
 
+            // find mall_id for filter
+            if (!empty($mall_name)) {
+                $parent = Mall::select('merchant_id')->where('merchants.name', 'like', "%$mall_name%")->first();
+            }
+
             $tenants = CampaignLocation::select('merchants.merchant_id',
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ', {$prefix}merchants.name)) as display_name"),
                                             'merchants.status',
-                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
+                                            DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN pm.city
+                                                          WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.city
+                                                    END as city"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN pm.country
+                                                          WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.country
+                                                    END as country")
                                         )
                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
                                        ->where('merchants.status', '!=', 'deleted')
@@ -2376,6 +2392,22 @@ class TenantAPIController extends ControllerAPI
                         $tenants->where(DB::raw("(IF({$prefix}merchants.object_type = 'tenant', pm.country_id, {$prefix}merchants.country_id))"), '=', $country_id);
                     });
                 }
+            }
+
+            // filter by city (can be multiple)
+            if (!empty($city)) {
+                $cityName = implode("','", $city);
+                $tenants->havingRaw("city in ('{$cityName}')");
+            }
+
+            // filter by store name
+            if (!empty($store_name)) {
+                $tenants->where('merchants.name', 'like', "%$store_name%");
+            }
+
+            // filter by mall name and store name
+            if (!empty($parent)) {
+                $tenants->where('merchants.parent_id', '=', $parent->merchant_id);
             }
 
             // this is for request from pmp account listing on admin portal
