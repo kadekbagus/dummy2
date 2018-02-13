@@ -392,7 +392,7 @@ class SponsorProviderAPIController extends ControllerAPI
                     'sort_by' => $sort_by,
                 ),
                 array(
-                    'sort_by' => 'in:sponsor_name,country,status',
+                    'sort_by' => 'in:sponsor_name,country,status,type',
                 )
             );
             // Run the validation
@@ -451,6 +451,12 @@ class SponsorProviderAPIController extends ControllerAPI
                 $sponsorProviders->whereIn('sponsor_providers.status', $status);
             });
 
+            // Filter sponsor provider by type (object type)
+            OrbitInput::get('type', function($type) use ($sponsorProviders) {
+                $type = (array) $type;
+                $sponsorProviders->whereIn('sponsor_providers.object_type', $type);
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($sponsorProviders) {
                 $with = (array) $with;
@@ -503,6 +509,7 @@ class SponsorProviderAPIController extends ControllerAPI
                     'sponsor_name' => 'sponsor_providers.name',
                     'country'      => 'country',
                     'status'       => 'sponsor_providers.status',
+                    'type'         => 'sponsor_providers.object_type',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
