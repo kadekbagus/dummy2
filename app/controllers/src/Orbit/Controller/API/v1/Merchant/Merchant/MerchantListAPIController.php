@@ -117,6 +117,10 @@ class MerchantListAPIController extends ControllerAPI
                 $merchants->where('base_merchants.name', 'like', "%$name%");
             });
 
+            OrbitInput::get('countries', function($countries) use ($merchants) {
+                $merchants->whereIn('base_merchants.country_id', $countries);
+            });
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($merchants) {
                 $with = (array) $with;
