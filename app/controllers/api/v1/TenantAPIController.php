@@ -2240,8 +2240,8 @@ class TenantAPIController extends ControllerAPI
             $keywords = OrbitInput::get('keywords');
             $store_name = OrbitInput::get('store_name');
             $mall_name = OrbitInput::get('mall_name');
-            $city = OrbitInput::get('city');
-            $city = (array) $city;
+            $cities = OrbitInput::get('cities');
+            $cities = (array) $cities;
             $parent = null;
 
             $validator = Validator::make(
@@ -2394,20 +2394,30 @@ class TenantAPIController extends ControllerAPI
                 }
             }
 
+            $account_name = '';
+            if (! is_null($this->valid_account_type)) {
+                $account_name = $this->valid_account_type->type_name;
+            }
+
             // filter by city (can be multiple)
-            if (!empty($city)) {
-                $cityName = implode("','", $city);
+            if (!empty($cities)) {
+                $cityName = implode("','", $cities);
                 $tenants->havingRaw("city in ('{$cityName}')");
             }
 
             // filter by store name
-            if (!empty($store_name)) {
+            if (!empty($store_name) && $account_name !== 'Mall') {
                 $tenants->where('merchants.name', 'like', "%$store_name%");
             }
 
             // filter by mall name and store name
-            if (!empty($parent)) {
+            if (!empty($parent) && $account_name !== 'Mall') {
                 $tenants->where('merchants.parent_id', '=', $parent->merchant_id);
+            }
+
+            // filter by mall name for account type mall (PMP account setup admin portal)
+            if (!empty($mall_name) && $account_name === 'Mall') {
+                $tenants->where('merchants.name', 'like', "%$mall_name%");
             }
 
             // this is for request from pmp account listing on admin portal
@@ -2452,6 +2462,7 @@ class TenantAPIController extends ControllerAPI
                 // access
                 if (array_key_exists($account_type->type_name, $permission)) {
                     $access = implode("','", explode("_", $permission[$account_type->type_name]));
+
                     $tenants->whereRaw("{$prefix}merchants.object_type in ('{$access}')");
                 }
 
