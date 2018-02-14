@@ -669,6 +669,11 @@ class AccountAPIController extends ControllerAPI
         }
 
         $data->columns = Config::get('account.listColumns');
+
+        // Remove subscription and creation date columns.
+        unset($data->columns['is_subscribed']);
+        unset($data->columns['created_at']);
+
         $data->records = $records;
 
         $this->data = $data;
