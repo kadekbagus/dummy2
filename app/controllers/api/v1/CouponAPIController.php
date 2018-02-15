@@ -912,7 +912,7 @@ class CouponAPIController extends ControllerAPI
                     $newProductTagObject = new ProductTagObject();
                     $newProductTagObject->product_tag_id = $product_tag_id;
                     $newProductTagObject->object_id = $newcoupon->promotion_id;
-                    $newProductTagObject->object_type = $object_type;
+                    $newProductTagObject->object_type = 'coupon';
                     $newProductTagObject->save();
                 }
             }
