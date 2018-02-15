@@ -1867,7 +1867,7 @@ class PromotionalEventAPIController extends ControllerAPI
                     'begin_date'             => 'news.begin_date',
                     'end_date'               => 'news.end_date',
                     'updated_at'             => 'news.updated_at',
-                    'status'                 => 'campain_status_order'
+                    'status'                 => 'campaign_status_order'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
