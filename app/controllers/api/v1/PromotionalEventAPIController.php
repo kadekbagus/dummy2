@@ -743,7 +743,7 @@ class PromotionalEventAPIController extends ControllerAPI
             // this is for send email to marketing, before and after list
             $beforeUpdatedPromotionalEvent = News::selectRaw("{$prefix}news.*,
                                                         DATE_FORMAT({$prefix}news.end_date, '%d/%m/%Y %H:%i') as end_date")
-                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'product_tag', 'campaign_status')
+                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'product_tags', 'campaign_status')
                                     ->excludeDeleted()
                                     ->where('news_id', $promotional_event_id)
                                     ->first();
