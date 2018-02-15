@@ -3417,7 +3417,7 @@ class CouponAPIController extends ControllerAPI
             //with name
             if ($sortBy !== 'coupon_translations.promotion_name') {
                 if ($sortBy === 'campaign_status_order') {
-                    $coupons->orderBy('promotions.created_at', 'desc');
+                    $coupons->orderBy('promotions.updated_at', 'desc');
                 }
                 else {
                     $coupons->orderBy('coupon_translations.promotion_name', 'asc');

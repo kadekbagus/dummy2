@@ -202,7 +202,7 @@ class NewsAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
             }
 
-            Event::fire('orbit.news.postnewnews.before.save', array($this, $newnews));
+            // Event::fire('orbit.news.postnewnews.before.save', array($this, $newnews));
 
             $newnews->save();
 
@@ -1833,7 +1833,7 @@ class NewsAPIController extends ControllerAPI
             //with name
             if ($sortBy !== 'news_translations.news_name') {
                 if ($sortBy === 'campaign_status_order') {
-                    $news->orderBy('news.created_at', 'desc');
+                    $news->orderBy('news.updated_at', 'desc');
                 }
                 else {
                     $news->orderBy('news_translations.news_name', 'asc');
