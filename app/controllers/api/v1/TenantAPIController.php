@@ -2243,6 +2243,7 @@ class TenantAPIController extends ControllerAPI
             $cities = OrbitInput::get('cities');
             $cities = (array) $cities;
             $parent = null;
+            $parent_ids = [];
 
             $validator = Validator::make(
                 array(
@@ -2273,7 +2274,10 @@ class TenantAPIController extends ControllerAPI
 
             // find mall_id for filter
             if (!empty($mall_name)) {
-                $parent = Mall::select('merchant_id')->where('merchants.name', 'like', "%$mall_name%")->first();
+                $parents = Mall::select('merchant_id')->where('merchants.name', 'like', "%$mall_name%")->get();
+                foreach ($parents as $key => $value) {
+                    $parent_ids[] = $value['merchant_id'];
+                }
             }
 
             $tenants = CampaignLocation::select('merchants.merchant_id',
@@ -2411,8 +2415,8 @@ class TenantAPIController extends ControllerAPI
             }
 
             // filter by mall name and store name
-            if (!empty($parent) && $account_name !== 'Mall') {
-                $tenants->where('merchants.parent_id', '=', $parent->merchant_id);
+            if (!empty($parent_ids) && $account_name !== 'Mall') {
+                $tenants->whereIn('merchants.parent_id', $parent_ids);
             }
 
             // filter by mall name for account type mall (PMP account setup admin portal)
