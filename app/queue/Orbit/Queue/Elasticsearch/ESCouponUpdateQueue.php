@@ -245,7 +245,7 @@ class ESCouponUpdateQueue
             }
 
             $productTags = array();
-            foreach ($news->product_tags as $product_tag) {
+            foreach ($coupon->product_tags as $product_tag) {
                 $productTags[] = $product_tag->product_tag;
             }
 

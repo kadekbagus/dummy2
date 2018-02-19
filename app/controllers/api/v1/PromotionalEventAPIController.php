@@ -743,7 +743,7 @@ class PromotionalEventAPIController extends ControllerAPI
             // this is for send email to marketing, before and after list
             $beforeUpdatedPromotionalEvent = News::selectRaw("{$prefix}news.*,
                                                         DATE_FORMAT({$prefix}news.end_date, '%d/%m/%Y %H:%i') as end_date")
-                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'product_tag', 'campaign_status')
+                                    ->with('translations.language', 'translations.media', 'ages.ageRange', 'genders', 'keywords', 'product_tags', 'campaign_status')
                                     ->excludeDeleted()
                                     ->where('news_id', $promotional_event_id)
                                     ->first();
@@ -1606,6 +1606,10 @@ class PromotionalEventAPIController extends ControllerAPI
                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.order ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                    WHERE om.merchant_id = {$prefix}news.mall_id)
+                                THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order"),
                             DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (SELECT COUNT(nm.news_merchant_id) FROM {$prefix}news_merchant as nm WHERE nm.object_type != 'mall' and nm.news_id = {$prefix}news.news_id)) AS estimated"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
@@ -1863,7 +1867,7 @@ class PromotionalEventAPIController extends ControllerAPI
                     'begin_date'             => 'news.begin_date',
                     'end_date'               => 'news.end_date',
                     'updated_at'             => 'news.updated_at',
-                    'status'                 => 'campaign_status'
+                    'status'                 => 'campaign_status_order'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -1879,7 +1883,12 @@ class PromotionalEventAPIController extends ControllerAPI
 
             //with name
             if ($sortBy !== 'news_name') {
-                $promotionalevent->orderBy('news_name', 'asc');
+                if ($sortBy === 'campaign_status_order') {
+                    $promotionalevent->orderBy('news.updated_at', 'desc');
+                }
+                else {
+                    $promotionalevent->orderBy('news_name', 'asc');
+                }
             }
 
             // Return the instance of Query Builder

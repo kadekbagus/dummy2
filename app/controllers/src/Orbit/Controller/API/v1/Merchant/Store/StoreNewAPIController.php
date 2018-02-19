@@ -20,6 +20,8 @@ use ObjectBank;
 use ObjectContact;
 use ObjectFinancialDetail;
 use MerchantStorePaymentProvider;
+use ProductTag;
+use BaseStoreProductTag;
 
 class StoreNewAPIController extends ControllerAPI
 {

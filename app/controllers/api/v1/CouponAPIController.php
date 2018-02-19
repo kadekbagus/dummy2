@@ -11,7 +11,6 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
-use \Queue;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\Payment\Payment as PaymentClient;
 
@@ -913,7 +912,7 @@ class CouponAPIController extends ControllerAPI
                     $newProductTagObject = new ProductTagObject();
                     $newProductTagObject->product_tag_id = $product_tag_id;
                     $newProductTagObject->object_id = $newcoupon->promotion_id;
-                    $newProductTagObject->object_type = $object_type;
+                    $newProductTagObject->object_type = 'coupon';
                     $newProductTagObject->save();
                 }
             }
@@ -2895,6 +2894,13 @@ class CouponAPIController extends ControllerAPI
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
                                                                                 WHERE om.merchant_id = {$table_prefix}promotions.merchant_id)
                     THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END) END AS campaign_status,
+
+                    CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.order ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                                FROM {$table_prefix}merchants om
+                                                                                LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                                WHERE om.merchant_id = {$table_prefix}promotions.merchant_id)
+                    THEN 5 ELSE {$table_prefix}campaign_status.order END) END AS campaign_status_order,
+
                     {$table_prefix}campaign_status.order,
                     CASE rule_type
                         WHEN 'cart_discount_by_percentage' THEN 'percentage'
@@ -3387,13 +3393,13 @@ class CouponAPIController extends ControllerAPI
                     'end_date'               => 'promotions.end_date',
                     'updated_at'             => 'promotions.updated_at',
                     'is_permanent'           => 'promotions.is_permanent',
-                    'status'                 => 'campaign_status',
+                    'status'                 => 'campaign_status_order',
                     'rule_type'              => 'rule_type',
                     'total_location'         => 'total_location',
                     'tenant_name'            => 'tenant_name',
                     'is_auto_issuance'       => 'is_auto_issue_on_signup',
                     'display_discount_value' => 'display_discount_value',
-                    'coupon_status'          => 'coupon_status'
+                    'coupon_status'          => 'coupon_status',
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -3410,7 +3416,12 @@ class CouponAPIController extends ControllerAPI
 
             //with name
             if ($sortBy !== 'coupon_translations.promotion_name') {
-                $coupons->orderBy('coupon_translations.promotion_name', 'asc');
+                if ($sortBy === 'campaign_status_order') {
+                    $coupons->orderBy('promotions.updated_at', 'desc');
+                }
+                else {
+                    $coupons->orderBy('coupon_translations.promotion_name', 'asc');
+                }
             }
 
             $totalCoupons = RecordCounter::create($_coupons)->count();
