@@ -667,14 +667,6 @@ class PromotionalEventAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.promotionalevent.postupdatepromotionalevent.before.authz', array($this, $user));
 
-/*
-            if (! ACL::create($user)->isAllowed('update_promotionalevent')) {
-                Event::fire('orbit.promotionalevent.postupdatepromotionalevent.authz.notallowed', array($this, $user));
-                $updatePromotionalEventLang = Lang::get('validation.orbit.actionlist.update_promotionalevent');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updatePromotionalEventLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->promotionalEventModifiyRoles;
@@ -768,7 +760,6 @@ class PromotionalEventAPIController extends ControllerAPI
             }
             Event::fire('orbit.promotionalevent.postupdatepromotionalevent.after.validation', array($this, $validator));
 
-            $retailernew = array();
             $mallid = array();
             foreach ($retailer_ids as $retailer_id) {
                 $data = @json_decode($retailer_id);
@@ -778,8 +769,6 @@ class PromotionalEventAPIController extends ControllerAPI
                 if(! in_array($mall_id, $mallid)) {
                     $mallid[] = $mall_id;
                 }
-
-                $retailernew[] = $tenant_id;
             }
 
             $prefix = DB::getTablePrefix();

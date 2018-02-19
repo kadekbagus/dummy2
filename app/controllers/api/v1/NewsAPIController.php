@@ -619,15 +619,6 @@ class NewsAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.news.postupdatenews.before.authz', array($this, $user));
 
-/*
-            if (! ACL::create($user)->isAllowed('update_news')) {
-                Event::fire('orbit.news.postupdatenews.authz.notallowed', array($this, $user));
-                $updateNewsLang = Lang::get('validation.orbit.actionlist.update_news');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateNewsLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
-            // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->newsModifiyRoles;
             if (! in_array( strtolower($role->role_name), $validRoles)) {
@@ -715,18 +706,14 @@ class NewsAPIController extends ControllerAPI
             }
             Event::fire('orbit.news.postupdatenews.after.validation', array($this, $validator));
 
-            $retailernew = array();
             $mallid = array();
             foreach ($retailer_ids as $retailer_id) {
                 $data = @json_decode($retailer_id);
-                $tenant_id = $data->tenant_id;
                 $mall_id = $data->mall_id;
 
                 if(! in_array($mall_id, $mallid)) {
                     $mallid[] = $mall_id;
                 }
-
-                $retailernew[] = $tenant_id;
             }
 
             $prefix = DB::getTablePrefix();
