@@ -56,12 +56,14 @@ class DataSynchronizationAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
+            $queueName = Config::get('queue.connections.store_sync.queue', 'store_sync');
+
             // queue for data synchronization
             Queue::push('Orbit\\Queue\\StoreSynchronization', [
                 'sync_type' => $syncType,
                 'sync_data' => $syncData,
                 'user' => $user->user_id
-            ], 'store_sync');
+            ], $queueName);
 
         } catch (ACLForbiddenException $e) {
 
