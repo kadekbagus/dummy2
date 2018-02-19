@@ -1,18 +1,29 @@
 <?php
 
-use Search as OrbitESSearch;
+use Orbit\Helper\Elasticsearch\Search;
+
+use Mall;
+use Country;
 
 /**
 * Implementation of ES search for Stores...
 */
-class StoreSearch extends OrbitESSearch
+class StoreSearch extends Search
 {
+	function __construct($ESConfig = [])
+	{
+		parent::__construct($ESConfig);
+
+		$this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['stores']['index']);
+		$this->setType($this->esConfig['indices']['stores']['type']);
+	}
+	
 	/**
-	 * Listed Stores should have at least 1 tenant.
+	 * Make sure Stores has at least 1 tenant.
 	 * 
 	 * @return [type] [description]
 	 */
-	public function filterMinimumTenants()
+	public function hasAtLeastOneTenant()
 	{
 		$this->must([
             'range' => [
@@ -38,7 +49,8 @@ class StoreSearch extends OrbitESSearch
 					'match' => [
 						'tenant_detail.mall_id' => $mallId
 					]
-				]
+				],
+				'inner_hits' => new \stdClass(),
 			]
 		]);
 	}
@@ -91,16 +103,19 @@ class StoreSearch extends OrbitESSearch
 	 * @param  string $keyword [description]
 	 * @return [type]          [description]
 	 */
-	public function filterByKeyword($keyword = '', $options = [])
+	public function filterByKeyword($keyword = '')
 	{
-		$priorityName = isset($options['priority']['name']) ? 
-			$options['priority']['name'] : '';
+		$priorityName = isset($this->esConfig['priority']['store']['name']) ? 
+			$this->esConfig['priority']['store']['name'] : '';
 
-		$priorityDescription = isset($options['priority']['description']) ? 
-			$options['priority']['description'] : '';
+		$priorityDescription = isset($this->esConfig['priority']['store']['description']) ? 
+			$this->esConfig['priority']['store']['description'] : '';
 
-		$priorityKeywords = isset($options['priority']['keywords']) ? 
-			$options['priority']['keywords'] : '';
+		$priorityKeywords = isset($this->esConfig['priority']['store']['keywords']) ? 
+			$this->esConfig['priority']['store']['keywords'] : '';
+
+		$priorityProductTags = isset($this->esConfig['priority']['store']['product_tags']) ? 
+			$this->esConfig['priority']['store']['product_tags'] : '';
 
 		$this->must([
 			'bool' => [
@@ -111,7 +126,8 @@ class StoreSearch extends OrbitESSearch
 							'fields' => [
 								'lowercase_name' . $priorityName, 
 								'description' . $priorityDescription, 
-								'keyword' . $priorityKeywords
+								'keyword' . $priorityKeywords,
+								'product_tags' . $priorityProductTags,
 							]
 						]
 					],
@@ -129,17 +145,17 @@ class StoreSearch extends OrbitESSearch
 			]
 		]);
 
-		$priorityCountry = isset($options['priority']['country']) ?
-			$options['priority']['country'] : '';
+		$priorityCountry = isset($this->esConfig['store']['priority']['country']) ?
+			$this->esConfig['store']['priority']['country'] : '';
 
-		$priorityProvince = isset($options['priority']['province']) ?
-			$options['priority']['province'] : '';
+		$priorityProvince = isset($this->esConfig['store']['priority']['province']) ?
+			$this->esConfig['store']['priority']['province'] : '';
 
-		$priorityCity = isset($options['priority']['city']) ?
-			$options['priority']['city'] : '';
+		$priorityCity = isset($this->esConfig['store']['priority']['city']) ?
+			$this->esConfig['store']['priority']['city'] : '';
 
-		$priorityMallName = isset($options['priority']['mall_name']) ?
-			$options['priority']['mall_name'] : '';
+		$priorityMallName = isset($this->esConfig['store']['priority']['mall_name']) ?
+			$this->esConfig['store']['priority']['mall_name'] : '';
 
 		$this->should([
 			'nested' => [
@@ -175,33 +191,35 @@ class StoreSearch extends OrbitESSearch
 						'match' => [
 							'tenant_detail.country.raw' => $area['country']
 						]
-					]
+					],
+					'inner_hits' => [
+						'name' => 'country_city_hits'
+					],
 				]
 			]);
 		}
 
 		if (isset($area['cities'])) {
 
-			$citiesQuery = [
-				'bool' => [
-					'should' => []
-				]
-			];
+			if (count($area['cities']) > 0) {
 
-			foreach($area['cities'] as $city) {
-				$citiesQuery['bool']['should'][] = [
-					'nested' => [
-						'path' => 'tenant_detail',
-						'query' => [
-							'match' => [
-								'tenant_detail.city.raw' => $city
+				$citiesQuery['bool']['should'] = [];
+
+				foreach($area['cities'] as $city) {
+					$citiesQuery['bool']['should'][] = [
+						'nested' => [
+							'path' => 'tenant_detail',
+							'query' => [
+								'match' => [
+									'tenant_detail.city.raw' => $city
+								]
 							]
 						]
-					]
-				];
-			}
+					];
+				}
 
-			$this->must($citiesQuery);
+				$this->must($citiesQuery);
+			}
 		}
 	}
 
@@ -220,7 +238,13 @@ class StoreSearch extends OrbitESSearch
 		]);
 	}
 
-	public function excludeAdvertStores($excludedId = [])
+	/**
+	 * Exclude some stores from the result.
+	 * 
+	 * @param  array  $excludedId [description]
+	 * @return [type]             [description]
+	 */
+	public function excludeStores($excludedId = [])
 	{
 		$this->mustNot([
 			'terms' => [
@@ -230,14 +254,18 @@ class StoreSearch extends OrbitESSearch
 	}
 
 	/**
-	 * Sort by...
+	 * Exclude the partner competitors from the result.
 	 * 
-	 * @param  array  $sortParams [description]
-	 * @return [type]             [description]
+	 * @param  array  $competitors [description]
+	 * @return [type]              [description]
 	 */
-	public function sortBy($sortParams = [])
+	public function excludePartnerCompetitors($competitors = [])
 	{
-		$this->sort($sortParams);
+		$this->mustNot([
+            'terms' => [
+                'partner_ids' => $partnerIds
+            ]
+        ]);
 	}
 
 	/**
@@ -250,6 +278,12 @@ class StoreSearch extends OrbitESSearch
 		$this->sort(['lowercase_name' => ['order' => 'asc']]);
 	}
 
+	/**
+	 * Sort store by rating.
+	 * 
+	 * @param  string $sortingScript [description]
+	 * @return [type]                [description]
+	 */
 	public function sortByRating($sortingScript = '')
 	{
 		$this->sort([
@@ -261,6 +295,12 @@ class StoreSearch extends OrbitESSearch
 		]);
 	}
 
+	/**
+	 * Sort store by favorite.
+	 * 
+	 * @param  string $sortingScript [description]
+	 * @return [type]                [description]
+	 */
 	public function sortByFavorite($sortingScript = '')
 	{
 		$this->sort([
@@ -275,8 +315,130 @@ class StoreSearch extends OrbitESSearch
 		$this->sortByName();
 	}
 
-	public function sortByRelevance()
+	public function addReviewFollowScript($params = [])
 	{
-		$this->sort(['_score' => ['order' => 'desc']]);
+		// calculate rating and review based on location/mall
+        ///// RATING AND FOLLOW SCRIPT //////
+        $scriptFieldRating = "double counter = 0; double rating = 0;";
+        $scriptFieldReview = "double review = 0;";
+        $scriptFieldFollow = "int follow = 0;";
+
+        if (! empty($params['mallId'])) {
+            // count total review and average rating for store inside mall
+            $scriptFieldRating = $scriptFieldRating . 
+                " if (doc.containsKey('mall_rating.rating_" . $params['mallId'] . "')) { 
+                    if (! doc['mall_rating.rating_" . $params['mallId'] . "'].empty) { 
+                        counter = counter + doc['mall_rating.review_" . $params['mallId'] . "'].value; 
+                        rating = rating + (doc['mall_rating.rating_" . $params['mallId'] . "'].value * doc['mall_rating.review_" . $params['mallId'] . "'].value);
+                    }
+                };";
+
+            $scriptFieldReview = $scriptFieldReview . 
+                " if (doc.containsKey('mall_rating.review_" . $params['mallId'] . "')) { 
+                    if (! doc['mall_rating.review_" . $params['mallId'] . "'].empty) { 
+                        review = review + doc['mall_rating.review_" . $params['mallId'] . "'].value;
+                    }
+                }; ";
+
+        } else if (! empty($params['cityFilters'])) {
+            // count total review and average rating based on city filter
+            $countryId = $params['countryData']->country_id;
+            foreach ((array) $params['cityFilters'] as $cityFilter) {
+                $scriptFieldRating = $scriptFieldRating . 
+                    " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { 
+                        if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { 
+                            counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; 
+                            rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);
+                        }
+                    }; ";
+
+                $scriptFieldReview = $scriptFieldReview . 
+                    " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { 
+                        if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { 
+                            review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;
+                        }
+                    }; ";
+            }
+
+        } else if (! empty($params['countryFilter'])) {
+            // count total review and average rating based on country filter
+            $countryId = $params['countryData']->country_id;
+            $scriptFieldRating = $scriptFieldRating . 
+                " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { 
+                    if (! doc['location_rating.rating_" . $countryId . "'].empty) { 
+                        counter = counter + doc['location_rating.review_" . $countryId . "'].value; 
+                        rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);
+                    }
+                }; ";
+
+            $scriptFieldReview = $scriptFieldReview . 
+                " if (doc.containsKey('location_rating.review_" . $countryId . "')) { 
+                    if (! doc['location_rating.review_" . $countryId . "'].empty) { 
+                        review = review + doc['location_rating.review_" . $countryId . "'].value;
+                    }
+                }; ";
+
+        } else {
+            // count total review and average rating based in all location
+            $mallCountry = Mall::groupBy('country')->lists('country');
+            $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
+
+            foreach ($countries as $country) {
+                $countryId = $country->country_id;
+                $scriptFieldRating = $scriptFieldRating . 
+                    " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { 
+                        if (! doc['location_rating.rating_" . $countryId . "'].empty) { 
+                            counter = counter + doc['location_rating.review_" . $countryId . "'].value; 
+                            rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);
+                        }
+                    }; ";
+
+                $scriptFieldReview = $scriptFieldReview . " 
+                    if (doc.containsKey('location_rating.review_" . $countryId . "')) { 
+                        if (! doc['location_rating.review_" . $countryId . "'].empty) { 
+                            review = review + doc['location_rating.review_" . $countryId . "'].value;
+                        }
+                    }; ";
+            }
+        }
+
+        $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
+        $scriptFieldRating = str_replace("\n", '', $scriptFieldRating);
+
+        $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
+        $scriptFieldReview = str_replace("\n", '', $scriptFieldReview);
+
+        $role = $params['user']->role->role_name;
+        $objectFollow = [];
+        if (strtolower($role) === 'consumer') {
+            $objectFollow = $this->getUserFollow($params['user'], $params['mallId'], $params['cityFilters']); // return array of base_merchant_id
+
+            if (! empty($objectFollow)) {
+                if ($sort_by === 'followed') {
+                    foreach ($objectFollow as $followId) {
+                        $scriptFieldFollow = $scriptFieldFollow . 
+                            " if (doc.containsKey('base_merchant_id')) { 
+                                if (! doc['base_merchant_id'].empty) { 
+                                    if (doc['base_merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "') { 
+                                        follow = 1; 
+                                    }
+                                }
+                            };";
+                    }
+
+                    $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
+                    $scriptFieldFollow = str_replace("\n", '', $scriptFieldFollow);
+                }
+            }
+        }
+
+        // Add script fields into request body...
+        $this->scriptFields([
+            'average_rating' => $scriptFieldRating,
+            'total_review' => $scriptFieldReview,
+            'is_follow' => $scriptFieldFollow
+        ]);
+
+        //////// END RATING & FOLLOW SCRIPTS /////
 	}
 }

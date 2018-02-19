@@ -40,7 +40,7 @@ use StoreSearch;
 use AdvertStoreSearch;
 
 /**
-* 
+* @todo  add search result mapper class.
 */
 class StoreListNewAPIController extends PubControllerAPI
 {
@@ -167,20 +167,16 @@ class StoreListNewAPIController extends PubControllerAPI
                 $esTake = 50;
             }
 
-            // New Search
-            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $esStoreIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index');
-            $storeSearch = new StoreSearch(Config::get('orbit.elasticsearch'), [
-                'index' => $esStoreIndex,
-                'type' => Config::get('orbit.elasticsearch.indices.stores.type')
-            ]);
+            // Get ES config only once, avoid calling Config::get() everytime. :)
+            $esConfig = Config::get('orbit.elasticsearch');
 
-            $storeSearch->setPaginationParams([
-                'from' => $skip,
-                'size' => $take
-            ]);
+            // Create the search...
+            $esStoreIndex = $esConfig['indices_prefix'] . $esConfig['indices']['stores']['index'];
+            $storeSearch = new StoreSearch($esConfig);
 
-            $storeSearch->filterMinimumTenants();
+            $storeSearch->setPaginationParams(['from' => $skip, 'size' => $take]);
+
+            $storeSearch->hasAtLeastOneTenant();
 
             $countryData = null;
             if (! empty($mallId)) {
@@ -236,69 +232,51 @@ class StoreListNewAPIController extends PubControllerAPI
 
             $keyword = OrbitInput::get('keyword');
             if (! empty($keyword)) {
-                $options = [
-                    'priority' => [
-                        'name' => '^6',
-                        'description' => '^4',
-                        'keywords' => '^3',
-                        'country' => '^2',
-                        'province' => '^2',
-                        'city' => '^3',
-                        'mall_name' => '^4',
-                    ]
-                ];
-
-                $storeSearch->filterByKeyword($keyword, $options);
+                $storeSearch->filterByKeyword($keyword);
             }
 
             // Filter by partner
             // Check for competitor first.
-            // OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey) {
-            //     $cacheKey['partner_id'] = $partnerId;
-            //     $partnerFilter = '';
-            //     if (! empty($partnerId)) {
-            //         $searchFlag = $searchFlag || TRUE;
-            //         $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
-            //                                                     $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-            //                                                          ->where('affected_group_names.group_type', '=', 'tenant');
-            //                                                 })
-            //                                                 ->where('partner_id', $partnerId)
-            //                                                 ->first();
+            OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey, &$storeSearch) {
+                $cacheKey['partner_id'] = $partnerId;
+                if (! empty($partnerId)) {
+                    $searchFlag = $searchFlag || TRUE;
+                    $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
+                                                                $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+                                                                     ->where('affected_group_names.group_type', '=', 'tenant');
+                                                            })
+                                                            ->where('partner_id', $partnerId)
+                                                            ->first();
 
-            //         if (is_object($partnerAffected)) {
-            //             $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
-            //             $partnerFilter = array('query' => array('match' => array('partner_ids' => $partnerId)));
+                    if (is_object($partnerAffected)) {
+                        $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
+                        // $partnerFilter = array('query' => array('match' => array('partner_ids' => $partnerId)));
 
-            //             if (in_array($partnerId, $exception)) {
-            //                 $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
-            //                 $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
-            //             }
-            //             $jsonQuery['query']['bool']['filter'][]= $partnerFilter;
-            //         }
-            //     }
-            // });
-
-            if (! empty($partnerId)) {
-                $storeSearch->filterByPartner($partnerId, $competitors);
-            }
+                        if (in_array($partnerId, $exception)) {
+                            $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
+                            // $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
+                            
+                            $storeSearch->excludePartnerCompetitors($partnerIds);
+                        }
+                        else {
+                            $storeSearch->filterByPartner($partnerId);
+                        }
+                    }
+                }
+            });
 
             // Get Advert_Store...
-            $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $esAdvertStoreIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index');
-            $advertStoreSearch = new AdvertStoreSearch(Config::get('orbit.elasticsearch'), [
-                'index' => $esAdvertStoreIndex,
-                'type' => Config::get('orbit.elasticsearch.indices.advert_stores.type')
-            ]);
-            $advertStoreSearch->setPaginationParams([
-                'from' => 0,
-                'size' => 100,
-            ]);
+            $esAdvertStoreIndex = $esConfig['indices_prefix'] . $esConfig['indices']['advert_stores']['index'];
+            $advertStoreSearch = new AdvertStoreSearch($esConfig);
 
+            $advertStoreSearch->setPaginationParams(['from' => 0, 'size' => 100]);
+
+            $locationId = ! empty($mallId) ? $mallId : 0;
             $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-            $advertStoreSearch->filterBase(compact('dateTimeEs', 'mallId', 'advertType'));
+            $advertStoreSearch->filterBase(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
 
-            $advertStoreSearchResult = $advertStoreSearch->get();
+            $advertStoreSearchResult = $advertStoreSearch->getResult();
 
             if ($advertStoreSearchResult['hits']['total'] > 0) {
                 $esStoreIndex .= ',' . $esAdvertStoreIndex;
@@ -332,9 +310,8 @@ class StoreListNewAPIController extends PubControllerAPI
 
                 // exclude_id useful for eliminate duplicate store in the list, because after this, we query to advert_stores and store index together
                 if (count($excludeId) > 0) {
-                    $storeSearch->excludeAdvertStores($excludeId);
+                    $storeSearch->excludeStores($excludeId);
                 }
-
 
                 // If there any advert_stores in the list, then sort by it.
                 if (count($withPreferred) > 0) {
@@ -357,138 +334,21 @@ class StoreListNewAPIController extends PubControllerAPI
                     }
 
                     $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
-                    $advertStoreOrdering = array('_script' => array('script' => $sortPageScript, 'type' => 'string', 'order' => 'desc'));
+                    $advertStoreOrdering = [
+                        '_script' => [
+                            'script' => $sortPageScript, 
+                            'type' => 'string', 
+                            'order' => 'desc'
+                        ]
+                    ];
 
                     $storeSearch->sortBy($advertStoreOrdering);
                 }
             }
 
-
-            // calculate rating and review based on location/mall
-            ///// RATING AND FOLLOW SCRIPT //////
-            $scriptFieldRating = "double counter = 0; double rating = 0;";
-            $scriptFieldReview = "double review = 0;";
-            $scriptFieldFollow = "int follow = 0;";
-
-            if (! empty($mallId)) {
-                // count total review and average rating for store inside mall
-                $scriptFieldRating = $scriptFieldRating . 
-                    " if (doc.containsKey('mall_rating.rating_" . $mallId . "')) { 
-                        if (! doc['mall_rating.rating_" . $mallId . "'].empty) { 
-                            counter = counter + doc['mall_rating.review_" . $mallId . "'].value; 
-                            rating = rating + (doc['mall_rating.rating_" . $mallId . "'].value * doc['mall_rating.review_" . $mallId . "'].value);
-                        }
-                    };";
-
-                $scriptFieldReview = $scriptFieldReview . 
-                    " if (doc.containsKey('mall_rating.review_" . $mallId . "')) { 
-                        if (! doc['mall_rating.review_" . $mallId . "'].empty) { 
-                            review = review + doc['mall_rating.review_" . $mallId . "'].value;
-                        }
-                    }; ";
-
-            } else if (! empty($cityFilters)) {
-                // count total review and average rating based on city filter
-                $countryId = $countryData->country_id;
-                foreach ((array) $cityFilters as $cityFilter) {
-                    $scriptFieldRating = $scriptFieldRating . 
-                        " if (doc.containsKey('location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { 
-                            if (! doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { 
-                                counter = counter + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value; 
-                                rating = rating + (doc['location_rating.rating_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value * doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value);
-                            }
-                        }; ";
-
-                    $scriptFieldReview = $scriptFieldReview . 
-                        " if (doc.containsKey('location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "')) { 
-                            if (! doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].empty) { 
-                                review = review + doc['location_rating.review_" . $countryId . "_" . str_replace(" ", "_", trim(strtolower($cityFilter), " ")) . "'].value;
-                            }
-                        }; ";
-                }
-
-            } else if (! empty($countryFilter)) {
-                // count total review and average rating based on country filter
-                $countryId = $countryData->country_id;
-                $scriptFieldRating = $scriptFieldRating . 
-                    " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { 
-                        if (! doc['location_rating.rating_" . $countryId . "'].empty) { 
-                            counter = counter + doc['location_rating.review_" . $countryId . "'].value; 
-                            rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);
-                        }
-                    }; ";
-
-                $scriptFieldReview = $scriptFieldReview . 
-                    " if (doc.containsKey('location_rating.review_" . $countryId . "')) { 
-                        if (! doc['location_rating.review_" . $countryId . "'].empty) { 
-                            review = review + doc['location_rating.review_" . $countryId . "'].value;
-                        }
-                    }; ";
-
-            } else {
-                // count total review and average rating based in all location
-                $mallCountry = Mall::groupBy('country')->lists('country');
-                $countries = Country::select('country_id')->whereIn('name', $mallCountry)->get();
-
-                foreach ($countries as $country) {
-                    $countryId = $country->country_id;
-                    $scriptFieldRating = $scriptFieldRating . 
-                        " if (doc.containsKey('location_rating.rating_" . $countryId . "')) { 
-                            if (! doc['location_rating.rating_" . $countryId . "'].empty) { 
-                                counter = counter + doc['location_rating.review_" . $countryId . "'].value; 
-                                rating = rating + (doc['location_rating.rating_" . $countryId . "'].value * doc['location_rating.review_" . $countryId . "'].value);
-                            }
-                        }; ";
-
-                    $scriptFieldReview = $scriptFieldReview . " 
-                        if (doc.containsKey('location_rating.review_" . $countryId . "')) { 
-                            if (! doc['location_rating.review_" . $countryId . "'].empty) { 
-                                review = review + doc['location_rating.review_" . $countryId . "'].value;
-                            }
-                        }; ";
-                }
-            }
-
-            $scriptFieldRating = $scriptFieldRating . " if(counter == 0 || rating == 0) {return 0;} else {return rating/counter;}; ";
-            $scriptFieldRating = str_replace("\n", '', $scriptFieldRating);
-
-            $scriptFieldReview = $scriptFieldReview . " if(review == 0) {return 0;} else {return review;}; ";
-            $scriptFieldReview = str_replace("\n", '', $scriptFieldReview);
-
-            $role = $user->role->role_name;
-            $objectFollow = [];
-            if (strtolower($role) === 'consumer') {
-                $objectFollow = $this->getUserFollow($user, $mallId, $cityFilters); // return array of base_merchant_id
-
-                if (! empty($objectFollow)) {
-                    if ($sort_by === 'followed') {
-                        foreach ($objectFollow as $followId) {
-                            $scriptFieldFollow = $scriptFieldFollow . 
-                                " if (doc.containsKey('base_merchant_id')) { 
-                                    if (! doc['base_merchant_id'].empty) { 
-                                        if (doc['base_merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "') { 
-                                            follow = 1; 
-                                        }
-                                    }
-                                };";
-                        }
-
-                        $scriptFieldFollow = $scriptFieldFollow . " if(follow == 0) {return 0;} else {return follow;}; ";
-                        $scriptFieldFollow = str_replace("\n", '', $scriptFieldFollow);
-                    }
-                }
-            }
-
-            // Add script fields into request body...
-            $storeSearch->scriptFields([
-                'average_rating' => $scriptFieldRating,
-                'total_review' => $scriptFieldReview,
-                'is_follow' => $scriptFieldFollow
-            ]);
-
-            //////// RATING FOLLOW SCRIPTS /////
-            
-            // return \Response::json($storeSearch->getRequestParam('body'));
+            $storeSearch->addReviewFollowScript(compact(
+                'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user'
+            ));
             
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
@@ -501,47 +361,33 @@ class StoreListNewAPIController extends PubControllerAPI
                     break;
                 case 'followed':
                     $storeSearch->sortByFavorite($scriptFieldFollow);
-                    $storeSearch->sortByRelevance();
                     break;
                 default:
                     $storeSearch->sortByRelevance();
                     break;
             }
 
-            // Reset index to stores and advert_stores.
             $storeSearch->setIndex($esStoreIndex);
-
-            return \Response::json($storeSearch->getRequestParam('body'));
-
-            $searchResult = $storeSearch->get();
-
-            // return \Response::json($searchResult['hits']);
-
-            // Map the result
-            $data = new stdClass;
-            foreach($searchResult['hits'] as $result) {
-
-            }
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() use ($client, &$esParam) {
-                    return $client->search($esParam);
+                $response = $recordCache->get($serializedCacheKey, function() use ($storeSearch) {
+                    return $storeSearch->getResult();
                 });
                 $recordCache->put($serializedCacheKey, $response);
             } else {
-                $response = $client->search($esParam);
+                $response = $storeSearch->getResult();
             }
 
             $records = $response['hits'];
 
-            $listOfRec = array();
+            $listOfRec = [];
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
             $innerHitsCount = 0;
 
             foreach ($records['hits'] as $record) {
-                $data = array();
+                $data = [];
                 $localPath = '';
                 $cdnPath = '';
                 $default_lang = '';
@@ -662,7 +508,7 @@ class StoreListNewAPIController extends PubControllerAPI
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
-            $data = new \stdclass();
+            $data = new \stdClass();
 
             $data->returned_records = count($listOfRec);
             $data->total_records = $records['total'];

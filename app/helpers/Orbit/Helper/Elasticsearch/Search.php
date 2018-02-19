@@ -1,12 +1,15 @@
 <?php 
 
+namespace Orbit\Helper\Elasticsearch;
+
 use Elasticsearch\ClientBuilder;
 
 /**
 * Base ES Search helper...
-* 
+*
+* @todo  make it more generic like laravel's eloquent.
 */
-abstract class Search
+class Search
 {
 	// ES Client
 	protected $client = null;
@@ -14,33 +17,21 @@ abstract class Search
 	// ES Params that will be sent to ES Server..
 	protected $searchParam = [];
 
-	function __construct($ESConfig = [], $collectionsParams = [], $searchBodyParams = [])
+	// ES connection config
+	protected $esConfig = [];
+
+	function __construct($ESConfig = [])
 	{
+		$this->esConfig = $ESConfig;
+
 		$this->client = new ClientBuilder;
-		$this->client = $this->client->create()
-			->setHosts($ESConfig['hosts'])
-			->build();
+		$this->client = $this->client->create()->setHosts($this->esConfig['hosts'])->build();
 
-		$this->searchParam = $this->initBaseSearchParam();
-
-		if (! empty($collectionsParams)) {
-			$this->setIndex($collectionsParams['index']);
-			$this->setType($collectionsParams['type']);
-		}
+		$this->setDefaultSearchParam();
 	}
 
 	/**
-	 * Set ES Host that will be used.
-	 * 
-	 * @param [type] $host [description]
-	 */
-	public function setHost($host)
-	{
-		$this->client->setHosts($host);
-	}
-
-	/**
-	 * Set the Indicies.
+	 * Set the Indices.
 	 * 
 	 * @param string $index [description]
 	 */
@@ -50,7 +41,7 @@ abstract class Search
 	}
 
 	/**
-	 * Get the indicies.
+	 * Get the indices.
 	 * 
 	 * @return [type] [description]
 	 */
@@ -60,7 +51,7 @@ abstract class Search
 	}
 
 	/**
-	 * Set the type of the Indicies.
+	 * Set the type of the Indices.
 	 * 
 	 * @param string $type [description]
 	 */
@@ -70,7 +61,7 @@ abstract class Search
 	}
 
 	/**
-	 * Get full param that will be sent to ES Server.
+	 * Get (full or partial) param that will be sent to ES Server.
 	 * 
 	 * @return [type] [description]
 	 */
@@ -86,6 +77,11 @@ abstract class Search
 		} else if (count($keys) == 2) {
 			return $this->searchParam[$keys[0]][$keys[1]];
 		}
+	}
+
+	public function getESClient()
+	{
+		return $this->client;
 	}
 
 	/**
@@ -177,17 +173,19 @@ abstract class Search
 	 * 
 	 * @return [type] [description]
 	 */
-	public function get()
+	public function getResult($resultMapperClass = '')
 	{
 		$this->searchParam['body'] = json_encode($this->searchParam['body']);
 
-		return $this->client->search($this->searchParam);
+		// if ($resultMapperClass == '')
+			return $this->client->search($this->searchParam);
+		// else
+			// return new $resultMapperClass($this->client->search($this->searchParam))->map();
 	}
 
 	/// ----------------------------------------------------------------------
 	// Bellow are some common methods that will be used by the child classes.
 	// Let the child classes take care of the implementation/override them.
-	// Why no interface or abstract? Because NOT all the the function need to be implemented.
 	// ----------------------------------------------------------------------
 	
 	/**
@@ -257,13 +255,13 @@ abstract class Search
 	}
 
 	/**
-	 * Base search parameter that will be sent to ES server.
+	 * Init default search params.
 	 * 
 	 * @return [type] [description]
 	 */
-	private function initBaseSearchParam()
+	public function setDefaultSearchParam()
 	{
-		return [
+		$this->searchParam = [
 			'index' => '',
 			'type' => '',
 			'body' => [
@@ -279,7 +277,7 @@ abstract class Search
 						],
 						'aggs' => [
 							'top_reverse_nested' => [
-								'reverse_nested' => new stdClass()
+								'reverse_nested' => new \stdClass()
 							]
 						]
 					],

@@ -1,12 +1,30 @@
 <?php
 
-use Search as OrbitESSearch;
+use Orbit\Helper\Elasticsearch\Search;
 
 /**
-* Implementation of ES search for Stores...
+* Implementation of ES search for Advert Stores...
 */
-class AdvertStoreSearch extends OrbitESSearch
+class AdvertStoreSearch extends Search
 {
+    function __construct($ESConfig = [])
+    {
+        parent::__construct($ESConfig);
+
+        $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['advert_stores']['index']);
+        $this->setType($this->esConfig['indices']['advert_stores']['type']);
+    }
+
+    /**
+     * Base filter of Advert Stores search.
+     * Basically it will filter by:
+     *     - start and end time by the given dateTime options.
+     *     - Mall ID (if set)
+     *     - advert type
+     * 
+     * @param  array  $options [description]
+     * @return [type]          [description]
+     */
 	public function filterBase($options = [])
 	{
 		$this->must([
@@ -35,7 +53,7 @@ class AdvertStoreSearch extends OrbitESSearch
                     ], 
                     [
                         'match' => [
-                            'advert_location_ids' => !empty($options['mallId']) ? $options['mallId'] : 0
+                            'advert_location_ids' => $options['locationId']
                         ]
                     ], 
                     [
@@ -44,18 +62,7 @@ class AdvertStoreSearch extends OrbitESSearch
                         ]
                     ]
                 ]
-            ] 
-
+            ]
         ]);
-	}
-	/**
-	 * Sort by...
-	 * 
-	 * @param  array  $sortParams [description]
-	 * @return [type]             [description]
-	 */
-	public function sortBy($sortParams = [])
-	{
-		$this->sort($sortParams);
 	}
 }
