@@ -2240,7 +2240,7 @@ class CouponAPIController extends ControllerAPI
                     // Insert new coupon retailer
                     $couponretailer = new CouponRetailer();
                     $couponretailer->retailer_id = $tenant_id;
-                    $couponretailer->promotion_id = $newcoupon->promotion_id;
+                    $couponretailer->promotion_id = $promotion_id;
                     $couponretailer->object_type = $isMall;
                     $couponretailer->save();
                 }
