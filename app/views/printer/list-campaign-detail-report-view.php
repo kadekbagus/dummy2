@@ -127,17 +127,6 @@
             <td>:</td>
             <td><strong><?php echo number_format($totalPageViews, 0); ?></strong></td>
         </tr>
-        <tr>
-            <td>Total Pop Up Clicks</td>
-            <td>:</td>
-            <td><strong><?php echo number_format($totalPopupClicks, 0); ?></strong></td>
-        </tr>
-        <tr>
-            <td>Total Spending (IDR)</td>
-            <td>:</td>
-            <td><strong><?php echo 'N/A'; ?></strong></td>
-        </tr>
-
 
         <!-- Filtering -->
         <?php if ($startDate != '' && $endDate != ''){ ?>
@@ -186,8 +175,6 @@
             <th style="text-align:left;">Unique Sign In</th>
             <th style="text-align:left;">Campaign Page Views</th>
             <th style="text-align:left;">Campaign Page View Rate (%)</th>
-            <th style="text-align:left;">Pop Up Clicks</th>
-            <th style="text-align:left;">Spending (IDR)</th>
         </thead>
         <tbody>
             <?php $count = 1; while ($row = $statement->fetch(PDO::FETCH_OBJ)) : ?>
@@ -205,8 +192,6 @@
                     <td><?php echo number_format($row->unique_users); ?></td>
                     <td><?php echo number_format($row->campaign_pages_views); ?></td>
                     <td><?php echo round($row->campaign_pages_view_rate, 2); ?></td>
-                    <td><?php echo number_format($row->popup_clicks); ?></td>
-                    <td><?php echo 'N/A'; ?></td>
                 </tr>
             <?php endwhile ; ?>
         </tbody>

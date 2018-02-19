@@ -38,6 +38,8 @@ use MerchantStorePaymentProvider;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use Exception;
+use ProductTagObject;
+use BaseStoreProductTag;
 
 class StoreSynchronization
 {
@@ -455,6 +457,22 @@ class StoreSynchronization
                     }
                     if (! empty($keywords)) {
                         DB::table('keyword_object')->insert($keywords);
+                    }
+
+                    // save to product_tag
+                    $delete_product_tag = ProductTagObject::where('object_id', '=', $base_store_id)->delete(true);
+                    $base_product_tags = BaseStoreProductTag::where('base_store_id', '=', $base_store_id)->get();
+                    $productTags = array();
+                    foreach ($base_product_tags as $base_product_tag) {
+                        $productTags[] = [ 'product_tag_object_id' => ObjectID::make(),
+                                           'product_tag_id' => $base_product_tag->product_tag_id,
+                                           'object_type' => 'tenant',
+                                           'object_id' => $base_store_id,
+                                           "created_at" => date("Y-m-d H:i:s"),
+                                           "updated_at" => date("Y-m-d H:i:s")];
+                    }
+                    if (! empty($productTags)) {
+                        DB::table('product_tag_object')->insert($productTags);
                     }
 
                     // save to category

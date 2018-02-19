@@ -136,6 +136,13 @@ class Tenant extends Eloquent
                     ->groupBy('keyword');
     }
 
+    public function productTag()
+    {
+        return $this->hasMany('ProductTagObject', 'object_id', 'merchant_id')
+                    ->join('product_tags', 'product_tags.product_tag_id', '=', 'product_tag_object.product_tag_id')
+                    ->groupBy('product_tag');
+    }
+
     /**
      * Eagler load the count query. It is not very optimized but it works for now
      *

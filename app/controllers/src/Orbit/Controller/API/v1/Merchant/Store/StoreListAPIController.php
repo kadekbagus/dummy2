@@ -71,7 +71,7 @@ class StoreListAPIController extends ControllerAPI
                     'sortby'   => $sort_by,
                 ),
                 array(
-                    'sortby'   => 'in:merchant,location,created_date',
+                    'sortby'   => 'in:merchant,location,created_date,floor',
                 )
             );
 
@@ -163,7 +163,8 @@ class StoreListAPIController extends ControllerAPI
             $sortByMapping = array(
                 'merchant'      => 'base_merchants.name',
                 'location'      => 'merchants.name',
-                'created_date'  => 'base_merchants.created_at'
+                'created_date'  => 'base_merchants.created_at',
+                'floor'         => 'floor',
             );
             $sort_by = $sortByMapping[$sort_by];
 

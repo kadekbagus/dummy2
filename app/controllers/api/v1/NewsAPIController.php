@@ -96,14 +96,8 @@ class NewsAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $link_object_type = OrbitInput::post('link_object_type');
             $id_language_default = OrbitInput::post('id_language_default');
-            $is_all_gender = OrbitInput::post('is_all_gender');
-            $is_all_age = OrbitInput::post('is_all_age');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
-            $gender_ids = OrbitInput::post('gender_ids');
-            $gender_ids = (array) $gender_ids;
-            $age_range_ids = OrbitInput::post('age_range_ids');
-            $age_range_ids = (array) $age_range_ids;
             $keywords = OrbitInput::post('keywords');
             $keywords = (array) $keywords;
             $productTags = OrbitInput::post('product_tags');
@@ -133,8 +127,6 @@ class NewsAPIController extends ControllerAPI
                 'end_date'            => $end_date,
                 'link_object_type'    => $link_object_type,
                 'id_language_default' => $id_language_default,
-                'is_all_gender'       => $is_all_gender,
-                'is_all_age'          => $is_all_age,
                 'sticky_order'        => $sticky_order,
             ];
             $validator_validation = [
@@ -145,8 +137,6 @@ class NewsAPIController extends ControllerAPI
                 'begin_date'          => 'required|date|orbit.empty.hour_format',
                 'end_date'            => 'required|date|orbit.empty.hour_format',
                 'id_language_default' => 'required|orbit.empty.language_default',
-                'is_all_gender'       => 'required|orbit.empty.is_all_gender',
-                'is_all_age'          => 'required|orbit.empty.is_all_age',
                 'sticky_order'        => 'in:0,1',
             ];
             $validator_message = [
@@ -176,50 +166,6 @@ class NewsAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            //to do : add validation for tenant
-
-            foreach ($gender_ids as $gender_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'gender_id'   => $gender_id_check,
-                    ),
-                    array(
-                        'gender_id'   => 'orbit.empty.gender',
-                    )
-                );
-
-                Event::fire('orbit.news.postnewnews.before.gendervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.news.postnewnews.after.retailervalidation', array($this, $validator));
-            }
-
-            foreach ($age_range_ids as $age_range_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'age_range_id'   => $age_range_id_check,
-                    ),
-                    array(
-                        'age_range_id'   => 'orbit.empty.age',
-                    )
-                );
-
-                Event::fire('orbit.news.postnewnews.before.retailervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.news.postnewnews.after.retailervalidation', array($this, $validator));
-            }
-
             $sponsorIds = array();
             if ($is_sponsored === 'Y') {
                 $sponsorIds = @json_decode($sponsor_ids);
@@ -243,8 +189,8 @@ class NewsAPIController extends ControllerAPI
             $newnews->begin_date = $begin_date;
             $newnews->end_date = $end_date;
             $newnews->link_object_type = $link_object_type;
-            $newnews->is_all_age = $is_all_age;
-            $newnews->is_all_gender = $is_all_gender;
+            $newnews->is_all_age = 'Y';
+            $newnews->is_all_gender = 'Y';
             $newnews->created_by = $this->api->user->user_id;
             $newnews->sticky_order = $sticky_order;
             $newnews->is_exclusive = $is_exclusive;
@@ -256,7 +202,7 @@ class NewsAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
             }
 
-            Event::fire('orbit.news.postnewnews.before.save', array($this, $newnews));
+            // Event::fire('orbit.news.postnewnews.before.save', array($this, $newnews));
 
             $newnews->save();
 
@@ -310,31 +256,6 @@ class NewsAPIController extends ControllerAPI
             $usercampaign->campaign_type = 'news';
             $usercampaign->save();
 
-            // save CampaignAge
-            $newsAges = array();
-            foreach ($age_range_ids as $age_range) {
-                $newsAge = new CampaignAge();
-                $newsAge->campaign_type = $object_type;
-                $newsAge->campaign_id = $newnews->news_id;
-                $newsAge->age_range_id = $age_range;
-                $newsAge->save();
-                $newsAges[] = $newsAge;
-            }
-            $newnews->age = $newsAges;
-
-            // save CampaignGender
-            $newsGenders = array();
-            foreach ($gender_ids as $gender) {
-                $newsGender = new CampaignGender();
-                $newsGender->campaign_type = $object_type;
-                $newsGender->campaign_id = $newnews->news_id;
-                $newsGender->gender_value = $gender;
-                $newsGender->save();
-                $gender_name = null;
-                $newsGenders[] = $newsGender;
-            }
-            $newnews->gender = $newsGenders;
-
             // save Keyword
             $newsKeywords = array();
             foreach ($keywords as $keyword) {
@@ -383,26 +304,26 @@ class NewsAPIController extends ControllerAPI
                         ->first();
 
                     if (empty($existProductTag)) {
-                        $newKeyword = new ProductTag();
-                        $newKeyword->merchant_id = $mall;
-                        $newKeyword->product_tag = $productTag;
-                        $newKeyword->status = 'active';
-                        $newKeyword->created_by = $this->api->user->user_id;
-                        $newKeyword->modified_by = $this->api->user->user_id;
-                        $newKeyword->save();
+                        $newProductTag = new ProductTag();
+                        $newProductTag->merchant_id = $mall;
+                        $newProductTag->product_tag = $productTag;
+                        $newProductTag->status = 'active';
+                        $newProductTag->created_by = $this->api->user->user_id;
+                        $newProductTag->modified_by = $this->api->user->user_id;
+                        $newProductTag->save();
 
-                        $product_tag_id = $newKeyword->product_tag_id;
-                        $newsProductTags[] = $newKeyword;
+                        $product_tag_id = $newProductTag->product_tag_id;
+                        $newsProductTags[] = $newProductTag;
                     } else {
                         $product_tag_id = $existProductTag->product_tag_id;
                         $newsProductTags[] = $existProductTag;
                     }
 
-                    $newKeywordObject = new ProductTagObject();
-                    $newKeywordObject->product_tag_id = $product_tag_id;
-                    $newKeywordObject->object_id = $newnews->news_id;
-                    $newKeywordObject->object_type = $object_type;
-                    $newKeywordObject->save();
+                    $newProductTagObject = new ProductTagObject();
+                    $newProductTagObject->product_tag_id = $product_tag_id;
+                    $newProductTagObject->object_id = $newnews->news_id;
+                    $newProductTagObject->object_type = $object_type;
+                    $newProductTagObject->save();
                 }
             }
             $newnews->product_tags = $newsProductTags;
@@ -685,8 +606,6 @@ class NewsAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $begin_date = OrbitInput::post('begin_date');
             $id_language_default = OrbitInput::post('id_language_default');
-            $is_all_gender = OrbitInput::post('is_all_gender');
-            $is_all_age = OrbitInput::post('is_all_age');
             $translations = OrbitInput::post('translations');
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
@@ -710,8 +629,6 @@ class NewsAPIController extends ControllerAPI
                 'link_object_type'    => $link_object_type,
                 'end_date'            => $end_date,
                 'id_language_default' => $id_language_default,
-                'is_all_gender'       => $is_all_gender,
-                'is_all_age'          => $is_all_age,
                 'partner_exclusive'    => $is_exclusive,
             );
 
@@ -730,8 +647,6 @@ class NewsAPIController extends ControllerAPI
                     'link_object_type'    => 'orbit.empty.link_object_type',
                     'end_date'            => 'date||orbit.empty.hour_format',
                     'id_language_default' => 'required|orbit.empty.language_default',
-                    'is_all_gender'       => 'required|orbit.empty.is_all_gender',
-                    'is_all_age'          => 'required|orbit.empty.is_all_age',
                     'partner_exclusive'   => 'in:Y,N|orbit.empty.exclusive_partner',
                 ),
                 array(
@@ -822,14 +737,6 @@ class NewsAPIController extends ControllerAPI
 
             OrbitInput::post('end_date', function($end_date) use ($updatednews) {
                 $updatednews->end_date = $end_date;
-            });
-
-            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatednews) {
-                $updatednews->is_all_gender = $is_all_gender;
-            });
-
-            OrbitInput::post('is_all_age', function($is_all_age) use ($updatednews) {
-                $updatednews->is_all_age = $is_all_age;
             });
 
             OrbitInput::post('is_popup', function($is_popup) use ($updatednews) {
@@ -991,24 +898,6 @@ class NewsAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatednews, $news_id, $object_type) {
-                $updatednews->is_all_gender = $is_all_gender;
-                if ($is_all_gender == 'Y') {
-                    $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $news_id)
-                                                            ->where('campaign_type', '=', $object_type);
-                    $deleted_campaign_genders->delete();
-                }
-            });
-
-            OrbitInput::post('is_all_age', function($is_all_age) use ($updatednews, $news_id, $object_type) {
-                $updatednews->is_all_age = $is_all_age;
-                if ($is_all_age == 'Y') {
-                    $deleted_campaign_ages = CampaignAge::where('campaign_id', '=', $news_id)
-                                                            ->where('campaign_type', '=', $object_type);
-                    $deleted_campaign_ages->delete();
-                }
-            });
-
             OrbitInput::post('retailer_ids', function($retailer_ids) use ($updatednews, $news_id, $mallid) {
                 // validate retailer_ids
 
@@ -1064,92 +953,6 @@ class NewsAPIController extends ControllerAPI
                     }
                 }
                 $updatednews->partners = $objectPartners;
-            });
-
-            OrbitInput::post('gender_ids', function($gender_ids) use ($updatednews, $news_id, $object_type) {
-                // validate gender_ids
-                $gender_ids = (array) $gender_ids;
-                foreach ($gender_ids as $gender_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'gender_id'   => $gender_id_check,
-                        ),
-                        array(
-                            'gender_id'   => 'orbit.empty.gender',
-                        )
-                    );
-
-                    Event::fire('orbit.news.postupdatenews.before.gendervalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.news.postupdatenews.after.gendervalidation', array($this, $validator));
-                }
-
-                // Delete old data
-                $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $news_id)
-                                                        ->where('campaign_type', '=', $object_type);
-                $deleted_campaign_genders->delete();
-
-                // Insert new data
-                $newsGenders = array();
-                foreach ($gender_ids as $gender) {
-                    $newsGender = new CampaignGender();
-                    $newsGender->campaign_type = $object_type;
-                    $newsGender->campaign_id = $news_id;
-                    $newsGender->gender_value = $gender;
-                    $newsGender->save();
-                    $newsGenders[] = $newsGenders;
-                }
-                $updatednews->gender = $newsGenders;
-
-            });
-
-            OrbitInput::post('age_range_ids', function($age_range_ids) use ($updatednews, $news_id, $object_type) {
-                // validate age_range_ids
-                $age_range_ids = (array) $age_range_ids;
-                foreach ($age_range_ids as $age_range_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'age_range_id'   => $age_range_id_check,
-                        ),
-                        array(
-                            'age_range_id'   => 'orbit.empty.age',
-                        )
-                    );
-
-                    Event::fire('orbit.news.postupdatenews.before.agevalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.news.postupdatenews.after.agevalidation', array($this, $validator));
-                }
-
-                // Delete old data
-                $deleted_campaign_ages = CampaignAge::where('campaign_id', '=', $news_id)
-                                                        ->where('campaign_type', '=', $object_type);
-                $deleted_campaign_ages->delete();
-
-                // Insert new data
-                $newsAges = array();
-                foreach ($age_range_ids as $age_range) {
-                    $newsAge = new CampaignAge();
-                    $newsAge->campaign_type = $object_type;
-                    $newsAge->campaign_id = $news_id;
-                    $newsAge->age_range_id = $age_range;
-                    $newsAge->save();
-                    $newsAges[] = $newsAges;
-                }
-                $updatednews->age = $newsAges;
-
             });
 
             // Delete old data
@@ -1215,26 +1018,26 @@ class NewsAPIController extends ControllerAPI
                             ->first();
 
                         if (empty($existProductTag)) {
-                            $newKeyword = new ProductTag();
-                            $newKeyword->merchant_id = $mall;
-                            $newKeyword->product_tag = $productTag;
-                            $newKeyword->status = 'active';
-                            $newKeyword->created_by = $user->user_id;
-                            $newKeyword->modified_by = $user->user_id;
-                            $newKeyword->save();
+                            $newProductTag = new ProductTag();
+                            $newProductTag->merchant_id = $mall;
+                            $newProductTag->product_tag = $productTag;
+                            $newProductTag->status = 'active';
+                            $newProductTag->created_by = $user->user_id;
+                            $newProductTag->modified_by = $user->user_id;
+                            $newProductTag->save();
 
-                            $product_tag_id = $newKeyword->product_tag_id;
-                            $newsProductTags[] = $newKeyword;
+                            $product_tag_id = $newProductTag->product_tag_id;
+                            $newsProductTags[] = $newProductTag;
                         } else {
                             $product_tag_id = $existProductTag->product_tag_id;
                             $newsProductTags[] = $existProductTag;
                         }
 
-                        $newKeywordObject = new ProductTagObject();
-                        $newKeywordObject->product_tag_id = $product_tag_id;
-                        $newKeywordObject->object_id = $news_id;
-                        $newKeywordObject->object_type = $object_type;
-                        $newKeywordObject->save();
+                        $newProductTagObject = new ProductTagObject();
+                        $newProductTagObject->product_tag_id = $product_tag_id;
+                        $newProductTagObject->object_id = $news_id;
+                        $newProductTagObject->object_type = $object_type;
+                        $newProductTagObject->save();
                     }
 
                 }
@@ -1735,6 +1538,10 @@ class NewsAPIController extends ControllerAPI
                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
                                 THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"),
+                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.order ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                    LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                    WHERE om.merchant_id = {$prefix}news.mall_id)
+                                THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order"),
                             DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (SELECT COUNT(nm.news_merchant_id) FROM {$prefix}news_merchant as nm WHERE nm.object_type != 'mall' and nm.news_id = {$prefix}news.news_id)) AS estimated"))
                         ->leftJoin('campaign_price', function ($join) use ($object_type) {
                                 $join->on('news.news_id', '=', 'campaign_price.campaign_id')
@@ -2008,7 +1815,7 @@ class NewsAPIController extends ControllerAPI
                     'begin_date'      => 'news.begin_date',
                     'end_date'        => 'news.end_date',
                     'updated_at'      => 'news.updated_at',
-                    'status'          => 'campaign_status'
+                    'status'          => 'campaign_status_order'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -2020,11 +1827,17 @@ class NewsAPIController extends ControllerAPI
                     $sortMode = 'desc';
                 }
             });
+
             $news->orderBy($sortBy, $sortMode);
 
             //with name
             if ($sortBy !== 'news_translations.news_name') {
-                $news->orderBy('news_translations.news_name', 'asc');
+                if ($sortBy === 'campaign_status_order') {
+                    $news->orderBy('news.updated_at', 'desc');
+                }
+                else {
+                    $news->orderBy('news_translations.news_name', 'asc');
+                }
             }
 
             // Return the instance of Query Builder
