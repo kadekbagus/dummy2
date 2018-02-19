@@ -79,11 +79,6 @@ class Search
 		}
 	}
 
-	public function getESClient()
-	{
-		return $this->client;
-	}
-
 	/**
 	 * Set the pagination parameter: the start index and the amount of data that will be taken. 
 	 * 
@@ -94,9 +89,6 @@ class Search
 		$this->searchParam['body']['from'] = $param['from'];
 		$this->searchParam['body']['size'] = $param['size'];
 	}
-
-
-	// Below are ES grammar supported at the moment.
 
 	/**
 	 * Add query into bool "must" array.
@@ -169,6 +161,16 @@ class Search
 	}
 
 	/**
+	 * How to sort the result.
+	 * 
+	 * @param  array  $sortParams [description]
+	 * @return [type]             [description]
+	 */
+	public function sortBy($sortParams = []) {
+		$this->sort($sortParams);
+	}
+
+	/**
 	 * Run the search, and get the result.
 	 * 
 	 * @return [type] [description]
@@ -181,77 +183,6 @@ class Search
 			return $this->client->search($this->searchParam);
 		// else
 			// return new $resultMapperClass($this->client->search($this->searchParam))->map();
-	}
-
-	/// ----------------------------------------------------------------------
-	// Bellow are some common methods that will be used by the child classes.
-	// Let the child classes take care of the implementation/override them.
-	// ----------------------------------------------------------------------
-	
-	/**
-	 * Filter by Mall
-	 * @param  string $mallId [description]
-	 * @return [type]         [description]
-	 */
-	public function filterByMall($mallId = '') {}
-
-	/**
-	 * Filter by User's GeoLocation
-	 * @param  array  $location [description]
-	 * @return [type]           [description]
-	 */
-	public function filterByLocation($location = []) {}
-
-	/**
-	 * Filter by Keyword.
-	 * 
-	 * @param  string $keyword [description]
-	 * @return [type]          [description]
-	 */
-	public function filterByKeyword($keyword = '') {}
-
-	/**
-	 * Filter by selected categories.
-	 * 
-	 * @param  array  $categories [description]
-	 * @return [type]             [description]
-	 */
-	public function filterByCategories($categories = []) {}
-
-	/**
-	 * Filter by Partner.
-	 * 
-	 * @param  array  $partners [description]
-	 * @return [type]           [description]
-	 */
-	public function filterByPartner($partners = []) {}
-
-	/**
-	 * Filter by Country and/or Cities.
-	 * 
-	 * @param  array  $partners [description]
-	 * @return [type]           [description]
-	 */
-	public function filterByCountryAndCities($partners = []) {}
-
-	/**
-	 * How to sort the result.
-	 * 
-	 * @param  array  $sortParams [description]
-	 * @return [type]             [description]
-	 */
-	public function sortBy($sortParams = []) {
-		$this->sort($sortParams);
-	}
-
-	/**
-	 * Sort by relevance..
-	 * 
-	 * @return [type] [description]
-	 */
-	public function sortByRelevance()
-	{
-		$this->sort(['_score' => ['order' => 'desc']]);
 	}
 
 	/**

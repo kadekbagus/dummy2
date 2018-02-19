@@ -2,8 +2,7 @@
 
 use Orbit\Helper\Elasticsearch\Search;
 
-use Mall;
-use Country;
+use Orbit\Helper\Util\FollowStatusChecker;
 
 /**
 * Implementation of ES search for Stores...
@@ -106,13 +105,13 @@ class StoreSearch extends Search
 	public function filterByKeyword($keyword = '')
 	{
 		$priorityName = isset($this->esConfig['priority']['store']['name']) ? 
-			$this->esConfig['priority']['store']['name'] : '';
+			$this->esConfig['priority']['store']['name'] : '^6';
 
 		$priorityDescription = isset($this->esConfig['priority']['store']['description']) ? 
-			$this->esConfig['priority']['store']['description'] : '';
+			$this->esConfig['priority']['store']['description'] : '^5';
 
 		$priorityKeywords = isset($this->esConfig['priority']['store']['keywords']) ? 
-			$this->esConfig['priority']['store']['keywords'] : '';
+			$this->esConfig['priority']['store']['keywords'] : '^4';
 
 		$priorityProductTags = isset($this->esConfig['priority']['store']['product_tags']) ? 
 			$this->esConfig['priority']['store']['product_tags'] : '';
@@ -140,7 +139,7 @@ class StoreSearch extends Search
 								]
 							]
 						]
-					]
+					],
 				]
 			]
 		]);
@@ -441,4 +440,37 @@ class StoreSearch extends Search
 
         //////// END RATING & FOLLOW SCRIPTS /////
 	}
+
+	/**
+	 * Sort by relevance..
+	 * 
+	 * @return [type] [description]
+	 */
+	public function sortByRelevance()
+	{
+		$this->sort(['_score' => ['order' => 'desc']]);
+	}
+
+	// check user follow
+    public function getUserFollow($user, $mallId, $city=array())
+    {
+        $follow = FollowStatusChecker::create()
+                                    ->setUserId($user->user_id)
+                                    ->setObjectType('store');
+
+        if (! empty($mallId)) {
+            $follow = $follow->setMallId($mallId);
+        }
+
+        if (! empty($city)) {
+            if (! is_array($city)) {
+                $city = (array) $city;
+            }
+            $follow = $follow->setCity($city);
+        }
+
+        $follow = $follow->getFollowStatus();
+
+        return $follow;
+    }
 }

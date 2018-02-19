@@ -41,6 +41,7 @@ use AdvertStoreSearch;
 
 /**
 * @todo  add search result mapper class.
+* @todo  the location filter?
 */
 class StoreListNewAPIController extends PubControllerAPI
 {
@@ -367,6 +368,9 @@ class StoreListNewAPIController extends PubControllerAPI
                     break;
             }
 
+            // Reset the indices that will be used as search source.
+            // If we have at least one advert_stores set (filtered), then the new indices will be 
+            // stores and advert_stores.
             $storeSearch->setIndex($esStoreIndex);
 
             if ($withCache) {
@@ -637,28 +641,5 @@ class StoreListNewAPIController extends PubControllerAPI
         $this->withoutScore = TRUE;
 
         return $this;
-    }
-
-    // check user follow
-    public function getUserFollow($user, $mallId, $city=array())
-    {
-        $follow = FollowStatusChecker::create()
-                                    ->setUserId($user->user_id)
-                                    ->setObjectType('store');
-
-        if (! empty($mallId)) {
-            $follow = $follow->setMallId($mallId);
-        }
-
-        if (! empty($city)) {
-            if (! is_array($city)) {
-                $city = (array) $city;
-            }
-            $follow = $follow->setCity($city);
-        }
-
-        $follow = $follow->getFollowStatus();
-
-        return $follow;
     }
 }
