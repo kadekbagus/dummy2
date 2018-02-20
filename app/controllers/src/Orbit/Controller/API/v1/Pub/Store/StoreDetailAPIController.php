@@ -171,7 +171,7 @@ class StoreDetailAPIController extends PubControllerAPI
                             );
                     }, 'keywords' => function ($q) {
                         $q->addSelect('keyword', 'object_id');
-                    }, 'productTag' => function ($q) {
+                    }, 'product_tags' => function ($q) {
                         $q->addSelect('product_tag', 'object_id');
                     }
                     ])
