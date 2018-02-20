@@ -136,7 +136,7 @@ class Tenant extends Eloquent
                     ->groupBy('keyword');
     }
 
-    public function productTag()
+    public function product_tags()
     {
         return $this->hasMany('ProductTagObject', 'object_id', 'merchant_id')
                     ->join('product_tags', 'product_tags.product_tag_id', '=', 'product_tag_object.product_tag_id')
