@@ -11,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Orbit\Helper\Util\PaginationNumber;
 use BaseMerchant;
+use Country;
 use Validator;
 use Lang;
 use DB;
@@ -75,6 +76,7 @@ class MerchantListAPIController extends ControllerAPI
             $merchants = BaseMerchant::select(
                                         'base_merchants.base_merchant_id',
                                         'base_merchants.country_id',
+                                        'countries.name as country_name',
                                         'base_merchants.name',
                                         DB::raw("(CASE
                                             WHEN COUNT({$prefix}pre_exports.object_id) > 0 THEN 'in_progress'
@@ -98,6 +100,7 @@ class MerchantListAPIController extends ControllerAPI
                                         $q->on('pre_exports.object_id', '=', 'base_merchants.base_merchant_id')
                                           ->on('pre_exports.object_type', '=', DB::raw("'merchant'"));
                                     })
+                                    ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id')
                                     ->excludeDeleted('base_merchants');
 
             OrbitInput::get('merchant_id', function($data) use ($merchants)
@@ -117,8 +120,9 @@ class MerchantListAPIController extends ControllerAPI
                 $merchants->where('base_merchants.name', 'like', "%$name%");
             });
 
-            OrbitInput::get('countries', function($countries) use ($merchants) {
-                $merchants->whereIn('base_merchants.country_id', $countries);
+            // Filter by country
+            OrbitInput::get('country', function($country) use ($merchants) {
+                $merchants->where('base_merchants.country_id', $country);
             });
 
             // Add new relation based on request
