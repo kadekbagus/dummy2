@@ -122,7 +122,7 @@ class StoreUpdateAPIController extends ControllerAPI
                 'base_merchant_id'    => 'required|orbit.empty.base_merchant',
                 'mall_id'             => 'required|orbit.empty.mall|orbit.mall.country:' . $baseMerchantId,
                 'floor_id'            => 'orbit.empty.floor:' . $mallId,
-                'status'              => 'in:active,inactive|orbit.check_link.pmp_account:' . $baseStoreId . '|orbit.check_link.active_campaign:' . $baseStoreId,
+                'status'              => 'in:active,inactive',
                 'verification_number' => 'alpha_num|orbit.unique.verification_number:' . $mallId . ',' . $baseStoreId,
             ];
 
