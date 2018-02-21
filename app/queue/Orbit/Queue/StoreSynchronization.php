@@ -38,6 +38,11 @@ use MerchantStorePaymentProvider;
 use Orbit\Helper\MongoDB\Client as MongoClient;
 use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use Exception;
+use News;
+use Coupon;
+use CampaignStatus;
+use PromotionRetailer;
+use NewsMerchant;
 
 class StoreSynchronization
 {
@@ -344,6 +349,96 @@ class StoreSynchronization
                     $tenant->is_payment_acquire = $store->is_payment_acquire;
                     $tenant->save();
 
+                    // handle inactive store
+                    if ($store->status === 'inactive') {
+                        // check campaign that linked to this inactive store
+                        $news = News::select('news.news_name','news.news_id', 'news.object_type', 'news.status', 'news.campaign_status_id', 'news.having_reward'
+                                         DB::raw("(select COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id)
+                                                    from {$prefix}news_merchant
+                                                        left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
+                                                        left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                                        where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as total_location"),
+                                         DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id WHERE om.merchant_id = {$prefix}news.mall_id)
+                                                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"))
+                                    ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                    ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                                    ->excludeDeleted('news')
+                                    ->having('campaign_status', '=', 'ongoing')
+                                    ->where('news_merchant.merchant_id', '=', $base_store_id)
+                                    ->groupBy('news.news_id')
+                                    ->get();
+
+                        if (!empty($news)) {
+                            foreach($news as $key => $value) {
+                                // if only one location, update the campaign status to paused
+                                if ($value->total_location == 1) {
+                                    $campaignStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', '=', 'paused')->first();
+                                    $updateNews = News::where('news_id', '=', $value->news_id)->first();
+                                    $updateNews->campaign_status_id = $campaignStatus->campaign_status_id;
+                                    $updateNews->save();
+                                }
+
+                                // delete link to campaign (news_merchant)
+                                $deleteLocation = NewsMerchant::where('news_id', '=', $value->news_id)
+                                                              ->where('merchant_id', '=', $base_store_id)
+                                                              ->where('object_type', '=', 'retailer')
+                                                              ->delete();
+
+                                // update ES
+                                if ($value->object_type == 'news') {
+                                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', ['news_id' => $value->news_id]);
+                                }
+
+                                if ($value->object_type == 'promotion') {
+                                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', ['news_id' => $value->news_id]);
+                                }
+                            }
+                        }
+
+
+                        // coupon
+                        $coupons = Coupon::select('promotions.promotion_id','promotions.promotion_name','promotions.status',
+                                            DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                                                                                FROM {$prefix}merchants om
+                                                                                                                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                                                                                WHERE om.merchant_id = {$prefix}promotions.merchant_id)
+                                                                            THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"),
+                                            DB::raw("(select COUNT(DISTINCT {$prefix}promotion_retailer.promotion_retailer_id)
+                                                                                    from {$prefix}promotion_retailer
+                                                                                    inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
+                                                                                    inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                                                                    where {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id) as total_location")
+                                            )
+                                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                        ->excludeDeleted('promotions')
+                                        ->where('promotion_retailer.retailer_id', '=', $base_store_id)
+                                        ->having('campaign_status', '=', 'ongoing')
+                                        ->groupBy('promotions.promotion_id')
+                                        ->get();
+
+                        if (!empty($coupons)) {
+                            foreach($coupons as $key => $value) {
+                                // if only one location, update the campaign status to paused
+                                if ($value->total_location == 1) {
+                                    $campaignStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', '=', 'paused')->first();
+                                    $updateCoupon = Coupon::where('promotion_id', '=', $value->promotion_id)->first();
+                                    $updateCoupon->campaign_status_id = $campaignStatus->campaign_status_id;
+                                    $updateCoupon->save();
+                                }
+
+                                // delete link to campaign (promotion_retailer)
+                                $deleteLocation = PromotionRetailer::where('promotion_id', '=', $value->promotion_id)
+                                                              ->where('retailer_id', '=', $base_store_id)
+                                                              ->where('object_type', '=', 'tenant')
+                                                              ->delete();
+
+                                Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', ['coupon_id' => $value->promotion_id]);
+                            }
+                        }
+                    }
+
 
                     // Insert the payment acquire, only chech if payment acquire = Y
                     if ($tenant->is_payment_acquire == 'Y') {
@@ -607,6 +702,7 @@ class StoreSynchronization
                         ], $queueName);
                     }
                 }
+
             });
 
             $_stores = $_stores->groupBy('base_merchants.name')->groupBy('base_merchants.country_id')->get();
