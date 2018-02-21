@@ -352,7 +352,7 @@ class StoreSynchronization
                     // handle inactive store
                     if ($store->status === 'inactive') {
                         // check campaign that linked to this inactive store
-                        $news = News::select('news.news_name','news.news_id', 'news.object_type', 'news.status', 'news.campaign_status_id', 'news.having_reward'
+                        $news = News::select('news.news_name','news.news_id', 'news.object_type', 'news.status', 'news.campaign_status_id',
                                          DB::raw("(select COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id)
                                                     from {$prefix}news_merchant
                                                         left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
