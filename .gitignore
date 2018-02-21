@@ -24,6 +24,7 @@ app/config/queue.php
 app/config/orbit-notifier.php
 app/config/dynamic-listing.php
 app/config/queue.php
+app/config/oauth-4-laravel.php
 public/mobile-ci/scripts/config.js
 public/templatepos/js/config.js
 
