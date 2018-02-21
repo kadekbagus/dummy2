@@ -199,6 +199,11 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                             }])
                         ->first();
 
+            $message = 'Request Ok';
+            if (! is_object($promotionalEvent)) {
+                throw new OrbitCustomException('Promotion that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
             $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
@@ -233,11 +238,6 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 }
             }
             $promotionalEvent->total_view = $totalPageViews;
-
-            $message = 'Request Ok';
-            if (! is_object($promotionalEvent)) {
-                throw new OrbitCustomException('Promotion that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
-            }
 
             if (! empty($mallId)) {
                 $mall = Mall::where('merchant_id', '=', $mallId)->first();
