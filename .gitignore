@@ -7,6 +7,7 @@ Thumbs.db
 /.idea
 *.iml
 .project
+nbproject/
 
 # Config
 app/config/app.php
