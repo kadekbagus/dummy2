@@ -540,7 +540,7 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
                     $languageName = $value->name;
                     if (! empty($value->promotion_name)) {
                         $headings->$languageName = $value->promotion_name;
-                        $contents->$languageName = $value->description;
+                        $contents->$languageName = strip_tags($value->description);
                     }
                 }
                 if ($value->merchant_language_id === $_coupon->default_language_id)
@@ -572,7 +572,7 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
                 'cdn_bucket_name' => $cdnBucketName,
                 'default_language' => $_coupon->default_language_name,
                 'headings' => $headings,
-                'contents' => strip_tags($contents),
+                'contents' => $contents,
                 'type' => 'coupon',
                 'status' => 'pending',
                 'sent_at' => null,
@@ -829,7 +829,7 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
             $languageName = $translation['name'];
             if (! empty($translation['promotion_name'])) {
                 $headings->$languageName = $translation['promotion_name'];
-                $contents->$languageName = $translation['description'];
+                $contents->$languageName = strip_tags($translation['description']);
             }
 
             if ($translation['merchant_language_id'] === $_coupon->default_language_id) {
@@ -936,7 +936,7 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
                     'cdn_bucket_name' => $cdnBucketName,
                     'default_language' => $_coupon->default_language_name,
                     'headings' => $headings,
-                    'contents' => strip_tags($contents),
+                    'contents' => $contents,
                     'type' => $objectType,
                     'status' => 'pending',
                     'sent_at' => null,
@@ -995,7 +995,7 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
                     'cdn_bucket_name' => $cdnBucketName,
                     'default_language' => $_coupon->default_language_name,
                     'headings' => $headings,
-                    'contents' => strip_tags($contents),
+                    'contents' => $contents,
                     'type' => $objectType,
                     'status' => 'pending',
                     'sent_at' => null,

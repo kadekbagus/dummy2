@@ -429,7 +429,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                     $languageName = $value->name;
                     if (! empty($value->news_name)) {
                         $headings->$languageName = $value->news_name;
-                        $contents->$languageName = $value->description;
+                        $contents->$languageName = strip_tags($value->description);
                     }
                 }
                 if ($value->merchant_language_id === $_news->default_language_id)
@@ -461,7 +461,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                 'cdn_bucket_name' => $cdnBucketName,
                 'default_language' => $_news->default_language_name,
                 'headings' => $headings,
-                'contents' => strip_tags($contents),
+                'contents' => $contents,
                 'type' => $_news->object_type == 'news' ? 'event' : 'promotion',
                 'status' => 'pending',
                 'sent_at' => null,
@@ -718,7 +718,7 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
             $languageName = $translation['name'];
             if (! empty($translation['news_name'])) {
                 $headings->$languageName = $translation['news_name'];
-                $contents->$languageName = $translation['description'];
+                $contents->$languageName = strip_tags($translation['description']);
             }
 
             if ($translation['merchant_language_id'] === $_news->default_language_id) {
@@ -826,7 +826,7 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
                     'cdn_bucket_name' => $cdnBucketName,
                     'default_language' => $_news->default_language_name,
                     'headings' => $headings,
-                    'contents' => strip_tags($contents),
+                    'contents' => $contents,
                     'type' => $objectType,
                     'status' => 'pending',
                     'sent_at' => null,
@@ -885,7 +885,7 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
                     'cdn_bucket_name' => $cdnBucketName,
                     'default_language' => $_news->default_language_name,
                     'headings' => $headings,
-                    'contents' => strip_tags($contents),
+                    'contents' => $contents,
                     'type' => $objectType,
                     'status' => 'pending',
                     'sent_at' => null,
