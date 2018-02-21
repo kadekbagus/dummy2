@@ -413,7 +413,7 @@ class StoreSearch extends Search
             $objectFollow = $this->getUserFollow($params['user'], $params['mallId'], $params['cityFilters']); // return array of base_merchant_id
 
             if (! empty($objectFollow)) {
-                if ($sort_by === 'followed') {
+                if ($params['sortBy'] === 'followed') {
                     foreach ($objectFollow as $followId) {
                         $scriptFieldFollow = $scriptFieldFollow . 
                             " if (doc.containsKey('base_merchant_id')) { 

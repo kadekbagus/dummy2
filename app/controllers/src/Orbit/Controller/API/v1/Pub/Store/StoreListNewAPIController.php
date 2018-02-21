@@ -348,7 +348,7 @@ class StoreListNewAPIController extends PubControllerAPI
             }
 
             $storeSearch->addReviewFollowScript(compact(
-                'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user'
+                'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
             
             // Next sorting based on Visitor's selection.
