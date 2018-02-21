@@ -231,6 +231,11 @@ class CouponDetailAPIController extends PubControllerAPI
 
             $coupon = $coupon->first();
 
+            $message = 'Request Ok';
+            if (! is_object($coupon)) {
+                throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
             $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
@@ -267,11 +272,6 @@ class CouponDetailAPIController extends PubControllerAPI
                 }
             }
             $coupon->total_view = $totalPageViews;
-
-            $message = 'Request Ok';
-            if (! is_object($coupon)) {
-                throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
-            }
 
             // ---- START RATING ----
             $reviewCounter = \Orbit\Helper\MongoDB\Review\ReviewCounter::create(Config::get('database.mongodb'))
