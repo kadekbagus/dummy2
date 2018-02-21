@@ -185,6 +185,10 @@ class PromotionDetailAPIController extends PubControllerAPI
                             }])
                         ->first();
 
+            $message = 'Request Ok';
+            if (! is_object($promotion)) {
+                throw new OrbitCustomException('Promotion that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
+            }
 
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
@@ -220,11 +224,6 @@ class PromotionDetailAPIController extends PubControllerAPI
                 }
             }
             $promotion->total_view = $totalPageViews;
-
-            $message = 'Request Ok';
-            if (! is_object($promotion)) {
-                throw new OrbitCustomException('Promotion that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
-            }
 
             if ($promotion->is_exclusive === 'Y') {
                 // check token
