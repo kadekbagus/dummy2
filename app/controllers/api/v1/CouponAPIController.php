@@ -1270,14 +1270,6 @@ class CouponAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.coupon.postupdatecoupon.before.authz', array($this, $user));
 
-/*
-            if (! ACL::create($user)->isAllowed('update_coupon')) {
-                Event::fire('orbit.coupon.postupdatecoupon.authz.notallowed', array($this, $user));
-                $updateCouponLang = Lang::get('validation.orbit.actionlist.update_coupon');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateCouponLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->couponModifiyRoles;
@@ -2225,6 +2217,32 @@ class CouponAPIController extends ControllerAPI
                             }
                         }
                     }
+                }
+
+                // Insert to promotion retailer, with delete first old data
+                $delete_coupon_retailer = CouponRetailer::where('promotion_id', '=', $promotion_id);
+                $delete_coupon_retailer->delete();
+
+                foreach ($retailer_ids as $retailer_id) {
+                    $data = @json_decode($retailer_id);
+                    $tenant_id = $data->tenant_id;
+                    $mall_id = $data->mall_id;
+
+                    if(! in_array($mall_id, $mallid)) {
+                        $mallid[] = $mall_id;
+                    }
+
+                    if ($tenant_id === $mall_id) {
+                        $isMall = 'mall';
+                    } else {
+                        $isMall = 'tenant';
+                    }
+                    // Insert new coupon retailer
+                    $couponretailer = new CouponRetailer();
+                    $couponretailer->retailer_id = $tenant_id;
+                    $couponretailer->promotion_id = $promotion_id;
+                    $couponretailer->object_type = $isMall;
+                    $couponretailer->save();
                 }
             });
 
