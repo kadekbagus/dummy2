@@ -347,7 +347,7 @@ class StoreListNewAPIController extends PubControllerAPI
                 }
             }
 
-            $storeSearch->addReviewFollowScript(compact(
+            $scriptFields = $storeSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
             
@@ -357,11 +357,11 @@ class StoreListNewAPIController extends PubControllerAPI
                     $storeSearch->sortByName();
                     break;
                 case 'rating':
-                    $storeSearch->sortByRating($scriptFieldRating);
-                    $storeSearch->sortByRelevance();
+                    $storeSearch->sortByRating($scriptFields['scriptFieldRating']);
+                    // $storeSearch->sortByRelevance();
                     break;
                 case 'followed':
-                    $storeSearch->sortByFavorite($scriptFieldFollow);
+                    $storeSearch->sortByFavorite($scriptFields['scriptFieldFollow']);
                     break;
                 default:
                     $storeSearch->sortByRelevance();
