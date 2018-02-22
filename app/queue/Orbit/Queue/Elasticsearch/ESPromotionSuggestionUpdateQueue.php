@@ -70,6 +70,18 @@ class ESPromotionSuggestionUpdateQueue
                     ->orderBy('news.news_id', 'asc')
                     ->first();
 
+        $mallIds = News::select(DB::raw(
+                "{$prefix}news.news_id, mall.merchant_id as mall_id, mall.name as mall_name"
+            ))
+            ->leftJoin(DB::raw("{$prefix}news_merchant as retailer"), DB::raw("{$prefix}news.news_id"), '=', DB::raw('retailer.news_id'))
+            ->leftJoin(DB::raw("{$prefix}merchants as merchants"), DB::raw("retailer.merchant_id"), '=', DB::raw("merchants.merchant_id"))
+            ->leftJoin(DB::raw("{$prefix}merchants as mall"), DB::raw("merchants.parent_id"), '=', DB::raw("mall.merchant_id"))
+            ->leftJoin(DB::raw("{$prefix}merchants as mall2"), DB::raw("retailer.merchant_id"), '=', DB::raw("mall.merchant_id"))
+            ->where('news.news_id', $newsId)
+            ->where(DB::raw("mall.name"), '<>', '')
+            ->groupBy(DB::raw('mall_name'))
+            ->lists('mall_id');
+
         try {
             // check exist elasticsearch index
             $params_search = [
@@ -143,6 +155,7 @@ class ESPromotionSuggestionUpdateQueue
                 'name'    => $news->news_name,
                 'country' => $country,
                 'city'    => $city,
+                'mall_ids' => $mallIds,
                 'begin_date' => date('Y-m-d', strtotime($news->begin_date)) . 'T' . date('H:i:s', strtotime($news->begin_date)) . 'Z',
                 'end_date' => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z'
             ];

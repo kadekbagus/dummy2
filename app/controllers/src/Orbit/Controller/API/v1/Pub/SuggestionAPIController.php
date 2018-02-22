@@ -44,31 +44,41 @@ class SuggestionAPIController extends PubControllerAPI
             $text = OrbitInput::get('text', '');
             $host = Config::get('orbit.elasticsearch');
             $language = OrbitInput::get('language', 'id');
+            $mallCountries = OrbitInput::get('country', null);
+            $mallCities = OrbitInput::get('cities', []);
+            $mallIds = OrbitInput::get('mall_id', null);
 
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
 
-            // get all country and city name in mall
-            $mallCountries = Mall::where('status', 'active')->groupBy('country')->lists('country');
-            $mallCities = Mall::where('status', 'active')->groupBy('city')->lists('city');
+            if (empty($country)) {
+                $mallCountries = Mall::where('status', 'active')->groupBy('country')->lists('country');
+            }
+
+            if (empty($cities)) {
+                $mallCities = Mall::where('status', 'active')->groupBy('city')->lists('city');
+            }
+
+            if (empty($mallIds)) {
+                $mallIds = Mall::where('status', 'active')->lists('merchant_id');
+            }
 
             $field = 'suggest_' . $language;
-            $body = array('gtm_suggestions' => array('text' => $text, 'completion' => array('size' => $take, 'field' => $field, 'context' => array('country' => $mallCountries, 'city' => $mallCities))));
-
-            OrbitInput::get('country', function($country) use (&$body)
-            {
-                if (! empty($country) || $country != '') {
-                    $body['gtm_suggestions']['completion']['context']['country'] = $country;
-                }
-            });
-
-            OrbitInput::get('cities', function($cities) use (&$body)
-            {
-                if (! empty($cities) || $cities != '') {
-                    $body['gtm_suggestions']['completion']['context']['city'] = $cities;
-                }
-            });
+            $body = [
+                'gtm_suggestions' => [
+                    'text' => $text, 
+                    'completion' => [
+                        'size' => $take, 
+                        'field' => $field, 
+                        'context' => [
+                            'country' => $mallCountries, 
+                            'city' => $mallCities, 
+                            'mall_ids' => $mallIds,
+                        ]
+                    ]
+                ]
+            ];
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $suggestionIndex = Config::get('orbit.elasticsearch.suggestion_indices');
@@ -90,7 +100,10 @@ class SuggestionAPIController extends PubControllerAPI
             ];
             $response = $client->suggest($esParam);
 
-            $listSuggestion = $response['gtm_suggestions'][0]['options'];
+            $listSuggestion = [];
+            if (isset($response['gtm_suggestions'])) {
+                $listSuggestion = $response['gtm_suggestions'][0]['options'];
+            }
 
             $this->response->data = new stdClass();
             $this->response->data->total_records = count($listSuggestion);
