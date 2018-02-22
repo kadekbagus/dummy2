@@ -540,7 +540,7 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
                     $languageName = $value->name;
                     if (! empty($value->promotion_name)) {
                         $headings->$languageName = $value->promotion_name;
-                        $contents->$languageName = strip_tags($value->description);
+                        $contents->$languageName = substr(str_replace('&nbsp;', ' ', strip_tags($value->description)), 0, 40) . '...';
                     }
                 }
                 if ($value->merchant_language_id === $_coupon->default_language_id)
@@ -829,7 +829,7 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
             $languageName = $translation['name'];
             if (! empty($translation['promotion_name'])) {
                 $headings->$languageName = $translation['promotion_name'];
-                $contents->$languageName = strip_tags($translation['description']);
+                $contents->$languageName = substr(str_replace('&nbsp;', ' ', strip_tags($translation['description'])), 0, 40) . '...';
             }
 
             if ($translation['merchant_language_id'] === $_coupon->default_language_id) {
