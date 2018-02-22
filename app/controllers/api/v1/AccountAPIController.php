@@ -1194,7 +1194,7 @@ class AccountAPIController extends ControllerAPI
                 'address_line1'      => 'required',
                 'city'               => 'required',
                 'country_id'         => 'required|orbit.empty.country',
-                'merchant_ids'       => 'required|array|exists:merchants,merchant_id',
+                'merchant_ids'       => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
                 'role_name'          => 'required|in:Campaign Owner,Campaign Employee,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
                 'user_password'      => 'min:6',
                 'languages'               => 'array',
@@ -1539,68 +1539,68 @@ class AccountAPIController extends ControllerAPI
 
                 $prefix = DB::getTablePrefix();
 
-                if ($removetenant) {
-                    foreach ($removetenant as $tenant_id) {
-                        $newsPromotionActive = 0;
-                        $couponStatusActive = 0;
+                // if ($removetenant) {
+                //     foreach ($removetenant as $tenant_id) {
+                //         $newsPromotionActive = 0;
+                //         $couponStatusActive = 0;
 
-                        $mall = CampaignLocation::select('merchant_id',
-                                                    'name',
-                                                    'parent_id',
-                                                    'object_type')
-                                                ->where('merchant_id', '=', $tenant_id)
-                                                ->whereIn('object_type', ['mall', 'tenant'])
-                                                ->first();
+                //         $mall = CampaignLocation::select('merchant_id',
+                //                                     'name',
+                //                                     'parent_id',
+                //                                     'object_type')
+                //                                 ->where('merchant_id', '=', $tenant_id)
+                //                                 ->whereIn('object_type', ['mall', 'tenant'])
+                //                                 ->first();
 
-                        if (! empty($mall)) {
-                            $mallid = '';
-                            if ($mall->object_type === 'mall') {
-                                $mallid = $mall->merchant_id;
-                            } else {
-                                $mallid = $mall->parent_id;
-                            }
+                //         if (! empty($mall)) {
+                //             $mallid = '';
+                //             if ($mall->object_type === 'mall') {
+                //                 $mallid = $mall->merchant_id;
+                //             } else {
+                //                 $mallid = $mall->parent_id;
+                //             }
 
-                            $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
-                                ->where('merchants.merchant_id','=', $mallid)
-                                ->first();
+                //             $timezone = Mall::leftJoin('timezones','timezones.timezone_id','=','merchants.timezone_id')
+                //                 ->where('merchants.merchant_id','=', $mallid)
+                //                 ->first();
 
-                            $timezoneName = $timezone->timezone_name;
+                //             $timezoneName = $timezone->timezone_name;
 
-                            $nowMall = Carbon::now($timezoneName);
-                            $dateNowMall = $nowMall->toDateString();
+                //             $nowMall = Carbon::now($timezoneName);
+                //             $dateNowMall = $nowMall->toDateString();
 
-                            //get data in news and promotion
-                            $newsPromotionActive = News::allowedForPMPUser($update_user, 'news_promotion')
-                                                        ->select('news.news_id', 'news.object_type', 'news.is_having_reward')
-                                                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                                                        ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
-                                                        ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
-                                                        ->where('news_merchant.merchant_id', $tenant_id)
-                                                        ->first();
-                            if (! empty($newsPromotionActive)) {
-                                if ($newsPromotionActive->is_having_reward === 'Y') {
-                                    $errorMessage = "Cannot unlink the tenant with an active promotional event on {$mall->object_type} {$mall->name}";
-                                } else {
-                                    $errorMessage = "Cannot unlink the tenant with an active {$newsPromotionActive->object_type} on {$mall->object_type} {$mall->name}";
-                                }
-                                OrbitShopAPI::throwInvalidArgument($errorMessage);
-                            }
+                //             //get data in news and promotion
+                //             $newsPromotionActive = News::allowedForPMPUser($update_user, 'news_promotion')
+                //                                         ->select('news.news_id', 'news.object_type', 'news.is_having_reward')
+                //                                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                //                                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                //                                         ->whereRaw("(CASE WHEN {$prefix}news.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                //                                         ->where('news_merchant.merchant_id', $tenant_id)
+                //                                         ->first();
+                //             if (! empty($newsPromotionActive)) {
+                //                 if ($newsPromotionActive->is_having_reward === 'Y') {
+                //                     $errorMessage = "Cannot unlink the tenant with an active promotional event on {$mall->object_type} {$mall->name}";
+                //                 } else {
+                //                     $errorMessage = "Cannot unlink the tenant with an active {$newsPromotionActive->object_type} on {$mall->object_type} {$mall->name}";
+                //                 }
+                //                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+                //             }
 
-                            //get data in coupon
-                            $couponStatusActive = Coupon::allowedForPMPUser($update_user, 'coupon')
-                                                        ->select('campaign_status.campaign_status_name')
-                                                        ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
-                                                        ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                                                        ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
-                                                        ->where('promotion_retailer.retailer_id', $tenant_id)
-                                                        ->first();
-                            if (! empty($couponStatusActive)) {
-                                $errorMessage = "Cannot unlink the tenant with an active coupon on {$mall->object_type} {$mall->name}";
-                                OrbitShopAPI::throwInvalidArgument($errorMessage);
-                            }
-                        }
-                    }
-                }
+                //             //get data in coupon
+                //             $couponStatusActive = Coupon::allowedForPMPUser($update_user, 'coupon')
+                //                                         ->select('campaign_status.campaign_status_name')
+                //                                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                //                                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                //                                         ->whereRaw("(CASE WHEN {$prefix}promotions.end_date < {$this->quote($nowMall)} THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) NOT IN ('stopped', 'expired')")
+                //                                         ->where('promotion_retailer.retailer_id', $tenant_id)
+                //                                         ->first();
+                //             if (! empty($couponStatusActive)) {
+                //                 $errorMessage = "Cannot unlink the tenant with an active coupon on {$mall->object_type} {$mall->name}";
+                //                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+                //             }
+                //         }
+                //     }
+                // }
 
                 // get campaign employee and delete merchant
                 $employee = CampaignAccount::where('parent_user_id', '=', $update_user->user_id)
