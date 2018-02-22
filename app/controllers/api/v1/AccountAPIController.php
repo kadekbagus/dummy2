@@ -1194,7 +1194,7 @@ class AccountAPIController extends ControllerAPI
                 'address_line1'      => 'required',
                 'city'               => 'required',
                 'country_id'         => 'required|orbit.empty.country',
-                'merchant_ids'       => 'required|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
+                'merchant_ids'       => 'required|array|exists:merchants,merchant_id',
                 'role_name'          => 'required|in:Campaign Owner,Campaign Employee,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
                 'user_password'      => 'min:6',
                 'languages'               => 'array',
