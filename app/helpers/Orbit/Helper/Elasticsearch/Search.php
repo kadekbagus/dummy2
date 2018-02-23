@@ -27,7 +27,7 @@ class Search
 		$this->client = new ClientBuilder;
 		$this->client = $this->client->create()->setHosts($this->esConfig['hosts'])->build();
 
-		$this->setDefaultSearchParam();
+		// $this->setDefaultSearchParam();
 	}
 
 	/**
@@ -183,40 +183,5 @@ class Search
 			return $this->client->search($this->searchParam);
 		// else
 			// return new $resultMapperClass($this->client->search($this->searchParam))->map();
-	}
-
-	/**
-	 * Init default search params.
-	 * 
-	 * @return [type] [description]
-	 */
-	public function setDefaultSearchParam()
-	{
-		$this->searchParam = [
-			'index' => '',
-			'type' => '',
-			'body' => [
-				'from' => 0,
-				'size' => 20,
-				'fields' => [
-					'_source'
-				],
-				'aggs' => [
-					'count' => [
-						'nested' => [
-							'path' => 'tenant_detail'
-						],
-						'aggs' => [
-							'top_reverse_nested' => [
-								'reverse_nested' => new \stdClass()
-							]
-						]
-					],
-				],
-				'query' => [],
-				'track_scores' => true,
-				'sort' => []
-			]
-		];
 	}
 }

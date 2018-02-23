@@ -7,12 +7,12 @@ use Orbit\Helper\Elasticsearch\Search;
 */
 class AdvertStoreSearch extends Search
 {
-    function __construct($ESConfig = [])
+    function __construct($ESConfig = [], $advertGroup = '')
     {
         parent::__construct($ESConfig);
 
-        $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['advert_stores']['index']);
-        $this->setType($this->esConfig['indices']['advert_stores']['type']);
+        $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices'][$advertGroup]['index']);
+        $this->setType($this->esConfig['indices'][$advertGroup]['type']);
     }
 
     /**
@@ -65,4 +65,27 @@ class AdvertStoreSearch extends Search
             ]
         ]);
 	}
+
+    public function filterPromotions($params = [])
+    {
+        $this->must(['match' => ['advert_status' => 'active']]);
+
+        $this->must(['range' => ['advert_start_date' => ['lte' => $params['dateTimeEs']]]]);
+
+        $this->must(['range' => ['advert_end_date' => ['gte' => $params['dateTimeEs']]]]);
+
+        $this->must(['match' => ['advert_location_ids' => $params['locationId']]]);
+
+        $this->must(['terms' => ['advert_type' => $params['advertType']]]);
+
+        $this->should([
+            'bool' => [
+                'must_not' => [
+                    'exists' => [
+                        'field' => 'advert_status'
+                    ],
+                ]
+            ]
+        ]);
+    }
 }

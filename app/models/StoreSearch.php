@@ -13,6 +13,8 @@ class StoreSearch extends Search
 	{
 		parent::__construct($ESConfig);
 
+		$this->setDefaultSearchParam();
+
 		$this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['stores']['index']);
 		$this->setType($this->esConfig['indices']['stores']['type']);
 	}
@@ -113,8 +115,8 @@ class StoreSearch extends Search
 		$priorityKeywords = isset($this->esConfig['priority']['store']['keywords']) ? 
 			$this->esConfig['priority']['store']['keywords'] : '^4';
 
-		$priorityProductTags = isset($this->esConfig['priority']['store']['product_tags']) ? 
-			$this->esConfig['priority']['store']['product_tags'] : '';
+		// $priorityProductTags = isset($this->esConfig['priority']['store']['product_tags']) ? 
+		// 	$this->esConfig['priority']['store']['product_tags'] : '';
 
 		$this->must([
 			'bool' => [
@@ -126,7 +128,7 @@ class StoreSearch extends Search
 								'lowercase_name' . $priorityName, 
 								'description' . $priorityDescription, 
 								'keyword' . $priorityKeywords,
-								'product_tags' . $priorityProductTags,
+								// 'product_tags' . $priorityProductTags,
 							]
 						]
 					],
@@ -475,4 +477,39 @@ class StoreSearch extends Search
 
         return $follow;
     }
+
+    /**
+	 * Init default search params.
+	 * 
+	 * @return [type] [description]
+	 */
+	public function setDefaultSearchParam()
+	{
+		$this->searchParam = [
+			'index' => '',
+			'type' => '',
+			'body' => [
+				'from' => 0,
+				'size' => 20,
+				'fields' => [
+					'_source'
+				],
+				'aggs' => [
+					'count' => [
+						'nested' => [
+							'path' => 'tenant_detail'
+						],
+						'aggs' => [
+							'top_reverse_nested' => [
+								'reverse_nested' => new \stdClass()
+							]
+						]
+					],
+				],
+				'query' => [],
+				'track_scores' => true,
+				'sort' => []
+			]
+		];
+	}
 }

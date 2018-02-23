@@ -268,13 +268,14 @@ class StoreListNewAPIController extends PubControllerAPI
 
             // Get Advert_Store...
             $esAdvertStoreIndex = $esConfig['indices_prefix'] . $esConfig['indices']['advert_stores']['index'];
-            $advertStoreSearch = new AdvertStoreSearch($esConfig);
+            $advertStoreSearch = new AdvertStoreSearch($esConfig, 'advert_stores');
 
             $advertStoreSearch->setPaginationParams(['from' => 0, 'size' => 100]);
 
             $locationId = ! empty($mallId) ? $mallId : 0;
             $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
+            // @todo add sort page in advert list..
             $advertStoreSearch->filterBase(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
 
             $advertStoreSearchResult = $advertStoreSearch->getResult();
@@ -314,21 +315,21 @@ class StoreListNewAPIController extends PubControllerAPI
                     $storeSearch->excludeStores($excludeId);
                 }
 
-                // If there any advert_stores in the list, then sort by it.
+                // If there any advert_stores in the list, then sort by it first...
                 if (count($withPreferred) > 0) {
                     $sortByPageType = array();
                     $pageTypeScore = '';
                     if ($list_type === 'featured') {
                         $pageTypeScore = 'featured_gtm_score';
                         $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
-                        if (! empty($mallId)) {
+                        if (! empty($mall)) {
                             $pageTypeScore = 'featured_mall_score';
                             $sortByPageType = array('featured_mall_score' => array('order' => 'desc'));
                         }
                     } else {
                         $pageTypeScore = 'preferred_gtm_score';
                         $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
-                        if (! empty($mallId)) {
+                        if (! empty($mall)) {
                             $pageTypeScore = 'preferred_mall_score';
                             $sortByPageType = array('preferred_mall_score' => array('order' => 'desc'));
                         }
