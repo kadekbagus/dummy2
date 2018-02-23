@@ -78,7 +78,7 @@ class PromotionSearch extends Search
         // });
 
 		foreach($categories as $category) {
-			$this->should(['match' => ['category' => $category]]);
+			$this->should(['match' => ['category_ids' => $category]]);
 		}
 	}
 
@@ -363,11 +363,11 @@ class PromotionSearch extends Search
 	 * 
 	 * @return [type] [description]
 	 */
-	public function filterByMyCC()
+	public function filterByMyCC($params = [])
 	{
-		$role = $user->role->role_name;
+		$role = $params['user']->role->role_name;
         if (strtolower($role) === 'consumer') {
-            $userId = $user->user_id;
+            $userId = $params['user']->user_id;
             $sponsorProviderIds = array();
 
             // get user ewallet
@@ -401,17 +401,60 @@ class PromotionSearch extends Search
 
             if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
                 $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
-                $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
-                $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
+                // $withSponsorProviderIds = array(
+                // 	'nested' => array(
+                // 		'path' => 'sponsor_provider', 
+                // 		'query' => array(
+                // 			'filtered' => array(
+                // 				'filter' => array(
+                // 					'terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))
+                // 			)
+                // 		)
+                // 	)
+                // );
+                // $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
+                $this->must([
+                	'nested' => [
+                		'path' => 'sponsor_provider',
+                		'query' => [
+                			'terms' => [
+                				'sponsor_provider.sponsor_id' => $sponsorProviderIds
+                			]
+                		]
+                	],
+                ]);
             }
         }
 	}
 
-	public function filterBySponsors($sponsorIds = [])
+	public function filterBySponsors($sponsorProviderIds = [])
 	{
 		$sponsorProviderIds = array_values($sponsorProviderIds);
-        $withSponsorProviderIds = array('nested' => array('path' => 'sponsor_provider', 'query' => array('filtered' => array('filter' => array('terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))))));
-        $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
+        // $withSponsorProviderIds = array(
+        // 	'nested' => array(
+        // 		'path' => 'sponsor_provider', 
+        // 		'query' => array(
+        // 			'filtered' => array(
+        // 				'filter' => array(
+        // 					'terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds)
+        // 				)
+        // 			)
+        // 		)
+        // 	)
+        // );
+
+        // $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
+
+        $this->must([
+    		'nested' => [
+    			'path' => 'sponsor_provider',
+    			'query' => [
+    				'terms' => [
+    					'sponsor_provider.sponsor_id' => $sponsorProviderIds
+    				]
+    			]
+    		]
+        ]);
 	}
 
 	/**

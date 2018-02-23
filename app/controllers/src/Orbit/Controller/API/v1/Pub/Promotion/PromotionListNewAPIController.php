@@ -215,6 +215,7 @@ class PromotionListNewAPIController extends PubControllerAPI
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword');
             if (! empty($keyword)) {
+                $cacheKey['keyword'] = $keyword;
                 $promotionSearch->filterByKeyword($keyword);
             }
             
@@ -244,14 +245,15 @@ class PromotionListNewAPIController extends PubControllerAPI
             }
 
             // Filter by my credit card or choose manually
+            $sponsorProviderIds = OrbitInput::get('sponsor_provider_ids', []);
             if ($myCCFilter) {
-                
                 $promotionSearch->filterByMyCC(compact('myCCFilter', 'user'));
-
             } else if (! empty($sponsorProviderIds)) {
                 $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
                 $promotionSearch->filterBySponsors($sponsorProviderIds);
             }
+
+            // return \Response::json($promotionSearch->getRequestParam());
 
 
             // Filter by selected categories...
