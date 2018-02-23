@@ -156,7 +156,7 @@ class StoreSearch extends Search
 			$this->esConfig['priority']['store']['city'] : '';
 
 		$priorityMallName = isset($this->esConfig['priority']['store']['mall_name']) ?
-			$this->esConfig['store']['priority']['mall_name'] : '';
+			$this->esConfig['priority']['store']['mall_name'] : '';
 
 		$this->should([
 			'nested' => [

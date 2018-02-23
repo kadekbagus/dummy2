@@ -240,7 +240,7 @@ class PromotionSearch extends Search
 			$this->esConfig['priority']['promotions']['city'] : '';
 
 		$priorityMallName = isset($this->esConfig['priority']['promotions']['mall_name']) ?
-			$this->esConfig['store']['priority']['mall_name'] : '';
+			$this->esConfig['priority']['store']['mall_name'] : '';
 
 		$this->should([
 			'nested' => [
