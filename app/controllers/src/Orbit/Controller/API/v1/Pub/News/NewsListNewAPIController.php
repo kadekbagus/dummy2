@@ -1,8 +1,7 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Promotion;
-
+<?php namespace Orbit\Controller\API\v1\Pub\News;
 /**
  * @author firmansyah <firmansyah@dominopos.com>
- * @desc Controller for promotion list and search in landing page
+ * @desc Controller for news list and search in landing page
  */
 
 use OrbitShop\API\v1\PubControllerAPI;
@@ -21,34 +20,36 @@ use Advert;
 use NewsMerchant;
 use Language;
 use Validator;
+use PartnerAffectedGroup;
+use PartnerCompetitor;
 use Orbit\Helper\Util\PaginationNumber;
 use Activity;
 use Orbit\Controller\API\v1\Pub\SocMedAPIController;
-use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
+use Orbit\Controller\API\v1\Pub\News\NewsHelper;
 use Mall;
-use stdClass;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
-use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Elasticsearch\ClientBuilder;
-use PartnerAffectedGroup;
-use PartnerCompetitor;
+use Carbon\Carbon as Carbon;
+use stdClass;
 use Country;
 use UserSponsor;
 
-use PromotionSearch;
+use NewsSearch;
 use AdvertStoreSearch as AdvertSearch;
 
-class PromotionListNewAPIController extends PubControllerAPI
+class NewsListNewAPIController extends PubControllerAPI
 {
+    protected $valid_language = NULL;
     protected $withoutScore = FALSE;
 
     /**
-     * GET - get active promotion in all mall, and also provide for searching
+     * GET - get active news in all mall, and also provide for searching
      *
      * @author Firmansyayh <firmansyah@dominopos.com>
+     * @author Rio Astamal <rio@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -61,7 +62,7 @@ class PromotionListNewAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getSearchPromotion()
+    public function getSearchNews()
     {
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
@@ -69,23 +70,24 @@ class PromotionListNewAPIController extends PubControllerAPI
         $user = null;
         $mall = null;
         $cacheKey = [];
-        $serializedCacheKey = '';
+        $serializedCacheKey = [];
 
         // Cache result of all possible calls to backend storage
         $cacheConfig = Config::get('orbit.cache.context');
-        $cacheContext = 'promotion-list';
+        $cacheContext = 'event-list';
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
+        $totalRecordCache = SimpleCache::create($cacheConfig, $cacheContext)
+                                       ->setKeyPrefix($cacheContext . '-total-rec');
         $keywordSearchCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-keyword-search');
         $advertCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-adverts');
 
         try {
-            $this->checkAuth();
-            $user = $this->api->user;
+            $user = $this->getUser();
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sortBy = OrbitInput::get('sortby', 'relevance');
+            $sort_by = OrbitInput::get('sortby', 'created_date');
+            $sortBy = OrbitInput::get('sortby', 'created_date');
             $sort_mode = OrbitInput::get('sortmode','desc');
             $sortMode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
@@ -98,24 +100,24 @@ class PromotionListNewAPIController extends PubControllerAPI
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
+            $category_id = OrbitInput::get('category_id');
+            $categoryIds = OrbitInput::get('category_id', []);
             $withPremium = OrbitInput::get('is_premium', null);
             $list_type = OrbitInput::get('list_type', 'featured');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
-            $category_id = OrbitInput::get('category_id');
-            $categoryIds = OrbitInput::get('category_id', []);
             $no_total_records = OrbitInput::get('no_total_records', null);
-            $take = PaginationNumber::parseTakeFromGet('promotion');
+            $take = PaginationNumber::parseTakeFromGet('news');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
             $partnerToken = OrbitInput::get('token', null);
             $viewType = OrbitInput::get('view_type', 'grid');
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
 
-             // search by key word or filter or sort by flag
+            // search by key word or filter or sort by flag
             $searchFlag = FALSE;
 
-            $promotionHelper = PromotionHelper::create();
-            $promotionHelper->registerCustomValidation();
+            $newsHelper = NewsHelper::create();
+            $newsHelper->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'language' => $language,
@@ -123,7 +125,7 @@ class PromotionListNewAPIController extends PubControllerAPI
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:relevance,name,location,created_date,updated_date,rating',
+                    'sortby'   => 'in:name,location,created_date,updated_date,rating,relevance',
                 )
             );
 
@@ -148,9 +150,14 @@ class PromotionListNewAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $valid_language = $promotionHelper->getValidLanguage();
-
+            $valid_language = $newsHelper->getValidLanguage();
             $prefix = DB::getTablePrefix();
+
+            $withScore = false;
+            $esTake = $take;
+            if ($list_type === 'featured') {
+                $esTake = 50;
+            }
 
             //Get now time, time must be 2017-01-09T15:30:00Z
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
@@ -161,29 +168,23 @@ class PromotionListNewAPIController extends PubControllerAPI
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
-            $withScore = false;
-            $esTake = $take;
-            if ($list_type === 'featured') {
-                $esTake = 50;
-            }
-
             // Get ES config only once, avoid calling Config::get() everytime. :)
             $esConfig = Config::get('orbit.elasticsearch');
 
             // Create the search...
-            $esIndex = $esConfig['indices_prefix'] . $esConfig['indices']['promotions']['index'];
-            $promotionSearch = new PromotionSearch($esConfig);
+            $esIndex = $esConfig['indices_prefix'] . $esConfig['indices']['news']['index'];
+            $newsSearch = new NewsSearch($esConfig);
 
-            $promotionSearch->setPaginationParams(['from' => $skip, 'size' => $take]);
+            $newsSearch->setPaginationParams(['from' => $skip, 'size' => $take]);
 
             // Only search active promotions..
-            $promotionSearch->isActive(compact('dateTimeEs'));
-            
+            $newsSearch->isActive(compact('dateTimeEs'));
+
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword');
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
-                $promotionSearch->filterByKeyword($keyword);
+                $newsSearch->filterByKeyword($keyword);
             }
             
             $countryData = null;
@@ -208,25 +209,25 @@ class PromotionListNewAPIController extends PubControllerAPI
 
             // If under mall page, we should ignore any other area/location filter.
             if (! empty($mall)) {
-                $promotionSearch->filterByMall($mallId);
+                $newsSearch->filterByMall($mallId);
             }
 
             // Filter by my credit card or choose manually
             $sponsorProviderIds = OrbitInput::get('sponsor_provider_ids', []);
             if ($myCCFilter) {
-                $sponsorProviderIds = $promotionSearch->filterByMyCC(compact('myCCFilter', 'user'));
+                $sponsorProviderIds = $newsSearch->filterByMyCC(compact('myCCFilter', 'user'));
 
                 if (count($sponsorProviderIds) > 0) {
                     $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
                 }
             } else if (! empty($sponsorProviderIds)) {
                 $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
-                $promotionSearch->filterBySponsors($sponsorProviderIds);
+                $newsSearch->filterBySponsors($sponsorProviderIds);
             }
 
             // Filter by selected categories...
             if (! empty($categoryIds)) {
-                $promotionSearch->filterByCategories($categoryIds);
+                $newsSearch->filterByCategories($categoryIds);
             }
 
             // Filter by partner...
@@ -237,7 +238,7 @@ class PromotionListNewAPIController extends PubControllerAPI
                     $searchFlag = $searchFlag || TRUE;
                     $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
                                                                 $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                                                                     ->where('affected_group_names.group_type', '=', 'promotion');
+                                                                     ->where('affected_group_names.group_type', '=', 'news');
                                                             })
                                                             ->where('partner_id', $partnerId)
                                                             ->first();
@@ -247,22 +248,22 @@ class PromotionListNewAPIController extends PubControllerAPI
 
                         if (in_array($partnerId, $exception)) {
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
-                            $promotionSearch->excludePartnerCompetitors($partnerIds);
+                            $newsSearch->excludePartnerCompetitors($partnerIds);
                         }
                         else {
-                           $promotionSearch->filterByPartner($partnerId); 
+                           $newsSearch->filterByPartner($partnerId); 
                         }
                     }
                 }
             });
 
-            // Filter by locations...
+            // filter by location (city or user location)
             
             // Filter by country/city only if no mall is set.
             if (empty($mall)) {
                 // Otherwise, we filter based on user's selection of country 
                 // and/or cities
-                $promotionSearch->filterByCountryAndCities($area);
+                $newsSearch->filterByCountryAndCities($area);
 
                 // get user lat and lon
                 if ($sort_by == 'location' || $location == 'mylocation') {
@@ -281,22 +282,22 @@ class PromotionListNewAPIController extends PubControllerAPI
                 }
                 
                 // Also user's geo-location...
-                // $promotionSearch->filterByLocation($location);
+                // $newsSearch->filterByLocation($location);
             }
 
             $withAdvert = true;
             if ($withAdvert) {
 
                 // Get Advert_Store...
-                $esAdvertIndex = $esConfig['indices_prefix'] . $esConfig['indices']['advert_promotions']['index'];
-                $advertSearch = new AdvertSearch($esConfig, 'advert_promotions');
+                $esAdvertIndex = $esConfig['indices_prefix'] . $esConfig['indices']['advert_news']['index'];
+                $advertSearch = new AdvertSearch($esConfig, 'advert_news');
 
                 $advertSearch->setPaginationParams(['from' => 0, 'size' => 100]);
 
                 $locationId = ! empty($mall) ? $mallId : 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-                $advertSearch->filterPromotions(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
+                $advertSearch->filterNews(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
 
                 $advertSearchResult = $advertSearch->getResult();
 
@@ -329,7 +330,7 @@ class PromotionListNewAPIController extends PubControllerAPI
                     }
 
                     if (count($excludeId) > 0) {
-                        $promotionSearch->exclude($excludeId);
+                        $newsSearch->exclude($excludeId);
                     }
 
                     if (count($withPreferred) > 0) {
@@ -352,7 +353,7 @@ class PromotionListNewAPIController extends PubControllerAPI
                         }
 
                         $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
-                        $advertPromotionSorting = [
+                        $advertSorting = [
                             '_script' => [
                                 'script' => $sortPageScript, 
                                 'type' => 'string', 
@@ -360,35 +361,37 @@ class PromotionListNewAPIController extends PubControllerAPI
                             ]
                         ];
 
-                        $promotionSearch->sortBy($advertPromotionSorting);
+                        $newsSearch->sortBy($advertSorting);
                     }
                 }
             }
 
-            // Add script fiedls...
-            $scriptFields = $promotionSearch->addReviewFollowScript(compact(
+            // Add script fields...
+            $scriptFields = $newsSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
             
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
                 case 'name':
-                    $promotionSearch->sortByName();
+                    $newsSearch->sortByName();
                     break;
                 case 'rating':
-                    $promotionSearch->sortByRating($scriptFields['scriptFieldRating']);
-                    // $promotionSearch->sortByRelevance();
+                    $newsSearch->sortByRating($scriptFields['scriptFieldRating']);
+                    // $newsSearch->sortByRelevance();
                     break;
                 case 'created_date':
-                    $promotionSearch->sortByCreatedDate($sortMode);
+                    $newsSearch->sortByCreatedDate($sortMode);
                     break;
                 case 'updated_date':
-                    $promotionSearch->sortByUpdatedDate($sortMode);
+                    $newsSearch->sortByUpdatedDate($sortMode);
                     break;
                 default:
-                    $promotionSearch->sortByRelevance();
+                    $newsSearch->sortByRelevance();
                     break;
             }
+
+
 
             // Exclude specific document Ids, useful for some cases e.g You May Also Like
             // @todo rewrite deprected 'filtered' query to bool only
@@ -400,29 +403,27 @@ class PromotionListNewAPIController extends PubControllerAPI
                 }
                 
                 if (count($jsonExcludedIds) > 0) {
-                    $promotionSearch->exclude($jsonExcludedIds);
+                    $newsSearch->exclude($jsonExcludedIds);
                 }
 
                 $withAdvert = FALSE;
             });
 
-            $promotionSearch->setIndex($esIndex);
+            $newsSearch->setIndex($esIndex);
 
-            // return \Response::json($promotionSearch->getRequestParam());
+            // return \Response::json($newsSearch->getRequestParam());
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() use ($promotionSearch, &$esParam) {
-                    return $promotionSearch->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() use ($newsSearch, &$esParam) {
+                    return $newsSearch->getResult();
                 });
                 $recordCache->put($serializedCacheKey, $response);
             } else {
-                $response = $promotionSearch->getResult();
+                $response = $newsSearch->getResult();
             }
 
             $records = $response['hits'];
-
-            // return \Response::json($records);
 
             $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
@@ -430,16 +431,22 @@ class PromotionListNewAPIController extends PubControllerAPI
 
             foreach ($records['hits'] as $record) {
                 $data = array();
-                $isOwned = false;
                 $default_lang = '';
                 $partnerTokens = isset($record['_source']['partner_tokens']) ? $record['_source']['partner_tokens'] : [];
                 $pageView = 0;
                 $data['placement_type'] = null;
                 $data['placement_type_orig'] = null;
+                $isHavingReward = 'N';
+                $avgGeneralRating = 0;
+                $totalGeneralReviews = 0;
                 $campaignId = '';
                 foreach ($record['_source'] as $key => $value) {
                     if ($key === 'news_id') {
                         $campaignId = $value;
+                    }
+
+                    if ($key === 'is_having_reward') {
+                        $isHavingReward = $value;
                     }
 
                     if ($key === "name") {
@@ -536,18 +543,31 @@ class PromotionListNewAPIController extends PubControllerAPI
                             }
                         }
                     }
+
+                    if ($key === 'avg_general_rating') {
+                        $avgGeneralRating = $value;
+                    }
+
+                    if ($key === 'total_general_reviews') {
+                        $totalGeneralReviews = $value;
+                    }
                 }
 
                 $data['average_rating'] = (! empty($record['fields']['average_rating'][0])) ? number_format(round($record['fields']['average_rating'][0], 1), 1) : 0;
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
+                if ($isHavingReward === 'Y') {
+                    $data['average_rating'] = ($avgGeneralRating != 0) ? number_format(round($avgGeneralRating, 1), 1) : 0;
+                    $data['total_review'] = round($totalGeneralReviews, 1);
+                }
 
                 if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
-                    $redisKey = 'promotion' . '||' . $campaignId . '||' . $locationId;
+                    $redisKey = 'news' . '||' . $campaignId . '||' . $locationId;
                     $redisConnection = Config::get('orbit.page_view.redis.connection', '');
                     $redis = Redis::connection($redisConnection);
                     $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
                 }
                 $data['page_view'] = $pageView;
+
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
@@ -594,28 +614,29 @@ class PromotionListNewAPIController extends PubControllerAPI
                 $data->records = $output;
             }
 
+
             if (OrbitInput::get('from_homepage', '') !== 'y') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
                     if (is_object($mall)) {
-                        $activityNotes = sprintf('Page viewed:  View mall promotion list');
+                        $activityNotes = sprintf('Page viewed: View mall event list');
                         $activity->setUser($user)
-                            ->setActivityName('view_mall_promotion_list')
-                            ->setActivityNameLong('View mall promotion list')
+                            ->setActivityName('view_mall_event_list')
+                            ->setActivityNameLong('View mall event list')
                             ->setObject(null)
                             ->setLocation($mall)
-                            ->setModuleName('Promotion')
+                            ->setModuleName('News')
                             ->setNotes($activityNotes)
                             ->setObjectDisplayName($viewType)
                             ->responseOK()
                             ->save();
                     } else {
-                        $activityNotes = sprintf('Page viewed: Promotion list');
+                        $activityNotes = sprintf('Page viewed: News list');
                         $activity->setUser($user)
-                            ->setActivityName('view_promotions_main_page')
-                            ->setActivityNameLong('View Promotions Main Page')
+                            ->setActivityName('view_news_main_page')
+                            ->setActivityNameLong('View News Main Page')
                             ->setObject(null)
                             ->setLocation($mall)
-                            ->setModuleName('Promotion')
+                            ->setModuleName('News')
                             ->setNotes($activityNotes)
                             ->setObjectDisplayName($viewType)
                             ->responseOK()

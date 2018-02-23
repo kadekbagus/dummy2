@@ -146,16 +146,16 @@ class StoreSearch extends Search
 			]
 		]);
 
-		$priorityCountry = isset($this->esConfig['store']['priority']['country']) ?
-			$this->esConfig['store']['priority']['country'] : '';
+		$priorityCountry = isset($this->esConfig['priority']['store']['country']) ?
+			$this->esConfig['priority']['store']['country'] : '';
 
-		$priorityProvince = isset($this->esConfig['store']['priority']['province']) ?
-			$this->esConfig['store']['priority']['province'] : '';
+		$priorityProvince = isset($this->esConfig['priority']['store']['province']) ?
+			$this->esConfig['priority']['store']['province'] : '';
 
-		$priorityCity = isset($this->esConfig['store']['priority']['city']) ?
-			$this->esConfig['store']['priority']['city'] : '';
+		$priorityCity = isset($this->esConfig['priority']['store']['city']) ?
+			$this->esConfig['priority']['store']['city'] : '';
 
-		$priorityMallName = isset($this->esConfig['store']['priority']['mall_name']) ?
+		$priorityMallName = isset($this->esConfig['priority']['store']['mall_name']) ?
 			$this->esConfig['store']['priority']['mall_name'] : '';
 
 		$this->should([

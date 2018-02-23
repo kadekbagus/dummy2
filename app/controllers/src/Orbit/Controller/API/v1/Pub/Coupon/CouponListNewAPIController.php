@@ -1,34 +1,30 @@
-<?php namespace Orbit\Controller\API\v1\Pub\Promotion;
-
-/**
- * @author firmansyah <firmansyah@dominopos.com>
- * @desc Controller for promotion list and search in landing page
- */
+<?php namespace Orbit\Controller\API\v1\Pub\Coupon;
 
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
-use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use \Config;
-use \Exception;
+use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use \DB;
-use \URL;
-use Redis;
-use News;
-use Advert;
-use NewsMerchant;
-use Language;
-use Validator;
-use Orbit\Helper\Util\PaginationNumber;
-use Activity;
-use Orbit\Controller\API\v1\Pub\SocMedAPIController;
-use Orbit\Controller\API\v1\Pub\Promotion\PromotionHelper;
-use Mall;
+use Illuminate\Database\QueryException;
+use Config;
+use Coupon;
 use stdClass;
+use Orbit\Helper\Util\PaginationNumber;
+use DB;
+use Redis;
+use Validator;
+use Activity;
+use Mall;
+use Advert;
+use Lang;
+use Role;
+use IssuedCoupon;
+use \Exception;
+use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Helper\Util\ObjectPartnerBuilder;
 use Orbit\Helper\Database\Cache as OrbitDBCache;
+use Helper\EloquentRecordCounter as RecordCounter;
 use \Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\SimpleCache;
 use Orbit\Helper\Util\CdnUrlGenerator;
@@ -38,17 +34,17 @@ use PartnerCompetitor;
 use Country;
 use UserSponsor;
 
-use PromotionSearch;
+use CouponSearch;
 use AdvertStoreSearch as AdvertSearch;
 
-class PromotionListNewAPIController extends PubControllerAPI
+class CouponListNewAPIController extends PubControllerAPI
 {
     protected $withoutScore = FALSE;
 
     /**
-     * GET - get active promotion in all mall, and also provide for searching
+     * GET - get all coupon in all mall
      *
-     * @author Firmansyayh <firmansyah@dominopos.com>
+     * @author Shelgi Prasetyo <shelgi@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -56,24 +52,22 @@ class PromotionListNewAPIController extends PubControllerAPI
      * @param string sortmode
      * @param string take
      * @param string skip
-     * @param string keyword
      * @param string filter_name
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getSearchPromotion()
+    public function getCouponList()
     {
-        $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
-        $keyword = null;
-        $user = null;
-        $mall = null;
+        $mall = NULL;
+        $user = NULL;
+        $httpCode = 200;
         $cacheKey = [];
-        $serializedCacheKey = '';
+        $serializedCacheKey = [];
 
         // Cache result of all possible calls to backend storage
         $cacheConfig = Config::get('orbit.cache.context');
-        $cacheContext = 'promotion-list';
+        $cacheContext = 'coupon-list';
         $recordCache = SimpleCache::create($cacheConfig, $cacheContext);
         $keywordSearchCache = SimpleCache::create($cacheConfig, $cacheContext)
                                        ->setKeyPrefix($cacheContext . '-keyword-search');
@@ -84,15 +78,16 @@ class PromotionListNewAPIController extends PubControllerAPI
             $this->checkAuth();
             $user = $this->api->user;
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sortBy = OrbitInput::get('sortby', 'relevance');
+            $sort_by = OrbitInput::get('sortby', 'created_date');
+            $sortBy = OrbitInput::get('sortby', 'created_date');
             $sort_mode = OrbitInput::get('sortmode','desc');
             $sortMode = OrbitInput::get('sortmode','desc');
-            $language = OrbitInput::get('language', 'id');
+            $usingDemo = Config::get('orbit.is_demo', FALSE);
             $location = OrbitInput::get('location', null);
             $cityFilters = OrbitInput::get('cities', null);
             $countryFilter = OrbitInput::get('country', null);
             $ul = OrbitInput::get('ul', null);
+            $language = OrbitInput::get('language', 'id');
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $distance = Config::get('orbit.geo_location.distance', 10);
             $lon = '';
@@ -104,26 +99,30 @@ class PromotionListNewAPIController extends PubControllerAPI
             $category_id = OrbitInput::get('category_id');
             $categoryIds = OrbitInput::get('category_id', []);
             $no_total_records = OrbitInput::get('no_total_records', null);
-            $take = PaginationNumber::parseTakeFromGet('promotion');
+            $take = PaginationNumber::parseTakeFromGet('coupon');
             $skip = PaginationNumber::parseSkipFromGet();
             $withCache = TRUE;
             $partnerToken = OrbitInput::get('token', null);
             $viewType = OrbitInput::get('view_type', 'grid');
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
 
-             // search by key word or filter or sort by flag
+            $couponHelper = CouponHelper::create();
+            $couponHelper->couponCustomValidator();
+            // search by key word or filter or sort by flag
             $searchFlag = FALSE;
 
-            $promotionHelper = PromotionHelper::create();
-            $promotionHelper->registerCustomValidation();
             $validator = Validator::make(
                 array(
                     'language' => $language,
                     'sortby'   => $sort_by,
+                    'list_type'   => $list_type,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
-                    'sortby'   => 'in:relevance,name,location,created_date,updated_date,rating',
+                    'sortby'   => 'in:name,location,created_date,updated_date,rating,relevance',
+                    'list_type'   => 'in:featured,preferred',
+                ),
+                array(
                 )
             );
 
@@ -148,7 +147,7 @@ class PromotionListNewAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $valid_language = $promotionHelper->getValidLanguage();
+            $valid_language = $couponHelper->getValidLanguage();
 
             $prefix = DB::getTablePrefix();
 
@@ -171,21 +170,21 @@ class PromotionListNewAPIController extends PubControllerAPI
             $esConfig = Config::get('orbit.elasticsearch');
 
             // Create the search...
-            $esIndex = $esConfig['indices_prefix'] . $esConfig['indices']['promotions']['index'];
-            $promotionSearch = new PromotionSearch($esConfig);
+            $esIndex = $esConfig['indices_prefix'] . $esConfig['indices']['coupons']['index'];
+            $couponSearch = new CouponSearch($esConfig);
 
-            $promotionSearch->setPaginationParams(['from' => $skip, 'size' => $take]);
+            $couponSearch->setPaginationParams(['from' => $skip, 'size' => $take]);
 
             // Only search active promotions..
-            $promotionSearch->isActive(compact('dateTimeEs'));
+            $couponSearch->isActive(compact('dateTimeEs'));
             
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword');
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
-                $promotionSearch->filterByKeyword($keyword);
+                $couponSearch->filterByKeyword($keyword);
             }
-            
+
             $countryData = null;
             $mall = null;
             if (! empty($mallId)) {
@@ -208,25 +207,25 @@ class PromotionListNewAPIController extends PubControllerAPI
 
             // If under mall page, we should ignore any other area/location filter.
             if (! empty($mall)) {
-                $promotionSearch->filterByMall($mallId);
+                $couponSearch->filterByMall($mallId);
             }
 
             // Filter by my credit card or choose manually
             $sponsorProviderIds = OrbitInput::get('sponsor_provider_ids', []);
             if ($myCCFilter) {
-                $sponsorProviderIds = $promotionSearch->filterByMyCC(compact('myCCFilter', 'user'));
+                $sponsorProviderIds = $couponSearch->filterByMyCC(compact('myCCFilter', 'user'));
 
                 if (count($sponsorProviderIds) > 0) {
                     $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
                 }
             } else if (! empty($sponsorProviderIds)) {
                 $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
-                $promotionSearch->filterBySponsors($sponsorProviderIds);
+                $couponSearch->filterBySponsors($sponsorProviderIds);
             }
 
             // Filter by selected categories...
             if (! empty($categoryIds)) {
-                $promotionSearch->filterByCategories($categoryIds);
+                $couponSearch->filterByCategories($categoryIds);
             }
 
             // Filter by partner...
@@ -237,7 +236,7 @@ class PromotionListNewAPIController extends PubControllerAPI
                     $searchFlag = $searchFlag || TRUE;
                     $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
                                                                 $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                                                                     ->where('affected_group_names.group_type', '=', 'promotion');
+                                                                     ->where('affected_group_names.group_type', '=', 'coupon');
                                                             })
                                                             ->where('partner_id', $partnerId)
                                                             ->first();
@@ -247,22 +246,20 @@ class PromotionListNewAPIController extends PubControllerAPI
 
                         if (in_array($partnerId, $exception)) {
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
-                            $promotionSearch->excludePartnerCompetitors($partnerIds);
+                            $couponSearch->excludePartnerCompetitors($partnerIds);
                         }
                         else {
-                           $promotionSearch->filterByPartner($partnerId); 
+                           $couponSearch->filterByPartner($partnerId); 
                         }
                     }
                 }
             });
 
-            // Filter by locations...
-            
             // Filter by country/city only if no mall is set.
             if (empty($mall)) {
                 // Otherwise, we filter based on user's selection of country 
                 // and/or cities
-                $promotionSearch->filterByCountryAndCities($area);
+                $couponSearch->filterByCountryAndCities($area);
 
                 // get user lat and lon
                 if ($sort_by == 'location' || $location == 'mylocation') {
@@ -281,22 +278,22 @@ class PromotionListNewAPIController extends PubControllerAPI
                 }
                 
                 // Also user's geo-location...
-                // $promotionSearch->filterByLocation($location);
+                // $couponSearch->filterByLocation($location);
             }
 
             $withAdvert = true;
             if ($withAdvert) {
 
                 // Get Advert_Store...
-                $esAdvertIndex = $esConfig['indices_prefix'] . $esConfig['indices']['advert_promotions']['index'];
-                $advertSearch = new AdvertSearch($esConfig, 'advert_promotions');
+                $esAdvertIndex = $esConfig['indices_prefix'] . $esConfig['indices']['advert_coupons']['index'];
+                $advertSearch = new AdvertSearch($esConfig, 'advert_coupons');
 
                 $advertSearch->setPaginationParams(['from' => 0, 'size' => 100]);
 
                 $locationId = ! empty($mall) ? $mallId : 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-                $advertSearch->filterPromotions(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
+                $advertSearch->filterCoupons(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
 
                 $advertSearchResult = $advertSearch->getResult();
 
@@ -308,7 +305,7 @@ class PromotionListNewAPIController extends PubControllerAPI
 
                     foreach ($advertList as $adverts) {
                         $advertId = $adverts['_id'];
-                        $newsId = $adverts['_source']['news_id'];
+                        $newsId = $adverts['_source']['promotion_id'];
                         if(! in_array($newsId, $excludeId)) {
                             $excludeId[] = $newsId;
                         } else {
@@ -329,7 +326,7 @@ class PromotionListNewAPIController extends PubControllerAPI
                     }
 
                     if (count($excludeId) > 0) {
-                        $promotionSearch->exclude($excludeId);
+                        $couponSearch->exclude($excludeId);
                     }
 
                     if (count($withPreferred) > 0) {
@@ -352,7 +349,7 @@ class PromotionListNewAPIController extends PubControllerAPI
                         }
 
                         $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
-                        $advertPromotionSorting = [
+                        $advertSorting = [
                             '_script' => [
                                 'script' => $sortPageScript, 
                                 'type' => 'string', 
@@ -360,33 +357,31 @@ class PromotionListNewAPIController extends PubControllerAPI
                             ]
                         ];
 
-                        $promotionSearch->sortBy($advertPromotionSorting);
+                        $couponSearch->sortBy($advertSorting);
                     }
                 }
-            }
-
-            // Add script fiedls...
-            $scriptFields = $promotionSearch->addReviewFollowScript(compact(
+            }// Add script fiedls...
+            $scriptFields = $couponSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
             
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
                 case 'name':
-                    $promotionSearch->sortByName();
+                    $couponSearch->sortByName();
                     break;
                 case 'rating':
-                    $promotionSearch->sortByRating($scriptFields['scriptFieldRating']);
-                    // $promotionSearch->sortByRelevance();
+                    $couponSearch->sortByRating($scriptFields['scriptFieldRating']);
+                    // $couponSearch->sortByRelevance();
                     break;
                 case 'created_date':
-                    $promotionSearch->sortByCreatedDate($sortMode);
+                    $couponSearch->sortByCreatedDate($sortMode);
                     break;
                 case 'updated_date':
-                    $promotionSearch->sortByUpdatedDate($sortMode);
+                    $couponSearch->sortByUpdatedDate($sortMode);
                     break;
                 default:
-                    $promotionSearch->sortByRelevance();
+                    $couponSearch->sortByRelevance();
                     break;
             }
 
@@ -400,30 +395,29 @@ class PromotionListNewAPIController extends PubControllerAPI
                 }
                 
                 if (count($jsonExcludedIds) > 0) {
-                    $promotionSearch->exclude($jsonExcludedIds);
+                    $couponSearch->exclude($jsonExcludedIds);
                 }
 
                 $withAdvert = FALSE;
             });
 
-            $promotionSearch->setIndex($esIndex);
+            $couponSearch->setIndex($esIndex);
 
-            // return \Response::json($promotionSearch->getRequestParam());
+            // return \Response::json($couponSearch->getRequestParam());
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() use ($promotionSearch, &$esParam) {
-                    return $promotionSearch->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() use ($couponSearch, &$esParam) {
+                    return $couponSearch->getResult();
                 });
                 $recordCache->put($serializedCacheKey, $response);
             } else {
-                $response = $promotionSearch->getResult();
+                $response = $couponSearch->getResult();
             }
 
             $records = $response['hits'];
 
-            // return \Response::json($records);
-
+            $promotionIds = array();
             $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
@@ -438,12 +432,12 @@ class PromotionListNewAPIController extends PubControllerAPI
                 $data['placement_type_orig'] = null;
                 $campaignId = '';
                 foreach ($record['_source'] as $key => $value) {
-                    if ($key === 'news_id') {
-                        $campaignId = $value;
-                    }
-
                     if ($key === "name") {
-                        $key = "news_name";
+                        $key = "coupon_name";
+                    } elseif ($key === "promotion_id") {
+                        $key = "coupon_id";
+                        $promotionIds[] = $value;
+                        $campaignId = $value;
                     }
 
                     $default_lang = (empty($record['_source']['default_lang']))? '' : $record['_source']['default_lang'];
@@ -460,7 +454,7 @@ class PromotionListNewAPIController extends PubControllerAPI
                             if ($dt['language_code'] === $language) {
                                 // name
                                 if (! empty($dt['name'])) {
-                                    $data['news_name'] = $dt['name'];
+                                    $data['coupon_name'] = $dt['name'];
                                 }
 
                                 // desc
@@ -474,8 +468,8 @@ class PromotionListNewAPIController extends PubControllerAPI
                                 }
                             } elseif ($dt['language_code'] === $default_lang) {
                                 // name
-                                if (! empty($dt['name']) && empty($data['news_name'])) {
-                                    $data['news_name'] = $dt['name'];
+                                if (! empty($dt['name']) && empty($data['coupon_name'])) {
+                                    $data['coupon_name'] = $dt['name'];
                                 }
 
                                 // description
@@ -491,7 +485,7 @@ class PromotionListNewAPIController extends PubControllerAPI
                         }
                     }
 
-                    // advert type
+                    // advert
                     if ($list_type === 'featured') {
                         if (! empty($mallId) && $key === 'featured_mall_type') {
                             $data['placement_type'] = $value;
@@ -523,6 +517,18 @@ class PromotionListNewAPIController extends PubControllerAPI
                         }
                     }
 
+                    if ($key === "wallet_operator") {
+                        $data['wallet_operator'] = null;
+                        if (! empty($record['_source']['wallet_operator'])) {
+                            foreach ($record['_source']['wallet_operator'] as $dt) {
+                                $logoLocalPath = (! empty($dt['operator_logo'])) ? $dt['operator_logo'] : '';
+                                $logoCdnPath = (! empty($dt['operator_logo_cdn'])) ? $dt['operator_logo_cdn'] : '';
+                                $data['wallet_operator'][] = array('operator_name' => $dt['operator_name'], 'operator_logo_url' => $imgUrl->getImageUrl($logoLocalPath, $logoCdnPath));
+                            }
+
+                        }
+                    }
+
                     if (empty($mallId)) {
                         if ($key === 'gtm_page_views') {
                             $pageView = $value;
@@ -542,15 +548,33 @@ class PromotionListNewAPIController extends PubControllerAPI
                 $data['total_review'] = (! empty($record['fields']['total_review'][0])) ? round($record['fields']['total_review'][0], 1) : 0;
 
                 if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
-                    $redisKey = 'promotion' . '||' . $campaignId . '||' . $locationId;
+                    $redisKey = 'coupon' . '||' . $campaignId . '||' . $locationId;
                     $redisConnection = Config::get('orbit.page_view.redis.connection', '');
                     $redis = Redis::connection($redisConnection);
                     $pageView = (! empty($redis->get($redisKey))) ? $redis->get($redisKey) : $pageView;
                 }
                 $data['page_view'] = $pageView;
+                $data['owned'] = $isOwned;
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
+            }
+
+            if ($user->isConsumer() && ! empty($promotionIds)) {
+                $myCoupons = IssuedCoupon::select('promotion_id')
+                                ->where('issued_coupons.user_id', '=', $user->user_id)
+                                ->where('issued_coupons.status', '=', 'issued')
+                                ->whereIn('promotion_id', $promotionIds)
+                                ->orderBy('created_at', 'desc')
+                                ->groupBy('promotion_id')
+                                ->get()
+                                ->lists('promotion_id');
+
+                foreach ($listOfRec as &$couponData) {
+                    if (in_array($couponData['coupon_id'], $myCoupons)) {
+                        $couponData['owned'] = true;
+                    }
+                }
             }
 
             // frontend need the mall name
@@ -568,8 +592,8 @@ class PromotionListNewAPIController extends PubControllerAPI
             }
             $data->records = $listOfRec;
 
-            // random featured adv
-            // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
+            // // random featured adv
+            // // @todo fix for random -- this is not the right way to do random, it could lead to memory leak
             if ($list_type === 'featured') {
                 $advertedCampaigns = array_filter($listOfRec, function($v) {
                     return ($v['placement_type_orig'] === 'featured_list');
@@ -594,33 +618,37 @@ class PromotionListNewAPIController extends PubControllerAPI
                 $data->records = $output;
             }
 
+            // save activity when accessing listing
+            // omit save activity if accessed from mall ci campaign list 'from_mall_ci' !== 'y'
+            // moved from generic activity number 32
             if (OrbitInput::get('from_homepage', '') !== 'y') {
                 if (empty($skip) && OrbitInput::get('from_mall_ci', '') !== 'y') {
                     if (is_object($mall)) {
-                        $activityNotes = sprintf('Page viewed:  View mall promotion list');
+                        $activityNotes = sprintf('Page viewed: View mall coupon list');
                         $activity->setUser($user)
-                            ->setActivityName('view_mall_promotion_list')
-                            ->setActivityNameLong('View mall promotion list')
+                            ->setActivityName('view_mall_coupon_list')
+                            ->setActivityNameLong('View mall coupon list')
                             ->setObject(null)
                             ->setLocation($mall)
-                            ->setModuleName('Promotion')
+                            ->setModuleName('Coupon')
                             ->setNotes($activityNotes)
                             ->setObjectDisplayName($viewType)
                             ->responseOK()
                             ->save();
                     } else {
-                        $activityNotes = sprintf('Page viewed: Promotion list');
+                        $activityNotes = sprintf('Page viewed: Coupon list');
                         $activity->setUser($user)
-                            ->setActivityName('view_promotions_main_page')
-                            ->setActivityNameLong('View Promotions Main Page')
+                            ->setActivityName('view_coupons_main_page')
+                            ->setActivityNameLong('View Coupons Main Page')
                             ->setObject(null)
                             ->setLocation($mall)
-                            ->setModuleName('Promotion')
+                            ->setModuleName('Coupon')
                             ->setNotes($activityNotes)
                             ->setObjectDisplayName($viewType)
                             ->responseOK()
                             ->save();
                     }
+
                 }
             }
 
@@ -628,15 +656,15 @@ class PromotionListNewAPIController extends PubControllerAPI
             $this->response->code = 0;
             $this->response->status = 'success';
             $this->response->message = 'Request Ok';
-
         } catch (ACLForbiddenException $e) {
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
-
         } catch (InvalidArgsException $e) {
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -646,10 +674,11 @@ class PromotionListNewAPIController extends PubControllerAPI
 
             $this->response->data = $result;
             $httpCode = 403;
-
         } catch (QueryException $e) {
+
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
+
             // Only shows full query error when we are in debug mode
             if (Config::get('app.debug')) {
                 $this->response->message = $e->getMessage();
@@ -658,8 +687,8 @@ class PromotionListNewAPIController extends PubControllerAPI
             }
             $this->response->data = null;
             $httpCode = 500;
-
         } catch (Exception $e) {
+
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
@@ -667,7 +696,9 @@ class PromotionListNewAPIController extends PubControllerAPI
             $httpCode = 500;
         }
 
-        return $this->render($httpCode);
+        $output = $this->render($httpCode);
+
+        return $output;
     }
 
     /**

@@ -15,8 +15,8 @@ class PromotionSearch extends Search
 
 		$this->setDefaultSearchParam();
 
-		$this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['stores']['index']);
-		$this->setType($this->esConfig['indices']['stores']['type']);
+		$this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['promotions']['index']);
+		$this->setType($this->esConfig['indices']['promotions']['type']);
 	}
 	
 	/**
@@ -190,17 +190,17 @@ class PromotionSearch extends Search
         //     }
         //  });
 
-		$priorityName = isset($this->esConfig['priority']['store']['name']) ? 
-			$this->esConfig['priority']['store']['name'] : '^6';
+		$priorityName = isset($this->esConfig['priority']['promotions']['name']) ? 
+			$this->esConfig['priority']['promotions']['name'] : '^6';
 
-		$priorityDescription = isset($this->esConfig['priority']['store']['description']) ? 
-			$this->esConfig['priority']['store']['description'] : '^5';
+		$priorityDescription = isset($this->esConfig['priority']['promotions']['description']) ? 
+			$this->esConfig['priority']['promotions']['description'] : '^5';
 
-		$priorityKeywords = isset($this->esConfig['priority']['store']['keywords']) ? 
-			$this->esConfig['priority']['store']['keywords'] : '^4';
+		$priorityKeywords = isset($this->esConfig['priority']['promotions']['keywords']) ? 
+			$this->esConfig['priority']['promotions']['keywords'] : '^4';
 
-		$priorityProductTags = isset($this->esConfig['priority']['store']['product_tags']) ? 
-			$this->esConfig['priority']['store']['product_tags'] : '';
+		$priorityProductTags = isset($this->esConfig['priority']['promotions']['product_tags']) ? 
+			$this->esConfig['priority']['promotions']['product_tags'] : '';
 
 		$this->must([
 			'bool' => [
@@ -230,16 +230,16 @@ class PromotionSearch extends Search
 			]
 		]);
 
-		$priorityCountry = isset($this->esConfig['store']['priority']['country']) ?
-			$this->esConfig['store']['priority']['country'] : '';
+		$priorityCountry = isset($this->esConfig['priority']['promotions']['country']) ?
+			$this->esConfig['priority']['promotions']['country'] : '';
 
-		$priorityProvince = isset($this->esConfig['store']['priority']['province']) ?
-			$this->esConfig['store']['priority']['province'] : '';
+		$priorityProvince = isset($this->esConfig['priority']['promotions']['province']) ?
+			$this->esConfig['priority']['promotions']['province'] : '';
 
-		$priorityCity = isset($this->esConfig['store']['priority']['city']) ?
-			$this->esConfig['store']['priority']['city'] : '';
+		$priorityCity = isset($this->esConfig['priority']['promotions']['city']) ?
+			$this->esConfig['priority']['promotions']['city'] : '';
 
-		$priorityMallName = isset($this->esConfig['store']['priority']['mall_name']) ?
+		$priorityMallName = isset($this->esConfig['priority']['promotions']['mall_name']) ?
 			$this->esConfig['store']['priority']['mall_name'] : '';
 
 		$this->should([
@@ -400,19 +400,6 @@ class PromotionSearch extends Search
             }
 
             if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
-                $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
-                // $withSponsorProviderIds = array(
-                // 	'nested' => array(
-                // 		'path' => 'sponsor_provider', 
-                // 		'query' => array(
-                // 			'filtered' => array(
-                // 				'filter' => array(
-                // 					'terms' => array('sponsor_provider.sponsor_id' => $sponsorProviderIds))
-                // 			)
-                // 		)
-                // 	)
-                // );
-                // $jsonQuery['query']['bool']['filter'][] = $withSponsorProviderIds;
                 $this->must([
                 	'nested' => [
                 		'path' => 'sponsor_provider',
@@ -423,8 +410,12 @@ class PromotionSearch extends Search
                 		]
                 	],
                 ]);
+
+                return $sponsorProviderIds;
             }
         }
+
+        return [];
 	}
 
 	public function filterBySponsors($sponsorProviderIds = [])
@@ -538,7 +529,7 @@ class PromotionSearch extends Search
 	public function sortByUpdatedDate($order = 'desc')
 	{
 		$this->sort([
-			'updated_date' => [
+			'updated_at' => [
 				'order' => $order
 			]
 		]);
@@ -614,7 +605,7 @@ class PromotionSearch extends Search
             'total_review' => $scriptFieldReview,
         ]);
 
-        return compact('scriptFieldRating', 'scriptFieldReview', 'scriptFieldFollow');
+        return compact('scriptFieldRating', 'scriptFieldReview');
 
         //////// END RATING & FOLLOW SCRIPTS /////
 	}
@@ -628,29 +619,6 @@ class PromotionSearch extends Search
 	{
 		$this->sort(['_score' => ['order' => 'desc']]);
 	}
-
-	// check user follow
-    public function getUserFollow($user, $mallId, $city=array())
-    {
-        $follow = FollowStatusChecker::create()
-                                    ->setUserId($user->user_id)
-                                    ->setObjectType('store');
-
-        if (! empty($mallId)) {
-            $follow = $follow->setMallId($mallId);
-        }
-
-        if (! empty($city)) {
-            if (! is_array($city)) {
-                $city = (array) $city;
-            }
-            $follow = $follow->setCity($city);
-        }
-
-        $follow = $follow->getFollowStatus();
-
-        return $follow;
-    }
 
     /**
 	 * Init default search params.

@@ -88,4 +88,51 @@ class AdvertStoreSearch extends Search
             ]
         ]);
     }
+
+
+    public function filterNews($params = [])
+    {
+        $this->must(['match' => ['advert_status' => 'active']]);
+
+        $this->must(['range' => ['advert_start_date' => ['lte' => $params['dateTimeEs']]]]);
+
+        $this->must(['range' => ['advert_end_date' => ['gte' => $params['dateTimeEs']]]]);
+
+        $this->must(['match' => ['advert_location_ids' => $params['locationId']]]);
+
+        $this->must(['terms' => ['advert_type' => $params['advertType']]]);
+
+        $this->should([
+            'bool' => [
+                'must_not' => [
+                    'exists' => [
+                        'field' => 'advert_status'
+                    ],
+                ]
+            ]
+        ]);
+    }
+
+    public function filterCoupons($params = [])
+    {
+        $this->must(['match' => ['advert_status' => 'active']]);
+
+        $this->must(['range' => ['advert_start_date' => ['lte' => $params['dateTimeEs']]]]);
+
+        $this->must(['range' => ['advert_end_date' => ['gte' => $params['dateTimeEs']]]]);
+
+        $this->must(['match' => ['advert_location_ids' => $params['locationId']]]);
+
+        $this->must(['terms' => ['advert_type' => $params['advertType']]]);
+
+        $this->should([
+            'bool' => [
+                'must_not' => [
+                    'exists' => [
+                        'field' => 'advert_status'
+                    ],
+                ]
+            ]
+        ]);
+    }
 }
