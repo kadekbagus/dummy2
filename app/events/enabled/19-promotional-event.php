@@ -542,7 +542,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-mallnotificatio
                     $languageName = $value->name;
                     if (! empty($value->news_name)) {
                         $headings->$languageName = $value->news_name;
-                        $contents->$languageName = $value->description;
+                        $contents->$languageName = substr(str_replace('&nbsp;', ' ', strip_tags($value->description)), 0, 40) . '...';
                     }
                 }
                 if ($value->merchant_language_id === $_news->default_language_id)
@@ -827,7 +827,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-storenotificati
             $languageName = $translation['name'];
             if (! empty($translation['news_name'])) {
                 $headings->$languageName = $translation['news_name'];
-                $contents->$languageName = $translation['description'];
+                $contents->$languageName = substr(str_replace('&nbsp;', ' ', strip_tags($translation['description'])), 0, 40) . '...';
             }
 
             if ($translation['merchant_language_id'] === $_news->default_language_id) {

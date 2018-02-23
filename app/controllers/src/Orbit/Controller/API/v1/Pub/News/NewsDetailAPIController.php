@@ -192,6 +192,11 @@ class NewsDetailAPIController extends PubControllerAPI
                             }])
                         ->first();
 
+            $message = 'Request Ok';
+            if (! is_object($news)) {
+                throw new OrbitCustomException('News that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
             $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
@@ -226,11 +231,6 @@ class NewsDetailAPIController extends PubControllerAPI
                 }
             }
             $news->total_view = $totalPageViews;
-
-            $message = 'Request Ok';
-            if (! is_object($news)) {
-                throw new OrbitCustomException('News that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
-            }
 
             if ($news->is_exclusive === 'Y') {
                 // check token
