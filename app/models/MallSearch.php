@@ -265,7 +265,7 @@ class MallSearch extends Search
             $objectFollow = $this->getUserFollow($params['user']); // return array of followed mall_id
 
             if (! empty($objectFollow)) {
-                if ($sort_by === 'followed') {
+                if ($sortBy === 'followed') {
                     foreach ($objectFollow as $followId) {
                         $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('merchant_id')) { if (! doc['merchant_id'].empty) { if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
                     }
@@ -349,24 +349,12 @@ class MallSearch extends Search
 	}
 
 	// check user follow
-    public function getUserFollow($user, $mallId, $city=array())
+    public function getUserFollow($user)
     {
         $follow = FollowStatusChecker::create()
                                     ->setUserId($user->user_id)
-                                    ->setObjectType('store');
-
-        if (! empty($mallId)) {
-            $follow = $follow->setMallId($mallId);
-        }
-
-        if (! empty($city)) {
-            if (! is_array($city)) {
-                $city = (array) $city;
-            }
-            $follow = $follow->setCity($city);
-        }
-
-        $follow = $follow->getFollowStatus();
+                                    ->setObjectType('mall')
+                                    ->getFollowStatus();
 
         return $follow;
     }
