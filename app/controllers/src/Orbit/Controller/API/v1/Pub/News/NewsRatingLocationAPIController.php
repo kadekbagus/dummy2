@@ -139,7 +139,9 @@ class NewsRatingLocationAPIController extends PubControllerAPI
 
                 $storeIds = array();
                 foreach ($listOfRec->records as $location) {
-                    $storeIds[] = $location->store_id;
+                    if (isset($location->store_id)) {
+                        $storeIds[] = $location->store_id;
+                    }
                 }
 
                 if (! empty($storeIds)) {

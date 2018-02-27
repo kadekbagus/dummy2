@@ -2293,7 +2293,7 @@ class TenantAPIController extends ControllerAPI
                                                     END as country")
                                         )
                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
-                                       ->where('merchants.status', '!=', 'deleted')
+                                       ->where('merchants.status', '=', 'active')
                                        ->whereIn('merchants.object_type', $object_type);
 
             if ($from === 'detail') {
