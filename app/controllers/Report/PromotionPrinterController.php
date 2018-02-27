@@ -83,21 +83,6 @@ class PromotionPrinterController extends DataPrinterController
                     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall Name', htmlentities($mallName), '', '', '','');
                 }
 
-                if ($etcFrom != '' && $etcTo != ''){
-                    $data_template = '%s,%s,%s - %s,%s,%s,%s' . "\n";
-                    printf($data_template, '', 'Filter by Estimated Total Cost', str_replace(',', '', $etcFrom), str_replace(',', '', $etcTo), '', '', '','');
-                }
-
-                if ($etcFrom != '' && $etcTo == ''){
-                    $data_template = '%s,%s,%s,%s,%s,%s' . "\n";
-                    printf($data_template, '', 'Filter by Estimated Total Cost (From)', str_replace(',', '', $etcFrom), '', '', '','');
-                }
-
-                if ($etcFrom == '' && $etcTo != ''){
-                    $data_template = '%s,%s,%s,%s,%s,%s' . "\n";
-                    printf($data_template, '', 'Filter by Estimated Total Cost (To)', str_replace(',', '', $etcTo), '', '', '','');
-                }
-
                 if ( is_array($status) && count($status) > 0) {
                     $statusString = '';
                     foreach ($status as $key => $valstatus){
