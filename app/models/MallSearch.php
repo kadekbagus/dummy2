@@ -265,7 +265,7 @@ class MallSearch extends Search
             $objectFollow = $this->getUserFollow($params['user']); // return array of followed mall_id
 
             if (! empty($objectFollow)) {
-                if ($sortBy === 'followed') {
+                if ($params['sortBy'] === 'followed') {
                     foreach ($objectFollow as $followId) {
                         $scriptFieldFollow = $scriptFieldFollow . " if (doc.containsKey('merchant_id')) { if (! doc['merchant_id'].empty) { if (doc['merchant_id'].value.toLowerCase() == '" . strtolower($followId) . "'){ follow = 1; }}};";
                     }
