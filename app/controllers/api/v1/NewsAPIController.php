@@ -1514,7 +1514,7 @@ class NewsAPIController extends ControllerAPI
 
             // Builder object
             $news = News::allowedForPMPUser($user, $object_type[0])
-                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as display_name',
+                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'news_translations.news_name as display_name',
                             DB::raw("(SELECT {$prefix}media.path FROM {$prefix}media
                                     {$mediaJoin}
                                     WHERE media_name_long = 'news_translation_image_resized_default'
@@ -1534,12 +1534,8 @@ class NewsAPIController extends ControllerAPI
                             DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.order ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
                                     LEFT JOIN {$prefix}timezones ot ON ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
-                                THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order"),
-                            DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (SELECT COUNT(nm.news_merchant_id) FROM {$prefix}news_merchant as nm WHERE nm.object_type != 'mall' and nm.news_id = {$prefix}news.news_id)) AS estimated"))
-                        ->leftJoin('campaign_price', function ($join) use ($object_type) {
-                                $join->on('news.news_id', '=', 'campaign_price.campaign_id')
-                                     ->where('campaign_price.campaign_type', '=', $object_type);
-                          })
+                                THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order")
+                        )
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
@@ -1704,23 +1700,6 @@ class NewsAPIController extends ControllerAPI
                         ) >= 1
                     ))
                 "));
-            });
-
-            // Filter news by estimated total cost
-            OrbitInput::get('etc_from', function ($etcfrom) use ($news) {
-                $etcto = OrbitInput::get('etc_to');
-                if (empty($etcto)) {
-                    $news->havingRaw('estimated >= ' . floatval(str_replace(',', '', $etcfrom)));
-                }
-            });
-
-            // Filter news by estimated total cost
-            OrbitInput::get('etc_to', function ($etcto) use ($news) {
-                $etcfrom = OrbitInput::get('etc_from');
-                if (empty($etcfrom)) {
-                    $etcfrom = 0;
-                }
-                $news->havingRaw('estimated between ' . floatval(str_replace(',', '', $etcfrom)) . ' and '. floatval(str_replace(',', '', $etcto)));
             });
 
             // Add new relation based on request
