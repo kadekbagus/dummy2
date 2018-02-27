@@ -1519,7 +1519,7 @@ class NewsAPIController extends ControllerAPI
                                     {$mediaJoin}
                                     WHERE media_name_long = 'news_translation_image_resized_default'
                                     {$mediaOptimize} AND
-                                    {$prefix}media.object_id = news_translations.news_translation_id
+                                    {$prefix}media.object_id = {$prefix}news_translations.news_translation_id
                                     LIMIT 1) AS image_path"),
                             DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
                             DB::raw("(SELECT GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
