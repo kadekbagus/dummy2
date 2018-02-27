@@ -1515,7 +1515,7 @@ class NewsAPIController extends ControllerAPI
             // Builder object
             $news = News::allowedForPMPUser($user, $object_type[0])
                         ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as display_name',
-                            DB::raw("(SELECT {$prefix}media.orb_media.path FROM {$prefix}media
+                            DB::raw("(SELECT {$prefix}media.path FROM {$prefix}media
                                     {$mediaJoin}
                                     WHERE media_name_long = 'news_translation_image_resized_default'
                                     {$mediaOptimize} AND
