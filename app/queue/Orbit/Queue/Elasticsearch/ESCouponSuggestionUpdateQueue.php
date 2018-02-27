@@ -81,18 +81,6 @@ class ESCouponSuggestionUpdateQueue
                     ->orderBy('promotions.promotion_id', 'asc')
                     ->first();
 
-        $mallIds = Coupon::select(DB::raw(
-                "{$prefix}promotions.promotion_id, mall.merchant_id as mall_id, mall.name as mall_name"
-            ))
-            ->leftJoin(DB::raw("{$prefix}promotion_retailer as retailer"), DB::raw("{$prefix}promotions.promotion_id"), '=', DB::raw('retailer.promotion_id'))
-            ->leftJoin(DB::raw("{$prefix}merchants as merchants"), DB::raw("retailer.retailer_id"), '=', DB::raw("merchants.merchant_id"))
-            ->leftJoin(DB::raw("{$prefix}merchants as mall"), DB::raw("merchants.parent_id"), '=', DB::raw("mall.merchant_id"))
-            ->leftJoin(DB::raw("{$prefix}merchants as mall2"), DB::raw("retailer.retailer_id"), '=', DB::raw("mall.merchant_id"))
-            ->where('promotions.promotion_id', $couponId)
-            ->where(DB::raw("mall.name"), '<>', '')
-            ->groupBy(DB::raw('mall_name'))
-            ->lists('mall_id');
-
         try {
             // check exist elasticsearch index
             $params_search = [
@@ -164,7 +152,6 @@ class ESCouponSuggestionUpdateQueue
                 'name'    => $coupon->promotion_name,
                 'country' => $country,
                 'city'    => $city,
-                'mall_ids' => $mallIds,
                 'begin_date' => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
                 'end_date' => date('Y-m-d', strtotime($coupon->end_date)) . 'T' . date('H:i:s', strtotime($coupon->end_date)) . 'Z'
             ];

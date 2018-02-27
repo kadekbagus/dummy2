@@ -46,7 +46,7 @@ class SuggestionAPIController extends PubControllerAPI
             $language = OrbitInput::get('language', 'id');
             $mallCountries = OrbitInput::get('country', null);
             $mallCities = OrbitInput::get('cities', []);
-            $mallIds = OrbitInput::get('mall_id', null);
+            // $mallIds = OrbitInput::get('mall_id', null);
 
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
@@ -60,9 +60,9 @@ class SuggestionAPIController extends PubControllerAPI
                 $mallCities = Mall::where('status', 'active')->groupBy('city')->lists('city');
             }
 
-            if (empty($mallIds)) {
-                $mallIds = Mall::where('status', 'active')->lists('merchant_id');
-            }
+            // if (empty($mallIds)) {
+            //     $mallIds = Mall::where('status', 'active')->lists('merchant_id');
+            // }
 
             $field = 'suggest_' . $language;
             $body = [
@@ -74,7 +74,7 @@ class SuggestionAPIController extends PubControllerAPI
                         'context' => [
                             'country' => $mallCountries, 
                             'city' => $mallCities, 
-                            'mall_ids' => $mallIds,
+                            // 'mall_ids' => $mallIds,
                         ]
                     ]
                 ]

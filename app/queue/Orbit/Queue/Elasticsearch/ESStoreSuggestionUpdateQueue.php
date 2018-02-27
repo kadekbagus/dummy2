@@ -55,7 +55,7 @@ class ESStoreSuggestionUpdateQueue
         $countryName = $data['country'];
         $store = Tenant::select(
                             'merchants.merchant_id',
-                            'merchants.parent_id',
+                            // 'merchants.parent_id',
                             'merchants.name',
                             DB::raw('oms.city'),
                             DB::raw('oms.country'))
@@ -132,7 +132,6 @@ class ESStoreSuggestionUpdateQueue
 
             $country = array();
             $city = array();
-            $mallIds = [];
             foreach($store as $_store) {
                 if (! in_array($_store->city, $city)) {
                     $city[] = $_store->city;
@@ -140,10 +139,6 @@ class ESStoreSuggestionUpdateQueue
 
                 if (! in_array($_store->country, $country)) {
                     $country[] = $_store->country;
-                }
-
-                if (! in_array($_store->parent_id, $mallIds)) {
-                    $mallIds[] = $_store->parent_id;
                 }
             }
 
@@ -171,7 +166,6 @@ class ESStoreSuggestionUpdateQueue
                 'name'       => $store[0]->name,
                 'country'    => $country,
                 'city'       => $city,
-                'mall_ids'   => $mallIds,
                 'suggest_id' => $suggest,
                 'suggest_en' => $suggest,
                 'suggest_zh' => $suggest,
