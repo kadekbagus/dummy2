@@ -443,8 +443,6 @@ class CampaignReportAPIController extends ControllerAPI
             $query_sum = array(
                 'COUNT(campaign_id) AS total_records',
                 'SUM(page_views) AS page_views',
-                '"N/A" AS estimated_total',
-                '"N/A" AS spending'
             );
 
             $total = $_campaign->selectRaw(implode(',', $query_sum))->get();
@@ -454,12 +452,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get total page views
             $totalPageViews = (int) isset($total[0]->page_views)?$total[0]->page_views:0;
-
-            // Get total estimate
-            $totalEstimated = isset($total[0]->estimated_total)?$total[0]->estimated_total:0;
-
-            // Get total spending
-            $totalSpending = isset($total[0]->spending)?$total[0]->spending:0;
 
             $_campaign->select('campaign_id');
 
@@ -540,8 +532,6 @@ class CampaignReportAPIController extends ControllerAPI
                     'builder' => $campaign,
                     'count' => $totalRecords,
                     'totalPageViews' => $totalPageViews,
-                    'totalSpending' => $totalSpending,
-                    'totalEstimatedCost' => $totalEstimated,
                 ];
             }
 
@@ -550,8 +540,6 @@ class CampaignReportAPIController extends ControllerAPI
             $data = new stdclass();
             $data->total_records = $totalRecords;
             $data->total_page_views = $totalPageViews;
-            $data->total_estimated_cost = $totalEstimated;
-            $data->total_spending = $totalSpending;
             $data->returned_records = count($listOfCampaign);
             $data->records = $listOfCampaign;
 
@@ -676,7 +664,7 @@ class CampaignReportAPIController extends ControllerAPI
                     'campaign_id' => 'required',
                     'campaign_type' => 'required',
                     'current_mall' => 'required|orbit.empty.mall',
-                    'sort_by' => 'in:campaign_date,total_tenant,total_location,mall_name,unique_users,campaign_pages_views,campaign_pages_view_rate,spending',
+                    'sort_by' => 'in:campaign_date,total_tenant,total_location,mall_name,unique_users,campaign_pages_views,campaign_pages_view_rate',
                 ),
                 array(
                     'in' => Lang::get('validation.orbit.empty.campaignreportgeneral_sortby'),
@@ -779,7 +767,6 @@ class CampaignReportAPIController extends ControllerAPI
                             count(object_page_view_id) as campaign_pages_views,
                             ifnull(unique_users, 0) as unique_users,
                             {$this->quote($totalLinkToLocation)} AS total_location,
-                            'N/A' as spending,
                             IFNULL(ROUND((count(object_page_view_id) / ifnull(unique_users, 0)) * 100, 2), 0) as campaign_pages_view_rate,
                             {$tablePrefix}object_page_views.*,
                             " . $locationNames .",
@@ -841,7 +828,6 @@ class CampaignReportAPIController extends ControllerAPI
             $_campaign = DB::table(DB::raw('(' . $_campaign_sql . ') as b'));
 
             $query_sum = array(
-                '"N/A" AS spending',
                 'SUM(campaign_pages_views) AS campaign_pages_views'
             );
 
@@ -849,7 +835,6 @@ class CampaignReportAPIController extends ControllerAPI
 
             // Get info total bottom page
             $totalPageViews = round(isset($total[0]->campaign_pages_views)?$total[0]->campaign_pages_views:0, 2);
-            $totalSpending = 'N/A';
 
             $_campaign->select('campaign_date');
 
@@ -901,8 +886,6 @@ class CampaignReportAPIController extends ControllerAPI
                     'mall_name'                => 'mall_name',
                     'unique_users'             => 'unique_users',
                     'campaign_pages_views'     => 'campaign_pages_views',
-                    'campaign_pages_view_rate' => 'campaign_pages_view_rate',
-                    'spending'                 => 'spending'
                 );
 
                 $sortBy = $sortByMapping[$_sortBy];
@@ -941,8 +924,6 @@ class CampaignReportAPIController extends ControllerAPI
                     'builder' => $campaign,
                     'count' => $totalCampaign,
                     'totalPageViews' => $totalPageViews,
-                    'totalPopupClicks' => $totalPopupClicks,
-                    'totalSpending' => $totalSpending,
                     'campaignName' => $campaignName,
                 ];
             }
@@ -954,7 +935,6 @@ class CampaignReportAPIController extends ControllerAPI
             $data->returned_records = count($listOfCampaign);
             $data->active_campaign_days = $totalCampaign;
             $data->total_page_views = $totalPageViews;
-            $data->total_spending = $totalSpending;
             $data->records = $listOfCampaign;
 
             if ($totalCampaign === 0) {
