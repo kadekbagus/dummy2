@@ -195,8 +195,6 @@ class ESNewsSuggestionUpdateQueue
                 }
             }
 
-            echo print_r(json_encode($body));
-
             if ($response_search['hits']['total'] > 0) {
                 $params['body'] = [
                     'doc' => $body
