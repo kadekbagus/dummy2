@@ -125,7 +125,7 @@ class StoreSearch extends Search
 						'query_string' => [
 							'query' => $keyword . '*',
 							'fields' => [
-								'lowercase_name' . $priorityName, 
+								'name' . $priorityName, 
 								'description' . $priorityDescription, 
 								'keyword' . $priorityKeywords,
 								// 'product_tags' . $priorityProductTags,
@@ -137,7 +137,7 @@ class StoreSearch extends Search
 							'path' => 'translation',
 							'query' => [
 								'match' => [
-									'translation.description' => $keyword
+									'translation.description' . $priorityDescription => $keyword
 								]
 							]
 						]

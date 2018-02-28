@@ -125,26 +125,6 @@ class MallListNewAPIController extends PubControllerAPI
             // and/or cities
             $mallSearch->filterByCountryAndCities($area);
 
-            if (! empty($ul)) {
-                // get user lat and lon
-                // if ($sort_by == 'location' || $location == 'mylocation') {
-                //     if (! empty($ul)) {
-                //         $position = explode("|", $ul);
-                //         $lon = $position[0];
-                //         $lat = $position[1];
-                //     } else {
-                //         // get lon lat from cookie
-                //         $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                //         if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                //             $lon = $userLocationCookieArray[0];
-                //             $lat = $userLocationCookieArray[1];
-                //         }
-                //     }
-                // }
-
-                // Filter by location.
-            }
-
             $keyword = OrbitInput::get('keyword', null);
             if (! empty($keyword)) {
                 $mallSearch->filterByKeyword($keyword);

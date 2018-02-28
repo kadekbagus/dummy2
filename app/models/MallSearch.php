@@ -71,11 +71,14 @@ class MallSearch extends Search
 		$priorityName = isset($this->esConfig['priority']['mall']['name']) ? 
 			$this->esConfig['priority']['mall']['name'] : '^6';
 
-		$priorityDescription = isset($this->esConfig['priority']['mall']['description']) ? 
-			$this->esConfig['priority']['mall']['description'] : '^5';
+		$priorityName = isset($this->esConfig['priority']['mall']['object_type']) ? 
+			$this->esConfig['priority']['mall']['object_type'] : '^5';
 
-		$priorityKeywords = isset($this->esConfig['priority']['mall']['keywords']) ? 
-			$this->esConfig['priority']['mall']['keywords'] : '^4';
+		$priorityDescription = isset($this->esConfig['priority']['mall']['description']) ? 
+			$this->esConfig['priority']['mall']['description'] : '^3';
+
+		$priorityAddressLine = isset($this->esConfig['priority']['mall']['address_line']) ? 
+			$this->esConfig['priority']['mall']['address_line'] : '';
 
 		$this->must([
 			'bool' => [
@@ -84,9 +87,10 @@ class MallSearch extends Search
 						'query_string' => [
 							'query' => '*' . $keyword . '*',
 							'fields' => [
-								'lowercase_name' . $priorityName, 
-								'description' . $priorityDescription, 
-								'keywords' . $priorityKeywords,
+								'name' . $priorityName, 
+								'object_type' . $priorityObjectType,
+								'description' . $priorityDescription,
+								'address_line' . $priorityAddressLine,
 							]
 						]
 					]
