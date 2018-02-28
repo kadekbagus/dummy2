@@ -75,10 +75,12 @@ class MallListNewAPIController extends PubControllerAPI
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
             $sort_by = OrbitInput::get('sortby', null);
-            $sortBy = OrbitInput::get('sortby', null);
+            $sortBy = OrbitInput::get('sortby', 'name');
             $partner_id = OrbitInput::get('partner_id', null);
             $sort_mode = OrbitInput::get('sortmode','asc');
+            $sortMode = OrbitInput::get('sortmode','asc');
             $ul = OrbitInput::get('ul', null);
+            $language = OrbitInput::get('language', 'id');
             $radius = Config::get('orbit.geo_location.distance', 10);
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $viewType = OrbitInput::get('view_type', 'grid');
@@ -143,7 +145,7 @@ class MallListNewAPIController extends PubControllerAPI
                 // Filter by location.
             }
 
-            $keyword = OrbitInput::get('keyword');
+            $keyword = OrbitInput::get('keyword', null);
             if (! empty($keyword)) {
                 $mallSearch->filterByKeyword($keyword);
             }
@@ -184,24 +186,28 @@ class MallListNewAPIController extends PubControllerAPI
             if ($bypassMallOrder === 'n') {
                 $mallSearch->bypassMallOrder();
             }
-            
+
+            // Force to sort result by relevance if any keyword is set.
+            if (! empty($keyword)) {
+                $sortBy = 'relevance';
+            }
+
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
-                case 'name':
-                    $mallSearch->sortByName();
+                case 'relevance':
+                    $mallSearch->sortByRelevance();
                     break;
                 case 'updated_at':
                     $mallSearch->sortByUpdatedAt();
                     break;
                 case 'rating':
                     $mallSearch->sortByRating($scriptFields['scriptFieldRating']);
-                    // $mallSearch->sortByRelevance();
                     break;
                 case 'followed':
                     $mallSearch->sortByFavorite($scriptFields['scriptFieldFollow']);
                     break;
                 default:
-                    $mallSearch->sortByRelevance();
+                    $mallSearch->sortByName();
                     break;
             }
 
