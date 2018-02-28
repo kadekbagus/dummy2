@@ -282,8 +282,6 @@ class StoreListNewAPIController extends PubControllerAPI
 
             $advertStoreSearchResult = $advertStoreSearch->getResult();
 
-            // return \Response::json($advertStoreSearchResult);
-
             if ($advertStoreSearchResult['hits']['total'] > 0) {
                 $esStoreIndex .= ',' . $esAdvertStoreIndex;
                 $advertList = $advertStoreSearchResult['hits']['hits'];
@@ -315,9 +313,7 @@ class StoreListNewAPIController extends PubControllerAPI
                 }
 
                 // exclude_id useful for eliminate duplicate store in the list, because after this, we query to advert_stores and store index together
-                if (count($excludeId) > 0) {
-                    $storeSearch->excludeStores($excludeId);
-                }
+                $storeSearch->excludeStores($excludeId);
 
                 // If there any advert_stores in the list, then sort by it first...
                 // if (count($withPreferred) > 0) {
@@ -376,8 +372,6 @@ class StoreListNewAPIController extends PubControllerAPI
                     $storeSearch->sortByName($language, $sort_mode);
                     break;
             }
-
-            return \Response::json($storeSearch->getRequestParam('body'));
 
             // Reset the indices that will be used as search source.
             // If we have at least one advert_stores set (filtered), then the new indices will be 
