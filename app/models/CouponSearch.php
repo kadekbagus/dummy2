@@ -327,9 +327,18 @@ class CouponSearch extends Search
 	 * 
 	 * @return [type] [description]
 	 */
-	public function sortByName()
+	public function sortByName($language = 'id', $sortMode = '')
 	{
-		$this->sort(['name' => ['order' => 'asc']]);
+		// $this->sort(['name' => ['order' => 'asc']]);
+		$sortScript =  "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
+		
+        $this->sort([
+        	'_script' => [
+        		'script' => $sortScript, 
+        		'type' => 'string', 
+        		'order' => $sortMode
+        	]
+        ]);
 	}
 
 	/**

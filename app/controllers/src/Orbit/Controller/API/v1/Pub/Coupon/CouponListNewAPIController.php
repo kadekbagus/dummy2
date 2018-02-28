@@ -364,15 +364,18 @@ class CouponListNewAPIController extends PubControllerAPI
             $scriptFields = $couponSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
+
+            if (! empty($keyword)) {
+                $sortBy = 'relevance';
+            }
             
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
-                case 'name':
-                    $couponSearch->sortByName();
+                case 'relevance':
+                    $couponSearch->sortByRelevance();
                     break;
                 case 'rating':
                     $couponSearch->sortByRating($scriptFields['scriptFieldRating']);
-                    // $couponSearch->sortByRelevance();
                     break;
                 case 'created_date':
                     $couponSearch->sortByCreatedDate($sortMode);
@@ -381,7 +384,7 @@ class CouponListNewAPIController extends PubControllerAPI
                     $couponSearch->sortByUpdatedDate($sortMode);
                     break;
                 default:
-                    $couponSearch->sortByRelevance();
+                    $couponSearch->sortByName($language, $sortMode);
                     break;
             }
 

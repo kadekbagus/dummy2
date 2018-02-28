@@ -370,11 +370,15 @@ class NewsListNewAPIController extends PubControllerAPI
             $scriptFields = $newsSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
+
+            if (! empty($keyword)) {
+                $sortBy = 'relevance';
+            }
             
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
-                case 'name':
-                    $newsSearch->sortByName();
+                case 'relevance':
+                    $newsSearch->sortByRelevance();
                     break;
                 case 'rating':
                     $newsSearch->sortByRating($scriptFields['scriptFieldRating']);
@@ -387,7 +391,7 @@ class NewsListNewAPIController extends PubControllerAPI
                     $newsSearch->sortByUpdatedDate($sortMode);
                     break;
                 default:
-                    $newsSearch->sortByRelevance();
+                    $newsSearch->sortByName($language, $sortMode);
                     break;
             }
 

@@ -84,8 +84,8 @@ class PromotionListNewAPIController extends PubControllerAPI
             $this->checkAuth();
             $user = $this->api->user;
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', 'name');
-            $sortBy = OrbitInput::get('sortby', 'relevance');
+            $sort_by = OrbitInput::get('sortby', 'created_date');
+            $sortBy = OrbitInput::get('sortby', 'created_date');
             $sort_mode = OrbitInput::get('sortmode','desc');
             $sortMode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
@@ -369,24 +369,27 @@ class PromotionListNewAPIController extends PubControllerAPI
             $scriptFields = $promotionSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
+
+            if (! empty($keyword)) {
+                $sortBy = 'relevance';
+            }
             
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
-                case 'name':
-                    $promotionSearch->sortByName();
+                case 'relevance':
+                    $promotionSearch->sortByRelevance();
                     break;
                 case 'rating':
                     $promotionSearch->sortByRating($scriptFields['scriptFieldRating']);
-                    // $promotionSearch->sortByRelevance();
                     break;
                 case 'created_date':
                     $promotionSearch->sortByCreatedDate($sortMode);
                     break;
-                case 'updated_date':
+                case 'updated_at':
                     $promotionSearch->sortByUpdatedDate($sortMode);
                     break;
                 default:
-                    $promotionSearch->sortByRelevance();
+                    $promotionSearch->sortByName($language, $sortMode);
                     break;
             }
 

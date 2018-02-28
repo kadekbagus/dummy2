@@ -82,7 +82,7 @@ class StoreListNewAPIController extends PubControllerAPI
             $user = $this->getUser();
             $host = Config::get('orbit.elasticsearch');
             $sort_by = OrbitInput::get('sortby', 'name');
-            $sortBy = OrbitInput::get('sortby', 'relevance');
+            $sortBy = OrbitInput::get('sortby', 'name');
             $sort_mode = OrbitInput::get('sortmode','asc');
             $location = OrbitInput::get('location', null);
             $cityFilters = OrbitInput::get('cities', []);
@@ -351,11 +351,15 @@ class StoreListNewAPIController extends PubControllerAPI
             $scriptFields = $storeSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
+
+            if (! empty($keyword)) {
+                $sortBy = 'relevance';
+            }
             
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
-                case 'name':
-                    $storeSearch->sortByName();
+                case 'relevance':
+                    $storeSearch->sortByRelevance();
                     break;
                 case 'rating':
                     $storeSearch->sortByRating($scriptFields['scriptFieldRating']);
@@ -365,7 +369,7 @@ class StoreListNewAPIController extends PubControllerAPI
                     $storeSearch->sortByFavorite($scriptFields['scriptFieldFollow']);
                     break;
                 default:
-                    $storeSearch->sortByRelevance();
+                    $storeSearch->sortByName($language, $sort_mode);
                     break;
             }
 
