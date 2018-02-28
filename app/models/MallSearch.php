@@ -71,7 +71,7 @@ class MallSearch extends Search
 		$priorityName = isset($this->esConfig['priority']['mall']['name']) ? 
 			$this->esConfig['priority']['mall']['name'] : '^6';
 
-		$priorityName = isset($this->esConfig['priority']['mall']['object_type']) ? 
+		$priorityObjectType = isset($this->esConfig['priority']['mall']['object_type']) ? 
 			$this->esConfig['priority']['mall']['object_type'] : '^5';
 
 		$priorityDescription = isset($this->esConfig['priority']['mall']['description']) ? 
