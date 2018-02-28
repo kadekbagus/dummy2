@@ -278,7 +278,11 @@ class StoreListNewAPIController extends PubControllerAPI
             // @todo add sort page in advert list..
             $advertStoreSearch->filterBase(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
 
+            $storeSearch->filterAdvertStores(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
+
             $advertStoreSearchResult = $advertStoreSearch->getResult();
+
+            // return \Response::json($advertStoreSearchResult);
 
             if ($advertStoreSearchResult['hits']['total'] > 0) {
                 $esStoreIndex .= ',' . $esAdvertStoreIndex;
@@ -316,7 +320,7 @@ class StoreListNewAPIController extends PubControllerAPI
                 }
 
                 // If there any advert_stores in the list, then sort by it first...
-                if (count($withPreferred) > 0) {
+                // if (count($withPreferred) > 0) {
                     $sortByPageType = array();
                     $pageTypeScore = '';
                     if ($list_type === 'featured') {
@@ -345,7 +349,7 @@ class StoreListNewAPIController extends PubControllerAPI
                     ];
 
                     $storeSearch->sortBy($advertStoreOrdering);
-                }
+                // }
             }
 
             $scriptFields = $storeSearch->addReviewFollowScript(compact(
@@ -372,6 +376,8 @@ class StoreListNewAPIController extends PubControllerAPI
                     $storeSearch->sortByName($language, $sort_mode);
                     break;
             }
+
+            return \Response::json($storeSearch->getRequestParam('body'));
 
             // Reset the indices that will be used as search source.
             // If we have at least one advert_stores set (filtered), then the new indices will be 

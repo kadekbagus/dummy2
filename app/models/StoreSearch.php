@@ -239,6 +239,47 @@ class StoreSearch extends Search
 		]);
 	}
 
+	public function filterAdvertStores($options = [])
+	{
+		$this->should([
+            'bool' => [
+                'must' => [ 
+                    [
+                        'query' => [
+                            'match' => [
+                                'advert_status' => 'active'
+                            ]
+                        ]
+                    ], 
+                    [
+                        'range' => [
+                            'advert_start_date' => [
+                                'lte' => $options['dateTimeEs']
+                            ]
+                        ]
+                    ], 
+                    [
+                        'range' => [
+                            'advert_end_date' => [
+                                'gte' => $options['dateTimeEs']
+                            ]
+                        ]
+                    ], 
+                    [
+                        'match' => [
+                            'advert_location_ids' => $options['locationId']
+                        ]
+                    ], 
+                    [
+                        'terms' => [
+                            'advert_type' => $options['advertType']
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+	}
+
 	/**
 	 * Exclude some stores from the result.
 	 * 
