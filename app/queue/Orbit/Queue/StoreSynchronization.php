@@ -45,6 +45,7 @@ use PromotionRetailer;
 use NewsMerchant;
 use ProductTagObject;
 use BaseStoreProductTag;
+use BaseMerchantProductTag;
 
 class StoreSynchronization
 {
