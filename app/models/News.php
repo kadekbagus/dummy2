@@ -170,15 +170,13 @@ class News extends Eloquent
     public function keywords()
     {
         return $this->hasMany('KeywordObject', 'object_id', 'news_id')
-                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id')
-                    ->groupBy('keyword');
+                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
     }
 
     public function product_tags()
     {
         return $this->hasMany('ProductTagObject', 'object_id', 'news_id')
-                    ->join('product_tags', 'product_tags.product_tag_id', '=', 'product_tag_object.product_tag_id')
-                    ->groupBy('product_tag');
+                    ->join('product_tags', 'product_tags.product_tag_id', '=', 'product_tag_object.product_tag_id');
     }
 
     public function campaign_status()

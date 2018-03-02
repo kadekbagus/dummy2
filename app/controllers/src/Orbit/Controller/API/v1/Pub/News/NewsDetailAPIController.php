@@ -186,9 +186,11 @@ class NewsDetailAPIController extends PubControllerAPI
                         ->where('news.object_type', '=', 'news')
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
+                                $q->groupBy('keyword');
                             }])
                         ->with(['product_tags' => function ($pt) {
                                 $pt->addSelect('product_tag', 'object_id');
+                                $pt->groupBy('product_tag');
                             }])
                         ->first();
 
