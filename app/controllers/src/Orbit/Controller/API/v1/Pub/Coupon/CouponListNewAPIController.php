@@ -84,7 +84,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $sortMode = OrbitInput::get('sortmode','desc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $location = OrbitInput::get('location', null);
-            $cityFilters = OrbitInput::get('cities', null);
+            $cityFilters = OrbitInput::get('cities', []);
             $countryFilter = OrbitInput::get('country', null);
             $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');
@@ -179,7 +179,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $couponSearch->isActive(compact('dateTimeEs'));
             
             // Filter by given keyword...
-            $keyword = OrbitInput::get('keyword');
+            $keyword = OrbitInput::get('keyword', null);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
                 $couponSearch->filterByKeyword($keyword);
@@ -209,6 +209,10 @@ class CouponListNewAPIController extends PubControllerAPI
             if (! empty($mall)) {
                 $couponSearch->filterByMall($mallId);
             }
+            else {
+                // Filter by country/city only if no mall is set.
+                $couponSearch->filterByCountryAndCities($area);
+            }
 
             // Filter by my credit card or choose manually
             $sponsorProviderIds = OrbitInput::get('sponsor_provider_ids', []);
@@ -229,138 +233,49 @@ class CouponListNewAPIController extends PubControllerAPI
             }
 
             // Filter by partner...
-            OrbitInput::get('partner_id', function($partnerId) use ($prefix, &$searchFlag, &$cacheKey) {
+            $partnerId = OrbitInput::get('partner_id', null);
+            if (! empty($partnerId)) {
                 $cacheKey['partner_id'] = $partnerId;
-                $partnerFilter = '';
-                if (! empty($partnerId)) {
-                    $searchFlag = $searchFlag || TRUE;
-                    $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
-                                                                $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                                                                     ->where('affected_group_names.group_type', '=', 'coupon');
-                                                            })
-                                                            ->where('partner_id', $partnerId)
-                                                            ->first();
-
-                    if (is_object($partnerAffected)) {
-                        $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
-
-                        if (in_array($partnerId, $exception)) {
-                            $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
-                            $couponSearch->excludePartnerCompetitors($partnerIds);
-                        }
-                        else {
-                           $couponSearch->filterByPartner($partnerId); 
-                        }
-                    }
-                }
-            });
-
-            // Filter by country/city only if no mall is set.
-            if (empty($mall)) {
-                // Otherwise, we filter based on user's selection of country 
-                // and/or cities
-                $couponSearch->filterByCountryAndCities($area);
-
-                // get user lat and lon
-                if ($sort_by == 'location' || $location == 'mylocation') {
-                    if (! empty($ul)) {
-                        $position = explode("|", $ul);
-                        $lon = $position[0];
-                        $lat = $position[1];
-                    } else {
-                        // get lon lat from cookie
-                        $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                        if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                            $lon = $userLocationCookieArray[0];
-                            $lat = $userLocationCookieArray[1];
-                        }
-                    }
-                }
-                
-                // Also user's geo-location...
-                // $couponSearch->filterByLocation($location);
+                $couponSearch->filterByPartner($partnerId);
             }
+
+            $sortByPageType = array();
+            $pageTypeScore = '';
+            if ($list_type === 'featured') {
+                $pageTypeScore = 'featured_gtm_score';
+                $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
+                if (! empty($mall)) {
+                    $pageTypeScore = 'featured_mall_score';
+                    $sortByPageType = array('featured_mall_score' => array('order' => 'desc'));
+                }
+            } else {
+                $pageTypeScore = 'preferred_gtm_score';
+                $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
+                if (! empty($mall)) {
+                    $pageTypeScore = 'preferred_mall_score';
+                    $sortByPageType = array('preferred_mall_score' => array('order' => 'desc'));
+                }
+            }
+
+            $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
+            $advertSorting = [
+                '_script' => [
+                    'script' => $sortPageScript, 
+                    'type' => 'string', 
+                    'order' => 'desc'
+                ]
+            ];
 
             $withAdvert = true;
             if ($withAdvert) {
 
-                // Get Advert_Store...
-                $esAdvertIndex = $esConfig['indices_prefix'] . $esConfig['indices']['advert_coupons']['index'];
-                $advertSearch = new AdvertSearch($esConfig, 'advert_coupons');
-
-                $advertSearch->setPaginationParams(['from' => 0, 'size' => 100]);
-
-                $locationId = ! empty($mall) ? $mallId : 0;
+                $locationId = ! empty($mallId) ? $mallId : 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-                $advertSearch->filterCoupons(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
+                $couponSearch->filterWithAdvert(compact('dateTimeEs', 'mallId', 'list_type', 'advertType', 'locationId', 'advertSorting'));
+            }
 
-                $advertSearchResult = $advertSearch->getResult();
-
-                if ($advertSearchResult['hits']['total'] > 0) {
-                    $esIndex .= ',' . $esAdvertIndex;
-                    $advertList = $advertSearchResult['hits']['hits'];
-                    $excludeId = array();
-                    $withPreferred = array();
-
-                    foreach ($advertList as $adverts) {
-                        $advertId = $adverts['_id'];
-                        $newsId = $adverts['_source']['promotion_id'];
-                        if(! in_array($newsId, $excludeId)) {
-                            $excludeId[] = $newsId;
-                        } else {
-                            $excludeId[] = $advertId;
-                        }
-
-                        // if featured list_type check preferred too
-                        if ($list_type === 'featured') {
-                            if ($adverts['_source']['advert_type'] === 'preferred_list_regular' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
-                                if (empty($withPreferred[$newsId]) || $withPreferred[$newsId] != 'preferred_list_large') {
-                                    $withPreferred[$newsId] = 'preferred_list_regular';
-                                    if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
-                                        $withPreferred[$newsId] = 'preferred_list_large';
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (count($excludeId) > 0) {
-                        $couponSearch->exclude($excludeId);
-                    }
-
-                    if (count($withPreferred) > 0) {
-                        $sortByPageType = array();
-                        $pageTypeScore = '';
-                        if ($list_type === 'featured') {
-                            $pageTypeScore = 'featured_gtm_score';
-                            $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
-                            if (! empty($mall)) {
-                                $pageTypeScore = 'featured_mall_score';
-                                $sortByPageType = array('featured_mall_score' => array('order' => 'desc'));
-                            }
-                        } else {
-                            $pageTypeScore = 'preferred_gtm_score';
-                            $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
-                            if (! empty($mall)) {
-                                $pageTypeScore = 'preferred_mall_score';
-                                $sortByPageType = array('preferred_mall_score' => array('order' => 'desc'));
-                            }
-                        }
-
-                        $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
-                        $advertSorting = [
-                            '_script' => [
-                                'script' => $sortPageScript, 
-                                'type' => 'string', 
-                                'order' => 'desc'
-                            ]
-                        ];
-
-                        $couponSearch->sortBy($advertSorting);
-                    }
-                }
-            }// Add script fiedls...
+            // Add script fields...
             $scriptFields = $couponSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
@@ -403,10 +318,6 @@ class CouponListNewAPIController extends PubControllerAPI
 
                 $withAdvert = FALSE;
             });
-
-            $couponSearch->setIndex($esIndex);
-
-            // return \Response::json($couponSearch->getRequestParam());
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);

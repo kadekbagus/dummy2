@@ -136,24 +136,44 @@ class AdvertSearch extends Search
      * @param  array  $params [description]
      * @return [type]         [description]
      */
-    public function filterCoupons($params = [])
+    public function filterCoupons($options = [])
     {
-        $this->must(['match' => ['advert_status' => 'active']]);
-
-        $this->must(['range' => ['advert_start_date' => ['lte' => $params['dateTimeEs']]]]);
-
-        $this->must(['range' => ['advert_end_date' => ['gte' => $params['dateTimeEs']]]]);
-
-        $this->must(['match' => ['advert_location_ids' => $params['locationId']]]);
-
-        $this->must(['terms' => ['advert_type' => $params['advertType']]]);
-
-        $this->should([
-            'bool' => [
-                'must_not' => [
-                    'exists' => [
-                        'field' => 'advert_status'
-                    ],
+        $this->must([
+            'query' => [
+                'bool' => [
+                    'must' => [ 
+                        [
+                            'query' => [
+                                'match' => [
+                                    'advert_status' => 'active'
+                                ]
+                            ]
+                        ], 
+                        [
+                            'range' => [
+                                'advert_start_date' => [
+                                    'lte' => $options['dateTimeEs']
+                                ]
+                            ]
+                        ], 
+                        [
+                            'range' => [
+                                'advert_end_date' => [
+                                    'gte' => $options['dateTimeEs']
+                                ]
+                            ]
+                        ], 
+                        [
+                            'match' => [
+                                'advert_location_ids' => $options['locationId']
+                            ]
+                        ], 
+                        [
+                            'terms' => [
+                                'advert_type' => $options['advertType']
+                            ]
+                        ]
+                    ]
                 ]
             ]
         ]);
