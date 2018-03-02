@@ -65,10 +65,10 @@ Route::get('/api/v1/newspromotion/by-retailer/search', function()
  */
 Route::get('/api/v1/pub/news-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create()->getSearchNews();
+    return Orbit\Controller\API\v1\Pub\News\NewsListNewAPIController::create()->getSearchNews();
 });
 
-Route::get('/app/v1/pub/news-list', ['as' => 'pub-news-list', 'uses' => 'IntermediatePubAuthController@News\NewsList_getSearchNews']);
+Route::get('/app/v1/pub/news-list', ['as' => 'pub-news-list', 'uses' => 'IntermediatePubAuthController@News\NewsListNew_getSearchNews']);
 
 /**
  * List mall of news

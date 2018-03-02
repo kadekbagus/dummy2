@@ -144,6 +144,8 @@ class ESNewsSuggestionUpdateQueue
                 'end_date' => date('Y-m-d', strtotime($news->end_date)) . 'T' . date('H:i:s', strtotime($news->end_date)) . 'Z'
             ];
 
+            // echo print_r(json_encode($body));
+
             foreach ($news->translations as $translationCollection) {
                 $suggest = array();
 
