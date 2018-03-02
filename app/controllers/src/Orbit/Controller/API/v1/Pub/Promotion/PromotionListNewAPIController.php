@@ -90,7 +90,7 @@ class PromotionListNewAPIController extends PubControllerAPI
             $sortMode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
-            $cityFilters = OrbitInput::get('cities', null);
+            $cityFilters = OrbitInput::get('cities', []);
             $countryFilter = OrbitInput::get('country', null);
             $ul = OrbitInput::get('ul', null);
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
@@ -102,7 +102,6 @@ class PromotionListNewAPIController extends PubControllerAPI
             $list_type = OrbitInput::get('list_type', 'featured');
             $from_mall_ci = OrbitInput::get('from_mall_ci', null);
             $category_id = OrbitInput::get('category_id');
-            $categoryIds = OrbitInput::get('category_id', []);
             $no_total_records = OrbitInput::get('no_total_records', null);
             $take = PaginationNumber::parseTakeFromGet('promotion');
             $skip = PaginationNumber::parseSkipFromGet();
@@ -202,13 +201,14 @@ class PromotionListNewAPIController extends PubControllerAPI
                     $area['country'] = $countryFilter;
                     $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
                 }
-
-                $location = [];
             }
 
             // If under mall page, we should ignore any other area/location filter.
             if (! empty($mall)) {
                 $promotionSearch->filterByMall($mallId);
+            }
+            else {
+                $promotionSearch->filterByCountryAndCities($area);
             }
 
             // Filter by my credit card or choose manually
@@ -225,144 +225,51 @@ class PromotionListNewAPIController extends PubControllerAPI
             }
 
             // Filter by selected categories...
-            if (! empty($categoryIds)) {
+            OrbitInput::get('category_id', function($categoryIds) use (&$promotionSearch) {
                 $promotionSearch->filterByCategories($categoryIds);
-            }
-
-            // Filter by partner...
-            OrbitInput::get('partner_id', function($partnerId) use ($prefix, &$searchFlag, &$cacheKey) {
-                $cacheKey['partner_id'] = $partnerId;
-                $partnerFilter = '';
-                if (! empty($partnerId)) {
-                    $searchFlag = $searchFlag || TRUE;
-                    $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
-                                                                $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                                                                     ->where('affected_group_names.group_type', '=', 'promotion');
-                                                            })
-                                                            ->where('partner_id', $partnerId)
-                                                            ->first();
-
-                    if (is_object($partnerAffected)) {
-                        $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
-
-                        if (in_array($partnerId, $exception)) {
-                            $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
-                            $promotionSearch->excludePartnerCompetitors($partnerIds);
-                        }
-                        else {
-                           $promotionSearch->filterByPartner($partnerId); 
-                        }
-                    }
-                }
             });
 
-            // Filter by locations...
-            
-            // Filter by country/city only if no mall is set.
-            if (empty($mall)) {
-                // Otherwise, we filter based on user's selection of country 
-                // and/or cities
-                $promotionSearch->filterByCountryAndCities($area);
+            // Filter by partner...
+            OrbitInput::get('partner_id', function($partnerId) use (&$promotionSearch) {
+                $cacheKey['partner_id'] = $partnerId;
 
-                // get user lat and lon
-                if ($sort_by == 'location' || $location == 'mylocation') {
-                    if (! empty($ul)) {
-                        $position = explode("|", $ul);
-                        $lon = $position[0];
-                        $lat = $position[1];
-                    } else {
-                        // get lon lat from cookie
-                        $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                        if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                            $lon = $userLocationCookieArray[0];
-                            $lat = $userLocationCookieArray[1];
-                        }
-                    }
+                $promotionSearch->filterByPartner($partnerId);
+
+            });
+
+            $sortByPageType = array();
+            $pageTypeScore = '';
+            if ($list_type === 'featured') {
+                $pageTypeScore = 'featured_gtm_score';
+                $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
+                if (! empty($mall)) {
+                    $pageTypeScore = 'featured_mall_score';
+                    $sortByPageType = array('featured_mall_score' => array('order' => 'desc'));
                 }
-                
-                // Also user's geo-location...
-                // $promotionSearch->filterByLocation($location);
+            } else {
+                $pageTypeScore = 'preferred_gtm_score';
+                $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
+                if (! empty($mall)) {
+                    $pageTypeScore = 'preferred_mall_score';
+                    $sortByPageType = array('preferred_mall_score' => array('order' => 'desc'));
+                }
             }
+
+            $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
+            $advertSorting = [
+                '_script' => [
+                    'script' => $sortPageScript, 
+                    'type' => 'string', 
+                    'order' => 'desc'
+                ]
+            ];
 
             $withAdvert = true;
             if ($withAdvert) {
-
-                // Get Advert_Store...
-                $esAdvertIndex = $esConfig['indices_prefix'] . $esConfig['indices']['advert_promotions']['index'];
-                $advertSearch = new AdvertSearch($esConfig, 'advert_promotions');
-
-                $advertSearch->setPaginationParams(['from' => 0, 'size' => 100]);
-
                 $locationId = ! empty($mall) ? $mallId : 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-                $advertSearch->filterPromotions(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
-
-                $advertSearchResult = $advertSearch->getResult();
-
-                if ($advertSearchResult['hits']['total'] > 0) {
-                    $esIndex .= ',' . $esAdvertIndex;
-                    $advertList = $advertSearchResult['hits']['hits'];
-                    $excludeId = array();
-                    $withPreferred = array();
-
-                    foreach ($advertList as $adverts) {
-                        $advertId = $adverts['_id'];
-                        $newsId = $adverts['_source']['news_id'];
-                        if(! in_array($newsId, $excludeId)) {
-                            $excludeId[] = $newsId;
-                        } else {
-                            $excludeId[] = $advertId;
-                        }
-
-                        // if featured list_type check preferred too
-                        if ($list_type === 'featured') {
-                            if ($adverts['_source']['advert_type'] === 'preferred_list_regular' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
-                                if (empty($withPreferred[$newsId]) || $withPreferred[$newsId] != 'preferred_list_large') {
-                                    $withPreferred[$newsId] = 'preferred_list_regular';
-                                    if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
-                                        $withPreferred[$newsId] = 'preferred_list_large';
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (count($excludeId) > 0) {
-                        $promotionSearch->exclude($excludeId);
-                    }
-
-                    if (count($withPreferred) > 0) {
-                        $sortByPageType = array();
-                        $pageTypeScore = '';
-                        if ($list_type === 'featured') {
-                            $pageTypeScore = 'featured_gtm_score';
-                            $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
-                            if (! empty($mall)) {
-                                $pageTypeScore = 'featured_mall_score';
-                                $sortByPageType = array('featured_mall_score' => array('order' => 'desc'));
-                            }
-                        } else {
-                            $pageTypeScore = 'preferred_gtm_score';
-                            $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
-                            if (! empty($mall)) {
-                                $pageTypeScore = 'preferred_mall_score';
-                                $sortByPageType = array('preferred_mall_score' => array('order' => 'desc'));
-                            }
-                        }
-
-                        $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
-                        $advertPromotionSorting = [
-                            '_script' => [
-                                'script' => $sortPageScript, 
-                                'type' => 'string', 
-                                'order' => 'desc'
-                            ]
-                        ];
-
-                        $promotionSearch->sortBy($advertPromotionSorting);
-                    }
-                }
+                $promotionSearch->filterWithAdvert(compact('dateTimeEs', 'mallId', 'advertType', 'locationId', 'list_type', 'advertSorting'));
             }
 
             // Add script fiedls...
@@ -395,7 +302,6 @@ class PromotionListNewAPIController extends PubControllerAPI
 
             // Exclude specific document Ids, useful for some cases e.g You May Also Like
             // @todo rewrite deprected 'filtered' query to bool only
-            $withAdvert = TRUE;
             OrbitInput::get('excluded_ids', function($excludedIds) use (&$withAdvert) {
                 $jsonExcludedIds = [];
                 foreach ($excludedIds as $excludedId) {
@@ -408,8 +314,6 @@ class PromotionListNewAPIController extends PubControllerAPI
 
                 $withAdvert = FALSE;
             });
-
-            $promotionSearch->setIndex($esIndex);
 
             // return \Response::json($promotionSearch->getRequestParam());
 
@@ -424,8 +328,6 @@ class PromotionListNewAPIController extends PubControllerAPI
             }
 
             $records = $response['hits'];
-
-            // return \Response::json($records);
 
             $listOfRec = array();
             $cdnConfig = Config::get('orbit.cdn');
@@ -554,12 +456,6 @@ class PromotionListNewAPIController extends PubControllerAPI
                 $data['score'] = $record['_score'];
                 unset($data['created_by'], $data['creator_email'], $data['partner_tokens']);
                 $listOfRec[] = $data;
-            }
-
-            // frontend need the mall name
-            $mall = null;
-            if (! empty($mallId)) {
-                $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
             $data = new \stdclass();
