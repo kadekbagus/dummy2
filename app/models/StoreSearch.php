@@ -115,6 +115,9 @@ class StoreSearch extends Search
         $priorityKeywords = isset($this->esConfig['priority']['store']['keywords']) ? 
             $this->esConfig['priority']['store']['keywords'] : '^4';
 
+        $priorityProductTags = isset($this->esConfig['priority']['store']['product_tags']) ? 
+            $this->esConfig['priority']['store']['product_tags'] : '^4';
+
         $this->must([
             'bool' => [
                 'should' => [
@@ -125,7 +128,7 @@ class StoreSearch extends Search
                                 'name' . $priorityName, 
                                 'description' . $priorityDescription, 
                                 'keywords' . $priorityKeywords,
-                                // 'product_tags' . $priorityProductTags,
+                                'product_tags' . $priorityProductTags,
                             ]
                         ]
                     ],
