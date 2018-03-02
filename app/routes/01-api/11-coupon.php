@@ -128,10 +128,10 @@ Route::get('/api/v1/coupon/customer-service', ['as' => 'api-coupon-customer-serv
  */
 Route::get('/api/v1/pub/coupon-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create()->getCouponList();
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponListNewAPIController::create()->getCouponList();
 });
 
-Route::get('/app/v1/pub/coupon-list', ['as' => 'pub-coupon-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponList_getCouponList']);
+Route::get('/app/v1/pub/coupon-list', ['as' => 'pub-coupon-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponListNew_getCouponList']);
 
 /**
  * Get mall list after click coupon
