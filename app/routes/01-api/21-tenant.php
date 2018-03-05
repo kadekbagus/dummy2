@@ -120,10 +120,10 @@ Route::post('/api/v1/mall-background/delete', function()
  */
 Route::get('/api/v1/pub/store-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\Store\StoreListAPIController::create()->getStoreList();
+    return Orbit\Controller\API\v1\Pub\Store\StoreListNewAPIController::create()->getStoreList();
 });
 
-Route::get('/app/v1/pub/store-list', ['as' => 'pub-store-list', 'uses' => 'IntermediatePubAuthController@Store\StoreList_getStoreList']);
+Route::get('/app/v1/pub/store-list', ['as' => 'pub-store-list', 'uses' => 'IntermediatePubAuthController@Store\StoreListNew_getStoreList']);
 
 /**
  * Get Merchant/Store lists counter for gotomalls landing page

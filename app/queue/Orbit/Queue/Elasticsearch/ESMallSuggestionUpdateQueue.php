@@ -146,6 +146,7 @@ class ESMallSuggestionUpdateQueue
                 'name'       => $mall->name,
                 'country'    => $mall->Country->name,
                 'city'       => $mall->city,
+                'mall_ids'   => [$mallId],
                 'suggest_id' => $suggest,
                 'suggest_en' => $suggest,
                 'suggest_zh' => $suggest,

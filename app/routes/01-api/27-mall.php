@@ -131,10 +131,10 @@ Route::get('/app/v1/pub/mall-nearest', ['as' => 'mall-nearest', 'uses' => 'Inter
  */
 Route::get('/api/v1/pub/mall-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create()->getMallList();
+    return Orbit\Controller\API\v1\Pub\Mall\MallListNewAPIController::create()->getMallList();
 });
 
-Route::get('/app/v1/pub/mall-list', ['as' => 'mall-list', 'uses' => 'IntermediatePubAuthController@Mall\MallList_getMallList']);
+Route::get('/app/v1/pub/mall-list', ['as' => 'mall-list', 'uses' => 'IntermediatePubAuthController@Mall\MallListNew_getMallList']);
 
 /**
  * Get City list
