@@ -174,7 +174,7 @@ class MallSearch extends Search
 	 * @param  array  $competitors [description]
 	 * @return [type]              [description]
 	 */
-	public function excludePartnerCompetitors($competitors = [])
+	public function excludePartnerCompetitors($partnerIds = [])
 	{
 		$this->mustNot([
             'terms' => [
@@ -338,16 +338,17 @@ class MallSearch extends Search
         if (! empty($mallFeaturedIds)) {
             $withScore = TRUE;
             $esFeaturedBoost = Config::get('orbit.featured.es_boost', 10);
-            // $mallOrder = array(array('terms' => array('_id' => $mallFeaturedIds, 'boost' => $esFeaturedBoost)), array('match_all' => new stdClass()));
 
             $this->should([
-            	'terms' => [
-            		[
+            	[
+            		'terms' => [
 	            		'_id' => $mallFeaturedIds,
 	            		'boost' => $esFeaturedBoost
-	            	],
+            		],
             	],
-            	'match_all' => new stdClass()
+            	[
+            		'match_all' => new stdClass()
+            	]
             ]);
         }
 	}
