@@ -1230,14 +1230,6 @@ class CouponAPIController extends ControllerAPI
             $user = $this->api->user;
             Event::fire('orbit.coupon.postupdatecoupon.before.authz', array($this, $user));
 
-/*
-            if (! ACL::create($user)->isAllowed('update_coupon')) {
-                Event::fire('orbit.coupon.postupdatecoupon.authz.notallowed', array($this, $user));
-                $updateCouponLang = Lang::get('validation.orbit.actionlist.update_coupon');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $updateCouponLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->couponModifiyRoles;
@@ -2173,6 +2165,32 @@ class CouponAPIController extends ControllerAPI
                         }
                     }
                 }
+
+                // Insert to promotion retailer, with delete first old data
+                $delete_coupon_retailer = CouponRetailer::where('promotion_id', '=', $promotion_id);
+                $delete_coupon_retailer->delete();
+
+                foreach ($retailer_ids as $retailer_id) {
+                    $data = @json_decode($retailer_id);
+                    $tenant_id = $data->tenant_id;
+                    $mall_id = $data->mall_id;
+
+                    if(! in_array($mall_id, $mallid)) {
+                        $mallid[] = $mall_id;
+                    }
+
+                    if ($tenant_id === $mall_id) {
+                        $isMall = 'mall';
+                    } else {
+                        $isMall = 'tenant';
+                    }
+                    // Insert new coupon retailer
+                    $couponretailer = new CouponRetailer();
+                    $couponretailer->retailer_id = $tenant_id;
+                    $couponretailer->promotion_id = $promotion_id;
+                    $couponretailer->object_type = $isMall;
+                    $couponretailer->save();
+                }
             });
 
 
@@ -2888,7 +2906,7 @@ class CouponAPIController extends ControllerAPI
             $coupons = Coupon::allowedForPMPUser($user, 'coupon')
                 ->with('couponRule')
                 ->select(
-                    DB::raw("{$table_prefix}promotions.*, {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}campaign_price.campaign_price_id, {$table_prefix}coupon_translations.promotion_name AS display_name, media.path as image_path,
+                    DB::raw("{$table_prefix}promotions.*, {$table_prefix}promotions.promotion_id as campaign_id, 'coupon' as campaign_type, {$table_prefix}coupon_translations.promotion_name AS display_name, media.path as image_path,
                     CASE WHEN {$table_prefix}campaign_status.campaign_status_name = 'expired' THEN {$table_prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$table_prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
                                                                                 FROM {$table_prefix}merchants om
                                                                                 LEFT JOIN {$table_prefix}timezones ot on ot.timezone_id = om.timezone_id
@@ -2919,7 +2937,6 @@ class CouponAPIController extends ControllerAPI
                                     inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
                                     inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
                                     where {$table_prefix}promotion_retailer.promotion_id = {$table_prefix}promotions.promotion_id) as campaign_location_names"),
-                    DB::raw("CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END AS base_price"),
                     DB::raw("CASE {$table_prefix}promotion_rules.rule_type WHEN 'auto_issue_on_signup' THEN 'Y' ELSE 'N' END as 'is_auto_issue_on_signup'"),
                     DB::raw("CASE WHEN {$table_prefix}promotions.end_date IS NOT NULL THEN
                         CASE WHEN
@@ -2936,7 +2953,6 @@ class CouponAPIController extends ControllerAPI
                     ELSE
                         {$table_prefix}promotions.status
                     END as 'coupon_status'"),
-                    DB::raw("((CASE WHEN {$table_prefix}campaign_price.base_price is null THEN 0 ELSE {$table_prefix}campaign_price.base_price END) * (DATEDIFF({$table_prefix}promotions.end_date, {$table_prefix}promotions.begin_date) + 1) * (SELECT COUNT(pr.promotion_retailer_id) FROM {$table_prefix}promotion_retailer as pr WHERE pr.object_type != 'mall' and pr.promotion_id = {$table_prefix}promotions.promotion_id)) AS estimated"),
                     DB::raw("COUNT(DISTINCT {$table_prefix}promotion_retailer.promotion_retailer_id) as total_location"),
                     DB::raw("(SELECT GROUP_CONCAT(issued_coupon_code separator '\n')
                         FROM {$table_prefix}issued_coupons ic
@@ -2950,10 +2966,6 @@ class CouponAPIController extends ControllerAPI
                             END AS export_status
                         ")
                 )
-                ->leftJoin('campaign_price', function ($join) {
-                         $join->on('promotions.promotion_id', '=', 'campaign_price.campaign_id')
-                              ->where('campaign_price.campaign_type', '=', 'coupon');
-                  })
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
@@ -3003,17 +3015,6 @@ class CouponAPIController extends ControllerAPI
             {
                 $coupons->whereIn('promotions.promotion_id', (array)$promotionIds);
             });
-
-            // to do : enable filter for mall id
-            // Filter coupon by merchant Ids
-            // OrbitInput::get('merchant_id', function ($merchantIds) use ($coupons) {
-            //     $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
-            // });
-
-            // Filter coupon by merchant Ids / dupes, same as above
-            // OrbitInput::get('current_mall', function ($merchantIds) use ($coupons) {
-            //     $coupons->whereIn('promotions.merchant_id', (array)$merchantIds);
-            // });
 
             // Filter coupon by promotion name
             OrbitInput::get('promotion_name', function($promotionName) use ($coupons)
@@ -3265,23 +3266,6 @@ class CouponAPIController extends ControllerAPI
                 $coupons->whereHas('couponrule', function ($q) use ($endDate) {
                     $q->where('rule_end_date', '>=', $endDate);
                 });
-            });
-
-            // Filter news by estimated total cost
-            OrbitInput::get('etc_from', function ($etcfrom) use ($coupons) {
-                $etcto = OrbitInput::get('etc_to');
-                if (empty($etcto)) {
-                    $coupons->havingRaw('estimated >= ' . floatval(str_replace(',', '', $etcfrom)));
-                }
-            });
-
-            // Filter coupon by estimated total cost
-            OrbitInput::get('etc_to', function ($etcto) use ($coupons) {
-                $etcfrom = OrbitInput::get('etc_from');
-                if (empty($etcfrom)) {
-                    $etcfrom = 0;
-                }
-                $coupons->havingRaw('estimated between ' . floatval(str_replace(',', '', $etcfrom)) . ' and '. floatval(str_replace(',', '', $etcto)));
             });
 
             $from_cs = OrbitInput::get('from_cs', 'no');

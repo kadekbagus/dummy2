@@ -289,6 +289,12 @@ class ESStoreUpdateQueue
             $listOfRecLocation = $response->data;
 
             if (! empty($listOfRecLocation->records)) {
+                // Get city
+                $cities = array();
+                foreach ($listOfRecLocation->records as $val) {
+                    $cities[$val->city] = $val->city;
+                }
+
                 $countryRating = array();
                 foreach ($listOfRecLocation->records as $rating) {
                     // by country
@@ -301,10 +307,29 @@ class ESStoreUpdateQueue
 
                     $locationRating['rating_' . $countryId] = ((double) $countryRating[$countryId]['total'] / (double) $countryRating[$countryId]['review']) + 0.00001;
                     $locationRating['review_' . $countryId] = (double) $countryRating[$countryId]['review'];
+                }
 
-                    // by country and city
-                    $locationRating['rating_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->average + 0.00001;
-                    $locationRating['review_' . $rating->country_id . '_' . str_replace(" ", "_", trim(strtolower($rating->city), " "))] = $rating->counter;
+                // by country and city
+                if (! empty($cities)) {
+                    foreach ($cities as $key => $city) {
+                        $totalReview = 0;
+                        $totalRating = 0;
+                        $averageRating = 0;
+                        foreach ($listOfRecLocation->records as $record) {
+                            if ($city == $record->city) {
+                                $totalReview = $totalReview + $record->counter;
+                                $totalRating = $totalRating + ((double) $record->average * (double) $record->counter);
+
+                                // Prevent for division by zero
+                                if ($totalReview != 0) {
+                                    $averageRating = $totalRating / $totalReview;
+                                }
+
+                                $locationRating['review_' . $record->country_id . '_' . str_replace(" ", "_", trim(strtolower($city), " "))] = $totalReview;
+                                $locationRating['rating_' . $record->country_id . '_' . str_replace(" ", "_", trim(strtolower($city), " "))] = $averageRating;
+                            }
+                        }
+                    }
                 }
             }
 

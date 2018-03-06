@@ -64,10 +64,10 @@ Route::post('/api/v1/promotion/delete/image', function()
  */
 Route::get('/api/v1/pub/promotion-list', function()
 {
-    return Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create()->getSearchPromotion();
+    return Orbit\Controller\API\v1\Pub\Promotion\PromotionListNewAPIController::create()->getSearchPromotion();
 });
 
-Route::get('/app/v1/pub/promotion-list', ['as' => 'pub-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion\PromotionList_getSearchPromotion']);
+Route::get('/app/v1/pub/promotion-list', ['as' => 'pub-promotion-list', 'uses' => 'IntermediatePubAuthController@Promotion\PromotionListNew_getSearchPromotion']);
 
 /**
  * List mall of promotion
