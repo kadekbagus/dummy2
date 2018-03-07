@@ -58,9 +58,17 @@ class CouponSearch extends Search
      */
     public function filterByCategories($categories = [])
     {
+        $arrCategories = [];
+
         foreach($categories as $category) {
-            $this->should(['match' => ['category_ids' => $category]]);
+            $arrCategories[] = ['match' => ['category_ids' => $category]];
         }
+
+        $this->must([
+            'bool' => [
+                'should' => $arrCategories
+            ]
+        ]);
     }
 
     /**
