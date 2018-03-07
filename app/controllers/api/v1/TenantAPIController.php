@@ -2424,6 +2424,11 @@ class TenantAPIController extends ControllerAPI
                 $tenants->where('merchants.name', 'like', "%$mall_name%");
             }
 
+            // show empty result when search mall_name but parent_ids not found
+            if (!empty($mall_name) && empty($parent_ids) && empty($store_name)) {
+                $tenants->where('merchants.name', '=', $mall_name);
+            }
+
             // this is for request from pmp account listing on admin portal
             $user_id = OrbitInput::get('user_id');
             if (!empty($user_id)) {
