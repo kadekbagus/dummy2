@@ -164,7 +164,8 @@ class MallListNewAPIController extends PubControllerAPI
 
             $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
             if ($bypassMallOrder === 'n') {
-                $mallSearch->bypassMallOrder();
+                $mallSearch->sortByRelevance();
+                $mallSearch->bypassMallOrder(compact('countryFilter', 'cityFilters'));
             }
 
             // Force to sort result by relevance if any keyword is set.
