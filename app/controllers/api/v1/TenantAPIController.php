@@ -2194,6 +2194,8 @@ class TenantAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
+            DB::enableQueryLog();
+
             Event::fire('orbit.tenant.getsearchtenant.before.auth', array($this));
 
             // Require authentication
@@ -2479,7 +2481,9 @@ class TenantAPIController extends ControllerAPI
                 if ($account_type->unique_rule !== 'none') {
                     $unique_rule = implode("','", explode("_", $account_type->unique_rule));
 
-                    $tenants->whereRaw("NOT EXISTS (
+                    $userId = OrbitInput::get('id');
+                    $tenants->where(function($query) use ($prefix, $unique_rule, $userId) {
+                        $query->whereRaw("NOT EXISTS (
                                 SELECT 1
                                 FROM {$prefix}user_merchant um
                                 JOIN {$prefix}campaign_account ca
@@ -2493,6 +2497,27 @@ class TenantAPIController extends ControllerAPI
                                     AND {$prefix}merchants.merchant_id = um.merchant_id
                                 GROUP BY um.merchant_id
                         )");
+
+                        // Add filter for selected tenants by current user.
+                        // This should be executed ONLY from pmp accounts update page (select tenants modal)
+                        if (! empty($userId)) {
+                            $query->orWhereRaw("EXISTS (
+                                    SELECT 1
+                                    FROM {$prefix}user_merchant um2
+                                    JOIN {$prefix}campaign_account ca2
+                                        ON ca2.user_id = um2.user_id
+                                    JOIN {$prefix}account_types at2
+                                        ON at2.account_type_id = ca2.account_type_id
+                                        AND at2.unique_rule != 'none'
+                                        AND at2.status = 'active'
+                                    WHERE
+                                        um2.object_type IN ('{$unique_rule}')
+                                        AND {$prefix}merchants.merchant_id = um2.merchant_id
+                                        AND um2.user_id = '{$userId}'
+                                    GROUP BY um2.merchant_id
+                            )");
+                        }
+                    });
                 }
             }
 
@@ -2645,6 +2670,8 @@ class TenantAPIController extends ControllerAPI
                 }
             });
             $tenants->orderBy($sortBy, $sortMode);
+
+            // echo '<pre>'; print_r($tenants->toSql()); die;
 
             $totalTenants = $recordCounter->count();
             $listOfTenants = $tenants->get();
