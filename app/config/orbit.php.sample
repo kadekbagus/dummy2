@@ -6396,6 +6396,15 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // user add GTM web app to home screen via web app install banner
+            '165' => array(
+                'name' => 'click_add_homescreen',
+                'name_long' => 'Click Add Homescreen',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
         ),
     ),
 
