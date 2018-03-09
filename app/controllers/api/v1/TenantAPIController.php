@@ -2500,7 +2500,7 @@ class TenantAPIController extends ControllerAPI
 
                         // Add filter for selected tenants by current user.
                         // This should be executed ONLY from pmp accounts update page (select tenants modal)
-                        if (! empty($userId)) {
+                        if (! empty($userId) && empty($store_name)) {
                             $query->orWhereRaw("EXISTS (
                                     SELECT 1
                                     FROM {$prefix}user_merchant um2
