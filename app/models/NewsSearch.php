@@ -9,221 +9,243 @@ use Orbit\Helper\Util\FollowStatusChecker;
 */
 class NewsSearch extends Search
 {
-	function __construct($ESConfig = [])
-	{
-		parent::__construct($ESConfig);
+    function __construct($ESConfig = [])
+    {
+        parent::__construct($ESConfig);
 
-		$this->setDefaultSearchParam();
+        $this->setDefaultSearchParam();
 
-		$this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['news']['index']);
-		$this->setType($this->esConfig['indices']['news']['type']);
-	}
-	
-	/**
-	 * Make sure the promotion is active.
-	 * 
-	 * @return [type] [description]
-	 */
-	public function isActive($params = [])
-	{
-		$this->must([ 'match' => ['status' => 'active'] ]);
-		$this->must([ 'range' => ['begin_date' => ['lte' => $params['dateTimeEs']]] ]);
-		$this->must([ 'range' => ['end_date' => ['gte' => $params['dateTimeEs']]] ]);
-	}
+        $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['news']['index']);
+        $this->setType($this->esConfig['indices']['news']['type']);
+    }
+    
+    /**
+     * Make sure the promotion is active.
+     * 
+     * @return [type] [description]
+     */
+    public function isActive($params = [])
+    {
+        $this->must([ 'match' => ['status' => 'active'] ]);
+        $this->must([ 'range' => ['begin_date' => ['lte' => $params['dateTimeEs']]] ]);
+        $this->must([ 'range' => ['end_date' => ['gte' => $params['dateTimeEs']]] ]);
+    }
 
-	/**
-	 * Filter by Mall...
-	 * 
-	 * @param  string $mallId [description]
-	 * @return [type]         [description]
-	 */
-	public function filterByMall($mallId = '')
-	{
-		$this->must([
-			'nested' => [
-				'path' => 'link_to_tenant',
-				'query' => [
-					'match' => [
-						'link_to_tenant.parent_id' => $mallId
-					]
-				],
-				// 'inner_hits' => new \stdClass(),
-			]
-		]);
-	}
+    /**
+     * Filter by Mall...
+     * 
+     * @param  string $mallId [description]
+     * @return [type]         [description]
+     */
+    public function filterByMall($mallId = '')
+    {
+        $this->must([
+            'nested' => [
+                'path' => 'link_to_tenant',
+                'query' => [
+                    'match' => [
+                        'link_to_tenant.parent_id' => $mallId
+                    ]
+                ],
+                // 'inner_hits' => new \stdClass(),
+            ]
+        ]);
+    }
 
-	/**
-	 * Filter by selected stores Categories..
-	 * 
-	 * @return [type] [description]
-	 */
-	public function filterByCategories($categories = [])
-	{
-		foreach($categories as $category) {
-			$this->should(['match' => ['category_ids' => $category]]);
-		}
-	}
+    /**
+     * Filter by selected stores Categories..
+     * 
+     * @return [type] [description]
+     */
+    public function filterByCategories($categories = [])
+    {
+        $arrCategories = [];
 
-	/**
-	 * Filter by user's geo-location...
-	 * 
-	 * @param  string $location [description]
-	 * @return [type]           [description]
-	 */
-	public function filterByLocation($location = [])
-	{
-		
-	}
+        foreach($categories as $category) {
+            $arrCategories[] = ['match' => ['category_ids' => $category]];
+        }
 
-	/**
-	 * Implement filter by keyword...
-	 * 
-	 * @param  string $keyword [description]
-	 * @return [type]          [description]
-	 */
-	public function filterByKeyword($keyword = '')
-	{
-		$priorityName = isset($this->esConfig['priority']['news']['name']) ? 
-			$this->esConfig['priority']['news']['name'] : '^6';
+        $this->must([
+            'bool' => [
+                'should' => $arrCategories
+            ]
+        ]);
+    }
 
-		$priorityDescription = isset($this->esConfig['priority']['news']['description']) ? 
-			$this->esConfig['priority']['news']['description'] : '^5';
+    /**
+     * Implement filter by keyword...
+     * 
+     * @param  string $keyword [description]
+     * @return [type]          [description]
+     */
+    public function filterByKeyword($keyword = '')
+    {
+        $priorityName = isset($this->esConfig['priority']['news']['name']) ? 
+            $this->esConfig['priority']['news']['name'] : '^6';
 
-		$priorityKeywords = isset($this->esConfig['priority']['news']['keywords']) ? 
-			$this->esConfig['priority']['news']['keywords'] : '^4';
+        $priorityObjectType = isset($this->esConfig['priority']['news']['object_type']) ? 
+            $this->esConfig['priority']['news']['object_type'] : '^5';
 
-		$priorityProductTags = isset($this->esConfig['priority']['news']['product_tags']) ? 
-			$this->esConfig['priority']['news']['product_tags'] : '';
+        $priorityDescription = isset($this->esConfig['priority']['news']['description']) ? 
+            $this->esConfig['priority']['news']['description'] : '^4';
 
-		$this->must([
-			'bool' => [
-				'should' => [
-					[
-						'query_string' => [
-							'query' => $keyword . '*',
-							'fields' => [
-								'name' . $priorityName, 
-								'description' . $priorityDescription, 
-								'keyword' . $priorityKeywords,
-								'product_tags' . $priorityProductTags,
-							]
-						]
-					],
-					[
-						'nested' => [
-							'path' => 'translation',
-							'query' => [
-								'match' => [
-									'translation.description' => $keyword
-								]
-							]
-						]
-					],
-				]
-			]
-		]);
+        $priorityKeywords = isset($this->esConfig['priority']['news']['keywords']) ? 
+            $this->esConfig['priority']['news']['keywords'] : '^4';
 
-		$priorityCountry = isset($this->esConfig['priority']['news']['country']) ?
-			$this->esConfig['priority']['news']['country'] : '';
+        $priorityProductTags = isset($this->esConfig['priority']['news']['product_tags']) ? 
+            $this->esConfig['priority']['news']['product_tags'] : '^3';
 
-		$priorityProvince = isset($this->esConfig['priority']['news']['province']) ?
-			$this->esConfig['priority']['news']['province'] : '';
+        $this->must([
+            'bool' => [
+                'should' => [
+                    [
+                        'query_string' => [
+                            'query' => '*' . $keyword . '*',
+                            'fields' => [
+                                'name' . $priorityName, 
+                                'object_type' . $priorityObjectType,
+                                'description' . $priorityDescription, 
+                                'keywords' . $priorityKeywords,
+                                'product_tags' . $priorityProductTags,
+                            ]
+                        ]
+                    ],
+                    [
+                        'nested' => [
+                            'path' => 'translation',
+                            'query' => [
+                                'match' => [
+                                    'translation.description' . $priorityDescription => $keyword
+                                ]
+                            ]
+                        ]
+                    ],
+                ]
+            ]
+        ]);
 
-		$priorityCity = isset($this->esConfig['priority']['news']['city']) ?
-			$this->esConfig['priority']['news']['city'] : '';
+        $priorityCountry = isset($this->esConfig['priority']['news']['country']) ?
+            $this->esConfig['priority']['news']['country'] : '^2';
 
-		$priorityMallName = isset($this->esConfig['priority']['news']['mall_name']) ?
-			$this->esConfig['priority']['news']['mall_name'] : '';
+        $priorityProvince = isset($this->esConfig['priority']['news']['province']) ?
+            $this->esConfig['priority']['news']['province'] : '^2';
 
-		$this->should([
-			'nested' => [
-				'path' => 'link_to_tenant',
-				'query' => [
-					'query_string' => [
-						'query' => $keyword . '*',
-						'fields' => [
-							'link_to_tenant.country' . $priorityCountry,
-							'link_to_tenant.province' . $priorityProvince,
-							'link_to_tenant.city' . $priorityCity,
-							'link_to_tenant.mall_name' . $priorityMallName,
-						]
-					]
-				]
-			]
-		]);
-	}
+        $priorityCity = isset($this->esConfig['priority']['news']['city']) ?
+            $this->esConfig['priority']['news']['city'] : '^2';
 
-	/**
-	 * Filte by Country and Cities...
-	 * 
-	 * @param  array  $area [description]
-	 * @return [type]       [description]
-	 */
-	public function filterByCountryAndCities($area = [])
-	{
-		if (isset($area['country'])) {
-			$this->must([
-				'nested' => [
-					'path' => 'link_to_tenant',
-					'query' => [
-						'match' => [
-							'link_to_tenant.country.raw' => $area['country']
-						]
-					],
-					'inner_hits' => [
-						'name' => 'country_city_hits'
-					],
-				]
-			]);
-		}
+        $priorityMallName = isset($this->esConfig['priority']['news']['mall_name']) ?
+            $this->esConfig['priority']['news']['mall_name'] : '^3';
 
-		if (isset($area['cities'])) {
+        $this->should([
+            'nested' => [
+                'path' => 'link_to_tenant',
+                'query' => [
+                    'query_string' => [
+                        'query' => '*' . $keyword . '*',
+                        'fields' => [
+                            'link_to_tenant.country' . $priorityCountry,
+                            'link_to_tenant.province' . $priorityProvince,
+                            'link_to_tenant.city' . $priorityCity,
+                            'link_to_tenant.mall_name' . $priorityMallName,
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+    }
 
-			if (count($area['cities']) > 0) {
+    /**
+     * Filte by Country and Cities...
+     * 
+     * @param  array  $area [description]
+     * @return [type]       [description]
+     */
+    public function filterByCountryAndCities($area = [])
+    {
+        if (! empty($area['country'])) {
+            $this->must([
+                'nested' => [
+                    'path' => 'link_to_tenant',
+                    'query' => [
+                        'match' => [
+                            'link_to_tenant.country.raw' => $area['country']
+                        ]
+                    ],
+                    'inner_hits' => [
+                        'name' => 'country_city_hits'
+                    ],
+                ]
+            ]);
+        }
 
-				$citiesQuery['bool']['should'] = [];
+        if (count($area['cities']) > 0) {
 
-				foreach($area['cities'] as $city) {
-					$citiesQuery['bool']['should'][] = [
-						'nested' => [
-							'path' => 'link_to_tenant',
-							'query' => [
-								'match' => [
-									'link_to_tenant.city.raw' => $city
-								]
-							]
-						]
-					];
-				}
+            $citiesQuery['bool']['should'] = [];
 
-				$this->must($citiesQuery);
-			}
-		}
-	}
+            foreach($area['cities'] as $city) {
+                $citiesQuery['bool']['should'][] = [
+                    'nested' => [
+                        'path' => 'link_to_tenant',
+                        'query' => [
+                            'match' => [
+                                'link_to_tenant.city.raw' => $city
+                            ]
+                        ]
+                    ]
+                ];
+            }
 
-	/**
-	 * Filter by Partner...
-	 * 
-	 * @param  string $partnerId [description]
-	 * @return [type]            [description]
-	 */
-	public function filterByPartner($partnerId = '')
-	{
-		$this->must([
-			'match' => [
-				'partner_ids' => $partnerId
-			]
-		]);
-	}
+            $this->must($citiesQuery);
+        }
+    }
 
-	/**
-	 * Filter by CC..?
-	 * 
-	 * @return [type] [description]
-	 */
-	public function filterByMyCC($params = [])
-	{
-		$role = $params['user']->role->role_name;
+    /**
+     * Filter by Partner...
+     * 
+     * @param  string $partnerId [description]
+     * @return [type]            [description]
+     */
+    public function filterByPartner($partnerId = '')
+    {
+        if (! empty($partnerId)) {
+            $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
+                                                        $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+                                                             ->where('affected_group_names.group_type', '=', 'news');
+                                                    })
+                                                    ->where('partner_id', $partnerId)
+                                                    ->first();
+
+            if (is_object($partnerAffected)) {
+                $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
+
+                if (in_array($partnerId, $exception)) {
+                    $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
+                    
+                    $this->mustNot([
+                        'terms' => [
+                            'partner_ids' => $partnerIds
+                        ]
+                    ]);
+                }
+                else {
+                   $this->must([
+                        'match' => [
+                            'partner_ids' => $partnerId
+                        ]
+                    ]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Filter by CC..?
+     * 
+     * @return [type] [description]
+     */
+    public function filterByMyCC($params = [])
+    {
+        $role = $params['user']->role->role_name;
         if (strtolower($role) === 'consumer') {
             $userId = $params['user']->user_id;
             $sponsorProviderIds = array();
@@ -259,14 +281,14 @@ class NewsSearch extends Search
 
             if (! empty($sponsorProviderIds) && is_array($sponsorProviderIds)) {
                 $this->must([
-                	'nested' => [
-                		'path' => 'sponsor_provider',
-                		'query' => [
-                			'terms' => [
-                				'sponsor_provider.sponsor_id' => $sponsorProviderIds
-                			]
-                		]
-                	],
+                    'nested' => [
+                        'path' => 'sponsor_provider',
+                        'query' => [
+                            'terms' => [
+                                'sponsor_provider.sponsor_id' => $sponsorProviderIds
+                            ]
+                        ]
+                    ],
                 ]);
 
                 return $sponsorProviderIds;
@@ -274,122 +296,213 @@ class NewsSearch extends Search
         }
 
         return [];
-	}
+    }
 
-	public function filterBySponsors($sponsorProviderIds = [])
-	{
-		$sponsorProviderIds = array_values($sponsorProviderIds);
+    public function filterBySponsors($sponsorProviderIds = [])
+    {
+        $sponsorProviderIds = array_values($sponsorProviderIds);
 
         $this->must([
-    		'nested' => [
-    			'path' => 'sponsor_provider',
-    			'query' => [
-    				'terms' => [
-    					'sponsor_provider.sponsor_id' => $sponsorProviderIds
-    				]
-    			]
-    		]
-        ]);
-	}
-
-	/**
-	 * Exclude some stores from the result.
-	 * 
-	 * @param  array  $excludedId [description]
-	 * @return [type]             [description]
-	 */
-	public function exclude($excludedId = [])
-	{
-		$this->mustNot([
-			'terms' => [
-				'_id' => $excludedId,
-			]
-		]);
-	}
-
-	/**
-	 * Exclude the partner competitors from the result.
-	 * 
-	 * @param  array  $competitors [description]
-	 * @return [type]              [description]
-	 */
-	public function excludePartnerCompetitors($competitors = [])
-	{
-		$this->mustNot([
-            'terms' => [
-                'partner_ids' => $partnerIds
+            'nested' => [
+                'path' => 'sponsor_provider',
+                'query' => [
+                    'terms' => [
+                        'sponsor_provider.sponsor_id' => $sponsorProviderIds
+                    ]
+                ]
             ]
         ]);
-	}
+    }
 
-	/**
-	 * Sort by name..
-	 * 
-	 * @return [type] [description]
-	 */
-	public function sortByName($language = 'id', $sortMode = 'asc')
-	{
-		$sortScript =  "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
-		
-        $this->sort([
-        	'_script' => [
-        		'script' => $sortScript, 
-        		'type' => 'string', 
-        		'order' => $sortMode
-        	]
+    public function filterAdvertNews($options = [])
+    {
+        $this->must([
+            'bool' => [
+                'should' => [
+                    [
+                        'bool' => [
+                            'must' => [ 
+                                [
+                                    'query' => [
+                                        'match' => [
+                                            'advert_status' => 'active'
+                                        ]
+                                    ]
+                                ], 
+                                [
+                                    'range' => [
+                                        'advert_start_date' => [
+                                            'lte' => $options['dateTimeEs']
+                                        ]
+                                    ]
+                                ], 
+                                [
+                                    'range' => [
+                                        'advert_end_date' => [
+                                            'gte' => $options['dateTimeEs']
+                                        ]
+                                    ]
+                                ], 
+                                [
+                                    'match' => [
+                                        'advert_location_ids' => $options['locationId']
+                                    ]
+                                ], 
+                                [
+                                    'terms' => [
+                                        'advert_type' => $options['advertType']
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
+                    [
+                        'bool' => [
+                            'must_not' => [
+                                [
+                                    'exists' => [
+                                        'field' => 'advert_status'
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
         ]);
-	}
+    }
 
-	/**
-	 * Sort store by rating.
-	 * 
-	 * @param  string $sortingScript [description]
-	 * @return [type]                [description]
-	 */
-	public function sortByRating($sortingScript = '')
-	{
-		$this->sort([
-			'_script' => [
-				'script' => $sortingScript,
-				'type' => 'number',
-				'order' => 'desc'
-			]
-		]);
-	}
+    public function filterWithAdvert($options = [])
+    {
+        $esAdvertIndex = $this->esConfig['indices_prefix'] . $this->esConfig['indices']['advert_news']['index'];
+        $advertSearch = new AdvertSearch($this->esConfig, 'advert_news');
 
-	/**
-	 * Sort store by created date.
-	 * 
-	 * @param  string $sortingScript [description]
-	 * @return [type]                [description]
-	 */
-	public function sortByCreatedDate($order = 'desc')
-	{
-		$this->sort([
-			'begin_date' => [
-				'order' => $order
-			]
-		]);
-	}
+        $advertSearch->setPaginationParams(['from' => 0, 'size' => 100]);
 
-	/**
-	 * Sort store by updated date.
-	 * 
-	 * @param  string $sortingScript [description]
-	 * @return [type]                [description]
-	 */
-	public function sortByUpdatedDate($order = 'desc')
-	{
-		$this->sort([
-			'updated_at' => [
-				'order' => $order
-			]
-		]);
-	}
+        $advertSearch->filterNews($options);
 
-	public function addReviewFollowScript($params = [])
-	{
-		// calculate rating and review based on location/mall
+        $this->filterAdvertNews($options);
+
+        $advertSearchResult = $advertSearch->getResult();
+
+        if ($advertSearchResult['hits']['total'] > 0) {
+            $advertList = $advertSearchResult['hits']['hits'];
+            $excludeId = array();
+            $withPreferred = array();
+
+            foreach ($advertList as $adverts) {
+                $advertId = $adverts['_id'];
+                $newsId = $adverts['_source']['news_id'];
+                if(! in_array($newsId, $excludeId)) {
+                    $excludeId[] = $newsId;
+                } else {
+                    $excludeId[] = $advertId;
+                }
+
+                // if featured options['list_type'] check preferred too
+                if ($options['list_type'] === 'featured') {
+                    if ($adverts['_source']['advert_type'] === 'preferred_list_regular' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
+                        if (empty($withPreferred[$newsId]) || $withPreferred[$newsId] != 'preferred_list_large') {
+                            $withPreferred[$newsId] = 'preferred_list_regular';
+                            if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
+                                $withPreferred[$newsId] = 'preferred_list_large';
+                            }
+                        }
+                    }
+                }
+            }
+
+            $this->exclude($excludeId);
+
+            $this->sortBy($options['advertSorting']);
+
+            $this->setIndex($this->getIndex() . ',' . $esAdvertIndex);
+        }
+    }
+
+    /**
+     * Exclude some stores from the result.
+     * 
+     * @param  array  $excludedId [description]
+     * @return [type]             [description]
+     */
+    public function exclude($excludedId = [])
+    {
+        $this->mustNot([
+            'terms' => [
+                '_id' => $excludedId,
+            ]
+        ]);
+    }
+
+    /**
+     * Sort by name..
+     * 
+     * @return [type] [description]
+     */
+    public function sortByName($language = 'id', $sortMode = 'asc')
+    {
+        $sortScript =  "if(doc['name_" . $language . "'].value != null) { return doc['name_" . $language . "'].value } else { doc['name_default'].value }";
+        
+        $this->sort([
+            '_script' => [
+                'script' => $sortScript, 
+                'type' => 'string', 
+                'order' => $sortMode
+            ]
+        ]);
+    }
+
+    /**
+     * Sort store by rating.
+     * 
+     * @param  string $sortingScript [description]
+     * @return [type]                [description]
+     */
+    public function sortByRating($sortingScript = '')
+    {
+        $this->sort([
+            '_script' => [
+                'script' => $sortingScript,
+                'type' => 'number',
+                'order' => 'desc'
+            ]
+        ]);
+    }
+
+    /**
+     * Sort store by created date.
+     * 
+     * @param  string $sortingScript [description]
+     * @return [type]                [description]
+     */
+    public function sortByCreatedDate($order = 'desc')
+    {
+        $this->sort([
+            'begin_date' => [
+                'order' => $order
+            ]
+        ]);
+    }
+
+    /**
+     * Sort store by updated date.
+     * 
+     * @param  string $sortingScript [description]
+     * @return [type]                [description]
+     */
+    public function sortByUpdatedDate($order = 'desc')
+    {
+        $this->sort([
+            'updated_at' => [
+                'order' => $order
+            ]
+        ]);
+    }
+
+    public function addReviewFollowScript($params = [])
+    {
+        // calculate rating and review based on location/mall
         $scriptFieldRating = "double counter = 0; double rating = 0;";
         $scriptFieldReview = "double review = 0;";
 
@@ -429,38 +542,38 @@ class NewsSearch extends Search
         return compact('scriptFieldRating', 'scriptFieldReview');
 
         //////// END RATING & FOLLOW SCRIPTS /////
-	}
-
-	/**
-	 * Sort by relevance..
-	 * 
-	 * @return [type] [description]
-	 */
-	public function sortByRelevance()
-	{
-		$this->sort(['_score' => ['order' => 'desc']]);
-	}
+    }
 
     /**
-	 * Init default search params.
-	 * 
-	 * @return [type] [description]
-	 */
-	public function setDefaultSearchParam()
-	{
-		$this->searchParam = [
-			'index' => '',
-			'type' => '',
-			'body' => [
-				'from' => 0,
-				'size' => 20,
-				'fields' => [
-					'_source'
-				],
-				'query' => [],
-				'track_scores' => true,
-				'sort' => []
-			]
-		];
-	}
+     * Sort by relevance..
+     * 
+     * @return [type] [description]
+     */
+    public function sortByRelevance()
+    {
+        $this->sort(['_score' => ['order' => 'desc']]);
+    }
+
+    /**
+     * Init default search params.
+     * 
+     * @return [type] [description]
+     */
+    public function setDefaultSearchParam()
+    {
+        $this->searchParam = [
+            'index' => '',
+            'type' => '',
+            'body' => [
+                'from' => 0,
+                'size' => 20,
+                'fields' => [
+                    '_source'
+                ],
+                'query' => [],
+                'track_scores' => true,
+                'sort' => []
+            ]
+        ];
+    }
 }

@@ -171,8 +171,10 @@ class StoreDetailAPIController extends PubControllerAPI
                             );
                     }, 'keywords' => function ($q) {
                         $q->addSelect('keyword', 'object_id');
+                        $q->groupBy('keyword');
                     }, 'product_tags' => function ($q) {
                         $q->addSelect('product_tag', 'object_id');
+                        $q->groupBy('product_tag');
                     }
                     ])
                 ->join(DB::raw("(select merchant_id, country_id, status, parent_id from {$prefix}merchants where object_type = 'mall') as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
@@ -181,15 +183,31 @@ class StoreDetailAPIController extends PubControllerAPI
                 ->where('merchants.status', 'active')
                 ->whereRaw("oms.status = 'active'");
 
-            $storeInfo = Tenant::select('merchants.name', DB::raw("oms.country"), DB::raw("oms.country_id"))
+            $storeInfo = Tenant::select('merchants.name', 'merchants.status',DB::raw("oms.country"), DB::raw("oms.country_id"))
                             ->leftJoin(DB::raw("{$prefix}merchants as oms"), DB::raw('oms.merchant_id'), '=', 'merchants.parent_id')
-                            ->where('merchants.status', '=', 'active')
                             ->where(DB::raw('oms.status'), '=', 'active')
                             ->where('merchants.merchant_id', $merchantId)
                             ->first();
 
             if (! is_object($storeInfo)) {
                 throw new OrbitCustomException('Unable to find store.', Tenant::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
+            }
+
+            if (! empty($storeInfo) && $storeInfo->status != 'active') {
+                $mallName = 'gtm';
+                if (! empty($mall)) {
+                    $mallName = $mall->name;
+                }
+
+                $customData = new \stdClass;
+                $customData->type = 'store';
+                $customData->location = $location;
+                $customData->mall_name = $mallName;
+                throw new OrbitCustomException('Store is inactive', Tenant::INACTIVE_ERROR_CODE, $customData);
             }
 
             $store = $store->orderBy('merchants.created_at', 'asc')
@@ -345,7 +363,7 @@ class StoreDetailAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getCustomData();
             $httpCode = 500;
 
         } catch (Exception $e) {
