@@ -221,7 +221,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 }
 
                 $customData = new \stdClass;
-                $customData->type = 'promotional-event';
+                $customData->type = 'news';
                 $customData->location = $location;
                 $customData->mall_name = $mallName;
                 throw new OrbitCustomException('News is inactive', News::INACTIVE_ERROR_CODE, $customData);
@@ -444,7 +444,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getCustomData();
             $httpCode = 500;
 
         } catch (Exception $e) {

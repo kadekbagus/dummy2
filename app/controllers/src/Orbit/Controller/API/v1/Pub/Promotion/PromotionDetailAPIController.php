@@ -339,7 +339,7 @@ class PromotionDetailAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getCustomData();
             $httpCode = 500;
 
         } catch (Exception $e) {
