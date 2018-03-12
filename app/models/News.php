@@ -17,6 +17,7 @@ class News extends Eloquent
 
     const IS_EXCLUSIVE_ERROR_CODE = 9001;
     const NOT_FOUND_ERROR_CODE = 404;
+    const INACTIVE_ERROR_CODE = 4040;
 
     protected $table = 'news';
 

@@ -209,6 +209,24 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 throw new OrbitCustomException('Promotion that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
             }
 
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
+            }
+
+            if (! empty($promotionalEvent) && $promotionalEvent->campaign_status != 'ongoing' && $promotionalEvent->is_started != 'true') {
+                $mallName = 'gtm';
+                if (! empty($mall)) {
+                    $mallName = $mall->name;
+                }
+
+                $customData = new \stdClass;
+                $customData->type = 'promotional-event';
+                $customData->location = $location;
+                $customData->mall_name = $mallName;
+                throw new OrbitCustomException('News is inactive', News::INACTIVE_ERROR_CODE, $customData);
+            }
+
             // Config page_views
             $configPageViewSource = Config::get('orbit.page_view.source', FALSE);
             $configPageViewRedisDb = Config::get('orbit.page_view.redis.connection', FALSE);
@@ -243,10 +261,6 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 }
             }
             $promotionalEvent->total_view = $totalPageViews;
-
-            if (! empty($mallId)) {
-                $mall = Mall::where('merchant_id', '=', $mallId)->first();
-            }
 
             // ---- START RATING ----
             $mongoClient = MongoClient::create($mongoConfig);

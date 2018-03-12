@@ -220,7 +220,6 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $pt->addSelect('product_tag', 'object_id');
                                 $pt->groupBy('product_tag');
                             }])
-                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('promotions.promotion_id', $couponId)
                         ->where('promotions.is_visible', 'Y');
 
@@ -236,6 +235,24 @@ class CouponDetailAPIController extends PubControllerAPI
             $message = 'Request Ok';
             if (! is_object($coupon)) {
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
+            }
+
+            if (! empty($coupon) && $coupon->campaign_status != 'ongoing' && $coupon->is_started != 'true') {
+                $mallName = 'gtm';
+                if (! empty($mall)) {
+                    $mallName = $mall->name;
+                }
+
+                $customData = new \stdClass;
+                $customData->type = 'coupon';
+                $customData->location = $location;
+                $customData->mall_name = $mallName;
+                throw new OrbitCustomException('Coupon is inactive', Coupon::INACTIVE_ERROR_CODE, $customData);
             }
 
             // Config page_views
