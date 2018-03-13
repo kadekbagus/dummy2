@@ -196,15 +196,36 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                         ->where('news.is_having_reward', '=', 'Y')
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
+                                $q->groupBy('keyword');
                             }])
                         ->with(['product_tags' => function ($pt) {
                                 $pt->addSelect('product_tag', 'object_id');
+                                $pt->groupBy('product_tag');
                             }])
                         ->first();
 
             $message = 'Request Ok';
             if (! is_object($promotionalEvent)) {
                 throw new OrbitCustomException('Promotion that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
+            }
+
+            // Only campaign having status ongoing and is_started true can going to detail page
+            if ($promotionalEvent->campaign_status != 'ongoing' && $promotionalEvent->is_started != 'false') {
+                $mallName = 'gtm';
+                if (! empty($mall)) {
+                    $mallName = $mall->name;
+                }
+
+                $customData = new \stdClass;
+                $customData->type = 'news';
+                $customData->location = $location;
+                $customData->mall_name = $mallName;
+                throw new OrbitCustomException('News is inactive', News::INACTIVE_ERROR_CODE, $customData);
             }
 
             // Config page_views
@@ -241,10 +262,6 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 }
             }
             $promotionalEvent->total_view = $totalPageViews;
-
-            if (! empty($mallId)) {
-                $mall = Mall::where('merchant_id', '=', $mallId)->first();
-            }
 
             // ---- START RATING ----
             $mongoClient = MongoClient::create($mongoConfig);
@@ -428,7 +445,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getCustomData();
             $httpCode = 500;
 
         } catch (Exception $e) {

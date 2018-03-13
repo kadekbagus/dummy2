@@ -37,7 +37,6 @@ use Country;
 use Orbit\Helper\Util\FollowStatusChecker;
 
 use StoreSearch;
-use AdvertStoreSearch;
 
 /**
 * @todo  add search result mapper class.
@@ -203,155 +202,68 @@ class StoreListNewAPIController extends PubControllerAPI
                 $storeSearch->filterByMall($mallId);
             }
             else {
-                // Otherwise, we filter based on user's selection of country 
-                // and/or cities
+                // Otherwise, we filter based on user's selection of country and/or cities
                 $storeSearch->filterByCountryAndCities($area);
-
-                // get user lat and lon
-                if ($sort_by == 'location' || $location == 'mylocation') {
-                    if (! empty($ul)) {
-                        $position = explode("|", $ul);
-                        $lon = $position[0];
-                        $lat = $position[1];
-                    } else {
-                        // get lon lat from cookie
-                        $userLocationCookieArray = isset($_COOKIE[$userLocationCookieName]) ? explode('|', $_COOKIE[$userLocationCookieName]) : NULL;
-                        if (! is_null($userLocationCookieArray) && isset($userLocationCookieArray[0]) && isset($userLocationCookieArray[1])) {
-                            $lon = $userLocationCookieArray[0];
-                            $lat = $userLocationCookieArray[1];
-                        }
-                    }
-                }
-                
-                // Also user's geo-location...
-                // $storeSearch->filterByLocation($location);
             }
 
             if (! empty($categoryIds)) {
                 $storeSearch->filterByCategories($categoryIds);
             }
 
+            // Filter by keyword
             $keyword = OrbitInput::get('keyword');
             if (! empty($keyword)) {
                 $storeSearch->filterByKeyword($keyword);
             }
 
             // Filter by partner
-            // Check for competitor first.
-            OrbitInput::get('partner_id', function($partnerId) use (&$jsonQuery, $prefix, &$searchFlag, &$cacheKey, &$storeSearch) {
+            $partnerId = OrbitInput::get('partner_id', null);
+            if (! empty($partnerId)) {
                 $cacheKey['partner_id'] = $partnerId;
-                if (! empty($partnerId)) {
-                    $searchFlag = $searchFlag || TRUE;
-                    $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
-                                                                $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
-                                                                     ->where('affected_group_names.group_type', '=', 'tenant');
-                                                            })
-                                                            ->where('partner_id', $partnerId)
-                                                            ->first();
+                $storeSearch->filterByPartner($partnerId);
+            }
 
-                    if (is_object($partnerAffected)) {
-                        $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
-                        // $partnerFilter = array('query' => array('match' => array('partner_ids' => $partnerId)));
-
-                        if (in_array($partnerId, $exception)) {
-                            $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
-                            // $partnerFilter = array('query' => array('not' => array('terms' => array('partner_ids' => $partnerIds))));
-                            
-                            $storeSearch->excludePartnerCompetitors($partnerIds);
-                        }
-                        else {
-                            $storeSearch->filterByPartner($partnerId);
-                        }
-                    }
+            $sortByPageType = array();
+            $pageTypeScore = '';
+            if ($list_type === 'featured') {
+                $pageTypeScore = 'featured_gtm_score';
+                $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
+                if (! empty($mall)) {
+                    $pageTypeScore = 'featured_mall_score';
+                    $sortByPageType = array('featured_mall_score' => array('order' => 'desc'));
                 }
-            });
+            } else {
+                $pageTypeScore = 'preferred_gtm_score';
+                $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
+                if (! empty($mall)) {
+                    $pageTypeScore = 'preferred_mall_score';
+                    $sortByPageType = array('preferred_mall_score' => array('order' => 'desc'));
+                }
+            }
+
+            $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
+            $advertStoreOrdering = [
+                '_script' => [
+                    'script' => $sortPageScript, 
+                    'type' => 'string', 
+                    'order' => 'desc'
+                ]
+            ];
 
             // Get Advert_Store...
-            $esAdvertStoreIndex = $esConfig['indices_prefix'] . $esConfig['indices']['advert_stores']['index'];
-            $advertStoreSearch = new AdvertStoreSearch($esConfig, 'advert_stores');
+            $withAdvert = true;
+            if ($withAdvert) {
+                $locationId = ! empty($mallId) ? $mallId : 0;
+                $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-            $advertStoreSearch->setPaginationParams(['from' => 0, 'size' => 100]);
-
-            $locationId = ! empty($mallId) ? $mallId : 0;
-            $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
-
-            // @todo add sort page in advert list..
-            $advertStoreSearch->filterBase(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
-
-            $storeSearch->filterAdvertStores(compact('dateTimeEs', 'mallId', 'advertType', 'locationId'));
-
-            $advertStoreSearchResult = $advertStoreSearch->getResult();
-
-            if ($advertStoreSearchResult['hits']['total'] > 0) {
-                $esStoreIndex .= ',' . $esAdvertStoreIndex;
-                $advertList = $advertStoreSearchResult['hits']['hits'];
-                $excludeId = array();
-                $withPreferred = array();
-
-                foreach ($advertList as $adverts) {
-                    $advertId = $adverts['_id'];
-                    $merchantId = $adverts['_source']['merchant_id'];
-                    if(! in_array($merchantId, $excludeId)) {
-                        // record merchant_id that have advert, because we need to exclude that merchant_id in the next query
-                        $excludeId[] = $merchantId;
-                    } else {
-                        // record only 1 advert_id, so only 1 advert appear in list
-                        $excludeId[] = $advertId;
-                    }
-
-                    // if in featured list, check also the store is have preferred adv or not
-                    if ($list_type === 'featured') {
-                        if ($adverts['_source']['advert_type'] === 'preferred_list_regular' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
-                            if (empty($withPreferred[$merchantId]) || $withPreferred[$merchantId] != 'preferred_list_large') {
-                                $withPreferred[$merchantId] = 'preferred_list_regular';
-                                if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
-                                    $withPreferred[$merchantId] = 'preferred_list_large';
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // exclude_id useful for eliminate duplicate store in the list, because after this, we query to advert_stores and store index together
-                $storeSearch->excludeStores($excludeId);
-
-                // If there any advert_stores in the list, then sort by it first...
-                // if (count($withPreferred) > 0) {
-                    $sortByPageType = array();
-                    $pageTypeScore = '';
-                    if ($list_type === 'featured') {
-                        $pageTypeScore = 'featured_gtm_score';
-                        $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
-                        if (! empty($mall)) {
-                            $pageTypeScore = 'featured_mall_score';
-                            $sortByPageType = array('featured_mall_score' => array('order' => 'desc'));
-                        }
-                    } else {
-                        $pageTypeScore = 'preferred_gtm_score';
-                        $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
-                        if (! empty($mall)) {
-                            $pageTypeScore = 'preferred_mall_score';
-                            $sortByPageType = array('preferred_mall_score' => array('order' => 'desc'));
-                        }
-                    }
-
-                    $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
-                    $advertStoreOrdering = [
-                        '_script' => [
-                            'script' => $sortPageScript, 
-                            'type' => 'string', 
-                            'order' => 'desc'
-                        ]
-                    ];
-
-                    $storeSearch->sortBy($advertStoreOrdering);
-                // }
+                $storeSearch->filterWithAdvert(compact('list_type', 'dateTimeEs', 'mallId', 'advertType', 'locationId', 'advertStoreOrdering'));
             }
 
             $scriptFields = $storeSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
 
+            // Force sort by relevance if visitor provide any keyword/searching.
             if (! empty($keyword)) {
                 $sortBy = 'relevance';
             }
@@ -363,20 +275,14 @@ class StoreListNewAPIController extends PubControllerAPI
                     break;
                 case 'rating':
                     $storeSearch->sortByRating($scriptFields['scriptFieldRating']);
-                    // $storeSearch->sortByRelevance();
                     break;
                 case 'followed':
                     $storeSearch->sortByFavorite($scriptFields['scriptFieldFollow']);
                     break;
                 default:
-                    $storeSearch->sortByName($language, $sort_mode);
+                    $storeSearch->sortByName();
                     break;
             }
-
-            // Reset the indices that will be used as search source.
-            // If we have at least one advert_stores set (filtered), then the new indices will be 
-            // stores and advert_stores.
-            $storeSearch->setIndex($esStoreIndex);
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
@@ -511,18 +417,12 @@ class StoreListNewAPIController extends PubControllerAPI
                 $listOfRec[] = $data;
             }
 
-            // frontend need the mall name
-            $mall = null;
-            if (! empty($mallId)) {
-                $mall = Mall::where('merchant_id', '=', $mallId)->first();
-            }
-
             $data = new \stdClass();
 
             $data->returned_records = count($listOfRec);
             $data->total_records = $records['total'];
 
-            if (is_object($mall)) {
+            if (isset($mall)) {
                 $data->mall_name = $mall->name;
                 $data->mall_city = $mall->city;
             }

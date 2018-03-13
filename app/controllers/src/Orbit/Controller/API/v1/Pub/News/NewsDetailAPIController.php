@@ -181,20 +181,40 @@ class NewsDetailAPIController extends PubControllerAPI
                               ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
+                                $q->groupBy('keyword');
                             }])
                         ->with(['product_tags' => function ($pt) {
                                 $pt->addSelect('product_tag', 'object_id');
+                                $pt->groupBy('product_tag');
                             }])
                         ->first();
 
             $message = 'Request Ok';
             if (! is_object($news)) {
                 throw new OrbitCustomException('News that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
+            }
+
+            // Only campaign having status ongoing and is_started true can going to detail page
+            if ($news->campaign_status != 'ongoing' && $news->is_started != 'false' ) {
+                $mallName = 'gtm';
+                if (! empty($mall)) {
+                    $mallName = $mall->name;
+                }
+
+                $customData = new \stdClass;
+                $customData->type = 'news';
+                $customData->location = $location;
+                $customData->mall_name = $mallName;
+                throw new OrbitCustomException('News is inactive', News::INACTIVE_ERROR_CODE, $customData);
             }
 
             // Config page_views
@@ -246,11 +266,6 @@ class NewsDetailAPIController extends PubControllerAPI
                 }
 
                 $news->is_exclusive = 'N';
-            }
-
-            $mall = null;
-            if (! empty($mallId)) {
-                $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
             // ---- START RATING ----
@@ -332,7 +347,7 @@ class NewsDetailAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getCustomData();
             $httpCode = 500;
 
         } catch (Exception $e) {
