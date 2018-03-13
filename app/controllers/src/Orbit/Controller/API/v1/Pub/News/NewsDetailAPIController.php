@@ -203,7 +203,8 @@ class NewsDetailAPIController extends PubControllerAPI
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
             }
 
-            if (! empty($news) && $news->campaign_status != 'ongoing' && $news->is_started != 'true') {
+            // Only campaign having status ongoing and is_started true can going to detail page
+            if ($news->campaign_status != 'ongoing' && $news->is_started != 'false' ) {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
                     $mallName = $mall->name;
