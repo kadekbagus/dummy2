@@ -42,7 +42,7 @@ class MallInfoAPIController extends PubControllerAPI
         try {
             $activity = Activity::mobileci()->setActivityType('view');
 
-            // $user = $this->getUser();
+            $user = $this->getUser();
 
             $fromMallDetail = OrbitInput::get('from_mall_detail', 'y');
 
