@@ -36,6 +36,7 @@ class SeoTextAPIController extends PubControllerAPI
             $language = OrbitInput::get('language', 'en');
             $mall_id = OrbitInput::get('mall_id');
             $default_language = 'en';
+            $category_id = OrbitInput::get('category_id');
 
             $validator = Validator::make(
                 array(
@@ -59,9 +60,10 @@ class SeoTextAPIController extends PubControllerAPI
                     $seo_text = Mall::select('description as seo_text')
                                     ->where('merchants.merchant_id', '=', $mall_id)
                                     ->first();
-                        break;
+                    break;
 
                 default:
+                    // find selected category with selected language
                     $seo_text = Page::select(DB::raw("CASE WHEN ({$prefix}pages.title = '' or {$prefix}pages.title is null)
                                                        THEN (select title from {$prefix}pages
                                                                 where {$prefix}pages.object_type = {$this->quote($object_type)}
@@ -74,24 +76,40 @@ class SeoTextAPIController extends PubControllerAPI
                                                                 and {$prefix}pages.language = {$this->quote($default_language)})
                                                        ELSE {$prefix}pages.content
                                                        END as seo_text"),
-                                            'language')
-                                    ->where('object_type', '=', $object_type)
-                                    ->where('status', '=', 'active')
+                                            'pages.language', 'categories.category_name')
+                                    ->leftJoin('categories', 'categories.category_id', '=', 'pages.category_id')
+                                    ->where('pages.object_type', '=', $object_type)
+                                    ->where('pages.status', '=', 'active')
                                     ->where('pages.language', '=', $language)
+                                    ->where('categories.category_id', '=', $category_id)
                                     ->first();
 
-                    // fallback to english if not found
-                    if (! is_object($seo_text)) {
-                        $seo_text = Page::select('title', 'content as seo_text', 'language')
-                                        ->where('object_type', '=', $object_type)
-                                        ->where('status', '=', 'active')
-                                        ->where('pages.language', '=', $default_language)
-                                        ->first();
-                    }
-                        break;
-            }
-            $seo = $seo_text;
 
+                    if (! is_object($seo_text)) {
+                        // fallback to selected category with default language
+                        $seo_text = Page::select('title', 'content as seo_text', 'language', 'categories.category_name')
+                                        ->leftJoin('categories', 'categories.category_id', '=', 'pages.category_id')
+                                        ->where('pages.object_type', '=', $object_type)
+                                        ->where('pages.status', '=', 'active')
+                                        ->where('pages.language', '=', $default_language)
+                                        ->where('categories.category_id', '=', $category_id)
+                                        ->first();
+
+                        // fallback to default category with default language
+                        if (! is_object($seo_text)) {
+                            $seo_text = Page::select('title', 'content as seo_text', 'language', 'categories.category_name')
+                                            ->leftJoin('categories', 'categories.category_id', '=', 'pages.category_id')
+                                            ->where('pages.object_type', '=', $object_type)
+                                            ->where('pages.status', '=', 'active')
+                                            ->where('pages.language', '=', $default_language)
+                                            ->whereNull('pages.category_id')
+                                            ->first();
+                        }
+                    }
+                    break;
+            }
+
+            $seo = $seo_text;
             $this->response->data = new stdClass();
             $this->response->data = $seo;
         } catch (ACLForbiddenException $e) {
