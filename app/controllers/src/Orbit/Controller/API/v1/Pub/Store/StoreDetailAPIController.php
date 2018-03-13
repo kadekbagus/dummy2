@@ -197,7 +197,7 @@ class StoreDetailAPIController extends PubControllerAPI
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
             }
 
-            if (! empty($storeInfo) && $storeInfo->status != 'active') {
+            if ($storeInfo->status != 'active') {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
                     $mallName = $mall->name;

@@ -214,7 +214,8 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                 $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
             }
 
-            if (! empty($promotionalEvent) && $promotionalEvent->campaign_status != 'ongoing' && $promotionalEvent->is_started != 'true') {
+            // Only campaign having status ongoing and is_started true can going to detail page
+            if ($promotionalEvent->campaign_status != 'ongoing' && $promotionalEvent->is_started != 'false') {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
                     $mallName = $mall->name;
