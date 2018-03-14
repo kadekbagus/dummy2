@@ -87,12 +87,12 @@ class AdvertAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $notes = OrbitInput::post('notes');
             $status = OrbitInput::post('status');
-            $locations = OrbitInput::post('locations');
+            $locations = OrbitInput::post('locations', []);
             $locations = (array) $locations;
             $country_id = OrbitInput::post('country_id', '');
             $is_all_city = OrbitInput::post('is_all_city', 'N');
             $is_all_location = OrbitInput::post('is_all_location', 'N');
-            $city = OrbitInput::post('city');
+            $city = OrbitInput::post('city', []);
             $city = (array) $city;
 
             $validator = Validator::make(
@@ -136,12 +136,12 @@ class AdvertAPIController extends ControllerAPI
                             ->where('advert_placement_id', '=', $advert_placement_id)
                             ->first();
 
+            $link_type = AdvertLinkType::select('advert_type')
+                            ->where('advert_link_type_id', '=', $advert_link_type_id)
+                            ->first();
+
             if (! empty($placement)) {
                 if (in_array(($placement->placement_type), ['top_banner', 'footer_banner'])) {
-                    $link_type = AdvertLinkType::select('advert_type')
-                                                ->where('advert_link_type_id', '=', $advert_link_type_id)
-                                                ->first();
-
                     if ($link_type->advert_type == 'store') {
                         $store = Tenant::select('merchants.name', DB::raw('oms.country'), DB::raw('oms.city'))
                                         ->excludeDeleted('merchants')
@@ -255,6 +255,30 @@ class AdvertAPIController extends ControllerAPI
                         }
                     }
                 }
+
+                // If link type mall...
+                if ($link_type->advert_type == 'mall') {
+                    // Get the mall detail
+                    $mall = Mall::where('merchant_id', $link_object_id)->first();
+                    $country_id = $mall->country_id;
+                    $is_all_location = 'N';
+                    $is_all_city = 'N';
+                    $locations = ['gtm']; // default location set gtm.
+
+                    // Get mall's city id...
+                    $mallCity = $mall->city_id;
+
+                    // If empty, then look at by city name...
+                    if (empty($mallCity)) {
+                        $mallCity = MallCity::where('city', $mall->city)->first();
+                        if (empty($mallCity)) {
+                            OrbitShopAPI::throwInvalidArgument('Invalid city for mall ' . $link_object_id);
+                        }
+
+                        $mallCity = $mallCity->mall_city_id;
+                    }
+                    $city = [$mallCity]; // default city to mall's city.
+                }
             }
 
             $newadvert = new Advert();
@@ -293,6 +317,7 @@ class AdvertAPIController extends ControllerAPI
                     $advertLocation->save();
                     $advertLocations[] = $advertLocation;
                 }
+                
                 $newadvert->locations = $advertLocations;
             }
 
@@ -313,6 +338,7 @@ class AdvertAPIController extends ControllerAPI
                     $advertCity->save();
                     $advertCities[] = $advertCity;
                 }
+
                 $newadvert->cities = $advertCities;
             }
 
@@ -333,6 +359,7 @@ class AdvertAPIController extends ControllerAPI
                     ->responseOK();
 
             Event::fire('orbit.advert.postnewadvert.after.commit', array($this, $newadvert));
+
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.advert.postnewadvert.access.forbidden', array($this, $e));
 
@@ -471,11 +498,13 @@ class AdvertAPIController extends ControllerAPI
             $end_date = OrbitInput::post('end_date');
             $notes = OrbitInput::post('notes');
             $status = OrbitInput::post('status');
-            $locations = OrbitInput::post('locations');
+            $locations = OrbitInput::post('locations', []);
             $locations = (array) $locations;
             $country_id = OrbitInput::post('country_id');
             $is_all_city = OrbitInput::post('is_all_city', 'N');
             $is_all_location = OrbitInput::post('is_all_location', 'N');
+            $city = OrbitInput::post('city', []);
+            $city = (array) $city;
 
             $validator = Validator::make(
                 array(
@@ -643,6 +672,32 @@ class AdvertAPIController extends ControllerAPI
                             $flag_update = true;
                         }
                 }
+
+                // If link type mall...
+                if ($link_type == 'mall' && ! empty($object_id)) {
+                    // Get the mall detail
+                    $mall = Mall::where('merchant_id', $object_id)->first();
+                    $country_id = $mall->country_id;
+                    $country_id_update = $mall->country_id;
+                    $is_all_location = 'N';
+                    $is_all_city = 'N';
+                    $locations = ['gtm']; // default location set gtm.
+
+                    // Get mall's city id...
+                    $mallCity = $mall->city_id;
+
+                    // If empty, then look at by city name...
+                    if (empty($mallCity)) {
+                        $mallCity = MallCity::where('city', $mall->city)->first();
+                        if (empty($mallCity)) {
+                            OrbitShopAPI::throwInvalidArgument('Invalid city for mall ' . $link_object_id);
+                        }
+
+                        $mallCity = $mallCity->mall_city_id;
+                    }
+                    $city = [$mallCity]; // default city to mall's city.
+                    $city_update = [$mallCity];
+                }
             }
 
             OrbitInput::post('notes', function($notes) use ($updatedadvert) {
@@ -682,57 +737,55 @@ class AdvertAPIController extends ControllerAPI
             });
 
             $advertLocations = array();
-            OrbitInput::post('locations', function($locations) use ($updatedadvert, $advert_id, $is_all_location, $advertLocations) {
-                if ($is_all_location == 'N') {
-                    // Delete old data
-                    $delete_retailer = AdvertLocation::where('advert_id', '=', $advert_id);
-                    $delete_retailer->delete();
+            
+            if ($is_all_location == 'N') {
+                // Delete old data
+                $delete_retailer = AdvertLocation::where('advert_id', '=', $advert_id);
+                $delete_retailer->delete();
 
-                    // Insert new data
+                // Insert new data
 
-                    foreach ($locations as $location_id) {
-                        $locationType = 'mall';
-                        if ($location_id == 'gtm' || $location_id == 'GTM') {
-                            $location_id = '0';
-                            $locationType = 'gtm';
-                        }
-                        $advertLocation = new AdvertLocation();
-                        $advertLocation->advert_id = $advert_id;
-                        $advertLocation->location_id = $location_id;
-                        $advertLocation->location_type = $locationType;
-                        $advertLocation->save();
-                        $advertLocations[] = $advertLocation;
+                foreach ($locations as $location_id) {
+                    $locationType = 'mall';
+                    if ($location_id == 'gtm' || $location_id == 'GTM') {
+                        $location_id = '0';
+                        $locationType = 'gtm';
                     }
-
-                    $updatedadvert->is_all_location = 'N';
+                    $advertLocation = new AdvertLocation();
+                    $advertLocation->advert_id = $advert_id;
+                    $advertLocation->location_id = $location_id;
+                    $advertLocation->location_type = $locationType;
+                    $advertLocation->save();
+                    $advertLocations[] = $advertLocation;
                 }
-            });
+
+                $updatedadvert->is_all_location = 'N';
+            }
 
             $advertCities = array();
-            OrbitInput::post('city', function($city) use ($updatedadvert, $advert_id, $is_all_city, $advertCities) {
-                if ($is_all_city == 'N') {
-                    $city = (array) $city;
-                    // Delete old data
-                    $deleteAdvertCity = AdvertCity::where('advert_id', '=', $advert_id);
-                    $deleteAdvertCity->delete();
+            if ($is_all_city == 'N') {
+                $city = (array) $city;
+                // Delete old data
+                $deleteAdvertCity = AdvertCity::where('advert_id', '=', $advert_id);
+                $deleteAdvertCity->delete();
 
-                    // Insert new data
-                    foreach ($city as $city_id) {
-                            $advertCity = new AdvertCity();
-                            $advertCity->advert_id = $advert_id;
-                            $advertCity->mall_city_id = $city_id;
-                            $advertCity->save();
-                            $advertCities[] = $advertCity;
-                        }
+                // Insert new data
+                foreach ($city as $city_id) {
+                        $advertCity = new AdvertCity();
+                        $advertCity->advert_id = $advert_id;
+                        $advertCity->mall_city_id = $city_id;
+                        $advertCity->save();
+                        $advertCities[] = $advertCity;
+                    }
 
-                    $updatedadvert->is_all_city = 'N';
-                }
-            });
+                $updatedadvert->is_all_city = 'N';
+            }
 
             if ($flag_update) {
                 if (! empty($country_id_update)) {
                     $updatedadvert->country_id = $country_id_update;
                 }
+
                 if (! empty($city_update)) {
                     if ($is_all_city == 'N') {
                         // Delete old data
@@ -741,12 +794,12 @@ class AdvertAPIController extends ControllerAPI
 
                         // Insert new data
                         foreach ($city_update as $city_id) {
-                                $advertCity = new AdvertCity();
-                                $advertCity->advert_id = $advert_id;
-                                $advertCity->mall_city_id = $city_id;
-                                $advertCity->save();
-                                $advertCities[] = $advertCity;
-                            }
+                            $advertCity = new AdvertCity();
+                            $advertCity->advert_id = $advert_id;
+                            $advertCity->mall_city_id = $city_id;
+                            $advertCity->save();
+                            $advertCities[] = $advertCity;
+                        }
 
                         $updatedadvert->is_all_city = 'N';
                     }
