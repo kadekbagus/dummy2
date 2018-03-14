@@ -190,7 +190,6 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                             $q->on(DB::raw("default_translation_button.reward_detail_id"), '=', 'reward_details.reward_detail_id')
                               ->on(DB::raw("default_translation_button.language_id"), '=', 'languages.language_id');
                         })
-                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news.is_having_reward', '=', 'Y')
