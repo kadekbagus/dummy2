@@ -3429,7 +3429,7 @@ class MallAPIController extends ControllerAPI
 
             // @Todo: Use ACL authentication instead
             $role = $user->role;
-            $validRoles = ['super admin', 'mall admin', 'mall owner', 'consumer'];
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'consumer', 'campaign owner', 'campaign employee', 'campaign admin'];
             if (! in_array( strtolower($role->role_name), $validRoles)) {
                 $message = 'Your role are not allowed to access this resource.';
                 ACL::throwAccessForbidden($message);

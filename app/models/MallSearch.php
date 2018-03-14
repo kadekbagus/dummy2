@@ -9,230 +9,230 @@ use Orbit\Helper\Util\FollowStatusChecker;
 */
 class MallSearch extends Search
 {
-	function __construct($ESConfig = [])
-	{
-		parent::__construct($ESConfig);
+    function __construct($ESConfig = [])
+    {
+        parent::__construct($ESConfig);
 
-		$this->setDefaultSearchParam();
+        $this->setDefaultSearchParam();
 
-		$this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['malldata']['index']);
-		$this->setType($this->esConfig['indices']['malldata']['type']);
-	}
-	
-	public function filterBase()
-	{
-		$this->must([
-			'match' => [
-				'is_subscribed' => 'Y'
-			]
-		]);
+        $this->setIndex($this->esConfig['indices_prefix'] . $this->esConfig['indices']['malldata']['index']);
+        $this->setType($this->esConfig['indices']['malldata']['type']);
+    }
+    
+    public function filterBase()
+    {
+        $this->must([
+            'match' => [
+                'is_subscribed' => 'Y'
+            ]
+        ]);
 
-		$this->must([
-			'match' => ['status' => 'active']
-		]);
-	}
+        $this->must([
+            'match' => ['status' => 'active']
+        ]);
+    }
 
-	/**
-	 * Filter by user's geo-location...
-	 * 
-	 * @param  string $location [description]
-	 * @return [type]           [description]
-	 */
-	public function filterByLocation($location = [])
-	{
-		if (! empty($location)) {
-			$this->should([
-				'nested' => [
-					'path' => 'tenant_detail',
-					'query' => [
-						'bool' => [
-							'must' => [
-								'geo_distance' => [
-									'distance' => "10km",
-									'distance_type' => 'plane',
-									'tenant_detail.position' => $location
-								]
-							]
-						]
-					]
-				]
-			]);
-		}
-	}
+    /**
+     * Filter by user's geo-location...
+     * 
+     * @param  string $location [description]
+     * @return [type]           [description]
+     */
+    public function filterByLocation($location = [])
+    {
+        if (! empty($location)) {
+            $this->should([
+                'nested' => [
+                    'path' => 'tenant_detail',
+                    'query' => [
+                        'bool' => [
+                            'must' => [
+                                'geo_distance' => [
+                                    'distance' => "10km",
+                                    'distance_type' => 'plane',
+                                    'tenant_detail.position' => $location
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]);
+        }
+    }
 
-	/**
-	 * Implement filter by keyword...
-	 * 
-	 * @param  string $keyword [description]
-	 * @return [type]          [description]
-	 */
-	public function filterByKeyword($keyword = '')
-	{
-		$priorityName = isset($this->esConfig['priority']['mall']['name']) ? 
-			$this->esConfig['priority']['mall']['name'] : '^6';
+    /**
+     * Implement filter by keyword...
+     * 
+     * @param  string $keyword [description]
+     * @return [type]          [description]
+     */
+    public function filterByKeyword($keyword = '')
+    {
+        $priorityName = isset($this->esConfig['priority']['mall']['name']) ? 
+            $this->esConfig['priority']['mall']['name'] : '^6';
 
-		$priorityObjectType = isset($this->esConfig['priority']['mall']['object_type']) ? 
-			$this->esConfig['priority']['mall']['object_type'] : '^5';
+        $priorityObjectType = isset($this->esConfig['priority']['mall']['object_type']) ? 
+            $this->esConfig['priority']['mall']['object_type'] : '^5';
 
-		$priorityDescription = isset($this->esConfig['priority']['mall']['description']) ? 
-			$this->esConfig['priority']['mall']['description'] : '^3';
+        $priorityDescription = isset($this->esConfig['priority']['mall']['description']) ? 
+            $this->esConfig['priority']['mall']['description'] : '^3';
 
-		$priorityAddressLine = isset($this->esConfig['priority']['mall']['address_line']) ? 
-			$this->esConfig['priority']['mall']['address_line'] : '';
+        $priorityAddressLine = isset($this->esConfig['priority']['mall']['address_line']) ? 
+            $this->esConfig['priority']['mall']['address_line'] : '';
 
-		$this->must([
-			'bool' => [
-				'should' => [
-					[
-						'query_string' => [
-							'query' => '*' . $keyword . '*',
-							'fields' => [
-								'name' . $priorityName, 
-								'object_type' . $priorityObjectType,
-								'description' . $priorityDescription,
-								'address_line' . $priorityAddressLine,
-							]
-						]
-					]
-				]
-			]
-		]);
+        $this->must([
+            'bool' => [
+                'should' => [
+                    [
+                        'query_string' => [
+                            'query' => '*' . $keyword . '*',
+                            'fields' => [
+                                'name' . $priorityName, 
+                                'object_type' . $priorityObjectType,
+                                'description' . $priorityDescription,
+                                'address_line' . $priorityAddressLine,
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]);
 
-		$priorityCountry = isset($this->esConfig['priority']['mall']['country']) ?
-			$this->esConfig['priority']['mall']['country'] : '';
+        $priorityCountry = isset($this->esConfig['priority']['mall']['country']) ?
+            $this->esConfig['priority']['mall']['country'] : '';
 
-		$priorityProvince = isset($this->esConfig['priority']['mall']['province']) ?
-			$this->esConfig['priority']['mall']['province'] : '';
+        $priorityProvince = isset($this->esConfig['priority']['mall']['province']) ?
+            $this->esConfig['priority']['mall']['province'] : '';
 
-		$priorityCity = isset($this->esConfig['priority']['mall']['city']) ?
-			$this->esConfig['priority']['mall']['city'] : '';
+        $priorityCity = isset($this->esConfig['priority']['mall']['city']) ?
+            $this->esConfig['priority']['mall']['city'] : '';
 
-		$this->should([
-			'query_string' => [
-				'query' => '*' . $keyword . '*',
-				'fields' => [
-					'country' . $priorityCountry,
-					'province' . $priorityProvince,
-					'city' . $priorityCity,
-				]
-			]
-		]);
-	}
+        $this->should([
+            'query_string' => [
+                'query' => '*' . $keyword . '*',
+                'fields' => [
+                    'country' . $priorityCountry,
+                    'province' . $priorityProvince,
+                    'city' . $priorityCity,
+                ]
+            ]
+        ]);
+    }
 
-	/**
-	 * Filte by Country and Cities...
-	 * 
-	 * @param  array  $area [description]
-	 * @return [type]       [description]
-	 */
-	public function filterByCountryAndCities($area = [])
-	{
-		if (! empty($area['country'])) {
-			$this->must([
-				'match' => [
-					'country.raw' => $area['country']
-				]
-			]);
-		}
+    /**
+     * Filte by Country and Cities...
+     * 
+     * @param  array  $area [description]
+     * @return [type]       [description]
+     */
+    public function filterByCountryAndCities($area = [])
+    {
+        if (! empty($area['country'])) {
+            $this->must([
+                'match' => [
+                    'country.raw' => $area['country']
+                ]
+            ]);
+        }
 
-		if (! empty($area['cities'])) {
+        if (! empty($area['cities'])) {
 
-			$citiesQuery['bool']['should'] = [];
+            $citiesQuery['bool']['should'] = [];
 
-			foreach($area['cities'] as $city) {
-				$citiesQuery['bool']['should'][] = [
-					'match' => [
-						'city.raw' => $city
-					]
-				];
-			}
+            foreach($area['cities'] as $city) {
+                $citiesQuery['bool']['should'][] = [
+                    'match' => [
+                        'city.raw' => $city
+                    ]
+                ];
+            }
 
-			if (! empty($citiesQuery)) {
-				$this->must($citiesQuery);
-			}
-		}
-	}
+            if (! empty($citiesQuery)) {
+                $this->must($citiesQuery);
+            }
+        }
+    }
 
-	/**
-	 * Filter by Partner...
-	 * 
-	 * @param  string $partnerId [description]
-	 * @return [type]            [description]
-	 */
-	public function filterByPartner($partnerId = '')
-	{
-		$this->must([
-			'match' => [
-				'partner_ids' => $partnerId
-			]
-		]);
-	}
+    /**
+     * Filter by Partner...
+     * 
+     * @param  string $partnerId [description]
+     * @return [type]            [description]
+     */
+    public function filterByPartner($partnerId = '')
+    {
+        $this->must([
+            'match' => [
+                'partner_ids' => $partnerId
+            ]
+        ]);
+    }
 
-	/**
-	 * Exclude the partner competitors from the result.
-	 * 
-	 * @param  array  $competitors [description]
-	 * @return [type]              [description]
-	 */
-	public function excludePartnerCompetitors($competitors = [])
-	{
-		$this->mustNot([
+    /**
+     * Exclude the partner competitors from the result.
+     * 
+     * @param  array  $competitors [description]
+     * @return [type]              [description]
+     */
+    public function excludePartnerCompetitors($partnerIds = [])
+    {
+        $this->mustNot([
             'terms' => [
                 'partner_ids' => $partnerIds
             ]
         ]);
-	}
+    }
 
-	/**
-	 * Sort by name..
-	 * 
-	 * @return [type] [description]
-	 */
-	public function sortByName()
-	{
-		$this->sort(['lowercase_name' => ['order' => 'asc']]);
-	}
+    /**
+     * Sort by name..
+     * 
+     * @return [type] [description]
+     */
+    public function sortByName()
+    {
+        $this->sort(['lowercase_name' => ['order' => 'asc']]);
+    }
 
-	/**
-	 * Sort store by rating.
-	 * 
-	 * @param  string $sortingScript [description]
-	 * @return [type]                [description]
-	 */
-	public function sortByRating($sortingScript = '')
-	{
-		$this->sort([
-			'_script' => [
-				'script' => $sortingScript,
-				'type' => 'number',
-				'order' => 'desc'
-			]
-		]);
-	}
+    /**
+     * Sort store by rating.
+     * 
+     * @param  string $sortingScript [description]
+     * @return [type]                [description]
+     */
+    public function sortByRating($sortingScript = '')
+    {
+        $this->sort([
+            '_script' => [
+                'script' => $sortingScript,
+                'type' => 'number',
+                'order' => 'desc'
+            ]
+        ]);
+    }
 
-	/**
-	 * Sort store by favorite.
-	 * 
-	 * @param  string $sortingScript [description]
-	 * @return [type]                [description]
-	 */
-	public function sortByFavorite($sortingScript = '')
-	{
-		$this->sort([
-			'_script' => [
-				'script' => $sortingScript,
-				'type' => 'number',
-				'order' => 'desc'
-			]
-		]);
+    /**
+     * Sort store by favorite.
+     * 
+     * @param  string $sortingScript [description]
+     * @return [type]                [description]
+     */
+    public function sortByFavorite($sortingScript = '')
+    {
+        $this->sort([
+            '_script' => [
+                'script' => $sortingScript,
+                'type' => 'number',
+                'order' => 'desc'
+            ]
+        ]);
 
-		$this->sortByRelevance();
-		$this->sortByName();
-	}
+        $this->sortByRelevance();
+        $this->sortByName();
+    }
 
-	public function addReviewFollowScript($params = [])
-	{
-		$scriptFieldRating = "double counter = 0; double rating = 0;";
+    public function addReviewFollowScript($params = [])
+    {
+        $scriptFieldRating = "double counter = 0; double rating = 0;";
         $scriptFieldReview = "double review = 0;";
         $scriptFieldFollow = "int follow = 0;";
 
@@ -289,42 +289,42 @@ class MallSearch extends Search
         return compact('scriptFieldRating', 'scriptFieldReview', 'scriptFieldFollow');
 
         //////// END RATING & FOLLOW SCRIPTS /////
-	}
+    }
 
-	/**
-	 * Sort by relevance..
-	 * 
-	 * @return [type] [description]
-	 */
-	public function sortByRelevance()
-	{
-		$this->sort(['_score' => ['order' => 'desc']]);
-	}
+    /**
+     * Sort by relevance..
+     * 
+     * @return [type] [description]
+     */
+    public function sortByRelevance()
+    {
+        $this->sort(['_score' => ['order' => 'desc']]);
+    }
 
-	public function sortByUpdatedAt()
-	{
-		$this->sort(['updated_at' => ['order' => 'desc']]);
-	}
+    public function sortByUpdatedAt()
+    {
+        $this->sort(['updated_at' => ['order' => 'desc']]);
+    }
 
-	/**
-	 * Bypass Malls ordering...
-	 * 
-	 * @param  array  $params [description]
-	 * @return [type]         [description]
-	 */
-	public function bypassMallOrder($params = [])
-	{
-		$mallFeaturedIds =  Config::get('orbit.featured.mall_ids.all', []);
+    /**
+     * Bypass Malls ordering...
+     * 
+     * @param  array  $params [description]
+     * @return [type]         [description]
+     */
+    public function bypassMallOrder($params = [])
+    {
+        $mallFeaturedIds =  Config::get('orbit.featured.mall_ids.all', []);
 
         if (! empty($params['countryFilter'])) {
             $params['countryFilter'] = strtolower($params['countryFilter']);
-            $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
+            $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $params['countryFilter'] . '.all', []);
 
             if (! empty($params['cityFilters'])) {
                 $mallFeaturedIds = [];
                 foreach ($params['cityFilters'] as $key => $cityName) {
                     $cityName = str_replace(' ', '_', strtolower($cityName));
-                    $cityValue = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.' . $cityName, []);
+                    $cityValue = Config::get('orbit.featured.mall_ids.' . $params['countryFilter'] . '.' . $cityName, []);
 
                     if (! empty($cityValue)) {
                         $mallFeaturedIds = array_merge($cityValue, $mallFeaturedIds);
@@ -336,23 +336,23 @@ class MallSearch extends Search
         $mallFeaturedIds = array_unique($mallFeaturedIds);
 
         if (! empty($mallFeaturedIds)) {
-            $withScore = TRUE;
             $esFeaturedBoost = Config::get('orbit.featured.es_boost', 10);
-            // $mallOrder = array(array('terms' => array('_id' => $mallFeaturedIds, 'boost' => $esFeaturedBoost)), array('match_all' => new stdClass()));
 
             $this->should([
-            	'terms' => [
-            		[
-	            		'_id' => $mallFeaturedIds,
-	            		'boost' => $esFeaturedBoost
-	            	],
-            	],
-            	'match_all' => new stdClass()
+                [
+                    'terms' => [
+                        '_id' => $mallFeaturedIds,
+                        'boost' => $esFeaturedBoost
+                    ],
+                ],
+                [
+                    'match_all' => new stdClass()
+                ]
             ]);
         }
-	}
+    }
 
-	// check user follow
+    // check user follow
     public function getUserFollow($user)
     {
         $follow = FollowStatusChecker::create()
@@ -364,25 +364,25 @@ class MallSearch extends Search
     }
 
     /**
-	 * Init default search params.
-	 * 
-	 * @return [type] [description]
-	 */
-	public function setDefaultSearchParam()
-	{
-		$this->searchParam = [
-			'index' => '',
-			'type' => '',
-			'body' => [
-				'from' => 0,
-				'size' => 20,
-				'fields' => [
-					'_source'
-				],
-				'query' => [],
-				'track_scores' => true,
-				'sort' => []
-			]
-		];
-	}
+     * Init default search params.
+     * 
+     * @return [type] [description]
+     */
+    public function setDefaultSearchParam()
+    {
+        $this->searchParam = [
+            'index' => '',
+            'type' => '',
+            'body' => [
+                'from' => 0,
+                'size' => 20,
+                'fields' => [
+                    '_source'
+                ],
+                'query' => [],
+                'track_scores' => true,
+                'sort' => []
+            ]
+        ];
+    }
 }

@@ -20,6 +20,7 @@ use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\Util\FollowStatusChecker;
+use \Orbit\Helper\Exception\OrbitCustomException;
 
 class MallInfoAPIController extends PubControllerAPI
 {
@@ -37,6 +38,7 @@ class MallInfoAPIController extends PubControllerAPI
     public function getMallInfo()
     {
         $httpCode = 200;
+        $user = null;
         try {
             $activity = Activity::mobileci()->setActivityType('view');
 
@@ -60,17 +62,16 @@ class MallInfoAPIController extends PubControllerAPI
             $filterStatus = '';
             if ($usingDemo) {
                 $filterStatus = '
-                    "not" : {
-                        "term" : {
-                            "status" : "deleted"
-                        }
-                    }';
-            } else {
-                // Production
-                $filterStatus = '
-                    "match" : {
-                        "status" : "active"
-                    }';
+                                    {
+                                        "query": {
+                                            "not" : {
+                                                "term" : {
+                                                    "status" : "deleted"
+                                                }
+                                            }
+                                        }
+                                    },
+                                ';
             }
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
@@ -81,11 +82,7 @@ class MallInfoAPIController extends PubControllerAPI
                                 "filtered": {
                                     "filter": {
                                         "and": [
-                                            {
-                                                "query": {
-                                                    ' . $filterStatus . '
-                                                }
-                                            },
+                                            ' . $filterStatus . '
                                             {
                                                 "query": {
                                                     "match" : {
@@ -117,6 +114,17 @@ class MallInfoAPIController extends PubControllerAPI
             ];
 
             $response = $client->search($param_area);
+
+            $message = 'Request Ok';
+            if ($response['hits']['total'] === 0) {
+                throw new OrbitCustomException('Mall that you specify is not found', Mall::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
+            if ($response['hits']['total'] > 0 && $response['hits']['hits'][0]['_source']['status'] != 'active') {
+                $customData = new \stdClass;
+                $customData->type = 'mall';
+                throw new OrbitCustomException('Mall is inactive', Mall::INACTIVE_ERROR_CODE, $customData);
+            }
 
             $role = $user->role->role_name;
             $objectFollow = [];
@@ -260,6 +268,12 @@ class MallInfoAPIController extends PubControllerAPI
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
             $this->response->data = null;
+            $httpCode = 500;
+        } catch (\Orbit\Helper\Exception\OrbitCustomException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = $e->getCustomData();
             $httpCode = 500;
         } catch (Exception $e) {
 

@@ -63,11 +63,17 @@ class StoreSearch extends Search
      */
     public function filterByCategories($categories = [])
     {
+        $arrCategories = [];
+
         foreach($categories as $category) {
-            $this->must(['match' => ['category' => $category]]);
+            $arrCategories[] = ['match' => ['category' => $category]];
         }
 
-        // $this->must($categories);
+        $this->must([
+            'bool' => [
+                'should' => $arrCategories
+            ]
+        ]);
     }
 
     /**

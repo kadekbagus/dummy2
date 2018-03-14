@@ -174,7 +174,6 @@ class PromotionDetailAPIController extends PubControllerAPI
                               ->on(DB::raw("default_translation.merchant_language_id"), '=', 'languages.language_id');
                         })
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
-                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $promotionId)
                         ->where('news.object_type', '=', 'promotion')
                         ->with(['keywords' => function ($q) {
@@ -190,6 +189,25 @@ class PromotionDetailAPIController extends PubControllerAPI
             $message = 'Request Ok';
             if (! is_object($promotion)) {
                 throw new OrbitCustomException('Promotion that you specify is not found', News::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
+            }
+
+            // Only campaign having status ongoing and is_started true can going to detail page
+            if ($promotion->campaign_status != 'ongoing' && $promotion->is_started != 'false' ) {
+                $mallName = 'gtm';
+                if (! empty($mall)) {
+                    $mallName = $mall->name;
+                }
+
+                $customData = new \stdClass;
+                $customData->type = 'promotion';
+                $customData->location = $location;
+                $customData->mall_name = $mallName;
+                throw new OrbitCustomException('Promotion is inactive', News::INACTIVE_ERROR_CODE, $customData);
             }
 
             // Config page_views
@@ -241,11 +259,6 @@ class PromotionDetailAPIController extends PubControllerAPI
                 }
 
                 $promotion->is_exclusive = 'N';
-            }
-
-            $mall = null;
-            if (! empty($mallId)) {
-                $mall = Mall::where('merchant_id', '=', $mallId)->first();
             }
 
             // ---- START RATING ----
@@ -327,7 +340,7 @@ class PromotionDetailAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
+            $this->response->data = $e->getCustomData();
             $httpCode = 500;
 
         } catch (Exception $e) {
