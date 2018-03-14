@@ -35,6 +35,7 @@ class Mall extends Eloquent
 
     const ORID_INCREMENT = 111111;
     const NOT_FOUND_ERROR_CODE = 404;
+    const INACTIVE_ERROR_CODE = 4040;
 
     protected $primaryKey = 'merchant_id';
 

@@ -26,6 +26,7 @@ class Tenant extends Eloquent
      */
     const OBJECT_TYPE = 'object_type';
     const NOT_FOUND_ERROR_CODE = 404;
+    const INACTIVE_ERROR_CODE = 4040;
 
     protected $primaryKey = 'merchant_id';
 
