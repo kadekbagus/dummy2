@@ -1,6 +1,6 @@
 <?php namespace Orbit\Queue\Elasticsearch;
 /**
- * Update Elasticsearch news mall level suggestion index when news has been updated.
+ * Update Elasticsearch promotion mall level suggestion index when promotion has been updated.
  *
  * @author firmansyah <firmansyah@dominopos.com>
  */
@@ -14,7 +14,7 @@ use Orbit\Helper\Util\JobBurier;
 use Exception;
 use Log;
 
-class ESNewsMallLevelSuggestionUpdateQueue
+class ESPromotionMallLevelSuggestionUpdateQueue
 {
     /**
      * Poster. The object which post the data to external system.
@@ -65,7 +65,7 @@ class ESNewsMallLevelSuggestionUpdateQueue
                     "))
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where('news.news_id', $newsId)
-                    ->where('news.object_type', 'news')
+                    ->where('news.object_type', 'promotion')
                     ->where('news.status', 'active')
                     ->having('campaign_status', '=', 'ongoing')
                     ->orderBy('news.news_id', 'asc')
@@ -97,8 +97,8 @@ class ESNewsMallLevelSuggestionUpdateQueue
         try {
             // check exist elasticsearch index
             $params_search = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.type'),
                 'body' => [
                     // limit default es is 10
                     'from' => 0,
@@ -120,8 +120,8 @@ class ESNewsMallLevelSuggestionUpdateQueue
                 $totalDelete = 0;
                 foreach ($response_search['hits']['hits'] as $val) {
                     $paramsDelete = [
-                        'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.index'),
-                        'type' => Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.type'),
+                        'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.index'),
+                        'type' => Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.type'),
                         'id' =>  $val['_id']
                     ];
 
@@ -140,8 +140,8 @@ class ESNewsMallLevelSuggestionUpdateQueue
                     $message = sprintf('[Job ID: `%s`] Elasticsearch Delete %s Doucment in Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
                                     $job->getJobId(),
                                     $totalDelete,
-                                    $esConfig['indices']['news_mall_level_suggestions']['index'],
-                                    $esConfig['indices']['news_mall_level_suggestions']['type']);
+                                    $esConfig['indices']['promotion_mall_level_suggestions']['index'],
+                                    $esConfig['indices']['promotion_mall_level_suggestions']['type']);
                     Log::info($message);
 
                     return [
@@ -164,8 +164,8 @@ class ESNewsMallLevelSuggestionUpdateQueue
                 if ($response_search['hits']['total'] > 0) {
                     foreach ($response_search['hits']['hits'] as $val) {
                         $paramsDelete = [
-                            'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.index'),
-                            'type' => Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.type'),
+                            'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.index'),
+                            'type' => Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.type'),
                             'id' =>  $val['_id']
                         ];
 
@@ -177,8 +177,8 @@ class ESNewsMallLevelSuggestionUpdateQueue
                 foreach ($mallIds as $key => $value) {
                     $response = NULL;
                     $params = [
-                        'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.index'),
-                        'type' => Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.type'),
+                        'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.index'),
+                        'type' => Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.type'),
                         'body' => []
                     ];
 
@@ -245,7 +245,7 @@ class ESNewsMallLevelSuggestionUpdateQueue
                     // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
                     ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
-                    $indexParams['index']  = $esPrefix . Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.index');
+                    $indexParams['index']  = $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.index');
                     $this->poster->indices()->refresh($indexParams);
 
                 }
@@ -254,8 +254,8 @@ class ESNewsMallLevelSuggestionUpdateQueue
 
                 $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; News ID: %s; News Name: %s',
                                     $job->getJobId(),
-                                    $esConfig['indices']['news_mall_level_suggestions']['index'],
-                                    $esConfig['indices']['news_mall_level_suggestions']['type'],
+                                    $esConfig['indices']['promotion_mall_level_suggestions']['index'],
+                                    $esConfig['indices']['promotion_mall_level_suggestions']['type'],
                                     $news->news_id,
                                     $news->news_name);
                 Log::info($message);
@@ -270,8 +270,8 @@ class ESNewsMallLevelSuggestionUpdateQueue
         } catch (Exception $e) {
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['news_mall_level_suggestions']['index'],
-                                $esConfig['indices']['news_mall_level_suggestions']['type'],
+                                $esConfig['indices']['promotion_mall_level_suggestions']['index'],
+                                $esConfig['indices']['promotion_mall_level_suggestions']['type'],
                                 $e->getCode(),
                                 $e->getMessage());
             Log::info($message);
