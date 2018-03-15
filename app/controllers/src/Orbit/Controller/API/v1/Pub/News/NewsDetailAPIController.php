@@ -204,7 +204,7 @@ class NewsDetailAPIController extends PubControllerAPI
             }
 
             // Only campaign having status ongoing and is_started true can going to detail page
-            if ($news->campaign_status != 'ongoing' && $news->is_started != 'false' ) {
+            if ($news->campaign_status != 'ongoing' || ($news->campaign_status == 'ongoing' && $news->is_started == 'false')) {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
                     $mallName = $mall->name;

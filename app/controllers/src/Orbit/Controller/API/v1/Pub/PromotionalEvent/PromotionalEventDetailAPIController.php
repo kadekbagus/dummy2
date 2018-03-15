@@ -214,7 +214,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             }
 
             // Only campaign having status ongoing and is_started true can going to detail page
-            if ($promotionalEvent->campaign_status != 'ongoing' && $promotionalEvent->is_started != 'false') {
+            if ($promotionalEvent->campaign_status != 'ongoing' || ($promotionalEvent->campaign_status == 'ongoing' && $promotionalEvent->is_started == 'false')) {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
                     $mallName = $mall->name;
