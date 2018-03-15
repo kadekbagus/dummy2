@@ -243,7 +243,7 @@ class CouponDetailAPIController extends PubControllerAPI
             }
 
             // Only campaign having status ongoing and is_started true can going to detail page
-            if ($coupon->campaign_status != 'ongoing' || ($coupon->campaign_status == 'ongoing' && $coupon->is_started == 'false')) {
+            if (! in_array($coupon->campaign_status, ['ongoing', 'expired']) || ($coupon->campaign_status == 'ongoing' && $coupon->is_started == 'false')) {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
                     $mallName = $mall->name;
