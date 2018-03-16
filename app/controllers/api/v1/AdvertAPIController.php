@@ -1067,6 +1067,7 @@ class AdvertAPIController extends ControllerAPI
                                                 WHEN advert_link_name = 'Promotion' THEN {$prefix}news.news_name
                                                 WHEN advert_link_name = 'Event' THEN {$prefix}news.news_name
                                                 WHEN advert_link_name = 'Promotional Event' THEN {$prefix}news.news_name
+                                                WHEN advert_link_name = 'Mall' THEN store.name
                                                 ELSE link_url
                                              END AS 'link_to'"),
                                      DB::raw("media.path as image_path"))
