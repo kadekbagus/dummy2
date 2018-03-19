@@ -130,7 +130,7 @@ class ESAdvertMallUpdateQueue
                     'body' => [
                         'query' => [
                             'match' => [
-                                '_id' => $mall->merchant_id
+                                '_id' => $adverts->advert_id
                             ]
                         ]
                     ]
@@ -142,7 +142,7 @@ class ESAdvertMallUpdateQueue
                 $params = [
                     'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_malls.index'),
                     'type' => Config::get('orbit.elasticsearch.indices.advert_malls.type'),
-                    'id' => $mallId,
+                    'id' => $adverts->advert_id,
                     'body' => []
                 ];
 
@@ -167,33 +167,9 @@ class ESAdvertMallUpdateQueue
 
                 //advert location
                 $advertLocationIds = array();
-                if ($adverts->is_all_location === 'Y') {
-                    $advertLocation = CampaignLocation::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as location_id"))
-                                               ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
-                                               ->where('merchants.object_type', 'tenant')
-                                               ->where('merchants.status', '!=', 'deleted')
-                                               ->where('merchants.name', '=', $storeName)
-                                               ->groupBy('location_id')
-                                               ->get();
-
-                    // add gtm location manually
-                    $advertLocationIds[] = '0';
-                    if ($adverts->placement_type === 'featured_list') {
-                        if ($adverts->placement_order > $featuredGtmScore) {
-                            $featuredGtmScore = $adverts->placement_order;
-                            $featuredGtmType = $adverts->placement_type;
-                        }
-                    } else {
-                        if ($adverts->placement_order > $preferredGtmScore) {
-                            $preferredGtmScore = $adverts->placement_order;
-                            $preferredGtmType = $adverts->placement_type;
-                        }
-                    }
-                } else {
-                    $advertLocation = AdvertLocation::select('location_id')
-                                                ->where('advert_id', $adverts->advert_id)
-                                                ->get();
-                }
+                $advertLocation = AdvertLocation::select('location_id')
+                                            ->where('advert_id', $adverts->advert_id)
+                                            ->get();
 
                 foreach ($advertLocation as $location) {
                     if ($location->location_id === '0') {
@@ -291,7 +267,7 @@ class ESAdvertMallUpdateQueue
                     'advert_start_date'    => date('Y-m-d', strtotime($adverts->start_date)) . 'T' . date('H:i:s', strtotime($adverts->start_date)) . 'Z',
                     'advert_end_date'      => date('Y-m-d', strtotime($adverts->end_date)) . 'T' . date('H:i:s', strtotime($adverts->end_date)) . 'Z',
                     'advert_status'        => $adverts->status,
-                    'advert_location_ids'  => [0], // Will always 0 a.k.a GTM level
+                    'advert_location_ids'  => $advertLocationIds,
                     'advert_type'          => $adverts->placement_type,
 
                     'featured_gtm_score'   => $featuredGtmScore,
