@@ -164,7 +164,6 @@ class MallListNewAPIController extends PubControllerAPI
 
             $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
             if ($bypassMallOrder === 'n') {
-                $mallSearch->sortByRelevance();
                 $mallSearch->bypassMallOrder(compact('countryFilter', 'cityFilters'));
             }
 
@@ -191,6 +190,8 @@ class MallListNewAPIController extends PubControllerAPI
                     $mallSearch->sortByName();
                     break;
             }
+
+            return \Response::json($mallSearch->getRequestParam('body'));
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
