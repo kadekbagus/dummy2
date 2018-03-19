@@ -83,7 +83,7 @@ class ESNewsMallLevelSuggestionUpdateQueue
                 // Re-group mallids per $take, this issue to reduce maximum calculation (250) in elasticseach
                 if(! $newsMalls->isEmpty()) {
                     $keyArray = 0;
-                    $take = 50;
+                    $take = 150;
 
                     foreach ($newsMalls as $key => $newsMall) {
                         if ($key % $take == 0) {
