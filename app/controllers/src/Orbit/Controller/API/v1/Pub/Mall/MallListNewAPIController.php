@@ -37,6 +37,7 @@ use Country;
 use Orbit\Helper\Util\FollowStatusChecker;
 
 use MallSearch;
+use AdvertStoreSearch;
 
 /**
 * @todo  add search result mapper class.
@@ -45,7 +46,7 @@ use MallSearch;
 class MallListNewAPIController extends PubControllerAPI
 {
 
-	protected $valid_language = NULL;
+    protected $valid_language = NULL;
     protected $store = NULL;
     protected $withoutScore = FALSE;
 
@@ -54,7 +55,7 @@ class MallListNewAPIController extends PubControllerAPI
      * 
      * @return [type] [description]
      */
-	public function getMallList()
+    public function getMallList()
     {
         $httpCode = 200;
         try {
@@ -84,6 +85,7 @@ class MallListNewAPIController extends PubControllerAPI
             $radius = Config::get('orbit.geo_location.distance', 10);
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $viewType = OrbitInput::get('view_type', 'grid');
+            $list_type = OrbitInput::get('list_type', 'preferred');
             $latitude = '';
             $longitude = '';
             $locationFilter = '';
@@ -99,6 +101,13 @@ class MallListNewAPIController extends PubControllerAPI
 
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
+
+            $timezone = 'Asia/Jakarta'; // now with jakarta timezone
+            $timestamp = date("Y-m-d H:i:s");
+            $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
+            $dateTime = $date->setTimezone('Asia/Jakarta')->toDateTimeString();
+            $dateTime = explode(' ', $dateTime);
+            $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
             $prefix = DB::getTablePrefix();
 
@@ -158,14 +167,18 @@ class MallListNewAPIController extends PubControllerAPI
                 }
             });
 
+            // Get Advertised Malls...
+            $withAdvert = true;
+            if ($withAdvert) {
+                $locationId = 0;
+                $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
+
+                $mallSearch->filterWithAdvert(compact('dateTimeEs', 'advertType', 'locationId', 'list_type'));
+            }
+
             $scriptFields = $mallSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
-
-            $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
-            if ($bypassMallOrder === 'n') {
-                $mallSearch->bypassMallOrder();
-            }
 
             // Force to sort result by relevance if any keyword is set.
             if (! empty($keyword)) {
@@ -190,8 +203,6 @@ class MallListNewAPIController extends PubControllerAPI
                     $mallSearch->sortByName();
                     break;
             }
-
-            // return \Response::json($mallSearch->getRequestParam('body'));
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
