@@ -164,7 +164,6 @@ class MallListNewAPIController extends PubControllerAPI
 
             $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
             if ($bypassMallOrder === 'n') {
-                $mallSearch->sortByRelevance();
                 $mallSearch->bypassMallOrder(compact('countryFilter', 'cityFilters'));
             }
 

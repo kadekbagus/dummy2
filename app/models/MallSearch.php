@@ -128,7 +128,7 @@ class MallSearch extends Search
     public function filterByCountryAndCities($area = [])
     {
         if (! empty($area['country'])) {
-            $this->must([
+            $this->filter([
                 'match' => [
                     'country.raw' => $area['country']
                 ]
@@ -148,7 +148,7 @@ class MallSearch extends Search
             }
 
             if (! empty($citiesQuery)) {
-                $this->must($citiesQuery);
+                $this->filter($citiesQuery);
             }
         }
     }
@@ -336,6 +336,7 @@ class MallSearch extends Search
         $mallFeaturedIds = array_unique($mallFeaturedIds);
 
         if (! empty($mallFeaturedIds)) {
+            $this->sortByRelevance();
             $esFeaturedBoost = Config::get('orbit.featured.es_boost', 10);
 
             $this->should([
