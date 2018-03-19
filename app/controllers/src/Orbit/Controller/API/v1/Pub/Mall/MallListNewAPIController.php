@@ -191,8 +191,6 @@ class MallListNewAPIController extends PubControllerAPI
                     break;
             }
 
-            return \Response::json($mallSearch->getRequestParam('body'));
-
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
                 $response = $recordCache->get($serializedCacheKey, function() use ($mallSearch) {
