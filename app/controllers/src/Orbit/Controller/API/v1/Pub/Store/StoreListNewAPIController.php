@@ -263,6 +263,8 @@ class StoreListNewAPIController extends PubControllerAPI
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
 
+            $objectFollow = $scriptFields['objectFollow'];
+
             // Force sort by relevance if visitor provide any keyword/searching.
             if (! empty($keyword)) {
                 $sortBy = 'relevance';

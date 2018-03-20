@@ -286,7 +286,7 @@ class MallSearch extends Search
             'is_follow' => $scriptFieldFollow
         ]);
 
-        return compact('scriptFieldRating', 'scriptFieldReview', 'scriptFieldFollow');
+        return compact('scriptFieldRating', 'scriptFieldReview', 'scriptFieldFollow', 'objectFollow');
 
         //////// END RATING & FOLLOW SCRIPTS /////
     }
