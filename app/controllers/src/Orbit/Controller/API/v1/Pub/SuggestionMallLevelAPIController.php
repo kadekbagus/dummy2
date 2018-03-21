@@ -1,6 +1,6 @@
 <?php namespace Orbit\Controller\API\v1\Pub;
 /**
- * An API controller for get suggestion list
+ * An API controller for get suggestion mall level list
  */
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -12,19 +12,17 @@ use Illuminate\Database\QueryException;
 use Text\Util\LineChecker;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Config;
-use Mall;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
-use Language;
 use DB;
 
 class SuggestionMallLevelAPIController extends PubControllerAPI
 {
     /**
-     * GET - suggestion list
+     * GET - suggestion mall level list
      *
-     * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -44,34 +42,28 @@ class SuggestionMallLevelAPIController extends PubControllerAPI
             $text = OrbitInput::get('text', 'bandung');
             $host = Config::get('orbit.elasticsearch');
             $language = OrbitInput::get('language', 'id');
+            $mallId = OrbitInput::get('mall_id', null);
 
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
 
-            // get all country and city name in mall
-            $mallCountries = Mall::where('status', 'active')->groupBy('country')->lists('country');
-            $mallCities = Mall::where('status', 'active')->groupBy('city')->lists('city');
-
             $field = 'suggest_' . $language;
-            $body = array('gtm_suggestions' => array('text' => $text, 'completion' => array('size' => $take, 'field' => $field, 'context' => array('country' => $mallCountries, 'city' => $mallCities))));
-
-            OrbitInput::get('country', function($country) use (&$body)
-            {
-                if (! empty($country) || $country != '') {
-                    $body['gtm_suggestions']['completion']['context']['country'] = $country;
-                }
-            });
-
-            OrbitInput::get('cities', function($cities) use (&$body)
-            {
-                if (! empty($cities) || $cities != '') {
-                    $body['gtm_suggestions']['completion']['context']['city'] = $cities;
-                }
-            });
+            $body = array(
+                            'gtm_suggestions' => array(
+                                'text' => $text,
+                                'completion' => array(
+                                    'size' => $take,
+                                    'field' => $field,
+                                    'context' => array(
+                                        'mall_id' => $mallId
+                                    )
+                                )
+                            )
+                        );
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $suggestionIndex = Config::get('orbit.elasticsearch.suggestion_indices');
+            $suggestionIndex = Config::get('orbit.elasticsearch.suggestion_mall_level_indices');
             $countSuggestion = count($suggestionIndex);
             $suggestion = '';
             $i = 1;
@@ -88,10 +80,6 @@ class SuggestionMallLevelAPIController extends PubControllerAPI
                 'index'  => $suggestion,
                 'body'   => json_encode($body)
             ];
-
-echo "<pre>";
-print_r($esParam);
-die();
 
             $response = $client->suggest($esParam);
 
