@@ -83,7 +83,7 @@ class ESNewsMallLevelSuggestionUpdateQueue
                 // Re-group mallids per $take, this issue to reduce maximum calculation (250) in elasticseach
                 if(! $newsMalls->isEmpty()) {
                     $keyArray = 0;
-                    $take = 150;
+                    $take = Config::get('orbit.elasticsearch.maximum_separated_mall_id');
 
                     foreach ($newsMalls as $key => $newsMall) {
                         if ($key % $take == 0) {

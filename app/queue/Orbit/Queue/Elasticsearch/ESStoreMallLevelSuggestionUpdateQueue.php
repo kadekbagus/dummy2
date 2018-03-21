@@ -84,7 +84,7 @@ class ESStoreMallLevelSuggestionUpdateQueue
             // Re-group mallids per $take, this issue to reduce maximum calculation (250) in elasticseach
             if(! $storeMalls->isEmpty()) {
                 $keyArray = 0;
-                $take = 150;
+                $take = Config::get('orbit.elasticsearch.maximum_separated_mall_id');
 
                 foreach ($storeMalls as $key => $couponMall) {
                     if ($key % $take == 0) {
@@ -103,7 +103,7 @@ class ESStoreMallLevelSuggestionUpdateQueue
                 'body' => [
                     // limit default es is 10
                     'from' => 0,
-                    'size' => 150,
+                    'size' => 50,
                     // query
                     'query' => [
                         'filtered' => [
