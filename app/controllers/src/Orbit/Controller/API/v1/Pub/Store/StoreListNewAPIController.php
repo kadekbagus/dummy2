@@ -105,6 +105,7 @@ class StoreListNewAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $viewType = OrbitInput::get('view_type', 'grid');
             $withCache = FALSE;
+            $withAdvert = (bool) OrbitInput::get('with_advert', true);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -251,7 +252,6 @@ class StoreListNewAPIController extends PubControllerAPI
             ];
 
             // Get Advert_Store...
-            $withAdvert = true;
             if ($withAdvert) {
                 $locationId = ! empty($mallId) ? $mallId : 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];

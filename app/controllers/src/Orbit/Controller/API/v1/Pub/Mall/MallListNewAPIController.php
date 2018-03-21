@@ -85,6 +85,7 @@ class MallListNewAPIController extends PubControllerAPI
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $viewType = OrbitInput::get('view_type', 'grid');
             $list_type = OrbitInput::get('list_type', 'preferred');
+            $withAdvert = (bool) OrbitInput::get('with_advert', true);
             $latitude = '';
             $longitude = '';
             $locationFilter = '';
@@ -167,7 +168,6 @@ class MallListNewAPIController extends PubControllerAPI
             });
 
             // Get Advertised Malls...
-            $withAdvert = true;
             if ($withAdvert) {
                 $locationId = 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
@@ -178,11 +178,6 @@ class MallListNewAPIController extends PubControllerAPI
             $scriptFields = $mallSearch->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
-
-            $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
-            if ($bypassMallOrder === 'n') {
-                $mallSearch->bypassMallOrder();
-            }
 
             // Force to sort result by relevance if any keyword is set.
             if (! empty($keyword)) {
