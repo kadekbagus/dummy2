@@ -128,7 +128,7 @@ class MallSearch extends Search
     public function filterByCountryAndCities($area = [])
     {
         if (! empty($area['country'])) {
-            $this->must([
+            $this->filter([
                 'match' => [
                     'country.raw' => $area['country']
                 ]
@@ -148,7 +148,7 @@ class MallSearch extends Search
             }
 
             if (! empty($citiesQuery)) {
-                $this->must($citiesQuery);
+                $this->filter($citiesQuery);
             }
         }
     }
@@ -168,13 +168,84 @@ class MallSearch extends Search
         ]);
     }
 
+    public function filterWithAdvert($params = [])
+    {
+        $esAdvertMallIndex = $this->esConfig['indices_prefix'] . $this->esConfig['indices']['advert_malls']['index'];
+        $advertMallsSearch = new AdvertStoreSearch($this->esConfig, 'advert_malls');
+
+        $advertMallsSearch->setPaginationParams(['from' => 0, 'size' => 100]);
+
+        // @todo add sort page in advert list..
+        $advertMallsSearch->filterMalls($params);
+
+        // return $advertMallsSearch->getRequestParam('body');
+
+        $this->filterAdvertMalls($params);
+
+        $advertMallsSearchResult = $advertMallsSearch->getResult();
+
+        if ($advertMallsSearchResult['hits']['total'] > 0) {
+            $advertList = $advertMallsSearchResult['hits']['hits'];
+            $excludeId = array();
+            $withPreferred = array();
+
+            foreach ($advertList as $adverts) {
+                $advertId = $adverts['_id'];
+                $merchantId = $adverts['_source']['merchant_id'];
+                if(! in_array($merchantId, $excludeId)) {
+                    // record merchant_id that have advert, because we need to exclude that merchant_id in the next query
+                    $excludeId[] = $merchantId;
+                } else {
+                    // record only 1 advert_id, so only 1 advert appear in list
+                    $excludeId[] = $advertId;
+                }
+            }
+
+            // exclude_id useful for eliminate duplicate store in the list, because after this, we query to advert_stores and store index together
+            $this->exclude($excludeId);
+
+            // If there any advert_stores in the list, then sort by it first...
+            $sortByPageType = array();
+            $pageTypeScore = '';
+            $sortPageScripts = [];
+            if ($params['list_type'] === 'featured') {
+                $pageTypeScore = 'featured_gtm_score';
+                $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
+            } else {
+                $pageTypeScore = 'preferred_gtm_score';
+                $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
+            }
+
+            $sortPageScripts[] = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
+
+            // Add secondary sort by preferred type..
+            if ($params['list_type'] === 'featured') {
+                $sortPageScripts[] = "if (doc.containsKey('preferred_gtm_score')) { if(! doc['preferred_gtm_score'].empty) { return doc['preferred_gtm_score'].value } else { return 0}} else {return 0}";
+            }
+
+            foreach($sortPageScripts as $sortPageScript) {
+                $advertOrdering = [
+                    '_script' => [
+                        'script' => $sortPageScript, 
+                        'type' => 'string', 
+                        'order' => 'desc'
+                    ]
+                ];
+
+                $this->sortBy($advertOrdering);
+            }
+
+            $this->setIndex($esAdvertMallIndex . ',' . $this->getIndex());
+        }
+    }
+
     /**
      * Exclude the partner competitors from the result.
      * 
      * @param  array  $competitors [description]
      * @return [type]              [description]
      */
-    public function excludePartnerCompetitors($partnerIds = [])
+    public function excludePartnerCompetitors($competitors = [])
     {
         $this->mustNot([
             'terms' => [
@@ -318,13 +389,13 @@ class MallSearch extends Search
 
         if (! empty($params['countryFilter'])) {
             $params['countryFilter'] = strtolower($params['countryFilter']);
-            $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $params['countryFilter'] . '.all', []);
+            $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
 
             if (! empty($params['cityFilters'])) {
                 $mallFeaturedIds = [];
                 foreach ($params['cityFilters'] as $key => $cityName) {
                     $cityName = str_replace(' ', '_', strtolower($cityName));
-                    $cityValue = Config::get('orbit.featured.mall_ids.' . $params['countryFilter'] . '.' . $cityName, []);
+                    $cityValue = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.' . $cityName, []);
 
                     if (! empty($cityValue)) {
                         $mallFeaturedIds = array_merge($cityValue, $mallFeaturedIds);
@@ -336,6 +407,10 @@ class MallSearch extends Search
         $mallFeaturedIds = array_unique($mallFeaturedIds);
 
         if (! empty($mallFeaturedIds)) {
+
+            // Make sure to sort by score first...
+            $this->sortByRelevance();
+
             $esFeaturedBoost = Config::get('orbit.featured.es_boost', 10);
 
             $this->should([
@@ -384,5 +459,72 @@ class MallSearch extends Search
                 'sort' => []
             ]
         ];
+    }
+
+    public function filterAdvertMalls($options = [])
+    {
+        $this->must([
+            'bool' => [
+                'should' => [
+                    [
+                        'bool' => [
+                            'must' => [ 
+                                [
+                                    'query' => [
+                                        'match' => [
+                                            'advert_status' => 'active'
+                                        ]
+                                    ]
+                                ], 
+                                [
+                                    'range' => [
+                                        'advert_start_date' => [
+                                            'lte' => $options['dateTimeEs']
+                                        ]
+                                    ]
+                                ], 
+                                [
+                                    'range' => [
+                                        'advert_end_date' => [
+                                            'gte' => $options['dateTimeEs']
+                                        ]
+                                    ]
+                                ], 
+                                [
+                                    'match' => [
+                                        'advert_location_ids' => $options['locationId']
+                                    ]
+                                ], 
+                                [
+                                    'terms' => [
+                                        'advert_type' => $options['advertType']
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ],
+                    [
+                        'bool' => [
+                            'must_not' => [
+                                [
+                                    'exists' => [
+                                        'field' => 'advert_status'
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]);
+    }
+
+    public function exclude($excludedIds = [])
+    {
+        $this->mustNot([
+            'terms' => [
+                '_id' => $excludedIds,
+            ]
+        ]);
     }
 }

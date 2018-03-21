@@ -197,7 +197,7 @@ class PromotionDetailAPIController extends PubControllerAPI
             }
 
             // Only campaign having status ongoing and is_started true can going to detail page
-            if ($promotion->campaign_status != 'ongoing' && $promotion->is_started != 'false' ) {
+            if (! in_array($promotion->campaign_status, ['ongoing', 'expired']) || ($promotion->campaign_status == 'ongoing' && $promotion->is_started == 'false')) {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
                     $mallName = $mall->name;
@@ -341,7 +341,11 @@ class PromotionDetailAPIController extends PubControllerAPI
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = $e->getCustomData();
-            $httpCode = 500;
+            if ($this->response->code === 4040) {
+                $httpCode = 404;
+            } else {
+                $httpCode = 500;
+            }
 
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
