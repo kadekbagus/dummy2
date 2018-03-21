@@ -177,6 +177,9 @@ return array(
             'store_mall_level_suggestions',
         ],
 
+        // Maximum mall id data in 1 document es, This implement for saving mall id in suggestion_mall_level*
+        'maximum_separated_mall_id' => 150,
+
         // index list will be include in popular
         'popular_indices' => [
             'news',
