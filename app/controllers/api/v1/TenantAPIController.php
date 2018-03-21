@@ -2398,6 +2398,12 @@ class TenantAPIController extends ControllerAPI
                         $tenants->where(DB::raw("(IF({$prefix}merchants.object_type = 'tenant', pm.country_id, {$prefix}merchants.country_id))"), '=', $country_id);
                     });
                 }
+                else if ($link_type === 'mall') {
+                    $tenants = Mall::select(
+                        'merchants.merchant_id', 'merchants.name as display_name', 'merchants.status'
+                    )
+                    ->where('merchants.status', 'active');
+                }
             }
 
             $account_name = '';
@@ -2463,12 +2469,12 @@ class TenantAPIController extends ControllerAPI
             if (! is_null($this->valid_account_type)) {
                 $account_type = $this->valid_account_type;
                 $permission = [
-                        'Mall'      => 'mall',
-                        'Merchant'  => 'tenant',
-                        'Agency'    => 'mall_tenant',
-                        '3rd Party' => 'mall',
-                        'Dominopos' => 'mall_tenant'
-                    ];
+                    'Mall'      => 'mall',
+                    'Merchant'  => 'tenant',
+                    'Agency'    => 'mall_tenant',
+                    '3rd Party' => 'mall',
+                    'Dominopos' => 'mall_tenant'
+                ];
 
                 // access
                 if (array_key_exists($account_type->type_name, $permission)) {
