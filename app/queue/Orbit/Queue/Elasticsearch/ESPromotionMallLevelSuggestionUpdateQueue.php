@@ -102,7 +102,7 @@ class ESPromotionMallLevelSuggestionUpdateQueue
                 'body' => [
                     // limit default es is 10
                     'from' => 0,
-                    'size' => 50,
+                    'size' => 200,
                     // query
                     'query' => [
                         'match' => [

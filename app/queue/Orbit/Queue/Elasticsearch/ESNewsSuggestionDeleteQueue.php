@@ -84,6 +84,38 @@ class ESNewsSuggestionDeleteQueue
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
 
         try {
+            // Delete mall level suggestion
+            $params_search = [
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.type'),
+                'body' => [
+                    'from' => 0,
+                    'size' => 200,
+                    'query' => [
+                        'match' => [
+                            'id' => $news->news_id
+                        ]
+                    ]
+                ]
+            ];
+
+            $response_search = $this->poster->search($params_search);
+            if ($response_search['hits']['total'] > 0) {
+                foreach ($response_search['hits']['hits'] as $val) {
+                    $paramsDelete = [
+                        'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.index'),
+                        'type' => Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.type'),
+                        'id' =>  $val['_id']
+                    ];
+
+                    $responseDelete = $this->poster->delete($paramsDelete);
+                }
+            }
+            $indexParamsMallLevel['index']  = $esPrefix . Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.index');
+            $this->poster->indices()->refresh($indexParamsMallLevel);
+
+
+            // Delete suggestion
             $params = [
                 'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_suggestions.index'),
                 'type' => Config::get('orbit.elasticsearch.indices.news_suggestions.type'),
@@ -92,20 +124,6 @@ class ESNewsSuggestionDeleteQueue
 
             $response = $this->poster->delete($params);
 
-            // Example response when document created:
-            // {
-            //   "found": true,
-            //   "_index": "malls",
-            //   "_type": "mall",
-            //   "_id": "abcs23",
-            //   "_version": 2,
-            //   "_shards": {
-            //     "total": 2,
-            //     "successful": 1,
-            //     "failed": 0
-            //   }
-            // }
-            //
             // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 

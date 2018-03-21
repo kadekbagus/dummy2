@@ -22,9 +22,10 @@ use DB;
 class SuggestionAPIController extends PubControllerAPI
 {
     /**
-     * GET - suggestion list
+     * GET - Suggestion list
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
+     * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
      * ----------------------
@@ -46,36 +47,57 @@ class SuggestionAPIController extends PubControllerAPI
             $language = OrbitInput::get('language', 'id');
             $mallCountries = OrbitInput::get('country', null);
             $mallCities = OrbitInput::get('cities', []);
+            $mallId = OrbitInput::get('mall_id', null);
 
             $client = ClientBuilder::create() // Instantiate a new ClientBuilder
                     ->setHosts($host['hosts']) // Set the hosts
                     ->build();
 
-            if (empty($mallCountries)) {
-                $mallCountries = Mall::where('status', 'active')->groupBy('country')->lists('country');
-            }
+            // If parsing mall_id thats mean we search suggestion in mall level, and even no parsing that is common searching suggestion
+            if (!empty($mallId)) {
+                $field = 'suggest_' . $language;
+                $body = array(
+                                'gtm_suggestions' => array(
+                                    'text' => $text,
+                                    'completion' => array(
+                                        'size' => $take,
+                                        'field' => $field,
+                                        'context' => array(
+                                            'mall_id' => $mallId
+                                        )
+                                    )
+                                )
+                            );
 
-            if (empty($mallCities)) {
-                $mallCities = Mall::where('status', 'active')->groupBy('city')->lists('city');
-            }
+                $suggestionIndex = Config::get('orbit.elasticsearch.suggestion_mall_level_indices');
+            } else {
+                if (empty($mallCountries)) {
+                    $mallCountries = Mall::where('status', 'active')->groupBy('country')->lists('country');
+                }
 
-            $field = 'suggest_' . $language;
-            $body = [
-                'gtm_suggestions' => [
-                    'text' => $text, 
-                    'completion' => [
-                        'size' => $take, 
-                        'field' => $field, 
-                        'context' => [
-                            'country' => $mallCountries, 
-                            'city' => $mallCities, 
+                if (empty($mallCities)) {
+                    $mallCities = Mall::where('status', 'active')->groupBy('city')->lists('city');
+                }
+
+                $field = 'suggest_' . $language;
+                $body = [
+                    'gtm_suggestions' => [
+                        'text' => $text,
+                        'completion' => [
+                            'size' => $take,
+                            'field' => $field,
+                            'context' => [
+                                'country' => $mallCountries,
+                                'city' => $mallCities,
+                            ]
                         ]
                     ]
-                ]
-            ];
+                ];
+
+                $suggestionIndex = Config::get('orbit.elasticsearch.suggestion_indices');
+            }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
-            $suggestionIndex = Config::get('orbit.elasticsearch.suggestion_indices');
             $countSuggestion = count($suggestionIndex);
             $suggestion = '';
             $i = 1;
