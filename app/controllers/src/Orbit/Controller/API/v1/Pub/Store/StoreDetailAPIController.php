@@ -364,7 +364,11 @@ class StoreDetailAPIController extends PubControllerAPI
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = $e->getCustomData();
-            $httpCode = 500;
+            if ($this->response->code === 4040) {
+                $httpCode = 404;
+            } else {
+                $httpCode = 500;
+            }
 
         } catch (Exception $e) {
 

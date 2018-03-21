@@ -190,7 +190,6 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
                             $q->on(DB::raw("default_translation_button.reward_detail_id"), '=', 'reward_details.reward_detail_id')
                               ->on(DB::raw("default_translation_button.language_id"), '=', 'languages.language_id');
                         })
-                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('news.news_id', $newsId)
                         ->where('news.object_type', '=', 'news')
                         ->where('news.is_having_reward', '=', 'Y')
@@ -215,7 +214,7 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             }
 
             // Only campaign having status ongoing and is_started true can going to detail page
-            if ($promotionalEvent->campaign_status != 'ongoing' && $promotionalEvent->is_started != 'false') {
+            if (! in_array($promotionalEvent->campaign_status, ['ongoing', 'expired']) || ($promotionalEvent->campaign_status == 'ongoing' && $promotionalEvent->is_started == 'false')) {
                 $mallName = 'gtm';
                 if (! empty($mall)) {
                     $mallName = $mall->name;
@@ -446,7 +445,11 @@ class PromotionalEventDetailAPIController extends PubControllerAPI
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = $e->getCustomData();
-            $httpCode = 500;
+            if ($this->response->code === 4040) {
+                $httpCode = 404;
+            } else {
+                $httpCode = 500;
+            }
 
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());

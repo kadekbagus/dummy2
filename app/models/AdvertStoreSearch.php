@@ -25,9 +25,9 @@ class AdvertStoreSearch extends Search
      * @param  array  $options [description]
      * @return [type]          [description]
      */
-	public function filterBase($options = [])
-	{
-		$this->must([
+    public function filterBase($options = [])
+    {
+        $this->must([
             'bool' => [
                 'must' => [ 
                     [
@@ -64,7 +64,7 @@ class AdvertStoreSearch extends Search
                 ]
             ]
         ]);
-	}
+    }
 
     public function filterPromotions($params = [])
     {
@@ -114,6 +114,29 @@ class AdvertStoreSearch extends Search
     }
 
     public function filterCoupons($params = [])
+    {
+        $this->must(['match' => ['advert_status' => 'active']]);
+
+        $this->must(['range' => ['advert_start_date' => ['lte' => $params['dateTimeEs']]]]);
+
+        $this->must(['range' => ['advert_end_date' => ['gte' => $params['dateTimeEs']]]]);
+
+        $this->must(['match' => ['advert_location_ids' => $params['locationId']]]);
+
+        $this->must(['terms' => ['advert_type' => $params['advertType']]]);
+
+        $this->should([
+            'bool' => [
+                'must_not' => [
+                    'exists' => [
+                        'field' => 'advert_status'
+                    ],
+                ]
+            ]
+        ]);
+    }
+
+    public function filterMalls($params = [])
     {
         $this->must(['match' => ['advert_status' => 'active']]);
 

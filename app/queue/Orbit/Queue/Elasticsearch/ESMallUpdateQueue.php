@@ -211,6 +211,10 @@ class ESMallUpdateQueue
             $esQueue = new \Orbit\Queue\Elasticsearch\ESMallSuggestionUpdateQueue();
             $suggestion = $esQueue->fire($fakeJob, ['mall_id' => $mallId]);
 
+            // Update advert
+            $esAdvertQueue = new \Orbit\Queue\Elasticsearch\ESAdvertMallUpdateQueue();
+            $advertUpdate = $esAdvertQueue->fire($fakeJob, ['mall_id' => $mallId]);
+
             if ($updateRelated) {
                 // update es coupon, news, and promotion
                 $this->updateESCoupon($mall);
