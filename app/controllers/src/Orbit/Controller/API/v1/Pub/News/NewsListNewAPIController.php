@@ -112,6 +112,7 @@ class NewsListNewAPIController extends PubControllerAPI
             $partnerToken = OrbitInput::get('token', null);
             $viewType = OrbitInput::get('view_type', 'grid');
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
+            $withAdvert = (bool) OrbitInput::get('with_advert', true);
 
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
@@ -266,7 +267,6 @@ class NewsListNewAPIController extends PubControllerAPI
                 ]
             ];
 
-            $withAdvert = true;
             if ($withAdvert) {
                 $locationId = ! empty($mall) ? $mallId : 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
