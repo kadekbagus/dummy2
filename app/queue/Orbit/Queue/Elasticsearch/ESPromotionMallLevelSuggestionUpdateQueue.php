@@ -208,15 +208,10 @@ class ESPromotionMallLevelSuggestionUpdateQueue
                                 $input[] = substr($textName, 0, -1);
                             }
 
-                            $payloadType = 'news';
-                            if ($news->is_having_reward === 'Y') {
-                                $payloadType = 'promotional_event';
-                            }
-
                             $suggest = [
                                 'input'   => $input,
                                 'output'  => $translationCollection->news_name,
-                                'payload' => ['id' => $news->news_id, 'type' => $payloadType]
+                                'payload' => ['id' => $news->news_id, 'type' => 'promotion']
                             ];
 
                             switch ($translationCollection->name) {
