@@ -153,6 +153,10 @@ class ESStoreUpdateQueue
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreSuggestionUpdateQueue();
                 $suggestion = $esQueue->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
 
+                // Update suggestion for mall level
+                $esSuggestionMallLevelQueue = new \Orbit\Queue\Elasticsearch\ESStoreMallLevelSuggestionUpdateQueue();
+                $suggestionMallLevel = $esSuggestionMallLevelQueue->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
+
                 // update detail
                 $esDetail = new \Orbit\Queue\Elasticsearch\ESStoreDetailUpdateQueue();
                 $detail = $esDetail->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);

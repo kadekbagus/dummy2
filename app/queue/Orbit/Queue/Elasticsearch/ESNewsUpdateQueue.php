@@ -479,6 +479,10 @@ class ESNewsUpdateQueue
             $esQueue = new \Orbit\Queue\Elasticsearch\ESNewsSuggestionUpdateQueue();
             $suggestion = $esQueue->fire($fakeJob, ['news_id' => $newsId]);
 
+            // Update suggestion for mall level
+            $esSuggestionMallLevelQueue = new \Orbit\Queue\Elasticsearch\ESNewsMallLevelSuggestionUpdateQueue();
+            $suggestionMallLevel = $esSuggestionMallLevelQueue->fire($fakeJob, ['news_id' => $newsId]);
+
             $esAdvertQueue = new \Orbit\Queue\Elasticsearch\ESAdvertNewsUpdateQueue();
             $advertUpdate = $esAdvertQueue->fire($fakeJob, ['news_id' => $newsId]);
 
