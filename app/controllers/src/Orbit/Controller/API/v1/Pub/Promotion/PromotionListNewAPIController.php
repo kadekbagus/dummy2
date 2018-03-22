@@ -265,10 +265,9 @@ class PromotionListNewAPIController extends PubControllerAPI
                 ]
             ];
 
+            $locationId = ! empty($mall) ? $mallId : 0;
             if ($withAdvert) {
-                $locationId = ! empty($mall) ? $mallId : 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
-
                 $promotionSearch->filterWithAdvert(compact('dateTimeEs', 'mallId', 'advertType', 'locationId', 'list_type', 'advertSorting'));
             }
 

@@ -252,10 +252,9 @@ class StoreListNewAPIController extends PubControllerAPI
             ];
 
             // Get Advert_Store...
+            $locationId = ! empty($mallId) ? $mallId : 0;
             if ($withAdvert) {
-                $locationId = ! empty($mallId) ? $mallId : 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
-
                 $storeSearch->filterWithAdvert(compact('list_type', 'dateTimeEs', 'mallId', 'advertType', 'locationId', 'advertStoreOrdering'));
             }
 
