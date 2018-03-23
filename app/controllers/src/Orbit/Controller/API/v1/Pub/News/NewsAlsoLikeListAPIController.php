@@ -70,7 +70,12 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             $sortMode = OrbitInput::get('sortmode', NULL);
             $language = OrbitInput::get('language', 'id');
             $token = OrbitInput::get('token', NULL);
-            $take = OrbitInput::get('take', 5); // @todo take from config
+            $take = OrbitInput::get('take', 4); // @todo take from config
+
+            //+1 to allow front end doing simple test
+            //to display see all button or not
+            $take = $take + 1;
+
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', NULL);
