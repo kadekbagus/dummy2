@@ -1,18 +1,18 @@
 <?php namespace Orbit\Queue\Elasticsearch;
 /**
- * Delete Elasticsearch index when promotion has been deleted.
+ * Delete Elasticsearch index when news has been deleted.
  *
- * @author shelgi <shelgi@dominopos.com>
+ * @author firmansyah <firmansyah@dominopos.com>
  */
 use Elasticsearch\ClientBuilder as ESBuilder;
 use Config;
-use News;
 use DB;
+use News;
 use Orbit\Helper\Elasticsearch\ElasticsearchErrorChecker;
 use Orbit\Helper\Util\JobBurier;
 use Exception;
 
-class ESPromotionSuggestionDeleteQueue
+class ESNewsMallLevelSuggestionDeleteQueue
 {
     /**
      * Poster. The object which post the data to external system.
@@ -41,7 +41,7 @@ class ESPromotionSuggestionDeleteQueue
     /**
      * Laravel main method to fire a job on a queue.
      *
-     * @author kadek <kadek@dominopos.com>
+     * @author firmansyah <firmansyah@dominopos.com>
      * @param Job $job
      * @param array $data[
      *                    'merchant_id' => NUM // Mall ID
@@ -67,7 +67,7 @@ class ESPromotionSuggestionDeleteQueue
                     "))
                     ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                     ->where('news.news_id', $newsId)
-                    ->where('news.object_type', 'promotion')
+                    ->where('news.object_type', 'news')
                     ->havingRaw("campaign_status in ('stopped', 'expired')")
                     ->first();
 
@@ -84,48 +84,17 @@ class ESPromotionSuggestionDeleteQueue
         $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
 
         try {
-            // Delete mall level suggestion
-            $params_search = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.type'),
-                'body' => [
-                    'from' => 0,
-                    'size' => 200,
-                    'query' => [
-                        'match' => [
-                            'id' => $news->news_id
-                        ]
-                    ]
-                ]
-            ];
-
-            $response_search = $this->poster->search($params_search);
-            if ($response_search['hits']['total'] > 0) {
-                foreach ($response_search['hits']['hits'] as $val) {
-                    $paramsDelete = [
-                        'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.index'),
-                        'type' => Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.type'),
-                        'id' =>  $val['_id']
-                    ];
-
-                    $responseDelete = $this->poster->delete($paramsDelete);
-                }
-            }
-            $indexParamsMallLevel['index']  = $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_mall_level_suggestions.index');
-            $this->poster->indices()->refresh($indexParamsMallLevel);
-
             $params = [
-                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_suggestions.index'),
-                'type' => Config::get('orbit.elasticsearch.indices.promotion_suggestions.type'),
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.type'),
                 'id' => $news->news_id
             ];
 
             $response = $this->poster->delete($params);
 
-            // The indexing considered successful is attribute `successful` on `_shard` is more than 0.
             ElasticsearchErrorChecker::throwExceptionOnDocumentError($response);
 
-            $indexParams['index']  = $esPrefix . Config::get('orbit.elasticsearch.indices.promotion_suggestions.index');
+            $indexParams['index']  = $esPrefix . Config::get('orbit.elasticsearch.indices.news_mall_level_suggestions.index');
             $this->poster->indices()->refresh($indexParams);
 
             // Safely delete the object
@@ -135,8 +104,8 @@ class ESPromotionSuggestionDeleteQueue
                 'status' => 'ok',
                 'message' => sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: OK; ES Index Name: %s; ES Index Type: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['promotions']['index'],
-                                $esConfig['indices']['promotions']['type'])
+                                $esConfig['indices']['news_mall_level_suggestions']['index'],
+                                $esConfig['indices']['news_mall_level_suggestions']['type'])
             ];
         } catch (Exception $e) {
             // Bury the job for later inspection
@@ -149,8 +118,8 @@ class ESPromotionSuggestionDeleteQueue
                 'status' => 'fail',
                 'message' => sprintf('[Job ID: `%s`] Elasticsearch Delete Index; Status: FAIL; ES Index Name: %s; ES Index Type: %s; Code: %s; Message: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['promotions']['index'],
-                                $esConfig['indices']['promotions']['type'],
+                                $esConfig['indices']['news_mall_level_suggestions']['index'],
+                                $esConfig['indices']['news_mall_level_suggestions']['type'],
                                 $e->getCode(),
                                 $e->getMessage())
             ];

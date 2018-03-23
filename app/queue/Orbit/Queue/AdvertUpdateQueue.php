@@ -51,17 +51,19 @@ class AdvertUpdateQueue
                 case 'coupon':
                     $this->updateESCoupon($advert);
                     break;
-
                 case 'promotion':
                     $this->updateESPromotion($advert);
                     break;
-
                 case 'store':
                     $this->updateESStore($advert);
                     break;
-
                 case 'news':
                     $this->updateESNews($advert);
+                    break;
+                case 'mall':
+                    $this->updateESMall($advert);
+                    break;
+                default:
                     break;
             }
 
@@ -252,6 +254,32 @@ class AdvertUpdateQueue
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreUpdateQueue();
                 $response = $esQueue->fire($fakeJob, ['name' => $store->name, 'country' => $countries->country]);
             }
+        }
+    }
+
+    /**
+     * Update ES Mall Document related to given advert.
+     * 
+     * @param  [type] $advert [description]
+     * @return [type]         [description]
+     */
+    protected function updateESMall($advert = null)
+    {
+        $fakeJob = new FakeJob();
+        // find store relate with advert to update ESstore
+        // check store before update elasticsearch
+        $prefix = DB::getTablePrefix();
+        // checking store/tenant data for updating elasticsearch data
+        $mall = Mall::select('merchants.merchant_id', 'merchants.name')
+                        ->excludeDeleted('merchants')
+                        ->join('adverts', 'adverts.link_object_id', '=', 'merchants.merchant_id')
+                        ->where('adverts.advert_id', '=', $advert->advert_id)
+                        ->first();
+
+        if (! empty($mall)) {
+            // Notify the queueing system to delete Elasticsearch document
+            $esQueue = new \Orbit\Queue\Elasticsearch\ESMallUpdateQueue();
+            $response = $esQueue->fire($fakeJob, ['mall_id' => $mall->merchant_id, 'update_related' => FALSE]);
         }
     }
 }

@@ -1584,7 +1584,7 @@ class PromotionalEventAPIController extends ControllerAPI
             }
 
             $promotionalevent = News::allowedForPMPUser($user, $object_type[0])
-                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'news_translations.news_name as display_name', DB::raw('media.path as image_path'),
+                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'news_translations.news_name as display_name', DB::raw("{$prefix}media.path as image_path"),
                             DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
                             DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
                                 from {$prefix}news_merchant
@@ -1604,12 +1604,11 @@ class PromotionalEventAPIController extends ControllerAPI
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
-                        ->leftJoin(DB::raw("(
-                                SELECT {$prefix}media.* FROM {$prefix}media
-                                {$mediaJoin}
-                                WHERE media_name_long = 'news_translation_image_resized_default'
-                                {$mediaOptimize} ) as media
-                            "), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
+                        ->leftJoin('media', function($join) use ($prefix) {
+                             $join->on('media.object_id', '=', 'news_translations.news_translation_id')
+                                 ->on(DB::raw("{$prefix}media.media_name_long = 'news_translation_image_resized_default'"), DB::raw(''), DB::raw(''))
+                                 ->on(DB::raw("{$prefix}media.object_name = 'news_translation'"), DB::raw(''), DB::raw(''));
+                         })
                         ->excludeDeleted('news')
                         ->where('is_having_reward', 'Y')
                         ->groupBy('news.news_id');

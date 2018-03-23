@@ -55,6 +55,7 @@ class ESStoreSuggestionUpdateQueue
         $countryName = $data['country'];
         $store = Tenant::select(
                             'merchants.merchant_id',
+                            // 'merchants.parent_id',
                             'merchants.name',
                             DB::raw('oms.city'),
                             DB::raw('oms.country'))

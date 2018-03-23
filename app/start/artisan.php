@@ -279,3 +279,9 @@ Artisan::add(new UserNotificationMallCommand);
 
 // Create User Merchant Review
 Artisan::add(new CreateUserMerchantReviewCommand);
+
+// Resend promotional event code email
+Artisan::add(new SendPromotionalEventMailCommand);
+
+// Generate Promotional Event Code for User and resend promotional event code email
+Artisan::add(new ReinsertUnobtainedPromotionalEventCodeCommand);

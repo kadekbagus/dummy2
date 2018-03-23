@@ -214,11 +214,12 @@ class CouponDetailAPIController extends PubControllerAPI
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
+                                $q->groupBy('keyword');
                             }])
                         ->with(['product_tags' => function ($pt) {
                                 $pt->addSelect('product_tag', 'object_id');
+                                $pt->groupBy('product_tag');
                             }])
-                        ->havingRaw("campaign_status NOT IN ('paused', 'stopped')")
                         ->where('promotions.promotion_id', $couponId)
                         ->where('promotions.is_visible', 'Y');
 
@@ -234,6 +235,25 @@ class CouponDetailAPIController extends PubControllerAPI
             $message = 'Request Ok';
             if (! is_object($coupon)) {
                 throw new OrbitCustomException('Coupon that you specify is not found', Coupon::NOT_FOUND_ERROR_CODE, NULL);
+            }
+
+            $mall = null;
+            if (! empty($mallId)) {
+                $mall = Mall::excludeDeleted()->where('merchant_id', '=', $mallId)->first();
+            }
+
+            // Only campaign having status ongoing and is_started true can going to detail page
+            if (! in_array($coupon->campaign_status, ['ongoing', 'expired']) || ($coupon->campaign_status == 'ongoing' && $coupon->is_started == 'false')) {
+                $mallName = 'gtm';
+                if (! empty($mall)) {
+                    $mallName = $mall->name;
+                }
+
+                $customData = new \stdClass;
+                $customData->type = 'coupon';
+                $customData->location = $location;
+                $customData->mall_name = $mallName;
+                throw new OrbitCustomException('Coupon is inactive', Coupon::INACTIVE_ERROR_CODE, $customData);
             }
 
             // Config page_views
@@ -431,8 +451,12 @@ class CouponDetailAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $this->response->data = null;
-            $httpCode = 500;
+            $this->response->data = $e->getCustomData();
+            if ($this->response->code === 4040) {
+                $httpCode = 404;
+            } else {
+                $httpCode = 500;
+            }
 
         } catch (Exception $e) {
             $this->response->code = $this->getNonZeroCode($e->getCode());
