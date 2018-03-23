@@ -70,6 +70,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
             $sortMode = OrbitInput::get('sortmode', NULL);
             $language = OrbitInput::get('language', 'id');
             $token = OrbitInput::get('token', NULL);
+            $take = OrbitInput::get('take', 5); // @todo take from config
             $lon = '';
             $lat = '';
             $mallId = OrbitInput::get('mall_id', NULL);
@@ -102,7 +103,8 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
                 'mall_id'     => $mallId,
                 'token'       => $token,
                 'filter'      => 'Y',
-                'primary_key' => 'news_id'
+                'primary_key' => 'news_id',
+                'take'        => $take,
             ];
 
             // Reset the index of the array by array_values so it does not decode as an object
@@ -169,7 +171,7 @@ class NewsAlsoLikeListAPIController extends PubControllerAPI
     {
         $_OLD_GET = $_GET;
         $_GET = [];
-        $_GET['take'] = 5; // @todo take from config
+        $_GET['take'] = $params['take'];
         $_GET['skip'] = 0;
         $_GET['country'] = $params['country'];
         $_GET['cities'] = $params['cities'];
