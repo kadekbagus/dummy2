@@ -189,10 +189,10 @@ class MallSearch extends Search
 
         $advertMallsSearchResult = $advertMallsSearch->getResult();
 
+        $withPreferred = array();
         if ($advertMallsSearchResult['hits']['total'] > 0) {
             $advertList = $advertMallsSearchResult['hits']['hits'];
             $excludeId = array();
-            $withPreferred = array();
 
             foreach ($advertList as $adverts) {
                 $advertId = $adverts['_id'];
@@ -203,6 +203,19 @@ class MallSearch extends Search
                 } else {
                     // record only 1 advert_id, so only 1 advert appear in list
                     $excludeId[] = $advertId;
+                }
+
+                // if in featured list, check also the store is have preferred adv or not
+                if ($params['list_type'] === 'featured') {
+                    if ($adverts['_source']['advert_type'] === 'preferred_list_regular' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
+                        // $withPreferred[$merchantId] = $adverts['_source']['advert_type'];
+                        if (empty($withPreferred[$merchantId]) || $withPreferred[$merchantId] != 'preferred_list_large') {
+                            $withPreferred[$merchantId] = 'preferred_list_regular';
+                            if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
+                                $withPreferred[$merchantId] = 'preferred_list_large';
+                            }
+                        }
+                    }
                 }
             }
 
@@ -239,6 +252,8 @@ class MallSearch extends Search
 
             $this->setIndex($esAdvertMallIndex . ',' . $this->getIndex());
         }
+
+        return compact('withPreferred');
     }
 
     /**
