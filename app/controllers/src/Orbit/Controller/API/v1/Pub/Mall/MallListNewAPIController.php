@@ -203,6 +203,9 @@ class MallListNewAPIController extends PubControllerAPI
                     break;
             }
 
+            // Add any constant scoring to search body if set.
+            $mallSearch->addConstantScoringToQuery();
+
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
                 $response = $recordCache->get($serializedCacheKey, function() use ($mallSearch) {
