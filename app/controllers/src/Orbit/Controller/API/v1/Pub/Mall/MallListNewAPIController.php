@@ -222,6 +222,8 @@ class MallListNewAPIController extends PubControllerAPI
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
 
+                $areadata['placement_type'] = null;
+                $areadata['placement_type_orig'] = null;
                 $areadata['average_rating'] = (! empty($dt['fields']['average_rating'][0])) ? number_format(round($dt['fields']['average_rating'][0], 1), 1) : 0;
                 $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? round($dt['fields']['total_review'][0], 1) : 0;
 
@@ -282,6 +284,16 @@ class MallListNewAPIController extends PubControllerAPI
                     $cdnPath = '';
 
                     foreach ($dt['_source'] as $source => $val) {
+
+                        // advert type
+                        if ($source === 'advert_type') {
+                            if ($val === 'featured_list') {
+                                $areadata['is_featured'] = true;
+                            }
+                            $areadata['placement_type'] = $val;
+                            $areadata['placement_type_orig'] = $val;
+                        }
+
                         if ($source == 'logo_url') {
                             $localPath = $val;
                         }

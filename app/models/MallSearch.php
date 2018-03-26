@@ -175,6 +175,21 @@ class MallSearch extends Search
 
         $advertMallsSearch->setPaginationParams(['from' => 0, 'size' => 100]);
 
+        if ($params['list_type'] === 'featured') {
+            $pageTypeScore = 'featured_gtm_score';
+        } else {
+            $pageTypeScore = 'preferred_gtm_score';
+        }
+
+        $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
+        $params['advertSorting'] = [
+            '_script' => [
+                'script' => $sortPageScript, 
+                'type' => 'string', 
+                'order' => 'desc'
+            ]
+        ];
+
         // @todo add sort page in advert list..
         $advertMallsSearch->filterMalls($params);
 
@@ -205,15 +220,12 @@ class MallSearch extends Search
             $this->exclude($excludeId);
 
             // If there any advert_stores in the list, then sort by it first...
-            $sortByPageType = array();
             $pageTypeScore = '';
             $sortPageScripts = [];
             if ($params['list_type'] === 'featured') {
                 $pageTypeScore = 'featured_gtm_score';
-                $sortByPageType = array('featured_gtm_score' => array('order' => 'desc'));
             } else {
                 $pageTypeScore = 'preferred_gtm_score';
-                $sortByPageType = array('preferred_gtm_score' => array('order' => 'desc'));
             }
 
             $sortPageScripts[] = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";

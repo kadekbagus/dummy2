@@ -157,5 +157,7 @@ class AdvertStoreSearch extends Search
                 ]
             ]
         ]);
+
+        $this->sortBy($params['advertSorting']);
     }
 }
