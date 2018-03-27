@@ -286,10 +286,8 @@ class SeoTextAPIController extends ControllerAPI
             }
 
             $seo_texts = Page::select('pages.pages_id', 'pages.title', 'pages.content as description',
-                                      'pages.object_type', 'pages.language', 'pages.status', 'languages.language_id',
-                                      'pages.category_id', 'categories.category_name')
+                                      'pages.object_type', 'pages.language', 'pages.status', 'languages.language_id')
                                 ->leftJoin('languages', 'languages.name', '=', 'pages.language')
-                                ->leftJoin('categories', 'categories.category_id', '=', 'pages.category_id')
                                 ->where('object_type', 'like', '%seo_%');
 
             OrbitInput::get('status', function($status) use ($seo_texts) {
@@ -365,56 +363,38 @@ class SeoTextAPIController extends ControllerAPI
                          ->delete();
         }
 
-        foreach ($data as $category_id => $dataSeo) {
-            // validate category_id
-            if ($category_id !== '0' && $category_id !== 'default') {
-                $category = Category::where('status', '=', 'active')
-                                    ->where('category_id', '=', $category_id)
-                                    ->first();
-                if (empty($category)) {
-                    OrbitShopAPI::throwInvalidArgument('category_id is not valid');
-                }
+        foreach ($data as $language_id => $translations) {
+            $language = Language::where('status', '=', 'active')
+                ->where('language_id', '=', $language_id)
+                ->first();
+            if (empty($language)) {
+                OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
             }
 
-            foreach($dataSeo as $language_id => $dataTranslation) {
-                // validate language_id
-                $language = Language::where('status', '=', 'active')
-                                    ->where('language_id', '=', $language_id)
-                                    ->first();
-                if (empty($language)) {
-                    OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.empty.merchant_language'));
+            if ($translations === null) {
+                // deleting, verify exists
+            } else {
+
+                foreach ($translations as $field => $value) {
+                    if (!in_array($field, $valid_fields, TRUE)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
+                    }
+                    if ($value !== null && !is_string($value)) {
+                        OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
+                    }
                 }
 
-                if ($dataTranslation === null) {
-                    // deleting, verify exists
-                } else {
-
-                    foreach ($dataTranslation as $field => $value) {
-                        if (!in_array($field, $valid_fields, TRUE)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.key'));
-                        }
-                        if ($value !== null && !is_string($value)) {
-                            OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.formaterror.translation.value'));
-                        }
-                    }
-
-                    // Insert every single seo per language_id
-                    $new_page = new Page();
-                    $new_page->country_id = $country_id;
-                    // no need to add category for default seo text
-                    if ($category_id !== '0' && $category_id !== 'default') {
-                        $new_page->category_id = $category_id;
-                    }
-                    $new_page->object_type = $object_type;
-                    $new_page->language = $language->name;
-                    $new_page->title = $dataTranslation->title;
-                    $new_page->content = $dataTranslation->description;
-                    $new_page->status = $status;
-                    $new_page->save();
-                    $page[] = $new_page;
-                }
+                // Insert every single seo per language_id
+                $new_page = new Page();
+                $new_page->country_id = $country_id;
+                $new_page->object_type = $object_type;
+                $new_page->language = $language->name;
+                $new_page->title = $translations->title;
+                $new_page->content = $translations->description;
+                $new_page->status =$status;
+                $new_page->save();
+                $page[] = $new_page;
             }
-
         }
 
         return $page;
