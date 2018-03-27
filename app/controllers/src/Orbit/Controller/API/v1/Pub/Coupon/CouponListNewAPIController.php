@@ -105,6 +105,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $partnerToken = OrbitInput::get('token', null);
             $viewType = OrbitInput::get('view_type', 'grid');
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
+            $withAdvert = (bool) OrbitInput::get('with_advert', true);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -266,12 +267,9 @@ class CouponListNewAPIController extends PubControllerAPI
                 ]
             ];
 
-            $withAdvert = true;
+            $locationId = ! empty($mallId) ? $mallId : 0;
             if ($withAdvert) {
-
-                $locationId = ! empty($mallId) ? $mallId : 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
-
                 $couponSearch->filterWithAdvert(compact('dateTimeEs', 'mallId', 'list_type', 'advertType', 'locationId', 'advertSorting'));
             }
 

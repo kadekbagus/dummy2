@@ -69,6 +69,8 @@ class MenuCounterAPIController extends PubControllerAPI
             $distance = Config::get('orbit.geo_location.distance', 10);
             $lon = '';
             $lat = '';
+            $mallId = OrbitInput::get('mall_id', null);
+            $keyword = OrbitInput::get('keyword', null);
 
             $prefix = DB::getTablePrefix();
 
@@ -90,6 +92,11 @@ class MenuCounterAPIController extends PubControllerAPI
             $couponJsonQuery = array('from' => 0, 'size' => 1, 'aggs' => array('campaign_index' => array('terms' => array('field' => '_index'))), 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('available' => array('gt' => 0))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
             $mallJsonQuery = array('from' => 0, 'size' => 1, 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('is_subscribed' => 'Y'))), array('query' => array('match' => array('status' => 'active')))))));
+
+            // filter mall_id
+            if (!empty($mallId)) {
+                $mallJsonQuery = array('from' => 0, 'size' => 1, 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('is_subscribed' => 'Y'))), array('query' => array('match' => array('status' => 'active'))), array('query' => array('match' => array('merchant_id' => $mallId)))))));
+            }
 
             $merchantJsonQuery = array('from' => 0, 'size' => 1);
             $storeJsonQuery = $merchantJsonQuery;
@@ -143,6 +150,9 @@ class MenuCounterAPIController extends PubControllerAPI
             $campaignCountryCityFilterArr = [];
             $merchantCountryCityFilterArr = [];
             $storeCountryCityFilterArr = [];
+            $mallFilterCampaign = [];
+            $mallFilterStore = [];
+            $keywordFilter = [];
             $countryData = null;
             // filter by country
             OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr) {
@@ -196,6 +206,23 @@ class MenuCounterAPIController extends PubControllerAPI
                 }
             });
 
+            // filter by mall_id (use in mall homepage/mall detail)
+            OrbitInput::get('mall_id', function ($mallId) use (&$mallFilterCampaign, &$mallFilterStore) {
+                $mallFilterCampaign = ['nested' => ['path' => 'link_to_tenant', 'query' => ['bool' => ['must' => ['match' => ['link_to_tenant.parent_id' => $mallId]]]], 'inner_hits' => ['name' => 'link_tenant_hits']]];
+                $mallFilterStore = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => ['must' => ['match' => ['tenant_detail.mall_id' => $mallId]]]], 'inner_hits' => ['name' => 'tenant_detail_hits']]];
+            });
+
+            // filter by keywords
+            OrbitInput::get('keywords', function($keywords) use (&$keywordFilter) {
+                if (! is_array($keywords)) {
+                    $keywords = (array)$keywords;
+                }
+
+                foreach ($keywords as $key => $value) {
+                    $keywordFilter['bool']['should'][] = array('match' => array('keywords' => $value));
+                }
+            });
+
             if (! empty($campaignCountryCityFilterArr)) {
                 $campaignJsonQuery['query']['bool']['filter'][] = $campaignCountryCityFilterArr;
                 $couponJsonQuery['query']['bool']['filter'][] = $campaignCountryCityFilterArr;
@@ -207,6 +234,21 @@ class MenuCounterAPIController extends PubControllerAPI
 
             if (! empty($storeCountryCityFilterArr)) {
                 $storeJsonQuery['query']['bool']['must'][] = $storeCountryCityFilterArr;
+            }
+
+            if (! empty($mallFilterCampaign)) {
+                $campaignJsonQuery['query']['bool']['filter'][] = $mallFilterCampaign;
+                $couponJsonQuery['query']['bool']['filter'][] = $mallFilterCampaign;
+            }
+
+            if (! empty($mallFilterStore)) {
+                $merchantJsonQuery['query']['bool']['filter'][] = $mallFilterStore;
+            }
+
+            if (! empty($keywordFilter)) {
+                $merchantJsonQuery['query']['bool']['filter'][] = $keywordFilter;
+                $campaignJsonQuery['query']['bool']['filter'][] = $keywordFilter;
+                $couponJsonQuery['query']['bool']['filter'][] = $keywordFilter;
             }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');

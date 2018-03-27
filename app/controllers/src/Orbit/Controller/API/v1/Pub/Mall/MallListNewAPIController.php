@@ -85,6 +85,7 @@ class MallListNewAPIController extends PubControllerAPI
             $userLocationCookieName = Config::get('orbit.user_location.cookie.name');
             $viewType = OrbitInput::get('view_type', 'grid');
             $list_type = OrbitInput::get('list_type', 'preferred');
+            $withAdvert = (bool) OrbitInput::get('with_advert', true);
             $latitude = '';
             $longitude = '';
             $locationFilter = '';
@@ -167,22 +168,21 @@ class MallListNewAPIController extends PubControllerAPI
             });
 
             // Get Advertised Malls...
-            $withAdvert = true;
+            $withPreferred = [];
             if ($withAdvert) {
                 $locationId = 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-                $mallSearch->filterWithAdvert(compact('dateTimeEs', 'advertType', 'locationId', 'list_type'));
+                $advertResult = $mallSearch->filterWithAdvert(compact('dateTimeEs', 'advertType', 'locationId', 'list_type'));
+                // return \Response::json($advertResult);
+                $withPreferred = $advertResult['withPreferred'];
             }
+
+            // return \Response::json($withPreferred);
 
             $scriptFields = $mallSearch->addReviewFollowScript(compact(
-                'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
+                'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
-
-            $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
-            if ($bypassMallOrder === 'n') {
-                $mallSearch->bypassMallOrder();
-            }
 
             // Force to sort result by relevance if any keyword is set.
             if (! empty($keyword)) {
@@ -208,6 +208,9 @@ class MallListNewAPIController extends PubControllerAPI
                     break;
             }
 
+            // Add any constant scoring to search body if set.
+            $mallSearch->addConstantScoringToQuery();
+
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
                 $response = $recordCache->get($serializedCacheKey, function() use ($mallSearch) {
@@ -227,8 +230,11 @@ class MallListNewAPIController extends PubControllerAPI
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
 
+                $areadata['placement_type'] = null;
+                $areadata['placement_type_orig'] = null;
                 $areadata['average_rating'] = (! empty($dt['fields']['average_rating'][0])) ? number_format(round($dt['fields']['average_rating'][0], 1), 1) : 0;
                 $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? round($dt['fields']['total_review'][0], 1) : 0;
+                $mallId = $dt['_source']['merchant_id'];
 
                 $pageView = 0;
                 if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
@@ -259,6 +265,23 @@ class MallListNewAPIController extends PubControllerAPI
 
                         foreach ($dt['_source'] as $source => $val) {
 
+                            // advert type
+                            if ($source === 'advert_type') {
+                                $areadata['placement_type'] = $val;
+                                $areadata['placement_type_orig'] = $val;
+
+                                if ($list_type === 'featured') {
+                                    if ($val === 'featured_list') {
+                                        $areadata['is_featured'] = true;
+                                    }
+
+                                    if (isset($withPreferred[$mallId])) {
+                                        $areadata['placement_type'] = $withPreferred[$mallId];
+                                        $areadata['placement_type_orig'] = $withPreferred[$mallId];
+                                    }
+                                }
+                            }
+
                             if (strtolower($dt['_source']['city']) === strtolower($location)) {
                                 if ($source == 'logo_url') {
                                     $localPath = $val;
@@ -287,6 +310,23 @@ class MallListNewAPIController extends PubControllerAPI
                     $cdnPath = '';
 
                     foreach ($dt['_source'] as $source => $val) {
+
+                        if ($source === 'advert_type') {
+                            $areadata['placement_type'] = $val;
+                            $areadata['placement_type_orig'] = $val;
+
+                            if ($list_type === 'featured') {
+                                if ($val === 'featured_list') {
+                                    $areadata['is_featured'] = true;
+                                }
+
+                                if (isset($withPreferred[$mallId])) {
+                                    $areadata['placement_type'] = $withPreferred[$mallId];
+                                    $areadata['placement_type_orig'] = $withPreferred[$mallId];
+                                }
+                            }
+                        }
+
                         if ($source == 'logo_url') {
                             $localPath = $val;
                         }
