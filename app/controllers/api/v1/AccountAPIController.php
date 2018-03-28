@@ -1199,7 +1199,7 @@ class AccountAPIController extends ControllerAPI
                 'address_line1'      => 'required',
                 'city'               => 'required',
                 'country_id'         => 'required|orbit.empty.country',
-                'merchant_ids'       => 'required_if:status,active|array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
+                'merchant_ids'       => 'array|exists:merchants,merchant_id|orbit.exists.link_to_tenant',
                 'role_name'          => 'required|in:Campaign Owner,Campaign Employee,Campaign Admin|orbit.empty.role:' . $account_type->type_name,
                 'user_password'      => 'min:6',
                 'languages'               => 'array',
@@ -1500,6 +1500,93 @@ class AccountAPIController extends ControllerAPI
 
             $update_employee->save();
 
+            $prefix = DB::getTablePrefix();
+            $existingUserMerchants = UserMerchant::where('user_id', $update_user->user_id)->get()->lists('merchant_id');
+            $campaignStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', '=', 'paused')->first();
+
+            // delete all link to tenant
+            if (empty($merchant_ids) && !is_array($merchant_ids) && !empty($existingUserMerchants)) {
+                // delete user merchant
+                $ownermerchant = UserMerchant::where('user_id', $update_user->user_id)->delete();
+                // delete campaign link to tenant
+                $news = News::select('news.news_name','news.news_id', 'news.object_type', 'news.status', 'news.campaign_status_id', 'news.created_by',
+                                 DB::raw("(select COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id)
+                                            from {$prefix}news_merchant
+                                                left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
+                                                left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                                where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as total_location"),
+                                 DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id WHERE om.merchant_id = {$prefix}news.mall_id)
+                                            THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"))
+                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                            ->excludeDeleted('news')
+                            ->having('campaign_status', '=', 'ongoing')
+                            ->where('news.created_by', '=', $update_user->user_id)
+                            ->whereIn('news_merchant.merchant_id', $existingUserMerchants)
+                            ->groupBy('news.news_id')
+                            ->get();
+
+                if (!empty($news)) {
+                    foreach($news as $key => $value) {
+                        // delete link to campaign (news_merchant)
+                        $deleteLocation = NewsMerchant::where('news_id', '=', $value->news_id)
+                                                      ->whereIn('merchant_id', $existingUserMerchants)
+                                                      ->delete();
+                        // pause the campaign
+                        $updateNews = News::where('news_id', '=', $value->news_id)->first();
+                        $updateNews->campaign_status_id = $campaignStatus->campaign_status_id;
+                        $updateNews->save();
+
+                        // update ES
+                        if ($value->object_type == 'news') {
+                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', ['news_id' => $value->news_id]);
+                        }
+
+                        if ($value->object_type == 'promotion') {
+                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', ['news_id' => $value->news_id]);
+                        }
+                    }
+                }
+
+                $coupons = Coupon::select('promotions.promotion_id','promotions.promotion_name','promotions.status',
+                                    DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                                                                        FROM {$prefix}merchants om
+                                                                                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                                                                        WHERE om.merchant_id = {$prefix}promotions.merchant_id)
+                                                                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"),
+                                    DB::raw("(select COUNT(DISTINCT {$prefix}promotion_retailer.promotion_retailer_id)
+                                                                            from {$prefix}promotion_retailer
+                                                                            inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
+                                                                            inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                                                            where {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id) as total_location")
+                                    )
+                                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                ->excludeDeleted('promotions')
+                                ->having('campaign_status', '=', 'ongoing')
+                                ->where('promotions.created_by', '=', $update_user->user_id)
+                                ->whereIn('promotion_retailer.retailer_id', $existingUserMerchants)
+                                ->groupBy('promotions.promotion_id')
+                                ->get();
+
+                if (!empty($coupons)) {
+                    foreach($coupons as $key => $value) {
+                        // delete link to campaign (promotion_retailer)
+                        $deleteLocation = PromotionRetailer::where('promotion_id', '=', $value->promotion_id)
+                                                          ->whereIn('retailer_id', $existingUserMerchants)
+                                                          ->delete();
+
+                        $updateCoupon = Coupon::where('promotion_id', '=', $value->promotion_id)->first();
+                        $updateCoupon->campaign_status_id = $campaignStatus->campaign_status_id;
+                        $updateCoupon->save();
+
+                        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', ['coupon_id' => $value->promotion_id]);
+                    }
+                }
+
+            }
+
             // Save to user_merchant (1 to M)
             if ($merchant_ids) {
                 $merchants = UserMerchant::where('user_id', $update_user->user_id)->get()->lists('merchant_id');
@@ -1519,7 +1606,7 @@ class AccountAPIController extends ControllerAPI
                     $merchants = $link_to_tenants->get()->lists('merchant_id');
                 }
 
-                $removetenant = array_diff($merchants, $merchant_ids);
+                $removetenant = array_values(array_diff($merchants, $merchant_ids));
                 $addtenant = array_diff($merchant_ids, $merchants);
                 $newsPromotionActive = 0;
                 $couponStatusActive = 0;
@@ -1541,8 +1628,6 @@ class AccountAPIController extends ControllerAPI
                         OrbitShopAPI::throwInvalidArgument($validator->messages()->first());
                     }
                 }
-
-                $prefix = DB::getTablePrefix();
 
                 // if ($removetenant) {
                 //     foreach ($removetenant as $tenant_id) {
@@ -1607,6 +1692,7 @@ class AccountAPIController extends ControllerAPI
                 //     }
                 // }
 
+
                 // get campaign employee and delete merchant
                 $employee = CampaignAccount::where('parent_user_id', '=', $update_user->user_id)
                                         ->lists('user_id');
@@ -1635,6 +1721,171 @@ class AccountAPIController extends ControllerAPI
                             $employeeMerchant->object_type = CampaignLocation::find($merchantId)->object_type;
                             $employeeMerchant->save();
                         }
+                    }
+                }
+
+                // remove link to tenant on campaign
+                if (! empty($removetenant)) {
+                    // news, promotion, promotional event
+                    $news = News::select('news.news_name','news.news_id', 'news.object_type', 'news.status', 'news.campaign_status_id', 'news.created_by',
+                                 DB::raw("(select COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id)
+                                            from {$prefix}news_merchant
+                                                left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
+                                                left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                                where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as total_location"),
+                                 DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id WHERE om.merchant_id = {$prefix}news.mall_id)
+                                            THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"))
+                                ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                                ->excludeDeleted('news')
+                                ->having('campaign_status', '=', 'ongoing')
+                                ->where('news.created_by', '=', $update_user->user_id)
+                                ->whereIn('news_merchant.merchant_id', $removetenant)
+                                ->groupBy('news.news_id')
+                                ->get();
+
+                    if (!empty($news)) {
+                        foreach($news as $key => $value) {
+                            // delete link to campaign (news_merchant)
+                            $deleteLocation = NewsMerchant::where('news_id', '=', $value->news_id)
+                                                          ->whereIn('merchant_id', $removetenant)
+                                                          ->delete();
+
+                            $currentLocation = NewsMerchant::select(DB::raw('count(news_id) as total_location'))
+                                                            ->where('news_id', '=', $value->news_id)
+                                                            ->first();
+
+                            if ($currentLocation->total_location == 0) {
+                                $updateNews = News::where('news_id', '=', $value->news_id)->first();
+                                $updateNews->campaign_status_id = $campaignStatus->campaign_status_id;
+                                $updateNews->save();
+                            }
+
+                            // update ES
+                            if ($value->object_type == 'news') {
+                                Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', ['news_id' => $value->news_id]);
+                            }
+
+                            if ($value->object_type == 'promotion') {
+                                Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', ['news_id' => $value->news_id]);
+                            }
+                        }
+                    }
+
+
+                    // coupon
+                    $coupons = Coupon::select('promotions.promotion_id','promotions.promotion_name','promotions.status',
+                                        DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                                                                            FROM {$prefix}merchants om
+                                                                                                                            LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                                                                            WHERE om.merchant_id = {$prefix}promotions.merchant_id)
+                                                                        THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"),
+                                        DB::raw("(select COUNT(DISTINCT {$prefix}promotion_retailer.promotion_retailer_id)
+                                                                                from {$prefix}promotion_retailer
+                                                                                inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
+                                                                                inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                                                                where {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id) as total_location")
+                                        )
+                                    ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                                    ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                    ->excludeDeleted('promotions')
+                                    ->where('promotions.created_by', '=', $update_user->user_id)
+                                    ->whereIn('promotion_retailer.retailer_id', $removetenant)
+                                    ->having('campaign_status', '=', 'ongoing')
+                                    ->groupBy('promotions.promotion_id')
+                                    ->get();
+
+                    if (!empty($coupons)) {
+                        foreach($coupons as $key => $value) {
+                            // delete link to campaign (promotion_retailer)
+                            $deleteLocation = PromotionRetailer::where('promotion_id', '=', $value->promotion_id)
+                                                              ->whereIn('retailer_id', $removetenant)
+                                                              ->delete();
+
+                            $currentLocation = PromotionRetailer::select(DB::raw('count(promotion_id) as total_location'))
+                                                                ->where('promotion_id', '=', $value->promotion_id)
+                                                                ->first();
+
+                            // if only one location, update the campaign status to paused
+                            if ($currentLocation->total_location == 0) {
+                                $updateCoupon = Coupon::where('promotion_id', '=', $value->promotion_id)->first();
+                                $updateCoupon->campaign_status_id = $campaignStatus->campaign_status_id;
+                                $updateCoupon->save();
+                            }
+
+                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', ['coupon_id' => $value->promotion_id]);
+                        }
+                    }
+
+                }
+
+            }
+
+            // if the pmp account is inactive, set all campaign under that pmp account as paused
+            if ($status === 'inactive') {
+                $news = News::select('news.news_name','news.news_id', 'news.object_type', 'news.status', 'news.campaign_status_id',
+                                 DB::raw("(select COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id)
+                                            from {$prefix}news_merchant
+                                                left join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}news_merchant.merchant_id
+                                                left join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                                where {$prefix}news_merchant.news_id = {$prefix}news.news_id) as total_location"),
+                                 DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
+                                                LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id WHERE om.merchant_id = {$prefix}news.mall_id)
+                                            THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END  AS campaign_status"))
+                            ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
+                            ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
+                            ->excludeDeleted('news')
+                            ->having('campaign_status', '=', 'ongoing')
+                            ->where('news.created_by', '=', $update_user->user_id)
+                            ->groupBy('news.news_id')
+                            ->get();
+
+                if (!empty($news)) {
+                    foreach($news as $key => $value) {
+                        $updateNews = News::where('news_id', '=', $value->news_id)->first();
+                        $updateNews->campaign_status_id = $campaignStatus->campaign_status_id;
+                        $updateNews->save();
+
+                        // update ES
+                        if ($value->object_type == 'news') {
+                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESNewsUpdateQueue', ['news_id' => $value->news_id]);
+                        }
+
+                        if ($value->object_type == 'promotion') {
+                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESPromotionUpdateQueue', ['news_id' => $value->news_id]);
+                        }
+                    }
+                }
+
+                // coupon
+                $coupons = Coupon::select('promotions.promotion_id','promotions.promotion_name','promotions.status',
+                                    DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.campaign_status_name ELSE (CASE WHEN {$prefix}promotions.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name)
+                                                                                                                        FROM {$prefix}merchants om
+                                                                                                                        LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
+                                                                                                                        WHERE om.merchant_id = {$prefix}promotions.merchant_id)
+                                                                    THEN 'expired' ELSE {$prefix}campaign_status.campaign_status_name END) END AS campaign_status"),
+                                    DB::raw("(select COUNT(DISTINCT {$prefix}promotion_retailer.promotion_retailer_id)
+                                                                            from {$prefix}promotion_retailer
+                                                                            inner join {$prefix}merchants on {$prefix}merchants.merchant_id = {$prefix}promotion_retailer.retailer_id
+                                                                            inner join {$prefix}merchants pm on {$prefix}merchants.parent_id = pm.merchant_id
+                                                                            where {$prefix}promotion_retailer.promotion_id = {$prefix}promotions.promotion_id) as total_location")
+                                    )
+                                ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
+                                ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
+                                ->excludeDeleted('promotions')
+                                ->having('campaign_status', '=', 'ongoing')
+                                ->where('promotions.created_by', '=', $update_user->user_id)
+                                ->groupBy('promotions.promotion_id')
+                                ->get();
+
+                if (!empty($coupons)) {
+                    foreach($coupons as $key => $value) {
+                        $updateCoupon = Coupon::where('promotion_id', '=', $value->promotion_id)->first();
+                        $updateCoupon->campaign_status_id = $campaignStatus->campaign_status_id;
+                        $updateCoupon->save();
+
+                        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', ['coupon_id' => $value->promotion_id]);
                     }
                 }
             }
@@ -1713,7 +1964,7 @@ class AccountAPIController extends ControllerAPI
             $this->response->message = $e->getMessage();
 
             if (Config::get('app.debug')) {
-                $this->response->data = $e->__toString();
+                $this->response->data = $e->getMessage().' '.$e->getLine();
             } else {
                 $this->response->data = null;
             }
