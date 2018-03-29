@@ -19,15 +19,18 @@ class MallSearch extends Search
         $this->setType($this->esConfig['indices']['malldata']['type']);
     }
     
+    /**
+     * Basic requirements of malls that will be listed.
+     * 
+     * @return [type] [description]
+     */
     public function filterBase()
     {
-        $this->must([
-            'match' => [
-                'is_subscribed' => 'Y'
-            ]
+        $this->constantScoring('must', [
+            'match' => ['is_subscribed' => 'Y']
         ]);
 
-        $this->must([
+        $this->constantScoring('must', [
             'match' => ['status' => 'active']
         ]);
     }
@@ -81,19 +84,13 @@ class MallSearch extends Search
             $this->esConfig['priority']['mall']['address_line'] : '';
 
         $this->must([
-            'bool' => [
-                'should' => [
-                    [
-                        'query_string' => [
-                            'query' => '*' . $keyword . '*',
-                            'fields' => [
-                                'name' . $priorityName, 
-                                'object_type' . $priorityObjectType,
-                                'description' . $priorityDescription,
-                                'address_line' . $priorityAddressLine,
-                            ]
-                        ]
-                    ]
+            'query_string' => [
+                'query' => '*' . $keyword . '*',
+                'fields' => [
+                    'name' . $priorityName, 
+                    'object_type' . $priorityObjectType,
+                    'description' . $priorityDescription,
+                    'address_line' . $priorityAddressLine,
                 ]
             ]
         ]);
@@ -120,7 +117,7 @@ class MallSearch extends Search
     }
 
     /**
-     * Filte by Country and Cities...
+     * Filter by Country and Cities...
      * 
      * @param  array  $area [description]
      * @return [type]       [description]
@@ -128,7 +125,7 @@ class MallSearch extends Search
     public function filterByCountryAndCities($area = [])
     {
         if (! empty($area['country'])) {
-            $this->filter([
+            $this->constantScoring('must', [
                 'match' => [
                     'country.raw' => $area['country']
                 ]
@@ -136,19 +133,12 @@ class MallSearch extends Search
         }
 
         if (! empty($area['cities'])) {
-
-            $citiesQuery['bool']['should'] = [];
-
             foreach($area['cities'] as $city) {
-                $citiesQuery['bool']['should'][] = [
+                $this->constantScoring('should', [
                     'match' => [
                         'city.raw' => $city
                     ]
-                ];
-            }
-
-            if (! empty($citiesQuery)) {
-                $this->filter($citiesQuery);
+                ]);
             }
         }
     }
@@ -199,10 +189,10 @@ class MallSearch extends Search
 
         $advertMallsSearchResult = $advertMallsSearch->getResult();
 
+        $withPreferred = array();
         if ($advertMallsSearchResult['hits']['total'] > 0) {
             $advertList = $advertMallsSearchResult['hits']['hits'];
             $excludeId = array();
-            $withPreferred = array();
 
             foreach ($advertList as $adverts) {
                 $advertId = $adverts['_id'];
@@ -213,6 +203,19 @@ class MallSearch extends Search
                 } else {
                     // record only 1 advert_id, so only 1 advert appear in list
                     $excludeId[] = $advertId;
+                }
+
+                // if in featured list, check also the store is have preferred adv or not
+                if ($params['list_type'] === 'featured') {
+                    if ($adverts['_source']['advert_type'] === 'preferred_list_regular' || $adverts['_source']['advert_type'] === 'preferred_list_large') {
+                        // $withPreferred[$merchantId] = $adverts['_source']['advert_type'];
+                        if (empty($withPreferred[$merchantId]) || $withPreferred[$merchantId] != 'preferred_list_large') {
+                            $withPreferred[$merchantId] = 'preferred_list_regular';
+                            if ($adverts['_source']['advert_type'] === 'preferred_list_large') {
+                                $withPreferred[$merchantId] = 'preferred_list_large';
+                            }
+                        }
+                    }
                 }
             }
 
@@ -249,6 +252,8 @@ class MallSearch extends Search
 
             $this->setIndex($esAdvertMallIndex . ',' . $this->getIndex());
         }
+
+        return compact('withPreferred');
     }
 
     /**
@@ -257,7 +262,7 @@ class MallSearch extends Search
      * @param  array  $competitors [description]
      * @return [type]              [description]
      */
-    public function excludePartnerCompetitors($competitors = [])
+    public function excludePartnerCompetitors($partnerIds = [])
     {
         $this->mustNot([
             'terms' => [
@@ -401,13 +406,13 @@ class MallSearch extends Search
 
         if (! empty($params['countryFilter'])) {
             $params['countryFilter'] = strtolower($params['countryFilter']);
-            $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
+            $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $params['countryFilter'] . '.all', []);
 
             if (! empty($params['cityFilters'])) {
                 $mallFeaturedIds = [];
                 foreach ($params['cityFilters'] as $key => $cityName) {
                     $cityName = str_replace(' ', '_', strtolower($cityName));
-                    $cityValue = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.' . $cityName, []);
+                    $cityValue = Config::get('orbit.featured.mall_ids.' . $params['countryFilter'] . '.' . $cityName, []);
 
                     if (! empty($cityValue)) {
                         $mallFeaturedIds = array_merge($cityValue, $mallFeaturedIds);
@@ -426,15 +431,14 @@ class MallSearch extends Search
             $esFeaturedBoost = Config::get('orbit.featured.es_boost', 10);
 
             $this->should([
-                [
-                    'terms' => [
-                        '_id' => $mallFeaturedIds,
-                        'boost' => $esFeaturedBoost
-                    ],
-                ],
-                [
-                    'match_all' => new stdClass()
+                'terms' => [
+                    '_id' => $mallFeaturedIds,
+                    'boost' => $esFeaturedBoost
                 ]
+            ]);
+
+            $this->should([
+                'match_all' => new stdClass()
             ]);
         }
     }
