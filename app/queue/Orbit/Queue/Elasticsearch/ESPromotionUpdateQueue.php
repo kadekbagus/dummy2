@@ -440,6 +440,10 @@ class ESPromotionUpdateQueue
             $esQueue = new \Orbit\Queue\Elasticsearch\ESPromotionSuggestionUpdateQueue();
             $suggestion = $esQueue->fire($fakeJob, ['news_id' => $newsId]);
 
+            // Update suggestion for mall level
+            $esSuggestionMallLevelQueue = new \Orbit\Queue\Elasticsearch\ESPromotionMallLevelSuggestionUpdateQueue();
+            $suggestionMallLevel = $esSuggestionMallLevelQueue->fire($fakeJob, ['news_id' => $newsId]);
+
             $esAdvertQueue = new \Orbit\Queue\Elasticsearch\ESAdvertPromotionUpdateQueue();
             $advertUpdate = $esAdvertQueue->fire($fakeJob, ['news_id' => $newsId]);
 
