@@ -94,6 +94,20 @@ class SuggestionAPIController extends PubControllerAPI
                     ]
                 ];
 
+                OrbitInput::get('country', function($country) use (&$body)
+                {
+                    if (! empty($country) || $country != '') {
+                        $body['gtm_suggestions']['completion']['context']['country'] = $country;
+                    }
+                });
+
+                OrbitInput::get('cities', function($cities) use (&$body)
+                {
+                    if (! empty($cities) || $cities != '') {
+                        $body['gtm_suggestions']['completion']['context']['city'] = $cities;
+                    }
+                });
+
                 $suggestionIndex = Config::get('orbit.elasticsearch.suggestion_indices');
             }
 
