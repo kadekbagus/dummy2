@@ -69,9 +69,16 @@ class CampaignDeleteInactiveEsCommand extends Command
         $dt = new DateTime('now', new DateTimezone('Asia/Jakarta'));
         $nowDateTimeEs = $dt->format('Y-m-d\TH:i:s\Z');
 
-        $campaignTypes = array('news', 'promotion', 'coupon');
+        $campaignTypes = array(
+                                'coupon_suggestions',
+                                'news_suggestions',
+                                'promotion_suggestions',
+                                'coupon_mall_level_suggestions',
+                                'news_mall_level_suggestions',
+                                'promotion_mall_level_suggestions',
+                            );
         foreach ($campaignTypes as $type) {
-            $index = $esPrefix . $this->esConfig['indices'][$type . '_suggestions']['index'];
+            $index = $esPrefix . $this->esConfig['indices'][$type]['index'];
             $this->deleteInactionSuggestionDocuments(['datetime' => $nowDateTimeEs, 'index' => $index, 'index_type' => 'basic']);
         }
     }

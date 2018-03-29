@@ -493,6 +493,10 @@ class ESCouponUpdateQueue
             $esQueue = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionUpdateQueue();
             $suggestion = $esQueue->fire($fakeJob, ['coupon_id' => $couponId]);
 
+            // Update suggestion for mall level
+            $esSuggestionMallLevelQueue = new \Orbit\Queue\Elasticsearch\ESCouponMallLevelSuggestionUpdateQueue();
+            $suggestionMallLevel = $esSuggestionMallLevelQueue->fire($fakeJob, ['coupon_id' => $couponId]);
+
             $esAdvertQueue = new \Orbit\Queue\Elasticsearch\ESAdvertCouponUpdateQueue();
             $advertUpdate = $esAdvertQueue->fire($fakeJob, ['coupon_id' => $couponId]);
 
