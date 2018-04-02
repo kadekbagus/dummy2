@@ -46,6 +46,7 @@ use NewsMerchant;
 use ProductTagObject;
 use BaseStoreProductTag;
 use BaseMerchantProductTag;
+use Cache;
 
 class StoreSynchronization
 {
@@ -354,6 +355,18 @@ class StoreSynchronization
 
                     // handle inactive store
                     if ($store->status === 'inactive') {
+
+                        // Remove all key *store* in Redis
+                        $redis = Cache::getRedis();
+                        $key_name = 'store';
+                        $keys = $redis->keys("*$key_name*");
+
+                        if (count($keys) > 0) {
+                            foreach ($keys as $key) {
+                                $redis->del($key);
+                            }
+                        }
+
                         $prefix = DB::getTablePrefix();
                         // check campaign that linked to this inactive store
                         $news = News::select('news.news_name','news.news_id', 'news.object_type', 'news.status', 'news.campaign_status_id',
