@@ -357,13 +357,16 @@ class StoreSynchronization
                     if ($store->status === 'inactive') {
 
                         // Remove all key *store* in Redis
-                        $redis = Cache::getRedis();
-                        $key_name = 'store';
-                        $keys = $redis->keys("*$key_name*");
-
-                        if (count($keys) > 0) {
-                            foreach ($keys as $key) {
-                                $redis->del($key);
+                        if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                            $redis = Cache::getRedis();
+                            $keyName = array('store','home');
+                            foreach ($keyName as $value) {
+                                $keys = $redis->keys("*$value*");
+                                if (! empty($keys)) {
+                                    foreach ($keys as $key) {
+                                        $redis->del($key);
+                                    }
+                                }
                             }
                         }
 

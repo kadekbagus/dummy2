@@ -11,6 +11,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
+use Cache;
 // use \Queue;
 
 class NewsAPIController extends ControllerAPI
@@ -658,6 +659,23 @@ class NewsAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
             Event::fire('orbit.news.postupdatenews.after.validation', array($this, $validator));
+
+            // Remove all key in Redis when campaign is stopped
+            if ($status == 'inactive') {
+                if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                    $type = $object_type == 'news' ? 'event' : 'promotion';
+                    $redis = Cache::getRedis();
+                    $keyName = array($type,'home');
+                    foreach ($keyName as $value) {
+                        $keys = $redis->keys("*$value*");
+                        if (! empty($keys)) {
+                            foreach ($keys as $key) {
+                                $redis->del($key);
+                            }
+                        }
+                    }
+                }
+            }
 
             $mallid = array();
             foreach ($retailer_ids as $retailer_id) {

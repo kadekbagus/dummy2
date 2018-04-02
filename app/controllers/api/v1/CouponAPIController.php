@@ -13,6 +13,7 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\Payment\Payment as PaymentClient;
+use Cache;
 
 class CouponAPIController extends ControllerAPI
 {
@@ -1383,6 +1384,22 @@ class CouponAPIController extends ControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // Remove all key in Redis when campaign is stopped
+            if ($status == 'inactive') {
+                if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                    $redis = Cache::getRedis();
+                    $keyName = array('coupon','home');
+                    foreach ($keyName as $value) {
+                        $keys = $redis->keys("*$value*");
+                        if (! empty($keys)) {
+                            foreach ($keys as $key) {
+                                $redis->del($key);
+                            }
+                        }
+                    }
+                }
             }
 
             if ($payByWallet === 'N' && $payByNormal === 'N') {
