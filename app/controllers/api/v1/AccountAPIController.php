@@ -1535,6 +1535,7 @@ class AccountAPIController extends ControllerAPI
                                                       ->delete();
                         // pause the campaign
                         $updateNews = News::where('news_id', '=', $value->news_id)->first();
+                        $updateNews->status = 'inactive';
                         $updateNews->campaign_status_id = $campaignStatus->campaign_status_id;
                         $updateNews->save();
 
@@ -1578,6 +1579,7 @@ class AccountAPIController extends ControllerAPI
                                                           ->delete();
 
                         $updateCoupon = Coupon::where('promotion_id', '=', $value->promotion_id)->first();
+                        $updateCoupon->status = 'inactive';
                         $updateCoupon->campaign_status_id = $campaignStatus->campaign_status_id;
                         $updateCoupon->save();
 
@@ -1758,6 +1760,7 @@ class AccountAPIController extends ControllerAPI
 
                             if ($currentLocation->total_location == 0) {
                                 $updateNews = News::where('news_id', '=', $value->news_id)->first();
+                                $updateNews->status = 'inactive';
                                 $updateNews->campaign_status_id = $campaignStatus->campaign_status_id;
                                 $updateNews->save();
                             }
@@ -1810,6 +1813,7 @@ class AccountAPIController extends ControllerAPI
                             // if only one location, update the campaign status to paused
                             if ($currentLocation->total_location == 0) {
                                 $updateCoupon = Coupon::where('promotion_id', '=', $value->promotion_id)->first();
+                                $updateCoupon->status = 'inactive';
                                 $updateCoupon->campaign_status_id = $campaignStatus->campaign_status_id;
                                 $updateCoupon->save();
                             }
@@ -1844,6 +1848,7 @@ class AccountAPIController extends ControllerAPI
                 if (!empty($news)) {
                     foreach($news as $key => $value) {
                         $updateNews = News::where('news_id', '=', $value->news_id)->first();
+                        $updateNews->status = 'inactive';
                         $updateNews->campaign_status_id = $campaignStatus->campaign_status_id;
                         $updateNews->save();
 
@@ -1882,6 +1887,7 @@ class AccountAPIController extends ControllerAPI
                 if (!empty($coupons)) {
                     foreach($coupons as $key => $value) {
                         $updateCoupon = Coupon::where('promotion_id', '=', $value->promotion_id)->first();
+                        $updateCoupon->status = 'inactive';
                         $updateCoupon->campaign_status_id = $campaignStatus->campaign_status_id;
                         $updateCoupon->save();
 
