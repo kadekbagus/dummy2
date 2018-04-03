@@ -69,6 +69,8 @@ class MenuCounterAPIController extends PubControllerAPI
             $distance = Config::get('orbit.geo_location.distance', 10);
             $lon = '';
             $lat = '';
+            $mallId = OrbitInput::get('mall_id', null);
+            $keyword = OrbitInput::get('keyword', null);
 
             $prefix = DB::getTablePrefix();
 
@@ -85,11 +87,16 @@ class MenuCounterAPIController extends PubControllerAPI
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
-            $campaignJsonQuery = array('from' => 0, 'size' => 1, 'aggs' => array('campaign_index' => array('terms' => array('field' => '_index'))), 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
+            $campaignJsonQuery = array('from' => 0, 'size' => 1, 'aggs' => array('campaign_index' => array('terms' => array('field' => '_index'))), 'query' => array('bool' => array('must' => array(  array('match' => array('status' => 'active')), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
-            $couponJsonQuery = array('from' => 0, 'size' => 1, 'aggs' => array('campaign_index' => array('terms' => array('field' => '_index'))), 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('available' => array('gt' => 0))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
+            $couponJsonQuery = array('from' => 0, 'size' => 1, 'aggs' => array('campaign_index' => array('terms' => array('field' => '_index'))), 'query' => array('bool' => array('must' => array( array('match' => array('status' => 'active')), array('range' => array('available' => array('gt' => 0))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
             $mallJsonQuery = array('from' => 0, 'size' => 1, 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('is_subscribed' => 'Y'))), array('query' => array('match' => array('status' => 'active')))))));
+
+            // filter mall_id
+            if (!empty($mallId)) {
+                $mallJsonQuery = array('from' => 0, 'size' => 1, 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('is_subscribed' => 'Y'))), array('query' => array('match' => array('status' => 'active'))), array('query' => array('match' => array('merchant_id' => $mallId)))))));
+            }
 
             $merchantJsonQuery = array('from' => 0, 'size' => 1);
             $storeJsonQuery = $merchantJsonQuery;
@@ -143,9 +150,17 @@ class MenuCounterAPIController extends PubControllerAPI
             $campaignCountryCityFilterArr = [];
             $merchantCountryCityFilterArr = [];
             $storeCountryCityFilterArr = [];
+            $mallFilterCampaign = [];
+            $mallFilterStore = [];
+            $keywordFilter = [];
+            $keywordFilterShould = [];
+            $campaignCountryFilter = [];
+            $campaignCityFilter = [];
+            $keywordMallFilter = [];
+            $keywordMallFilterShould = [];
             $countryData = null;
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr) {
+            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter) {
                 $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
 
                 // campaign
@@ -161,10 +176,22 @@ class MenuCounterAPIController extends PubControllerAPI
                 $merchantCountryCityFilterArr['nested']['query']['bool'] = ['must' => ['match' => ['tenant_detail.country.raw' => $countryFilter]]];
 
                 $storeCountryCityFilterArr['bool'] = ['must' => ['match' => ['country.raw' => $countryFilter]]];
+
+                $campaignCountryFilter = ['nested' => [
+                                            'path' => 'link_to_tenant',
+                                            'query' => [
+                                                'match' => [
+                                                    'link_to_tenant.country.raw' => $countryFilter
+                                                ]
+                                            ],
+                                            'inner_hits' => [
+                                                'name' => 'country_city_hits'
+                                            ],
+                                        ]];
             });
 
             // filter by city, only filter when countryFilter is not empty
-            OrbitInput::get('cities', function ($cityFilters) use (&$campaignJsonQuery, &$mallJsonQuery, $countryFilter, &$campaignCountryCityFilterArr, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr) {
+            OrbitInput::get('cities', function ($cityFilters) use (&$campaignJsonQuery, &$mallJsonQuery, $countryFilter, &$campaignCountryCityFilterArr, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCityFilter) {
                 if (! empty($countryFilter)) {
                     $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.city', '');
                     $campaignCityFilterArr = [];
@@ -194,11 +221,104 @@ class MenuCounterAPIController extends PubControllerAPI
                     $merchantCountryCityFilterArr['nested']['query']['bool']['should'] = $merchantCityFilterArr;
                     $storeCountryCityFilterArr['bool']['should'] = $storeCityFilterArr;
                 }
+
+                $campaignCityFilter['bool']['should'] = [];
+
+                foreach((array) $cityFilters as $city) {
+                    $campaignCityFilter['bool']['should'][] = [
+                        'nested' => [
+                            'path' => 'link_to_tenant',
+                            'query' => [
+                                'match' => [
+                                    'link_to_tenant.city.raw' => $city
+                                ]
+                            ]
+                        ]
+                    ];
+                }
             });
 
+            // filter by mall_id (use in mall homepage/mall detail)
+            OrbitInput::get('mall_id', function ($mallId) use (&$mallFilterCampaign, &$mallFilterStore) {
+                $mallFilterCampaign = ['nested' => ['path' => 'link_to_tenant', 'query' => ['bool' => ['must' => ['match' => ['link_to_tenant.parent_id' => $mallId]]]], 'inner_hits' => ['name' => 'link_tenant_hits']]];
+                $mallFilterStore = ['nested' => ['path' => 'tenant_detail', 'query' => ['bool' => ['must' => ['match' => ['tenant_detail.mall_id' => $mallId]]]], 'inner_hits' => ['name' => 'tenant_detail_hits']]];
+            });
+
+            // filter by keywords
+            OrbitInput::get('keywords', function($keywords) use (&$keywordFilter, &$keywordFilterShould, &$keywordMallFilter, &$keywordMallFilterShould) {
+
+                $esPriority = Config::get('orbit.elasticsearch.priority');
+
+                // for campaign
+                $priorityName = isset($esPriority['news']['name']) ? $esPriority['news']['name'] : '^6';
+                $priorityObjectType = isset($esPriority['news']['object_type']) ? $esPriority['news']['object_type'] : '^5';
+                $priorityDescription = isset($esPriority['news']['description']) ? $esPriority['news']['description'] : '^4';
+                $priorityKeywords = isset($esPriority['news']['keywords']) ? $esPriority['news']['keywords'] : '^3';
+                $priorityProductTags = isset($esPriority['news']['product_tags']) ? $esPriority['news']['product_tags'] : '^3';
+                $priorityCountry = isset($esPriority['news']['country']) ? $esPriority['news']['country'] : '';
+                $priorityProvince = isset($esPriority['news']['province']) ? $esPriority['news']['province'] : '';
+                $priorityCity = isset($esPriority['news']['city']) ? $esPriority['news']['city'] : '';
+                $priorityMallName = isset($esPriority['news']['mall_name']) ? $esPriority['news']['mall_name'] : '';
+
+                $keywordFilter['bool']['should'][] = array('query_string' => array('query' => '*' . $keywords .'*', 'fields' => array(
+                                        "name" . $priorityName,
+                                        "object_type" . $priorityObjectType,
+                                        "description" . $priorityDescription,
+                                        "keywords" . $priorityKeywords,
+                                        "product_tags" . $priorityProductTags)));
+
+                $keywordFilter['bool']['should'][] = array('nested' => array('path'=> 'translation', 'query' => array('match' => array("translation.description" . $priorityDescription => $keywords))));
+
+                $keywordFilterShould =  ['nested' => [
+                                            'path' => 'link_to_tenant',
+                                            'query' => [
+                                                'query_string' => [
+                                                    'query' => '*' . $keywords . '*',
+                                                    'fields' => [
+                                                        'link_to_tenant.country' . $priorityCountry,
+                                                        'link_to_tenant.province' . $priorityProvince,
+                                                        'link_to_tenant.city' . $priorityCity,
+                                                        'link_to_tenant.mall_name' . $priorityMallName,
+                                                    ]
+                                                ]
+                                            ]
+                                        ]];
+
+                // for mall
+                $priorityName = isset($esPriority['mall']['name']) ? $esPriority['mall']['name'] : '^6';
+                $priorityObjectType = isset($esPriority['mall']['object_type']) ? $esPriority['mall']['object_type'] : '^5';
+                $priorityDescription = isset($esPriority['mall']['description']) ? $esPriority['mall']['description'] : '^3';
+                $priorityAddressLine = isset($esPriority['mall']['address_line']) ? $esPriority['mall']['address_line'] : '';
+                $priorityCountry = isset($esPriority['mall']['country']) ? $esPriority['mall']['country'] : '';
+                $priorityProvince = isset($esPriority['mall']['province']) ? $esPriority['mall']['province'] : '';
+                $priorityCity = isset($esPriority['mall']['city']) ? $esPriority['mall']['city'] : '';
+
+                $keywordMallFilter = array('query_string' => array('query' => '*' . $keywords .'*', 'fields' => array(
+                                        "name" . $priorityName,
+                                        "object_type" . $priorityObjectType,
+                                        "description" . $priorityDescription,
+                                        "address_line" . $priorityAddressLine)));
+
+                $keywordMallFilterShould = array('query_string' => array('query' => '*' . $keywords .'*', 'fields' => array(
+                                            "country" . $priorityCountry,
+                                            "province" . $priorityProvince,
+                                            "city" . $priorityCity)));
+            });
+
+            /* old query
             if (! empty($campaignCountryCityFilterArr)) {
-                $campaignJsonQuery['query']['bool']['filter'][] = $campaignCountryCityFilterArr;
-                $couponJsonQuery['query']['bool']['filter'][] = $campaignCountryCityFilterArr;
+                $campaignJsonQuery['query']['bool']['should'][] = $campaignCountryCityFilterArr;
+                $couponJsonQuery['query']['bool']['should'][] = $campaignCountryCityFilterArr;
+            }*/
+
+            if (! empty($campaignCountryFilter)) {
+                $campaignJsonQuery['query']['bool']['must'][] = $campaignCountryFilter;
+                $couponJsonQuery['query']['bool']['must'][] = $campaignCountryFilter;
+            }
+
+            if (! empty($campaignCityFilter)) {
+                $campaignJsonQuery['query']['bool']['must'][] = $campaignCityFilter;
+                $couponJsonQuery['query']['bool']['must'][] = $campaignCityFilter;
             }
 
             if (! empty($merchantCountryCityFilterArr)) {
@@ -207,6 +327,34 @@ class MenuCounterAPIController extends PubControllerAPI
 
             if (! empty($storeCountryCityFilterArr)) {
                 $storeJsonQuery['query']['bool']['must'][] = $storeCountryCityFilterArr;
+            }
+
+            if (! empty($mallFilterCampaign)) {
+                $campaignJsonQuery['query']['bool']['filter'][] = $mallFilterCampaign;
+                $couponJsonQuery['query']['bool']['filter'][] = $mallFilterCampaign;
+            }
+
+            if (! empty($mallFilterStore)) {
+                $merchantJsonQuery['query']['bool']['filter'][] = $mallFilterStore;
+            }
+
+            if (! empty($keywordFilter)) {
+                $merchantJsonQuery['query']['bool']['must'][] = $keywordFilter;
+                $campaignJsonQuery['query']['bool']['must'][] = $keywordFilter;
+                $couponJsonQuery['query']['bool']['must'][] = $keywordFilter;
+            }
+
+            if (! empty($keywordFilterShould)) {
+                $campaignJsonQuery['query']['bool']['should'][] = $keywordFilterShould;
+                $couponJsonQuery['query']['bool']['should'][] = $keywordFilterShould;
+            }
+
+            if (! empty($keywordMallFilter)) {
+                $mallJsonQuery['query']['bool']['must'][] = $keywordMallFilter;
+            }
+
+            if (! empty($keywordMallFilterShould)) {
+                $mallJsonQuery['query']['bool']['should'][] = $keywordMallFilterShould;
             }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');

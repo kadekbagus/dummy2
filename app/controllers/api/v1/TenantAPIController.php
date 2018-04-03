@@ -2194,6 +2194,8 @@ class TenantAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
+            DB::enableQueryLog();
+
             Event::fire('orbit.tenant.getsearchtenant.before.auth', array($this));
 
             // Require authentication
@@ -2396,6 +2398,12 @@ class TenantAPIController extends ControllerAPI
                         $tenants->where(DB::raw("(IF({$prefix}merchants.object_type = 'tenant', pm.country_id, {$prefix}merchants.country_id))"), '=', $country_id);
                     });
                 }
+                else if ($link_type === 'mall') {
+                    $tenants = Mall::select(
+                        'merchants.merchant_id', 'merchants.name as display_name', 'merchants.status'
+                    )
+                    ->where('merchants.status', 'active');
+                }
             }
 
             $account_name = '';
@@ -2422,6 +2430,11 @@ class TenantAPIController extends ControllerAPI
             // filter by mall name for account type mall (PMP account setup admin portal)
             if (!empty($mall_name) && $account_name === 'Mall') {
                 $tenants->where('merchants.name', 'like', "%$mall_name%");
+            }
+
+            // show empty result when search mall_name but parent_ids not found
+            if (!empty($mall_name) && empty($parent_ids) && empty($store_name)) {
+                $tenants->where('merchants.name', '=', $mall_name);
             }
 
             // this is for request from pmp account listing on admin portal
@@ -2456,12 +2469,12 @@ class TenantAPIController extends ControllerAPI
             if (! is_null($this->valid_account_type)) {
                 $account_type = $this->valid_account_type;
                 $permission = [
-                        'Mall'      => 'mall',
-                        'Merchant'  => 'tenant',
-                        'Agency'    => 'mall_tenant',
-                        '3rd Party' => 'mall',
-                        'Dominopos' => 'mall_tenant'
-                    ];
+                    'Mall'      => 'mall',
+                    'Merchant'  => 'tenant',
+                    'Agency'    => 'mall_tenant',
+                    '3rd Party' => 'mall',
+                    'Dominopos' => 'mall_tenant'
+                ];
 
                 // access
                 if (array_key_exists($account_type->type_name, $permission)) {
@@ -2474,7 +2487,9 @@ class TenantAPIController extends ControllerAPI
                 if ($account_type->unique_rule !== 'none') {
                     $unique_rule = implode("','", explode("_", $account_type->unique_rule));
 
-                    $tenants->whereRaw("NOT EXISTS (
+                    $userId = OrbitInput::get('id');
+                    $tenants->where(function($query) use ($prefix, $unique_rule, $userId) {
+                        $query->whereRaw("NOT EXISTS (
                                 SELECT 1
                                 FROM {$prefix}user_merchant um
                                 JOIN {$prefix}campaign_account ca
@@ -2488,6 +2503,27 @@ class TenantAPIController extends ControllerAPI
                                     AND {$prefix}merchants.merchant_id = um.merchant_id
                                 GROUP BY um.merchant_id
                         )");
+
+                        // Add filter for selected tenants by current user.
+                        // This should be executed ONLY from pmp accounts update page (select tenants modal)
+                        if (! empty($userId) && empty($store_name)) {
+                            $query->orWhereRaw("EXISTS (
+                                    SELECT 1
+                                    FROM {$prefix}user_merchant um2
+                                    JOIN {$prefix}campaign_account ca2
+                                        ON ca2.user_id = um2.user_id
+                                    JOIN {$prefix}account_types at2
+                                        ON at2.account_type_id = ca2.account_type_id
+                                        AND at2.unique_rule != 'none'
+                                        AND at2.status = 'active'
+                                    WHERE
+                                        um2.object_type IN ('{$unique_rule}')
+                                        AND {$prefix}merchants.merchant_id = um2.merchant_id
+                                        AND um2.user_id = '{$userId}'
+                                    GROUP BY um2.merchant_id
+                            )");
+                        }
+                    });
                 }
             }
 
@@ -2640,6 +2676,8 @@ class TenantAPIController extends ControllerAPI
                 }
             });
             $tenants->orderBy($sortBy, $sortMode);
+
+            // echo '<pre>'; print_r($tenants->toSql()); die;
 
             $totalTenants = $recordCounter->count();
             $listOfTenants = $tenants->get();

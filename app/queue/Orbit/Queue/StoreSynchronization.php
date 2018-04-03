@@ -45,6 +45,7 @@ use PromotionRetailer;
 use NewsMerchant;
 use ProductTagObject;
 use BaseStoreProductTag;
+use BaseMerchantProductTag;
 
 class StoreSynchronization
 {
@@ -557,7 +558,7 @@ class StoreSynchronization
 
                     // save to product_tag
                     $delete_product_tag = ProductTagObject::where('object_id', '=', $base_store_id)->delete(true);
-                    $base_product_tags = BaseStoreProductTag::where('base_store_id', '=', $base_store_id)->get();
+                    $base_product_tags = BaseMerchantProductTag::where('base_merchant_id', '=', $base_merchant_id)->get();
                     $productTags = array();
                     foreach ($base_product_tags as $base_product_tag) {
                         $productTags[] = [ 'product_tag_object_id' => ObjectID::make(),

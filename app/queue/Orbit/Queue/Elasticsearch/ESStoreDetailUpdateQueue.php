@@ -54,7 +54,7 @@ class ESStoreDetailUpdateQueue
 
         $storeName = $data['name'];
         $countryName = $data['country'];
-        $store = Tenant::with('keywords','translations','adverts','campaignObjectPartners', 'categories')
+        $store = Tenant::with('keywords','translations','adverts','campaignObjectPartners', 'categories', 'product_tags')
                         ->select(
                             'merchants.merchant_id',
                             'merchants.name',
@@ -168,6 +168,11 @@ class ESStoreDetailUpdateQueue
                      $keywords[] = $keyword->keyword;
                 }
 
+                $productTags = array();
+                foreach ($_store->product_tags as $product_tag) {
+                    $productTags[] = $product_tag->product_tag;
+                }
+
                 $partnerIds = array();
                 foreach ($_store->campaignObjectPartners as $campaignObjectPartner) {
                     $partnerIds[] = $campaignObjectPartner->partner_id;
@@ -199,6 +204,7 @@ class ESStoreDetailUpdateQueue
                     'object_type' => $_store->object_type,
                     'category' => $categoryIds,
                     'keywords' => $keywords,
+                    'product_tag' => $productTags,
                     'partner_ids' => $partnerIds,
                     'mall_id' => $_store->mall_id,
                     'mall_name' => $_store->mall_name,

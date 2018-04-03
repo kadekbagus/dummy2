@@ -138,6 +138,26 @@ return array(
                  'index' => 'advert_stores',
                  'type'  => 'basic'
             ],
+
+            'news_mall_level_suggestions' => [
+                 'index' => 'news_mall_level_suggestions',
+                 'type'  => 'basic'
+            ],
+
+            'promotion_mall_level_suggestions' => [
+                 'index' => 'promotion_mall_level_suggestions',
+                 'type'  => 'basic'
+            ],
+
+           'coupon_mall_level_suggestions' => [
+                'index' => 'coupon_mall_level_suggestions',
+                'type'  => 'basic'
+            ],
+
+            'store_mall_level_suggestions' => [
+                 'index' => 'store_mall_level_suggestions',
+                 'type'  => 'basic'
+            ],
         ],
 
         // index list will be include in suggestion
@@ -148,6 +168,17 @@ return array(
             'store_suggestions',
             'mall_suggestions'
         ],
+
+        // index list will be include in suggestion in mall level
+        'suggestion_mall_level_indices' => [
+            'coupon_mall_level_suggestions',
+            'news_mall_level_suggestions',
+            'promotion_mall_level_suggestions',
+            'store_mall_level_suggestions',
+        ],
+
+        // Maximum mall id data in 1 document es, This implement for saving mall id in suggestion_mall_level*
+        'maximum_separated_mall_id' => 150,
 
         // index list will be include in popular
         'popular_indices' => [
@@ -6391,6 +6422,15 @@ return array(
             '164' => array(
                 'name' => 'click_my_credit_card_popup_icon',
                 'name_long' => 'Click My Credit Card/E-Wallet Popup',
+                'module_name' => 'Application',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // user add GTM web app to home screen via web app install banner
+            '165' => array(
+                'name' => 'click_add_homescreen',
+                'name_long' => 'Click Add Homescreen',
                 'module_name' => 'Application',
                 'type' => 'click',
                 'object_type' => null,

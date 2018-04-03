@@ -121,6 +121,7 @@ class ESCouponSuggestionUpdateQueue
                     'message' => $message
                 ];
             } elseif (count($coupon) === 0) {
+
                 $job->delete();
 
                 return [
@@ -220,8 +221,8 @@ class ESCouponSuggestionUpdateQueue
 
             $message = sprintf('[Job ID: `%s`] Elasticsearch Update Index; Status: OK; ES Index Name: %s; ES Index Type: %s; Coupon ID: %s; Coupon Name: %s',
                                 $job->getJobId(),
-                                $esConfig['indices']['coupons']['index'],
-                                $esConfig['indices']['coupons']['type'],
+                                $esConfig['indices']['coupon_suggestions']['index'],
+                                $esConfig['indices']['coupon_suggestions']['type'],
                                 $coupon->promotion_id,
                                 $coupon->promotion_name);
             Log::info($message);

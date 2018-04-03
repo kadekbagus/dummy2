@@ -60,7 +60,7 @@ class ESStoreUpdateQueue
 
             $storeName = $data['name'];
             $countryName = $data['country'];
-            $store = Tenant::with('keywords','translations','adverts','campaignObjectPartners', 'categories')
+            $store = Tenant::with('keywords','translations','adverts','campaignObjectPartners', 'categories', 'product_tags')
                             ->select(
                                 'merchants.merchant_id',
                                 'merchants.name',
@@ -153,6 +153,10 @@ class ESStoreUpdateQueue
                 $esQueue = new \Orbit\Queue\Elasticsearch\ESStoreSuggestionUpdateQueue();
                 $suggestion = $esQueue->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
 
+                // Update suggestion for mall level
+                $esSuggestionMallLevelQueue = new \Orbit\Queue\Elasticsearch\ESStoreMallLevelSuggestionUpdateQueue();
+                $suggestionMallLevel = $esSuggestionMallLevelQueue->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
+
                 // update detail
                 $esDetail = new \Orbit\Queue\Elasticsearch\ESStoreDetailUpdateQueue();
                 $detail = $esDetail->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
@@ -183,6 +187,11 @@ class ESStoreUpdateQueue
             $keywords = array();
             foreach ($store[0]->keywords as $keyword) {
                  $keywords[] = $keyword->keyword;
+            }
+
+            $productTags = array();
+            foreach ($store[0]->product_tags as $product_tag) {
+                 $productTags[] = $product_tag->product_tag;
             }
 
             $partnerIds = array();
@@ -365,6 +374,7 @@ class ESStoreUpdateQueue
                 'default_lang'        => $store[0]->mobile_default_language,
                 'category'            => $categoryIds,
                 'keywords'            => $keywords,
+                'product_tags'        => $productTags,
                 'partner_ids'         => $partnerIds,
                 'created_at'          => date('Y-m-d', strtotime($store[0]->created_at)) . 'T' . date('H:i:s', strtotime($store[0]->created_at)) . 'Z',
                 'updated_at'          => date('Y-m-d', strtotime($store[0]->updated_at)) . 'T' . date('H:i:s', strtotime($store[0]->updated_at)) . 'Z',

@@ -1584,7 +1584,7 @@ class PromotionalEventAPIController extends ControllerAPI
             }
 
             $promotionalevent = News::allowedForPMPUser($user, $object_type[0])
-                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'campaign_price.campaign_price_id', 'news_translations.news_name as display_name', DB::raw('media.path as image_path'),
+                        ->select('news.*', 'news.news_id as campaign_id', 'news.object_type as campaign_type', 'campaign_status.order', 'news_translations.news_name as display_name', DB::raw("{$prefix}media.path as image_path"),
                             DB::raw("COUNT(DISTINCT {$prefix}news_merchant.news_merchant_id) as total_location"),
                             DB::raw("(select GROUP_CONCAT(IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$prefix}merchants.name) ) separator ', ')
                                 from {$prefix}news_merchant
@@ -1598,22 +1598,17 @@ class PromotionalEventAPIController extends ControllerAPI
                             DB::raw("CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired' THEN {$prefix}campaign_status.order ELSE (CASE WHEN {$prefix}news.end_date < (SELECT CONVERT_TZ(UTC_TIMESTAMP(),'+00:00', ot.timezone_name) FROM {$prefix}merchants om
                                     LEFT JOIN {$prefix}timezones ot on ot.timezone_id = om.timezone_id
                                     WHERE om.merchant_id = {$prefix}news.mall_id)
-                                THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order"),
-                            DB::raw("CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END AS base_price, ((CASE WHEN {$prefix}campaign_price.base_price is null THEN 0 ELSE {$prefix}campaign_price.base_price END) * (DATEDIFF({$prefix}news.end_date, {$prefix}news.begin_date) + 1) * (SELECT COUNT(nm.news_merchant_id) FROM {$prefix}news_merchant as nm WHERE nm.object_type != 'mall' and nm.news_id = {$prefix}news.news_id)) AS estimated"))
-                        ->leftJoin('campaign_price', function ($join) use ($object_type) {
-                                $join->on('news.news_id', '=', 'campaign_price.campaign_id')
-                                     ->where('campaign_price.campaign_type', '=', $object_type);
-                          })
+                                THEN 5 ELSE {$prefix}campaign_status.order END) END  AS campaign_status_order")
+                        )
                         ->leftJoin('news_merchant', 'news_merchant.news_id', '=', 'news.news_id')
                         ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'news.campaign_status_id')
                         ->leftJoin('news_translations', 'news_translations.news_id', '=', 'news.news_id')
                         ->leftJoin('languages', 'languages.language_id', '=', 'news_translations.merchant_language_id')
-                        ->leftJoin(DB::raw("(
-                                SELECT {$prefix}media.* FROM {$prefix}media
-                                {$mediaJoin}
-                                WHERE media_name_long = 'news_translation_image_resized_default'
-                                {$mediaOptimize} ) as media
-                            "), DB::raw('media.object_id'), '=', 'news_translations.news_translation_id')
+                        ->leftJoin('media', function($join) use ($prefix) {
+                             $join->on('media.object_id', '=', 'news_translations.news_translation_id')
+                                 ->on(DB::raw("{$prefix}media.media_name_long = 'news_translation_image_resized_default'"), DB::raw(''), DB::raw(''))
+                                 ->on(DB::raw("{$prefix}media.object_name = 'news_translation'"), DB::raw(''), DB::raw(''));
+                         })
                         ->excludeDeleted('news')
                         ->where('is_having_reward', 'Y')
                         ->groupBy('news.news_id');
@@ -1749,23 +1744,6 @@ class PromotionalEventAPIController extends ControllerAPI
                         ) >= 1
                     ))
                 "));
-            });
-
-            // Filter promotionaleventnews by estimated total cost
-            OrbitInput::get('etc_from', function ($etcfrom) use ($promotionalevent) {
-                $etcto = OrbitInput::get('etc_to');
-                if (empty($etcto)) {
-                    $promotionalevent->havingRaw('estimated >= ' . floatval(str_replace(',', '', $etcfrom)));
-                }
-            });
-
-            // Filter promotionalevent by estimated total cost
-            OrbitInput::get('etc_to', function ($etcto) use ($promotionalevent) {
-                $etcfrom = OrbitInput::get('etc_from');
-                if (empty($etcfrom)) {
-                    $etcfrom = 0;
-                }
-                $promotionalevent->havingRaw('estimated between ' . floatval(str_replace(',', '', $etcfrom)) . ' and '. floatval(str_replace(',', '', $etcto)));
             });
 
             // Add new relation based on request

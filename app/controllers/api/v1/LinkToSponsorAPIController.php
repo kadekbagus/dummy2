@@ -57,6 +57,7 @@ class LinkToSponsorAPIController extends ControllerAPI
             $sponsorProviders = SponsorProvider::select('sponsor_providers.*', DB::raw("CONCAT({$prefix}sponsor_providers.name, ' (', {$prefix}countries.name, ')') as name"))
                                             ->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
                                             ->where('status', 'active')
+                                            ->orderBy('sponsor_providers.object_type', 'asc')
                                             ->orderBy('sponsor_providers.name', 'asc')
                                             ->get();
 
