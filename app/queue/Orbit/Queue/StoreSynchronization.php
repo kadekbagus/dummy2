@@ -46,6 +46,7 @@ use NewsMerchant;
 use ProductTagObject;
 use BaseStoreProductTag;
 use BaseMerchantProductTag;
+use CouponRetailerRedeem;
 
 class StoreSynchronization
 {
@@ -379,6 +380,7 @@ class StoreSynchronization
                                 if ($value->total_location == 1) {
                                     $campaignStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', '=', 'paused')->first();
                                     $updateNews = News::where('news_id', '=', $value->news_id)->first();
+                                    $updateNews->status = 'inactive';
                                     $updateNews->campaign_status_id = $campaignStatus->campaign_status_id;
                                     $updateNews->save();
                                 }
@@ -428,6 +430,7 @@ class StoreSynchronization
                                 if ($value->total_location == 1) {
                                     $campaignStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', '=', 'paused')->first();
                                     $updateCoupon = Coupon::where('promotion_id', '=', $value->promotion_id)->first();
+                                    $updateCoupon->status = 'inactive';
                                     $updateCoupon->campaign_status_id = $campaignStatus->campaign_status_id;
                                     $updateCoupon->save();
                                 }
@@ -437,6 +440,12 @@ class StoreSynchronization
                                                               ->where('retailer_id', '=', $base_store_id)
                                                               ->where('object_type', '=', 'tenant')
                                                               ->delete();
+
+                                // delete redemption place
+                                $deleteRetailerRedeem = CouponRetailerRedeem::where('promotion_id', '=', $value->promotion_id)
+                                                                        ->where('retailer_id', '=', $base_store_id)
+                                                                        ->where('object_type', '=', 'tenant')
+                                                                        ->delete();
 
                                 Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', ['coupon_id' => $value->promotion_id]);
                             }
