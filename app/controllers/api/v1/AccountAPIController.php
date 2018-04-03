@@ -1578,6 +1578,11 @@ class AccountAPIController extends ControllerAPI
                                                           ->whereIn('retailer_id', $existingUserMerchants)
                                                           ->delete();
 
+                        // delete redemption place
+                        $deleteRetailerRedeem = CouponRetailerRedeem::where('promotion_id', '=', $value->promotion_id)
+                                                                    ->whereIn('retailer_id', $existingUserMerchants)
+                                                                    ->delete();
+
                         $updateCoupon = Coupon::where('promotion_id', '=', $value->promotion_id)->first();
                         $updateCoupon->status = 'inactive';
                         $updateCoupon->campaign_status_id = $campaignStatus->campaign_status_id;
@@ -1805,6 +1810,11 @@ class AccountAPIController extends ControllerAPI
                             $deleteLocation = PromotionRetailer::where('promotion_id', '=', $value->promotion_id)
                                                               ->whereIn('retailer_id', $removetenant)
                                                               ->delete();
+
+                            // delete redemption place
+                            $deleteRetailerRedeem = CouponRetailerRedeem::where('promotion_id', '=', $value->promotion_id)
+                                                                    ->whereIn('retailer_id', $removetenant)
+                                                                    ->delete();
 
                             $currentLocation = PromotionRetailer::select(DB::raw('count(promotion_id) as total_location'))
                                                                 ->where('promotion_id', '=', $value->promotion_id)
