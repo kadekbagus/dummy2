@@ -319,12 +319,13 @@ class ESActivityUpdateQueue
      */
     protected function applyExtendedActivity($data, &$esBody)
     {
-        $esBody['tenant_id'] = '[EMPTY]';
-        $esBody['tenant_name'] = '[EMPTY]';
-        $esBody['mall_id'] = '[EMPTY]';
-        $esBody['mall_name'] = '[EMPTY]';
+        $esBody['tenant_id'] = '';
+        $esBody['tenant_name'] = '';
+        $esBody['mall_id'] = '';
+        $esBody['mall_name'] = '';
         $esBody['rating'] = '0';
-        $esBody['token_notification'] = '[EMPTY]';
+        $esBody['token_notification'] = '';
+        $esBody['filter_cities'] = '';
 
         if (! isset($data['extended_activity_id'])) {
             return;
@@ -335,11 +336,12 @@ class ESActivityUpdateQueue
             return;
         }
 
-        $esBody['tenant_id'] = $extendedActivity->tenant_id ? $extendedActivity->tenant_id : '[EMPTY]';
-        $esBody['tenant_name'] = $extendedActivity->tenant_name ? $extendedActivity->tenant_name : '[EMPTY]';
-        $esBody['mall_id'] = $extendedActivity->mall_id ? $extendedActivity->mall_id : '[EMPTY]';
-        $esBody['mall_name'] = $extendedActivity->mall_name ? $extendedActivity->mall_name : '[EMPTY]';
+        $esBody['tenant_id'] = $extendedActivity->tenant_id ? $extendedActivity->tenant_id : '';
+        $esBody['tenant_name'] = $extendedActivity->tenant_name ? $extendedActivity->tenant_name : '';
+        $esBody['mall_id'] = $extendedActivity->mall_id ? $extendedActivity->mall_id : '';
+        $esBody['mall_name'] = $extendedActivity->mall_name ? $extendedActivity->mall_name : '';
         $esBody['rating'] = trim($extendedActivity->rating) !== '' ? $extendedActivity->rating : '0';
-        $esBody['token_notification'] = trim($extendedActivity->notification_token) !== '' ? $extendedActivity->notification_token : '[EMPTY]';
+        $esBody['token_notification'] = trim($extendedActivity->notification_token) !== '' ? $extendedActivity->notification_token : '';
+        $esBody['filter_cities'] = trim($extendedActivity->filter_cities) !== '' ? $extendedActivity->filter_cities : '';
     }
 }
