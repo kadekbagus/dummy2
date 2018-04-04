@@ -71,15 +71,24 @@ class StoreListAdactiveAPIController extends PubControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
-            $mallInfo = Mall::select('name as mall_name', 'city', 'province', 'country', 'address_line1 as address',
+            $mallInfo = Mall::select('name as mall_name', 'city', 'province', 'country', 'address_line1 as address', 'operating_hours',
                                     DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.position), LOCATE('(', AsText({$prefix}merchant_geofences.position)) + 1, LOCATE(' ', AsText({$prefix}merchant_geofences.position)) - 1 - LOCATE('(', AsText({$prefix}merchant_geofences.position))) as lat"),
                                     DB::raw("SUBSTR(AsText({$prefix}merchant_geofences.position), LOCATE(' ', AsText({$prefix}merchant_geofences.position)) + 1, LOCATE(')', AsText({$prefix}merchant_geofences.position)) - 1 - LOCATE(' ', AsText({$prefix}merchant_geofences.position))) as lon"))
                             ->leftJoin('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id')
                             ->where('merchants.merchant_id', '=', $mallId)
                             ->first();
 
-            $stores = Tenant::select('merchant_id as store_id', 'name as store_name', 'description', 'floor', 'unit', 'operating_hours', 'media.cdn_url as logo_cdn')
-                            ->with('translations', 'categories')
+            $stores = Tenant::select('merchant_id as merchant_id', 'name as store_name', 'description', 'floor', 'unit', 'media.cdn_url as logo_cdn')
+                            ->with(['translations' => function($q) use($prefix) {
+                                    $q->select('merchant_translations.merchant_id', 'description', DB::raw("{$prefix}languages.name as language_code"));
+                                },
+                                'categories' => function($q) {
+                                    $q->select('category_merchant.merchant_id', 'categories.category_id')
+                                        ->where('status', 'active');
+                                },
+                                'product_tags' => function($q) {
+                                    $q->select('product_tag_object.object_id', 'product_tags.product_tag');
+                                }])
                             ->leftJoin('media', function($q) {
                                     $q->on('media.media_name_long', '=', DB::raw("'retailer_logo_orig'"));
                                     $q->on('media.object_id', '=', 'merchants.merchant_id');
@@ -115,6 +124,26 @@ class StoreListAdactiveAPIController extends PubControllerAPI
 
             $totalStores = $_stores->count();
             $listOfStores = $stores->get();
+
+            foreach ($listOfStores as $listOfStore) {
+                foreach ($listOfStore->translations as $translation) {
+                    unset($translation->merchant_id);
+                }
+
+                $categories = [];
+                foreach ($listOfStore->categories as $category) {
+                    $categories[] = $category->category_id;
+                }
+                unset($listOfStore->categories);
+                $listOfStore->categories = $categories;
+
+                $productTags = [];
+                foreach ($listOfStore->product_tags as $productTag) {
+                    $productTags[] = $productTag->product_tag;
+                }
+                unset($listOfStore->product_tags);
+                $listOfStore->product_tags = $productTags;
+            }
 
             $data = new \stdclass();
             $data->total_records = $totalStores;
