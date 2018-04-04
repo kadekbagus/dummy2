@@ -24,7 +24,7 @@ class StoreListAdactiveAPIController extends PubControllerAPI
     {
         try {
             $httpCode = 200;
-            $enabled = Config::get('orbit.enable_api.store_list_adactive', FALSE);
+            $enabled = Config::get('orbit.enable_api.adactive.enable_store_list_adactive_api', FALSE);
 
             if (!$enabled) {
                 return Response::view('errors.404');
@@ -38,7 +38,10 @@ class StoreListAdactiveAPIController extends PubControllerAPI
                     'mall_id' => $mallId
                 ),
                 array(
-                    'mall_id' => 'required|orbit.empty.mall'
+                    'mall_id' => 'required|orbit.empty.mall|orbit.whitelist.mall_id'
+                ),
+                array(
+                    'orbit.whitelist.mall_id' => 'Access Denied'
                 )
             );
 
@@ -141,7 +144,7 @@ class StoreListAdactiveAPIController extends PubControllerAPI
 
     protected function registerCustomValidation()
     {
-        // Check the existance of merchant id
+        // Check the existance of mall id
         Validator::extend('orbit.empty.mall', function ($attribute, $value, $parameters) {
             $mall = Mall::excludeDeleted()
                         ->where('merchant_id', $value)
@@ -154,6 +157,20 @@ class StoreListAdactiveAPIController extends PubControllerAPI
             App::instance('orbit.empty.mall', $mall);
 
             return TRUE;
+        });
+
+        // Check the mall id against whitelist ids
+        Validator::extend('orbit.whitelist.mall_id', function ($attribute, $value, $parameters) {
+            $whiteListedIds = Config::get('orbit.enable_api.adactive.whitelist_mall_ids', []);
+            if (empty($whiteListedIds)) {
+                return TRUE;
+            }
+
+            if (in_array($value, $whiteListedIds)) {
+                return TRUE;
+            }
+
+            return FALSE;
         });
     }
 }
