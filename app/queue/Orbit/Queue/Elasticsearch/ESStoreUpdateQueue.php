@@ -160,6 +160,11 @@ class ESStoreUpdateQueue
                 // update detail
                 $esDetail = new \Orbit\Queue\Elasticsearch\ESStoreDetailUpdateQueue();
                 $detail = $esDetail->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
+
+                // advert store
+                $esAdvert = new \Orbit\Queue\Elasticsearch\ESAdvertStoreUpdateQueue();
+                $esAdvertUpdate = $esAdvert->fire($fakeJob, ['name' => $storeName, 'country' => $countryName]);
+
             }
 
             if ($store->isEmpty()) {
