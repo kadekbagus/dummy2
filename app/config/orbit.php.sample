@@ -7208,4 +7208,8 @@ return array(
             'connection' => 'page_view'
         ],
     ],
+
+    'enable_api' => [
+        'store_list_adactive' => TRUE
+    ]
 );
