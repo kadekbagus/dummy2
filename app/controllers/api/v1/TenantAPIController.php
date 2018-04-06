@@ -2283,6 +2283,8 @@ class TenantAPIController extends ControllerAPI
             }
 
             $tenants = CampaignLocation::select('merchants.merchant_id',
+                                            'merchants.floor',
+                                            'merchants.unit',
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                             DB::raw("IF({$prefix}merchants.object_type = 'tenant', CONCAT({$prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ', {$prefix}merchants.name)) as display_name"),
                                             'merchants.status',
