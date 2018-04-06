@@ -184,6 +184,13 @@ class MallListNewAPIController extends PubControllerAPI
                 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
 
+            $objectFollow = $scriptFields['objectFollow'];
+
+            $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
+            if ($bypassMallOrder === 'n') {
+                $mallSearch->bypassMallOrder(compact('countryFilter', 'cityFilters'));
+            }
+
             // Force to sort result by relevance if any keyword is set.
             if (! empty($keyword)) {
                 $sortBy = 'relevance';

@@ -71,6 +71,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $lat = '';
             $mallId = OrbitInput::get('mall_id', null);
             $keyword = OrbitInput::get('keyword', null);
+            $myCCFilter = OrbitInput::get('my_cc_filter', false);
 
             $prefix = DB::getTablePrefix();
 
@@ -158,9 +159,14 @@ class MenuCounterAPIController extends PubControllerAPI
             $campaignCityFilter = [];
             $keywordMallFilter = [];
             $keywordMallFilterShould = [];
+            $categoryCampaignFilter = [];
+            $categoryStoreFilter = [];
+            $sponsorFilter = [];
+            $storeCountryFilter = [];
+            $storeCityFilter = [];
             $countryData = null;
             // filter by country
-            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter) {
+            OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter) {
                 $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
 
                 // campaign
@@ -188,10 +194,22 @@ class MenuCounterAPIController extends PubControllerAPI
                                                 'name' => 'country_city_hits'
                                             ],
                                         ]];
+
+                $storeCountryFilter = ['nested' => [
+                                            'path' => 'tenant_detail',
+                                            'query' => [
+                                                'match' => [
+                                                    'tenant_detail.country.raw' => $countryFilter
+                                                ]
+                                            ],
+                                            'inner_hits' => [
+                                                'name' => 'country_city_hits'
+                                            ],
+                                        ]];
             });
 
             // filter by city, only filter when countryFilter is not empty
-            OrbitInput::get('cities', function ($cityFilters) use (&$campaignJsonQuery, &$mallJsonQuery, $countryFilter, &$campaignCountryCityFilterArr, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCityFilter) {
+            OrbitInput::get('cities', function ($cityFilters) use (&$campaignJsonQuery, &$mallJsonQuery, $countryFilter, &$campaignCountryCityFilterArr, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCityFilter, &$storeCityFilter) {
                 if (! empty($countryFilter)) {
                     $shouldMatch = Config::get('orbit.elasticsearch.minimum_should_match.news.city', '');
                     $campaignCityFilterArr = [];
@@ -223,6 +241,7 @@ class MenuCounterAPIController extends PubControllerAPI
                 }
 
                 $campaignCityFilter['bool']['should'] = [];
+                $storeCityFilter['bool']['should'] = [];
 
                 foreach((array) $cityFilters as $city) {
                     $campaignCityFilter['bool']['should'][] = [
@@ -235,7 +254,19 @@ class MenuCounterAPIController extends PubControllerAPI
                             ]
                         ]
                     ];
+
+                    $storeCityFilter['bool']['should'][] = [
+                        'nested' => [
+                            'path' => 'tenant_detail',
+                            'query' => [
+                                'match' => [
+                                    'tenant_detail.city.raw' => $city
+                                ]
+                            ]
+                        ]
+                    ];
                 }
+
             });
 
             // filter by mall_id (use in mall homepage/mall detail)
@@ -305,6 +336,32 @@ class MenuCounterAPIController extends PubControllerAPI
                                             "city" . $priorityCity)));
             });
 
+            // filter by category
+            OrbitInput::get('category_id', function($category_ids) use (&$categoryCampaignFilter, &$categoryStoreFilter) {
+                foreach((array) $category_ids as $category_id) {
+                    $categoryCampaignFilter['bool']['should'][] = ['match' => ['category_ids' => $category_id]];
+                    $categoryStoreFilter['bool']['should'][] = ['match' => ['category' => $category_id]];
+                }
+            });
+
+            // filter by category
+            OrbitInput::get('sponsor_provider_ids', function($sponsor_provider_ids) use (&$sponsorFilter) {
+                $sponsor_provider_ids = (array) $sponsor_provider_ids;
+                $sponsor_provider_ids = array_values($sponsor_provider_ids);
+
+                $sponsorFilter = [
+                        'nested' => [
+                            'path' => 'sponsor_provider',
+                            'query' => [
+                                'terms' => [
+                                    'sponsor_provider.sponsor_id' => $sponsor_provider_ids
+                                ]
+                            ]
+                        ]
+                ];
+            });
+
+
             /* old query
             if (! empty($campaignCountryCityFilterArr)) {
                 $campaignJsonQuery['query']['bool']['should'][] = $campaignCountryCityFilterArr;
@@ -325,8 +382,16 @@ class MenuCounterAPIController extends PubControllerAPI
                 $merchantJsonQuery['query']['bool']['must'][] = $merchantCountryCityFilterArr;
             }
 
+            /* old query
             if (! empty($storeCountryCityFilterArr)) {
                 $storeJsonQuery['query']['bool']['must'][] = $storeCountryCityFilterArr;
+            }*/
+            if (! empty($storeCountryFilter)) {
+                $storeJsonQuery['query']['bool']['must'][] = $storeCountryFilter;
+            }
+
+            if (! empty($storeCityFilter)) {
+                $storeJsonQuery['query']['bool']['must'][] = $storeCityFilter;
             }
 
             if (! empty($mallFilterCampaign)) {
@@ -357,13 +422,28 @@ class MenuCounterAPIController extends PubControllerAPI
                 $mallJsonQuery['query']['bool']['should'][] = $keywordMallFilterShould;
             }
 
+            if (! empty($categoryCampaignFilter)) {
+                $campaignJsonQuery['query']['bool']['must'][] = $categoryCampaignFilter;
+                $couponJsonQuery['query']['bool']['must'][] = $categoryCampaignFilter;
+            }
+
+            if (! empty($categoryStoreFilter)) {
+                $storeJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
+            }
+
+            if (! empty($sponsorFilter)) {
+                $campaignJsonQuery['query']['bool']['must'][] = $sponsorFilter;
+                $couponJsonQuery['query']['bool']['must'][] = $sponsorFilter;
+            }
+
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
             $newsIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.news.index');
             $promotionIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.promotions.index');
             $couponIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index');
             $mallIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index');
             $merchantIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores');
-            $storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.store_details.index', 'store_details');
+            //$storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.store_details.index', 'store_details');
+            $storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'store_details');
 
             // call es campaign
             $campaignParam = [
