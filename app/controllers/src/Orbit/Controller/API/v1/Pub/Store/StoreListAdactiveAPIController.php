@@ -82,9 +82,12 @@ class StoreListAdactiveAPIController extends PubControllerAPI
                             ->with(['translations' => function($q) use($prefix) {
                                     $q->select('merchant_translations.merchant_id', 'description', DB::raw("{$prefix}languages.name as language_code"));
                                 },
-                                'categories' => function($q) {
+                                'categories' => function($q) use($prefix) {
                                     $q->select('category_merchant.merchant_id', 'categories.category_id')
-                                        ->where('status', 'active');
+                                        ->where('categories.status', 'active')
+                                        ->with(['translationsWithoutStatusExclusion' => function($q2) {
+                                            $q2->leftJoin('languages', 'category_translations.merchant_language_id', '=', 'languages.language_id');
+                                        }]);
                                 },
                                 'product_tags' => function($q) {
                                     $q->select('product_tag_object.object_id', 'product_tags.product_tag');
@@ -132,7 +135,17 @@ class StoreListAdactiveAPIController extends PubControllerAPI
 
                 $categories = [];
                 foreach ($listOfStore->categories as $category) {
-                    $categories[] = $category->category_id;
+                    $_category = new \stdclass();
+                    $categoryTranslation = [];
+                    foreach ($category->translationsWithoutStatusExclusion as $translation) {
+                        $_translation = new \stdclass();
+                        $_translation->category_name = $translation->category_name;
+                        $_translation->language_code = $translation->name;
+                        $categoryTranslation[] = $_translation;
+                    }
+                    $_category->category_id = $category->category_id;
+                    $_category->translations = $categoryTranslation;
+                    $categories[] = $_category;
                 }
                 unset($listOfStore->categories);
                 $listOfStore->categories = $categories;
