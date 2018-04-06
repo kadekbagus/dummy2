@@ -83,8 +83,10 @@ class StoreListAdactiveAPIController extends PubControllerAPI
                                     $q->select('merchant_translations.merchant_id', 'description', DB::raw("{$prefix}languages.name as language_code"));
                                 },
                                 'categories' => function($q) {
-                                    $q->select('category_merchant.merchant_id', 'categories.category_id')
-                                        ->where('status', 'active');
+                                    $q->select('category_merchant.merchant_id', 'categories.category_id', 'category_translations.category_name as cat_name', 'languages.name as lang_code')
+                                        ->where('categories.status', 'active');
+                                    $q->leftJoin('category_translations', 'categories.category_id', '=', 'category_translations.category_id');
+                                    $q->leftJoin('languages', 'languages.language_id', '=', 'category_translations.merchant_language_id');
                                 },
                                 'product_tags' => function($q) {
                                     $q->select('product_tag_object.object_id', 'product_tags.product_tag');
@@ -132,7 +134,7 @@ class StoreListAdactiveAPIController extends PubControllerAPI
 
                 $categories = [];
                 foreach ($listOfStore->categories as $category) {
-                    $categories[] = $category->category_id;
+                    $categories[$category->category_id]['translation'][] = ['category_name' => $category->cat_name,'language_code' => $category->lang_code];
                 }
                 unset($listOfStore->categories);
                 $listOfStore->categories = $categories;
