@@ -164,6 +164,8 @@ class MenuCounterAPIController extends PubControllerAPI
             $sponsorFilter = [];
             $storeCountryFilter = [];
             $storeCityFilter = [];
+            $partnerFilterMustNot = [];
+            $partnerFilterMust = [];
             $countryData = null;
             // filter by country
             OrbitInput::get('country', function ($countryFilter) use (&$campaignJsonQuery, &$mallJsonQuery, &$campaignCountryCityFilterArr, &$countryData, &$merchantCountryCityFilterArr, &$storeCountryCityFilterArr, &$campaignCountryFilter, &$storeCountryFilter) {
@@ -361,6 +363,35 @@ class MenuCounterAPIController extends PubControllerAPI
                 ];
             });
 
+            OrbitInput::get('partner_id', function($partnerId) use (&$partnerFilterMustNot, &$partnerFilterMust){
+                $partnerAffected = PartnerAffectedGroup::join('affected_group_names', function($join) {
+                                            $join->on('affected_group_names.affected_group_name_id', '=', 'partner_affected_group.affected_group_name_id')
+                                                 ->where('affected_group_names.group_type', '=', 'promotion');
+                                        })
+                                        ->where('partner_id', $partnerId)
+                                        ->first();
+
+                if (is_object($partnerAffected)) {
+                $exception = Config::get('orbit.partner.exception_behaviour.partner_ids', []);
+
+                    if (in_array($partnerId, $exception)) {
+                        $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
+
+                        $partnerFilterMustNot = ['terms' => [
+                                                    'partner_ids' => $partnerIds
+                                                    ]
+                                                ];
+                    }
+                    else {
+                        $partnerFilterMust = [
+                            'match' => [
+                                'partner_ids' => $partnerId
+                            ]
+                        ];
+                    }
+                }
+            });
+
 
             /* old query
             if (! empty($campaignCountryCityFilterArr)) {
@@ -378,20 +409,20 @@ class MenuCounterAPIController extends PubControllerAPI
                 $couponJsonQuery['query']['bool']['must'][] = $campaignCityFilter;
             }
 
-            if (! empty($merchantCountryCityFilterArr)) {
-                $merchantJsonQuery['query']['bool']['must'][] = $merchantCountryCityFilterArr;
-            }
+            // if (! empty($merchantCountryCityFilterArr)) {
+            //     $merchantJsonQuery['query']['bool']['must'][] = $merchantCountryCityFilterArr;
+            // }
 
             /* old query
             if (! empty($storeCountryCityFilterArr)) {
                 $storeJsonQuery['query']['bool']['must'][] = $storeCountryCityFilterArr;
             }*/
             if (! empty($storeCountryFilter)) {
-                $storeJsonQuery['query']['bool']['must'][] = $storeCountryFilter;
+                $merchantJsonQuery['query']['bool']['must'][] = $storeCountryFilter;
             }
 
             if (! empty($storeCityFilter)) {
-                $storeJsonQuery['query']['bool']['must'][] = $storeCityFilter;
+                $merchantJsonQuery['query']['bool']['must'][] = $storeCityFilter;
             }
 
             if (! empty($mallFilterCampaign)) {
@@ -428,12 +459,25 @@ class MenuCounterAPIController extends PubControllerAPI
             }
 
             if (! empty($categoryStoreFilter)) {
-                $storeJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
+                //$storeJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
+                $merchantJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
             }
 
             if (! empty($sponsorFilter)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $sponsorFilter;
                 $couponJsonQuery['query']['bool']['must'][] = $sponsorFilter;
+            }
+
+            if (! empty($partnerFilterMustNot)) {
+                $campaignJsonQuery['query']['bool']['must_not'][] = $partnerFilterMustNot;
+                $couponJsonQuery['query']['bool']['must_not'][] = $partnerFilterMustNot;
+                $merchantJsonQuery['query']['bool']['must_not'][] = $partnerFilterMustNot;
+            }
+
+            if (! empty($partnerFilterMust)) {
+                $campaignJsonQuery['query']['bool']['must'][] = $partnerFilterMust;
+                $couponJsonQuery['query']['bool']['must'][] = $partnerFilterMust;
+                $merchantJsonQuery['query']['bool']['must'][] = $partnerFilterMust;
             }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
@@ -442,8 +486,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $couponIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index');
             $mallIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index');
             $merchantIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores');
-            //$storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.store_details.index', 'store_details');
-            $storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'store_details');
+            $storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.store_details.index', 'store_details');
 
             // call es campaign
             $campaignParam = [
