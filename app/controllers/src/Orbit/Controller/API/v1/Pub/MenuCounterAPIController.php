@@ -409,20 +409,20 @@ class MenuCounterAPIController extends PubControllerAPI
                 $couponJsonQuery['query']['bool']['must'][] = $campaignCityFilter;
             }
 
-            if (! empty($merchantCountryCityFilterArr)) {
-                $merchantJsonQuery['query']['bool']['must'][] = $merchantCountryCityFilterArr;
-            }
+            // if (! empty($merchantCountryCityFilterArr)) {
+            //     $merchantJsonQuery['query']['bool']['must'][] = $merchantCountryCityFilterArr;
+            // }
 
             /* old query
             if (! empty($storeCountryCityFilterArr)) {
                 $storeJsonQuery['query']['bool']['must'][] = $storeCountryCityFilterArr;
             }*/
             if (! empty($storeCountryFilter)) {
-                $storeJsonQuery['query']['bool']['must'][] = $storeCountryFilter;
+                $merchantJsonQuery['query']['bool']['must'][] = $storeCountryFilter;
             }
 
             if (! empty($storeCityFilter)) {
-                $storeJsonQuery['query']['bool']['must'][] = $storeCityFilter;
+                $merchantJsonQuery['query']['bool']['must'][] = $storeCityFilter;
             }
 
             if (! empty($mallFilterCampaign)) {
@@ -459,7 +459,8 @@ class MenuCounterAPIController extends PubControllerAPI
             }
 
             if (! empty($categoryStoreFilter)) {
-                $storeJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
+                //$storeJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
+                $merchantJsonQuery['query']['bool']['must'][] = $categoryStoreFilter;
             }
 
             if (! empty($sponsorFilter)) {
@@ -470,11 +471,13 @@ class MenuCounterAPIController extends PubControllerAPI
             if (! empty($partnerFilterMustNot)) {
                 $campaignJsonQuery['query']['bool']['must_not'][] = $partnerFilterMustNot;
                 $couponJsonQuery['query']['bool']['must_not'][] = $partnerFilterMustNot;
+                $merchantJsonQuery['query']['bool']['must_not'][] = $partnerFilterMustNot;
             }
 
             if (! empty($partnerFilterMust)) {
                 $campaignJsonQuery['query']['bool']['must'][] = $partnerFilterMust;
                 $couponJsonQuery['query']['bool']['must'][] = $partnerFilterMust;
+                $merchantJsonQuery['query']['bool']['must'][] = $partnerFilterMust;
             }
 
             $esPrefix = Config::get('orbit.elasticsearch.indices_prefix');
@@ -483,8 +486,7 @@ class MenuCounterAPIController extends PubControllerAPI
             $couponIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.coupons.index');
             $mallIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.malldata.index');
             $merchantIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'stores');
-            //$storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.store_details.index', 'store_details');
-            $storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.stores.index', 'store_details');
+            $storeIndex = $esPrefix . Config::get('orbit.elasticsearch.indices.store_details.index', 'store_details');
 
             // call es campaign
             $campaignParam = [
