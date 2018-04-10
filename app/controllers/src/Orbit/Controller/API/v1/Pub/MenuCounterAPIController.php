@@ -34,6 +34,7 @@ use Elasticsearch\ClientBuilder;
 use Carbon\Carbon as Carbon;
 use stdClass;
 use Country;
+use UserSponsor;
 
 class MenuCounterAPIController extends PubControllerAPI
 {
