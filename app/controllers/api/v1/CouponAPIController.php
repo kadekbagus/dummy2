@@ -13,7 +13,6 @@ use Helper\EloquentRecordCounter as RecordCounter;
 use Carbon\Carbon as Carbon;
 use \Orbit\Helper\Exception\OrbitCustomException;
 use Orbit\Helper\Payment\Payment as PaymentClient;
-use Cache;
 
 class CouponAPIController extends ControllerAPI
 {

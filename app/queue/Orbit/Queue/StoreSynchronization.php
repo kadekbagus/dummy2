@@ -46,7 +46,6 @@ use NewsMerchant;
 use ProductTagObject;
 use BaseStoreProductTag;
 use BaseMerchantProductTag;
-use Cache;
 
 class StoreSynchronization
 {
