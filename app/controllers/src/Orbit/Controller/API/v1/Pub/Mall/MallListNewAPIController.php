@@ -102,6 +102,18 @@ class MallListNewAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
 
+            $cacheKey = [
+                'country' => $countryFilter,
+                'cities' => $cityFilters,
+                'skip' => $skip,
+                'take' => $take,
+                'sort_by' => $sortBy,
+                'sort_mode' => $sortMode,
+                'language' => $language,
+                'location' => $location,
+                'list_type' => $list_type
+            ];
+
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
             $timestamp = date("Y-m-d H:i:s");
             $date = Carbon::createFromFormat('Y-m-d H:i:s', $timestamp, 'UTC');
@@ -136,6 +148,7 @@ class MallListNewAPIController extends PubControllerAPI
 
             $keyword = OrbitInput::get('keyword', null);
             if (! empty($keyword)) {
+                $cacheKey['keyword'] = $keyword;
                 $mallSearch->filterByKeyword($keyword);
             }
 
@@ -167,6 +180,14 @@ class MallListNewAPIController extends PubControllerAPI
                 }
             });
 
+            // Make sure to prioritize mall order from config 
+            // (At the moment, until we add feature to set ordering in admin portal)
+            $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
+            if ($bypassMallOrder === 'n') {
+                $cacheKey['by_pass_mall_order'] = $bypassMallOrder;
+                $mallSearch->bypassMallOrder(compact('countryFilter', 'cityFilters'));
+            }
+
             // Get Advertised Malls...
             $withPreferred = [];
             if ($withAdvert) {
@@ -174,22 +195,14 @@ class MallListNewAPIController extends PubControllerAPI
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
                 $advertResult = $mallSearch->filterWithAdvert(compact('dateTimeEs', 'advertType', 'locationId', 'list_type'));
-                // return \Response::json($advertResult);
                 $withPreferred = $advertResult['withPreferred'];
             }
-
-            // return \Response::json($withPreferred);
 
             $scriptFields = $mallSearch->addReviewFollowScript(compact(
                 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
 
             $objectFollow = $scriptFields['objectFollow'];
-
-            $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
-            if ($bypassMallOrder === 'n') {
-                $mallSearch->bypassMallOrder(compact('countryFilter', 'cityFilters'));
-            }
 
             // Force to sort result by relevance if any keyword is set.
             if (! empty($keyword)) {
@@ -245,8 +258,8 @@ class MallListNewAPIController extends PubControllerAPI
 
                 $pageView = 0;
                 if (Config::get('orbit.page_view.source', 'mysql') === 'redis') {
-                    $redisKeyGTM = 'mall' . '||' . $dt['_id'] . '||0';
-                    $redisKeyMall = 'mall' . '||' . $dt['_id'] . '||' . $dt['_id'];
+                    $redisKeyGTM = 'mall' . '||' . $mallId . '||0';
+                    $redisKeyMall = 'mall' . '||' . $mallId . '||' . $mallId;
                     $redisConnection = Config::get('orbit.page_view.redis.connection', '');
                     $redis = Redis::connection($redisConnection);
                     $pageViewGTM = (! empty($redis->get($redisKeyGTM))) ? $redis->get($redisKeyGTM) : 0;
@@ -257,7 +270,7 @@ class MallListNewAPIController extends PubControllerAPI
 
                 $followStatus = false;
                 if (! empty($objectFollow)) {
-                    if (in_array($dt['_id'], $objectFollow)) {
+                    if (in_array($mallId, $objectFollow)) {
                         // if mall_id is available inside $objectFollow set follow status to true
                         $followStatus = true;
                     }
@@ -266,7 +279,7 @@ class MallListNewAPIController extends PubControllerAPI
                 if ($words === 1) {
                     // handle if user filter location with one word, ex "jakarta", data in city "jakarta selatan", "jakarta barat" etc will be dissapear
                     if (strtolower($dt['_source']['city']) === strtolower($location)) {
-                        $areadata['id'] = $dt['_id'];
+                        $areadata['id'] = $mallId;
                         $localPath = '';
                         $cdnPath = '';
 
@@ -312,7 +325,7 @@ class MallListNewAPIController extends PubControllerAPI
                     }
                     $total = count($listmall);
                 } else {
-                    $areadata['id'] = $dt['_id'];
+                    $areadata['id'] = $mallId;
                     $localPath = '';
                     $cdnPath = '';
 
