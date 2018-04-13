@@ -479,7 +479,7 @@ class MallSearch extends Search
 
     public function filterAdvertMalls($options = [])
     {
-        $this->must([
+        $this->filter([
             'bool' => [
                 'should' => [
                     [
