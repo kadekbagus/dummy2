@@ -310,15 +310,15 @@ class PromotionalEventAPIController extends ControllerAPI
             foreach ($keywords as $keyword) {
                 $keyword_id = null;
 
-                foreach ($mallid as $mall) {
+                // foreach ($mallid as $mall) {
                     $exist_keyword = Keyword::excludeDeleted()
                         ->where('keyword', '=', $keyword)
-                        ->where('merchant_id', '=', $mall)
+                        ->where('merchant_id', '=', 0)
                         ->first();
 
                     if (empty($exist_keyword)) {
                         $new_keyword = new Keyword();
-                        $new_keyword->merchant_id = $mall;
+                        $new_keyword->merchant_id = 0;
                         $new_keyword->keyword = $keyword;
                         $new_keyword->status = 'active';
                         $new_keyword->created_by = $this->api->user->user_id;
@@ -337,7 +337,7 @@ class PromotionalEventAPIController extends ControllerAPI
                     $new_keyword_object->object_id = $newpromotional_event->news_id;
                     $new_keyword_object->object_type = $object_type;
                     $new_keyword_object->save();
-                }
+                // }
             }
             $newpromotional_event->keywords = $promotional_event_keywords;
 
@@ -346,15 +346,15 @@ class PromotionalEventAPIController extends ControllerAPI
             foreach ($productTags as $productTag) {
                 $product_tag_id = null;
 
-                foreach ($mallid as $mall) {
+                // foreach ($mallid as $mall) {
                     $existProductTag = ProductTag::excludeDeleted()
                         ->where('product_tag', '=', $productTag)
-                        ->where('merchant_id', '=', $mall)
+                        ->where('merchant_id', '=', 0)
                         ->first();
 
                     if (empty($existProductTag)) {
                         $newProductTag = new ProductTag();
-                        $newProductTag->merchant_id = $mall;
+                        $newProductTag->merchant_id = 0;
                         $newProductTag->product_tag = $productTag;
                         $newProductTag->status = 'active';
                         $newProductTag->created_by = $this->api->user->user_id;
@@ -373,7 +373,7 @@ class PromotionalEventAPIController extends ControllerAPI
                     $newProductTagObject->object_id = $newpromotional_event->news_id;
                     $newProductTagObject->object_type = $object_type;
                     $newProductTagObject->save();
-                }
+                // }
             }
             $newpromotional_event->product_tags = $promotionalEventProductTags;
 
@@ -1768,9 +1768,13 @@ class PromotionalEventAPIController extends ControllerAPI
                     } elseif ($relation === 'ages') {
                         $promotionalevent->with('ages');
                     } elseif ($relation === 'keywords') {
-                        $promotionalevent->with('keywords');
+                        $promotionalevent->with(['keywords' => function($query) {
+                            $query->groupBy('keyword');
+                        }]);
                     } elseif ($relation === 'product_tags') {
-                        $promotionalevent->with('product_tags');
+                        $promotionalevent->with(['product_tags' => function($query) {
+                            $query->groupBy('product_tag');
+                        }]);
                     } elseif ($relation === 'campaignObjectPartners') {
                         $promotionalevent->with('campaignObjectPartners');
                     } elseif ($relation === 'rewardDetail') {
