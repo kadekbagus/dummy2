@@ -96,13 +96,15 @@ class Coupon extends Eloquent
     public function keywords()
     {
         return $this->hasMany('KeywordObject', 'object_id', 'promotion_id')
-                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id');
+                    ->join('keywords', 'keywords.keyword_id', '=', 'keyword_object.keyword_id')
+                    ->groupBy('keywords.keyword');
     }
 
     public function product_tags()
     {
         return $this->hasMany('ProductTagObject', 'object_id', 'promotion_id')
-                    ->join('product_tags', 'product_tags.product_tag_id', '=', 'product_tag_object.product_tag_id');
+                    ->join('product_tags', 'product_tags.product_tag_id', '=', 'product_tag_object.product_tag_id')
+                    ->groupBy('product_tags.product_tag');
     }
 
     public function campaign_status()
