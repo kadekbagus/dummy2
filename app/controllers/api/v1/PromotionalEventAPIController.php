@@ -1026,16 +1026,15 @@ class PromotionalEventAPIController extends ControllerAPI
                 foreach ($keywords as $keyword) {
                     $keyword_id = null;
 
-                    foreach ($mallid as $mall) {
-
+                    // foreach ($mallid as $mall) {
                         $exist_keyword = Keyword::excludeDeleted()
                             ->where('keyword', '=', $keyword)
-                            ->where('merchant_id', '=', $mall)
+                            ->where('merchant_id', '=', 0)
                             ->first();
 
                         if (empty($exist_keyword)) {
                             $new_keyword = new Keyword();
-                            $new_keyword->merchant_id = $mall;
+                            $new_keyword->merchant_id = 0;
                             $new_keyword->keyword = $keyword;
                             $new_keyword->status = 'active';
                             $new_keyword->created_by = $user->user_id;
@@ -1055,7 +1054,7 @@ class PromotionalEventAPIController extends ControllerAPI
                         $newKeywordObject->object_id = $promotional_event_id;
                         $newKeywordObject->object_type = $object_type;
                         $newKeywordObject->save();
-                    }
+                    // }
 
                 }
                 $updatedpromotional_event->keywords = $promotional_event_keywords;
@@ -1072,15 +1071,15 @@ class PromotionalEventAPIController extends ControllerAPI
                 foreach ($productTags as $productTag) {
                     $product_tag_id = null;
 
-                    foreach ($mallid as $mall) {
+                    // foreach ($mallid as $mall) {
                         $existProductTag = ProductTag::excludeDeleted()
                             ->where('product_tag', '=', $productTag)
-                            ->where('merchant_id', '=', $mall)
+                            ->where('merchant_id', '=', 0)
                             ->first();
 
                         if (empty($existProductTag)) {
                             $newProductTag = new ProductTag();
-                            $newProductTag->merchant_id = $mall;
+                            $newProductTag->merchant_id = 0;
                             $newProductTag->product_tag = $productTag;
                             $newProductTag->status = 'active';
                             $newProductTag->created_by = $user->user_id;
@@ -1099,7 +1098,7 @@ class PromotionalEventAPIController extends ControllerAPI
                         $newProductTagObject->object_id = $promotional_event_id;
                         $newProductTagObject->object_type = $object_type;
                         $newProductTagObject->save();
-                    }
+                    // }
 
                 }
                 $updatedpromotional_event->product_tags = $promotionalEventProductTags;
