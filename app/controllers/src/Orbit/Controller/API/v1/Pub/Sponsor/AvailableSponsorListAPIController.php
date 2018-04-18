@@ -103,13 +103,6 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                                        ->where('status', 'active')
                                        ->orderBy('sponsor_providers.name', 'asc');
             } elseif ($objectType === 'credit_card') {
-                $bankId = OrbitInput::get('bank_id');
-
-                if ($validator->fails()) {
-                    $errorMessage = "Bank ID is required";
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
                 $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";
                 if ($usingCdn) {
                     $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
