@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace Orbit\Controller\API\v1\Pub\Mall;
 
@@ -51,7 +51,7 @@ class MallListNewAPIController extends PubControllerAPI
 
     /**
      *
-     * 
+     *
      * @return [type] [description]
      */
     public function getMallList()
@@ -130,7 +130,7 @@ class MallListNewAPIController extends PubControllerAPI
             $esStoreIndex = $esConfig['indices_prefix'] . $esConfig['indices']['malldata']['index'];
             $mallSearch = new MallSearch($esConfig);
 
-            $mallSearch->setPaginationParams(['from' => $skip, 'size' => $take]);
+            $mallSearch->setPaginationParams(['from' => $skip, 'size' => 50]);
 
             $mallSearch->filterBase();
 
@@ -142,7 +142,7 @@ class MallListNewAPIController extends PubControllerAPI
                 $countryData = Country::select('country_id')->where('name', $countryFilter)->first();
             }
 
-            // Otherwise, we filter based on user's selection of country 
+            // Otherwise, we filter based on user's selection of country
             // and/or cities
             $mallSearch->filterByCountryAndCities($area);
 
@@ -170,7 +170,7 @@ class MallListNewAPIController extends PubControllerAPI
 
                         if (in_array($partnerId, $exception)) {
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
-                            
+
                             $mallSearch->excludePartnerCompetitors($partnerIds);
                         }
                         else {
