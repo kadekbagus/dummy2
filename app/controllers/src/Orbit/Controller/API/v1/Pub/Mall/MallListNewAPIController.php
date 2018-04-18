@@ -205,7 +205,7 @@ class MallListNewAPIController extends PubControllerAPI
             $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
             if ($bypassMallOrder === 'n') {
                 $cacheKey['by_pass_mall_order'] = $bypassMallOrder;
-                $mallSearch->bypassMallOrder(compact('countryFilter', 'cityFilters'));
+                $this->searcher->bypassMallOrder(compact('countryFilter', 'cityFilters'));
             }
 
             // Get Advertised Malls...
@@ -214,7 +214,7 @@ class MallListNewAPIController extends PubControllerAPI
                 $locationId = 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-                $advertResult = $mallSearch->filterWithAdvert(compact('dateTimeEs', 'advertType', 'locationId', 'list_type'));
+                $advertResult = $this->searcher->filterWithAdvert(compact('dateTimeEs', 'advertType', 'locationId', 'list_type'));
                 $withPreferred = $advertResult['withPreferred'];
             }
 
