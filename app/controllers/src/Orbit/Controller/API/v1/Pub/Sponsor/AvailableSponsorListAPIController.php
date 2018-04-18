@@ -20,9 +20,32 @@ use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Language;
 use DB;
+use Validator;
 
 class AvailableSponsorListAPIController extends PubControllerAPI
 {
+    /**
+     * create validator instance
+     * @param  string $objectType object type of bank, ewallet, credit_card
+     * @param  string $language   language identifier
+     * @param  string $bankId     bank identifier
+     * @return Validator validator instance
+     */
+    private function createValidator($objectType, $language, $bankId)
+    {
+        return Validator::make(
+            array(
+                'object_type' => $objectType,
+                'language' => $language,
+                'bank_id' => $bankId
+            ),
+            array(
+                'object_type'   => 'required|in:bank,ewallet,credit_card',
+                'bank_id'   => 'required_if|object_type,credit_card',
+                'language' => 'required|orbit.empty.language_default',
+            )
+        );
+    }
 
     /**
      * GET - Get active sponsor list (all)
@@ -44,8 +67,17 @@ class AvailableSponsorListAPIController extends PubControllerAPI
             $user = $this->api->user;
 
             $prefix = DB::getTablePrefix();
+
             $objectType = OrbitInput::get('object_type', 'bank');
             $lang = OrbitInput::get('language', 'id');
+            $bankId = OrbitInput::get('bank_id');
+            $validator = $this->createValidator($objectType, $lang, $bankId);
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $language = Language::where('status', '=', 'active')
                             ->where('name', $lang)
