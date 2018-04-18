@@ -99,11 +99,6 @@ class MenuCounterAPIController extends PubControllerAPI
 
             $mallJsonQuery = array('from' => 0, 'size' => 1, 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('is_subscribed' => 'Y'))), array('query' => array('match' => array('status' => 'active')))))));
 
-            // filter mall_id
-            if (!empty($mallId)) {
-                $mallJsonQuery = array('from' => 0, 'size' => 1, 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('is_subscribed' => 'Y'))), array('query' => array('match' => array('status' => 'active'))), array('query' => array('match' => array('merchant_id' => $mallId)))))));
-            }
-
             $merchantJsonQuery = array('from' => 0, 'size' => 1);
             $storeJsonQuery = $merchantJsonQuery;
 
