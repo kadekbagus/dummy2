@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace Orbit\Helper\Elasticsearch;
 
@@ -41,7 +41,7 @@ class Search
 
     /**
      * Set the Indices.
-     * 
+     *
      * @param string $index [description]
      */
     public function setIndex($index = '')
@@ -51,7 +51,7 @@ class Search
 
     /**
      * Get the indices.
-     * 
+     *
      * @return [type] [description]
      */
     public function getIndex()
@@ -61,7 +61,7 @@ class Search
 
     /**
      * Set the type of the Indices.
-     * 
+     *
      * @param string $type [description]
      */
     public function setType($type = '')
@@ -71,7 +71,7 @@ class Search
 
     /**
      * Get (full or partial) param that will be sent to ES Server.
-     * 
+     *
      * @return [type] [description]
      */
     public function getRequestParam($key = '')
@@ -89,8 +89,8 @@ class Search
     }
 
     /**
-     * Set the pagination parameter: the start index and the amount of data that will be taken. 
-     * 
+     * Set the pagination parameter: the start index and the amount of data that will be taken.
+     *
      * @param array $param [description]
      */
     public function setPaginationParams($param = [])
@@ -101,7 +101,7 @@ class Search
 
     /**
      * Add query into bool "must" array.
-     * 
+     *
      * @param  array  $query [description]
      * @return [type]        [description]
      */
@@ -112,7 +112,7 @@ class Search
 
     /**
      * Add query into bool "must_not" array.
-     * 
+     *
      * @param  array  $query [description]
      * @return [type]        [description]
      */
@@ -123,7 +123,7 @@ class Search
 
     /**
      * Add query into bool "filter" array.
-     * 
+     *
      * @param  array  $query [description]
      * @return [type]        [description]
      */
@@ -134,7 +134,7 @@ class Search
 
     /**
      * Add query into bool "should" array.
-     * 
+     *
      * @param  array  $query [description]
      * @return [type]        [description]
      */
@@ -145,7 +145,7 @@ class Search
 
     /**
      * Add bool query into constant_scoring.
-     * 
+     *
      * @param  string $boolType [description]
      * @param  array  $query    [description]
      * @return [type]           [description]
@@ -174,8 +174,29 @@ class Search
     }
 
     /**
+     * Add sort query/script into sort array.
+     *
+     * @param  array  $sortParams [description]
+     * @return [type]             [description]
+     */
+    public function sort($sortParams = [])
+    {
+        $this->searchParam['body']['sort'][] = $sortParams;
+    }
+
+    /**
+     * How to sort the result.
+     *
+     * @param  array  $sortParams [description]
+     * @return [type]             [description]
+     */
+    public function sortBy($sortParams = []) {
+        $this->sort($sortParams);
+    }
+
+    /**
      * Add script into script_fields array.
-     * 
+     *
      * @param  array  $scriptFields [description]
      * @return [type]               [description]
      */
@@ -187,40 +208,53 @@ class Search
             ];
         }
     }
-
-    /**
-     * Add sort query/script into sort array.
-     * 
-     * @param  array  $sortParams [description]
-     * @return [type]             [description]
-     */
-    public function sort($sortParams = [])
-    {
-        $this->searchParam['body']['sort'][] = $sortParams;
-    }
-
-    /**
-     * How to sort the result.
-     * 
-     * @param  array  $sortParams [description]
-     * @return [type]             [description]
-     */
-    public function sortBy($sortParams = []) {
-        $this->sort($sortParams);
-    }
-
     /**
      * Run the search, and get the result.
-     * 
+     *
      * @return [type] [description]
      */
     public function getResult($resultMapperClass = '')
     {
         $this->searchParam['body'] = json_encode($this->searchParam['body']);
 
-        // if ($resultMapperClass == '')
-            return $this->client->search($this->searchParam);
-        // else
-            // return new $resultMapperClass($this->client->search($this->searchParam))->map();
+        return $this->client->search($this->searchParam);
+    }
+
+    /**
+     * Set/Override search params
+     *
+     * @param $params array
+     * @return void
+     */
+    public function setParams($params = [])
+    {
+        foreach ($params as $param => $value) {
+            $this->searchParam[$param] = $value;
+        }
+    }
+
+    /**
+     * Remove search params array element by key
+     *
+     * @param $key string (dot notation array)
+     * @return void
+     */
+    public function removeParamItem($key='')
+    {
+        if (! empty($key)) {
+            if (! is_null(array_get($this->searchParam, $key, null))) {
+                array_forget($this->searchParam, $key);
+            }
+        }
+    }
+
+    /**
+     * Get client
+     *
+     * @return $client Elasticsearch\ClientBuilder
+     */
+    public function getActiveClient()
+    {
+        return $this->client;
     }
 }
