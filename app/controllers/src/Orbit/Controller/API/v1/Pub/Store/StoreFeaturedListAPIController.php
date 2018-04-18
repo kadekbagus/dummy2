@@ -579,7 +579,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
 
             $sortby = array("_score", $sortPage, $defaultSort);
             $jsonQuery['sort'] = $sortby;
-            $jsonQuery['size'] = 4;
+            $jsonQuery['size'] = 50;
 
             // boost slot
             $boost = [500, 400, 300, 200];
