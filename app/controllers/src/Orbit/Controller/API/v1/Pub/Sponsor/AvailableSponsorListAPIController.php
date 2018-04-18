@@ -114,7 +114,8 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                                                   ->on('media.media_name_long', '=', DB::raw("'sponsor_credit_card_image_orig'"));
                                             })
                                             ->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
-                                            ->where('sponsor_credit_cards.sponsor_provider_id', $bankId)
+                                            ->join('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'sponsor_credit_cards.sponsor_provider_id')
+                                            ->where('sponsor_providers.sponsor_provider_id', $bankId)
                                             ->where('sponsor_credit_cards.status', 'active')
                                             ->orderBy('sponsor_credit_cards.name', 'asc');
             }
