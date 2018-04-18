@@ -262,29 +262,38 @@ class GenerateSitemapCommand extends Command
         }
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
-        $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
 
-        if ($this->responseCheck($response)) {
-            $counter = $response->data->returned_records;
-            $total_records = $response->data->total_records;
+        $listController = Orbit\Controller\API\v1\Pub\Promotion\PromotionListNewAPIController::create('raw')
+            ->setUser($this->user)
+            ->setUseScroll();
 
-            if (! empty($total_records)) {
-                $urlTemplate = $this->urlTemplate;
-                if (! empty($mall_id)) {
-                    $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-                    $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-                }
+        $scroller = $listController->getSearcher();
 
-                $this->detailAppender($response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+        $response = $listController->getSearchPromotion();
 
-                while ($counter < $response->data->total_records) {
-                    $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                    $response = Orbit\Controller\API\v1\Pub\Promotion\PromotionListAPIController::create('raw')->setUser($this->user)->getSearchPromotion();
+        if ($this->scrollResponseCheck($response)) {
+            $scrollId = $response['_scroll_id'];
 
-                    $this->detailAppender($response->data->records, 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+            while (true) {
+                // Execute a Scroll request
+                $scrollResponse = $scroller->scroll(["scroll_id" => $scrollId, "scroll" => "20s"]);
 
-                    $counter = $counter + $response->data->returned_records;
-                    usleep($this->sleep);
+                // Check to see if we got any search hits from the scroll
+                if (count($scrollResponse['hits']['hits']) > 0) {
+                    // If yes, Do Work Here
+
+                    $urlTemplate = $this->urlTemplate;
+                    if (! empty($mall_id)) {
+                        $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                        $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+                    }
+                    // build the url
+                    $this->detailAppender($this->scrollRecords($scrollResponse), 'promotion', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                    // Get new scrollId
+                    $scrollId = $scrollResponse['_scroll_id'];
+                } else {
+                    break;
                 }
             }
         }
@@ -309,29 +318,38 @@ class GenerateSitemapCommand extends Command
 
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
-        $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
 
-        if ($this->responseCheck($response)) {
-            $counter = $response->data->returned_records;
-            $total_records = $response->data->total_records;
+        $listController = Orbit\Controller\API\v1\Pub\News\NewsListNewAPIController::create('raw')
+            ->setUser($this->user)
+            ->setUseScroll();
 
-            if (! empty($total_records)) {
-                $urlTemplate = $this->urlTemplate;
-                if (! empty($mall_id)) {
-                    $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-                    $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-                }
+        $scroller = $listController->getSearcher();
 
-                $this->detailAppender($response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+        $response = $listController->getSearchNews();
 
-                while ($counter < $response->data->total_records) {
-                    $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                    $response = Orbit\Controller\API\v1\Pub\News\NewsListAPIController::create('raw')->setUser($this->user)->getSearchNews();
+        if ($this->scrollResponseCheck($response)) {
+            $scrollId = $response['_scroll_id'];
 
-                    $this->detailAppender($response->data->records, 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+            while (true) {
+                // Execute a Scroll request
+                $scrollResponse = $scroller->scroll(["scroll_id" => $scrollId, "scroll" => "20s"]);
 
-                    $counter = $counter + $response->data->returned_records;
-                    usleep($this->sleep);
+                // Check to see if we got any search hits from the scroll
+                if (count($scrollResponse['hits']['hits']) > 0) {
+                    // If yes, Do Work Here
+
+                    $urlTemplate = $this->urlTemplate;
+                    if (! empty($mall_id)) {
+                        $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                        $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+                    }
+                    // build the url
+                    $this->detailAppender($this->scrollRecords($scrollResponse), 'event', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                    // Get new scrollId
+                    $scrollId = $scrollResponse['_scroll_id'];
+                } else {
+                    break;
                 }
             }
         }
@@ -354,31 +372,37 @@ class GenerateSitemapCommand extends Command
             $_GET['country'] = $this->country;
         }
 
-        $_GET['take'] = 50;
-        $_GET['skip'] = 0;
-        $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
+        $listController = Orbit\Controller\API\v1\Pub\Coupon\CouponListNewAPIController::create('raw')
+            ->setUser($this->user)
+            ->setUseScroll();
 
-        if ($this->responseCheck($response)) {
-            $counter = $response->data->returned_records;
-            $total_records = $response->data->total_records;
+        $scroller = $listController->getSearcher();
 
-            if (! empty($total_records)) {
-                $urlTemplate = $this->urlTemplate;
-                if (! empty($mall_id)) {
-                    $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-                    $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-                }
+        $response = $listController->getCouponList();
 
-                $this->detailAppender($response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+        if ($this->scrollResponseCheck($response)) {
+            $scrollId = $response['_scroll_id'];
 
-                while ($counter < $response->data->total_records) {
-                    $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                    $response = Orbit\Controller\API\v1\Pub\Coupon\CouponListAPIController::create('raw')->setUser($this->user)->getCouponList();
+            while (true) {
+                // Execute a Scroll request
+                $scrollResponse = $scroller->scroll(["scroll_id" => $scrollId, "scroll" => "20s"]);
 
-                    $this->detailAppender($response->data->records, 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+                // Check to see if we got any search hits from the scroll
+                if (count($scrollResponse['hits']['hits']) > 0) {
+                    // If yes, Do Work Here
 
-                    $counter = $counter + $response->data->returned_records;
-                    usleep($this->sleep);
+                    $urlTemplate = $this->urlTemplate;
+                    if (! empty($mall_id)) {
+                        $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                        $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+                    }
+                    // build the url
+                    $this->detailAppender($this->scrollRecords($scrollResponse), 'coupon', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                    // Get new scrollId
+                    $scrollId = $scrollResponse['_scroll_id'];
+                } else {
+                    break;
                 }
             }
         }
@@ -401,41 +425,34 @@ class GenerateSitemapCommand extends Command
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
         $mallSkip = 0;
-        $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
 
-        if ($this->responseCheck($response)) {
-            $counter = $response->data->returned_records;
-            $total_records = $response->data->total_records;
-            $listUris = Config::get('orbit.sitemap.uri_properties.list', []);
+        $listController = Orbit\Controller\API\v1\Pub\Mall\MallListNewAPIController::create('raw')
+            ->setUseScroll()
+            ->setUser($this->user);
 
-            if (! empty($total_records)) {
-                $listUrlTemplate = sprintf($this->urlTemplate, $detailUri['uri']) . '/%s';
+        $scroller = $listController->getSearcher();
 
-                foreach ($response->data->records as $record) {
-                    $updatedAt = $this->getLastPromotionUpdatedAt($record['id']);
-                    $this->urlStringPrinter(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
-                }
+        $response = $listController->getMallList();
 
-                while ($counter < $response->data->total_records) {
-                    unset($_GET);
+        if ($this->scrollResponseCheck($response)) {
+            $scrollId = $response['_scroll_id'];
 
-                    if (! empty($this->country)) {
-                        $_GET['country'] = $this->country;
-                    }
-                    $_GET['take'] = 50;
-                    $mallSkip = $mallSkip + $_GET['take'];
-                    $_GET['skip'] = $mallSkip;
-                    $response = Orbit\Controller\API\v1\Pub\Mall\MallListAPIController::create('raw')->setUser($this->user)->getMallList();
+            while (true) {
+                // Execute a Scroll request
+                $scrollResponse = $scroller->scroll(["scroll_id" => $scrollId, "scroll" => "20s"]);
 
-                    if ($this->responseCheck($response)) {
-                        foreach ($response->data->records as $record) {
-                            $updatedAt = $this->getLastPromotionUpdatedAt($record['id']);
-                            $this->urlStringPrinter(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
-                        }
+                // Check to see if we got any search hits from the scroll
+                if (count($scrollResponse['hits']['hits']) > 0) {
+                    // build the url
+                    foreach ($this->scrollRecords($scrollResponse) as $record) {
+                        $updatedAt = $this->getLastPromotionUpdatedAt(strtotime($record['updated_at']));
+                        $this->urlStringPrinter(sprintf(sprintf($this->urlTemplate, $detailUri['uri']), $record['merchant_id'], Str::slug($record['name'])), date('c', $updatedAt), $detailUri['changefreq']);
                     }
 
-                    $counter = $counter + $response->data->returned_records;
-                    usleep($this->sleep);
+                    // Get new scrollId
+                    $scrollId = $scrollResponse['_scroll_id'];
+                } else {
+                    break;
                 }
             }
         }
@@ -460,29 +477,37 @@ class GenerateSitemapCommand extends Command
 
         $_GET['take'] = 50;
         $_GET['skip'] = 0;
-        $response = Orbit\Controller\API\v1\Pub\Store\StoreListAPIController::create('raw')->setUser($this->user)->getStoreList();
+        $listController = Orbit\Controller\API\v1\Pub\Store\StoreListNewAPIController::create('raw')
+            ->setUseScroll()
+            ->setUser($this->user);
 
-        if ($this->responseCheck($response)) {
-            $counter = $response->data->returned_records;
-            $total_records = $response->data->total_records;
+        $scroller = $listController->getSearcher();
 
-            if (! empty($total_records)) {
-                $urlTemplate = $this->urlTemplate;
-                if (! empty($mall_id)) {
-                    $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
-                    $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
-                }
+        $response = $listController->getStoreList();
 
-                $this->detailAppender($response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+        if ($this->scrollResponseCheck($response)) {
+            $scrollId = $response['_scroll_id'];
 
-                while ($counter < $response->data->total_records) {
-                    $_GET['skip'] = $_GET['skip'] + $_GET['take'];
-                    $response = Orbit\Controller\API\v1\Pub\Store\StoreListAPIController::create('raw')->setUser($this->user)->getStoreList();
+            while (true) {
+                // Execute a Scroll request
+                $scrollResponse = $scroller->scroll(["scroll_id" => $scrollId, "scroll" => "20s"]);
 
-                    $this->detailAppender($response->data->records, 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+                // Check to see if we got any search hits from the scroll
+                if (count($scrollResponse['hits']['hits']) > 0) {
+                    // If yes, Do Work Here
 
-                    $counter = $counter + $response->data->returned_records;
-                    usleep($this->sleep);
+                    $urlTemplate = $this->urlTemplate;
+                    if (! empty($mall_id)) {
+                        $mallUri = Config::get('orbit.sitemap.uri_properties.detail.mall', []);
+                        $urlTemplate = sprintf($urlTemplate, $mallUri['uri']) . '/%s';
+                    }
+                    // build the url
+                    $this->detailAppender($this->scrollRecords($scrollResponse), 'store', $urlTemplate, $detailUri, $mall_id, $mall_slug);
+
+                    // Get new scrollId
+                    $scrollId = $scrollResponse['_scroll_id'];
+                } else {
+                    break;
                 }
             }
         }
@@ -541,7 +566,7 @@ class GenerateSitemapCommand extends Command
                 case 'promotion':
                 case 'event':
                     $id = $record['news_id'];
-                    $name = $record['news_name'];
+                    $name = isset($record['news_name']) ? $record['news_name'] : $record['name'];
 
                     if ($type === 'event' && isset($record['is_having_reward']) && $record['is_having_reward'] === 'Y') {
                         $detailUri = Config::get('orbit.sitemap.uri_properties.detail.promotional-event', []);
@@ -549,8 +574,8 @@ class GenerateSitemapCommand extends Command
                     break;
 
                 case 'coupon':
-                    $id = $record['coupon_id'];
-                    $name = $record['coupon_name'];
+                    $id = isset($record['coupon_id']) ? $record['coupon_id'] : $record['promotion_id'];
+                    $name = isset($record['coupon_name']) ? $record['coupon_name'] : $record['name'];
                     break;
 
                 case 'store':
@@ -627,6 +652,38 @@ class GenerateSitemapCommand extends Command
     {
         $ok = (is_object($response) && $response->code === 0 && ! is_null($response->data)) ? TRUE : FALSE;
         return $ok;
+    }
+
+    /**
+     * Check response for scroll id
+     *
+     * @return boolean
+     */
+    protected function scrollResponseCheck($response)
+    {
+        $ok = (isset($response['_scroll_id']) && ! empty($response['_scroll_id'])) ? TRUE : FALSE;
+        return $ok;
+    }
+
+    /**
+     * Get records from scroller
+     *
+     * @return array
+     */
+    protected function scrollRecords($response)
+    {
+        $hits = $response['hits'];
+
+        $records = [];
+        foreach ($hits['hits'] as $hit) {
+            $data = [];
+            foreach ($hit['_source'] as $key => $value) {
+                $data[$key] = $value;
+            }
+            $records[] = $data;
+        }
+
+        return $records;
     }
 
     /**
