@@ -42,7 +42,7 @@ class AvailableSponsorListAPIController extends PubControllerAPI
             array(
                 'object_type'   => 'required|in:bank,ewallet,credit_card',
                 'bank_id'   => 'required_if:object_type,credit_card',
-                'language' => 'required|orbit.empty.language_default',
+                'language' => 'required',
             )
         );
     }
