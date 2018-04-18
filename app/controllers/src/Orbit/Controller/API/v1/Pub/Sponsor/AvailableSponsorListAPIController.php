@@ -108,7 +108,7 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                     $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
                 }
 
-                $sponsor = SponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id as sponsor_id', 'sponsor_providers.name', 'countries.name as country_name', DB::raw("({$image}) as image_url"))
+                $sponsor = SponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id as sponsor_id', 'sponsor_credit_cards.name', 'countries.name as country_name', DB::raw("({$image}) as image_url"))
                                             ->leftJoin('media', function ($q) use ($prefix){
                                                 $q->on('media.object_id', '=', 'sponsor_credit_cards.sponsor_credit_card_id')
                                                   ->on('media.media_name_long', '=', DB::raw("'sponsor_credit_card_image_orig'"));
