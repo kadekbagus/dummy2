@@ -150,7 +150,7 @@ class MallListNewAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
+            $this->searcher->setPaginationParams(['from' => $skip, 'size' => 50]);
 
             $this->searcher->filterBase();
 
