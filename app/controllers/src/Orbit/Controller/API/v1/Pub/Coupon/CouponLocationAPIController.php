@@ -171,7 +171,8 @@ class CouponLocationAPIController extends PubControllerAPI
                                             DB::raw("{$mallLogo}"),
                                             DB::raw("{$locationLogo}"),
                                             DB::raw("{$mallMap}"),
-                                            DB::raw("{$prefix}merchants.phone as phone"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN '' ELSE oms.phone END as phone"),
+                                            DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.phone ELSE '' END as store_phone"),
                                             DB::raw("{$prefix}merchants.name as name_orig"),
                                             DB::raw("x(position) as latitude"),
                                             DB::raw("y(position) as longitude")
