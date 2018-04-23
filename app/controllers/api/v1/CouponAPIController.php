@@ -3340,7 +3340,7 @@ class CouponAPIController extends ControllerAPI
                         }]);
                     } elseif ($relation === 'product_tags') {
                         $news->with(['product_tags' => function($query) {
-                            $query->groupBy('product_tag')
+                            $query->groupBy('product_tag');
                         }]);
                     } elseif ($relation === 'campaignObjectPartners') {
                         $coupons->with('campaignObjectPartners');
