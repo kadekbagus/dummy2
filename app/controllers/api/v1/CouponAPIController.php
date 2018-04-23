@@ -3335,11 +3335,11 @@ class CouponAPIController extends ControllerAPI
                     } elseif ($relation === 'ages') {
                         $coupons->with('ages');
                     } elseif ($relation === 'keywords') {
-                        $news->with(['keywords' => function($query) {
+                        $coupons->with(['keywords' => function($query) {
                             $query->groupBy('keyword');
                         }]);
                     } elseif ($relation === 'product_tags') {
-                        $news->with(['product_tags' => function($query) {
+                        $coupons->with(['product_tags' => function($query) {
                             $query->groupBy('product_tag');
                         }]);
                     } elseif ($relation === 'campaignObjectPartners') {
