@@ -113,6 +113,7 @@ class MallListNewAPIController extends PubControllerAPI
             $viewType = OrbitInput::get('view_type', 'grid');
             $list_type = OrbitInput::get('list_type', 'preferred');
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
+            $bankBaseMerchantId = OrbitInput::get('bank_base_merchant_id', null);
             $latitude = '';
             $longitude = '';
             $locationFilter = '';
