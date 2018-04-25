@@ -34,6 +34,7 @@ use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Orbit\Controller\API\v1\Pub\Store\StoreHelper;
 use Country;
+use BaseMerchant;
 use Orbit\Helper\Util\FollowStatusChecker;
 
 use MallSearch;
@@ -139,7 +140,8 @@ class MallListNewAPIController extends PubControllerAPI
                 'sort_mode' => $sortMode,
                 'language' => $language,
                 'location' => $location,
-                'list_type' => $list_type
+                'list_type' => $list_type,
+                'bank_base_merchant_id' => $bankBaseMerchantId
             ];
 
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
@@ -282,6 +284,33 @@ class MallListNewAPIController extends PubControllerAPI
 
                 return $this->searcher->getResult();
             }
+
+            // This scope for et list mall per bank, klik button location in bank detail page
+            // There is no data bank in mall ES, so we need to get data mall id per bank
+            $mallIdsPerBank = [];
+            if (! empty($bankBaseMerchantId)) {
+                $withAdvert = false;
+                $bankBaseMerchant = BaseMerchant::select('base_merchant_id', 'name', 'country_id')
+                ->where('base_merchant_id', $bankBaseMerchantId)
+                ->where('status', 'active')
+                ->first();
+
+                if (! empty($bankBaseMerchant)) {
+                    // Get mall list which have bank
+                    $mallIdsPerBank = Tenant::select(DB::raw('mall.merchant_id'))
+                                    ->join('merchants as mall', DB::raw('mall.merchant_id'), '=', 'merchants.parent_id')
+                                    ->where('merchants.name', $bankBaseMerchant['name'])
+                                    ->where('merchants.country_id', $bankBaseMerchant['country_id'])
+                                    ->where('merchants.status', 'active')
+                                    ->where(DB::raw('mall.status'), 'active')
+                                    ->get();
+                }
+            }
+
+            if ($bankBaseMerchantId != null) {
+                $this->searcher->getMallPerBank($mallIdsPerBank);
+            }
+            // end scope list mall per bank
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
