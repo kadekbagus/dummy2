@@ -354,6 +354,21 @@ class StoreSynchronization
 
                     // handle inactive store
                     if ($store->status === 'inactive') {
+
+                        // Remove all key *store* in Redis
+                        if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                            $redis = Cache::getRedis();
+                            $keyName = array('store','home');
+                            foreach ($keyName as $value) {
+                                $keys = $redis->keys("*$value*");
+                                if (! empty($keys)) {
+                                    foreach ($keys as $key) {
+                                        $redis->del($key);
+                                    }
+                                }
+                            }
+                        }
+
                         $prefix = DB::getTablePrefix();
                         // check campaign that linked to this inactive store
                         $news = News::select('news.news_name','news.news_id', 'news.object_type', 'news.status', 'news.campaign_status_id',
