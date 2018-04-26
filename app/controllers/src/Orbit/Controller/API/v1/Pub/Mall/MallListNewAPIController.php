@@ -121,6 +121,11 @@ class MallListNewAPIController extends PubControllerAPI
             $withCache = TRUE;
             $words = 0;
 
+            // No need advert in bank detail page and list coming from bank detail
+            if ($bankBaseMerchantId != null) {
+                $withAdvert = false;
+            }
+
             // search by key word or filter or sort by flag
             $searchFlag = FALSE;
 
@@ -287,9 +292,9 @@ class MallListNewAPIController extends PubControllerAPI
 
             // This scope for et list mall per bank, klik button location in bank detail page
             // There is no data bank in mall ES, so we need to get data mall id per bank
-            $mallIdsPerBank = [];
-            if (! empty($bankBaseMerchantId)) {
-                $withAdvert = false;
+            if ($bankBaseMerchantId != null) {
+                $mallIdsPerBank = [];
+
                 $bankBaseMerchant = BaseMerchant::select('base_merchant_id', 'name', 'country_id')
                 ->where('base_merchant_id', $bankBaseMerchantId)
                 ->where('status', 'active')
@@ -305,10 +310,10 @@ class MallListNewAPIController extends PubControllerAPI
                                     ->where(DB::raw('mall.status'), 'active')
                                     ->get();
                 }
-            }
 
-            if ($bankBaseMerchantId != null) {
-                $this->searcher->getMallPerBank($mallIdsPerBank);
+                if ($bankBaseMerchantId != null) {
+                    $this->searcher->getMallPerBank($mallIdsPerBank);
+                }
             }
             // end scope list mall per bank
 
