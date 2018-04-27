@@ -19,6 +19,7 @@ use MerchantTranslation;
 use Media;
 use Country;
 use PreSync;
+use Cache;
 use Sync;
 use Config;
 use DB;
