@@ -549,7 +549,6 @@ class PromotionListNewAPIController extends PubControllerAPI
                 }
 
                 $data->returned_records = count($output);
-                $data->total_records = $records['total'];
                 $data->records = $output;
             }
 
