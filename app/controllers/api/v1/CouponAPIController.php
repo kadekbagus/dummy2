@@ -851,34 +851,32 @@ class CouponAPIController extends ControllerAPI
             foreach ($keywords as $keyword) {
                 $keyword_id = null;
 
-                // foreach ($mallid as $mall) {
-                    $existKeyword = Keyword::excludeDeleted()
-                    ->where('keyword', '=', $keyword)
-                    ->where('merchant_id', '=', 0)
-                    ->first();
+                $existKeyword = Keyword::excludeDeleted()
+                ->where('keyword', '=', $keyword)
+                ->where('merchant_id', '=', 0)
+                ->first();
 
-                    if (empty($existKeyword)) {
-                        $newKeyword = new Keyword();
-                        $newKeyword->merchant_id = 0;
-                        $newKeyword->keyword = $keyword;
-                        $newKeyword->status = 'active';
-                        $newKeyword->created_by = $this->api->user->user_id;
-                        $newKeyword->modified_by = $this->api->user->user_id;
-                        $newKeyword->save();
+                if (empty($existKeyword)) {
+                    $newKeyword = new Keyword();
+                    $newKeyword->merchant_id = 0;
+                    $newKeyword->keyword = $keyword;
+                    $newKeyword->status = 'active';
+                    $newKeyword->created_by = $this->api->user->user_id;
+                    $newKeyword->modified_by = $this->api->user->user_id;
+                    $newKeyword->save();
 
-                        $keyword_id = $newKeyword->keyword_id;
-                        $couponKeywords[] = $newKeyword;
-                    } else {
-                        $keyword_id = $existKeyword->keyword_id;
-                        $couponKeywords[] = $existKeyword;
-                    }
+                    $keyword_id = $newKeyword->keyword_id;
+                    $couponKeywords[] = $newKeyword;
+                } else {
+                    $keyword_id = $existKeyword->keyword_id;
+                    $couponKeywords[] = $existKeyword;
+                }
 
-                    $newKeywordObject = new KeywordObject();
-                    $newKeywordObject->keyword_id = $keyword_id;
-                    $newKeywordObject->object_id = $newcoupon->promotion_id;
-                    $newKeywordObject->object_type = 'coupon';
-                    $newKeywordObject->save();
-                // }
+                $newKeywordObject = new KeywordObject();
+                $newKeywordObject->keyword_id = $keyword_id;
+                $newKeywordObject->object_id = $newcoupon->promotion_id;
+                $newKeywordObject->object_type = 'coupon';
+                $newKeywordObject->save();
             }
             $newcoupon->keywords = $couponKeywords;
 
@@ -2287,35 +2285,33 @@ class CouponAPIController extends ControllerAPI
                 foreach ($keywords as $keyword) {
                     $keyword_id = null;
 
-                    // foreach ($mallid as $mall) {
-                        $existKeyword = Keyword::excludeDeleted()
-                            ->where('keyword', '=', $keyword)
-                            ->where('merchant_id', '=', 0)
-                            ->first();
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
 
-                        if (empty($existKeyword)) {
-                            $newKeyword = new Keyword();
-                            $newKeyword->merchant_id = 0;
-                            $newKeyword->keyword = $keyword;
-                            $newKeyword->status = 'active';
-                            $newKeyword->created_by = $user->user_id;
-                            $newKeyword->modified_by = $user->user_id;
-                            $newKeyword->save();
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = 0;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
 
-                            $keyword_id = $newKeyword->keyword_id;
-                            $couponKeywords[] = $newKeyword;
-                        } else {
-                            $keyword_id = $existKeyword->keyword_id;
-                            $couponKeywords[] = $existKeyword;
-                        }
+                        $keyword_id = $newKeyword->keyword_id;
+                        $couponKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $couponKeywords[] = $existKeyword;
+                    }
 
 
-                        $newKeywordObject = new KeywordObject();
-                        $newKeywordObject->keyword_id = $keyword_id;
-                        $newKeywordObject->object_id = $promotion_id;
-                        $newKeywordObject->object_type = 'coupon';
-                        $newKeywordObject->save();
-                    // }
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $promotion_id;
+                    $newKeywordObject->object_type = 'coupon';
+                    $newKeywordObject->save();
                 }
                 $updatedcoupon->keywords = $couponKeywords;
             });

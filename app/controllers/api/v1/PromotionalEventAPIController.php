@@ -310,34 +310,32 @@ class PromotionalEventAPIController extends ControllerAPI
             foreach ($keywords as $keyword) {
                 $keyword_id = null;
 
-                // foreach ($mallid as $mall) {
-                    $exist_keyword = Keyword::excludeDeleted()
-                        ->where('keyword', '=', $keyword)
-                        ->where('merchant_id', '=', 0)
-                        ->first();
+                $exist_keyword = Keyword::excludeDeleted()
+                    ->where('keyword', '=', $keyword)
+                    ->where('merchant_id', '=', 0)
+                    ->first();
 
-                    if (empty($exist_keyword)) {
-                        $new_keyword = new Keyword();
-                        $new_keyword->merchant_id = 0;
-                        $new_keyword->keyword = $keyword;
-                        $new_keyword->status = 'active';
-                        $new_keyword->created_by = $this->api->user->user_id;
-                        $new_keyword->modified_by = $this->api->user->user_id;
-                        $new_keyword->save();
+                if (empty($exist_keyword)) {
+                    $new_keyword = new Keyword();
+                    $new_keyword->merchant_id = 0;
+                    $new_keyword->keyword = $keyword;
+                    $new_keyword->status = 'active';
+                    $new_keyword->created_by = $this->api->user->user_id;
+                    $new_keyword->modified_by = $this->api->user->user_id;
+                    $new_keyword->save();
 
-                        $keyword_id = $new_keyword->keyword_id;
-                        $promotional_event_keywords[] = $new_keyword;
-                    } else {
-                        $keyword_id = $exist_keyword->keyword_id;
-                        $promotional_event_keywords[] = $exist_keyword;
-                    }
+                    $keyword_id = $new_keyword->keyword_id;
+                    $promotional_event_keywords[] = $new_keyword;
+                } else {
+                    $keyword_id = $exist_keyword->keyword_id;
+                    $promotional_event_keywords[] = $exist_keyword;
+                }
 
-                    $new_keyword_object = new KeywordObject();
-                    $new_keyword_object->keyword_id = $keyword_id;
-                    $new_keyword_object->object_id = $newpromotional_event->news_id;
-                    $new_keyword_object->object_type = $object_type;
-                    $new_keyword_object->save();
-                // }
+                $new_keyword_object = new KeywordObject();
+                $new_keyword_object->keyword_id = $keyword_id;
+                $new_keyword_object->object_id = $newpromotional_event->news_id;
+                $new_keyword_object->object_type = $object_type;
+                $new_keyword_object->save();
             }
             $newpromotional_event->keywords = $promotional_event_keywords;
 
@@ -1026,36 +1024,33 @@ class PromotionalEventAPIController extends ControllerAPI
                 foreach ($keywords as $keyword) {
                     $keyword_id = null;
 
-                    // foreach ($mallid as $mall) {
-                        $exist_keyword = Keyword::excludeDeleted()
-                            ->where('keyword', '=', $keyword)
-                            ->where('merchant_id', '=', 0)
-                            ->first();
+                    $exist_keyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
 
-                        if (empty($exist_keyword)) {
-                            $new_keyword = new Keyword();
-                            $new_keyword->merchant_id = 0;
-                            $new_keyword->keyword = $keyword;
-                            $new_keyword->status = 'active';
-                            $new_keyword->created_by = $user->user_id;
-                            $new_keyword->modified_by = $user->user_id;
-                            $new_keyword->save();
+                    if (empty($exist_keyword)) {
+                        $new_keyword = new Keyword();
+                        $new_keyword->merchant_id = 0;
+                        $new_keyword->keyword = $keyword;
+                        $new_keyword->status = 'active';
+                        $new_keyword->created_by = $user->user_id;
+                        $new_keyword->modified_by = $user->user_id;
+                        $new_keyword->save();
 
-                            $keyword_id = $new_keyword->keyword_id;
-                            $promotional_event_keywords[] = $new_keyword;
-                        } else {
-                            $keyword_id = $exist_keyword->keyword_id;
-                            $promotional_event_keywords[] = $exist_keyword;
-                        }
+                        $keyword_id = $new_keyword->keyword_id;
+                        $promotional_event_keywords[] = $new_keyword;
+                    } else {
+                        $keyword_id = $exist_keyword->keyword_id;
+                        $promotional_event_keywords[] = $exist_keyword;
+                    }
 
 
-                        $newKeywordObject = new KeywordObject();
-                        $newKeywordObject->keyword_id = $keyword_id;
-                        $newKeywordObject->object_id = $promotional_event_id;
-                        $newKeywordObject->object_type = $object_type;
-                        $newKeywordObject->save();
-                    // }
-
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $promotional_event_id;
+                    $newKeywordObject->object_type = $object_type;
+                    $newKeywordObject->save();
                 }
                 $updatedpromotional_event->keywords = $promotional_event_keywords;
             });
