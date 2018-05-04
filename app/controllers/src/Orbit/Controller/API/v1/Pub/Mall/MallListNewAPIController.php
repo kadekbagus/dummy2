@@ -129,6 +129,10 @@ class MallListNewAPIController extends PubControllerAPI
             $take = PaginationNumber::parseTakeFromGet('retailer');
             $skip = PaginationNumber::parseSkipFromGet();
 
+            if ($list_type === 'featured') {
+                $take = 50;
+            }
+
             $cacheKey = [
                 'country' => $countryFilter,
                 'cities' => $cityFilters,
@@ -150,7 +154,7 @@ class MallListNewAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $this->searcher->setPaginationParams(['from' => $skip, 'size' => 50]);
+            $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
 
             $this->searcher->filterBase();
 
