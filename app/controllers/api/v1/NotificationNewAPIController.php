@@ -71,6 +71,9 @@ class NotificationNewAPIController extends ControllerAPI
             $userIds = OrbitInput::post('user_ids');
             $targetAudience = OrbitInput::post('target_audience');
             $files = OrbitInput::files('images');
+            $schedule_date = OrbitInput::post('schedule_date', null);
+            $timezone = OrbitInput::post('timezone', 'GMT+0800');
+            $send_after = null;
 
             $validator = Validator::make(
                 array(
@@ -159,6 +162,10 @@ class NotificationNewAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Content in default language is empty');
             }
 
+            if (!empty($schedule_date)) {
+                $send_after = $schedule_date.' '.$timezone;
+            }
+
             $body = [
                 'title'               => $headings->$defaultLanguage,
                 'launch_url'          => $launchUrl,
@@ -172,8 +179,12 @@ class NotificationNewAPIController extends ControllerAPI
                 'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
                 'notification_tokens' => $jsonNotifications,
                 'user_ids'            => $jsonUserIds,
-                'target_audience_ids' => $targetAudience,
+                'target_audience_ids' => $targetAudience
             ];
+
+            if (!empty($schedule_date)) {
+                $body['schedule_date'] = $schedule_date;
+            }
 
             $response = $mongoClient->setFormParam($body)
                                     ->setEndPoint('notifications') // express endpoint
@@ -190,7 +201,7 @@ class NotificationNewAPIController extends ControllerAPI
 
                 $localPath = "";
                 $cdnPath = "";
-                
+
                 if ($files) {
                     $cdnConfig = Config::get('orbit.cdn');
                     $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
@@ -218,6 +229,10 @@ class NotificationNewAPIController extends ControllerAPI
                         'chrome_big_picture' => $imageUrl,
                         'chrome_web_image'   => $imageUrl,
                     ];
+
+                    if (!empty($send_after)) {
+                        $data['send_after'] = $send_after;
+                    }
 
                     $oneSignal = new OneSignal($oneSignalConfig);
                     $newNotif = $oneSignal->notifications->add($data);
