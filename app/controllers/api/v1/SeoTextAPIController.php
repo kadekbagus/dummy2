@@ -50,17 +50,20 @@ class SeoTextAPIController extends ControllerAPI
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status', 'active');
             $translations = OrbitInput::post('translations');
+            $categoryId = OrbitInput::post('category_id', 'default');
 
             $validator = Validator::make(
                 array(
                     'object_type' => $object_type,
                     'translations' => $translations,
                     'status' => $status,
+                    'category_id' => $categoryId,
                 ),
                 array(
                     'object_type' => 'required|in:seo_promotion_list,seo_coupon_list,seo_event_list,seo_store_list,seo_mall_list,seo_homepage',
                     'translations' => 'required',
                     'status' => 'in:active,inactive',
+                    'category_id' => 'required',
                 )
             );
 
@@ -73,7 +76,7 @@ class SeoTextAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $result = $this->validateAndSaveTranslations($country_id, $object_type, $translations, $status, 'create');
+            $result = $this->validateAndSaveTranslations($country_id, $object_type, $translations, $status, $categoryId, 'create');
 
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -161,17 +164,20 @@ class SeoTextAPIController extends ControllerAPI
             $object_type = OrbitInput::post('object_type');
             $status = OrbitInput::post('status', 'active');
             $translations = OrbitInput::post('translations');
+            $categoryId = OrbitInput::post('category_id', 'default');
 
             $validator = Validator::make(
                 array(
                     'object_type' => $object_type,
                     'translations' => $translations,
                     'status' => $status,
+                    'category_id' => $categoryId,
                 ),
                 array(
                     'object_type' => 'required|in:seo_promotion_list,seo_coupon_list,seo_event_list,seo_store_list,seo_mall_list,seo_homepage',
                     'translations' => 'required',
                     'status' => 'in:active,inactive',
+                    'category_id' => 'required',
                 )
             );
 
@@ -184,7 +190,7 @@ class SeoTextAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $result = $this->validateAndSaveTranslations($country_id, $object_type, $translations, $status, 'update');
+            $result = $this->validateAndSaveTranslations($country_id, $object_type, $translations, $status, $categoryId, 'update');
 
             $this->response->code = 0;
             $this->response->status = 'success';
@@ -269,10 +275,12 @@ class SeoTextAPIController extends ControllerAPI
             }
 
             $object_type = OrbitInput::get('object_type');
+            $categoryId = OrbitInput::get('category_id', null);
 
             $validator = Validator::make(
                 array(
                     'object_type' => $object_type,
+                    'category_id' => $categoryId,
                 ),
                 array(
                     'object_type' => 'in:seo_promotion_list,seo_coupon_list,seo_event_list,seo_store_list,seo_mall_list,seo_homepage',
@@ -286,7 +294,7 @@ class SeoTextAPIController extends ControllerAPI
             }
 
             $seo_texts = Page::select('pages.pages_id', 'pages.title', 'pages.content as description',
-                                      'pages.object_type', 'pages.language', 'pages.status', 'languages.language_id')
+                                      'pages.object_type', 'pages.language', 'pages.status', 'languages.language_id', 'category_id')
                                 ->leftJoin('languages', 'languages.name', '=', 'pages.language')
                                 ->where('object_type', 'like', '%seo_%');
 
@@ -301,6 +309,13 @@ class SeoTextAPIController extends ControllerAPI
             OrbitInput::get('language', function($language) use ($seo_texts) {
                 $seo_texts->where('pages.language', '=', $language);
             });
+
+            if (! empty($categoryId)) {
+                $seo_texts->where('category_id', $categoryId);
+            }
+            else {
+                $seo_texts->whereNull('category_id');
+            }
 
             $_seo_texts = clone $seo_texts;
 
@@ -347,7 +362,7 @@ class SeoTextAPIController extends ControllerAPI
     }
 
 
-    private function validateAndSaveTranslations($country_id, $object_type, $translations, $status, $operation)
+    private function validateAndSaveTranslations($country_id, $object_type, $translations, $status, $categoryId, $operation)
     {
         $valid_fields = ['title', 'description'];
         $data = @json_decode($translations);
@@ -356,10 +371,15 @@ class SeoTextAPIController extends ControllerAPI
             OrbitShopAPI::throwInvalidArgument(Lang::get('validation.orbit.jsonerror.field.format', ['field' => 'translations']));
         }
 
+        if ($categoryId === 'default') {
+            $categoryId = null;
+        }
+
         if ($operation == 'update') {
             // delete all value and them insert all new value
             $existing_translation = Page::where('country_id', '=', '0')
                          ->where('object_type', '=', $object_type)
+                         ->where('category_id', $categoryId)
                          ->delete();
         }
 
@@ -391,7 +411,8 @@ class SeoTextAPIController extends ControllerAPI
                 $new_page->language = $language->name;
                 $new_page->title = $translations->title;
                 $new_page->content = $translations->description;
-                $new_page->status =$status;
+                $new_page->status = $status;
+                $new_page->category_id = $categoryId;
                 $new_page->save();
                 $page[] = $new_page;
             }
