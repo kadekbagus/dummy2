@@ -83,7 +83,6 @@ class ESAdvertStoreUpdateQueue
                                             ( SELECT merchant_id, name, status, parent_id, city, province, country, address_line1, operating_hours FROM {$prefix}merchants where status = 'active' AND object_type = 'mall' ) AS oms ON oms.merchant_id = {$prefix}merchants.parent_id
                                         WHERE {$prefix}merchants.object_type = 'tenant'
                                             AND {$prefix}merchants.name = {$this->quote($storeName)}
-                                            AND {$prefix}merchants.status = 'active'
                                             AND oms.country = {$this->quote($countryName)})")
                                     ->groupBy('adverts.advert_id')
                                     ->orderBy('adverts.advert_id')
@@ -143,6 +142,36 @@ class ESAdvertStoreUpdateQueue
                             ->whereRaw("oms.country = '{$countryName}'")
                             ->orderBy('merchants.created_at', 'asc')
                             ->get();
+
+            // Delete ES advert when $store not exist and ES store advert is exist
+            if (! $advertData->isEmpty() && $store->isEmpty() ) {
+                foreach ($advertData as $adverts) {
+                    $params_search = [
+                        'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index'),
+                        'type' => Config::get('orbit.elasticsearch.indices.advert_stores.type'),
+                        'body' => [
+                            'query' => [
+                                'match' => [
+                                    '_id' => $adverts->advert_id
+                                ]
+                            ]
+                        ]
+                    ];
+
+                    $response_search = $this->poster->search($params_search);
+
+                    if ($response_search['hits']['total'] > 0) {
+                        $params = [
+                            'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index'),
+                            'type' => Config::get('orbit.elasticsearch.indices.advert_stores.type'),
+                            'id' => $response_search['hits']['hits'][0]['_id']
+                        ];
+
+                        $response = $this->poster->delete($params);
+                    }
+
+                }
+            }
 
             if ($store->isEmpty()) {
                 $job->delete();
@@ -451,16 +480,6 @@ class ESAdvertStoreUpdateQueue
                     'base_merchant_id'     => $baseMerchantId,
                     'lowercase_name'       => str_replace(" ", "_", strtolower($store[0]->name))
                 ];
-
-                if ($response_search['hits']['total'] > 0) {
-                    $params = [
-                        'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_stores.index'),
-                        'type' => Config::get('orbit.elasticsearch.indices.advert_stores.type'),
-                        'id' => $response_search['hits']['hits'][0]['_id']
-                    ];
-
-                    $response = $this->poster->delete($params);
-                }
 
                 $params['body'] = $body;
                 $response = $this->poster->index($params);
