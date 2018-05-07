@@ -36,6 +36,7 @@ class SeoTextAPIController extends PubControllerAPI
             $language = OrbitInput::get('language', 'en');
             $mall_id = OrbitInput::get('mall_id');
             $default_language = 'en';
+            $categoryId = OrbitInput::get('category_id', null);
 
             $validator = Validator::make(
                 array(
@@ -59,7 +60,7 @@ class SeoTextAPIController extends PubControllerAPI
                     $seo_text = Mall::select('description as seo_text')
                                     ->where('merchants.merchant_id', '=', $mall_id)
                                     ->first();
-                        break;
+                    break;
 
                 default:
                     $seo_text = Page::select(DB::raw("CASE WHEN ({$prefix}pages.title = '' or {$prefix}pages.title is null)
@@ -78,6 +79,7 @@ class SeoTextAPIController extends PubControllerAPI
                                     ->where('object_type', '=', $object_type)
                                     ->where('status', '=', 'active')
                                     ->where('pages.language', '=', $language)
+                                    ->where('pages.category_id', $categoryId)
                                     ->first();
 
                     // fallback to english if not found
@@ -88,12 +90,11 @@ class SeoTextAPIController extends PubControllerAPI
                                         ->where('pages.language', '=', $default_language)
                                         ->first();
                     }
-                        break;
+                    break;
             }
-            $seo = $seo_text;
 
             $this->response->data = new stdClass();
-            $this->response->data = $seo;
+            $this->response->data = $seo_text;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
