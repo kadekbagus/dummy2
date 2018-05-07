@@ -149,10 +149,6 @@ class NewsFeaturedListAPIController extends PubControllerAPI
                     ->build();
 
             $withScore = false;
-            $esTake = $take;
-            if ($list_type === 'featured') {
-                $esTake = 50;
-            }
 
             //Get now time, time must be 2017-01-09T15:30:00Z
             $timezone = 'Asia/Jakarta'; // now with jakarta timezone
@@ -558,7 +554,7 @@ class NewsFeaturedListAPIController extends PubControllerAPI
 
             $sortby = array("_score", $sortPage, $defaultSort);
             $jsonQuery['sort'] = $sortby;
-            $jsonQuery['size'] = 50;
+            $jsonQuery['size'] = $take;
 
             // boost slot
             $boost = [500, 400, 300, 200];
