@@ -32,10 +32,11 @@ class SeoTextAPIController extends PubControllerAPI
         $httpCode = 200;
         try {
             $user = $this->getUser();
-            $object_type = OrbitInput::get('object_type');
-            $language = OrbitInput::get('language', 'en');
-            $mall_id = OrbitInput::get('mall_id');
+
             $default_language = 'en';
+            $object_type = OrbitInput::get('object_type');
+            $language = OrbitInput::get('language', $default_language);
+            $mall_id = OrbitInput::get('mall_id');
             $categoryId = OrbitInput::get('category_id', null);
 
             $validator = Validator::make(
@@ -65,20 +66,39 @@ class SeoTextAPIController extends PubControllerAPI
                 default:
                     $seo_text = Page::select('language', 'title', 'content as seo_text', 'status')
                                     ->where('content', '<>', '')
+                                    ->where('status', '=', 'active')
                                     ->where('object_type', '=', $object_type)
                                     ->where('pages.language', '=', $language)
                                     ->where('pages.category_id', $categoryId)
                                     ->first();
 
-                    if (! empty($seo_text)) {
-                        if ($seo_text->status === 'inactive') {
+                    if (empty($seo_text)) {
+                        $seo_text = Page::select('language', 'title', 'content as seo_text', 'status')
+                                        ->where('object_type', '=', $object_type)
+                                        ->where('status', '=', 'active')
+                                        ->where('content', '<>', '')
+                                        ->where('pages.language', '=', $default_language)
+                                        ->where('pages.category_id', $categoryId)
+                                        ->first();
+
+                        if (empty($seo_text) && ! empty($categoryId)) {
                             $seo_text = Page::select('language', 'title', 'content as seo_text', 'status')
                                             ->where('object_type', '=', $object_type)
                                             ->where('status', '=', 'active')
                                             ->where('content', '<>', '')
-                                            ->whereNull('category_id')
                                             ->where('pages.language', '=', $language)
+                                            ->whereNull('pages.category_id')
                                             ->first();
+
+                            if (empty($seo_text)) {
+                                $seo_text = Page::select('language', 'title', 'content as seo_text', 'status')
+                                                ->where('object_type', '=', $object_type)
+                                                ->where('status', '=', 'active')
+                                                ->where('content', '<>', '')
+                                                ->where('pages.language', '=', $default_language)
+                                                ->whereNull('pages.category_id')
+                                                ->first();
+                            }
                         }
                     }
 
