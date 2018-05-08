@@ -170,6 +170,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                     DB::raw("GROUP_CONCAT( {$prefix}merchants.floor SEPARATOR '||') as floor"),
                                     DB::raw("GROUP_CONCAT( {$prefix}merchants.unit SEPARATOR '||') as unit"),
                                     DB::raw("GROUP_CONCAT( {$prefix}merchants.phone SEPARATOR '||') as phone"),
+                                    DB::raw("mall.phone as mall_phone"),
                                     DB::raw("x(position) as latitude"),
                                     DB::raw("y(position) as longitude")
                                 )

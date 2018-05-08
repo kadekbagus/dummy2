@@ -165,11 +165,11 @@ class NewsLocationAPIController extends PubControllerAPI
                                         DB::raw("{$mallLogo}"),
                                         DB::raw("{$locationLogo}"),
                                         DB::raw("{$mallMap}"),
-                                        DB::raw("{$prefix}merchants.phone as phone"),
                                         DB::raw("{$prefix}merchants.name as name_orig"),
                                         DB::raw("GROUP_CONCAT( CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.floor ELSE '' END SEPARATOR '||') as floor"),
                                         DB::raw("GROUP_CONCAT( CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.unit ELSE '' END SEPARATOR '||') as unit"),
                                         DB::raw("GROUP_CONCAT( {$prefix}merchants.phone SEPARATOR '||') as phone"),
+                                        DB::raw("oms.phone as mall_phone"),
                                         DB::raw("x(position) as latitude"),
                                         DB::raw("y(position) as longitude")
                                     )

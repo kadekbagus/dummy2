@@ -2325,8 +2325,8 @@ class TenantAPIController extends ControllerAPI
                                     'merchants.status',
                                     'merchants.object_type',
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name"),
-                                    DB::raw('pm.country'),
-                                    DB::raw('pm.city')
+                                    'merchants.country',
+                                    'merchants.city'
                                 )
                                 ->leftjoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
                                 ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
@@ -2340,8 +2340,8 @@ class TenantAPIController extends ControllerAPI
                                     'merchants.status',
                                     'merchants.object_type',
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name"),
-                                    DB::raw('pm.country'),
-                                    DB::raw('pm.city')
+                                    'merchants.country',
+                                    'merchants.city'
                                 )
                                 ->leftjoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                 ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
@@ -2352,8 +2352,8 @@ class TenantAPIController extends ControllerAPI
                                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                                     DB::raw("{$prefix}merchants.name as display_name"),
                                                     'merchants.status',
-                                                    DB::raw('pm.country'),
-                                                    DB::raw('pm.city'),
+                                                    'merchants.country',
+                                                    'merchants.city',
                                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
                                                 )
                                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
@@ -2366,8 +2366,8 @@ class TenantAPIController extends ControllerAPI
                                                         DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                                         DB::raw("pm.name as display_name"),
                                                         'merchants.status',
-                                                        DB::raw('pm.country'),
-                                                        DB::raw('pm.city'),
+                                                        'merchants.country',
+                                                        'merchants.city',
                                                         DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
                                                     )
                                                    ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
@@ -2380,8 +2380,8 @@ class TenantAPIController extends ControllerAPI
                         $tenants = CampaignLocation::select('merchants.merchant_id', 'merchants.name as display_name',
                                                         DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                                         'merchants.status',
-                                                        DB::raw('pm.country'),
-                                                        DB::raw('pm.city'),
+                                                        'merchants.country',
+                                                        'merchants.city',
                                                         DB::raw("IF({$prefix}merchants.object_type = 'tenant', (select language_id from {$prefix}languages where name = pm.mobile_default_language), (select language_id from {$prefix}languages where name = {$prefix}merchants.mobile_default_language)) as default_language")
                                                     )
                                                    ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', 'merchants.parent_id')
@@ -2396,8 +2396,8 @@ class TenantAPIController extends ControllerAPI
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name"),
                                     'merchants.status',
-                                    DB::raw('pm.country'),
-                                    DB::raw('pm.city')
+                                    'merchants.country',
+                                    'merchants.city'
                                 )
                                ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
                                ->leftjoin('mall_countries', 'mall_countries.country', '=', DB::raw('pm.country'))
