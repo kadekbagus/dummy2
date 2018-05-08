@@ -63,33 +63,18 @@ class SeoTextAPIController extends PubControllerAPI
                     break;
 
                 default:
-                    $seo_text = Page::select(DB::raw("CASE WHEN ({$prefix}pages.title = '' or {$prefix}pages.title is null)
-                                                       THEN (select title from {$prefix}pages
-                                                                where {$prefix}pages.object_type = {$this->quote($object_type)}
-                                                                and {$prefix}pages.language = {$this->quote($default_language)})
-                                                       ELSE {$prefix}pages.title
-                                                       END as title,
-                                                     CASE WHEN ({$prefix}pages.content = '' or {$prefix}pages.content is null)
+                    $seo_text = Page::select(DB::raw("CASE WHEN ({$prefix}pages.content = '' or {$prefix}pages.content is null)
                                                        THEN (select content from {$prefix}pages
                                                                 where {$prefix}pages.object_type = {$this->quote($object_type)}
                                                                 and {$prefix}pages.language = {$this->quote($default_language)})
                                                        ELSE {$prefix}pages.content
                                                        END as seo_text"),
-                                            'language')
+                                            'language', 'title')
                                     ->where('object_type', '=', $object_type)
                                     ->where('status', '=', 'active')
                                     ->where('pages.language', '=', $language)
                                     ->where('pages.category_id', $categoryId)
                                     ->first();
-
-                    // fallback to english if not found
-                    if (! is_object($seo_text)) {
-                        $seo_text = Page::select('title', 'content as seo_text', 'language')
-                                        ->where('object_type', '=', $object_type)
-                                        ->where('status', '=', 'active')
-                                        ->where('pages.language', '=', $default_language)
-                                        ->first();
-                    }
                     break;
             }
 
