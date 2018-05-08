@@ -178,6 +178,7 @@ class NotificationUpdateAPIController extends ControllerAPI
 
             if (!empty($schedule_date)) {
                 $send_after = $schedule_date.' '.$timezone;
+                $status = 'scheduled';
             }
 
             $body = [
