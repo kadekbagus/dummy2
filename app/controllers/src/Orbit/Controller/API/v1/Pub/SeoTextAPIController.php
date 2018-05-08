@@ -63,18 +63,25 @@ class SeoTextAPIController extends PubControllerAPI
                     break;
 
                 default:
-                    $seo_text = Page::select(DB::raw("CASE WHEN ({$prefix}pages.content = '' or {$prefix}pages.content is null)
-                                                       THEN (select content from {$prefix}pages
-                                                                where {$prefix}pages.object_type = {$this->quote($object_type)}
-                                                                and {$prefix}pages.language = {$this->quote($default_language)})
-                                                       ELSE {$prefix}pages.content
-                                                       END as seo_text"),
-                                            'language', 'title')
+                    $seo_text = Page::select('language', 'title', 'content as seo_text', 'status')
+                                    ->where('content', '<>', '')
                                     ->where('object_type', '=', $object_type)
-                                    ->where('status', '=', 'active')
                                     ->where('pages.language', '=', $language)
                                     ->where('pages.category_id', $categoryId)
                                     ->first();
+
+                    if (! empty($seo_text)) {
+                        if ($seo_text->status === 'inactive') {
+                            $seo_text = Page::select('language', 'title', 'content as seo_text', 'status')
+                                            ->where('object_type', '=', $object_type)
+                                            ->where('status', '=', 'active')
+                                            ->where('content', '<>', '')
+                                            ->whereNull('category_id')
+                                            ->where('pages.language', '=', $language)
+                                            ->first();
+                        }
+                    }
+
                     break;
             }
 
