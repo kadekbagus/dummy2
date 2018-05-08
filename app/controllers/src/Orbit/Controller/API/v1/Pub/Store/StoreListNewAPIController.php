@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace Orbit\Controller\API\v1\Pub\Store;
 
@@ -45,16 +45,43 @@ use StoreSearch;
 class StoreListNewAPIController extends PubControllerAPI
 {
 
-	protected $valid_language = NULL;
+    protected $valid_language = NULL;
     protected $store = NULL;
     protected $withoutScore = FALSE;
 
     /**
+     * Enable / disable scroll function on ES
+     */
+    protected $useScroll = FALSE;
+
+    /**
+     * Scroll duration when $useScroll is TRUE
+     */
+    protected $scrollDuration = '20s';
+
+    /**
+     * Searcher
+     */
+    protected $searcher = null;
+
+    /**
+     * ES Config
+     */
+    protected $esConfig = [];
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->esConfig = Config::get('orbit.elasticsearch');
+        $this->searcher = new StoreSearch($this->esConfig);
+    }
+
+    /**
      *
-     * 
+     *
      * @return [type] [description]
      */
-	public function getStoreList()
+    public function getStoreList()
     {
         $activity = Activity::mobileci()->setActivityType('view');
         $mall = NULL;
@@ -168,16 +195,9 @@ class StoreListNewAPIController extends PubControllerAPI
                 $esTake = 50;
             }
 
-            // Get ES config only once, avoid calling Config::get() everytime. :)
-            $esConfig = Config::get('orbit.elasticsearch');
+            $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
 
-            // Create the search...
-            $esStoreIndex = $esConfig['indices_prefix'] . $esConfig['indices']['stores']['index'];
-            $storeSearch = new StoreSearch($esConfig);
-
-            $storeSearch->setPaginationParams(['from' => $skip, 'size' => $take]);
-
-            $storeSearch->hasAtLeastOneTenant();
+            $this->searcher->hasAtLeastOneTenant();
 
             $countryData = null;
             if (! empty($mallId)) {
@@ -200,28 +220,28 @@ class StoreListNewAPIController extends PubControllerAPI
 
             // If under mall page, we should ignore any other area/location filter.
             if (isset($mall)) {
-                $storeSearch->filterByMall($mallId);
+                $this->searcher->filterByMall($mallId);
             }
             else {
                 // Otherwise, we filter based on user's selection of country and/or cities
-                $storeSearch->filterByCountryAndCities($area);
+                $this->searcher->filterByCountryAndCities($area);
             }
 
             if (! empty($categoryIds)) {
-                $storeSearch->filterByCategories($categoryIds);
+                $this->searcher->filterByCategories($categoryIds);
             }
 
             // Filter by keyword
             $keyword = OrbitInput::get('keyword');
             if (! empty($keyword)) {
-                $storeSearch->filterByKeyword($keyword);
+                $this->searcher->filterByKeyword($keyword);
             }
 
             // Filter by partner
             $partnerId = OrbitInput::get('partner_id', null);
             if (! empty($partnerId)) {
                 $cacheKey['partner_id'] = $partnerId;
-                $storeSearch->filterByPartner($partnerId);
+                $this->searcher->filterByPartner($partnerId);
             }
 
             $sortByPageType = array();
@@ -245,8 +265,8 @@ class StoreListNewAPIController extends PubControllerAPI
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
             $advertStoreOrdering = [
                 '_script' => [
-                    'script' => $sortPageScript, 
-                    'type' => 'string', 
+                    'script' => $sortPageScript,
+                    'type' => 'string',
                     'order' => 'desc'
                 ]
             ];
@@ -255,10 +275,10 @@ class StoreListNewAPIController extends PubControllerAPI
             $locationId = ! empty($mallId) ? $mallId : 0;
             if ($withAdvert) {
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
-                $storeSearch->filterWithAdvert(compact('list_type', 'dateTimeEs', 'mallId', 'advertType', 'locationId', 'advertStoreOrdering'));
+                $this->searcher->filterWithAdvert(compact('list_type', 'dateTimeEs', 'mallId', 'advertType', 'locationId', 'advertStoreOrdering'));
             }
 
-            $scriptFields = $storeSearch->addReviewFollowScript(compact(
+            $scriptFields = $this->searcher->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
 
@@ -268,31 +288,41 @@ class StoreListNewAPIController extends PubControllerAPI
             if (! empty($keyword)) {
                 $sortBy = 'relevance';
             }
-            
+
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
                 case 'relevance':
-                    $storeSearch->sortByRelevance();
+                    $this->searcher->sortByRelevance();
                     break;
                 case 'rating':
-                    $storeSearch->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
                     break;
                 case 'followed':
-                    $storeSearch->sortByFavorite($scriptFields['scriptFieldFollow']);
+                    $this->searcher->sortByFavorite($scriptFields['scriptFieldFollow']);
                     break;
                 default:
-                    $storeSearch->sortByName();
+                    $this->searcher->sortByName();
                     break;
+            }
+
+            if ($this->useScroll) {
+                $this->searcher->setParams([
+                    'search_type' => 'scan',
+                    'scroll' => $this->scrollDuration,
+                ]);
+                $this->searcher->removeParamItem('body.aggs');
+
+                return $this->searcher->getResult();
             }
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() use ($storeSearch) {
-                    return $storeSearch->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() {
+                    return $this->searcher->getResult();
                 });
                 $recordCache->put($serializedCacheKey, $response);
             } else {
-                $response = $storeSearch->getResult();
+                $response = $this->searcher->getResult();
             }
 
             $records = $response['hits'];
@@ -547,5 +577,36 @@ class StoreListNewAPIController extends PubControllerAPI
         $this->withoutScore = TRUE;
 
         return $this;
+    }
+
+    /**
+     * Force $useScroll value to TRUE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setUseScroll()
+    {
+        $this->useScroll = TRUE;
+
+        return $this;
+    }
+
+    /**
+     * Set $scrollDuration, use less when $useScroll is FALSE
+     * @param $scrollDuration int
+     */
+    public function setScrollDuration($scrollDuration=20)
+    {
+        $this->scrollDuration = $scrollDuration . 's';
+
+        return $this;
+    }
+
+
+    /**
+     * Get Searcher
+     */
+    public function getSearcher()
+    {
+        return $this->searcher->getActiveClient();
     }
 }
