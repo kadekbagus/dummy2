@@ -1385,6 +1385,22 @@ class CouponAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
+            // Remove all key in Redis when campaign is stopped
+            if ($status == 'inactive') {
+                if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                    $redis = Cache::getRedis();
+                    $keyName = array('coupon','home');
+                    foreach ($keyName as $value) {
+                        $keys = $redis->keys("*$value*");
+                        if (! empty($keys)) {
+                            foreach ($keys as $key) {
+                                $redis->del($key);
+                            }
+                        }
+                    }
+                }
+            }
+
             if ($payByWallet === 'N' && $payByNormal === 'N') {
                 $errorMessage = 'Select one payment method.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);

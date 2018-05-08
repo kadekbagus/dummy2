@@ -6839,6 +6839,9 @@ return array(
                 'cache_ttl' => 60
             ],
         ],
+
+        // If value is TRUE, Redis key will be deleted when store / campaign inactive
+        'ng_redis_enabled' => FALSE
     ],
 
     /**
@@ -7208,4 +7211,17 @@ return array(
             'connection' => 'page_view'
         ],
     ],
+
+    // Enable/disable endpoints
+    'enable_api' => [
+        'adactive' => [
+            // /api/v1/store-list-adactive -> Endpoint intended for Adactive to integrate mall indoor map.
+            'enable_store_list_adactive_api' => FALSE,
+
+            // whitelist accessible mall IDs
+            // if empty, all store data from all mall is accessible
+            // if not then only given mall id can be accessed
+            'whitelist_mall_ids' => [],
+        ]
+    ]
 );
