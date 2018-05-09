@@ -64,27 +64,29 @@ class SeoTextAPIController extends PubControllerAPI
                     break;
 
                 default:
+                    $queryCategory = empty($categoryId) ? ' category_id is null ' : " category_id = '{$categoryId}' ";
+
                     $seo_text = Page::select(DB::raw("
-                                        case when ({$prefix}pages.title = '' or {$prefix}pages.title is null)
+                                        case when (TRIM({$prefix}pages.title) = '' or {$prefix}pages.title is null)
                                             then (
                                                 select {$prefix}pages.title
                                                 from {$prefix}pages 
                                                     where `language` = '{$default_language}' and
                                                         `status` = 'active' and
-                                                        object_type = '{$object_type}' and
-                                                        category_id = '{$categoryId}'
+                                                        `object_type` = '{$object_type}' and
+                                                        {$queryCategory}
                                             )
                                             else {$prefix}pages.title
                                             end
                                             as title,
-                                        case when ({$prefix}pages.content = '' or {$prefix}pages.content is null)
+                                        case when (TRIM({$prefix}pages.content) = '' or {$prefix}pages.content is null)
                                             then (
                                                 select {$prefix}pages.content
                                                 from {$prefix}pages 
                                                     where `language` = '{$default_language}' and
                                                         `status` = 'active' and
-                                                        object_type = '{$object_type}' and
-                                                        category_id = '{$categoryId}'
+                                                        `object_type` = '{$object_type}' and
+                                                        {$queryCategory}
                                             )
                                             else {$prefix}pages.content
                                             end as seo_text"
@@ -92,15 +94,22 @@ class SeoTextAPIController extends PubControllerAPI
                                     )
                                     ->where('object_type', $object_type)
                                     ->where('status', 'active')
-                                    ->where('category_id', $categoryId)
-                                    ->where('language', $language)
-                                    ->first();
-                    
+                                    ->where('language', $language);
+
+                    if (! empty($categoryId)) {
+                        $seo_text->where('category_id', $categoryId);
+                    }
+                    else {
+                        $seo_text->whereNull('category_id');
+                    }
+
+                    $seo_text = $seo_text->first();
+
                     // If category is set but seo_text is empty,
                     // try fetching the default one (without category id.)
                     if (empty($seo_text) && ! empty($categoryId)) {
                         $seo_text = Page::select(DB::raw("
-                                            case when ({$prefix}pages.title = '' or {$prefix}pages.title is null)
+                                            case when (TRIM({$prefix}pages.title) = '' or {$prefix}pages.title is null)
                                                 then (
                                                     select {$prefix}pages.title
                                                     from {$prefix}pages 
@@ -112,7 +121,7 @@ class SeoTextAPIController extends PubControllerAPI
                                                 else {$prefix}pages.title
                                                 end
                                             as title,
-                                            case when ({$prefix}pages.content = '' or {$prefix}pages.content is null)
+                                            case when (TRIM({$prefix}pages.content) = '' or {$prefix}pages.content is null)
                                                 then (
                                                     select {$prefix}pages.content
                                                     from {$prefix}pages 
