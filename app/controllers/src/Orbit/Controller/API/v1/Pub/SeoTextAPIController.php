@@ -64,42 +64,72 @@ class SeoTextAPIController extends PubControllerAPI
                     break;
 
                 default:
-                    $seo_text = Page::select('language', 'title', 'content as seo_text', 'status')
-                                    ->where('content', '<>', '')
-                                    ->where('status', '=', 'active')
-                                    ->where('object_type', '=', $object_type)
-                                    ->where('pages.language', '=', $language)
-                                    ->where('pages.category_id', $categoryId)
+                    $seo_text = Page::select(DB::raw("
+                                        case when ({$prefix}pages.title = '' or {$prefix}pages.title is null)
+                                            then (
+                                                select {$prefix}pages.title
+                                                from {$prefix}pages 
+                                                    where `language` = '{$default_language}' and
+                                                        `status` = 'active' and
+                                                        object_type = '{$object_type}' and
+                                                        category_id = '{$categoryId}'
+                                            )
+                                            else {$prefix}pages.title
+                                            end
+                                            as title,
+                                        case when ({$prefix}pages.content = '' or {$prefix}pages.content is null)
+                                            then (
+                                                select {$prefix}pages.content
+                                                from {$prefix}pages 
+                                                    where `language` = '{$default_language}' and
+                                                        `status` = 'active' and
+                                                        object_type = '{$object_type}' and
+                                                        category_id = '{$categoryId}'
+                                            )
+                                            else {$prefix}pages.content
+                                            end as seo_text"
+                                        )
+                                    )
+                                    ->where('object_type', $object_type)
+                                    ->where('status', 'active')
+                                    ->where('category_id', $categoryId)
+                                    ->where('language', $language)
                                     ->first();
-
-                    if (empty($seo_text)) {
-                        $seo_text = Page::select('language', 'title', 'content as seo_text', 'status')
-                                        ->where('object_type', '=', $object_type)
-                                        ->where('status', '=', 'active')
-                                        ->where('content', '<>', '')
-                                        ->where('pages.language', '=', $default_language)
-                                        ->where('pages.category_id', $categoryId)
+                    
+                    // If category is set but seo_text is empty,
+                    // try fetching the default one (without category id.)
+                    if (empty($seo_text) && ! empty($categoryId)) {
+                        $seo_text = Page::select(DB::raw("
+                                            case when ({$prefix}pages.title = '' or {$prefix}pages.title is null)
+                                                then (
+                                                    select {$prefix}pages.title
+                                                    from {$prefix}pages 
+                                                        where `language` = '{$default_language}' and
+                                                            `status` = 'active' and
+                                                            object_type = '{$object_type}' and
+                                                            category_id is null
+                                                )
+                                                else {$prefix}pages.title
+                                                end
+                                            as title,
+                                            case when ({$prefix}pages.content = '' or {$prefix}pages.content is null)
+                                                then (
+                                                    select {$prefix}pages.content
+                                                    from {$prefix}pages 
+                                                        where `language` = '{$default_language}' and
+                                                            `status` = 'active' and
+                                                            object_type = '{$object_type}' and
+                                                            category_id is null
+                                                )
+                                                else {$prefix}pages.content
+                                                end as seo_text"
+                                            )
+                                        )
+                                        ->where('object_type', $object_type)
+                                        ->where('status', 'active')
+                                        ->where('language', $language)
+                                        ->whereNull('category_id')
                                         ->first();
-
-                        if (empty($seo_text) && ! empty($categoryId)) {
-                            $seo_text = Page::select('language', 'title', 'content as seo_text', 'status')
-                                            ->where('object_type', '=', $object_type)
-                                            ->where('status', '=', 'active')
-                                            ->where('content', '<>', '')
-                                            ->where('pages.language', '=', $language)
-                                            ->whereNull('pages.category_id')
-                                            ->first();
-
-                            if (empty($seo_text)) {
-                                $seo_text = Page::select('language', 'title', 'content as seo_text', 'status')
-                                                ->where('object_type', '=', $object_type)
-                                                ->where('status', '=', 'active')
-                                                ->where('content', '<>', '')
-                                                ->where('pages.language', '=', $default_language)
-                                                ->whereNull('pages.category_id')
-                                                ->first();
-                            }
-                        }
                     }
 
                     break;
