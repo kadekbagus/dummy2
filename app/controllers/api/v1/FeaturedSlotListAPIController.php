@@ -90,8 +90,8 @@ class FeaturedSlotListAPIController extends ControllerAPI
                                 ->where('advert_slot_locations.status', 'active')
                                 ->where('advert_slot_locations.country_id', $countryId)
                                 ->where('advert_slot_locations.city', $city)
-                                ->where('adverts.end_date', '>=', $startDate)
-                                ->where('advert_slot_locations.end_date', '>=', $endDate)
+                                ->where('advert_slot_locations.start_date', '<=', $endDate)
+                                ->where('advert_slot_locations.end_date', '>=', $startDate)
                                 ->get();
 
             // get image advert
