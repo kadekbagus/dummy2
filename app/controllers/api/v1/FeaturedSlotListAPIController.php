@@ -47,6 +47,7 @@ class FeaturedSlotListAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
+            $locationId = OrbitInput::get('location_id', 0);
             $countryId = OrbitInput::get('country_id');
             $city = OrbitInput::get('city');
             $startDate = OrbitInput::get('start_date');
@@ -89,6 +90,7 @@ class FeaturedSlotListAPIController extends ControllerAPI
                                 ->where('adverts.status', 'active')
                                 ->where('advert_slot_locations.status', 'active')
                                 ->where('advert_slot_locations.country_id', $countryId)
+                                ->where('advert_slot_locations.location_id', $locationId)
                                 ->where('advert_slot_locations.city', $city)
                                 ->where('advert_slot_locations.start_date', '<=', $endDate)
                                 ->where('advert_slot_locations.end_date', '>=', $startDate)
