@@ -48,21 +48,17 @@ class FeaturedSlotListAPIController extends ControllerAPI
             }
 
             $locationId = OrbitInput::get('location_id', 0);
-            $countryId = OrbitInput::get('country_id');
-            $city = OrbitInput::get('city');
             $startDate = OrbitInput::get('start_date');
             $endDate = OrbitInput::get('end_date');
 
             $validator = Validator::make(
                 array(
-                    'country_id' => $countryId,
-                    'city' => $city,
+                    'location_id' => $locationId,
                     'start_date' => $startDate,
                     'end_date' => $endDate,
                 ),
                 array(
-                    'country_id' => 'required',
-                    'city' => 'required',
+                    'location_id' => 'required',
                     'start_date' => 'required|date',
                     'end_date' => 'required|date',
                 )
@@ -83,18 +79,28 @@ class FeaturedSlotListAPIController extends ControllerAPI
                                     'advert_slot_locations.slot_number',
                                     'advert_slot_locations.slot_type',
                                     'adverts.link_object_id',
+                                    'advert_slot_locations.location_id',
                                     'advert_slot_locations.start_date',
                                     'advert_slot_locations.end_date'
                                 )
                                 ->join('adverts', 'adverts.advert_id', '=', 'advert_slot_locations.advert_id')
                                 ->where('adverts.status', 'active')
                                 ->where('advert_slot_locations.status', 'active')
-                                ->where('advert_slot_locations.country_id', $countryId)
                                 ->where('advert_slot_locations.location_id', $locationId)
-                                ->where('advert_slot_locations.city', $city)
                                 ->where('advert_slot_locations.start_date', '<=', $endDate)
-                                ->where('advert_slot_locations.end_date', '>=', $startDate)
-                                ->get();
+                                ->where('advert_slot_locations.end_date', '>=', $startDate);
+
+            OrbitInput::get('country_id', function($newsname) use ($advertSlot)
+            {
+                $advertSlot->where('advert_slot_locations.country_id', $countryId);
+            });
+
+            OrbitInput::get('city', function($newsname) use ($advertSlot)
+            {
+                $advertSlot->where('advert_slot_locations.city', $city);
+            });
+
+            $advertSlot = $advertSlot->get();
 
             // get image advert
             if (count($advertSlot) > 0) {
