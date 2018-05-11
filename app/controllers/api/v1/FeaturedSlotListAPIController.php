@@ -90,12 +90,12 @@ class FeaturedSlotListAPIController extends ControllerAPI
                                 ->where('advert_slot_locations.start_date', '<=', $endDate)
                                 ->where('advert_slot_locations.end_date', '>=', $startDate);
 
-            OrbitInput::get('country_id', function($newsname) use ($advertSlot)
+            OrbitInput::get('country_id', function($countryId) use ($advertSlot)
             {
                 $advertSlot->where('advert_slot_locations.country_id', $countryId);
             });
 
-            OrbitInput::get('city', function($newsname) use ($advertSlot)
+            OrbitInput::get('city', function($city) use ($advertSlot)
             {
                 $advertSlot->where('advert_slot_locations.city', $city);
             });
