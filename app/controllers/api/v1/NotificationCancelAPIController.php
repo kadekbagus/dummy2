@@ -92,12 +92,17 @@ class NotificationCancelAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('cannot cancel draft notification');
             }
 
-            if (!isset($notification->data->schedule_date)) {
+            if (!isset($notification->data->schedule_date) || $notification->data->schedule_date == '') {
                 OrbitShopAPI::throwInvalidArgument('schedule date not found');
             }
 
-            if (!isset($notification->data->vendor_notification_id)) {
+            if (!isset($notification->data->vendor_notification_id) || $notification->data->vendor_notification_id == '') {
                 OrbitShopAPI::throwInvalidArgument('vendor notification id not found');
+            }
+
+            $date_now = Carbon::now('Asia/Makassar');
+            if ($notification->data->schedule_date < $date_now) {
+                OrbitShopAPI::throwInvalidArgument('Cannot cancel notification that scheduled in the past');
             }
 
             $vendor_notification_id = $notification->data->vendor_notification_id;
@@ -158,7 +163,7 @@ class NotificationCancelAPIController extends ControllerAPI
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getLine();
+            $this->response->message = $e->getMessage().' '.$e->getLine();
             $this->response->data = null;
         }
 
