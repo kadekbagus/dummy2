@@ -90,30 +90,22 @@ class FeaturedSlotListAPIController extends ControllerAPI
                                 ->where('advert_slot_locations.start_date', '<=', $endDate)
                                 ->where('advert_slot_locations.end_date', '>=', $startDate);
 
-            OrbitInput::get('country_id', function($newsname) use ($advertSlot)
+            OrbitInput::get('country_id', function($countryId) use ($advertSlot)
             {
                 $advertSlot->where('advert_slot_locations.country_id', $countryId);
             });
 
-            OrbitInput::get('city', function($newsname) use ($advertSlot)
+            OrbitInput::get('city', function($city) use ($advertSlot)
             {
                 $advertSlot->where('advert_slot_locations.city', $city);
             });
 
-            $advertSlot = $advertSlot->get();
+            $advertSlot = $advertSlot->groupBy('slot_number')
+                                     ->orderBy('advert_slot_locations.start_date','asc')
+                                     ->get();
 
             // get image advert
             if (count($advertSlot) > 0) {
-
-                // cdn setting
-                $usingCdn = Config::get('orbit.cdn.enable_cdn', FALSE);
-                $defaultUrlPrefix = Config::get('orbit.cdn.providers.default.url_prefix', '');
-                $urlPrefix = ($defaultUrlPrefix != '') ? $defaultUrlPrefix . '/' : '';
-
-                $image = "CONCAT({$this->quote($urlPrefix)}, m.path)";
-                if ($usingCdn) {
-                    $image = "CASE WHEN m.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, m.path) ELSE m.cdn_url END";
-                }
 
                 // set image each advert
                 foreach ($advertSlot as $key => $val) {
