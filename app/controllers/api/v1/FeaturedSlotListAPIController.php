@@ -47,20 +47,20 @@ class FeaturedSlotListAPIController extends ControllerAPI
                 ACL::throwAccessForbidden($message);
             }
 
-            $locationId = OrbitInput::get('location_id', 0);
+            $mallId = OrbitInput::get('mall_id', 0);
             $objectType = OrbitInput::get('object_type');
             $startDate = OrbitInput::get('start_date');
             $endDate = OrbitInput::get('end_date');
 
             $validator = Validator::make(
                 array(
-                    'location_id' => $locationId,
+                    'mall_id' => $mallId,
                     'object_type' => $objectType,
                     'start_date' => $startDate,
                     'end_date' => $endDate,
                 ),
                 array(
-                    'location_id' => 'required',
+                    'mall_id' => 'required',
                     'object_type' => 'required',
                     'start_date' => 'required|date',
                     'end_date' => 'required|date',
@@ -89,7 +89,7 @@ class FeaturedSlotListAPIController extends ControllerAPI
                                 ->join('adverts', 'adverts.advert_id', '=', 'advert_slot_locations.advert_id')
                                 ->where('adverts.status', 'active')
                                 ->where('advert_slot_locations.status', 'active')
-                                ->where('advert_slot_locations.location_id', $locationId)
+                                ->where('advert_slot_locations.location_id', $mallId)
                                 ->where('advert_slot_locations.slot_type', $objectType)
                                 ->where('advert_slot_locations.start_date', '<=', $endDate)
                                 ->where('advert_slot_locations.end_date', '>=', $startDate);
@@ -105,7 +105,7 @@ class FeaturedSlotListAPIController extends ControllerAPI
             });
 
             $advertSlot = $advertSlot->groupBy('slot_number')
-                                     ->orderBy('advert_slot_locations.start_date','asc')
+                                     ->orderBy('advert_slot_locations.start_date','asc');
                                      ->get();
 
             // get image advert
