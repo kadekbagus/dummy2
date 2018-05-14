@@ -117,6 +117,7 @@ class FeaturedSlotListAPIController extends ControllerAPI
                     if ($val->slot_type == 'promotion' || $val->slot_type == 'news') {
 
                         $advertImage = News::select(
+                                        'news.news_name as advert_name',
                                         'news.news_id as news_id',
                                         'media.path as image'
                                     )
@@ -136,6 +137,7 @@ class FeaturedSlotListAPIController extends ControllerAPI
                     } elseif ($val->slot_type == 'coupon') {
 
                         $advertImage = Coupon::select(
+                                        'promotions.promotion_name as advert_name',
                                         'promotions.promotion_id as promotion_id',
                                         'media.path as image'
                                     )
@@ -154,7 +156,8 @@ class FeaturedSlotListAPIController extends ControllerAPI
 
                     } elseif ($val->slot_type == 'store') {
 
-                        $advertImage = Media::select('path as image')
+                        $advertImage = Media::select('path as image', 'merchants.name as advert_name')
+                                                ->join('merchants', 'merchants.merchant_id', '=', 'media.object_id')
                                                 ->where('object_id', $val->link_object_id)
                                                 ->where('media_name_long', 'retailer_logo_orig')
                                                 ->first();
@@ -164,8 +167,10 @@ class FeaturedSlotListAPIController extends ControllerAPI
 
                     if (! empty($advertImage)) {
                         $advertSlot[$key]->advert_image = $advertImage->image;
+                        $advertSlot[$key]->advert_name = $advertImage->advert_name;
                     } else {
                         $advertSlot[$key]->advert_image = '';
+                        $advertSlot[$key]->advert_name = '';
                     }
 
                 }
