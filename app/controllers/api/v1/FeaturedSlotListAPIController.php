@@ -48,17 +48,20 @@ class FeaturedSlotListAPIController extends ControllerAPI
             }
 
             $locationId = OrbitInput::get('location_id', 0);
+            $objectType = OrbitInput::get('object_type');
             $startDate = OrbitInput::get('start_date');
             $endDate = OrbitInput::get('end_date');
 
             $validator = Validator::make(
                 array(
                     'location_id' => $locationId,
+                    'object_type' => $objectType,
                     'start_date' => $startDate,
                     'end_date' => $endDate,
                 ),
                 array(
                     'location_id' => 'required',
+                    'object_type' => 'required',
                     'start_date' => 'required|date',
                     'end_date' => 'required|date',
                 )
@@ -87,6 +90,7 @@ class FeaturedSlotListAPIController extends ControllerAPI
                                 ->where('adverts.status', 'active')
                                 ->where('advert_slot_locations.status', 'active')
                                 ->where('advert_slot_locations.location_id', $locationId)
+                                ->where('advert_slot_locations.slot_type', $objectType)
                                 ->where('advert_slot_locations.start_date', '<=', $endDate)
                                 ->where('advert_slot_locations.end_date', '>=', $startDate);
 
