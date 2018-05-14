@@ -105,7 +105,7 @@ class FeaturedSlotListAPIController extends ControllerAPI
             });
 
             $advertSlot = $advertSlot->groupBy('slot_number')
-                                     ->orderBy('advert_slot_locations.start_date','asc');
+                                     ->orderBy('advert_slot_locations.start_date','asc')
                                      ->get();
 
             // get image advert
