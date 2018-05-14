@@ -156,7 +156,7 @@ class FeaturedSlotListAPIController extends ControllerAPI
 
                         $advertImage = Media::select('path as image')
                                                 ->where('object_id', $val->link_object_id)
-                                                ->where('media_name_long', 'retailer_image_orig')
+                                                ->where('media_name_long', 'retailer_logo_orig')
                                                 ->first();
 
                     }
