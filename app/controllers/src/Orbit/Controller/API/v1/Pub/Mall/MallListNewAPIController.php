@@ -101,11 +101,9 @@ class MallListNewAPIController extends PubControllerAPI
             $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', null);
             $sortBy = OrbitInput::get('sortby', 'name');
-            $partner_id = OrbitInput::get('partner_id', null);
-            $sort_mode = OrbitInput::get('sortmode','asc');
             $sortMode = OrbitInput::get('sortmode','asc');
+            $partner_id = OrbitInput::get('partner_id', null);
             $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');
             $radius = Config::get('orbit.geo_location.distance', 10);
@@ -247,14 +245,11 @@ class MallListNewAPIController extends PubControllerAPI
 
             // Force to sort result by relevance if any keyword is set.
             if (! empty($keyword)) {
-                $sortBy = 'relevance';
+                $this->searcher->sortByRelevance();
             }
 
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
-                case 'relevance':
-                    $this->searcher->sortByRelevance();
-                    break;
                 case 'updated_at':
                     $this->searcher->sortByUpdatedAt();
                     break;

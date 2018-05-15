@@ -105,9 +105,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $this->checkAuth();
             $user = $this->api->user;
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', 'created_date');
             $sortBy = OrbitInput::get('sortby', 'created_date');
-            $sort_mode = OrbitInput::get('sortmode','desc');
             $sortMode = OrbitInput::get('sortmode','desc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $location = OrbitInput::get('location', null);
@@ -142,7 +140,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $validator = Validator::make(
                 array(
                     'language' => $language,
-                    'sortby'   => $sort_by,
+                    'sortby'   => $sortBy,
                     'list_type'   => $list_type,
                 ),
                 array(
@@ -157,7 +155,7 @@ class CouponListNewAPIController extends PubControllerAPI
             // Pass all possible parameters to be used as cache key.
             // Make sure there is no missing one.
             $cacheKey = [
-                'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
+                'sort_by' => $sortBy, 'sort_mode' => $sortMode, 'language' => $language,
                 'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
@@ -306,14 +304,11 @@ class CouponListNewAPIController extends PubControllerAPI
             ));
 
             if (! empty($keyword)) {
-                $sortBy = 'relevance';
+                $this->searcher->sortByRelevance();
             }
 
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
-                case 'relevance':
-                    $this->searcher->sortByRelevance();
-                    break;
                 case 'rating':
                     $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
                     break;
