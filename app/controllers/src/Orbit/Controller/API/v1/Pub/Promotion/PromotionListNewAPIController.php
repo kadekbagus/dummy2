@@ -295,14 +295,11 @@ class PromotionListNewAPIController extends PubControllerAPI
             ));
 
             if (! empty($keyword)) {
-                $sortBy = 'relevance';
+                $this->searcher->sortByRelevance();
             }
 
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
-                case 'relevance':
-                    $this->searcher->sortByRelevance();
-                    break;
                 case 'rating':
                     $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
                     break;

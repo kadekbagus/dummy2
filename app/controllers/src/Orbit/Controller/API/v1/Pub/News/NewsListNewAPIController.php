@@ -297,14 +297,11 @@ class NewsListNewAPIController extends PubControllerAPI
             ));
 
             if (! empty($keyword)) {
-                $sort_by = 'relevance';
+                $this->searcher->sortByRelevance();
             }
 
             // Next sorting based on Visitor's selection.
             switch ($sort_by) {
-                case 'relevance':
-                    $this->searcher->sortByRelevance();
-                    break;
                 case 'rating':
                     $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
                     break;
