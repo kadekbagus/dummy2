@@ -114,9 +114,7 @@ class NewsListNewAPIController extends PubControllerAPI
             $user = $this->getUser();
             $host = Config::get('orbit.elasticsearch');
             $sort_by = OrbitInput::get('sortby', 'created_date');
-            $sortBy = OrbitInput::get('sortby', 'created_date');
             $sort_mode = OrbitInput::get('sortmode','desc');
-            $sortMode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
             $cityFilters = OrbitInput::get('cities', []);
@@ -299,11 +297,11 @@ class NewsListNewAPIController extends PubControllerAPI
             ));
 
             if (! empty($keyword)) {
-                $sortBy = 'relevance';
+                $sort_by = 'relevance';
             }
 
             // Next sorting based on Visitor's selection.
-            switch ($sortBy) {
+            switch ($sort_by) {
                 case 'relevance':
                     $this->searcher->sortByRelevance();
                     break;
@@ -311,13 +309,13 @@ class NewsListNewAPIController extends PubControllerAPI
                     $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
                     break;
                 case 'created_date':
-                    $this->searcher->sortByCreatedDate($sortMode);
+                    $this->searcher->sortByCreatedDate($sort_mode);
                     break;
                 case 'updated_date':
-                    $this->searcher->sortByUpdatedDate($sortMode);
+                    $this->searcher->sortByUpdatedDate($sort_mode);
                     break;
                 default:
-                    $this->searcher->sortByName($language, $sortMode);
+                    $this->searcher->sortByName($language, $sort_mode);
                     break;
             }
 

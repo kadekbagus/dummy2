@@ -101,11 +101,9 @@ class MallListNewAPIController extends PubControllerAPI
             $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', null);
             $sortBy = OrbitInput::get('sortby', 'name');
-            $partner_id = OrbitInput::get('partner_id', null);
-            $sort_mode = OrbitInput::get('sortmode','asc');
             $sortMode = OrbitInput::get('sortmode','asc');
+            $partner_id = OrbitInput::get('partner_id', null);
             $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');
             $radius = Config::get('orbit.geo_location.distance', 10);
