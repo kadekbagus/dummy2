@@ -7,9 +7,9 @@ use Config;
 use Cache;
 
 /**
- * Get Campaign List from Sepulsa
+ * Get Voucher List from Sepulsa
  */
-class CampaignList
+class VoucherList
 {
     /**
      * HTTP Client
@@ -22,9 +22,9 @@ class CampaignList
     protected $config;
 
     /**
-     * Campaign list endpoint
+     * Voucher list endpoint
      */
-    protected $endpoint = 'partner/campaign/list';
+    protected $endpoint = 'partner/voucher/list';
 
     public function __construct($config=[])
     {
@@ -47,7 +47,6 @@ class CampaignList
     {
         try {
             $requestParams = [
-                'partnerid' => $this->config['partner_id'],
                 'q' => $searchQuery,
                 'rp' => $recordPerPage,
                 'f' => $filters,

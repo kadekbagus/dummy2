@@ -7,9 +7,9 @@ use Config;
 use Cache;
 
 /**
- * Get Campaign List from Sepulsa
+ * Get Voucher List from Sepulsa
  */
-class CampaignList
+class TakeVoucher
 {
     /**
      * HTTP Client
@@ -22,9 +22,9 @@ class CampaignList
     protected $config;
 
     /**
-     * Campaign list endpoint
+     * Voucher list endpoint
      */
-    protected $endpoint = 'partner/campaign/list';
+    protected $endpoint = 'partner/voucher/taken';
 
     public function __construct($config=[])
     {
@@ -38,20 +38,22 @@ class CampaignList
     }
 
     /**
-     * @param string $searchQuery
-     * @param int $recordPerPage
+     * @param string $trx_id
+     * @param array $tokens = array(
+     *       'token' => '$2y$10$UoqM6KpZLwCgJIDGMZMgt.JvOBfOOIXTIW1O7lpLSDdIboRjwlcHS'
+     *       'token' => '$2y$10$UoqM6KpZLwCgJIDGMZMgt.JvOBfOOIXTIW1O7lpLSDdIboRjwlxxx'
+     *   )
      * @param array $filter
      * @param int $page
      */
-    public function getList($searchQuery='', $recordPerPage=10, $filters=[], $page=1, $counter=0)
+    public function take($trxId, $tokens=[], $identifier=null, $counter=0)
     {
         try {
             $requestParams = [
+                'trx_id' => $trxId,
+                'tokens' => $tokens,
+                'identifier' => $identifier,
                 'partnerid' => $this->config['partner_id'],
-                'q' => $searchQuery,
-                'rp' => $recordPerPage,
-                'f' => $filters,
-                'page' => $page
             ];
 
             $requestHeaders = [

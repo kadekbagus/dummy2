@@ -30,15 +30,15 @@ class Login
      */
     protected $loginResponse;
 
-    public function __construct()
+    public function __construct($config=[])
     {
-        $this->config = Config::get('orbit.partners_api.sepulsa');
+        $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
         $this->client = SepulsaClient::create($this->config);
     }
 
-    public static function create()
+    public static function create($config=[])
     {
-        return new static();
+        return new static($config);
     }
 
     public function login()

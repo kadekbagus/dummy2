@@ -7,9 +7,9 @@ use Config;
 use Cache;
 
 /**
- * Get Campaign List from Sepulsa
+ * Get Voucher List from Sepulsa
  */
-class CampaignList
+class RedeemOnline
 {
     /**
      * HTTP Client
@@ -22,9 +22,9 @@ class CampaignList
     protected $config;
 
     /**
-     * Campaign list endpoint
+     * Voucher list endpoint
      */
-    protected $endpoint = 'partner/campaign/list';
+    protected $endpoint = 'partner/voucher/redeemonline';
 
     public function __construct($config=[])
     {
@@ -43,15 +43,12 @@ class CampaignList
      * @param array $filter
      * @param int $page
      */
-    public function getList($searchQuery='', $recordPerPage=10, $filters=[], $page=1, $counter=0)
+    public function redeem($token, $code, $counter=0)
     {
         try {
             $requestParams = [
-                'partnerid' => $this->config['partner_id'],
-                'q' => $searchQuery,
-                'rp' => $recordPerPage,
-                'f' => $filters,
-                'page' => $page
+                'voucher_token' => $token,
+                'code' => $code,
             ];
 
             $requestHeaders = [

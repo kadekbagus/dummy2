@@ -7,9 +7,9 @@ use Config;
 use Cache;
 
 /**
- * Get Campaign List from Sepulsa
+ * Get Voucher detail from Sepulsa
  */
-class CampaignList
+class VoucherDetail
 {
     /**
      * HTTP Client
@@ -22,9 +22,9 @@ class CampaignList
     protected $config;
 
     /**
-     * Campaign list endpoint
+     * Voucher detail endpoint
      */
-    protected $endpoint = 'partner/campaign/list';
+    protected $endpoint = 'partner/voucher/details';
 
     public function __construct($config=[])
     {
@@ -38,20 +38,13 @@ class CampaignList
     }
 
     /**
-     * @param string $searchQuery
-     * @param int $recordPerPage
-     * @param array $filter
-     * @param int $page
+     * @param string $token
      */
-    public function getList($searchQuery='', $recordPerPage=10, $filters=[], $page=1, $counter=0)
+    public function getDetail($token='', $counter=0)
     {
         try {
-            $requestParams = [
-                'partnerid' => $this->config['partner_id'],
-                'q' => $searchQuery,
-                'rp' => $recordPerPage,
-                'f' => $filters,
-                'page' => $page
+            $queryString = [
+                'vt' => $token,
             ];
 
             $requestHeaders = [
@@ -60,10 +53,10 @@ class CampaignList
             ];
 
             $response = $this->client
-                ->setJsonBody($requestParams)
+                ->setQueryString($queryString)
                 ->setEndpoint($this->endpoint)
                 ->setHeaders($requestHeaders)
-                ->request('POST');
+                ->request('GET');
 
             return $response;
         } catch (OrbitCustomException $e) {

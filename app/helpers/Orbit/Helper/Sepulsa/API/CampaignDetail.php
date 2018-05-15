@@ -27,15 +27,15 @@ class CampaignDetail
      */
     protected $endpoint = 'partner/campaign/%s/%s';
 
-    public function __construct()
+    public function __construct($config=[])
     {
-        $this->config = Config::get('orbit.partners_api.sepulsa');
+        $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
         $this->client = SepulsaClient::create($this->config);
     }
 
-    public static function create()
+    public static function create($config=[])
     {
-        return new static();
+        return new static($config);
     }
 
     /**
@@ -52,7 +52,7 @@ class CampaignDetail
                 'Content-Type' => 'application/json',
                 'Authorization' => Cache::get($this->config['session_key_name'])
             ];
-dd(sprintf($this->endpoint, $campaignId, $this->config['partner_id']));
+
             $response = $this->client
                 ->setEndpoint(sprintf($this->endpoint, $campaignId, $this->config['partner_id']))
                 ->setHeaders($requestHeaders)
@@ -67,6 +67,8 @@ dd(sprintf($this->endpoint, $campaignId, $this->config['partner_id']));
                     throw new Exception("Error Processing Request, Tried {$tries} times.", 1);
                 }
                 return $this->getList($counter++);
+            } else {
+                return $e->getMessage();
             }
         } catch (Exception $e) {
             return $e->getMessage();
