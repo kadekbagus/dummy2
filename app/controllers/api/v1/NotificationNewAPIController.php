@@ -164,7 +164,17 @@ class NotificationNewAPIController extends ControllerAPI
 
             if (!empty($schedule_date)) {
                 $send_after = $schedule_date.' '.$timezone;
-                $status = 'scheduled';
+                if ($status !== 'draft') {
+                    $status = 'scheduled';
+                }
+            }
+
+            // scheduled date cannot less than current date
+            if ($status == 'scheduled' && !empty($schedule_date)) {
+                $date_now = Carbon::now('Asia/Makassar');
+                if ($schedule_date < $date_now) {
+                    OrbitShopAPI::throwInvalidArgument('Scheduled date cannot less than current date');
+                }
             }
 
             $body = [

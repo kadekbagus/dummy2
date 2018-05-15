@@ -74,4 +74,22 @@ class Notifications
         ], $data);
     }
 
+
+    /**
+     * cancel scheduled notification.
+     *
+     * Application authentication key and ID must be set.
+     *
+     * @param array $data
+     *
+     * @return array
+     */
+    public function cancel($id)
+    {
+        $url = '/notifications/'.$id.'?app_id='.$this->api->getConfig('app_id');
+        return $this->api->request('DELETE', $url, [
+            'Authorization' => 'Basic '.$this->api->getConfig('api_key'),
+        ]);
+    }
+
 }
