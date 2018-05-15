@@ -245,11 +245,14 @@ class MallListNewAPIController extends PubControllerAPI
 
             // Force to sort result by relevance if any keyword is set.
             if (! empty($keyword)) {
-                $this->searcher->sortByRelevance();
+                $sortBy = 'relevance';
             }
 
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
+                case 'relevance':
+                    $this->searcher->sortByRelevance();
+                    break;
                 case 'updated_at':
                     $this->searcher->sortByUpdatedAt();
                     break;

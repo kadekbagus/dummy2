@@ -113,8 +113,8 @@ class NewsListNewAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', 'created_date');
-            $sort_mode = OrbitInput::get('sortmode','desc');
+            $sortBy = OrbitInput::get('sortby', 'created_date');
+            $sortMode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
             $cityFilters = OrbitInput::get('cities', []);
@@ -147,7 +147,7 @@ class NewsListNewAPIController extends PubControllerAPI
             $validator = Validator::make(
                 array(
                     'language' => $language,
-                    'sortby'   => $sort_by,
+                    'sortby'   => $sortBy,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
@@ -158,7 +158,7 @@ class NewsListNewAPIController extends PubControllerAPI
             // Pass all possible parameters to be used as cache key.
             // Make sure there is no missing one.
             $cacheKey = [
-                'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
+                'sort_by' => $sortBy, 'sort_mode' => $sortMode, 'language' => $language,
                 'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
@@ -297,22 +297,25 @@ class NewsListNewAPIController extends PubControllerAPI
             ));
 
             if (! empty($keyword)) {
-                $this->searcher->sortByRelevance();
+                $sortBy = 'relevance';
             }
 
             // Next sorting based on Visitor's selection.
-            switch ($sort_by) {
+            switch ($sortBy) {
+                case 'relevance':
+                    $this->searcher->sortByRelevance();
+                    break;
                 case 'rating':
                     $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
                     break;
                 case 'created_date':
-                    $this->searcher->sortByCreatedDate($sort_mode);
+                    $this->searcher->sortByCreatedDate($sortMode);
                     break;
                 case 'updated_date':
-                    $this->searcher->sortByUpdatedDate($sort_mode);
+                    $this->searcher->sortByUpdatedDate($sortMode);
                     break;
                 default:
-                    $this->searcher->sortByName($language, $sort_mode);
+                    $this->searcher->sortByName($language, $sortMode);
                     break;
             }
 
