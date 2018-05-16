@@ -352,3 +352,29 @@ Route::get('/api/v1/pub/coupon-purchased/list', function()
 });
 
 Route::get('/app/v1/pub/coupon-purchased/list', ['as' => 'pub-coupon-purchased-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponPurchasedList_getCouponPurchasedList']);
+
+
+
+/**
+ * Create new coupon sepulsa
+ */
+Route::post('/api/v1/coupon-sepulsa/new', function()
+{
+    return CouponSepulsaAPIController::create()->postNewCoupon();
+});
+
+/**
+ * Update coupon sepulsa
+ */
+Route::post('/api/v1/coupon-sepulsa/update', function()
+{
+    return CouponSepulsaAPIController::create()->postUpdateCoupon();
+});
+
+/**
+ * List/Search coupon sepulsa
+ */
+Route::get('/api/v1/coupon-sepulsa/search', function()
+{
+    return CouponSepulsaAPIController::create()->getSearchCoupon();
+});
