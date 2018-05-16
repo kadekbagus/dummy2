@@ -6,8 +6,9 @@
  */
 
 use Orbit\Helper\Sepulsa\API\VoucherList;
+use Orbit\Helper\Sepulsa\API\VoucherDetail;
 
-class VoucherListTest extends TestCase
+class VoucherDetailTest extends TestCase
 {
     private $config = [
         // GTM Sepulsa ID
@@ -45,14 +46,39 @@ class VoucherListTest extends TestCase
 
     public function testOK()
     {
-        $response = VoucherList::create($this->config)->getList();
+        $listResponse = VoucherList::create($this->config)->getList();
+
+        if (isset($listResponse->result->data) && ! empty($listResponse->result->data)) {
+            $token = isset($listResponse->result->data[0]->token) ? $listResponse->result->data[0]->token : null;
+
+            if (! is_null($token)) {
+                $response = VoucherDetail::create($this->config)->getDetail($token);
+
+                // check response metas
+                $this->assertTrue($response->meta->status);
+                $this->assertSame('v1', $response->meta->version);
+
+                // check result
+                $this->assertTrue(isset($response->result));
+                $this->assertTrue(is_object($response->result));
+
+                // should return the same token
+                $this->assertSame($token, $response->result->token);
+            }
+        }
+    }
+
+    public function testFAIL()
+    {
+        $token = 'blablabla';
+
+        $response = VoucherDetail::create($this->config)->getDetail($token);
 
         // check response metas
         $this->assertTrue($response->meta->status);
         $this->assertSame('v1', $response->meta->version);
 
-        // result data should be an array
-        $this->assertTrue(isset($response->result->data));
-        $this->assertTrue(is_array($response->result->data));
+        // check response metas
+        $this->assertTrue(is_null($response->result));
     }
 }

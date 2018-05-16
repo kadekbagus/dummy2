@@ -24,7 +24,7 @@ class VoucherDetail
     /**
      * Voucher detail endpoint
      */
-    protected $endpoint = 'partner/voucher/details';
+    protected $endpoint = 'partner/voucher/detail';
 
     public function __construct($config=[])
     {
@@ -66,7 +66,7 @@ class VoucherDetail
                 if ($counter > $tries = 3) {
                     throw new Exception("Error Processing Request, Tried {$tries} times.", 1);
                 }
-                return $this->getList($counter++);
+                return $this->getDetail($counter++);
             } else {
                 return $e->getMessage();
             }

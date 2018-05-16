@@ -62,7 +62,6 @@ class LoginTest extends TestCase
         $this->config['auth']['sandbox']['username'] = 'wrongUsername';
         $response = Login::create($this->config)->login();
 
-        // check response metas
         $this->assertTrue(is_null($response->response));
     }
 }
