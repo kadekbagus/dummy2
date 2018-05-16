@@ -40,9 +40,9 @@ class TakeVoucher
     /**
      * @param string $trx_id
      * @param array $tokens = array(
-     *       'token' => '$2y$10$UoqM6KpZLwCgJIDGMZMgt.JvOBfOOIXTIW1O7lpLSDdIboRjwlcHS'
-     *       'token' => '$2y$10$UoqM6KpZLwCgJIDGMZMgt.JvOBfOOIXTIW1O7lpLSDdIboRjwlxxx'
-     *   )
+     *           ['token' => '$2y$10$UoqM6KpZLwCgJIDGMZMgt.JvOBfOOIXTIW1O7lpLSDdIboRjwlcHS'],
+     *           ['token' => '$2y$10$UoqM6KpZLwCgJIDGMZMgt.JvOBfOOIXTIW1O7lpLSDdIboRjwlxxx']
+     *      )
      * @param array $filter
      * @param int $page
      */
