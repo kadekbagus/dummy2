@@ -7,7 +7,7 @@ use Config;
 use Cache;
 
 /**
- * Get Voucher List from Sepulsa
+ * Taken Voucher from Sepulsa
  */
 class TakeVoucher
 {
@@ -22,7 +22,7 @@ class TakeVoucher
     protected $config;
 
     /**
-     * Voucher list endpoint
+     * Taking voucher endpoint
      */
     protected $endpoint = 'partner/voucher/taken';
 

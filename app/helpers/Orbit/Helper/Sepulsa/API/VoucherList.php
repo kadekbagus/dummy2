@@ -40,7 +40,7 @@ class VoucherList
     /**
      * @param string $searchQuery
      * @param int $recordPerPage
-     * @param array $filter
+     * @param array $filters
      * @param int $page
      */
     public function getList($searchQuery='', $recordPerPage=10, $filters=[], $page=1, $counter=0)

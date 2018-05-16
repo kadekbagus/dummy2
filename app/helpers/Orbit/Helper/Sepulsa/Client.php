@@ -201,11 +201,7 @@ class Client
                 $options['headers'] = $this->headers;
             }
 
-            if ($method === 'DELETE') {
-                $response = $this->client->request($method, $this->endpoint);
-            } else {
-                $response = $this->client->request($method, $this->endpoint, $options);
-            }
+            $response = $this->client->request($method, $this->endpoint, $options);
 
             return json_decode($response->getBody()->getContents());
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
