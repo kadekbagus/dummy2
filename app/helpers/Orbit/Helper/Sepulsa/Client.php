@@ -179,7 +179,7 @@ class Client
     public function request($method='GET')
     {
         try {
-            $acceptedMethods = ['GET', 'POST', 'DELETE', 'PUT'];
+            $acceptedMethods = ['GET', 'POST'];
             if (! in_array($method, $acceptedMethods)) {
                 throw new OrbitCustomException("Invalid HTTP method.", 1);
             }
