@@ -7,7 +7,7 @@ use Config;
 use Cache;
 
 /**
- * Get Campaign List from Sepulsa
+ * Get Campaign detail from Sepulsa
  */
 class CampaignDetail
 {
@@ -22,7 +22,7 @@ class CampaignDetail
     protected $config;
 
     /**
-     * Campaign list endpoint
+     * Campaign detail endpoint
      * partner/campaign/{campaignId}/{partnerId}
      */
     protected $endpoint = 'partner/campaign/%s/%s';

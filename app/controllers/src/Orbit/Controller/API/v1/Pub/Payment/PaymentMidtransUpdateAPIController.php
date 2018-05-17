@@ -72,8 +72,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 $payment_update->status = $status;
             });
 
-           	OrbitInput::post('post_data', function($post_data) use ($payment_update) {
-                $payment_update->post_data = serialize($post_data);
+           	OrbitInput::post('external_payment_transaction_id', function($external_payment_transaction_id) use ($payment_update) {
+                $payment_update->external_payment_transaction_id = $external_payment_transaction_id;
             });
 
             OrbitInput::post('provider_response_code', function($provider_response_code) use ($payment_update) {
