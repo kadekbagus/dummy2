@@ -83,3 +83,18 @@ Route::get('/app/v1/coupon/customer-service', 'IntermediateAuthController@CSList
  * Get available wallet operator for coupon
  */
 Route::get('/app/v1/available-wallet-operator/list', 'IntermediateAuthController@Coupon_getAvailableWalletOperator');
+
+/**
+ * Create new coupon sepulsa
+ */
+Route::post('/app/v1/coupon-sepulsa/new', 'IntermediateAuthController@CouponSepulsa_postNewCoupon');
+
+/**
+ * Update coupon sepulsa
+ */
+Route::post('/app/v1/coupon-sepulsa/update', 'IntermediateAuthController@CouponSepulsa_postUpdateCoupon');
+
+/**
+ * List and/or Search coupon sepulsa
+ */
+Route::get('/app/v1/coupon-sepulsa/search', 'IntermediateAuthController@CouponSepulsa_getSearchCoupon');

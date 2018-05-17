@@ -434,6 +434,7 @@ class ESCouponUpdateQueue
             $body = [
                 'promotion_id'            => $coupon->promotion_id,
                 'name'                    => $coupon->promotion_name,
+                'promotion_type'          => $coupon->promotion_type,
                 'description'             => $coupon->description,
                 'object_type'             => 'coupon',
                 'begin_date'              => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
@@ -468,7 +469,10 @@ class ESCouponUpdateQueue
                 'location_rating'         => $locationRating,
                 'mall_rating'             => $mallRating,
                 'wallet_operator'         => $paymentOperator,
-                'sponsor_provider'        => $sponsorProviderES
+                'sponsor_provider'        => $sponsorProviderES,
+                'price_old'               => $coupon->price_old,
+                'price_value'             => $coupon->price_value,
+                'price_selling'           => $coupon->price_selling
             ];
 
             $body = array_merge($body, $translationBody);
