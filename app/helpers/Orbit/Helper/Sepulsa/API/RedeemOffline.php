@@ -7,7 +7,7 @@ use Config;
 use Cache;
 
 /**
- * Get Voucher List from Sepulsa
+ * Get Redeem Offline from Sepulsa
  */
 class RedeemOffline
 {
@@ -22,7 +22,7 @@ class RedeemOffline
     protected $config;
 
     /**
-     * Voucher list endpoint
+     * Redeem Offline endpoint
      */
     protected $endpoint = 'partner/voucher/redeem';
 
@@ -38,10 +38,9 @@ class RedeemOffline
     }
 
     /**
-     * @param string $searchQuery
-     * @param int $recordPerPage
-     * @param array $filter
-     * @param int $page
+     * @param string $token
+     * @param string $identifier
+     * @param string $mlcode
      */
     public function redeem($token, $indentifier=null, $mlcode=null, $counter=0)
     {

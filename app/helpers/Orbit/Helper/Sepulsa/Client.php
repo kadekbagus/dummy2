@@ -179,7 +179,7 @@ class Client
     public function request($method='GET')
     {
         try {
-            $acceptedMethods = ['GET', 'POST', 'DELETE', 'PUT'];
+            $acceptedMethods = ['GET', 'POST'];
             if (! in_array($method, $acceptedMethods)) {
                 throw new OrbitCustomException("Invalid HTTP method.", 1);
             }
@@ -201,11 +201,7 @@ class Client
                 $options['headers'] = $this->headers;
             }
 
-            if ($method === 'DELETE') {
-                $response = $this->client->request($method, $this->endpoint);
-            } else {
-                $response = $this->client->request($method, $this->endpoint, $options);
-            }
+            $response = $this->client->request($method, $this->endpoint, $options);
 
             return json_decode($response->getBody()->getContents());
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
