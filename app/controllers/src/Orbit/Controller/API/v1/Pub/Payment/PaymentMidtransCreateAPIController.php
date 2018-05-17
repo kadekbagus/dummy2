@@ -38,18 +38,21 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	        $user_email = $user->user_email;
 	        $user_name = $user->user_firstname.' '.$user->user_lastname;
 	        $user_id = $user->user_id;
-	        $country_id = OrbitInput::post('country_id', '101');
+	        $country_id = OrbitInput::post('country_id');
 	        $phone = OrbitInput::post('phone');
 	        $amount = OrbitInput::post('amount');
+	        $post_data = OrbitInput::post('post_data');
 
 	        $validator = Validator::make(
 	            array(
-	                'phone'  => $phone,
-	                'amount' => $amount,
+	                'phone'     => $phone,
+	                'amount'    => $amount,
+	                'post_data' => $post_data,
 	            ),
 	            array(
-	                'phone'  => 'required',
-	                'amount' => 'required',
+	                'phone'     => 'required',
+	                'amount'    => 'required',
+	                'post_data' => 'required',
 	            )
 	        );
 
@@ -69,6 +72,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	        $payment_new->country_id = $country_id;
 	        $payment_new->transaction_date_and_time = Carbon::now('UTC');
 	        $payment_new->amount = $amount;
+	        $payment_new->post_data = serialize($post_data);
 	        $payment_new->payment_method = 'midtrans';
 	        $payment_new->currency_id = '1';
 	        $payment_new->currency = 'IDR';
