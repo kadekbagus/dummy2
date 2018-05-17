@@ -41,18 +41,23 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	        $country_id = OrbitInput::post('country_id');
 	        $phone = OrbitInput::post('phone');
 	        $amount = OrbitInput::post('amount');
+	        $currency_id = OrbitInput::post('currency_id', '1');
+	        $currency = OrbitInput::post('currency', 'IDR');
 	        $post_data = OrbitInput::post('post_data');
+	        $object_id = OrbitInput::post('object_id');
+	        $object_type = OrbitInput::post('object_type');
+	        $object_name = OrbitInput::post('object_name');
 
 	        $validator = Validator::make(
 	            array(
-	                'phone'     => $phone,
-	                'amount'    => $amount,
-	                'post_data' => $post_data,
+	                'phone'       => $phone,
+	                'amount'      => $amount,
+	                'post_data'   => $post_data,
 	            ),
 	            array(
-	                'phone'     => 'required',
-	                'amount'    => 'required',
-	                'post_data' => 'required',
+	                'phone'       => 'required',
+	                'amount'      => 'required',
+	                'post_data'   => 'required',
 	            )
 	        );
 
@@ -74,10 +79,23 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	        $payment_new->amount = $amount;
 	        $payment_new->post_data = serialize($post_data);
 	        $payment_new->payment_method = 'midtrans';
-	        $payment_new->currency_id = '1';
-	        $payment_new->currency = 'IDR';
+	        $payment_new->currency_id = $currency_id;
+	        $payment_new->currency = $currency;
 	        $payment_new->status = 'pending';
 	        $payment_new->timezone_name = 'UTC';
+
+	       	OrbitInput::post('object_id', function($object_id) use ($payment_new) {
+                $payment_new->object_id = $object_id;
+            });
+
+           	OrbitInput::post('object_type', function($object_type) use ($payment_new) {
+                $payment_new->object_type = $object_type;
+            });
+
+           	OrbitInput::post('object_name', function($object_name) use ($payment_new) {
+                $payment_new->object_name = $object_name;
+            });
+
 	        $payment_new->save();
 
 	        // Commit the changes
