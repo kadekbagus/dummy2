@@ -378,3 +378,19 @@ Route::get('/api/v1/coupon-sepulsa/search', function()
 {
     return CouponSepulsaAPIController::create()->getSearchCoupon();
 });
+
+/**
+ * Get sepulsa voucher from token
+ */
+Route::get('/api/v1/voucher-sepulsa/list', function()
+{
+    return CouponSepulsaAPIController::create()->getVoucherSepulsaList();
+});
+
+/**
+ * Get sepulsa voucher from token
+ */
+Route::get('/api/v1/voucher-sepulsa/detail', function()
+{
+    return CouponSepulsaAPIController::create()->getVoucherSepulsaDetail();
+});

@@ -98,3 +98,13 @@ Route::post('/app/v1/coupon-sepulsa/update', 'IntermediateAuthController@CouponS
  * List and/or Search coupon sepulsa
  */
 Route::get('/app/v1/coupon-sepulsa/search', 'IntermediateAuthController@CouponSepulsa_getSearchCoupon');
+
+/**
+ * Get sepulsa voucher from token
+ */
+Route::get('/app/v1/voucher-sepulsa/list', 'IntermediateAuthController@CouponSepulsa_getVoucherSepulsaList');
+
+/**
+ * Get sepulsa voucher from token
+ */
+Route::get('/app/v1/voucher-sepulsa/detail', 'IntermediateAuthController@CouponSepulsa_getVoucherSepulsaDetail');
