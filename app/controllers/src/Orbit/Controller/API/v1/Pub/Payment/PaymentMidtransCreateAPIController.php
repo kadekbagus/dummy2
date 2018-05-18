@@ -83,6 +83,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	        $payment_new->currency = $currency;
 	        $payment_new->status = 'pending';
 	        $payment_new->timezone_name = 'UTC';
+	        $payment_new->phone = $phone;
 
 	       	OrbitInput::post('object_id', function($object_id) use ($payment_new) {
                 $payment_new->object_id = $object_id;
