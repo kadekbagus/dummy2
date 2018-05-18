@@ -3082,6 +3082,17 @@ class CouponSepulsaAPIController extends ControllerAPI
         try {
             $httpCode = 200;
 
+            $this->checkAuth();
+
+            $user = $this->api->user;
+
+            $role = $user->role;
+            $validRoles = $this->couponModifiyRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'You have to log in to continue';
+                ACL::throwAccessForbidden($message);
+            }
+
             $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
             $this->client = SepulsaClient::create($this->config);
 
@@ -3164,6 +3175,17 @@ class CouponSepulsaAPIController extends ControllerAPI
     {
         try {
             $httpCode = 200;
+
+            $this->checkAuth();
+
+            $user = $this->api->user;
+
+            $role = $user->role;
+            $validRoles = $this->couponModifiyRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'You have to log in to continue';
+                ACL::throwAccessForbidden($message);
+            }
 
             $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
             $this->client = SepulsaClient::create($this->config);
