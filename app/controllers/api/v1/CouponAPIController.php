@@ -200,9 +200,9 @@ class CouponAPIController extends ControllerAPI
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
             // hot deals
-            $price_old = OrbitInput::post('price_old');
-            $price_value = OrbitInput::post('price_value');
-            $price_selling = OrbitInput::post('price_selling');
+            $price_old = OrbitInput::post('price_old', 0);
+            $price_value = OrbitInput::post('price_value', 0);
+            $price_selling = OrbitInput::post('price_selling', 0);
 
             if ($payByNormal === 'N') {
                 $fixedAmountCommission = 0;
