@@ -126,9 +126,82 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
+/*
+    From add coupon  :
+    translations : {"KXyS14LOVSgGUMOp":{"promotion_name":"","description":"","long_description":"","short_description":""},"KXyS14LOVSgGUMPB":{"promotion_name":"Couon name switch PSP VITA","description":"<p>Couon name switch PSP VITA</p>","long_description":"","short_description":""}}
+    link_to_tenant_ids[] : {"tenant_id":"LANghtXoxPh0kmYc","mall_id":"Kv3rm8XoxIGBIXa1"}
+    link_to_tenant_ids[] : {"tenant_id":"LDlzy8XoxMWXNt7G","mall_id":"Kv3rm8XoxIGBIXa1"}
+    link_to_tenant_ids[] : {"tenant_id":"LODvMtXoxQ3lTQbZ","mall_id":"LAPInOXoxFK9-1fw"}
+    link_to_tenant_ids[] : {"tenant_id":"LDh8YOXoxUsroPnu","mall_id":"LAPInOXoxFK9-1fw"}
+    link_to_tenant_ids[] : {"tenant_id":"LDh7VOXoxG7gn0BU","mall_id":"KsOUgtXoxKp3V3mW"}
+    link_to_tenant_ids[] : {"tenant_id":"LBTRVdXoxOoXP6r5","mall_id":"KvOsydXoxQwVT8Ze"}
+    link_to_tenant_ids[] : {"tenant_id":"L8A6RtXoxUsg3UWB","mall_id":"L8-cAOXoxGtMDPXg"}
+    link_to_tenant_ids[] : {"tenant_id":"L6L7FOXoxS03bg0q","mall_id":"L6L6r8XoxQG3r0L-"}
+    link_to_tenant_ids[] : {"tenant_id":"L769atXoxOKyPjoE","mall_id":"L6L6r8XoxQG3r0L-"}
+    link_to_tenant_ids[] : {"tenant_id":"L8-V48XoxMWVraJi","mall_id":"L8-UWdXoxQhgvBms"}
+    retailer_ids[] : {"tenant_id":"LANghtXoxPh0kmYc","mall_id":"Kv3rm8XoxIGBIXa1"}
+    retailer_ids[] : {"tenant_id":"LDlzy8XoxMWXNt7G","mall_id":"Kv3rm8XoxIGBIXa1"}
+    retailer_ids[] : {"tenant_id":"LODvMtXoxQ3lTQbZ","mall_id":"LAPInOXoxFK9-1fw"}
+    retailer_ids[] : {"tenant_id":"LDh8YOXoxUsroPnu","mall_id":"LAPInOXoxFK9-1fw"}
+    retailer_ids[] : {"tenant_id":"LDh7VOXoxG7gn0BU","mall_id":"KsOUgtXoxKp3V3mW"}
+    retailer_ids[] : {"tenant_id":"L8A6RtXoxUsg3UWB","mall_id":"L8-cAOXoxGtMDPXg"}
+    retailer_ids[] : {"tenant_id":"LBTRVdXoxOoXP6r5","mall_id":"KvOsydXoxQwVT8Ze"}
+    retailer_ids[] : {"tenant_id":"L6L7FOXoxS03bg0q","mall_id":"L6L6r8XoxQG3r0L-"}
+    retailer_ids[] : {"tenant_id":"L769atXoxOKyPjoE","mall_id":"L6L6r8XoxQG3r0L-"}
+    retailer_ids[] : {"tenant_id":"L8-V48XoxMWVraJi","mall_id":"L8-UWdXoxQhgvBms"}
+    no_employee : Y
+    is_3rd_party_promotion : N
+    is_hidden : N
+    pay_by_wallet : N
+    pay_by_normal : Y
+    payment_provider_ids : []
+    amount_commission : undefined
+    fixed_amount_commission : undefined
+    isLinkToSponsorOperator : N
+    linkToSponsorOperatorModel : [object Object]
+    begin_date_hour : 16
+    begin_date_minute : 40
+    end_date_hour : 23
+    end_date_minute : 59
+    rule_begin_date_hour : 16
+    rule_begin_date_minute : 40
+    rule_end_date_hour : 23
+    rule_end_date_minute : 59
+    merchant_id : L7zdbtXoxI8FrN0F
+    is_permanent : false
+    promotion_type : mall
+    id_language_default : KXyS14LOVSgGUMPB
+    begin_date : 2018-05-18 16:40:00
+    coupon_codes : 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 22, 33
+    image_translation_KXyS14LOVSgGUMPB"; filename="PS-Vita-Featured-796x416.jpg : ontent-Type: image/jpeg
+    end_date : 2018-08-31 23:59:00
+    rule_type : unique_coupon_per_user
+    rule_value : 0
+    discount_value : 0
+    rule_begin_date : 2018-05-18 16:40:00
+    rule_end_date : 2018-08-31 23:59:00
+    coupon_validity_in_date : 2018-09-01 23:59:59
+    promotion_name : Couon name switch PSP VITA
+    description : <p>Couon name switch PSP VITA</p>
+    maximum_issued_coupon :
+    coupon_validity_in_days : 0
+    coupon_redeem_rule_value : 0
+    is_redeemed_at_employee : N
+    is_all_retailer : N
+    is_all_employee : N
+    partner_ids[] : L9zOt8XoxFloqb__
+    partner_ids[] : L9kHNdXoxNCewNTc
+    is_exclusive : N
+    keywords[] : test
+    keywords[] : psp
+    product_tags[] : tags
+    product_tags[] : psp
+    current_mall : L7zdbtXoxI8FrN0F
+*/
+
             $merchant_id = OrbitInput::post('current_mall');
             $promotion_name = OrbitInput::post('promotion_name');
-            $promotion_type = OrbitInput::post('promotion_type');
+            $promotion_type = OrbitInput::post('promotion_type', 'coupon_sepulsa');
             $campaignStatus = OrbitInput::post('campaign_status');
             $description = OrbitInput::post('description');
             $long_description = OrbitInput::post('long_description');
@@ -201,6 +274,17 @@ class CouponSepulsaAPIController extends ControllerAPI
             $amountCommission = OrbitInput::post('amount_commission', null);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
+            $coupon_sepulsa_id = OrbitInput::post('coupon_sepulsa_id');
+            $promotion_id = OrbitInput::post('promotion_id');
+            $external_id = OrbitInput::post('external_id');
+            $price_from_sepulsa = OrbitInput::post('price_from_sepulsa');
+            $price_value = OrbitInput::post('price_value');
+            $price_selling = OrbitInput::post('price_selling');
+            $coupon_image_url = OrbitInput::post('coupon_image_url');
+            $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
+            $terms_and_conditions = OrbitInput::post('terms_and_conditions');
+            // $token = OrbitInput::post('token');
+
             if ($payByNormal === 'N') {
                 $fixedAmountCommission = 0;
             }
@@ -240,6 +324,15 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'is_3rd_party_promotion'  => $is3rdPartyPromotion,
                 'maximum_redeem'          => $maximumRedeem,
                 'maximum_issued_coupon'   => $maximum_issued_coupon,
+
+                'coupon_sepulsa_id'       => $coupon_sepulsa_id,
+                'external_id'             => $external_id,
+                'price_from_sepulsa'      => $price_from_sepulsa,
+                'price_value'             => $price_value,
+                'price_selling'           => $price_selling,
+                'coupon_image_url'        => $coupon_image_url,
+                'how_to_buy_and_redeem'   => $how_to_buy_and_redeem,
+                'terms_and_conditions'    => $terms_and_conditions,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -262,6 +355,15 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
                 'maximum_redeem'          => 'numeric',
                 'maximum_issued_coupon'   => 'required',
+
+                'coupon_sepulsa_id'       => 'required',
+                'external_id'             => 'required',
+                'price_from_sepulsa'      => 'required',
+                'price_value'             => 'required',
+                'price_selling'           => 'required',
+                'coupon_image_url'        => 'required',
+                'how_to_buy_and_redeem'   => 'required',
+                'terms_and_conditions'    => 'required',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -1091,6 +1193,17 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
+
+            $coupon_sepulsa_id = OrbitInput::post('coupon_sepulsa_id');
+            $promotion_id = OrbitInput::post('promotion_id');
+            $external_id = OrbitInput::post('external_id');
+            $price_from_sepulsa = OrbitInput::post('price_from_sepulsa');
+            $price_value = OrbitInput::post('price_value');
+            $price_selling = OrbitInput::post('price_selling');
+            $coupon_image_url = OrbitInput::post('coupon_image_url');
+            $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
+            $terms_and_conditions = OrbitInput::post('terms_and_conditions');
+            // $token = OrbitInput::post('token');
 
             $idStatus = CampaignStatus::select('campaign_status_id')->where('campaign_status_name', $campaignStatus)->first();
             $status = 'inactive';
@@ -3192,7 +3305,8 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $token = OrbitInput::get('token');
 
-            $listOfCoupons = VoucherDetail::create($this->config)->getDetail($token);
+            $listOfCoupons = VoucherDetail::create($this->config)->getDetail($token)->result;
+
             $totalCoupon = count($listOfCoupons);
 
             $data = new stdclass();
