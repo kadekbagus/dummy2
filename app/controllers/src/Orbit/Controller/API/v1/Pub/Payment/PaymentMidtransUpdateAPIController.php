@@ -48,7 +48,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	            ),
 	            array(
 	                'payment_transaction_id'  => 'required|orbit.exist.payment_transaction_id',
-	                'status'  => 'required'
+	                'status'  => 'required|in:pending,success,failed'
 	            ),
 	            array(
 	            	'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
@@ -65,7 +65,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	        }
 
 	        $payment_update = PaymentTransaction::where('payment_transaction_id', '=', $payment_transaction_id)
-	        									->where('status', '=', 'pending')
+												->whereRaw("status = 'starting' OR 'pending'")
 	        									->first();
 
 	        OrbitInput::post('status', function($status) use ($payment_update) {
