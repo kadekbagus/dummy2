@@ -81,7 +81,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	        $payment_new->payment_method = 'midtrans';
 	        $payment_new->currency_id = $currency_id;
 	        $payment_new->currency = $currency;
-	        $payment_new->status = 'pending';
+	        $payment_new->status = 'starting';
 	        $payment_new->timezone_name = 'UTC';
 	        $payment_new->phone = $phone;
 
