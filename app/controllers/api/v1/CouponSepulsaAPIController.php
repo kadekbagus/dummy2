@@ -201,7 +201,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $coupon_image_url = OrbitInput::post('coupon_image_url');
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
-            // $token = OrbitInput::post('token');
+            $token = OrbitInput::post('token');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -237,6 +237,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'coupon_image_url'        => $coupon_image_url,
                 'how_to_buy_and_redeem'   => $how_to_buy_and_redeem,
                 'terms_and_conditions'    => $terms_and_conditions,
+                'token'                   => $token,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -263,6 +264,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'coupon_image_url'        => 'required',
                 'how_to_buy_and_redeem'   => 'required',
                 'terms_and_conditions'    => 'required',
+                'token'                   => 'required',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -579,8 +581,9 @@ class CouponSepulsaAPIController extends ControllerAPI
             $couponSepulsa->price_from_sepulsa = $price_from_sepulsa;
             $couponSepulsa->price_value = $price_value;
             $couponSepulsa->coupon_image_url = $coupon_image_url;
-            // $couponSepulsa->how_to_buy_and_redeem = $how_to_buy_and_redeem;
-            // $couponSepulsa->terms_and_conditions = $terms_and_conditions;
+            $couponSepulsa->token = $token;
+            $couponSepulsa->how_to_buy_and_redeem = $how_to_buy_and_redeem;
+            $couponSepulsa->terms_and_conditions = $terms_and_conditions;
             $couponSepulsa->save();
             $newcoupon->coupon_sepulsa = $couponSepulsa;
 
@@ -2442,7 +2445,8 @@ class CouponSepulsaAPIController extends ControllerAPI
                         {$mediaOptimize} ) as media
                     "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
-                ->groupBy('promotions.promotion_id');
+                ->groupBy('promotions.promotion_id')
+                ->where('promotion_type', 'sepulsa');
 
             if($filterName === '') {
                 // handle role campaign admin cause not join with campaign account
