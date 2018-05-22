@@ -32,7 +32,7 @@ Route::post('/api/v1/pub/payment/midtrans/update', function()
     return Orbit\Controller\API\v1\Pub\Payment\PaymentMidtransUpdateAPIController::create()->postPaymentMidtransUpdate();
 });
 
-Route::post('/api/v1/pub/payment/midtrans/verify', function()
+Route::get('/api/v1/pub/payment/midtrans/verify', function()
 {
     return Orbit\Controller\API\v1\Pub\Payment\PaymentMidtransVerifyAPIController::create()->getPaymentMidtransVerify();
 });

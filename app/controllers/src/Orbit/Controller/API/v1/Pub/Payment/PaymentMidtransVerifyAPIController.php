@@ -21,35 +21,21 @@ use Carbon\Carbon as Carbon;
 class PaymentMidtransVerifyAPIController extends PubControllerAPI
 {
 
-    public function postPaymentMidtransVerify()
+    public function getPaymentMidtransVerify()
     {
 	    $httpCode = 200;
 	    try {
 	    	$this->checkAuth();
 	    	$user = $this->api->user;
 
-            // should always check the role
-            $role = $user->role->role_name;
-            if (strtolower($role) !== 'consumer') {
-                $message = 'You have to login to continue';
-                OrbitShopAPI::throwInvalidArgument($message);
-            }
-
-	        $user_id = $user->user_id;
-	        $transaction_id = OrbitInput::post('transaction_id');
-	        $amount = OrbitInput::post('amount');
-	        $response_status = OrbitInput::post('response_status');
+	        $payment_transaction_id = OrbitInput::get('payment_transaction_id');
 
 	        $validator = Validator::make(
 	            array(
-	                'transaction_id'  => $transaction_id,
-	                'amount' 		  => $amount,
-	                'response_status' => $response_status
+	                'payment_transaction_id'  => $payment_transaction_id
 	            ),
 	            array(
-	                'transaction_id'  => 'required',
-	                'amount'	      => 'required',
-	                'response_status' => 'required|in:success,failed'
+	                'payment_transaction_id'  => 'required'
 	            )
 	        );
 
@@ -63,34 +49,22 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
 	        }
 
 	        // validate payment data
-	        $payment = PaymentTransaction::select('external_payment_transaction_id', 'amount', 'status')
-	        							 ->where('payment_transaction_id', '=', $transaction_id)
-	        							 ->where('user_id', '=', $user_id)
-	        							 ->where('amount', '=', $amount)
-	        							 ->where('status', '=', 'pending')
+	        $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status')
+	        							 ->where('payment_transaction_id', '=', $payment_transaction_id)
 	        							 ->first();
 
 	 		if (empty($payment)) {
-	 			$errorMessage = 'Transaction not found';
-	 			OrbitShopAPI::throwInvalidArgument($errorMessage);
+	 			$httpCode = 404;
+	 			$this->response->data = null;
+		        $this->response->code = 404;
+		        $this->response->status = 'error';
+		        $this->response->message = 'Transaction not found';
+	 		} else {
+	 			$this->response->data = $payment;
+		        $this->response->code = 0;
+		        $this->response->status = 'success';
+		        $this->response->message = 'Request OK';
 	 		}
-
-	 		// update payment status
-	 		$payment_update = PaymentTransaction::where('payment_transaction_id', '=', $transaction_id)->first();
-
-	 		OrbitInput::post('response_status', function($response_status) use ($payment_update) {
-                $payment_update->status = $response_status;
-            });
-
-            $payment_update->save();
-
-           	// Commit the changes
-            $this->commit();
-
-	        $this->response->data = $payment_update;
-	        $this->response->code = 0;
-	        $this->response->status = 'success';
-	        $this->response->message = 'Request OK';
 
 	    } catch (ACLForbiddenException $e) {
 	        $this->response->code = $e->getCode();
@@ -98,16 +72,12 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
 	        $this->response->message = $e->getMessage();
 	        $this->response->data = null;
 	        $httpCode = 403;
-	       	// Rollback the changes
-            $this->rollBack();
 	    } catch (InvalidArgsException $e) {
 	        $this->response->code = $e->getCode();
 	        $this->response->status = 'error';
 	        $this->response->message = $e->getMessage();
 	        $this->response->data = null;
 	        $httpCode = 403;
-	       	// Rollback the changes
-            $this->rollBack();
 	    } catch (QueryException $e) {
 	        $this->response->code = $e->getCode();
 	        $this->response->status = 'error';
@@ -119,16 +89,12 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
 	        }
 	        $this->response->data = null;
 	        $httpCode = 500;
-	       	// Rollback the changes
-            $this->rollBack();
 	    } catch (Exception $e) {
 	        $this->response->code = $this->getNonZeroCode($e->getCode());
 	        $this->response->status = 'error';
 	        $this->response->message = $e->getMessage();
 	        $this->response->data = null;
 	        $httpCode = 500;
-	        // Rollback the changes
-            $this->rollBack();
 	    }
 
 	    return $this->render($httpCode);
