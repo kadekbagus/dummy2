@@ -1076,14 +1076,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->price_selling = $price_selling;
             });
 
-            OrbitInput::post('how_to_buy_and_redeem', function($how_to_buy_and_redeem) use ($updatedcoupon) {
-                $updatedcoupon->how_to_buy_and_redeem = $how_to_buy_and_redeem;
-            });
-
-            OrbitInput::post('terms_and_conditions', function($terms_and_conditions) use ($updatedcoupon) {
-                $updatedcoupon->terms_and_conditions = $terms_and_conditions;
-            });
-
             OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon) {
                 $updatedcoupon->amount_commission = $amount_commission;
             });
@@ -1124,6 +1116,44 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $updatedcoupon->setUpdatedAt($updatedcoupon->freshTimestamp());
             $updatedcoupon->save();
+
+
+            // Update coupon sepulsa additional
+            $updatedCouponSepulsa = CouponSepulsa::where('promotion_id', $promotion_id)->first();
+
+            OrbitInput::post('external_id', function($external_id) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->external_id = $external_id;
+            });
+
+            OrbitInput::post('price_from_sepulsa', function($price_from_sepulsa) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->price_from_sepulsa = $price_from_sepulsa;
+            });
+
+            OrbitInput::post('price_value', function($price_value) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->price_value = $price_value;
+            });
+
+            OrbitInput::post('coupon_image_url', function($coupon_image_url) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->coupon_image_url = $coupon_image_url;
+            });
+
+            OrbitInput::post('token', function($token) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->token = $token;
+            });
+
+            OrbitInput::post('how_to_buy_and_redeem', function($how_to_buy_and_redeem) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->how_to_buy_and_redeem = $how_to_buy_and_redeem;
+            });
+
+            OrbitInput::post('terms_and_conditions', function($terms_and_conditions) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->terms_and_conditions = $terms_and_conditions;
+            });
+            $updatedCouponSepulsa->setUpdatedAt($updatedCouponSepulsa->freshTimestamp());
+            $updatedCouponSepulsa->save();
+
+            $updatedcoupon->coupon_sepulsa = $updatedCouponSepulsa;
+
+
 
             // save CouponRule.
             $couponrule = CouponRule::where('promotion_id', '=', $promotion_id)->first();
