@@ -29,13 +29,6 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	    	$this->checkAuth();
 	    	$user = $this->api->user;
 
-            // should always check the role
-            $role = $user->role->role_name;
-            if (strtolower($role) !== 'consumer') {
-                $message = 'You have to login to continue';
-                OrbitShopAPI::throwInvalidArgument($message);
-            }
-
 	        $payment_transaction_id = OrbitInput::post('payment_transaction_id');
 	        $status = OrbitInput::post('status');
 
