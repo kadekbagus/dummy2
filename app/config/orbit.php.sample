@@ -7223,5 +7223,34 @@ return array(
             // if not then only given mall id can be accessed
             'whitelist_mall_ids' => [],
         ]
-    ]
+    ],
+
+    // config regarding third party partners API
+    'partners_api' => [
+        'sepulsa' => [
+            // GTM Sepulsa ID
+            'partner_id' => null,
+            // set to true to switch base uri to production
+            'is_production' => false,
+            // use sandbox base uri for development (with trailing slash)
+            'base_uri' => [
+                'production' => 'http://asd.test/app/oke/',
+                'sandbox' => 'https://bonabo.sepulsa.co.id/api/v1/'
+            ],
+            'auth' => [
+                'production' => [
+                    'username' => 'oke@test.com',
+                    'password' => '123123',
+                ],
+                'sandbox' => [
+                    'username' => 'buzzebees@sepulsa.com',
+                    'password' => 'masukaja',
+                ]
+            ],
+            // cache key, the session will be saved to cache
+            'session_key_name' => 'sepulsa_token',
+            // redeem callback secret_token, to be given to sepulsa
+            'callback_secret_token' => 'HXJQluD4hGV1UqgaaR4YJomdv0zsQXny',
+        ],
+    ],
 );
