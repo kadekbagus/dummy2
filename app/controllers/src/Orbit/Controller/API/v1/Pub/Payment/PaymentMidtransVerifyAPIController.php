@@ -28,14 +28,6 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
 	    	$this->checkAuth();
 	    	$user = $this->api->user;
 
-            // should always check the role
-            $role = $user->role->role_name;
-            if (strtolower($role) !== 'consumer') {
-                $message = 'You have to login to continue';
-                OrbitShopAPI::throwInvalidArgument($message);
-            }
-
-	        $user_id = $user->user_id;
 	        $external_payment_transaction_id = OrbitInput::get('external_payment_transaction_id');
 
 	        $validator = Validator::make(
@@ -59,7 +51,6 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
 	        // validate payment data
 	        $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status')
 	        							 ->where('external_payment_transaction_id', '=', $external_payment_transaction_id)
-	        							 ->where('user_id', '=', $user_id)
 	        							 ->first();
 
 	 		if (empty($payment)) {
