@@ -202,7 +202,7 @@ class ActivationAPIController extends IntermediateBaseController
 
             $this->rollBack();
         } catch (Exception $e) {
-            $this->response->code = Status::UNKNOWN_ERROR;
+            $this->response->code = 1;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
