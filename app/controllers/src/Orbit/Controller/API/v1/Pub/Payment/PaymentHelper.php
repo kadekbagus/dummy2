@@ -23,8 +23,8 @@ class PaymentHelper
         Validator::extend('orbit.exist.payment_transaction_id', function ($attribute, $value, $parameters) {
 
             $payment = PaymentTransaction::where('payment_transaction_id', '=', $value)
-                                                ->where('status', '=', 'pending')
-                                                ->first();
+                                        ->whereRaw("status = 'starting' OR 'pending'")
+                                        ->first();
 
             if (empty($payment)) {
                 return FALSE;

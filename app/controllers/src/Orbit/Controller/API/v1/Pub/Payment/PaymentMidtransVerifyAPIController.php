@@ -2,7 +2,7 @@
 
 /**
  * @author kadek <kadek@dominopos.com>
- * @desc Controller for create payment with midtrans
+ * @desc Controller for verifying payment with midtrans
  */
 
 use OrbitShop\API\v1\PubControllerAPI;
@@ -18,10 +18,10 @@ use Validator;
 use PaymentTransaction;
 use Carbon\Carbon as Carbon;
 
-class PaymentMidtransCreateAPIController extends PubControllerAPI
+class PaymentMidtransVerifyAPIController extends PubControllerAPI
 {
 
-    public function postPaymentMidtransCreate()
+    public function postPaymentMidtransVerify()
     {
 	    $httpCode = 200;
 	    try {
@@ -35,33 +35,25 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-	        $user_email = $user->user_email;
-	        $user_name = $user->user_firstname.' '.$user->user_lastname;
 	        $user_id = $user->user_id;
-	        $country_id = OrbitInput::post('country_id');
-	        $phone = OrbitInput::post('phone');
+	        $transaction_id = OrbitInput::post('transaction_id');
 	        $amount = OrbitInput::post('amount');
-	        $currency_id = OrbitInput::post('currency_id', '1');
-	        $currency = OrbitInput::post('currency', 'IDR');
-	        $post_data = OrbitInput::post('post_data');
-	        $object_id = OrbitInput::post('object_id');
-	        $object_type = OrbitInput::post('object_type');
-	        $object_name = OrbitInput::post('object_name');
+	        $response_status = OrbitInput::post('response_status');
 
 	        $validator = Validator::make(
 	            array(
-	                'phone'       => $phone,
-	                'amount'      => $amount,
-	                'post_data'   => $post_data,
+	                'transaction_id'  => $transaction_id,
+	                'amount' 		  => $amount,
+	                'response_status' => $response_status
 	            ),
 	            array(
-	                'phone'       => 'required',
-	                'amount'      => 'required',
-	                'post_data'   => 'required',
+	                'transaction_id'  => 'required',
+	                'amount'	      => 'required',
+	                'response_status' => 'required|in:success,failed'
 	            )
 	        );
 
-	        // Begin database transaction
+	      	// Begin database transaction
             $this->beginTransaction();
 
 	        // Run the validation
@@ -70,39 +62,32 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	            OrbitShopAPI::throwInvalidArgument($errorMessage);
 	        }
 
-	        $payment_new = new PaymentTransaction;
-	        $payment_new->user_email = $user_email;
-	        $payment_new->user_name = $user_name;
-	        $payment_new->user_id = $user_id;
-	        $payment_new->country_id = $country_id;
-	        $payment_new->transaction_date_and_time = Carbon::now('UTC');
-	        $payment_new->amount = $amount;
-	        $payment_new->post_data = serialize($post_data);
-	        $payment_new->payment_method = 'midtrans';
-	        $payment_new->currency_id = $currency_id;
-	        $payment_new->currency = $currency;
-	        $payment_new->status = 'starting';
-	        $payment_new->timezone_name = 'UTC';
-	        $payment_new->phone = $phone;
+	        // validate payment data
+	        $payment = PaymentTransaction::select('external_payment_transaction_id', 'amount', 'status')
+	        							 ->where('payment_transaction_id', '=', $transaction_id)
+	        							 ->where('user_id', '=', $user_id)
+	        							 ->where('amount', '=', $amount)
+	        							 ->where('status', '=', 'pending')
+	        							 ->first();
 
-	       	OrbitInput::post('object_id', function($object_id) use ($payment_new) {
-                $payment_new->object_id = $object_id;
+	 		if (empty($payment)) {
+	 			$errorMessage = 'Transaction not found';
+	 			OrbitShopAPI::throwInvalidArgument($errorMessage);
+	 		}
+
+	 		// update payment status
+	 		$payment_update = PaymentTransaction::where('payment_transaction_id', '=', $transaction_id)->first();
+
+	 		OrbitInput::post('response_status', function($response_status) use ($payment_update) {
+                $payment_update->status = $response_status;
             });
 
-           	OrbitInput::post('object_type', function($object_type) use ($payment_new) {
-                $payment_new->object_type = $object_type;
-            });
+            $payment_update->save();
 
-           	OrbitInput::post('object_name', function($object_name) use ($payment_new) {
-                $payment_new->object_name = $object_name;
-            });
-
-	        $payment_new->save();
-
-	        // Commit the changes
+           	// Commit the changes
             $this->commit();
 
-	        $this->response->data = $payment_new;
+	        $this->response->data = $payment_update;
 	        $this->response->code = 0;
 	        $this->response->status = 'success';
 	        $this->response->message = 'Request OK';
@@ -113,18 +98,16 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	        $this->response->message = $e->getMessage();
 	        $this->response->data = null;
 	        $httpCode = 403;
-	        // Rollback the changes
+	       	// Rollback the changes
             $this->rollBack();
-
 	    } catch (InvalidArgsException $e) {
 	        $this->response->code = $e->getCode();
 	        $this->response->status = 'error';
 	        $this->response->message = $e->getMessage();
 	        $this->response->data = null;
 	        $httpCode = 403;
-	        // Rollback the changes
+	       	// Rollback the changes
             $this->rollBack();
-
 	    } catch (QueryException $e) {
 	        $this->response->code = $e->getCode();
 	        $this->response->status = 'error';
@@ -136,9 +119,8 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	        }
 	        $this->response->data = null;
 	        $httpCode = 500;
-	        // Rollback the changes
+	       	// Rollback the changes
             $this->rollBack();
-
 	    } catch (Exception $e) {
 	        $this->response->code = $this->getNonZeroCode($e->getCode());
 	        $this->response->status = 'error';
