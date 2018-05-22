@@ -107,9 +107,8 @@ class StoreListNewAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', 'name');
             $sortBy = OrbitInput::get('sortby', 'name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
+            $sortMode = OrbitInput::get('sortmode','asc');
             $location = OrbitInput::get('location', null);
             $cityFilters = OrbitInput::get('cities', []);
             $cityFilters = (array) $cityFilters;
@@ -138,9 +137,9 @@ class StoreListNewAPIController extends PubControllerAPI
             $searchFlag = FALSE;
 
             // store can not sorted by date, so it must be changes to default sorting (name - ascending)
-            if ($sort_by === "created_date") {
-                $sort_by = "name";
-                $sort_mode = "asc";
+            if ($sortBy === "created_date") {
+                $sortBy = "name";
+                $sortMode = "asc";
             }
 
             // Call validation from store helper
@@ -150,7 +149,7 @@ class StoreListNewAPIController extends PubControllerAPI
             $validator = Validator::make(
                 array(
                     'language' => $language,
-                    'sortby'   => $sort_by,
+                    'sortby'   => $sortBy,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
@@ -161,7 +160,7 @@ class StoreListNewAPIController extends PubControllerAPI
             // Pass all possible parameters to be used as cache key.
             // Make sure there is no missing one.
             $cacheKey = [
-                'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
+                'sort_by' => $sortBy, 'sort_mode' => $sortMode, 'language' => $language,
                 'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,

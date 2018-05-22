@@ -7248,7 +7248,9 @@ return array(
                 ]
             ],
             // cache key, the session will be saved to cache
-            'session_key_name' => ''
-        ]
+            'session_key_name' => 'sepulsa_token',
+            // redeem callback secret_token, to be given to sepulsa
+            'callback_secret_token' => 'HXJQluD4hGV1UqgaaR4YJomdv0zsQXny',
+        ],
     ],
 );
