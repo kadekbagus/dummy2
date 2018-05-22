@@ -28,14 +28,14 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
 	    	$this->checkAuth();
 	    	$user = $this->api->user;
 
-	        $external_payment_transaction_id = OrbitInput::get('external_payment_transaction_id');
+	        $payment_transaction_id = OrbitInput::get('payment_transaction_id');
 
 	        $validator = Validator::make(
 	            array(
-	                'external_payment_transaction_id'  => $external_payment_transaction_id
+	                'payment_transaction_id'  => $payment_transaction_id
 	            ),
 	            array(
-	                'external_payment_transaction_id'  => 'required'
+	                'payment_transaction_id'  => 'required'
 	            )
 	        );
 
@@ -50,7 +50,7 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
 
 	        // validate payment data
 	        $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status')
-	        							 ->where('external_payment_transaction_id', '=', $external_payment_transaction_id)
+	        							 ->where('payment_transaction_id', '=', $payment_transaction_id)
 	        							 ->first();
 
 	 		if (empty($payment)) {
