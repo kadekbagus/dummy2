@@ -63,14 +63,17 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
 	        							 ->first();
 
 	 		if (empty($payment)) {
-	 			$errorMessage = 'Transaction not found';
-	 			OrbitShopAPI::throwInvalidArgument($errorMessage);
+	 			$httpCode = 404;
+	 			$this->response->data = null;
+		        $this->response->code = 404;
+		        $this->response->status = 'error';
+		        $this->response->message = 'Transaction not found';
+	 		} else {
+	 			$this->response->data = $payment;
+		        $this->response->code = 0;
+		        $this->response->status = 'success';
+		        $this->response->message = 'Request OK';
 	 		}
-
-	        $this->response->data = $payment;
-	        $this->response->code = 0;
-	        $this->response->status = 'success';
-	        $this->response->message = 'Request OK';
 
 	    } catch (ACLForbiddenException $e) {
 	        $this->response->code = $e->getCode();
