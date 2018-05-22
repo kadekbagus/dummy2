@@ -87,8 +87,6 @@ class CouponSepulsaAPIController extends ControllerAPI
      * @param string     `sticky_order`                      (required) - For set premium content, Default : 0
      *
      * FOR SEPULSA FORM
-
-
      *
      *
      * @return Illuminate\Support\Facades\Response
@@ -126,79 +124,6 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-/*
-    From add coupon  :
-    translations : {"KXyS14LOVSgGUMOp":{"promotion_name":"","description":"","long_description":"","short_description":""},"KXyS14LOVSgGUMPB":{"promotion_name":"Couon name switch PSP VITA","description":"<p>Couon name switch PSP VITA</p>","long_description":"","short_description":""}}
-    link_to_tenant_ids[] : {"tenant_id":"LANghtXoxPh0kmYc","mall_id":"Kv3rm8XoxIGBIXa1"}
-    link_to_tenant_ids[] : {"tenant_id":"LDlzy8XoxMWXNt7G","mall_id":"Kv3rm8XoxIGBIXa1"}
-    link_to_tenant_ids[] : {"tenant_id":"LODvMtXoxQ3lTQbZ","mall_id":"LAPInOXoxFK9-1fw"}
-    link_to_tenant_ids[] : {"tenant_id":"LDh8YOXoxUsroPnu","mall_id":"LAPInOXoxFK9-1fw"}
-    link_to_tenant_ids[] : {"tenant_id":"LDh7VOXoxG7gn0BU","mall_id":"KsOUgtXoxKp3V3mW"}
-    link_to_tenant_ids[] : {"tenant_id":"LBTRVdXoxOoXP6r5","mall_id":"KvOsydXoxQwVT8Ze"}
-    link_to_tenant_ids[] : {"tenant_id":"L8A6RtXoxUsg3UWB","mall_id":"L8-cAOXoxGtMDPXg"}
-    link_to_tenant_ids[] : {"tenant_id":"L6L7FOXoxS03bg0q","mall_id":"L6L6r8XoxQG3r0L-"}
-    link_to_tenant_ids[] : {"tenant_id":"L769atXoxOKyPjoE","mall_id":"L6L6r8XoxQG3r0L-"}
-    link_to_tenant_ids[] : {"tenant_id":"L8-V48XoxMWVraJi","mall_id":"L8-UWdXoxQhgvBms"}
-    retailer_ids[] : {"tenant_id":"LANghtXoxPh0kmYc","mall_id":"Kv3rm8XoxIGBIXa1"}
-    retailer_ids[] : {"tenant_id":"LDlzy8XoxMWXNt7G","mall_id":"Kv3rm8XoxIGBIXa1"}
-    retailer_ids[] : {"tenant_id":"LODvMtXoxQ3lTQbZ","mall_id":"LAPInOXoxFK9-1fw"}
-    retailer_ids[] : {"tenant_id":"LDh8YOXoxUsroPnu","mall_id":"LAPInOXoxFK9-1fw"}
-    retailer_ids[] : {"tenant_id":"LDh7VOXoxG7gn0BU","mall_id":"KsOUgtXoxKp3V3mW"}
-    retailer_ids[] : {"tenant_id":"L8A6RtXoxUsg3UWB","mall_id":"L8-cAOXoxGtMDPXg"}
-    retailer_ids[] : {"tenant_id":"LBTRVdXoxOoXP6r5","mall_id":"KvOsydXoxQwVT8Ze"}
-    retailer_ids[] : {"tenant_id":"L6L7FOXoxS03bg0q","mall_id":"L6L6r8XoxQG3r0L-"}
-    retailer_ids[] : {"tenant_id":"L769atXoxOKyPjoE","mall_id":"L6L6r8XoxQG3r0L-"}
-    retailer_ids[] : {"tenant_id":"L8-V48XoxMWVraJi","mall_id":"L8-UWdXoxQhgvBms"}
-    no_employee : Y
-    is_3rd_party_promotion : N
-    is_hidden : N
-    pay_by_wallet : N
-    pay_by_normal : Y
-    payment_provider_ids : []
-    amount_commission : undefined
-    fixed_amount_commission : undefined
-    isLinkToSponsorOperator : N
-    linkToSponsorOperatorModel : [object Object]
-    begin_date_hour : 16
-    begin_date_minute : 40
-    end_date_hour : 23
-    end_date_minute : 59
-    rule_begin_date_hour : 16
-    rule_begin_date_minute : 40
-    rule_end_date_hour : 23
-    rule_end_date_minute : 59
-    merchant_id : L7zdbtXoxI8FrN0F
-    is_permanent : false
-    promotion_type : mall
-    id_language_default : KXyS14LOVSgGUMPB
-    begin_date : 2018-05-18 16:40:00
-    coupon_codes : 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 22, 33
-    image_translation_KXyS14LOVSgGUMPB"; filename="PS-Vita-Featured-796x416.jpg : ontent-Type: image/jpeg
-    end_date : 2018-08-31 23:59:00
-    rule_type : unique_coupon_per_user
-    rule_value : 0
-    discount_value : 0
-    rule_begin_date : 2018-05-18 16:40:00
-    rule_end_date : 2018-08-31 23:59:00
-    coupon_validity_in_date : 2018-09-01 23:59:59
-    promotion_name : Couon name switch PSP VITA
-    description : <p>Couon name switch PSP VITA</p>
-    maximum_issued_coupon :
-    coupon_validity_in_days : 0
-    coupon_redeem_rule_value : 0
-    is_redeemed_at_employee : N
-    is_all_retailer : N
-    is_all_employee : N
-    partner_ids[] : L9zOt8XoxFloqb__
-    partner_ids[] : L9kHNdXoxNCewNTc
-    is_exclusive : N
-    keywords[] : test
-    keywords[] : psp
-    product_tags[] : tags
-    product_tags[] : psp
-    current_mall : L7zdbtXoxI8FrN0F
-*/
-
             $merchant_id = OrbitInput::post('current_mall');
             $promotion_name = OrbitInput::post('promotion_name');
             $promotion_type = OrbitInput::post('promotion_type', 'coupon_sepulsa');
@@ -207,7 +132,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $long_description = OrbitInput::post('long_description');
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
-            $is_permanent = OrbitInput::post('is_permanent');
+            $is_permanent = OrbitInput::post('is_permanent','f');
             $is_all_retailer = OrbitInput::post('is_all_retailer');
             $is_all_employee = OrbitInput::post('is_all_employee');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
@@ -215,7 +140,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $coupon_notification = OrbitInput::post('coupon_notification');
-            $rule_type = OrbitInput::post('rule_type');
+            $rule_type = OrbitInput::post('rule_type','unique_coupon_per_user');
             $rule_value = OrbitInput::post('rule_value');
             $rule_object_type = OrbitInput::post('rule_object_type');
             $rule_object_id1 = OrbitInput::post('rule_object_id1');
@@ -233,10 +158,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             $is_cumulative_with_coupons = OrbitInput::post('is_cumulative_with_coupons');
             $is_cumulative_with_promotions = OrbitInput::post('is_cumulative_with_promotions');
             $coupon_redeem_rule_value = OrbitInput::post('coupon_redeem_rule_value');
-            $retailer_ids = OrbitInput::post('retailer_ids');
-            $retailer_ids = (array) $retailer_ids;
-            $employee_user_ids = OrbitInput::post('employee_user_ids');
-            $employee_user_ids = (array) $employee_user_ids;
             $id_language_default = OrbitInput::post('id_language_default');
             $is_popup = OrbitInput::post('is_popup', 'N');
             $rule_begin_date = OrbitInput::post('rule_begin_date');
@@ -266,16 +187,13 @@ class CouponSepulsaAPIController extends ControllerAPI
             $shortDescription = OrbitInput::post('short_description', NULL);
             $isVisible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
             $thirdPartyName = OrbitInput::post('third_party_name', NULL);
-            $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
-
-            $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $payByNormal = OrbitInput::post('pay_by_normal', 'N');
+            $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $paymentProviders = OrbitInput::post('payment_provider_ids', null);
-            $amountCommission = OrbitInput::post('amount_commission', null);
-            $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
+            $amountCommission = OrbitInput::post('amount_commission', 0);
+            $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', 0);
 
-            $coupon_sepulsa_id = OrbitInput::post('coupon_sepulsa_id');
-            $promotion_id = OrbitInput::post('promotion_id');
+            // $promotion_id = OrbitInput::post('promotion_id');
             $external_id = OrbitInput::post('external_id');
             $price_from_sepulsa = OrbitInput::post('price_from_sepulsa');
             $price_value = OrbitInput::post('price_value');
@@ -283,16 +201,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $coupon_image_url = OrbitInput::post('coupon_image_url');
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
-            // $token = OrbitInput::post('token');
-
-            if ($payByNormal === 'N') {
-                $fixedAmountCommission = 0;
-            }
-
-            if ($payByWallet === 'N') {
-                $amountCommission = 0;
-                $paymentProviders = null;
-            }
+            $token = OrbitInput::post('token');
 
             if (empty($campaignStatus)) {
                 $campaignStatus = 'not started';
@@ -316,16 +225,11 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'is_all_retailer'         => $is_all_retailer,
                 'is_all_employee'         => $is_all_employee,
                 'id_language_default'     => $id_language_default,
-                'rule_begin_date'         => $rule_begin_date,
-                'rule_end_date'           => $rule_end_date,
                 'sticky_order'            => $sticky_order,
                 'is_popup'                => $is_popup,
                 'is_visible'              => $isVisible,
                 'is_3rd_party_promotion'  => $is3rdPartyPromotion,
-                'maximum_redeem'          => $maximumRedeem,
                 'maximum_issued_coupon'   => $maximum_issued_coupon,
-
-                'coupon_sepulsa_id'       => $coupon_sepulsa_id,
                 'external_id'             => $external_id,
                 'price_from_sepulsa'      => $price_from_sepulsa,
                 'price_value'             => $price_value,
@@ -333,10 +237,11 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'coupon_image_url'        => $coupon_image_url,
                 'how_to_buy_and_redeem'   => $how_to_buy_and_redeem,
                 'terms_and_conditions'    => $terms_and_conditions,
+                'token'                   => $token,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
-                'promotion_type'          => 'required|orbit.empty.coupon_type',
+                'promotion_type'          => 'required|in:sepulsa',
                 'begin_date'              => 'required|date_format:Y-m-d H:i:s',
                 'end_date'                => 'required|date_format:Y-m-d H:i:s',
                 'rule_type'               => 'orbit.empty.coupon_rule_type',
@@ -347,16 +252,11 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'is_all_retailer'         => 'orbit.empty.status_link_to',
                 'is_all_employee'         => 'orbit.empty.status_link_to',
                 'id_language_default'     => 'required|orbit.empty.language_default',
-                'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
-                'rule_end_date'           => 'date_format:Y-m-d H:i:s',
                 'sticky_order'            => 'in:0,1',
                 'is_popup'                => 'in:Y,N',
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
-                'maximum_redeem'          => 'numeric',
                 'maximum_issued_coupon'   => 'required',
-
-                'coupon_sepulsa_id'       => 'required',
                 'external_id'             => 'required',
                 'price_from_sepulsa'      => 'required',
                 'price_value'             => 'required',
@@ -364,6 +264,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'coupon_image_url'        => 'required',
                 'how_to_buy_and_redeem'   => 'required',
                 'terms_and_conditions'    => 'required',
+                'token'                   => 'required',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -395,7 +296,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument('JSON sponsor is not valid');
                 }
             }
-
             Event::fire('orbit.coupon.postnewcoupon.before.validation', array($this, $validator));
 
             // Begin database transaction
@@ -413,93 +313,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             if ($int_validity_date <= $int_before_end_date) {
                 $errorMessage = 'The validity redeem date should be greater than the end date.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            if ($payByWallet === 'N' && $payByNormal === 'N') {
-                $errorMessage = 'Select one payment method.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
-                $dataPayment = @json_decode($paymentProviders);
-                if (count($dataPayment) != count($retailer_ids)) {
-                    $errorMessage = 'Not all redemption place support wallet payment method';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            }
-
-            if ($payByNormal === 'Y') {
-                $validator = Validator::make(
-                    array(
-                        'amount_commission'       => $amountCommission,
-                        'fixed_amount_commission' => $fixedAmountCommission,
-
-                    ),
-                    array(
-                        'amount_commission'       => 'required',
-                        'fixed_amount_commission' => 'required',
-                    )
-                );
-
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            }
-
-            if ($payByWallet === 'Y') {
-                $dataPayment = @json_decode($paymentProviders);
-                if (json_last_error() != JSON_ERROR_NONE) {
-                    OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
-                }
-            }
-
-            // validating retailer_ids.
-            foreach ($retailer_ids as $retailer_json) {
-                $data = @json_decode($retailer_json);
-                $tenant_id = $data->tenant_id;
-                $mall_id = $data->mall_id;
-
-                $validator = Validator::make(
-                    array(
-                        'retailer_id'   => $tenant_id,
-
-                    ),
-                    array(
-                        'retailer_id'   => 'orbit.empty.tenant',
-                    )
-                );
-
-                Event::fire('orbit.coupon.postnewcoupon.before.retailervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
-            }
-
-            // validating employee_user_ids.
-            foreach ($employee_user_ids as $employee_user_id_check) {
-                $validator = Validator::make(
-                    array(
-                        'employee_user_id'   => $employee_user_id_check,
-
-                    ),
-                    array(
-                        'employee_user_id'   => 'orbit.empty.employee',
-                    )
-                );
-
-                Event::fire('orbit.coupon.postnewcoupon.before.retailervalidation', array($this, $validator));
-
-                // Run the validation
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                Event::fire('orbit.coupon.postnewcoupon.after.retailervalidation', array($this, $validator));
             }
 
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
@@ -532,12 +345,13 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->sticky_order = $sticky_order;
             $newcoupon->is_exclusive = $is_exclusive;
             $newcoupon->is_visible = $isVisible;
-            $newcoupon->maximum_redeem = $maximumRedeem;
+            $newcoupon->maximum_redeem = $maximum_issued_coupon;
             $newcoupon->is_payable_by_wallet = $payByWallet;
             $newcoupon->is_payable_by_normal = $payByNormal;
             $newcoupon->transaction_amount_commission = $amountCommission;
             $newcoupon->fixed_amount_commission = $fixedAmountCommission;
             $newcoupon->is_sponsored = $is_sponsored;
+            $newcoupon->price_selling = $price_selling;
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $newcoupon->is_unique_redeem = 'Y';
@@ -549,6 +363,7 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             // Return campaign_status_name
             $newcoupon->campaign_status = $idStatus->campaign_status_name;
+
 
             // save CouponRule.
             $couponrule = new CouponRule();
@@ -632,69 +447,10 @@ class CouponSepulsaAPIController extends ControllerAPI
             $couponrule->is_cumulative_with_coupons = $is_cumulative_with_coupons;
             $couponrule->is_cumulative_with_promotions = $is_cumulative_with_promotions;
             $couponrule->coupon_redeem_rule_value = $coupon_redeem_rule_value;
-            $couponrule->rule_begin_date = $rule_begin_date;
-            $couponrule->rule_end_date = $rule_end_date;
+            $couponrule->rule_begin_date = $begin_date;
+            $couponrule->rule_end_date = $end_date;
             $couponrule = $newcoupon->couponRule()->save($couponrule);
             $newcoupon->coupon_rule = $couponrule;
-
-            // save CouponRetailerRedeem
-            $retailers = array();
-            $isMall = 'tenant';
-            $mallid = array();
-            foreach ($retailer_ids as $retailer_id) {
-                $data = @json_decode($retailer_id);
-                $tenant_id = $data->tenant_id;
-                $mall_id = $data->mall_id;
-
-                if(! in_array($mall_id, $mallid)) {
-                    $mallid[] = $mall_id;
-                }
-
-                if ($tenant_id === $mall_id) {
-                    $isMall = 'mall';
-                } else {
-                    $isMall = 'tenant';
-                }
-
-                $retailer = new CouponRetailerRedeem();
-                $retailer->promotion_id = $newcoupon->promotion_id;
-                $retailer->retailer_id = $tenant_id;
-                $retailer->object_type = $isMall;
-                $retailer->save();
-                $retailers[] = $retailer;
-
-                $retailerRedeemId = $retailer->promotion_retailer_redeem_id;
-
-                // save coupon payment provider
-                if ($payByWallet === 'Y') {
-                    $dataPayment = @json_decode($paymentProviders);
-                    foreach ($dataPayment as $data) {
-                        foreach ((array) $data as $key => $value) {
-                            if ($key === $tenant_id) {
-                                foreach ($value as $provider) {
-                                    $couponPayment = new CouponPaymentProvider();
-                                    $couponPayment->payment_provider_id = $provider;
-                                    $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
-                                    $couponPayment->save();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            $newcoupon->tenants = $retailers;
-
-            $employees = array();
-            foreach ($employee_user_ids as $employee_user_id) {
-                $employee = new CouponEmployee();
-                $employee->promotion_id = $newcoupon->promotion_id;
-                $employee->user_id = $employee_user_id;
-                $employee->save();
-                $employees[] = $employee;
-            }
-
-            $newcoupon->employees = $employees;
 
             // save CouponRetailer
             $retailers = array();
@@ -816,6 +572,21 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $objectPartners[] = $objectPartner;
             }
             $newcoupon->partners = $objectPartners;
+
+
+            // Save coupon sepulsa
+            $couponSepulsa = new CouponSepulsa();
+            $couponSepulsa->promotion_id = $newcoupon->promotion_id;
+            $couponSepulsa->external_id = $external_id;
+            $couponSepulsa->price_from_sepulsa = $price_from_sepulsa;
+            $couponSepulsa->price_value = $price_value;
+            $couponSepulsa->coupon_image_url = $coupon_image_url;
+            $couponSepulsa->token = $token;
+            $couponSepulsa->how_to_buy_and_redeem = $how_to_buy_and_redeem;
+            $couponSepulsa->terms_and_conditions = $terms_and_conditions;
+            $couponSepulsa->save();
+            $newcoupon->coupon_sepulsa = $couponSepulsa;
+
 
             Event::fire('orbit.coupon.postnewcoupon.after.save', array($this, $newcoupon));
 
@@ -1162,7 +933,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $rule_begin_date = OrbitInput::post('rule_begin_date');
             $rule_end_date = OrbitInput::post('rule_end_date');
             $translations = OrbitInput::post('translations');
-            $coupon_codes = OrbitInput::post('coupon_codes');
+            // $coupon_codes = OrbitInput::post('coupon_codes');
 
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
@@ -1194,7 +965,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
 
-            $coupon_sepulsa_id = OrbitInput::post('coupon_sepulsa_id');
             $promotion_id = OrbitInput::post('promotion_id');
             $external_id = OrbitInput::post('external_id');
             $price_from_sepulsa = OrbitInput::post('price_from_sepulsa');
@@ -2675,7 +2445,8 @@ class CouponSepulsaAPIController extends ControllerAPI
                         {$mediaOptimize} ) as media
                     "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
-                ->groupBy('promotions.promotion_id');
+                ->groupBy('promotions.promotion_id')
+                ->where('promotion_type', 'sepulsa');
 
             if($filterName === '') {
                 // handle role campaign admin cause not join with campaign account
@@ -3948,7 +3719,7 @@ class CouponSepulsaAPIController extends ControllerAPI
          * value null it means set to null (use main language content instead).
          */
 
-        $valid_fields = ['promotion_name', 'description', 'long_description', 'short_description'];
+        $valid_fields = ['promotion_name', 'description', 'long_description', 'short_description', 'how_to_buy_and_redeem', 'terms_and_conditions'];
         $user = $this->api->user;
         $operations = [];
 
