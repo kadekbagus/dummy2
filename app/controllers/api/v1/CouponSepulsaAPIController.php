@@ -55,7 +55,6 @@ class CouponSepulsaAPIController extends ControllerAPI
      * @param file       `image`                             (optional) - Coupon image
      * @param string     `maximum_issued_coupon_type`        (optional) - Maximum issued coupon type. Valid value: period, days.
      * @param integer    `maximum_issued_coupon`             (optional) - Maximum issued coupon
-     * @param integer    `coupon_validity_in_days`           (optional) - Coupon validity in days
      * @param datetime   `coupon_validity_in_date`           (optional) - Coupon validity in date
      * @param string     `coupon_notification`               (optional) - Coupon notification. Valid value: Y, N.
      * @param string     `rule_type`                         (optional) - Rule type. Valid value: cart_discount_by_value, cart_discount_by_percentage, new_product_price, product_discount_by_value, product_discount_by_percentage.
@@ -84,7 +83,6 @@ class CouponSepulsaAPIController extends ControllerAPI
      * @param string     `gender_ids`                        (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`                     (optional) - Age Range IDs
      * @param string     `translations`                      (optional) - For Translations
-     * @param string     `sticky_order`                      (required) - For set premium content, Default : 0
      *
      * FOR SEPULSA FORM
      *
@@ -133,15 +131,14 @@ class CouponSepulsaAPIController extends ControllerAPI
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent','f');
-            $is_all_retailer = OrbitInput::post('is_all_retailer');
-            $is_all_employee = OrbitInput::post('is_all_employee');
+            $is_all_retailer = OrbitInput::post('is_all_retailer', 'N');
+            $is_all_employee = OrbitInput::post('is_all_employee', 'N');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
-            $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $coupon_notification = OrbitInput::post('coupon_notification');
             $rule_type = OrbitInput::post('rule_type','unique_coupon_per_user');
-            $rule_value = OrbitInput::post('rule_value');
+            $rule_value = OrbitInput::post('rule_value', 0);
             $rule_object_type = OrbitInput::post('rule_object_type');
             $rule_object_id1 = OrbitInput::post('rule_object_id1');
             $rule_object_id2 = OrbitInput::post('rule_object_id2');
@@ -154,10 +151,10 @@ class CouponSepulsaAPIController extends ControllerAPI
             $discount_object_id3 = OrbitInput::post('discount_object_id3');
             $discount_object_id4 = OrbitInput::post('discount_object_id4');
             $discount_object_id5 = OrbitInput::post('discount_object_id5');
-            $discount_value = OrbitInput::post('discount_value');
+            $discount_value = OrbitInput::post('discount_value', 0);
             $is_cumulative_with_coupons = OrbitInput::post('is_cumulative_with_coupons');
             $is_cumulative_with_promotions = OrbitInput::post('is_cumulative_with_promotions');
-            $coupon_redeem_rule_value = OrbitInput::post('coupon_redeem_rule_value');
+            $coupon_redeem_rule_value = OrbitInput::post('coupon_redeem_rule_value',0);
             $id_language_default = OrbitInput::post('id_language_default');
             $is_popup = OrbitInput::post('is_popup', 'N');
             $rule_begin_date = OrbitInput::post('rule_begin_date');
@@ -169,7 +166,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             $productTags = (array) $productTags;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
-            $sticky_order = OrbitInput::post('sticky_order');
 
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
@@ -225,7 +221,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'is_all_retailer'         => $is_all_retailer,
                 'is_all_employee'         => $is_all_employee,
                 'id_language_default'     => $id_language_default,
-                'sticky_order'            => $sticky_order,
                 'is_popup'                => $is_popup,
                 'is_visible'              => $isVisible,
                 'is_3rd_party_promotion'  => $is3rdPartyPromotion,
@@ -252,7 +247,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'is_all_retailer'         => 'orbit.empty.status_link_to',
                 'is_all_employee'         => 'orbit.empty.status_link_to',
                 'id_language_default'     => 'required|orbit.empty.language_default',
-                'sticky_order'            => 'in:0,1',
                 'is_popup'                => 'in:Y,N',
                 'is_visible'              => 'required|in:Y,N',
                 'is_3rd_party_promotion'  => 'required|in:Y,N',
@@ -273,7 +267,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'discount_value.required' => 'The coupon value is required',
                 'discount_value.numeric'  => 'The coupon value must be a number',
                 'discount_value.min'      => 'The coupon value must be greater than zero',
-                'sticky_order.in'         => 'The sticky order value must 0 or 1',
                 'is_popup.in'             => 'is popup must Y or N',
             ];
 
@@ -289,13 +282,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $validator_message
             );
 
-            $sponsorIds = array();
-            if ($is_sponsored === 'Y') {
-                $sponsorIds = @json_decode($sponsor_ids);
-                if (json_last_error() != JSON_ERROR_NONE) {
-                    OrbitShopAPI::throwInvalidArgument('JSON sponsor is not valid');
-                }
-            }
+
             Event::fire('orbit.coupon.postnewcoupon.before.validation', array($this, $validator));
 
             // Begin database transaction
@@ -335,14 +322,12 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->is_all_employee = $is_all_employee;
             $newcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
             $newcoupon->maximum_issued_coupon = $maximum_issued_coupon;
-            $newcoupon->coupon_validity_in_days = $coupon_validity_in_days;
             $newcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             $newcoupon->coupon_notification = $coupon_notification;
             $newcoupon->created_by = $this->api->user->user_id;
             $newcoupon->is_all_age = 'Y';
             $newcoupon->is_all_gender = 'Y';
             $newcoupon->is_popup = $is_popup;
-            $newcoupon->sticky_order = $sticky_order;
             $newcoupon->is_exclusive = $is_exclusive;
             $newcoupon->is_visible = $isVisible;
             $newcoupon->maximum_redeem = $maximum_issued_coupon;
@@ -595,6 +580,31 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $this->validateAndSaveTranslations($newcoupon, $translation_json_string, 'create', $isThirdParty);
             });
 
+            // Save manual image
+            $couponTranslation = CouponTranslation::where('merchant_language_id', $id_language_default)
+                                                  ->where('promotion_id', $newcoupon->promotion_id)
+                                                  ->first();
+
+            if (! empty($couponTranslation)) {
+                $couponImageType = ['coupon_translation_image_orig', 'coupon_translation_image_resized_default', 'coupon_translation_image_cropped_default'];
+
+                foreach ($couponImageType as $key => $val) {
+                    $couponMedia = new Media();
+                    $couponMedia->media_name_id = 'coupon_translation_image';
+                    $couponMedia->media_name_long = $val;
+                    $couponMedia->object_id = $couponTranslation->coupon_translation_id;
+                    $couponMedia->object_name = 'coupon_translation';
+                    $couponMedia->path = $coupon_image_url;
+                    $couponMedia->realpath = $coupon_image_url;
+                    $couponMedia->save();
+                    $couponMediaTranslations[] = $couponMedia;
+                }
+
+            }
+
+            $newcoupon->media = $couponMediaTranslations;
+
+
             // Default language for pmp_account is required
             $malls = implode("','", $mallid);
             $prefix = DB::getTablePrefix();
@@ -635,53 +645,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             } elseif ($required_desc) {
                 $errorMessage = Lang::get('validation.orbit.empty.default_language_desc', ['type' => 'coupon']);
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            if ($is_sponsored === 'Y' && (! empty($sponsorIds))) {
-                $uniqueSponsor = array();
-                foreach ($sponsorIds as $sponsorData) {
-                    foreach ((array) $sponsorData as $key => $value) {
-                        if (in_array($key, $uniqueSponsor)) {
-                            $errorMessage = "Duplicate Sponsor (bank or e-wallet)";
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
-
-                        $uniqueSponsor[] = $key;
-
-                        //credit card must be filled
-                        if ((count($value) == 0) || ($value === '')) {
-                            $sponsorProvider = SponsorProvider::where('sponsor_provider_id', $key)->first();
-
-                            if ($sponsorProvider->object_type === 'bank') {
-                                $errorMessage = "Credit card is required";
-                                OrbitShopAPI::throwInvalidArgument($errorMessage);
-                            }
-                        }
-
-                        $objectSponsor = new ObjectSponsor();
-                        $objectSponsor->sponsor_provider_id = $key;
-                        $objectSponsor->object_id = $newcoupon->promotion_id;
-                        $objectSponsor->object_type = 'coupon';
-
-                        $allCreditCard = 'N';
-                        if ($value === 'all_credit_card') {
-                            $allCreditCard = 'Y';
-                        }
-                        $objectSponsor->is_all_credit_card = $allCreditCard;
-                        $objectSponsor->save();
-
-                        if (($allCreditCard === 'N') && (count($value) > 0)) {
-                            if (is_array($value)) {
-                                foreach ($value as $creditCardId) {
-                                    $objectSponsorCreditCard = new ObjectSponsorCreditCard();
-                                    $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
-                                    $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
-                                    $objectSponsorCreditCard->save();
-                                }
-                            }
-                        }
-                    }
-                }
             }
 
             $this->response->data = $newcoupon;
@@ -831,7 +794,6 @@ class CouponSepulsaAPIController extends ControllerAPI
      * @param string     `is_all_retailer`                   (optional) - Is all retailer coupon redeem. Valid value: Y, N.* @param file       `images`                            (optional) - Coupon image
      * @param integer    `maximum_issued_coupon_type`        (optional) - Maximum issued coupon type. Valid value: period, days.
      * @param integer    `maximum_issued_coupon`             (optional) - Maximum issued coupon
-     * @param integer    `coupon_validity_in_days`           (optional) - Coupon validity in days
      * @param integer    `coupon_validity_in_date`           (optional) - Coupon validity in date
      * @param string     `coupon_notification`               (optional) - Coupon notification. Valid value: Y, N.
      * @param string     `rule_type`                         (optional) - Rule type. Valid value: cart_discount_by_value, cart_discount_by_percentage, new_product_price, product_discount_by_value, product_discount_by_percentage.
@@ -853,7 +815,6 @@ class CouponSepulsaAPIController extends ControllerAPI
      * @param string     `is_cumulative_with_promotions`     (optional) - Cumulative with other promotions. Valid value: Y, N.
      * @param decimal    `coupon_redeem_rule_value`          (optional) - Coupon redeem rule value
      * @param array      `retailer_ids`                      (optional) - Retailer IDs
-     * @param array      `employee_user_ids`                 (optional) - User IDs of Employee
      * @param string     `no_retailer`                       (optional) - Flag to delete all retailer links. Valid value: Y.
      * @param string     `no_employee`                       (optional) - Flag to delete all cs links. Valid value: Y.
      * @param array      `id_language_default`               (required) - ID language default
@@ -862,7 +823,6 @@ class CouponSepulsaAPIController extends ControllerAPI
      * @param string     `gender_ids`                        (optional) - for Male, Female. Unknown. Valid value: M, F, U.
      * @param string     `age_range_ids`                     (optional) - Age Range IDs
      * @param string     `translations`                      (optional) - For translations
-     * @param string     `sticky_order`                      (required) - For set premium content, Default : 0
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -900,40 +860,23 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $this->registerCustomValidation();
 
-
             $promotion_id = OrbitInput::post('promotion_id');
             $merchant_id = OrbitInput::post('current_mall');
-            $promotion_type = OrbitInput::post('promotion_type');
             $campaignStatus = OrbitInput::post('campaign_status');
-            $rule_type = OrbitInput::post('rule_type');
+            $rule_type = OrbitInput::post('rule_type', 'unique_coupon_per_user');
             $rule_object_type = OrbitInput::post('rule_object_type');
-            $rule_object_id1 = OrbitInput::post('rule_object_id1');
-            $rule_object_id2 = OrbitInput::post('rule_object_id2');
-            $rule_object_id3 = OrbitInput::post('rule_object_id3');
-            $rule_object_id4 = OrbitInput::post('rule_object_id4');
-            $rule_object_id5 = OrbitInput::post('rule_object_id5');
             $discount_object_type = OrbitInput::post('discount_object_type');
-            $discount_object_id1 = OrbitInput::post('discount_object_id1');
-            $discount_object_id2 = OrbitInput::post('discount_object_id2');
-            $discount_object_id3 = OrbitInput::post('discount_object_id3');
-            $discount_object_id4 = OrbitInput::post('discount_object_id4');
-            $discount_object_id5 = OrbitInput::post('discount_object_id5');
-
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent');
-            $is_all_retailer = OrbitInput::post('is_all_retailer');
-            $is_all_employee = OrbitInput::post('is_all_employee');
+            $is_all_retailer = OrbitInput::post('is_all_retailer', 'N');
+            $is_all_employee = OrbitInput::post('is_all_employee', 'N');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
-            $coupon_validity_in_days = OrbitInput::post('coupon_validity_in_days');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
-            $discount_value = OrbitInput::post('discount_value');
-            $rule_value = OrbitInput::post('rule_value');
+            $discount_value = OrbitInput::post('discount_value', 0);
+            $rule_value = OrbitInput::post('rule_value', 0);
             $id_language_default = OrbitInput::post('id_language_default');
-            $rule_begin_date = OrbitInput::post('rule_begin_date');
-            $rule_end_date = OrbitInput::post('rule_end_date');
             $translations = OrbitInput::post('translations');
-            // $coupon_codes = OrbitInput::post('coupon_codes');
 
             $retailer_ids = OrbitInput::post('retailer_ids');
             $retailer_ids = (array) $retailer_ids;
@@ -942,7 +885,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
-
             $is_visible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
 
             $is_3rd_party_promotion = OrbitInput::post('is_3rd_party_promotion', 'N');
@@ -954,15 +896,10 @@ class CouponSepulsaAPIController extends ControllerAPI
             $redemption_verification_code = OrbitInput::post('redemption_verification_code', NULL);
             $short_description = OrbitInput::post('short_description', NULL);
             $third_party_name = OrbitInput::post('third_party_name', NULL) === '' ? 'grab' : OrbitInput::post('third_party_name');
-            $maximumRedeem = OrbitInput::post('maximum_redeem', NULL);
-
             $payByWallet = OrbitInput::post('pay_by_wallet', 'N');
             $payByNormal = OrbitInput::post('pay_by_normal', 'N');
-            $paymentProviders = OrbitInput::post('payment_provider_ids', null);
-            $amountCommission = OrbitInput::post('amount_commission', null);
+            $amountCommission = OrbitInput::post('amount_commission', 0);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
-
-            $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
 
             $promotion_id = OrbitInput::post('promotion_id');
@@ -983,23 +920,17 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $data = array(
                 'promotion_id'            => $promotion_id,
-                'promotion_type'          => $promotion_type,
                 'status'                  => $status,
                 'begin_date'              => $begin_date,
                 'end_date'                => $end_date,
                 'rule_type'               => $rule_type,
-                'coupon_validity_in_date' => $coupon_validity_in_date,
                 'rule_value'              => $rule_value,
                 'discount_value'          => $discount_value,
                 'is_all_retailer'         => $is_all_retailer,
                 'is_all_employee'         => $is_all_employee,
                 'id_language_default'     => $id_language_default,
-                'rule_begin_date'         => $rule_begin_date,
-                'rule_end_date'           => $rule_end_date,
-                'partner_exclusive'       => $is_exclusive,
                 'is_visible'              => $is_visible,
                 'is_3rd_party_promotion'  => $is_3rd_party_promotion,
-                'maximum_redeem'          => $maximumRedeem,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -1012,23 +943,17 @@ class CouponSepulsaAPIController extends ControllerAPI
                 array(
                     'promotion_id'            => 'required|orbit.update.coupon',
                     'promotion_name'          => 'sometimes|required|max:255',
-                    'promotion_type'          => 'orbit.empty.coupon_type',
                     'status'                  => 'orbit.empty.coupon_status',
                     'begin_date'              => 'date_format:Y-m-d H:i:s',
                     'end_date'                => 'date_format:Y-m-d H:i:s',
                     'rule_type'               => 'orbit.empty.coupon_rule_type',
-                    'coupon_validity_in_date' => 'date_format:Y-m-d H:i:s',
                     'rule_value'              => 'numeric|min:0',
                     'discount_value'          => 'numeric|min:0',
                     'is_all_retailer'         => 'orbit.empty.status_link_to',
                     'is_all_employee'         => 'orbit.empty.status_link_to',
                     'id_language_default'     => 'required|orbit.empty.language_default',
-                    'rule_begin_date'         => 'date_format:Y-m-d H:i:s',
-                    'rule_end_date'           => 'date_format:Y-m-d H:i:s',
-                    'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
                     'is_visible'              => 'in:Y,N',
                     'is_3rd_party_promotion'  => 'in:Y,N',
-                    'maximum_redeem'          => 'numeric'
                 ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
@@ -1065,207 +990,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                                 $redis->del($key);
                             }
                         }
-                    }
-                }
-            }
-
-            if ($payByWallet === 'N' && $payByNormal === 'N') {
-                $errorMessage = 'Select one payment method.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            } elseif ($payByWallet === 'Y' && $payByNormal === 'N') {
-                $dataPayment = @json_decode($paymentProviders);
-                if (count($dataPayment) != count($retailer_ids)) {
-                    $errorMessage = 'Not all redemption place support wallet payment method';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            }
-
-            if ($payByNormal === 'Y') {
-                $validator = Validator::make(
-                    array(
-                        'amount_commission'       => $amountCommission,
-                        'fixed_amount_commission' => $fixedAmountCommission,
-
-                    ),
-                    array(
-                        'amount_commission'       => 'required',
-                        'fixed_amount_commission' => 'required',
-                    )
-                );
-
-                if ($validator->fails()) {
-                    $errorMessage = $validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-            }
-
-            if ($payByWallet === 'Y') {
-                $dataPayment = @json_decode($paymentProviders);
-                if (json_last_error() != JSON_ERROR_NONE) {
-                    OrbitShopAPI::throwInvalidArgument('JSON payment_providers is not valid');
-                }
-            }
-
-            // 3rd party coupon validation
-            if ($is_3rd_party_promotion === 'Y') {
-                $third_party_validator_value = [
-                    'coupon_validity_in_date' => $coupon_validity_in_date,
-                    'reward_value' => $promotion_value,
-                    'currency' => $currency,
-                    'offer_type' => $offer_type,
-                    'offer_value' => $offer_value,
-                    'original_price' => $original_price,
-                    'redemption_verification_code' => $redemption_verification_code,
-                    // 'redemption_method' => $redemption_method,
-                    'short_description' => $short_description,
-                    '3rd_party_name' => $third_party_name,
-                ];
-                $third_party_validator_check = [
-                    'coupon_validity_in_date' => 'required',
-                    'reward_value' => 'required|numeric',
-                    'currency' => 'required',
-                    'offer_type' => 'required|in:voucher,discount,general,deal',
-                    'offer_value' => 'numeric',
-                    'original_price' => 'numeric',
-                    'redemption_verification_code' => 'required',
-                    // 'redemption_method' => 'required|in:online,4-digit PIN,Barcode: code 128,Barcode: ean-128,Barcode: ean-13,Barcode: upc-a,Barcode: gs1-databar,QRCode,Plain Text',
-                    'short_description' => 'required',
-                    '3rd_party_name' => 'required',
-                ];
-
-                $third_party_validator = Validator::make(
-                    $third_party_validator_value,
-                    $third_party_validator_check,
-                    []
-                );
-
-                if ($third_party_validator->fails()) {
-                    $errorMessage = $third_party_validator->messages()->first();
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                // offer value is required when offer_type = 'voucher', 'discount', or 'deal'
-                $offer_type_values = ['voucher', 'discount', 'deal'];
-                if (in_array(strtolower($offer_type), $offer_type_values)) {
-                    if (empty($offer_value)) {
-                        $errorMessage = 'The coupon voucher value is required';
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-                }
-
-                // original_price is required when offer_type = 'deal'
-                if (strtolower($offer_type) === 'deal') {
-                    if (empty($original_price)) {
-                        $errorMessage = 'The coupon original price is required';
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-                }
-
-                // validate PMP Account's required fields for 3rd party
-                $user_campaign_account = $user->campaignAccount()->first();
-                $this->pmpAccountDefaultLanguage = $user_campaign_account->mobile_default_language;
-
-                if (empty($user_campaign_account->mobile_default_language)) {
-                    $errorMessage = 'PMP Account missing mobile default language field';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-                if (empty($user_campaign_account->phone)) {
-                    $errorMessage = 'PMP Account missing phone field';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
-                // validate Merchant's required fields for 3rd party
-                $error_tenants = [];
-                $tenant_ids = [];
-                foreach ($linkToTenantIds as $link_to_tenant_id) {
-                    $data = @json_decode($link_to_tenant_id);
-                    $tenant_ids[] = $data->tenant_id;
-                }
-                $tenants = Tenant::with([
-                        'baseStore' => function($q) {
-                            $q->with('mediaImageGrabOrig', 'baseMerchant.mediaLogoGrab');
-                        },
-                        'categories.vendorGTMCategory.grabCategory',
-                        'mall' => function($q) {
-                            $q->addSelect('merchants.*')
-                                ->includeLatLong()
-                                ->join('merchant_geofences', 'merchant_geofences.merchant_id', '=', 'merchants.merchant_id');
-                        }
-                    ])
-                    ->excludeDeleted()
-                    ->whereIn('merchant_id', $tenant_ids)
-                    ->get();
-
-                foreach ($tenants as $tenant) {
-                    $errorReason = new \stdclass();
-                    $errorReason->reasons = array();
-
-                    if (is_object($tenant)) {
-                        $valid = TRUE;
-                        if (!isset($tenant->phone) || empty($tenant->phone)) {
-                            $errorReason->reasons[] = 'missing phone field';
-                            $valid = FALSE;
-                        }
-                        if (empty($tenant->baseStore->mediaImageGrabOrig) || !isset($tenant->baseStore->mediaImageGrabOrig[0])) {
-                            $errorReason->reasons[] = 'missing 3rd party image field';
-                            $valid = FALSE;
-                        }
-                        if (!isset($tenant->mall->country_id) || empty($tenant->mall->country_id)) {
-                            $errorReason->reasons[] = "mall missing country field";
-                            $valid = FALSE;
-                        }
-                        if (!isset($tenant->mall->city) || empty($tenant->mall->city)) {
-                            $errorReason->reasons[] = "mall missing city field";
-                            $valid = FALSE;
-                        }
-                        if (!isset($tenant->mall->address_line1) || empty($tenant->mall->address_line1)) {
-                            $errorReason->reasons[] = "mall missing address field";
-                            $valid = FALSE;
-                        }
-                        if (!isset($tenant->mall->postal_code) || empty($tenant->mall->postal_code)) {
-                            $errorReason->reasons[] = "mall missing postal code field";
-                            $valid = FALSE;
-                        }
-                        if (!isset($tenant->mall->longitude) || empty($tenant->mall->longitude)) {
-                            $errorReason->reasons[] = "mall missing longitude field";
-                            $valid = FALSE;
-                        }
-                        if (!isset($tenant->mall->latitude) || empty($tenant->mall->latitude)) {
-                            $errorReason->reasons[] = "mall missing latitude field";
-                            $valid = FALSE;
-                        }
-                        if (empty($tenant->categories)) {
-                            $errorReason->reasons[] = 'missing categories field';
-                            $valid = FALSE;
-                        } else {
-                            $categoryIsValid = FALSE;
-                            $validCategories = ['Eat', 'Play', 'Shop', 'Travel', 'Service'];
-                            foreach ($tenant->categories as $category) {
-                                if (isset($category->vendorGTMCategory->grabCategory)) {
-                                    $categoryIsValid = $categoryIsValid || in_array($category->vendorGTMCategory->grabCategory->category_name, $validCategories);
-                                }
-                            }
-                            if (! $categoryIsValid) {
-                                $errorReason->reasons[] = 'Tenant category is not in Eat, Play, Shop, Travel, or Service';
-                                $valid = FALSE;
-                            }
-                        }
-                        if (! $valid) {
-                            $errorReason->tenant_id = $tenant->merchant_id;
-                            $errorReason->tenant_name = $tenant->name;
-                            $errorReason->mall_name = $tenant->mall->name;
-                            $error_tenants[] = $errorReason;
-                        }
-
-                    } else {
-                        $errorReason->tenant_id = $tenant->merchant_id;
-                        $errorReason->reasons = 'Tenant not found';
-                        $error_tenants[] = $errorReason;
-                    }
-
-                    if (! empty($error_tenants)) {
-                        $errorMessage = 'Link to Tenant error';
-                        throw new OrbitCustomException($errorMessage, Coupon::THIRD_PARTY_COUPON_TENANT_VALIDATION_ERROR, $errorReason);
                     }
                 }
             }
@@ -1325,17 +1049,9 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->merchant_id = $merchant_id;
             });
 
-            OrbitInput::post('promotion_type', function($promotion_type) use ($updatedcoupon) {
-                $updatedcoupon->promotion_type = $promotion_type;
-            });
-
             OrbitInput::post('campaign_status', function($campaignStatus) use ($updatedcoupon, $idStatus, $status) {
                 $updatedcoupon->status = $status;
                 $updatedcoupon->campaign_status_id = $idStatus->campaign_status_id;
-            });
-
-            OrbitInput::post('promotion_name', function($promotion_name) use ($updatedcoupon) {
-                $updatedcoupon->promotion_name = $promotion_name;
             });
 
             OrbitInput::post('description', function($description) use ($updatedcoupon) {
@@ -1348,14 +1064,20 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('begin_date', function($begin_date) use ($updatedcoupon) {
                 $updatedcoupon->begin_date = $begin_date;
+                $updatedcoupon->rule_begin_date = $begin_date;
             });
 
             OrbitInput::post('end_date', function($end_date) use ($updatedcoupon) {
                 $updatedcoupon->end_date = $end_date;
+                $updatedcoupon->rule_end_date = $end_date;
             });
 
-            OrbitInput::post('is_permanent', function($is_permanent) use ($updatedcoupon) {
-                $updatedcoupon->is_permanent = $is_permanent;
+            OrbitInput::post('price_selling', function($price_selling) use ($updatedcoupon) {
+                $updatedcoupon->price_selling = $price_selling;
+            });
+
+            OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon) {
+                $updatedcoupon->amount_commission = $amount_commission;
             });
 
             OrbitInput::post('is_all_retailer', function($is_all_retailer) use ($updatedcoupon) {
@@ -1369,113 +1091,10 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('is_all_employee', function($is_all_employee) use ($updatedcoupon) {
                 $updatedcoupon->is_all_employee = $is_all_employee;
-                if ($is_all_employee == 'Y') {
-                    $deleted_employee_user_ids = CouponEmployee::where('promotion_id', $updatedcoupon->promotion_id)->get(array('user_id'))->toArray();
-                    $updatedcoupon->employee()->detach($deleted_employee_user_ids);
-                    $updatedcoupon->load('employee');
-                }
-            });
-
-            OrbitInput::post('is_popup', function($is_popup) use ($updatedcoupon) {
-                $updatedcoupon->is_popup = $is_popup;
-            });
-
-            OrbitInput::post('sticky_order', function($sticky_order) use ($updatedcoupon) {
-                $updatedcoupon->sticky_order = $sticky_order;
             });
 
             OrbitInput::post('maximum_issued_coupon_type', function($maximum_issued_coupon_type) use ($updatedcoupon) {
                 $updatedcoupon->maximum_issued_coupon_type = $maximum_issued_coupon_type;
-            });
-
-            OrbitInput::post('coupon_validity_in_days', function($coupon_validity_in_days) use ($updatedcoupon) {
-                $updatedcoupon->coupon_validity_in_days = $coupon_validity_in_days;
-            });
-
-            OrbitInput::post('is_exclusive', function($is_exclusive) use ($updatedcoupon) {
-                $updatedcoupon->is_exclusive = $is_exclusive;
-            });
-
-            OrbitInput::post('is_sponsored', function($is_sponsored) use ($updatedcoupon, $promotion_id) {
-                $updatedcoupon->is_sponsored = $is_sponsored;
-
-                if ($is_sponsored === 'N') {
-                    // delete before insert new
-                    $objectSponsor = ObjectSponsor::where('object_id', $promotion_id)
-                                                  ->where('object_type', 'coupon');
-
-                    $objectSponsorIds = $objectSponsor->lists('object_sponsor_id');
-
-                    // delete ObjectSponsorCreditCard
-                    if (! empty($objectSponsorIds)) {
-                        $objectSponsorCreditCard = ObjectSponsorCreditCard::whereIn('object_sponsor_id', $objectSponsorIds)->delete();
-                        $objectSponsor->delete();
-                    }
-                }
-            });
-
-            OrbitInput::post('sponsor_ids', function($sponsor_ids) use ($updatedcoupon, $promotion_id) {
-                $sponsorIds = @json_decode($sponsor_ids);
-                if (json_last_error() != JSON_ERROR_NONE) {
-                    OrbitShopAPI::throwInvalidArgument('JSON sponsor is not valid');
-                }
-
-                // delete before insert new
-                $objectSponsor = ObjectSponsor::where('object_id', $promotion_id)
-                                              ->where('object_type', 'coupon');
-
-                $objectSponsorIds = $objectSponsor->lists('object_sponsor_id');
-
-                // delete ObjectSponsorCreditCard
-                if (! empty($objectSponsorIds)) {
-                    $objectSponsorCreditCard = ObjectSponsorCreditCard::whereIn('object_sponsor_id', $objectSponsorIds)->delete();
-                    $objectSponsor->delete();
-                }
-
-                $uniqueSponsor = array();
-                foreach ($sponsorIds as $sponsorData) {
-                    foreach ((array) $sponsorData as $key => $value) {
-                        if (in_array($key, $uniqueSponsor)) {
-                            $errorMessage = "Duplicate Sponsor (bank or e-wallet)";
-                            OrbitShopAPI::throwInvalidArgument($errorMessage);
-                        }
-
-                        $uniqueSponsor[] = $key;
-
-                        //credit card must be filled
-                        if ((count($value) == 0) || ($value === '')) {
-                            $sponsorProvider = SponsorProvider::where('sponsor_provider_id', $key)->first();
-
-                            if ($sponsorProvider->object_type === 'bank') {
-                                $errorMessage = "Credit card is required";
-                                OrbitShopAPI::throwInvalidArgument($errorMessage);
-                            }
-                        }
-
-                        $objectSponsor = new ObjectSponsor();
-                        $objectSponsor->sponsor_provider_id = $key;
-                        $objectSponsor->object_id = $promotion_id;
-                        $objectSponsor->object_type = 'coupon';
-
-                        $allCreditCard = 'N';
-                        if ($value === 'all_credit_card') {
-                            $allCreditCard = 'Y';
-                        }
-                        $objectSponsor->is_all_credit_card = $allCreditCard;
-                        $objectSponsor->save();
-
-                        if (($allCreditCard === 'N') && (count($value) > 0)) {
-                            if (is_array($value)) {
-                                foreach ($value as $creditCardId) {
-                                    $objectSponsorCreditCard = new ObjectSponsorCreditCard();
-                                    $objectSponsorCreditCard->object_sponsor_id = $objectSponsor->object_sponsor_id;
-                                    $objectSponsorCreditCard->sponsor_credit_card_id = $creditCardId;
-                                    $objectSponsorCreditCard->save();
-                                }
-                            }
-                        }
-                    }
-                }
             });
 
             OrbitInput::post('coupon_validity_in_date', function($coupon_validity_in_date) use ($updatedcoupon, $end_date) {
@@ -1490,114 +1109,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
 
-            OrbitInput::post('coupon_notification', function($coupon_notification) use ($updatedcoupon) {
-                $updatedcoupon->coupon_notification = $coupon_notification;
-            });
-
-            OrbitInput::post('is_3rd_party_promotion', function($is_3rd_party_promotion) use ($updatedcoupon) {
-                $updatedcoupon->is_3rd_party_promotion = $is_3rd_party_promotion;
-            });
-
-            OrbitInput::post('pay_by_wallet', function($pay_by_wallet) use ($updatedcoupon) {
-                $updatedcoupon->is_payable_by_wallet = $pay_by_wallet;
-            });
-
-            OrbitInput::post('pay_by_normal', function($pay_by_normal) use ($updatedcoupon) {
-                $updatedcoupon->is_payable_by_normal = $pay_by_normal;
-            });
-
-            OrbitInput::post('amount_commission', function($amount_commission) use ($updatedcoupon, $payByWallet) {
-                if ($payByWallet === 'N') {
-                    $amount_commission = 0;
-                }
-
-                $updatedcoupon->transaction_amount_commission = $amount_commission;
-            });
-
-            OrbitInput::post('fixed_amount_commission', function($fixed_amount_commission) use ($updatedcoupon, $payByNormal) {
-                if ($payByNormal === 'N') {
-                    $fixed_amount_commission = 0;
-                }
-
-                $updatedcoupon->fixed_amount_commission = $fixed_amount_commission;
-            });
-
-            if ($is_3rd_party_promotion === 'Y') {
-                // update 3rd party
-                if (! empty($promotion_value)) {
-                    $updatedcoupon->promotion_value = $promotion_value;
-                }
-
-                if (! empty($currency)) {
-                    $updatedcoupon->currency = $currency;
-                }
-
-                if (! empty($offer_type)) {
-                    $updatedcoupon->offer_type = $offer_type;
-                }
-
-                if (! empty($offer_value)) {
-                    $updatedcoupon->offer_value = $offer_value;
-                }
-
-                if (! empty($original_price)) {
-                    $updatedcoupon->original_price = $original_price;
-                } else {
-                    $updatedcoupon->original_price = null;
-                }
-
-                if (! empty($redemption_verification_code)) {
-                    $updatedcoupon->redemption_verification_code = $redemption_verification_code;
-                }
-
-                if (! empty($short_description)) {
-                    $updatedcoupon->short_description = $short_description;
-                }
-
-                if (! empty($third_party_name)) {
-                    $updatedcoupon->third_party_name = $third_party_name;
-                }
-
-                $updatedcoupon->redemption_method = '4-digit PIN';
-            }
-
-            $updatedcoupon->is_visible = $is_visible;
-
-            OrbitInput::post('maximum_redeem', function($maximumRedeem) use ($updatedcoupon) {
-                if (! empty($maximumRedeem)) {
-                    if ($maximumRedeem < 1) {
-                        $errorMessage = 'Minimum amount of maximum redeemed coupon is 1';
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    // maximum redeem validation
-                    $couponCode = IssuedCoupon::where('promotion_id', $updatedcoupon->promotion_id)->count();
-
-                    if ($maximumRedeem > $couponCode) {
-                        $errorMessage = 'The total maximum redeemed coupon can not be more than amount of coupon code';
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    $redeemed = IssuedCoupon::where('status', '=', 'redeemed')
-                                                ->where('promotion_id', $updatedcoupon->promotion_id)
-                                                ->count();
-
-                    if ($maximumRedeem < $redeemed) {
-                        $errorMessage = 'The total maximum redeemed coupon can not be less than amount of redeemed coupon';
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    $updatedcoupon->maximum_redeem = $maximumRedeem;
-                }
-            });
-
-            if (empty($maximumRedeem)) {
-               $updatedcoupon->maximum_redeem = 0;
-            }
-
-            if ($rule_type === 'unique_coupon_per_user') {
-                $updatedcoupon->is_unique_redeem = 'Y';
-            }
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
@@ -1605,6 +1116,44 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $updatedcoupon->setUpdatedAt($updatedcoupon->freshTimestamp());
             $updatedcoupon->save();
+
+
+            // Update coupon sepulsa additional
+            $updatedCouponSepulsa = CouponSepulsa::where('promotion_id', $promotion_id)->first();
+
+            OrbitInput::post('external_id', function($external_id) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->external_id = $external_id;
+            });
+
+            OrbitInput::post('price_from_sepulsa', function($price_from_sepulsa) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->price_from_sepulsa = $price_from_sepulsa;
+            });
+
+            OrbitInput::post('price_value', function($price_value) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->price_value = $price_value;
+            });
+
+            OrbitInput::post('coupon_image_url', function($coupon_image_url) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->coupon_image_url = $coupon_image_url;
+            });
+
+            OrbitInput::post('token', function($token) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->token = $token;
+            });
+
+            OrbitInput::post('how_to_buy_and_redeem', function($how_to_buy_and_redeem) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->how_to_buy_and_redeem = $how_to_buy_and_redeem;
+            });
+
+            OrbitInput::post('terms_and_conditions', function($terms_and_conditions) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->terms_and_conditions = $terms_and_conditions;
+            });
+            $updatedCouponSepulsa->setUpdatedAt($updatedCouponSepulsa->freshTimestamp());
+            $updatedCouponSepulsa->save();
+
+            $updatedcoupon->coupon_sepulsa = $updatedCouponSepulsa;
+
+
 
             // save CouponRule.
             $couponrule = CouponRule::where('promotion_id', '=', $promotion_id)->first();
@@ -1617,114 +1166,6 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('rule_value', function($rule_value) use ($couponrule) {
                 $couponrule->rule_value = $rule_value;
-            });
-
-            OrbitInput::post('rule_object_type', function($rule_object_type) use ($couponrule) {
-                if (trim($rule_object_type) === '') {
-                    $rule_object_type = NULL;
-                }
-                $couponrule->rule_object_type = $rule_object_type;
-            });
-
-            OrbitInput::post('rule_object_id1', function($rule_object_id1) use ($couponrule) {
-                if (trim($rule_object_id1) === '') {
-                    $rule_object_id1 = NULL;
-                }
-                $couponrule->rule_object_id1 = $rule_object_id1;
-            });
-
-            OrbitInput::post('rule_object_id2', function($rule_object_id2) use ($couponrule) {
-                if (trim($rule_object_id2) === '') {
-                    $rule_object_id2 = NULL;
-                }
-                $couponrule->rule_object_id2 = $rule_object_id2;
-            });
-
-            OrbitInput::post('rule_object_id3', function($rule_object_id3) use ($couponrule) {
-                if (trim($rule_object_id3) === '') {
-                    $rule_object_id3 = NULL;
-                }
-                $couponrule->rule_object_id3 = $rule_object_id3;
-            });
-
-            OrbitInput::post('rule_object_id4', function($rule_object_id4) use ($couponrule) {
-                if (trim($rule_object_id4) === '') {
-                    $rule_object_id4 = NULL;
-                }
-                $couponrule->rule_object_id4 = $rule_object_id4;
-            });
-
-            OrbitInput::post('rule_object_id5', function($rule_object_id5) use ($couponrule) {
-                if (trim($rule_object_id5) === '') {
-                    $rule_object_id5 = NULL;
-                }
-                $couponrule->rule_object_id5 = $rule_object_id5;
-            });
-
-            OrbitInput::post('discount_object_type', function($discount_object_type) use ($couponrule) {
-                if (trim($discount_object_type) === '') {
-                    $discount_object_type = NULL;
-                }
-                $couponrule->discount_object_type = $discount_object_type;
-            });
-
-            OrbitInput::post('discount_object_id1', function($discount_object_id1) use ($couponrule) {
-                if (trim($discount_object_id1) === '') {
-                    $discount_object_id1 = NULL;
-                }
-                $couponrule->discount_object_id1 = $discount_object_id1;
-            });
-
-            OrbitInput::post('discount_object_id2', function($discount_object_id2) use ($couponrule) {
-                if (trim($discount_object_id2) === '') {
-                    $discount_object_id2 = NULL;
-                }
-                $couponrule->discount_object_id2 = $discount_object_id2;
-            });
-
-            OrbitInput::post('discount_object_id3', function($discount_object_id3) use ($couponrule) {
-                if (trim($discount_object_id3) === '') {
-                    $discount_object_id3 = NULL;
-                }
-                $couponrule->discount_object_id3 = $discount_object_id3;
-            });
-
-            OrbitInput::post('discount_object_id4', function($discount_object_id4) use ($couponrule) {
-                if (trim($discount_object_id4) === '') {
-                    $discount_object_id4 = NULL;
-                }
-                $couponrule->discount_object_id4 = $discount_object_id4;
-            });
-
-            OrbitInput::post('discount_object_id5', function($discount_object_id5) use ($couponrule) {
-                if (trim($discount_object_id5) === '') {
-                    $discount_object_id5 = NULL;
-                }
-                $couponrule->discount_object_id5 = $discount_object_id5;
-            });
-
-            OrbitInput::post('discount_value', function($discount_value) use ($couponrule) {
-                $couponrule->discount_value = $discount_value;
-            });
-
-            OrbitInput::post('is_cumulative_with_coupons', function($is_cumulative_with_coupons) use ($couponrule) {
-                $couponrule->is_cumulative_with_coupons = $is_cumulative_with_coupons;
-            });
-
-            OrbitInput::post('is_cumulative_with_promotions', function($is_cumulative_with_promotions) use ($couponrule) {
-                $couponrule->is_cumulative_with_promotions = $is_cumulative_with_promotions;
-            });
-
-            OrbitInput::post('coupon_redeem_rule_value', function($coupon_redeem_rule_value) use ($couponrule) {
-                $couponrule->coupon_redeem_rule_value = $coupon_redeem_rule_value;
-            });
-
-            OrbitInput::post('rule_begin_date', function($rule_begin_date) use ($couponrule) {
-                $couponrule->rule_begin_date = $rule_begin_date;
-            });
-
-            OrbitInput::post('rule_end_date', function($rule_end_date) use ($couponrule) {
-                $couponrule->rule_end_date = $rule_end_date;
             });
 
             $couponrule->save();
@@ -1767,7 +1208,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet) {
+            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $payByWallet) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
                     $data = @json_decode($retailer_id_json);
@@ -1831,23 +1272,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                     $retailer->save();
 
                     $retailerRedeemId = $retailer->promotion_retailer_redeem_id;
-
-                    // save coupon payment provider
-                    if ($payByWallet === 'Y') {
-                        $dataPayment = @json_decode($paymentProviders);
-                        foreach ($dataPayment as $data) {
-                            foreach ((array) $data as $key => $value) {
-                                if ($key === $tenant_id) {
-                                    foreach ($value as $provider) {
-                                        $couponPayment = new CouponPaymentProvider();
-                                        $couponPayment->payment_provider_id = $provider;
-                                        $couponPayment->promotion_retailer_redeem_id = $retailerRedeemId;
-                                        $couponPayment->save();
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
 
                 // Insert to promotion retailer, with delete first old data
@@ -1877,37 +1301,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 }
             });
 
-
-            OrbitInput::post('employee_user_ids', function($employee_user_ids) use ($updatedcoupon) {
-                // validate employee_user_ids
-                $employee_user_ids = (array) $employee_user_ids;
-                foreach ($employee_user_ids as $employee_user_id_check) {
-                    $validator = Validator::make(
-                        array(
-                            'employee_user_id'   => $employee_user_id_check,
-                        ),
-                        array(
-                            'employee_user_id'   => 'orbit.empty.employee',
-                        )
-                    );
-
-                    Event::fire('orbit.coupon.postupdatecoupon.before.employeevalidation', array($this, $validator));
-
-                    // Run the validation
-                    if ($validator->fails()) {
-                        $errorMessage = $validator->messages()->first();
-                        OrbitShopAPI::throwInvalidArgument($errorMessage);
-                    }
-
-                    Event::fire('orbit.coupon.postupdatecoupon.after.employeevalidation', array($this, $validator));
-                }
-                // sync new set of retailer ids
-                $updatedcoupon->employee()->sync($employee_user_ids);
-
-                // reload tenants relation
-                $updatedcoupon->load('employee');
-            });
-
             OrbitInput::post('partner_ids', function($partner_ids) use ($updatedcoupon, $promotion_id) {
                 // validate retailer_ids
                 $partner_ids = (array) $partner_ids;
@@ -1929,19 +1322,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                     }
                 }
                 $updatedcoupon->partners = $objectPartners;
-            });
-
-            OrbitInput::post('paument_provider_ids', function($paymentProvider) use ($updatedcoupon, $promotion_id) {
-                // Delete exsisting data
-                $deleteCouponPayment = CouponPaymentProvider::where('coupon_id', '=', $promotion_id);
-                $deleteCouponPayment->delete();
-
-                foreach ($paymentProvider as $provider) {
-                    $couponPayment = new CouponPaymentProvider();
-                    $couponPayment->payment_provider_id = $provider;
-                    $couponPayment->coupon_id = $promotion_id;
-                    $couponPayment->save();
-                }
             });
 
             // Delete old data
@@ -1987,7 +1367,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 }
                 $updatedcoupon->keywords = $couponKeywords;
             });
-
 
             // Update product tags
             $deleted_product_tags_object = ProductTagObject::where('object_id', '=', $promotion_id)
@@ -2041,7 +1420,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             Event::fire('orbit.coupon.postupdatecoupon-mallnotification.after.save', array($this, $updatedcoupon));
 
             OrbitInput::post('translations', function($translation_json_string) use ($updatedcoupon, $mallid, $is_3rd_party_promotion) {
-                $is_third_party = $is_3rd_party_promotion === 'Y' ? TRUE : FALSE;
+                $is_third_party =  FALSE;
                 $this->validateAndSaveTranslations($updatedcoupon, $translation_json_string, 'create', $is_third_party);
             });
 
@@ -2246,7 +1625,6 @@ class CouponSepulsaAPIController extends ControllerAPI
      * @param integer  `merchant_id`           (optional) - Merchant ID
      * @param string   `promotion_name`        (optional) - Coupon name
      * @param string   `promotion_name_like`   (optional) - Coupon name like
-     * @param string   `promotion_type`        (optional) - Coupon type. Valid value: product, cart.
      * @param string   `description`           (optional) - Description
      * @param string   `description_like`      (optional) - Description like
      * @param string   `long_description`      (optional) - Long description
@@ -2256,19 +1634,6 @@ class CouponSepulsaAPIController extends ControllerAPI
      * @param string   `is_permanent`          (optional) - Is permanent. Valid value: Y, N.
      * @param string   `coupon_notification`   (optional) - Coupon notification. Valid value: Y, N.
      * @param string   `status`                (optional) - Status. Valid value: active, inactive, pending, blocked, deleted.
-     * @param string   `rule_type`             (optional) - Rule type. Valid value: cart_discount_by_value, cart_discount_by_percentage, new_product_price, product_discount_by_value, product_discount_by_percentage.
-     * @param string   `rule_object_type`      (optional) - Rule object type. Valid value: product, family.
-     * @param integer  `rule_object_id1`       (optional) - Rule object ID1 (product_id or category_id1).
-     * @param integer  `rule_object_id2`       (optional) - Rule object ID2 (category_id2).
-     * @param integer  `rule_object_id3`       (optional) - Rule object ID3 (category_id3).
-     * @param integer  `rule_object_id4`       (optional) - Rule object ID4 (category_id4).
-     * @param integer  `rule_object_id5`       (optional) - Rule object ID5 (category_id5).
-     * @param string   `discount_object_type`  (optional) - Discount object type. Valid value: product, family, cash_rebate.
-     * @param integer  `discount_object_id1`   (optional) - Discount object ID1 (product_id or category_id1).
-     * @param integer  `discount_object_id2`   (optional) - Discount object ID2 (category_id2).
-     * @param integer  `discount_object_id3`   (optional) - Discount object ID3 (category_id3).
-     * @param integer  `discount_object_id4`   (optional) - Discount object ID4 (category_id4).
-     * @param integer  `discount_object_id5`   (optional) - Discount object ID5 (category_id5).
      * @param integer  `retailer_name`           (optional) - Retailer name
      *
      * @return Illuminate\Support\Facades\Response
@@ -2433,6 +1798,8 @@ class CouponSepulsaAPIController extends ControllerAPI
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+
+                ->leftJoin('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
                 // Join for get export status
                 ->leftJoin('pre_exports', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'pre_exports.object_id')
@@ -2498,12 +1865,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $coupons->where('coupon_translations.promotion_name', 'like', "$keywords%");
             });
 
-            // Filter coupon by promotion type
-            OrbitInput::get('promotion_type', function($promotionTypes) use ($coupons)
-            {
-                $coupons->whereIn('promotions.promotion_type', $promotionTypes);
-            });
-
             // Filter coupon by description
             OrbitInput::get('description', function($description) use ($coupons)
             {
@@ -2558,151 +1919,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                     THEN 'expired' ELSE {$table_prefix}campaign_status.campaign_status_name END) END"), $statuses);
             });
 
-            // Filter coupon rule by rule type
-            OrbitInput::get('rule_type', function ($ruleTypes) use ($coupons) {
-                if (is_array($ruleTypes)) {
-                    $coupons->whereHas('couponrule', function($q) use ($ruleTypes) {
-                        $q->whereIn('rule_type', $ruleTypes);
-                    });
-                } else {
-                    $coupons->whereHas('couponrule', function($q) use ($ruleTypes) {
-                        $q->where(function($q) use ($ruleTypes) {
-                            $q->where('rule_type', $ruleTypes);
-                            $q->orWhereNull('rule_type');
-                        });
-                    });
-                }
-            });
-
-            // Filter coupon merchants by retailer(tenant) name
-            OrbitInput::get('tenant_name_like', function ($tenant_name_like) use ($coupons) {
-                $coupons->whereHas('linkToTenants', function($q) use ($tenant_name_like) {
-                    $q->where('merchants.name', 'like', "%$tenant_name_like%");
-                });
-            });
-
-            // Filter coupon merchants by mall name
-            // There is laravel bug regarding nested whereHas on the same table like in this case
-            // news->tenant->mall : whereHas('tenant', function($q) { $q->whereHas('mall' ...)}) this is not gonna work
-            OrbitInput::get('mall_name_like', function ($mall_name_like) use ($coupons, $table_prefix, $user) {
-                $user_id = $user->user_id;
-                $quote = function($arg)
-                {
-                    return DB::connection()->getPdo()->quote($arg);
-                };
-                $mall_name_like = "%" . $mall_name_like . "%";
-                $mall_name_like = $quote($mall_name_like);
-                $coupons->whereRaw(DB::raw("
-                ((
-                    (select count(mtenant.merchant_id) from {$table_prefix}merchants mtenant
-                    inner join {$table_prefix}promotion_retailer opr on mtenant.merchant_id = opr.retailer_id
-                    where mtenant.object_type = 'tenant' and opr.promotion_id = {$table_prefix}promotions.promotion_id and (
-                        select count(mtenant.merchant_id) from {$table_prefix}merchants mmall
-                        where mmall.object_type = 'mall' and
-                        mtenant.parent_id = mmall.merchant_id and
-                        mmall.name like {$mall_name_like} and
-                        mmall.object_type = 'mall'
-                    ) >= 1 and
-                    mtenant.object_type = 'tenant' and
-                    mtenant.is_mall = 'no' and
-                    opr.object_type = 'tenant') >= 1
-                )
-                OR
-                (
-                    select count(mmallx.merchant_id) from {$table_prefix}merchants mmallx
-                    inner join {$table_prefix}promotion_retailer oprx on mmallx.merchant_id = oprx.retailer_id
-                    inner join {$table_prefix}user_campaign ucp on ucp.campaign_id = oprx.promotion_id
-                    where mmallx.object_type = 'mall' and
-                    ucp.user_id = '{$user_id}' and
-                    mmallx.name like {$mall_name_like} and
-                    mmallx.object_type = 'mall'
-                ))
-                "));
-            });
-
-             // Filter coupon rule by rule object type
-            OrbitInput::get('rule_object_type', function ($ruleObjectTypes) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($ruleObjectTypes) {
-                    $q->whereIn('rule_object_type', $ruleObjectTypes);
-                });
-            });
-
-            // Filter coupon rule by rule object id1
-            OrbitInput::get('rule_object_id1', function ($ruleObjectId1s) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($ruleObjectId1s) {
-                    $q->whereIn('rule_object_id1', $ruleObjectId1s);
-                });
-            });
-
-            // Filter coupon rule by rule object id2
-            OrbitInput::get('rule_object_id2', function ($ruleObjectId2s) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($ruleObjectId2s) {
-                    $q->whereIn('rule_object_id2', $ruleObjectId2s);
-                });
-            });
-
-            // Filter coupon rule by rule object id3
-            OrbitInput::get('rule_object_id3', function ($ruleObjectId3s) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($ruleObjectId3s) {
-                    $q->whereIn('rule_object_id3', $ruleObjectId3s);
-                });
-            });
-
-            // Filter coupon rule by rule object id4
-            OrbitInput::get('rule_object_id4', function ($ruleObjectId4s) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($ruleObjectId4s) {
-                    $q->whereIn('rule_object_id4', $ruleObjectId4s);
-                });
-            });
-
-            // Filter coupon rule by rule object id5
-            OrbitInput::get('rule_object_id5', function ($ruleObjectId5s) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($ruleObjectId5s) {
-                    $q->whereIn('rule_object_id5', $ruleObjectId5s);
-                });
-            });
-
-            // Filter coupon rule by discount object type
-            OrbitInput::get('discount_object_type', function ($discountObjectTypes) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($discountObjectTypes) {
-                    $q->whereIn('discount_object_type', $discountObjectTypes);
-                });
-            });
-
-            // Filter coupon rule by discount object id1
-            OrbitInput::get('discount_object_id1', function ($discountObjectId1s) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($discountObjectId1s) {
-                    $q->whereIn('discount_object_id1', $discountObjectId1s);
-                });
-            });
-
-            // Filter coupon rule by discount object id2
-            OrbitInput::get('discount_object_id2', function ($discountObjectId2s) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($discountObjectId2s) {
-                    $q->whereIn('discount_object_id2', $discountObjectId2s);
-                });
-            });
-
-            // Filter coupon rule by discount object id3
-            OrbitInput::get('discount_object_id3', function ($discountObjectId3s) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($discountObjectId3s) {
-                    $q->whereIn('discount_object_id3', $discountObjectId3s);
-                });
-            });
-
-            // Filter coupon rule by discount object id4
-            OrbitInput::get('discount_object_id4', function ($discountObjectId4s) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($discountObjectId4s) {
-                    $q->whereIn('discount_object_id4', $discountObjectId4s);
-                });
-            });
-
-            // Filter coupon rule by discount object id5
-            OrbitInput::get('discount_object_id5', function ($discountObjectId5s) use ($coupons) {
-                $coupons->whereHas('couponrule', function($q) use ($discountObjectId5s) {
-                    $q->whereIn('discount_object_id5', $discountObjectId5s);
-                });
-            });
 
             // Filter coupon by retailer id
             OrbitInput::get('retailer_id', function ($retailerIds) use ($coupons) {
@@ -2779,10 +1995,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                         $coupons->with('campaignLocations');
                     } elseif ($relation === 'campaignLocations.mall') {
                         $coupons->with('campaignLocations.mall');
-                    } elseif ($relation === 'genders') {
-                        $coupons->with('genders');
-                    } elseif ($relation === 'ages') {
-                        $coupons->with('ages');
                     } elseif ($relation === 'keywords') {
                         $coupons->with('keywords');
                     } elseif ($relation === 'product_tags') {
