@@ -101,11 +101,9 @@ class MallListNewAPIController extends PubControllerAPI
             $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', null);
             $sortBy = OrbitInput::get('sortby', 'name');
-            $partner_id = OrbitInput::get('partner_id', null);
-            $sort_mode = OrbitInput::get('sortmode','asc');
             $sortMode = OrbitInput::get('sortmode','asc');
+            $partner_id = OrbitInput::get('partner_id', null);
             $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');
             $radius = Config::get('orbit.geo_location.distance', 10);
@@ -150,7 +148,7 @@ class MallListNewAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            $this->searcher->setPaginationParams(['from' => $skip, 'size' => 50]);
+            $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
 
             $this->searcher->filterBase();
 
@@ -203,9 +201,30 @@ class MallListNewAPIController extends PubControllerAPI
             // Make sure to prioritize mall order from config
             // (At the moment, until we add feature to set ordering in admin portal)
             $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
+            $mallFeaturedIds = array();
             if ($bypassMallOrder === 'n') {
                 $cacheKey['by_pass_mall_order'] = $bypassMallOrder;
                 $this->searcher->bypassMallOrder(compact('countryFilter', 'cityFilters'));
+
+                // Get featured IDS for set as featured
+                if (! empty($countryFilter)) {
+                    $countryFilter = strtolower($countryFilter);
+                    $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
+
+                    if (! empty($cityFilters)) {
+                        $mallFeaturedIds = [];
+                        foreach ($cityFilters as $key => $cityName) {
+                            $cityName = str_replace(' ', '_', strtolower($cityName));
+                            $cityValue = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.' . $cityName, []);
+
+                            if (! empty($cityValue)) {
+                                $mallFeaturedIds = array_merge($cityValue, $mallFeaturedIds);
+                            }
+                        }
+                    }
+                } else {
+                    $mallFeaturedIds = Config::get('orbit.featured.mall_ids.all', []);
+                }
             }
 
             // Get Advertised Malls...
@@ -280,8 +299,16 @@ class MallListNewAPIController extends PubControllerAPI
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
 
-                $areadata['placement_type'] = null;
-                $areadata['placement_type_orig'] = null;
+                $placementType = null;
+                $placementTypeOrig = null;
+                if (in_array($dt['_source']['merchant_id'], $mallFeaturedIds)) {
+                    $placementType = 'featured';
+                    $placementTypeOrig = 'featured';
+                    $areadata['is_featured'] = true;
+                }
+
+                $areadata['placement_type'] = $placementType;
+                $areadata['placement_type_orig'] = $placementTypeOrig;
                 $areadata['average_rating'] = (! empty($dt['fields']['average_rating'][0])) ? number_format(round($dt['fields']['average_rating'][0], 1), 1) : 0;
                 $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? round($dt['fields']['total_review'][0], 1) : 0;
                 $mallId = $dt['_source']['merchant_id'];

@@ -156,10 +156,6 @@ class CouponFeaturedListAPIController extends PubControllerAPI
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
             $withScore = false;
-            $esTake = $take;
-            if ($list_type === 'featured') {
-                $esTake = 50;
-            }
 
             $jsonQuery = array('fields' => array("_source"), 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('status' => 'active'))), array('range' => array('available' => array('gt' => 0))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
@@ -553,7 +549,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
 
             $sortby = array("_score", $sortPage, $defaultSort);
             $jsonQuery['sort'] = $sortby;
-            $jsonQuery['size'] = 50;
+            $jsonQuery['size'] = $take;
 
             // boost slot
             $boost = [500, 400, 300, 200];
