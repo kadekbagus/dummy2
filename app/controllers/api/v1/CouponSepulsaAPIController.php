@@ -1175,11 +1175,11 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $couponrule->rule_value = $rule_value;
             });
 
-            OrbitInput::post('begin_date', function($begin_date) use ($updatedcoupon) {
+            OrbitInput::post('begin_date', function($begin_date) use ($couponrule) {
                 $couponrule->rule_begin_date = $begin_date;
             });
 
-            OrbitInput::post('end_date', function($end_date) use ($updatedcoupon) {
+            OrbitInput::post('end_date', function($end_date) use ($couponrule) {
                 $couponrule->rule_end_date = $end_date;
             });
 
