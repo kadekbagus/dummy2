@@ -233,6 +233,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'how_to_buy_and_redeem'   => $how_to_buy_and_redeem,
                 'terms_and_conditions'    => $terms_and_conditions,
                 'token'                   => $token,
+                'voucher_benefit'         => $voucher_benefit,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -259,6 +260,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'how_to_buy_and_redeem'   => 'required',
                 'terms_and_conditions'    => 'required',
                 'token'                   => 'required',
+                'voucher_benefit'         => 'required',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -337,7 +339,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->fixed_amount_commission = $fixedAmountCommission;
             $newcoupon->is_sponsored = $is_sponsored;
             $newcoupon->price_selling = $price_selling;
-            $newcoupon->price_value = $price_value;
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $newcoupon->is_unique_redeem = 'Y';
@@ -570,6 +571,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $couponSepulsa->token = $token;
             $couponSepulsa->how_to_buy_and_redeem = $how_to_buy_and_redeem;
             $couponSepulsa->terms_and_conditions = $terms_and_conditions;
+            $couponSepulsa->voucher_benefit = $voucher_benefit;
             $couponSepulsa->save();
             $newcoupon->coupon_sepulsa = $couponSepulsa;
 
@@ -1110,10 +1112,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
 
-            OrbitInput::post('price_value', function($price_value) use ($updatedCouponSepulsa) {
-                $updatedcoupon->price_value = $price_value;
-            });
-
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.coupon.postupdatecoupon.before.save', array($this, $updatedcoupon));
@@ -1152,11 +1150,15 @@ class CouponSepulsaAPIController extends ControllerAPI
             OrbitInput::post('terms_and_conditions', function($terms_and_conditions) use ($updatedCouponSepulsa) {
                 $updatedCouponSepulsa->terms_and_conditions = $terms_and_conditions;
             });
+
+            OrbitInput::post('voucher_benefit', function($voucher_benefit) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->voucher_benefit = $voucher_benefit;
+            });
+
             $updatedCouponSepulsa->setUpdatedAt($updatedCouponSepulsa->freshTimestamp());
             $updatedCouponSepulsa->save();
 
             $updatedcoupon->coupon_sepulsa = $updatedCouponSepulsa;
-
 
 
             // save CouponRule.
@@ -1767,7 +1769,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     "),
                     'coupon_sepulsa.external_id',
                     'coupon_sepulsa.price_from_sepulsa',
-                    // 'coupon_sepulsa.price_value',
+                    'coupon_sepulsa.price_value',
                     'coupon_sepulsa.coupon_image_url',
                     'coupon_sepulsa.how_to_buy_and_redeem',
                     'coupon_sepulsa.terms_and_conditions',
