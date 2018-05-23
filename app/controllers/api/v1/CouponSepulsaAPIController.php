@@ -131,8 +131,8 @@ class CouponSepulsaAPIController extends ControllerAPI
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent','f');
-            $is_all_retailer = OrbitInput::post('is_all_retailer');
-            $is_all_employee = OrbitInput::post('is_all_employee');
+            $is_all_retailer = OrbitInput::post('is_all_retailer', 'N');
+            $is_all_employee = OrbitInput::post('is_all_employee', 'N');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
             $maximum_issued_coupon = OrbitInput::post('maximum_issued_coupon');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
@@ -869,8 +869,8 @@ class CouponSepulsaAPIController extends ControllerAPI
             $begin_date = OrbitInput::post('begin_date');
             $end_date = OrbitInput::post('end_date');
             $is_permanent = OrbitInput::post('is_permanent');
-            $is_all_retailer = OrbitInput::post('is_all_retailer');
-            $is_all_employee = OrbitInput::post('is_all_employee');
+            $is_all_retailer = OrbitInput::post('is_all_retailer', 'N');
+            $is_all_employee = OrbitInput::post('is_all_employee', 'N');
             $maximum_issued_coupon_type = OrbitInput::post('maximum_issued_coupon_type');
             $coupon_validity_in_date = OrbitInput::post('coupon_validity_in_date');
             $discount_value = OrbitInput::post('discount_value', 0);
