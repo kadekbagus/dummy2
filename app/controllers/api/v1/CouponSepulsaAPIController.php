@@ -1774,6 +1774,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     'coupon_sepulsa.how_to_buy_and_redeem',
                     'coupon_sepulsa.terms_and_conditions',
                     'coupon_sepulsa.token',
+                    'coupon_sepulsa.voucher_benefit',
                     DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$table_prefix}merchants.name)) separator ', ') from {$table_prefix}promotion_retailer
                                     inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
                                     inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
