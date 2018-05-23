@@ -42,7 +42,7 @@ class RedeemOnline
      * @param string $code
      * @param int $page
      */
-    public function redeem($token, $code, $counter=0)
+    public function redeem($token, $code, $tries=1)
     {
         try {
             $requestParams = [
@@ -63,13 +63,22 @@ class RedeemOnline
 
             return $response;
         } catch (OrbitCustomException $e) {
+
+            // If we get unauthorized error, it might be the token is invalid (need refresh)
+            // So we need to re-log, and use the new token to do the request.
             if ($e->getCode() === SepulsaClient::UNAUTHORIZED_ERROR_CODE) {
-                Login::create($this->config)->login()->saveToken();
-                // retries 3 times
-                if ($counter > $tries = 3) {
+
+                // Limit the retry.
+                if ($tries >= SepulsaClient::MAX_RETRIES) {
                     throw new Exception("Error Processing Request, Tried {$tries} times.", 1);
                 }
-                return $this->getList($counter++);
+
+                $tries++;
+                Login::create($this->config)->login()->saveToken();
+
+                // Retry the request
+                return $this->redeem($token, $code, $tries);
+
             } else {
                 return $e->getMessage();
             }

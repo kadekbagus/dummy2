@@ -26,8 +26,6 @@ class TakeVoucher
      */
     protected $endpoint = 'partner/voucher/taken';
 
-    const MAX_TRIES = 3;
-
     public function __construct($config = [])
     {
         $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
@@ -76,9 +74,9 @@ class TakeVoucher
             // If we get unauthorized error, it might be the token is invalid (need refresh)
             // So we need to re-log, and use the new token to do the request.
             if ($e->getCode() === SepulsaClient::UNAUTHORIZED_ERROR_CODE) {
-                
+
                 // Limit the retry.
-                if ($tries >= self::MAX_TRIES) {
+                if ($tries >= SepulsaClient::MAX_RETRIES) {
                     throw new Exception("Error Processing Request, Tried {$tries} times.", 1);
                 }
 

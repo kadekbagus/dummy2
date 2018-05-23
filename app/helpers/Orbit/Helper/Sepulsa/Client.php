@@ -12,6 +12,7 @@ class Client
 {
     const CURL_CONNECT_ERROR_CODE = 8701;
     const UNAUTHORIZED_ERROR_CODE = 8702;
+    const MAX_RETRIES = 3;
 
     /**
      * The main config
