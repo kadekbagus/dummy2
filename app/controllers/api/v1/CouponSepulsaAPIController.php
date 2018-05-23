@@ -197,6 +197,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $coupon_image_url = OrbitInput::post('coupon_image_url');
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
+            $voucher_benefit = OrbitInput::post('voucher_benefit');
             $token = OrbitInput::post('token');
 
             if (empty($campaignStatus)) {
@@ -339,6 +340,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->fixed_amount_commission = $fixedAmountCommission;
             $newcoupon->is_sponsored = $is_sponsored;
             $newcoupon->price_selling = $price_selling;
+            $newcoupon->price_old = $price_value;
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $newcoupon->is_unique_redeem = 'Y';
