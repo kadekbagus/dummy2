@@ -11,9 +11,7 @@ use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\OneSignal\OneSignal;
 
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
-use Orbit\Helper\Sepulsa\API\VoucherOrder;
-use Orbit\Helper\Sepulsa\API\Responses\VoucherOrderResponse;
-use Orbit\Helper\Sepulsa\API\Responses\VoucherRedeemResponse;
+use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
 /**
  * Listen on:    `orbit.payment.postupdatepayment.after.save`
@@ -33,43 +31,42 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
     // If payment completed...
     if ($payment->completed()) {
 
-        // For sepulsa deals...
-        if ($payment->coupon->promotion_type === 'sepulsa') {
+        // Check if this coupon is issued...
+        $issuedCoupon = IssuedCoupon::where('user_id', $payment->user_id)
+                                    ->where('user_email', $payment->user_email)
+                                    ->where('promotion_id', $payment->object_id)
+                                    ->first();
 
-            if (! empty($payment->coupon_sepulsa)) {
+        // If no IssuedCoupon found for given User and Coupon, then do Taken Voucher request.
+        if (empty($issuedCoupon)) {
 
-                // Check if this coupon is issued...
-                $issuedCoupon = IssuedCoupon::where('user_id', $payment->user_id)
-                                            ->where('user_email', $payment->user_email)
-                                            ->where('promotion_id', $payment->object_id)
-                                            ->first();
+            $issuedCouponData = [];
 
-                // If no IssuedCoupon found for given User and Coupon, then do Taken Voucher request.
-                if (empty($issuedCoupon)) {
+            // For sepulsa deals...
+            if ($payment->coupon->promotion_type === 'sepulsa') {
+
+                if (! empty($payment->coupon_sepulsa)) {
 
                     $voucherToken = $payment->coupon_sepulsa->token;
 
                     // Take voucher
                     $takenVouchers = TakeVoucher::create()->take($payment->payment_transaction_id, [['token' => $voucherToken]]);
-                    $takenVouchers = new VoucherTakenResponse($takenVouchers);
+                    $takenVouchers = new TakeVoucherResponse($takenVouchers);
 
                     if ($takenVouchers->isValid() && $takenVouchers->isSuccess()) {
                         $takenVoucherData = $takenVouchers->getVoucherData();
 
-                        $issuedCoupon = new IssuedCoupon;
-                        $issuedCoupon->promotion_id       = $payment->object_id;
-                        $issuedCoupon->transaction_id     = $payment->payment_transaction_id;
-                        $issuedCoupon->user_id            = $payment->user_id;
-                        $issuedCoupon->user_email         = $payment->user_email;
-                        $issuedCoupon->issued_coupon_code = $takenVoucherData->code; // see todos
-                        $issuedCoupon->url                = $takenVoucherData->redeem_url; // see todos
-                        $issuedCoupon->issued_date        = $takenVoucherData->taken_date;
-                        $issuedCoupon->expired_date       = $takenVoucherData->expired_date;
-                        $issuedCoupon->issuer_user_id     = $payment->coupon_sepulsa->coupon->created_by;
-                        $issuedCoupon->status             = 'issued';
-                        $issuedCoupon->record_exists      = 'Y';
-
-                        $issuedCoupon->save();
+                        $issuedCouponData['promotion_id']       = $payment->object_id;
+                        $issuedCouponData['transaction_id']     = $payment->payment_transaction_id;
+                        $issuedCouponData['user_id']            = $payment->user_id;
+                        $issuedCouponData['user_email']         = $payment->user_email;
+                        $issuedCouponData['issued_coupon_code'] = $takenVoucherData->code; // see todos
+                        $issuedCouponData['url']                = $takenVoucherData->redeem_url; // see todos
+                        $issuedCouponData['issued_date']        = $takenVoucherData->taken_date;
+                        $issuedCouponData['expired_date']       = $takenVoucherData->expired_date;
+                        $issuedCouponData['issuer_user_id']     = $payment->coupon->created_by;
+                        $issuedCouponData['status']             = 'issued';
+                        $issuedCouponData['record_exists']      = 'Y';
 
                         // if (! empty($takenVoucherData->redeem_url)) {
                             // Send email with redeem_url for offline redeem...
@@ -77,23 +74,30 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
                         // }
                     }
                     else {
-                        $errorMessage = sprintf('Taken Voucher request to Sepulsa failed. CouponID = %s. %s', $payment->object_id, $voucherOrder->getMessage());
+                        $errorMessage = sprintf('Taken Voucher request to Sepulsa failed. CouponID = %s. %s', $payment->object_id, $takenVouchers->getMessage());
                         throw new Exception($errorMessage, 500);
                     }
                 }
-                else {
-                    // Coupon already issued...
-                }
+                // Coupon Sepulsa not found.
             }
             else {
-                // Payment - Coupon Sepulsa relation not found.
-                throw new Exception('Coupon not found.', 500);
+                // For other deals (e.g Hot Deals)
+            }
+
+            if (! empty($issuedCouponData)) {
+
+                $issuedCoupon = new IssuedCoupon;
+                foreach($issuedCouponData as $field => $value) {
+                    $issuedCoupon->{$field} = $value;
+                }
+                $issuedCoupon->save();
+
+                $payment->coupon_redemption_code = $issuedCoupon->issued_coupon_code;
+                $payment->save();
             }
         }
-        else {
-            // For other deals (e.g Hot Deals)
-            
-        }
+
+        // Coupon already issued...
     }
 
     // If not complete..

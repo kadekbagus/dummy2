@@ -69,8 +69,9 @@ class TakeVoucherResponse
         // Only 1 voucher should exists in the result.
         foreach($this->data->result as $voucher) {
             $data->code             = $voucher->code;
-            $data->expired_date     = $voucher->voucher->expired_date;
+            $data->expired_date     = $voucher->expired_date;
             $data->redeem_url       = $voucher->redeem_url;
+            $data->taken_date       = $voucher->taken_date;
         }
 
         return $data;

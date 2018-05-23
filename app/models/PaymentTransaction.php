@@ -28,6 +28,18 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Payment - Coupon relation.
+     *
+     * @author Budi <budi@dominopos.com>
+     * 
+     * @return [type] [description]
+     */
+    public function coupon()
+    {
+        return $this->belongsTo('Coupon', 'object_id', 'promotion_id');
+    }
+
+    /**
      * Determine if the payment is fully completed or not.
      *
      * @author Budi <budi@dominopos.com>
