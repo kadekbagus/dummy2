@@ -59,7 +59,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	        }
 
 	        $payment_update = PaymentTransaction::with(['coupon_sepulsa.coupon'])->where('payment_transaction_id', '=', $payment_transaction_id)
-												->whereRaw("status = 'starting' OR 'pending'")
+												->whereIn('status', ['starting', 'pending'])
 	        									->first();
 
 	        OrbitInput::post('status', function($status) use ($payment_update) {
