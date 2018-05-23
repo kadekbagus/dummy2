@@ -1798,6 +1798,8 @@ class CouponSepulsaAPIController extends ControllerAPI
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
+
+                ->leftJoin('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
                 // Join for get export status
                 ->leftJoin('pre_exports', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'pre_exports.object_id')
