@@ -337,6 +337,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->fixed_amount_commission = $fixedAmountCommission;
             $newcoupon->is_sponsored = $is_sponsored;
             $newcoupon->price_selling = $price_selling;
+            $newcoupon->price_value = $price_value;
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $newcoupon->is_unique_redeem = 'Y';
@@ -1109,6 +1110,9 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
 
+            OrbitInput::post('price_value', function($price_value) use ($updatedCouponSepulsa) {
+                $updatedcoupon->price_value = $price_value;
+            });
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
@@ -1761,6 +1765,13 @@ class CouponSepulsaAPIController extends ControllerAPI
                         ELSE discount_value
                     END AS 'display_discount_value'
                     "),
+                    'coupon_sepulsa.external_id',
+                    'coupon_sepulsa.price_from_sepulsa',
+                    // 'coupon_sepulsa.price_value',
+                    'coupon_sepulsa.coupon_image_url',
+                    'coupon_sepulsa.how_to_buy_and_redeem',
+                    'coupon_sepulsa.terms_and_conditions',
+                    'coupon_sepulsa.token',
                     DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$table_prefix}merchants.name)) separator ', ') from {$table_prefix}promotion_retailer
                                     inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
                                     inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id
@@ -1798,8 +1809,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('coupon_translations', 'coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                 ->leftJoin('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id')
-
-                ->leftJoin('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
+                ->join('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
                 // Join for get export status
                 ->leftJoin('pre_exports', function ($join) {
                          $join->on('promotions.promotion_id', '=', 'pre_exports.object_id')
