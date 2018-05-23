@@ -26,13 +26,15 @@ class TakeVoucher
      */
     protected $endpoint = 'partner/voucher/taken';
 
-    public function __construct($config=[])
+    const MAX_TRIES = 3;
+
+    public function __construct($config = [])
     {
         $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
         $this->client = SepulsaClient::create($this->config);
     }
 
-    public static function create($config=[])
+    public static function create($config = [])
     {
         return new static($config);
     }
@@ -46,7 +48,7 @@ class TakeVoucher
      * @param array $filter
      * @param int $page
      */
-    public function take($trxId, $tokens=[], $identifier=null, $counter=0)
+    public function take($trxId, $tokens = [], $identifier = null, $tries = 1)
     {
         try {
             $requestParams = [
@@ -68,14 +70,24 @@ class TakeVoucher
                 ->request('POST');
 
             return $response;
+
         } catch (OrbitCustomException $e) {
+
+            // If we get unauthorized error, it might be the token is invalid (need refresh)
+            // So we need to re-log, and use the new token to do the request.
             if ($e->getCode() === SepulsaClient::UNAUTHORIZED_ERROR_CODE) {
-                Login::create($this->config)->login()->saveToken();
-                // retries 3 times
-                if ($counter > $tries = 3) {
+                
+                // Limit the retry.
+                if ($tries >= self::MAX_TRIES) {
                     throw new Exception("Error Processing Request, Tried {$tries} times.", 1);
                 }
-                return $this->getList($counter++);
+
+                $tries++;
+                Login::create($this->config)->login()->saveToken();
+
+                // Retry the request
+                return $this->take($trxId, $tokens, $identifier, $tries);
+
             } else {
                 return $e->getMessage();
             }
@@ -83,5 +95,4 @@ class TakeVoucher
             return $e->getMessage();
         }
     }
-
 }
