@@ -599,6 +599,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     $couponMedia->object_name = 'coupon_translation';
                     $couponMedia->path = $coupon_image_url;
                     $couponMedia->realpath = $coupon_image_url;
+                    $couponMedia->cdn_url = $coupon_image_url;
                     $couponMedia->save();
                     $couponMediaTranslations[] = $couponMedia;
                 }
