@@ -410,9 +410,14 @@ class CouponListNewAPIController extends PubControllerAPI
                                 }
 
                                 // image
-                                if (! empty($dt['image_url'])) {
-                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                if ($record['_source']['promotion_type'] == 'sepulsa') {
+                                    $data['image_url'] = $localPath;
+                                } else {
+                                    if (! empty($dt['image_url'])) {
+                                        $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                    }
                                 }
+
                             } elseif ($dt['language_code'] === $default_lang) {
                                 // name
                                 if (! empty($dt['name']) && empty($data['coupon_name'])) {
@@ -425,8 +430,12 @@ class CouponListNewAPIController extends PubControllerAPI
                                 }
 
                                 // image
-                                if (empty($data['image_url'])) {
-                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                if ($record['_source']['promotion_type'] == 'sepulsa') {
+                                    $data['image_url'] = $localPath;
+                                } else {
+                                    if (empty($data['image_url'])) {
+                                        $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                    }
                                 }
                             }
                         }
