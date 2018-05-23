@@ -18,6 +18,7 @@ use Validator;
 use PaymentTransaction;
 use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
+use Event;
 
 class PaymentMidtransUpdateAPIController extends PubControllerAPI
 {
@@ -57,7 +58,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	            OrbitShopAPI::throwInvalidArgument($errorMessage);
 	        }
 
-	        $payment_update = PaymentTransaction::where('payment_transaction_id', '=', $payment_transaction_id)
+	        $payment_update = PaymentTransaction::with(['coupon_sepulsa.coupon'])->where('payment_transaction_id', '=', $payment_transaction_id)
 												->whereRaw("status = 'starting' OR 'pending'")
 	        									->first();
 
@@ -79,6 +80,9 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
 	        $payment_update->responded_at = Carbon::now('UTC');
 	        $payment_update->save();
+
+            // Issue Coupon if meet the requirement.
+            Event::fire('orbit.payment.postupdatepayment.after.save', [$payment_update]);
 
 	        // Commit the changes
             $this->commit();
