@@ -201,7 +201,7 @@ class CouponAPIController extends ControllerAPI
 
             // hot deals
             $price_old = OrbitInput::post('price_old', 0);
-            $price_value = OrbitInput::post('price_value', 0);
+            $merchant_commision = OrbitInput::post('merchant_commision', 0);
             $price_selling = OrbitInput::post('price_selling', 0);
 
             if ($payByNormal === 'N') {
@@ -326,12 +326,12 @@ class CouponAPIController extends ControllerAPI
             if ($promotion_type === 'hot_deals') {
                 $hotDealsValue = [
                     'price_old' => $price_old,
-                    'price_value' => $price_value,
+                    'merchant_commision' => $merchant_commision,
                     'price_selling' => $price_selling,
                 ];
                 $hotDealsValidation = [
                     'price_old' => 'required',
-                    'price_value' => 'required',
+                    'merchant_commision' => 'required',
                     'price_selling' => 'required',
                 ];
                 $thirdValidator = Validator::make(
@@ -661,7 +661,7 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->fixed_amount_commission = $fixedAmountCommission;
             $newcoupon->is_sponsored = $is_sponsored;
             $newcoupon->price_old = $price_old;
-            $newcoupon->price_value = $price_value;
+            $newcoupon->merchant_commision = $merchant_commision;
             $newcoupon->price_selling = $price_selling;
 
             // save 3rd party coupon fields
@@ -1333,7 +1333,7 @@ class CouponAPIController extends ControllerAPI
 
             // hot deals
             $price_old = OrbitInput::post('price_old');
-            $price_value = OrbitInput::post('price_value');
+            $merchant_commision = OrbitInput::post('merchant_commision');
             $price_selling = OrbitInput::post('price_selling');
 
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
@@ -1638,12 +1638,12 @@ class CouponAPIController extends ControllerAPI
                 // validation for hot deals
                 $hotDealsValue = [
                     'price_old' => $price_old,
-                    'price_value' => $price_value,
+                    'merchant_commision' => $merchant_commision,
                     'price_selling' => $price_selling,
                 ];
                 $hotDealsValidation = [
                     'price_old' => 'required',
-                    'price_value' => 'required',
+                    'merchant_commision' => 'required',
                     'price_selling' => 'required',
                 ];
                 $thirdValidator = Validator::make(
@@ -1717,7 +1717,7 @@ class CouponAPIController extends ControllerAPI
 
             if ($promotion_type === 'hot_deals') {
                 $updatedcoupon->price_old = $price_old;
-                $updatedcoupon->price_value = $price_value;
+                $updatedcoupon->merchant_commision = $merchant_commision;
                 $updatedcoupon->price_selling = $price_selling;
             }
 
