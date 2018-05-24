@@ -80,4 +80,10 @@ class Login
             Cache::put($this->config['session_key_name'], 'Bearer ' . $this->response->result->token, 60);
         }
     }
+
+    public function getConfigAfterSelector()
+    {
+        $config = ConfigSelector::create($this->config)->getConfig();
+        return $config;
+    }
 }

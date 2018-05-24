@@ -16,13 +16,13 @@ class LoginTest extends TestCase
         'is_production' => false,
         // use sandbox base uri for development (with trailing slash)
         'base_uri' => [
-            'production' => '',
+            'production' => 'http://sepulsa.prod',
             'sandbox' => 'https://bonabo.sepulsa.co.id/api/v1/'
         ],
         'auth' => [
             'production' => [
-                'username' => '',
-                'password' => '',
+                'username' => 'produser',
+                'password' => 'prodpass',
             ],
             'sandbox' => [
                 'username' => 'buzzebees@sepulsa.com',
@@ -55,6 +55,18 @@ class LoginTest extends TestCase
         $this->assertTrue(isset($response->response->result->token));
         $this->assertTrue(! empty($response->response->result->token));
         $this->assertTrue(is_string($response->response->result->token));
+    }
+
+    public function testEnvSwitchOK()
+    {
+        // test if the config selector works when env is switched to production
+        $this->config['is_production'] = true;
+        $config = Login::create($this->config)->getConfigAfterSelector();
+
+        // check response metas
+        $this->assertSame($config['base_uri'], $this->config['base_uri']['production']);
+        $this->assertSame($config['auth']['username'], $this->config['auth']['production']['username']);
+        $this->assertSame($config['auth']['password'], $this->config['auth']['production']['password']);
     }
 
     public function testFAIL()

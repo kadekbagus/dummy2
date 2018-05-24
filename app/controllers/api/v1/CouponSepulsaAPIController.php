@@ -197,6 +197,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $coupon_image_url = OrbitInput::post('coupon_image_url');
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
+            $voucher_benefit = OrbitInput::post('voucher_benefit');
             $token = OrbitInput::post('token');
 
             if (empty($campaignStatus)) {
@@ -339,6 +340,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->fixed_amount_commission = $fixedAmountCommission;
             $newcoupon->is_sponsored = $is_sponsored;
             $newcoupon->price_selling = $price_selling;
+            $newcoupon->price_old = $price_value;
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $newcoupon->is_unique_redeem = 'Y';
@@ -1068,12 +1070,10 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('begin_date', function($begin_date) use ($updatedcoupon) {
                 $updatedcoupon->begin_date = $begin_date;
-                $updatedcoupon->rule_begin_date = $begin_date;
             });
 
             OrbitInput::post('end_date', function($end_date) use ($updatedcoupon) {
                 $updatedcoupon->end_date = $end_date;
-                $updatedcoupon->rule_end_date = $end_date;
             });
 
             OrbitInput::post('price_selling', function($price_selling) use ($updatedcoupon) {
@@ -1173,6 +1173,14 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('rule_value', function($rule_value) use ($couponrule) {
                 $couponrule->rule_value = $rule_value;
+            });
+
+            OrbitInput::post('begin_date', function($begin_date) use ($couponrule) {
+                $couponrule->rule_begin_date = $begin_date;
+            });
+
+            OrbitInput::post('end_date', function($end_date) use ($couponrule) {
+                $couponrule->rule_end_date = $end_date;
             });
 
             $couponrule->save();
