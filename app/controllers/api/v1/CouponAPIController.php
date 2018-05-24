@@ -3115,12 +3115,6 @@ class CouponAPIController extends ControllerAPI
                 $coupons->where('coupon_translations.promotion_name', 'like', "$keywords%");
             });
 
-            // Filter coupon by promotion type
-            OrbitInput::get('promotion_type', function($promotionTypes) use ($coupons)
-            {
-                $coupons->whereIn('promotions.promotion_type', $promotionTypes);
-            });
-
             // Filter coupon by description
             OrbitInput::get('description', function($description) use ($coupons)
             {
