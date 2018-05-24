@@ -18,6 +18,8 @@ abstract class Notification {
     public function setNotifiable($notifiable)
     {
         $this->notifiable = $notifiable;
+
+        return $this;
     }
 
     protected function getEmailData()
@@ -45,7 +47,7 @@ abstract class Notification {
      * 
      * @return [type] [description]
      */
-    public function toEmail()
+    public function toEmail($job, $data)
     {
         // Implemented in the child class...
     }

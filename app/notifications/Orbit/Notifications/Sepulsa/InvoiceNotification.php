@@ -10,6 +10,8 @@ use Log;
 use Queue;
 use Exception;
 
+use IssuedCoupon;
+
 /**
  * Notify user after completing and getting Sepulsa Voucher.
  * 
@@ -57,7 +59,10 @@ class InvoiceNotification extends Notification
             'transactionId'     => $this->payment->payment_transaction_id,
             'couponRedeemCode'  => $this->payment->coupon_redemption_code,
             'couponName'        => $this->payment->coupon->promotion_name,
-            'redeemUrl'         => $this->payment->redeem_url,
+            'couponPrice'       => $this->payment->amount,
+            'quantity'          => 1,
+            'total'             => $this->payment->amount,
+            'redeemUrl'         => $this->payment->issued_coupon->url,
         ];
     }
 
@@ -71,7 +76,7 @@ class InvoiceNotification extends Notification
     public function toEmail($job, $data)
     {
         try {
-            Log::debug('Notification(' . $data['transactionId'] . '): Sending InvoiceNotification email...');
+            // Log::debug('Notification(' . $data['transactionId'] . '): Sending InvoiceNotification email...');
 
             $emailTemplate = 'emails.receipt.sepulsa-voucher';
 
@@ -87,7 +92,7 @@ class InvoiceNotification extends Notification
 
             $job->delete();
 
-            Log::debug('Notification(' . $data['transactionId'] . '): InvoiceNotification email should be sent by now.');
+            // Log::debug('Notification(' . $data['transactionId'] . '): InvoiceNotification email should be sent by now.');
 
             // Bury the job for later inspection
             JobBurier::create($job, function($theJob) {
@@ -118,9 +123,9 @@ class InvoiceNotification extends Notification
      */
     public function send()
     {
-        Log::debug('Notification: Pushing InvoiceNotification email to queue..');
+        // Log::debug('Notification: Pushing InvoiceNotification email to queue..');
         Queue::push(
-            'Orbit\Notifications\Sepulsa\InvoiceNotification@toEmail', 
+            'Orbit\\Notifications\\Sepulsa\\InvoiceNotification@toEmail', 
             $this->getEmailData(),
             $this->queueName
         );

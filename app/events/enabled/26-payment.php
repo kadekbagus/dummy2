@@ -16,14 +16,10 @@ use Orbit\Notifications\Sepulsa\InvoiceNotification as SepulsaInvoiceNotificatio
 
 /**
  * Listen on:    `orbit.payment.postupdatepayment.after.save`
- * Purpose:      Create issued coupon if needed
  *
  * @author Budi <budi@dominopos.com>
  *
- * @param PaymentMidtransUpdateAPIController $controller - The instance of the PaymentMidtransUpdateAPIController or its subclass
  * @param PaymentTransaction $payment - Instance of PaymentTransaction model
- *
- * @todo Send email with redeem_url for offline redeem
  */
 Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
 {
@@ -70,12 +66,6 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
                     // Update payment transaction
                     $payment->coupon_redemption_code = $takenVoucherData->code;
                     $payment->save();
-
-                    // Set redeem url
-                    $payment->redeem_url = $takenVoucherData->redeem_url;
-
-                    // Create invoice for customer
-                    $invoice = new SepulsaInvoiceNotification($payment);
                 }
                 else {
                     $errorMessage = sprintf('Taken Voucher request to Sepulsa failed. CouponID = %s. %s', $payment->object_id, $takenVouchers->getMessage());
@@ -92,7 +82,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
                 // Create invoice for customer...
             }
 
-            // Issue the coupon and notify user
+            // Issue the coupon
             if (! empty($issuedCouponData)) {
 
                 $issuedCoupon = new IssuedCoupon;
@@ -100,9 +90,6 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
                     $issuedCoupon->{$field} = $value;
                 }
                 $issuedCoupon->save();
-
-                // Notify user...
-                $payment->user->notify($invoice);
             }
         }
 
@@ -110,4 +97,26 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
     }
 
     // @todo add always-do tasks here...
+});
+
+/**
+ * Listen on:    `orbit.payment.postupdatepayment.after.commit`
+ *
+ * @author Budi <budi@dominopos.com>
+ *
+ * @param PaymentTransaction $payment - Instance of PaymentTransaction model
+ */
+Event::listen('orbit.payment.postupdatepayment.after.commit', function($payment)
+{
+    // If payment completed...
+    if ($payment->completed()) {
+
+        // Load related IssuedCoupon.
+        $payment->load('issued_coupon');
+
+        if (! empty($payment->issued_coupon)) {
+            // Create and send invoice to customer
+            $payment->user->notify(new SepulsaInvoiceNotification($payment));
+        }
+    }
 });

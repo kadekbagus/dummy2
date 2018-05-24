@@ -40,6 +40,16 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Payment - IssuedCoupon relation.
+     * 
+     * @return [type] [description]
+     */
+    public function issued_coupon()
+    {
+        return $this->hasOne('IssuedCoupon', 'transaction_id');
+    }
+
+    /**
      * Payment - User relation.
      *
      * @author Budi <budi@dominopos.com>

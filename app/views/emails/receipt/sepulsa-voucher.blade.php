@@ -1,16 +1,16 @@
 <html>
     <head>Invoice</head>
     <body>
-        <h1>Hi, {!! $customerName !!} !</h1>
+        <h1>Hi, {{{ $customerName }}} !</h1>
         <p>
-            Thank you for purchasing Coupon {!! $couponName !!} at GoToMalls.com. Here the receipt:
+            Thank you for purchasing <strong>Coupon {{{ $couponName }}}</strong> at GoToMalls.com! You can view the detail of your purchase below.
         </p>
 
         <table>
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Code</th>
+                    <th>Redeem Code</th>
                     <th>Coupon Name</th>
                     <th>Quantity</th>
                     <th>Price</th>
@@ -20,21 +20,26 @@
 
             <tbody>
                 <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                    <td>1</td>
+                    <td>{{{ $couponRedeemCode }}}</td>
+                    <td>{{{ $couponName }}}</td>
+                    <td>{{{ $quantity }}}</td>
+                    <td>{{{ $couponPrice }}}</td>
+                    <td>{{{ $total }}}</td>
                 </tr>
             </tbody>
 
             <tfoot>
                 <tr>
                     <td colspan="5" style="text-align: right">Grand Total &nbsp;</td>
-                    <td></td>
+                    <td>{{{ $couponPrice }}}</td>
                 </tr>
             </tfoot>
         </table>
+
+        <br>
+        <br>
+        <br>
+        <a href="<?= $redeemUrl ?>">Redeem This Coupon</a>
     </body>
 </html>
