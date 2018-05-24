@@ -197,6 +197,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $coupon_image_url = OrbitInput::post('coupon_image_url');
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
+            $voucher_benefit = OrbitInput::post('voucher_benefit');
             $token = OrbitInput::post('token');
 
             if (empty($campaignStatus)) {
@@ -233,6 +234,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'how_to_buy_and_redeem'   => $how_to_buy_and_redeem,
                 'terms_and_conditions'    => $terms_and_conditions,
                 'token'                   => $token,
+                'voucher_benefit'         => $voucher_benefit,
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
@@ -259,6 +261,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'how_to_buy_and_redeem'   => 'required',
                 'terms_and_conditions'    => 'required',
                 'token'                   => 'required',
+                'voucher_benefit'         => 'required',
             ];
             $validator_message = [
                 'rule_value.required'     => 'The amount to obtain is required',
@@ -337,7 +340,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->fixed_amount_commission = $fixedAmountCommission;
             $newcoupon->is_sponsored = $is_sponsored;
             $newcoupon->price_selling = $price_selling;
-            $newcoupon->price_value = $price_value;
+            $newcoupon->price_old = $price_value;
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $newcoupon->is_unique_redeem = 'Y';
@@ -570,6 +573,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $couponSepulsa->token = $token;
             $couponSepulsa->how_to_buy_and_redeem = $how_to_buy_and_redeem;
             $couponSepulsa->terms_and_conditions = $terms_and_conditions;
+            $couponSepulsa->voucher_benefit = $voucher_benefit;
             $couponSepulsa->save();
             $newcoupon->coupon_sepulsa = $couponSepulsa;
 
@@ -597,6 +601,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     $couponMedia->object_name = 'coupon_translation';
                     $couponMedia->path = $coupon_image_url;
                     $couponMedia->realpath = $coupon_image_url;
+                    $couponMedia->cdn_url = $coupon_image_url;
                     $couponMedia->save();
                     $couponMediaTranslations[] = $couponMedia;
                 }
@@ -1065,12 +1070,10 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('begin_date', function($begin_date) use ($updatedcoupon) {
                 $updatedcoupon->begin_date = $begin_date;
-                $updatedcoupon->rule_begin_date = $begin_date;
             });
 
             OrbitInput::post('end_date', function($end_date) use ($updatedcoupon) {
                 $updatedcoupon->end_date = $end_date;
-                $updatedcoupon->rule_end_date = $end_date;
             });
 
             OrbitInput::post('price_selling', function($price_selling) use ($updatedcoupon) {
@@ -1108,10 +1111,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                 }
 
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
-            });
-
-            OrbitInput::post('price_value', function($price_value) use ($updatedCouponSepulsa) {
-                $updatedcoupon->price_value = $price_value;
             });
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
@@ -1152,11 +1151,15 @@ class CouponSepulsaAPIController extends ControllerAPI
             OrbitInput::post('terms_and_conditions', function($terms_and_conditions) use ($updatedCouponSepulsa) {
                 $updatedCouponSepulsa->terms_and_conditions = $terms_and_conditions;
             });
+
+            OrbitInput::post('voucher_benefit', function($voucher_benefit) use ($updatedCouponSepulsa) {
+                $updatedCouponSepulsa->voucher_benefit = $voucher_benefit;
+            });
+
             $updatedCouponSepulsa->setUpdatedAt($updatedCouponSepulsa->freshTimestamp());
             $updatedCouponSepulsa->save();
 
             $updatedcoupon->coupon_sepulsa = $updatedCouponSepulsa;
-
 
 
             // save CouponRule.
@@ -1170,6 +1173,14 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('rule_value', function($rule_value) use ($couponrule) {
                 $couponrule->rule_value = $rule_value;
+            });
+
+            OrbitInput::post('begin_date', function($begin_date) use ($couponrule) {
+                $couponrule->rule_begin_date = $begin_date;
+            });
+
+            OrbitInput::post('end_date', function($end_date) use ($couponrule) {
+                $couponrule->rule_end_date = $end_date;
             });
 
             $couponrule->save();
@@ -1767,11 +1778,12 @@ class CouponSepulsaAPIController extends ControllerAPI
                     "),
                     'coupon_sepulsa.external_id',
                     'coupon_sepulsa.price_from_sepulsa',
-                    // 'coupon_sepulsa.price_value',
+                    'coupon_sepulsa.price_value',
                     'coupon_sepulsa.coupon_image_url',
                     'coupon_sepulsa.how_to_buy_and_redeem',
                     'coupon_sepulsa.terms_and_conditions',
                     'coupon_sepulsa.token',
+                    'coupon_sepulsa.voucher_benefit',
                     DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$table_prefix}merchants.name)) separator ', ') from {$table_prefix}promotion_retailer
                                     inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
                                     inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id

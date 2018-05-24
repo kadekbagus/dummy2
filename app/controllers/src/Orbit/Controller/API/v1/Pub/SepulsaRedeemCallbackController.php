@@ -6,6 +6,8 @@ use DominoPOS\OrbitAPI\v10\StatusInterface as Status;
 use Validator;
 use Config;
 use Exception;
+use IssuedCoupon;
+use Log;
 
 /**
  * Sepulsa Redeem Callback Controller
@@ -40,12 +42,25 @@ class SepulsaRedeemCallbackController extends ControllerAPI
             }
 
             // @todo: remove issued coupon from user's wallet based on sepulsa voucher_code.
+            // get the issued coupon
+            $issuedCoupon = IssuedCoupon::where('issued_coupon_code', $voucherCode)
+                ->where('status', 'issued')
+                ->first();
 
+            if (! is_object($issuedCoupon)) {
+                $issuedCoupon->redeemed_date = date('Y-m-d H:i:s');
+                $issuedCoupon->status = 'redeemed';
+                $issuedCoupon->save();
+                Log::error('>> SEPULSA REDEEM OK');
+            } else {
+                Log::error('>> SEPULSA REDEEM FAILED: Issued coupon is not found');
+            }
         } catch (Exception $e) {
             $this->response->code = Status::UNKNOWN_ERROR;
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
             $this->response->data = null;
+            Log::error(sprintf('>> SEPULSA REDEEM FAILED: %s, in %s:%s', $e->getMessage(), $e->getFile(), $e->getLine()));
         }
         return $this->render(200);
     }
