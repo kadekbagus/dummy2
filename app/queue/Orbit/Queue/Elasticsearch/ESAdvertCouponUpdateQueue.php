@@ -613,7 +613,7 @@ class ESAdvertCouponUpdateQueue
                     'featured_slot_mall'      => $featuredSlotMall,
                     'sponsor_provider'        => $sponsorProviderES,
                     'price_old'               => $coupon->price_old,
-                    'price_value'             => $coupon->price_value,
+                    'merchant_commision'      => $coupon->merchant_commision,
                     'price_selling'           => $coupon->price_selling
                 ];
 

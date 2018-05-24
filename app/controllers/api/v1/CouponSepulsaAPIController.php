@@ -197,6 +197,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $coupon_image_url = OrbitInput::post('coupon_image_url');
             $how_to_buy_and_redeem = OrbitInput::post('how_to_buy_and_redeem');
             $terms_and_conditions = OrbitInput::post('terms_and_conditions');
+            $voucher_benefit = OrbitInput::post('voucher_benefit');
             $token = OrbitInput::post('token');
 
             if (empty($campaignStatus)) {
@@ -339,6 +340,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->fixed_amount_commission = $fixedAmountCommission;
             $newcoupon->is_sponsored = $is_sponsored;
             $newcoupon->price_selling = $price_selling;
+            $newcoupon->price_old = $price_value;
 
             if ($rule_type === 'unique_coupon_per_user') {
                 $newcoupon->is_unique_redeem = 'Y';
@@ -599,6 +601,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     $couponMedia->object_name = 'coupon_translation';
                     $couponMedia->path = $coupon_image_url;
                     $couponMedia->realpath = $coupon_image_url;
+                    $couponMedia->cdn_url = $coupon_image_url;
                     $couponMedia->save();
                     $couponMediaTranslations[] = $couponMedia;
                 }
@@ -1067,12 +1070,10 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('begin_date', function($begin_date) use ($updatedcoupon) {
                 $updatedcoupon->begin_date = $begin_date;
-                $updatedcoupon->rule_begin_date = $begin_date;
             });
 
             OrbitInput::post('end_date', function($end_date) use ($updatedcoupon) {
                 $updatedcoupon->end_date = $end_date;
-                $updatedcoupon->rule_end_date = $end_date;
             });
 
             OrbitInput::post('price_selling', function($price_selling) use ($updatedcoupon) {
@@ -1172,6 +1173,14 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             OrbitInput::post('rule_value', function($rule_value) use ($couponrule) {
                 $couponrule->rule_value = $rule_value;
+            });
+
+            OrbitInput::post('begin_date', function($begin_date) use ($couponrule) {
+                $couponrule->rule_begin_date = $begin_date;
+            });
+
+            OrbitInput::post('end_date', function($end_date) use ($couponrule) {
+                $couponrule->rule_end_date = $end_date;
             });
 
             $couponrule->save();
@@ -1774,6 +1783,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     'coupon_sepulsa.how_to_buy_and_redeem',
                     'coupon_sepulsa.terms_and_conditions',
                     'coupon_sepulsa.token',
+                    'coupon_sepulsa.voucher_benefit',
                     DB::raw("(select GROUP_CONCAT(IF({$table_prefix}merchants.object_type = 'tenant', CONCAT({$table_prefix}merchants.name,' at ', pm.name), CONCAT('Mall at ',{$table_prefix}merchants.name)) separator ', ') from {$table_prefix}promotion_retailer
                                     inner join {$table_prefix}merchants on {$table_prefix}merchants.merchant_id = {$table_prefix}promotion_retailer.retailer_id
                                     inner join {$table_prefix}merchants pm on {$table_prefix}merchants.parent_id = pm.merchant_id

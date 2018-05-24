@@ -41,7 +41,7 @@ class CampaignDetail
     /**
      * @param int $campaignId
      */
-    public function getDetail($campaignId='', $counter=0)
+    public function getDetail($campaignId='', $tries=1)
     {
         try {
             if (empty($campaignId)) {
@@ -60,13 +60,22 @@ class CampaignDetail
 
             return $response;
         } catch (OrbitCustomException $e) {
+
+            // If we get unauthorized error, it might be the token is invalid (need refresh)
+            // So we need to re-log, and use the new token to do the request.
             if ($e->getCode() === SepulsaClient::UNAUTHORIZED_ERROR_CODE) {
-                Login::create($this->config)->login()->saveToken();
-                // retries 3 times
-                if ($counter > $tries = 3) {
+
+                // Limit the retry.
+                if ($tries >= SepulsaClient::MAX_RETRIES) {
                     throw new Exception("Error Processing Request, Tried {$tries} times.", 1);
                 }
-                return $this->getList($counter++);
+
+                $tries++;
+                Login::create($this->config)->login()->saveToken();
+
+                // Retry the request
+                return $this->getDetail($campaignId, $tries);
+
             } else {
                 return $e->getMessage();
             }
