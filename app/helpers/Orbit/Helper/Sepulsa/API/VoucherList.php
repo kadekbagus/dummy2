@@ -80,7 +80,7 @@ class VoucherList
                 Login::create($this->config)->login()->saveToken();
 
                 // Retry the request
-                return $this->getList($tries);
+                return $this->getList($searchQuery, $recordPerPage, $filters, $page, $tries);
 
             } else {
                 return $e->getMessage();
@@ -89,5 +89,4 @@ class VoucherList
             return $e->getMessage();
         }
     }
-
 }
