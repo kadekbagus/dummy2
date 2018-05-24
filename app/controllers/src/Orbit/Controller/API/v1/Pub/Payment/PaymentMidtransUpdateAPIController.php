@@ -37,12 +37,12 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentHelper->registerCustomValidation();
 	        $validator = Validator::make(
 	            array(
-	                'payment_transaction_id'  => $payment_transaction_id,
-	                'status'  => $status,
+	                'payment_transaction_id'   => $payment_transaction_id,
+	                'status'                   => $status,
 	            ),
 	            array(
-	                'payment_transaction_id'  => 'required|orbit.exist.payment_transaction_id',
-	                'status'  => 'required|in:pending,success,failed'
+	                'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
+	                'status'                   => 'required|in:pending,success,failed'
 	            ),
 	            array(
 	            	'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
@@ -58,7 +58,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	            OrbitShopAPI::throwInvalidArgument($errorMessage);
 	        }
 
-	        $payment_update = PaymentTransaction::with(['coupon', 'coupon_sepulsa'])
+	        $payment_update = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'user'])
 	        									->where('payment_transaction_id', '=', $payment_transaction_id)
 	        									->first();
 
@@ -81,7 +81,6 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	        $payment_update->responded_at = Carbon::now('UTC');
 	        $payment_update->save();
 
-            // Issue Coupon if meet the requirement.
             Event::fire('orbit.payment.postupdatepayment.after.save', [$payment_update]);
 
 	        // Commit the changes
