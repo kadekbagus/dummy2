@@ -285,3 +285,6 @@ Artisan::add(new SendPromotionalEventMailCommand);
 
 // Generate Promotional Event Code for User and resend promotional event code email
 Artisan::add(new ReinsertUnobtainedPromotionalEventCodeCommand);
+
+// Fetch Sepulsa voucher list
+Artisan::add(new GetSepulsaVoucherListCommand);
