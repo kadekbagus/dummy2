@@ -442,13 +442,13 @@ class CouponListNewAPIController extends PubControllerAPI
                     }
 
                     // Calculation percentage discount for sepulsa and hot delas
-                    $data['price_discount'] = '0 %';
+                    $data['price_discount'] = '0';
                     if ($record['_source']['promotion_type'] != 'mall') {
                         $priceOld = $record['_source']['price_old'];
                         $priceNew = $record['_source']['price_selling'];
 
                         if ($priceOld != '0' && $priceNew != '0') {
-                            $data['price_discount'] = (($priceOld - $priceNew) / $priceOld) * 100 . ' %';
+                            $data['price_discount'] = (($priceOld - $priceNew) / $priceOld) * 100;
                         }
                     }
 
