@@ -1,4 +1,4 @@
-<?php namespace Orbit\Notifications\Sepulsa;
+<?php namespace Orbit\Notifications\Coupon\Sepulsa;
 
 use Orbit\Helper\Notifications\Notification;
 use Orbit\Helper\Util\JobBurier;
@@ -74,6 +74,7 @@ class InvoiceNotification extends Notification
             'customerName'      => $this->getName(),
             'customerPhone'     => $this->payment->phone,
             'transaction'       => $transaction,
+            'redeemUrl'         => 'https://www.gotomalls.com/my/coupons',
         ];
     }
 
@@ -89,7 +90,7 @@ class InvoiceNotification extends Notification
         try {
             // Log::debug('Notification(' . $data['transactionId'] . '): Sending InvoiceNotification email...');
 
-            $emailTemplate = 'emails.receipt.sepulsa-voucher';
+            $emailTemplate = 'emails.receipt.sepulsa-invoice';
 
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
@@ -136,7 +137,7 @@ class InvoiceNotification extends Notification
     {
         // Log::debug('Notification: Pushing InvoiceNotification email to queue..');
         Queue::push(
-            'Orbit\\Notifications\\Sepulsa\\InvoiceNotification@toEmail', 
+            'Orbit\\Notifications\\Coupon\\Sepulsa\\InvoiceNotification@toEmail', 
             $this->getEmailData(),
             $this->queueName
         );
