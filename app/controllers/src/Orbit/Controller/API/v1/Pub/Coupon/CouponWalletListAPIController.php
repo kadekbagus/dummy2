@@ -86,7 +86,16 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
-                                    CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath,
+                                    CASE WHEN {$prefix}promotions.promotion_type = 'sepulsa'
+                                        THEN {$prefix}coupon_sepulsa.coupon_image_url
+                                        ELSE (
+                                            CASE WHEN {$prefix}media.cdn_url is null 
+                                            THEN med.cdn_url 
+                                            ELSE {$prefix}media.cdn_url 
+                                            END
+                                        ) 
+                                        END as cdnPath,
+                                    {$prefix}issued_coupons.issued_coupon_code,
                                     {$prefix}promotions.end_date,
                                     {$prefix}promotions.coupon_validity_in_date,
                                     {$prefix}promotions.status,
@@ -166,6 +175,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                 "),
                                 'issued_coupons.issued_date'
                             )
+                            ->leftJoin('coupon_sepulsa', 'promotions.promotion_id', '=', 'coupon_sepulsa.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')

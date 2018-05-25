@@ -40,6 +40,28 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Payment - IssuedCoupon relation.
+     * 
+     * @return [type] [description]
+     */
+    public function issued_coupon()
+    {
+        return $this->hasOne('IssuedCoupon', 'transaction_id');
+    }
+
+    /**
+     * Payment - User relation.
+     *
+     * @author Budi <budi@dominopos.com>
+     * 
+     * @return [type] [description]
+     */
+    public function user()
+    {
+        return $this->belongsTo('User', 'user_id', 'user_id');
+    }
+
+    /**
      * Determine if the payment is fully completed or not.
      *
      * @author Budi <budi@dominopos.com>
@@ -50,5 +72,21 @@ class PaymentTransaction extends Eloquent
     public function completed()
     {
         return in_array($this->status, ['success', 'paid', 'settlement']);
+    }
+
+    /**
+     * Determine if the payment is for Sepulsa Deals.
+     *
+     * @author Budi <budi@dominopos.com>
+     * 
+     * @return [type] [description]
+     */
+    public function forSepulsa()
+    {
+        if (! empty($this->coupon)) {
+            return $this->coupon->promotion_type === 'sepulsa';
+        }
+
+        return false;
     }
 }
