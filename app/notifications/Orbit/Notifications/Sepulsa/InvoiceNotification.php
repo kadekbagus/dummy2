@@ -3,14 +3,13 @@
 use Orbit\Helper\Notifications\Notification;
 use Orbit\Helper\Util\JobBurier;
 use Orbit\Helper\MongoDB\Client as MongoClient;
+use Carbon\Carbon;
 
 use Mail;
 use Config;
 use Log;
 use Queue;
 use Exception;
-
-use IssuedCoupon;
 
 /**
  * Notify user after completing and getting Sepulsa Voucher.
@@ -33,7 +32,7 @@ class InvoiceNotification extends Notification
      */
     protected function getEmailAddress()
     {
-        return $this->notifiable->user_email;
+        return $this->payment->user_email;
     }
 
     /**
@@ -43,7 +42,7 @@ class InvoiceNotification extends Notification
      */
     protected function getName()
     {
-        return $this->notifiable->getFullName();
+        return $this->payment->user_name;
     }
 
     /**
@@ -53,16 +52,28 @@ class InvoiceNotification extends Notification
      */
     protected function getEmailData()
     {
+        $transaction = [];
+
+        $amount = $this->payment->getAmount();
+        
+        $transaction['id']    = $this->payment->payment_transaction_id;
+        $transaction['date']  = Carbon::parse($this->payment->transaction_date_and_time)->format('j M Y');
+        $transaction['total'] = $amount;
+
+        $transaction['items'] = [
+            [
+                'name'      => $this->payment->object_name,
+                'quantity'  => '1',
+                'price'     => $amount,
+                'total'     => $amount, // should be quantity * $this->payment->amount
+            ],
+        ];
+
         return [
             'customerEmail'     => $this->getEmailAddress(),
             'customerName'      => $this->getName(),
-            'transactionId'     => $this->payment->payment_transaction_id,
-            'couponRedeemCode'  => $this->payment->coupon_redemption_code,
-            'couponName'        => $this->payment->coupon->promotion_name,
-            'couponPrice'       => $this->payment->amount,
-            'quantity'          => 1,
-            'total'             => $this->payment->amount,
-            'redeemUrl'         => $this->payment->issued_coupon->url,
+            'customerPhone'     => $this->payment->phone,
+            'transaction'       => $transaction,
         ];
     }
 
@@ -83,7 +94,7 @@ class InvoiceNotification extends Notification
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Your Invoice for ' . $data['couponName'];
+                $subject = 'Your Invoice from Gotomalls.com';
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
@@ -101,7 +112,7 @@ class InvoiceNotification extends Notification
             })->bury();
 
         } catch (Exception $e) {
-            Log::debug('Notification(' . $data['transactionId'] . '): InvoiceNotification email exception. ' . $e->getMessage());
+            Log::debug('Notification: InvoiceNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
     }
 

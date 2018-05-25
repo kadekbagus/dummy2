@@ -58,7 +58,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	            OrbitShopAPI::throwInvalidArgument($errorMessage);
 	        }
 
-	        $payment_update = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'user'])
+	        $payment_update = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])
 	        									->where('payment_transaction_id', '=', $payment_transaction_id)
 	        									->first();
 
