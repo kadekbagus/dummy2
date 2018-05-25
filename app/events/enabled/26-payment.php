@@ -95,6 +95,8 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function($payment)
         // $payment->load('issued_coupon');
 
         // Create and send invoice to customer
-        $payment->user->notify(new SepulsaInvoiceNotification($payment));
+        if ($payment->forSepulsa()) {
+            $payment->user->notify(new SepulsaInvoiceNotification($payment));
+        }
     }
 });
