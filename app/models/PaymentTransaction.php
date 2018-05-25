@@ -91,6 +91,22 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Determine if the payment is for Hot Deals.
+     *
+     * @author Budi <budi@dominopos.com>
+     * 
+     * @return [type] [description]
+     */
+    public function forHotDeals()
+    {
+        if (! empty($this->coupon)) {
+            return $this->coupon->promotion_type === 'hot_deals';
+        }
+
+        return false;
+    }
+
+    /**
      * Get formatted amount.
      * 
      * @return [type] [description]
