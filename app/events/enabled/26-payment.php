@@ -26,18 +26,8 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
     // If payment completed...
     if ($payment->completed()) {
 
-        // Check if this coupon is issued...
-        $issuedCoupon = IssuedCoupon::where('user_id', $payment->user_id)
-                                    ->where('user_email', $payment->user_email)
-                                    ->where('promotion_id', $payment->object_id)
-                                    ->first();
-
         // If no IssuedCoupon found for given User and Coupon, then do Taken Voucher request.
-        if (empty($issuedCoupon)) {
-
-            $issuedCouponData = [];
-
-            $invoice = null;
+        if (empty($payment->issued_coupon)) {
 
             // For sepulsa deals...
             if ($payment->forSepulsa()) {
@@ -51,17 +41,21 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
                 if ($takenVouchers->isValid() && $takenVouchers->isSuccess()) {
                     $takenVoucherData = $takenVouchers->getVoucherData();
 
-                    $issuedCouponData['promotion_id']       = $payment->object_id;
-                    $issuedCouponData['transaction_id']     = $payment->payment_transaction_id;
-                    $issuedCouponData['user_id']            = $payment->user_id;
-                    $issuedCouponData['user_email']         = $payment->user_email;
-                    $issuedCouponData['issued_coupon_code'] = $takenVoucherData->code; // see todos
-                    $issuedCouponData['url']                = $takenVoucherData->redeem_url; // see todos
-                    $issuedCouponData['issued_date']        = $takenVoucherData->taken_date;
-                    $issuedCouponData['expired_date']       = $takenVoucherData->expired_date;
-                    $issuedCouponData['issuer_user_id']     = $payment->coupon->created_by;
-                    $issuedCouponData['status']             = 'issued';
-                    $issuedCouponData['record_exists']      = 'Y';
+                    $issuedCoupon = new IssuedCoupon;
+
+                    $issuedCoupon->promotion_id       = $payment->object_id;
+                    $issuedCoupon->transaction_id     = $payment->payment_transaction_id;
+                    $issuedCoupon->user_id            = $payment->user_id;
+                    $issuedCoupon->user_email         = $payment->user_email;
+                    $issuedCoupon->issued_coupon_code = $takenVoucherData->code; // see todos
+                    $issuedCoupon->url                = $takenVoucherData->redeem_url; // see todos
+                    $issuedCoupon->issued_date        = $takenVoucherData->taken_date;
+                    $issuedCoupon->expired_date       = $takenVoucherData->expired_date;
+                    $issuedCoupon->issuer_user_id     = $payment->coupon->created_by;
+                    $issuedCoupon->status             = 'issued';
+                    $issuedCoupon->record_exists      = 'Y';
+
+                    $issuedCoupon->save();
 
                     // Update payment transaction
                     $payment->coupon_redemption_code = $takenVoucherData->code;
@@ -75,21 +69,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
             else {
                 // @todo other type of coupon, e.g. Hot Deals/Paid Coupon
                 
-                // Get coupon detail...
-                
-                // Prepare issuedCoupon data...
-                
-                // Create invoice for customer...
-            }
-
-            // Issue the coupon
-            if (! empty($issuedCouponData)) {
-
-                $issuedCoupon = new IssuedCoupon;
-                foreach($issuedCouponData as $field => $value) {
-                    $issuedCoupon->{$field} = $value;
-                }
-                $issuedCoupon->save();
+                // Call controller/handler we already have
             }
         }
 
@@ -108,14 +88,14 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
  */
 Event::listen('orbit.payment.postupdatepayment.after.commit', function($payment)
 {
-    // If payment completed...
+    // If payment completed and coupon issued.
     if ($payment->completed()) {
+        
+        // Reload issued coupon relationship.
+        // $payment->load('issued_coupon');
 
-        // Load related IssuedCoupon.
-        $payment->load('issued_coupon');
-
-        if (! empty($payment->issued_coupon)) {
-            // Create and send invoice to customer
+        // Create and send invoice to customer
+        if ($payment->forSepulsa()) {
             $payment->user->notify(new SepulsaInvoiceNotification($payment));
         }
     }

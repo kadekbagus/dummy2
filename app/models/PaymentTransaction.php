@@ -89,4 +89,14 @@ class PaymentTransaction extends Eloquent
 
         return false;
     }
+
+    /**
+     * Get formatted amount.
+     * 
+     * @return [type] [description]
+     */
+    public function getAmount()
+    {
+        return $this->currency . ' ' . number_format($this->amount, 0, ',', '.');
+    }
 }
