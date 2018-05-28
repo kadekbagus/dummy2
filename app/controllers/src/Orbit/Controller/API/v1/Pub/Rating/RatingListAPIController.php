@@ -117,12 +117,8 @@ class RatingListAPIController extends PubControllerAPI
                 unset($queryString['object_id']);
             }
 
-            if (! empty($cityFilters)) {
-                $cityFilters = array_unique($cityFilters);
-            }
-
             if (empty($mallId)) {
-                if (! empty($cityFilters)) $queryString['cities'] = $cityFilters;
+                if (! empty($cityFilters)) $queryString['cities'] = array_unique($cityFilters);
                 if (! empty($countryFilter)) {
                     $country = Country::where('name', $countryFilter)->first();
                     if (is_object($country)) $queryString['country_id'] = $country->country_id;
