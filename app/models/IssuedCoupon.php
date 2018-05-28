@@ -31,6 +31,16 @@ class IssuedCoupon extends Eloquent
         return $this->belongsTo('User', 'user_id', 'user_id');
     }
 
+    /**
+     * IssuedCoupon - PaymentTransaction relation.
+     * 
+     * @return [type] [description]
+     */
+    public function payment()
+    {
+        return $this->belongsTo('PaymentTransaction', 'transaction_id', 'payment_transaction_id');
+    }
+
     public function issuerretailer()
     {
         return $this->belongsTo('Retailer', 'issuer_retailer_id', 'merchant_id');

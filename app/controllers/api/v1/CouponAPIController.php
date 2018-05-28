@@ -3062,8 +3062,7 @@ class CouponAPIController extends ControllerAPI
                         {$mediaOptimize} ) as media
                     "), DB::raw('media.object_id'), '=', 'coupon_translations.coupon_translation_id')
                 ->joinPromotionRules()
-                ->groupBy('promotions.promotion_id')
-                ->whereIn('promotions.promotion_type', array('mall', 'hot_deals'));
+                ->groupBy('promotions.promotion_id');
 
             if($filterName === '') {
                 // handle role campaign admin cause not join with campaign account
@@ -3101,6 +3100,12 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::get('promotion_name', function($promotionName) use ($coupons)
             {
                 $coupons->where('promotions.promotion_name', '=', $promotionName);
+            });
+
+            // Filter coupon by promotion type
+            OrbitInput::get('promotion_type', function($promotionTypes) use ($coupons)
+            {
+                $coupons->whereIn('promotions.promotion_type', $promotionTypes);
             });
 
             // Filter coupon by matching promotion name pattern
