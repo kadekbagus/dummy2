@@ -99,6 +99,16 @@
             tfoot.transaction-footer tr td {
                 border-top: 1px solid #999;
             }
+
+            .btn-redeem {
+                border-radius: 5px;
+                background-color: #f43d3c;
+                color: #fff;
+                display: inline-block;
+                padding: 10px 20px;
+                text-decoration: none;
+                margin: 10px 0;
+            }
         </style>
     </head>
     
@@ -181,6 +191,8 @@
                         <p>
                             Thank you and have a nice day.
                         </p>
+
+                        <a href="{{{ $redeemUrl }}}" class="btn-redeem">Redeem Coupon</a>
                     </td>
                 </tr>
             </tbody>
