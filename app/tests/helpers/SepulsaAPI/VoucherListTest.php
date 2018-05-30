@@ -11,7 +11,7 @@ class VoucherListTest extends TestCase
 {
     private $config = [
         // GTM Sepulsa ID
-        'partner_id' => 42,
+        'partner_id' => 76,
         // set to true to switch base uri to production
         'is_production' => false,
         // use sandbox base uri for development (with trailing slash)
@@ -25,12 +25,15 @@ class VoucherListTest extends TestCase
                 'password' => '',
             ],
             'sandbox' => [
-                'username' => 'buzzebees@sepulsa.com',
-                'password' => 'masukaja',
+                'username' => 'gtm_user@sepulsa.com',
+                'password' => '12345678',
             ]
         ],
         // cache key, the session will be saved to cache
         'session_key_name' => 'sepulsa_token'
+
+        // redeem callback secret_token, to be given to sepulsa
+        'callback_secret_token' => 'HXJQluD4hGV1UqgaaR4YJomdv0zsQXny',
     ];
 
     public function setUp()
