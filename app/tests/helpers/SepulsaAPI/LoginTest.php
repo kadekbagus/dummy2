@@ -11,7 +11,7 @@ class LoginTest extends TestCase
 {
     private $config = [
         // GTM Sepulsa ID
-        'partner_id' => 42,
+        'partner_id' => 76,
         // set to true to switch base uri to production
         'is_production' => false,
         // use sandbox base uri for development (with trailing slash)
@@ -25,8 +25,8 @@ class LoginTest extends TestCase
                 'password' => 'prodpass',
             ],
             'sandbox' => [
-                'username' => 'buzzebees@sepulsa.com',
-                'password' => 'masukaja',
+                'username' => 'gtm_user@sepulsa.com',
+                'password' => '12345678',
             ]
         ],
         // cache key, the session will be saved to cache
