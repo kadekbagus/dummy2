@@ -74,7 +74,7 @@ class VoucherDetail
                 Login::create($this->config)->login()->saveToken();
 
                 // Retry the request
-                return $this->getDetail($tries);
+                return $this->getDetail($token, $tries);
 
             } else {
                 return $e->getMessage();
