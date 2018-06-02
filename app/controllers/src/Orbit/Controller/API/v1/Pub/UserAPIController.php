@@ -96,6 +96,19 @@ class UserAPIController extends PubControllerAPI
                 }
                 $updateUserDetail->phone = $phone;
             });
+
+            OrbitInput::post('gender', function($gender) use ($updateUserDetail) {
+                $validator = Validator::make(
+                    array('gender' => $gender),
+                    array('gender' => 'required')
+                );
+                if ($validator->fails()) {
+                    $errorMessage = $validator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+                $updateUserDetail->gender = $gender;
+            });
+
             $updateUserDetail->save();
 
             // Update session fullname and email
@@ -135,6 +148,7 @@ class UserAPIController extends PubControllerAPI
             $data->email = $updateUser->user_email;
             $data->firstname = $updateUser->user_firstname;
             $data->lastname = $updateUser->user_lastname;
+            $data->gender = $updateUserDetail->gender;
             $data->phone = $updateUserDetail->phone;
             $data->image = $image;
 
