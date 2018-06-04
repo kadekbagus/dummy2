@@ -2,8 +2,9 @@
     <head>
         <title>Invoice from Gotomalls.com</title>
         <style>
+            @import url('https://fonts.googleapis.com/css?family=Roboto');
             body {
-                font-family: Sans;
+                font-family: 'Roboto', sans-serif;
                 padding: 20px;
                 text-align: left;
             }
