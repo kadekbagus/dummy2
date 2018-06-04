@@ -46,6 +46,33 @@ class NewsListNewAPIController extends PubControllerAPI
     protected $withoutScore = FALSE;
 
     /**
+     * Enable / disable scroll function on ES
+     */
+    protected $useScroll = FALSE;
+
+    /**
+     * Scroll duration when $useScroll is TRUE
+     */
+    protected $scrollDuration = '20s';
+
+    /**
+     * Searcher
+     */
+    protected $searcher = null;
+
+    /**
+     * ES Config
+     */
+    protected $esConfig = [];
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->esConfig = Config::get('orbit.elasticsearch');
+        $this->searcher = new NewsSearch($this->esConfig);
+    }
+
+    /**
      * GET - get active news in all mall, and also provide for searching
      *
      * @author Firmansyayh <firmansyah@dominopos.com>
@@ -86,9 +113,7 @@ class NewsListNewAPIController extends PubControllerAPI
         try {
             $user = $this->getUser();
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', 'created_date');
             $sortBy = OrbitInput::get('sortby', 'created_date');
-            $sort_mode = OrbitInput::get('sortmode','desc');
             $sortMode = OrbitInput::get('sortmode','desc');
             $language = OrbitInput::get('language', 'id');
             $location = OrbitInput::get('location', null);
@@ -122,7 +147,7 @@ class NewsListNewAPIController extends PubControllerAPI
             $validator = Validator::make(
                 array(
                     'language' => $language,
-                    'sortby'   => $sort_by,
+                    'sortby'   => $sortBy,
                 ),
                 array(
                     'language' => 'required|orbit.empty.language_default',
@@ -133,7 +158,7 @@ class NewsListNewAPIController extends PubControllerAPI
             // Pass all possible parameters to be used as cache key.
             // Make sure there is no missing one.
             $cacheKey = [
-                'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
+                'sort_by' => $sortBy, 'sort_mode' => $sortMode, 'language' => $language,
                 'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
@@ -169,25 +194,18 @@ class NewsListNewAPIController extends PubControllerAPI
             $dateTime = explode(' ', $dateTime);
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
-            // Get ES config only once, avoid calling Config::get() everytime. :)
-            $esConfig = Config::get('orbit.elasticsearch');
-
-            // Create the search...
-            $esIndex = $esConfig['indices_prefix'] . $esConfig['indices']['news']['index'];
-            $newsSearch = new NewsSearch($esConfig);
-
-            $newsSearch->setPaginationParams(['from' => $skip, 'size' => $take]);
+            $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
 
             // Only search active promotions..
-            $newsSearch->isActive(compact('dateTimeEs'));
+            $this->searcher->isActive(compact('dateTimeEs'));
 
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword');
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
-                $newsSearch->filterByKeyword($keyword);
+                $this->searcher->filterByKeyword($keyword);
             }
-            
+
             $countryData = null;
             $mall = null;
             if (! empty($mallId)) {
@@ -209,35 +227,35 @@ class NewsListNewAPIController extends PubControllerAPI
 
             // If under mall page, we should ignore any other area/location filter.
             if (! empty($mall)) {
-                $newsSearch->filterByMall($mallId);
+                $this->searcher->filterByMall($mallId);
             }
             else {
-                $newsSearch->filterByCountryAndCities($area);
+                $this->searcher->filterByCountryAndCities($area);
             }
 
             // Filter by my credit card or choose manually
             $sponsorProviderIds = OrbitInput::get('sponsor_provider_ids', []);
             if ($myCCFilter) {
-                $sponsorProviderIds = $newsSearch->filterByMyCC(compact('myCCFilter', 'user'));
+                $sponsorProviderIds = $this->searcher->filterByMyCC(compact('myCCFilter', 'user'));
 
                 if (count($sponsorProviderIds) > 0) {
                     $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
                 }
             } else if (! empty($sponsorProviderIds)) {
                 $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
-                $newsSearch->filterBySponsors($sponsorProviderIds);
+                $this->searcher->filterBySponsors($sponsorProviderIds);
             }
 
             // Filter by selected categories...
             if (! empty($categoryIds)) {
-                $newsSearch->filterByCategories($categoryIds);
+                $this->searcher->filterByCategories($categoryIds);
             }
 
             // Filter by partner...
             $partnerId = OrbitInput::get('partner_id', null);
             if (! empty($partnerId)) {
                 $cacheKey['partner_id'] = $partnerId;
-                $newsSearch->filterByPartner($partnerId);
+                $this->searcher->filterByPartner($partnerId);
             }
 
             $sortByPageType = array();
@@ -261,8 +279,8 @@ class NewsListNewAPIController extends PubControllerAPI
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
             $advertSorting = [
                 '_script' => [
-                    'script' => $sortPageScript, 
-                    'type' => 'string', 
+                    'script' => $sortPageScript,
+                    'type' => 'string',
                     'order' => 'desc'
                 ]
             ];
@@ -270,35 +288,45 @@ class NewsListNewAPIController extends PubControllerAPI
             $locationId = ! empty($mall) ? $mallId : 0;
             if ($withAdvert) {
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
-                $newsSearch->filterWithAdvert(compact('dateTimeEs', 'mallId', 'advertType', 'locationId', 'list_type', 'advertSorting'));
+                $this->searcher->filterWithAdvert(compact('dateTimeEs', 'mallId', 'advertType', 'locationId', 'list_type', 'advertSorting'));
             }
 
             // Add script fields...
-            $scriptFields = $newsSearch->addReviewFollowScript(compact(
+            $scriptFields = $this->searcher->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
 
             if (! empty($keyword)) {
                 $sortBy = 'relevance';
             }
-            
+
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
                 case 'relevance':
-                    $newsSearch->sortByRelevance();
+                    $this->searcher->sortByRelevance();
                     break;
                 case 'rating':
-                    $newsSearch->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
                     break;
                 case 'created_date':
-                    $newsSearch->sortByCreatedDate($sortMode);
+                    $this->searcher->sortByCreatedDate($sortMode);
                     break;
                 case 'updated_date':
-                    $newsSearch->sortByUpdatedDate($sortMode);
+                    $this->searcher->sortByUpdatedDate($sortMode);
                     break;
                 default:
-                    $newsSearch->sortByName($language, $sortMode);
+                    $this->searcher->sortByName($language, $sortMode);
                     break;
+            }
+
+            if ($this->useScroll) {
+                $this->searcher->setParams([
+                    'search_type' => 'scan',
+                    'scroll' => $this->scrollDuration,
+                ]);
+                $this->searcher->removeParamItem('body.aggs');
+
+                return $this->searcher->getResult();
             }
 
             // Exclude specific document Ids, useful for some cases e.g You May Also Like
@@ -309,9 +337,9 @@ class NewsListNewAPIController extends PubControllerAPI
                 foreach ($excludedIds as $excludedId) {
                     $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
                 }
-                
+
                 if (count($jsonExcludedIds) > 0) {
-                    $newsSearch->exclude($jsonExcludedIds);
+                    $this->searcher->exclude($jsonExcludedIds);
                 }
 
                 $withAdvert = FALSE;
@@ -319,12 +347,12 @@ class NewsListNewAPIController extends PubControllerAPI
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() use ($newsSearch, &$esParam) {
-                    return $newsSearch->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() {
+                    return $this->searcher->getResult();
                 });
                 $recordCache->put($serializedCacheKey, $response);
             } else {
-                $response = $newsSearch->getResult();
+                $response = $this->searcher->getResult();
             }
 
             $records = $response['hits'];
@@ -604,6 +632,36 @@ class NewsListNewAPIController extends PubControllerAPI
         $this->withoutScore = TRUE;
 
         return $this;
+    }
+
+    /**
+     * Force $useScroll value to TRUE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setUseScroll()
+    {
+        $this->useScroll = TRUE;
+
+        return $this;
+    }
+
+    /**
+     * Set $scrollDuration, use less when $useScroll is FALSE
+     * @param $scrollDuration int
+     */
+    public function setScrollDuration($scrollDuration=20)
+    {
+        $this->scrollDuration = $scrollDuration . 's';
+
+        return $this;
+    }
+
+    /**
+     * Get Searcher
+     */
+    public function getSearcher()
+    {
+        return $this->searcher->getActiveClient();
     }
 
     protected function quote($arg)

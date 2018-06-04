@@ -167,10 +167,6 @@ class StoreFeaturedListAPIController extends PubControllerAPI
             $dateTimeEs = $dateTime[0] . 'T' . $dateTime[1] . 'Z';
 
             $withScore = false;
-            $esTake = $take;
-            if ($list_type === 'featured') {
-                $esTake = 50;
-            }
 
             // value will be true if query to nested, *to get right number of stores
             $withInnerHits = false;
@@ -579,7 +575,7 @@ class StoreFeaturedListAPIController extends PubControllerAPI
 
             $sortby = array("_score", $sortPage, $defaultSort);
             $jsonQuery['sort'] = $sortby;
-            $jsonQuery['size'] = 4;
+            $jsonQuery['size'] = $take;
 
             // boost slot
             $boost = [500, 400, 300, 200];

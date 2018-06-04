@@ -135,3 +135,12 @@ Route::post('/api/v1/featured-slot/new', function()
 {
     return FeaturedSlotNewAPIController::create()->postNewFeaturedSlot();
 });
+
+
+/**
+ * List/Search featured advert slot
+ */
+Route::get('/api/v1/featured-slot/{search}', function()
+{
+    return FeaturedSlotListAPIController::create()->getListFeaturedSlot();
+})->where('search', '(list|search)');

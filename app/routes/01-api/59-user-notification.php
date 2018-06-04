@@ -46,6 +46,14 @@ Route::post('/api/v1/notification/detail', function()
 });
 
 /**
+ * notifications cancel
+ */
+Route::post('/api/v1/notification/cancel', function()
+{
+    return NotificationCancelAPIController::create()->postCancelNotification();
+});
+
+/**
  * notification in Apps list
  */
 Route::get('/api/v1/pub/user-notification/list', function()

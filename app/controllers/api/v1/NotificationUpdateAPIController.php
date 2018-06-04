@@ -71,6 +71,9 @@ class NotificationUpdateAPIController extends ControllerAPI
             $mongoConfig = Config::get('database.mongodb');
             $targetAudience = OrbitInput::post('target_audience');
             $files = OrbitInput::files('images');
+            $schedule_date = OrbitInput::post('schedule_date', null);
+            $timezone = OrbitInput::post('timezone', 'GMT+0800');
+            $send_after = null;
 
             $validator = Validator::make(
                 array(
@@ -173,6 +176,21 @@ class NotificationUpdateAPIController extends ControllerAPI
                 OrbitShopAPI::throwInvalidArgument('Content in default language is empty');
             }
 
+            if (!empty($schedule_date)) {
+                $send_after = $schedule_date.' '.$timezone;
+                if ($status !== 'draft') {
+                    $status = 'scheduled';
+                }
+            }
+
+            // scheduled date cannot less than current date
+            if ($status == 'scheduled' && !empty($schedule_date)) {
+                $date_now = Carbon::now('Asia/Makassar');
+                if ($schedule_date < $date_now) {
+                    OrbitShopAPI::throwInvalidArgument('Scheduled date cannot less than current date');
+                }
+            }
+
             $body = [
                 '_id'                 => $notificationId,
                 'title'               => $headings->$defaultLanguage,
@@ -186,8 +204,12 @@ class NotificationUpdateAPIController extends ControllerAPI
                 'vendor_type'         => Config::get('orbit.vendor_push_notification.default'),
                 'notification_tokens' => $jsonNotifications,
                 'user_ids'            => $jsonUserIds,
-                'target_audience_ids' => $targetAudience,
+                'target_audience_ids' => $targetAudience
             ];
+
+            if (!empty($schedule_date)) {
+                $body['schedule_date'] = $schedule_date;
+            }
 
             // Update notification with new data.
             $response = $mongoClient->setFormParam($body)
@@ -209,7 +231,7 @@ class NotificationUpdateAPIController extends ControllerAPI
                     $cdnConfig = Config::get('orbit.cdn');
                     $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
                     $localPath = $notif->data->attachment_path;
-                    $cdnPath = $notif->data->cdn_url; 
+                    $cdnPath = $notif->data->cdn_url;
 
                     // If cdnPath is the old one/not match with the latest (being uploaded)
                     // then use local path (by setting cdnPath to '')
@@ -241,6 +263,10 @@ class NotificationUpdateAPIController extends ControllerAPI
                         'chrome_big_picture' => $imageUrl,
                         'chrome_web_image'   => $imageUrl,
                     ];
+
+                    if (!empty($send_after)) {
+                        $data['send_after'] = $send_after;
+                    }
 
                     $oneSignal = new OneSignal($oneSignalConfig);
                     $newNotif = $oneSignal->notifications->add($data);

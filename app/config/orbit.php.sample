@@ -6839,6 +6839,9 @@ return array(
                 'cache_ttl' => 60
             ],
         ],
+
+        // If value is TRUE, Redis key will be deleted when store / campaign inactive
+        'ng_redis_enabled' => FALSE
     ],
 
     /**
@@ -7206,6 +7209,48 @@ return array(
         // total page view cache redis connection
         'redis' => [
             'connection' => 'page_view'
+        ],
+    ],
+
+    // Enable/disable endpoints
+    'enable_api' => [
+        'adactive' => [
+            // /api/v1/store-list-adactive -> Endpoint intended for Adactive to integrate mall indoor map.
+            'enable_store_list_adactive_api' => FALSE,
+
+            // whitelist accessible mall IDs
+            // if empty, all store data from all mall is accessible
+            // if not then only given mall id can be accessed
+            'whitelist_mall_ids' => [],
+        ]
+    ],
+
+    // config regarding third party partners API
+    'partners_api' => [
+        'sepulsa' => [
+            // GTM Sepulsa ID
+            'partner_id' => null,
+            // set to true to switch base uri to production
+            'is_production' => false,
+            // use sandbox base uri for development (with trailing slash)
+            'base_uri' => [
+                'production' => '',
+                'sandbox' => 'https://bonabo.sepulsa.co.id/api/v1/'
+            ],
+            'auth' => [
+                'production' => [
+                    'username' => '',
+                    'password' => '',
+                ],
+                'sandbox' => [
+                    'username' => 'buzzebees@sepulsa.com',
+                    'password' => 'masukaja',
+                ]
+            ],
+            // cache key, the session will be saved to cache
+            'session_key_name' => 'sepulsa_token',
+            // redeem callback secret_token, to be given to sepulsa
+            'callback_secret_token' => 'HXJQluD4hGV1UqgaaR4YJomdv0zsQXny',
         ],
     ],
 );

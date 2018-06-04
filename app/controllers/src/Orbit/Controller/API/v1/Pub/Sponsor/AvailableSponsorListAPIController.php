@@ -20,9 +20,32 @@ use Orbit\Helper\Util\PaginationNumber;
 use Elasticsearch\ClientBuilder;
 use Language;
 use DB;
+use Validator;
 
 class AvailableSponsorListAPIController extends PubControllerAPI
 {
+    /**
+     * create validator instance
+     * @param  string $objectType object type of bank, ewallet, credit_card
+     * @param  string $language   language identifier
+     * @param  string $bankId     bank identifier
+     * @return Validator validator instance
+     */
+    private function createValidator($objectType, $language, $bankId)
+    {
+        return Validator::make(
+            array(
+                'object_type' => $objectType,
+                'language' => $language,
+                'bank_id' => $bankId
+            ),
+            array(
+                'object_type'   => 'required|in:bank,ewallet,credit_card',
+                'bank_id'   => 'required_if:object_type,credit_card',
+                'language' => 'required',
+            )
+        );
+    }
 
     /**
      * GET - Get active sponsor list (all)
@@ -44,8 +67,17 @@ class AvailableSponsorListAPIController extends PubControllerAPI
             $user = $this->api->user;
 
             $prefix = DB::getTablePrefix();
+
             $objectType = OrbitInput::get('object_type', 'bank');
             $lang = OrbitInput::get('language', 'id');
+            $bankId = OrbitInput::get('bank_id');
+            $validator = $this->createValidator($objectType, $lang, $bankId);
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $language = Language::where('status', '=', 'active')
                             ->where('name', $lang)
@@ -71,25 +103,19 @@ class AvailableSponsorListAPIController extends PubControllerAPI
                                        ->where('status', 'active')
                                        ->orderBy('sponsor_providers.name', 'asc');
             } elseif ($objectType === 'credit_card') {
-                $bankId = OrbitInput::get('bank_id');
-
-                if ($validator->fails()) {
-                    $errorMessage = "Bank ID is required";
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
-
                 $image = "CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path)";
                 if ($usingCdn) {
                     $image = "CASE WHEN {$prefix}media.cdn_url IS NULL THEN CONCAT({$this->quote($urlPrefix)}, {$prefix}media.path) ELSE {$prefix}media.cdn_url END";
                 }
 
-                $sponsor = SponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id as sponsor_id', 'sponsor_providers.name', 'countries.name as country_name', DB::raw("({$image}) as image_url"))
+                $sponsor = SponsorCreditCard::select('sponsor_credit_cards.sponsor_credit_card_id as sponsor_id', 'sponsor_credit_cards.name', 'countries.name as country_name', DB::raw("({$image}) as image_url"))
                                             ->leftJoin('media', function ($q) use ($prefix){
                                                 $q->on('media.object_id', '=', 'sponsor_credit_cards.sponsor_credit_card_id')
                                                   ->on('media.media_name_long', '=', DB::raw("'sponsor_credit_card_image_orig'"));
                                             })
+                                            ->join('sponsor_providers', 'sponsor_providers.sponsor_provider_id', '=', 'sponsor_credit_cards.sponsor_provider_id')
                                             ->join('countries', 'countries.country_id', '=', 'sponsor_providers.country_id')
-                                            ->where('sponsor_credit_cards.sponsor_provider_id', $bankId)
+                                            ->where('sponsor_providers.sponsor_provider_id', $bankId)
                                             ->where('sponsor_credit_cards.status', 'active')
                                             ->orderBy('sponsor_credit_cards.name', 'asc');
             }

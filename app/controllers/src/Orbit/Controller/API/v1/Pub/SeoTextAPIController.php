@@ -32,10 +32,12 @@ class SeoTextAPIController extends PubControllerAPI
         $httpCode = 200;
         try {
             $user = $this->getUser();
-            $object_type = OrbitInput::get('object_type');
-            $language = OrbitInput::get('language', 'en');
-            $mall_id = OrbitInput::get('mall_id');
+
             $default_language = 'en';
+            $object_type = OrbitInput::get('object_type');
+            $language = OrbitInput::get('language', $default_language);
+            $mall_id = OrbitInput::get('mall_id');
+            $categoryId = OrbitInput::get('category_id', null);
 
             $validator = Validator::make(
                 array(
@@ -59,41 +61,91 @@ class SeoTextAPIController extends PubControllerAPI
                     $seo_text = Mall::select('description as seo_text')
                                     ->where('merchants.merchant_id', '=', $mall_id)
                                     ->first();
-                        break;
+                    break;
 
                 default:
-                    $seo_text = Page::select(DB::raw("CASE WHEN ({$prefix}pages.title = '' or {$prefix}pages.title is null)
-                                                       THEN (select title from {$prefix}pages
-                                                                where {$prefix}pages.object_type = {$this->quote($object_type)}
-                                                                and {$prefix}pages.language = {$this->quote($default_language)})
-                                                       ELSE {$prefix}pages.title
-                                                       END as title,
-                                                     CASE WHEN ({$prefix}pages.content = '' or {$prefix}pages.content is null)
-                                                       THEN (select content from {$prefix}pages
-                                                                where {$prefix}pages.object_type = {$this->quote($object_type)}
-                                                                and {$prefix}pages.language = {$this->quote($default_language)})
-                                                       ELSE {$prefix}pages.content
-                                                       END as seo_text"),
-                                            'language')
-                                    ->where('object_type', '=', $object_type)
-                                    ->where('status', '=', 'active')
-                                    ->where('pages.language', '=', $language)
-                                    ->first();
+                    $queryCategory = empty($categoryId) ? ' category_id is null ' : " category_id = '{$categoryId}' ";
 
-                    // fallback to english if not found
-                    if (! is_object($seo_text)) {
-                        $seo_text = Page::select('title', 'content as seo_text', 'language')
-                                        ->where('object_type', '=', $object_type)
-                                        ->where('status', '=', 'active')
-                                        ->where('pages.language', '=', $default_language)
+                    $seo_text = Page::select(DB::raw("
+                                        case when (TRIM({$prefix}pages.title) = '' or {$prefix}pages.title is null)
+                                            then (
+                                                select {$prefix}pages.title
+                                                from {$prefix}pages 
+                                                    where `language` = '{$default_language}' and
+                                                        `status` = 'active' and
+                                                        `object_type` = '{$object_type}' and
+                                                        {$queryCategory}
+                                            )
+                                            else {$prefix}pages.title
+                                            end
+                                            as title,
+                                        case when (TRIM({$prefix}pages.content) = '' or {$prefix}pages.content is null)
+                                            then (
+                                                select {$prefix}pages.content
+                                                from {$prefix}pages 
+                                                    where `language` = '{$default_language}' and
+                                                        `status` = 'active' and
+                                                        `object_type` = '{$object_type}' and
+                                                        {$queryCategory}
+                                            )
+                                            else {$prefix}pages.content
+                                            end as seo_text"
+                                        )
+                                    )
+                                    ->where('object_type', $object_type)
+                                    ->where('status', 'active')
+                                    ->where('language', $language);
+
+                    if (! empty($categoryId)) {
+                        $seo_text->where('category_id', $categoryId);
+                    }
+                    else {
+                        $seo_text->whereNull('category_id');
+                    }
+
+                    $seo_text = $seo_text->first();
+
+                    // If category is set but seo_text is empty,
+                    // try fetching the default one (without category id.)
+                    if (empty($seo_text) && ! empty($categoryId)) {
+                        $seo_text = Page::select(DB::raw("
+                                            case when (TRIM({$prefix}pages.title) = '' or {$prefix}pages.title is null)
+                                                then (
+                                                    select {$prefix}pages.title
+                                                    from {$prefix}pages 
+                                                        where `language` = '{$default_language}' and
+                                                            `status` = 'active' and
+                                                            object_type = '{$object_type}' and
+                                                            category_id is null
+                                                )
+                                                else {$prefix}pages.title
+                                                end
+                                            as title,
+                                            case when (TRIM({$prefix}pages.content) = '' or {$prefix}pages.content is null)
+                                                then (
+                                                    select {$prefix}pages.content
+                                                    from {$prefix}pages 
+                                                        where `language` = '{$default_language}' and
+                                                            `status` = 'active' and
+                                                            object_type = '{$object_type}' and
+                                                            category_id is null
+                                                )
+                                                else {$prefix}pages.content
+                                                end as seo_text"
+                                            )
+                                        )
+                                        ->where('object_type', $object_type)
+                                        ->where('status', 'active')
+                                        ->where('language', $language)
+                                        ->whereNull('category_id')
                                         ->first();
                     }
-                        break;
+
+                    break;
             }
-            $seo = $seo_text;
 
             $this->response->data = new stdClass();
-            $this->response->data = $seo;
+            $this->response->data = $seo_text;
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
