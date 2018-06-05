@@ -1094,10 +1094,6 @@ class PromotionalEventAPIController extends ControllerAPI
                 $updatedpromotional_event->product_tags = $promotionalEventProductTags;
             });
 
-            $tempContent = new TemporaryContent();
-            $tempContent->contents = serialize($beforeUpdatedPromotionalEvent);
-            $tempContent->save();
-
             // update promotion advert
             if ($updatedpromotional_event->object_type === 'news') {
                 if (! empty($campaign_status) || $campaign_status !== '') {

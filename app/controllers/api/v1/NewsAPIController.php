@@ -1037,11 +1037,6 @@ class NewsAPIController extends ControllerAPI
                 $updatednews->product_tags = $newsProductTags;
             });
 
-            $tempContent = new TemporaryContent();
-            $tempContent->contents = serialize($beforeUpdatedNews);
-            $tempContent->save();
-
-
             if (! empty($campaignStatus) || $campaignStatus !== '') {
                 $promotionAdverts = Advert::excludeDeleted()
                                     ->where('link_object_id', $updatednews->news_id)

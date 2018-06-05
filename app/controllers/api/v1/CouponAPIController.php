@@ -2356,10 +2356,6 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->product_tags = $couponProductTags;
             });
 
-            $tempContent = new TemporaryContent();
-            $tempContent->contents = serialize($beforeUpdatedCoupon);
-            $tempContent->save();
-
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
             Event::fire('orbit.coupon.postupdatecoupon-mallnotification.after.save', array($this, $updatedcoupon));
 
