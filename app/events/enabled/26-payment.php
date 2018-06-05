@@ -15,8 +15,8 @@ use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
 // Notifications 
 // use Orbit\Notifications\Coupon\IssuedCouponNotification;
-use Orbit\Notifications\Coupon\Sepulsa\InvoiceNotification as SepulsaInvoiceNotification;
-use Orbit\Notifications\Coupon\HotDeals\InvoiceNotification as HotDealsInvoiceNotification;
+use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification as SepulsaReceiptNotification;
+use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
 
 /**
  * Listen on:    `orbit.payment.postupdatepayment.after.save`
@@ -69,7 +69,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
                 $payment->save();
             }
             else {
-                $errorMessage = sprintf('Taken Voucher request to Sepulsa failed. CouponID = %s. %s', $payment->object_id, $takenVouchers->getMessage());
+                $errorMessage = sprintf('Request TakenVoucher to Sepulsa is failed. CouponID = %s. %s', $payment->object_id, $takenVouchers->getMessage());
                 throw new Exception($errorMessage, 500);
             }
         }
@@ -79,6 +79,10 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
             $issuedCoupon = IssuedCoupon::where('promotion_id', $payment->object_id)
                                             ->where('status', 'available')
                                             ->first();
+
+            if (empty($issuedCoupon)) {
+                throw new Exception('No issued coupons is available for purchase.', 500);
+            }
 
             // Claim the coupon...
             $issuedCoupon->transaction_id     = $payment->payment_transaction_id;
@@ -117,10 +121,10 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function($payment)
         // $payment->user->notify(new IssuedCouponNotification($payment->issued_coupon, $payment));
 
         if ($payment->forSepulsa()) {
-            $payment->user->notify(new SepulsaInvoiceNotification($payment));
+            $payment->user->notify(new SepulsaReceiptNotification($payment));
         }
         else if ($payment->forHotDeals()) {
-            $payment->user->notify(new HotDealsInvoiceNotification($payment));
+            $payment->user->notify(new HotDealsReceiptNotification($payment));
         }
     }
 });
