@@ -162,14 +162,15 @@ class StoreMallDetailAPIController extends PubControllerAPI
                                     'merchants.name',
                                     DB::raw("mall.name as mall_name"),
                                     DB::raw("mall.address_line1 as address"),
-                                    'merchants.floor',
-                                    'merchants.unit',
-                                    DB::raw("mall.phone"),
                                     DB::raw("mall.operating_hours"),
                                     DB::raw("mall.is_subscribed"),
                                     DB::raw("mall.object_type as location_type"),
                                     DB::raw("{$mallLogo}"),
                                     DB::raw("{$mallMap}"),
+                                    DB::raw("GROUP_CONCAT( {$prefix}merchants.floor SEPARATOR '||') as floor"),
+                                    DB::raw("GROUP_CONCAT( {$prefix}merchants.unit SEPARATOR '||') as unit"),
+                                    DB::raw("GROUP_CONCAT( {$prefix}merchants.phone SEPARATOR '||') as phone"),
+                                    DB::raw("mall.phone as mall_phone"),
                                     DB::raw("x(position) as latitude"),
                                     DB::raw("y(position) as longitude")
                                 )
@@ -202,7 +203,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             // get number of mall without filter
             $numberOfMall = 0;
             $_numberOfMall = clone $mall;
-            $_numberOfMall->groupBy('merchants.merchant_id')->get();
+            $_numberOfMall->groupBy(DB::raw("mall_id"))->get();
 
             if (! empty($location)) {
                 if (! in_array('0', $location)) {
@@ -231,7 +232,7 @@ class StoreMallDetailAPIController extends PubControllerAPI
             $mall->orderBy(DB::raw('mall.city'), 'asc');
             $mall->orderBy('merchants.name', 'asc');
 
-            $mall = $mall->groupBy('merchants.merchant_id');
+            $mall = $mall->groupBy(DB::raw("mall_id"));
 
             $_mall = clone $mall;
             $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
