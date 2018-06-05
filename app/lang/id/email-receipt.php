@@ -3,7 +3,7 @@
 return [
     'header' => [
         'invoice'       => 'Invoice',
-        'order_number'  => 'No. Order: :transactionId',
+        'order_number'  => 'No. Transaksi: :transactionId',
     ],
 
     'body' => [
