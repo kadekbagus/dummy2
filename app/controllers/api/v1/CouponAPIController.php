@@ -851,34 +851,32 @@ class CouponAPIController extends ControllerAPI
             foreach ($keywords as $keyword) {
                 $keyword_id = null;
 
-                foreach ($mallid as $mall) {
-                    $existKeyword = Keyword::excludeDeleted()
-                    ->where('keyword', '=', $keyword)
-                    ->where('merchant_id', '=', $mall)
-                    ->first();
+                $existKeyword = Keyword::excludeDeleted()
+                ->where('keyword', '=', $keyword)
+                ->where('merchant_id', '=', 0)
+                ->first();
 
-                    if (empty($existKeyword)) {
-                        $newKeyword = new Keyword();
-                        $newKeyword->merchant_id = $mall;
-                        $newKeyword->keyword = $keyword;
-                        $newKeyword->status = 'active';
-                        $newKeyword->created_by = $this->api->user->user_id;
-                        $newKeyword->modified_by = $this->api->user->user_id;
-                        $newKeyword->save();
+                if (empty($existKeyword)) {
+                    $newKeyword = new Keyword();
+                    $newKeyword->merchant_id = 0;
+                    $newKeyword->keyword = $keyword;
+                    $newKeyword->status = 'active';
+                    $newKeyword->created_by = $this->api->user->user_id;
+                    $newKeyword->modified_by = $this->api->user->user_id;
+                    $newKeyword->save();
 
-                        $keyword_id = $newKeyword->keyword_id;
-                        $couponKeywords[] = $newKeyword;
-                    } else {
-                        $keyword_id = $existKeyword->keyword_id;
-                        $couponKeywords[] = $existKeyword;
-                    }
-
-                    $newKeywordObject = new KeywordObject();
-                    $newKeywordObject->keyword_id = $keyword_id;
-                    $newKeywordObject->object_id = $newcoupon->promotion_id;
-                    $newKeywordObject->object_type = 'coupon';
-                    $newKeywordObject->save();
+                    $keyword_id = $newKeyword->keyword_id;
+                    $couponKeywords[] = $newKeyword;
+                } else {
+                    $keyword_id = $existKeyword->keyword_id;
+                    $couponKeywords[] = $existKeyword;
                 }
+
+                $newKeywordObject = new KeywordObject();
+                $newKeywordObject->keyword_id = $keyword_id;
+                $newKeywordObject->object_id = $newcoupon->promotion_id;
+                $newKeywordObject->object_type = 'coupon';
+                $newKeywordObject->save();
             }
             $newcoupon->keywords = $couponKeywords;
 
@@ -887,34 +885,32 @@ class CouponAPIController extends ControllerAPI
             foreach ($productTags as $productTag) {
                 $product_tag_id = null;
 
-                foreach ($mallid as $mall) {
-                    $existProductTag = ProductTag::excludeDeleted()
-                        ->where('product_tag', '=', $productTag)
-                        ->where('merchant_id', '=', $mall)
-                        ->first();
+                $existProductTag = ProductTag::excludeDeleted()
+                    ->where('product_tag', '=', $productTag)
+                    ->where('merchant_id', '=', 0)
+                    ->first();
 
-                    if (empty($existProductTag)) {
-                        $newProductTag = new ProductTag();
-                        $newProductTag->merchant_id = $mall;
-                        $newProductTag->product_tag = $productTag;
-                        $newProductTag->status = 'active';
-                        $newProductTag->created_by = $this->api->user->user_id;
-                        $newProductTag->modified_by = $this->api->user->user_id;
-                        $newProductTag->save();
+                if (empty($existProductTag)) {
+                    $newProductTag = new ProductTag();
+                    $newProductTag->merchant_id = 0;
+                    $newProductTag->product_tag = $productTag;
+                    $newProductTag->status = 'active';
+                    $newProductTag->created_by = $this->api->user->user_id;
+                    $newProductTag->modified_by = $this->api->user->user_id;
+                    $newProductTag->save();
 
-                        $product_tag_id = $newProductTag->product_tag_id;
-                        $couponProductTags[] = $newProductTag;
-                    } else {
-                        $product_tag_id = $existProductTag->product_tag_id;
-                        $couponProductTags[] = $existProductTag;
-                    }
-
-                    $newProductTagObject = new ProductTagObject();
-                    $newProductTagObject->product_tag_id = $product_tag_id;
-                    $newProductTagObject->object_id = $newcoupon->promotion_id;
-                    $newProductTagObject->object_type = 'coupon';
-                    $newProductTagObject->save();
+                    $product_tag_id = $newProductTag->product_tag_id;
+                    $couponProductTags[] = $newProductTag;
+                } else {
+                    $product_tag_id = $existProductTag->product_tag_id;
+                    $couponProductTags[] = $existProductTag;
                 }
+
+                $newProductTagObject = new ProductTagObject();
+                $newProductTagObject->product_tag_id = $product_tag_id;
+                $newProductTagObject->object_id = $newcoupon->promotion_id;
+                $newProductTagObject->object_type = 'coupon';
+                $newProductTagObject->save();
             }
             $newcoupon->product_tags = $couponProductTags;
 
@@ -2287,35 +2283,33 @@ class CouponAPIController extends ControllerAPI
                 foreach ($keywords as $keyword) {
                     $keyword_id = null;
 
-                    foreach ($mallid as $mall) {
-                        $existKeyword = Keyword::excludeDeleted()
-                            ->where('keyword', '=', $keyword)
-                            ->where('merchant_id', '=', $mall)
-                            ->first();
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
 
-                        if (empty($existKeyword)) {
-                            $newKeyword = new Keyword();
-                            $newKeyword->merchant_id = $mall;
-                            $newKeyword->keyword = $keyword;
-                            $newKeyword->status = 'active';
-                            $newKeyword->created_by = $user->user_id;
-                            $newKeyword->modified_by = $user->user_id;
-                            $newKeyword->save();
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = 0;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
 
-                            $keyword_id = $newKeyword->keyword_id;
-                            $couponKeywords[] = $newKeyword;
-                        } else {
-                            $keyword_id = $existKeyword->keyword_id;
-                            $couponKeywords[] = $existKeyword;
-                        }
-
-
-                        $newKeywordObject = new KeywordObject();
-                        $newKeywordObject->keyword_id = $keyword_id;
-                        $newKeywordObject->object_id = $promotion_id;
-                        $newKeywordObject->object_type = 'coupon';
-                        $newKeywordObject->save();
+                        $keyword_id = $newKeyword->keyword_id;
+                        $couponKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $couponKeywords[] = $existKeyword;
                     }
+
+
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $promotion_id;
+                    $newKeywordObject->object_type = 'coupon';
+                    $newKeywordObject->save();
                 }
                 $updatedcoupon->keywords = $couponKeywords;
             });
@@ -2332,35 +2326,32 @@ class CouponAPIController extends ControllerAPI
                 foreach ($productTags as $productTag) {
                     $product_tag_id = null;
 
-                    foreach ($mallid as $mall) {
-                        $existProductTag = ProductTag::excludeDeleted()
-                            ->where('product_tag', '=', $productTag)
-                            ->where('merchant_id', '=', $mall)
-                            ->first();
+                    $existProductTag = ProductTag::excludeDeleted()
+                        ->where('product_tag', '=', $productTag)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
 
-                        if (empty($existProductTag)) {
-                            $newProductTag = new ProductTag();
-                            $newProductTag->merchant_id = $mall;
-                            $newProductTag->product_tag = $productTag;
-                            $newProductTag->status = 'active';
-                            $newProductTag->created_by = $user->user_id;
-                            $newProductTag->modified_by = $user->user_id;
-                            $newProductTag->save();
+                    if (empty($existProductTag)) {
+                        $newProductTag = new ProductTag();
+                        $newProductTag->merchant_id = 0;
+                        $newProductTag->product_tag = $productTag;
+                        $newProductTag->status = 'active';
+                        $newProductTag->created_by = $user->user_id;
+                        $newProductTag->modified_by = $user->user_id;
+                        $newProductTag->save();
 
-                            $product_tag_id = $newProductTag->product_tag_id;
-                            $couponProductTags[] = $newProductTag;
-                        } else {
-                            $product_tag_id = $existProductTag->product_tag_id;
-                            $couponProductTags[] = $existProductTag;
-                        }
-
-                        $newProductTagObject = new ProductTagObject();
-                        $newProductTagObject->product_tag_id = $product_tag_id;
-                        $newProductTagObject->object_id = $promotion_id;
-                        $newProductTagObject->object_type = 'coupon';
-                        $newProductTagObject->save();
+                        $product_tag_id = $newProductTag->product_tag_id;
+                        $couponProductTags[] = $newProductTag;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $couponProductTags[] = $existProductTag;
                     }
 
+                    $newProductTagObject = new ProductTagObject();
+                    $newProductTagObject->product_tag_id = $product_tag_id;
+                    $newProductTagObject->object_id = $promotion_id;
+                    $newProductTagObject->object_type = 'coupon';
+                    $newProductTagObject->save();
                 }
                 $updatedcoupon->product_tags = $couponProductTags;
             });
@@ -3336,9 +3327,13 @@ class CouponAPIController extends ControllerAPI
                     } elseif ($relation === 'ages') {
                         $coupons->with('ages');
                     } elseif ($relation === 'keywords') {
-                        $coupons->with('keywords');
+                        $coupons->with(['keywords' => function($query) {
+                            $query->groupBy('keyword');
+                        }]);
                     } elseif ($relation === 'product_tags') {
-                        $coupons->with('product_tags');
+                        $coupons->with(['product_tags' => function($query) {
+                            $query->groupBy('product_tag');
+                        }]);
                     } elseif ($relation === 'campaignObjectPartners') {
                         $coupons->with('campaignObjectPartners');
                     }

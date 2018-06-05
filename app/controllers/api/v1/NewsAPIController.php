@@ -260,34 +260,32 @@ class NewsAPIController extends ControllerAPI
             foreach ($keywords as $keyword) {
                 $keyword_id = null;
 
-                foreach ($mallid as $mall) {
-                    $existKeyword = Keyword::excludeDeleted()
-                        ->where('keyword', '=', $keyword)
-                        ->where('merchant_id', '=', $mall)
-                        ->first();
+                $existKeyword = Keyword::excludeDeleted()
+                    ->where('keyword', '=', $keyword)
+                    ->where('merchant_id', '=', 0)
+                    ->first();
 
-                    if (empty($existKeyword)) {
-                        $newKeyword = new Keyword();
-                        $newKeyword->merchant_id = $mall;
-                        $newKeyword->keyword = $keyword;
-                        $newKeyword->status = 'active';
-                        $newKeyword->created_by = $this->api->user->user_id;
-                        $newKeyword->modified_by = $this->api->user->user_id;
-                        $newKeyword->save();
+                if (empty($existKeyword)) {
+                    $newKeyword = new Keyword();
+                    $newKeyword->merchant_id = 0;
+                    $newKeyword->keyword = $keyword;
+                    $newKeyword->status = 'active';
+                    $newKeyword->created_by = $this->api->user->user_id;
+                    $newKeyword->modified_by = $this->api->user->user_id;
+                    $newKeyword->save();
 
-                        $keyword_id = $newKeyword->keyword_id;
-                        $newsKeywords[] = $newKeyword;
-                    } else {
-                        $keyword_id = $existKeyword->keyword_id;
-                        $newsKeywords[] = $existKeyword;
-                    }
-
-                    $newKeywordObject = new KeywordObject();
-                    $newKeywordObject->keyword_id = $keyword_id;
-                    $newKeywordObject->object_id = $newnews->news_id;
-                    $newKeywordObject->object_type = $object_type;
-                    $newKeywordObject->save();
+                    $keyword_id = $newKeyword->keyword_id;
+                    $newsKeywords[] = $newKeyword;
+                } else {
+                    $keyword_id = $existKeyword->keyword_id;
+                    $newsKeywords[] = $existKeyword;
                 }
+
+                $newKeywordObject = new KeywordObject();
+                $newKeywordObject->keyword_id = $keyword_id;
+                $newKeywordObject->object_id = $newnews->news_id;
+                $newKeywordObject->object_type = $object_type;
+                $newKeywordObject->save();
             }
             $newnews->keywords = $newsKeywords;
 
@@ -296,34 +294,32 @@ class NewsAPIController extends ControllerAPI
             foreach ($productTags as $productTag) {
                 $product_tag_id = null;
 
-                foreach ($mallid as $mall) {
-                    $existProductTag = ProductTag::excludeDeleted()
-                        ->where('product_tag', '=', $productTag)
-                        ->where('merchant_id', '=', $mall)
-                        ->first();
+                $existProductTag = ProductTag::excludeDeleted()
+                    ->where('product_tag', '=', $productTag)
+                    ->where('merchant_id', '=', 0)
+                    ->first();
 
-                    if (empty($existProductTag)) {
-                        $newProductTag = new ProductTag();
-                        $newProductTag->merchant_id = $mall;
-                        $newProductTag->product_tag = $productTag;
-                        $newProductTag->status = 'active';
-                        $newProductTag->created_by = $this->api->user->user_id;
-                        $newProductTag->modified_by = $this->api->user->user_id;
-                        $newProductTag->save();
+                if (empty($existProductTag)) {
+                    $newProductTag = new ProductTag();
+                    $newProductTag->merchant_id = 0;
+                    $newProductTag->product_tag = $productTag;
+                    $newProductTag->status = 'active';
+                    $newProductTag->created_by = $this->api->user->user_id;
+                    $newProductTag->modified_by = $this->api->user->user_id;
+                    $newProductTag->save();
 
-                        $product_tag_id = $newProductTag->product_tag_id;
-                        $newsProductTags[] = $newProductTag;
-                    } else {
-                        $product_tag_id = $existProductTag->product_tag_id;
-                        $newsProductTags[] = $existProductTag;
-                    }
-
-                    $newProductTagObject = new ProductTagObject();
-                    $newProductTagObject->product_tag_id = $product_tag_id;
-                    $newProductTagObject->object_id = $newnews->news_id;
-                    $newProductTagObject->object_type = $object_type;
-                    $newProductTagObject->save();
+                    $product_tag_id = $newProductTag->product_tag_id;
+                    $newsProductTags[] = $newProductTag;
+                } else {
+                    $product_tag_id = $existProductTag->product_tag_id;
+                    $newsProductTags[] = $existProductTag;
                 }
+
+                $newProductTagObject = new ProductTagObject();
+                $newProductTagObject->product_tag_id = $product_tag_id;
+                $newProductTagObject->object_id = $newnews->news_id;
+                $newProductTagObject->object_type = $object_type;
+                $newProductTagObject->save();
             }
             $newnews->product_tags = $newsProductTags;
 
@@ -969,36 +965,33 @@ class NewsAPIController extends ControllerAPI
                 foreach ($keywords as $keyword) {
                     $keyword_id = null;
 
-                    foreach ($mallid as $mall) {
-                        $existKeyword = Keyword::excludeDeleted()
-                            ->where('keyword', '=', $keyword)
-                            ->where('merchant_id', '=', $mall)
-                            ->first();
+                    $existKeyword = Keyword::excludeDeleted()
+                        ->where('keyword', '=', $keyword)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
 
-                        if (empty($existKeyword)) {
-                            $newKeyword = new Keyword();
-                            $newKeyword->merchant_id = $mall;
-                            $newKeyword->keyword = $keyword;
-                            $newKeyword->status = 'active';
-                            $newKeyword->created_by = $user->user_id;
-                            $newKeyword->modified_by = $user->user_id;
-                            $newKeyword->save();
+                    if (empty($existKeyword)) {
+                        $newKeyword = new Keyword();
+                        $newKeyword->merchant_id = 0;
+                        $newKeyword->keyword = $keyword;
+                        $newKeyword->status = 'active';
+                        $newKeyword->created_by = $user->user_id;
+                        $newKeyword->modified_by = $user->user_id;
+                        $newKeyword->save();
 
-                            $keyword_id = $newKeyword->keyword_id;
-                            $newsKeywords[] = $newKeyword;
-                        } else {
-                            $keyword_id = $existKeyword->keyword_id;
-                            $newsKeywords[] = $existKeyword;
-                        }
-
-
-                        $newKeywordObject = new KeywordObject();
-                        $newKeywordObject->keyword_id = $keyword_id;
-                        $newKeywordObject->object_id = $news_id;
-                        $newKeywordObject->object_type = $object_type;
-                        $newKeywordObject->save();
+                        $keyword_id = $newKeyword->keyword_id;
+                        $newsKeywords[] = $newKeyword;
+                    } else {
+                        $keyword_id = $existKeyword->keyword_id;
+                        $newsKeywords[] = $existKeyword;
                     }
 
+
+                    $newKeywordObject = new KeywordObject();
+                    $newKeywordObject->keyword_id = $keyword_id;
+                    $newKeywordObject->object_id = $news_id;
+                    $newKeywordObject->object_type = $object_type;
+                    $newKeywordObject->save();
                 }
                 $updatednews->keywords = $newsKeywords;
             });
@@ -1014,35 +1007,32 @@ class NewsAPIController extends ControllerAPI
                 foreach ($productTags as $productTag) {
                     $product_tag_id = null;
 
-                    foreach ($mallid as $mall) {
-                        $existProductTag = ProductTag::excludeDeleted()
-                            ->where('product_tag', '=', $productTag)
-                            ->where('merchant_id', '=', $mall)
-                            ->first();
+                    $existProductTag = ProductTag::excludeDeleted()
+                        ->where('product_tag', '=', $productTag)
+                        ->where('merchant_id', '=', 0)
+                        ->first();
 
-                        if (empty($existProductTag)) {
-                            $newProductTag = new ProductTag();
-                            $newProductTag->merchant_id = $mall;
-                            $newProductTag->product_tag = $productTag;
-                            $newProductTag->status = 'active';
-                            $newProductTag->created_by = $user->user_id;
-                            $newProductTag->modified_by = $user->user_id;
-                            $newProductTag->save();
+                    if (empty($existProductTag)) {
+                        $newProductTag = new ProductTag();
+                        $newProductTag->merchant_id = 0;
+                        $newProductTag->product_tag = $productTag;
+                        $newProductTag->status = 'active';
+                        $newProductTag->created_by = $user->user_id;
+                        $newProductTag->modified_by = $user->user_id;
+                        $newProductTag->save();
 
-                            $product_tag_id = $newProductTag->product_tag_id;
-                            $newsProductTags[] = $newProductTag;
-                        } else {
-                            $product_tag_id = $existProductTag->product_tag_id;
-                            $newsProductTags[] = $existProductTag;
-                        }
-
-                        $newProductTagObject = new ProductTagObject();
-                        $newProductTagObject->product_tag_id = $product_tag_id;
-                        $newProductTagObject->object_id = $news_id;
-                        $newProductTagObject->object_type = $object_type;
-                        $newProductTagObject->save();
+                        $product_tag_id = $newProductTag->product_tag_id;
+                        $newsProductTags[] = $newProductTag;
+                    } else {
+                        $product_tag_id = $existProductTag->product_tag_id;
+                        $newsProductTags[] = $existProductTag;
                     }
 
+                    $newProductTagObject = new ProductTagObject();
+                    $newProductTagObject->product_tag_id = $product_tag_id;
+                    $newProductTagObject->object_id = $news_id;
+                    $newProductTagObject->object_type = $object_type;
+                    $newProductTagObject->save();
                 }
                 $updatednews->product_tags = $newsProductTags;
             });
@@ -1740,9 +1730,13 @@ class NewsAPIController extends ControllerAPI
                     } elseif ($relation === 'ages') {
                         $news->with('ages');
                     } elseif ($relation === 'keywords') {
-                        $news->with('keywords');
+                        $news->with(['keywords' => function($query) {
+                            $query->groupBy('keyword');
+                        }]);
                     } elseif ($relation === 'product_tags') {
-                        $news->with('product_tags');
+                        $news->with(['product_tags' => function($query) {
+                            $query->groupBy('product_tag');
+                        }]);
                     } elseif ($relation === 'campaignObjectPartners') {
                         $news->with('campaignObjectPartners');
                     }
