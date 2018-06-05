@@ -2437,7 +2437,7 @@ class CouponAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.coupon.postupdatecoupon.after.commit', array($this, $updatedcoupon, $tempContent->temporary_content_id));
+            Event::fire('orbit.coupon.postupdatecoupon.after.commit', array($this, $updatedcoupon));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.coupon.postupdatecoupon.access.forbidden', array($this, $e));
 

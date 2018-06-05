@@ -1070,7 +1070,7 @@ class NewsAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.news.postupdatenews.after.commit', array($this, $updatednews, $tempContent->temporary_content_id));
+            Event::fire('orbit.news.postupdatenews.after.commit', array($this, $updatednews));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.news.postupdatenews.access.forbidden', array($this, $e));
 

@@ -1130,7 +1130,7 @@ class PromotionalEventAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.promotionalevent.postupdatepromotionalevent.after.commit', array($this, $updatedpromotional_event, $tempContent->temporary_content_id));
+            Event::fire('orbit.promotionalevent.postupdatepromotionalevent.after.commit', array($this, $updatedpromotional_event));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.promotionalevent.postupdatepromotionalevent.access.forbidden', array($this, $e));
 
