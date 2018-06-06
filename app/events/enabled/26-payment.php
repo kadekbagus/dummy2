@@ -66,10 +66,16 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
 
                 // Update payment transaction
                 $payment->coupon_redemption_code = $takenVoucherData->code;
+                // $payment->notes = ''; // clear the notes?
                 $payment->save();
             }
             else {
-                $errorMessage = sprintf('Request TakenVoucher to Sepulsa is failed. CouponID = %s. %s', $payment->object_id, $takenVouchers->getMessage());
+                // Record failure...
+                $paymentNotes = $payment->notes;
+                $payment->notes = $paymentNotes . "--- " . $e->getMessage() . "\n";
+                $payment->save();
+                
+                $errorMessage = sprintf('Request TakenVoucher to Sepulsa is failed. CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
                 throw new Exception($errorMessage, 500);
             }
         }
