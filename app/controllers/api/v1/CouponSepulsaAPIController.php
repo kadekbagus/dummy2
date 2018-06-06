@@ -298,10 +298,10 @@ class CouponSepulsaAPIController extends ControllerAPI
             // Check the end date should be less than validity in date
             $int_before_end_date = strtotime(date('Y-m-d', strtotime($end_date)));
             $int_validity_date = strtotime($coupon_validity_in_date);
-            if ($int_validity_date <= $int_before_end_date) {
-                $errorMessage = 'The validity redeem date should be greater than the end date.';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
+            // if ($int_validity_date <= $int_before_end_date) {
+            //     $errorMessage = 'The validity redeem date should be greater than the end date.';
+            //     OrbitShopAPI::throwInvalidArgument($errorMessage);
+            // }
 
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
@@ -1103,10 +1103,10 @@ class CouponSepulsaAPIController extends ControllerAPI
                 // Check the end date should be less than validity in date
                 $int_before_end_date = strtotime(date('Y-m-d', strtotime($end_date)));
                 $int_validity_date = strtotime($coupon_validity_in_date);
-                if ($int_validity_date <= $int_before_end_date) {
-                    $errorMessage = 'The validity redeem date should be greater than the end date.';
-                    OrbitShopAPI::throwInvalidArgument($errorMessage);
-                }
+                // if ($int_validity_date <= $int_before_end_date) {
+                //     $errorMessage = 'The validity redeem date should be greater than the end date.';
+                //     OrbitShopAPI::throwInvalidArgument($errorMessage);
+                // }
 
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
