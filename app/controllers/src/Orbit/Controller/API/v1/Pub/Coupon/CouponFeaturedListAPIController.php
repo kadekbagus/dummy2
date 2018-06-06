@@ -663,7 +663,7 @@ class CouponFeaturedListAPIController extends PubControllerAPI
                         $priceNew = $record['_source']['price_selling'];
 
                         if ($priceOld != '0' && $priceNew != '0') {
-                            $data['price_discount'] = (($priceOld - $priceNew) / $priceOld) * 100;
+                            $data['price_discount'] = round((($priceOld - $priceNew) / $priceOld) * 100, 1, PHP_ROUND_HALF_DOWN);
                         }
                     }
 
