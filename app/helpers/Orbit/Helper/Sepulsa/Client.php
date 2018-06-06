@@ -203,14 +203,28 @@ class Client
             }
 
             $response = $this->client->request($method, $this->endpoint, $options);
+            $response = $response->getBody()->getContents();
 
-            return json_decode($response->getBody()->getContents());
         } catch (\GuzzleHttp\Exception\ConnectException $e) {
             throw new OrbitCustomException('cURL connection failed', Client::CURL_CONNECT_ERROR_CODE, NULL);
         } catch (\GuzzleHttp\Exception\RequestException $e) {
             if ($e->getCode() === 401) {
                 throw new OrbitCustomException('Unautorized access', Client::UNAUTHORIZED_ERROR_CODE, NULL);
             }
+
+            $response = $e->getResponse()->getBody()->getContents();
+        } catch(\Exception $e) {
+            \Log::info('SepulsaClient [E]: ' . $e->getMessage());
+
+            $response = new \stdClass;
+            $response->meta = new \stdClass;
+            $response->meta->status = false;
+            $response->meta->message = 'Internal server error.';
+            $response->result = null;
+
+            return $response;
         }
+
+        return json_decode($response);
     }
 }

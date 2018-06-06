@@ -1,9 +1,14 @@
-<html>
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
     <head>
+        <meta charset="utf-8"> <!-- utf-8 works for most cases -->
+        <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
         <title>Invoice from Gotomalls.com</title>
         <style>
+            @import url('https://fonts.googleapis.com/css?family=Roboto');
             body {
-                font-family: Sans;
+                font-family: 'Roboto', sans-serif;
                 padding: 20px;
                 text-align: left;
             }
@@ -28,6 +33,7 @@
             .text-red { color: #f43d3c; }
 
             .text-right { text-align: right; }
+            .text-center { text-align: center; }
             .text-left { text-align: left; }
 
             thead tr.invoice-header th {
@@ -124,33 +130,29 @@
                         <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/logo-en.png?t=1523326836" alt="" class="logo">
                     </th>
                     <th class="text-right">
-                        <span class="text-red invoice-title">Invoice</span>
+                        <span class="text-red invoice-title">{{{ trans('email-receipt.header.invoice') }}}</span>
                     </th>
                 </tr>
             </thead>
 
             <tbody>
                 <tr>
-                    <td class="text-left invoice-info"><strong>Order No. {{{ $transaction['id'] }}}</strong></td>
+                    <td class="text-left invoice-info"><strong>{{{ trans('email-receipt.header.order_number', ['transactionId' => $transaction['id']]) }}}</strong></td>
                     <td class="text-right invoice-info">{{{ $transaction['date'] }}}</td>
                 </tr>
 
                 <tr>
                     <td colspan="2" class="invoice-body">
                         <p>
-                            Hello, {{{ $customerName }}}
-                            <br>
-                            Thank you for shopping at Gotomalls.com and for your order. A detailed summary of your invoice is below.
-                            If you have questions, we are happy to help you. Please send your your email to <a href="mailto:support@gotomalls.com"><span class="text-red">support@gotomalls.com</span></a> 
-                            or contact us through our support channel.
+                            {{ trans('email-receipt.body.greeting', ['customerName' => $customerName, 'itemName' => $transaction['items'][0]['name']]) }}
                         </p>
 
                         <table class="no-border collapse customer" width="100%">
                             <thead>
                                 <tr>
-                                    <th class="text-left" width="25%">Customer</th>
-                                    <th class="text-left" width="25%">Email</th>
-                                    <th class="text-left">Phone</th>
+                                    <th class="text-left" width="25%">{{{ trans('email-receipt.table_customer_info.header.customer') }}}</th>
+                                    <th class="text-left" width="25%">{{{ trans('email-receipt.table_customer_info.header.email') }}}</th>
+                                    <th class="text-left">{{{ trans('email-receipt.table_customer_info.header.phone') }}}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -165,10 +167,10 @@
                         <table class="no-border collapse transaction" width="100%">
                             <thead class="bordered">
                                 <tr>
-                                    <th class="text-left" width="35%">Item</th>
-                                    <th class="text-left" width="20%">Quantity</th>
-                                    <th class="text-left" width="25%">Price</th>
-                                    <th class="text-left" width="25%">Subtotal</th>
+                                    <th class="text-left" width="35%">{{{ trans('email-receipt.table_transaction.header.item') }}}</th>
+                                    <th class="text-left" width="20%">{{{ trans('email-receipt.table_transaction.header.quantity') }}}</th>
+                                    <th class="text-left" width="25%">{{{ trans('email-receipt.table_transaction.header.price') }}}</th>
+                                    <th class="text-left" width="25%">{{{ trans('email-receipt.table_transaction.header.subtotal') }}}</th>
                                 </tr>
                             </thead>
 
@@ -186,17 +188,25 @@
                             <tfoot class="transaction-footer">
                                 <tr>
                                     <td colspan="2"></td>
-                                    <td><strong>Total</strong></td>
+                                    <td><strong>{{{ trans('email-receipt.table_transaction.footer.total') }}}</strong></td>
                                     <td>{{{ $transaction['total'] }}}</td>
                                 </tr>
                             </tfoot>
                         </table>
 
                         <p>
-                            Thank you and have a nice day.
+                            {{{ trans('email-receipt.body.redeem') }}}
                         </p>
 
-                        <a href="{{{ $redeemUrl }}}" class="btn-redeem">Redeem Coupon</a>
+                        <p class="text-center">
+                            <a href="{{{ $redeemUrl }}}" class="btn-redeem">{{{ trans('email-receipt.buttons.redeem') }}}</a>
+                        </p>
+
+                        <p>
+                            {{ trans('email-receipt.body.help', ['csPhone' => $cs['phone'], 'csEmail' => $cs['email']]) }}
+                            <br>
+                            {{{ trans('email-receipt.body.thank_you') }}}
+                        </p>
                     </td>
                 </tr>
             </tbody>
