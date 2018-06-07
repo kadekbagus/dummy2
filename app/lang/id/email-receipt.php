@@ -2,12 +2,12 @@
 
 return [
     'header' => [
-        'invoice'       => 'Invoice',
+        'invoice'       => 'Kuitansi',
         'order_number'  => 'No. Transaksi: :transactionId',
     ],
 
     'body' => [
-        'greeting' => 'Dear, :customerName
+        'greeting' => 'Yth, :customerName
                         <br>
                         Thank you for purchasing :itemName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
 
