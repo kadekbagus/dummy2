@@ -62,7 +62,7 @@ class ReceiptNotification extends Notification
         $transaction['id']    = $this->payment->payment_transaction_id;
         $transaction['date']  = Carbon::parse($this->payment->transaction_date_and_time)->format('j M Y');
         $transaction['total'] = $amount;
-        $redeemUrl            = 'https://www.gotomalls.com/my/coupons';
+        $redeemUrl            = Config::get('orbit.coupon.direct_redemption_url');
         $cs = [
             'phone' => $this->contact['customer_service']['phone'],
             'email' => $this->contact['customer_service']['email'],
