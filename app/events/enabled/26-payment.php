@@ -50,6 +50,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
 
                 $issuedCoupon = new IssuedCoupon;
 
+                $issuedCoupon->redeem_verification_code       = $takenVoucherData->id;
                 $issuedCoupon->promotion_id       = $payment->object_id;
                 $issuedCoupon->transaction_id     = $payment->payment_transaction_id;
                 $issuedCoupon->user_id            = $payment->user_id;
