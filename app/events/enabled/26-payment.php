@@ -13,7 +13,7 @@ use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
-// Notifications 
+// Notifications
 // use Orbit\Notifications\Coupon\IssuedCouponNotification;
 use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification as SepulsaReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
@@ -50,6 +50,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
 
                 $issuedCoupon = new IssuedCoupon;
 
+                $issuedCoupon->redeem_verification_code       = $takenVoucherData->id;
                 $issuedCoupon->promotion_id       = $payment->object_id;
                 $issuedCoupon->transaction_id     = $payment->payment_transaction_id;
                 $issuedCoupon->user_id            = $payment->user_id;
@@ -72,9 +73,9 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
             else {
                 // Record failure...
                 $paymentNotes = $payment->notes;
-                $payment->notes = $paymentNotes . "--- " . $e->getMessage() . "\n";
+                $payment->notes = $paymentNotes . "--- " . $takenVouchers->getMessage() . "\n";
                 $payment->save();
-                
+
                 $errorMessage = sprintf('Request TakenVoucher to Sepulsa is failed. CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
                 throw new Exception($errorMessage, 500);
             }
@@ -119,10 +120,10 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function($payment)
 {
     // If payment completed and coupon issued.
     if ($payment->completed()) {
-        
+
         // Reload issued coupon relationship.
         $payment->load('issued_coupon');
-        
+
         // Notify user for the IssuedCoupon detail...
         // $payment->user->notify(new IssuedCouponNotification($payment->issued_coupon, $payment));
 
