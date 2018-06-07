@@ -2356,10 +2356,6 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->product_tags = $couponProductTags;
             });
 
-            $tempContent = new TemporaryContent();
-            $tempContent->contents = serialize($beforeUpdatedCoupon);
-            $tempContent->save();
-
             Event::fire('orbit.coupon.postupdatecoupon.after.save', array($this, $updatedcoupon));
             Event::fire('orbit.coupon.postupdatecoupon-mallnotification.after.save', array($this, $updatedcoupon));
 
@@ -2441,7 +2437,7 @@ class CouponAPIController extends ControllerAPI
                     ->setNotes($activityNotes)
                     ->responseOK();
 
-            Event::fire('orbit.coupon.postupdatecoupon.after.commit', array($this, $updatedcoupon, $tempContent->temporary_content_id));
+            Event::fire('orbit.coupon.postupdatecoupon.after.commit', array($this, $updatedcoupon));
         } catch (ACLForbiddenException $e) {
             Event::fire('orbit.coupon.postupdatecoupon.access.forbidden', array($this, $e));
 
