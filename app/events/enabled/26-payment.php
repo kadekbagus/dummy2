@@ -74,6 +74,11 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
                 // Record failure...
                 $paymentNotes = $payment->notes;
                 $payment->notes = $paymentNotes . "--- " . $takenVouchers->getMessage() . "\n";
+
+                // success_no_coupon means the payment was success but we can not get/take the coupon from Sepulsa API
+                // either it is not available (all taken) or inactive.
+                $payment->status = 'success_no_coupon';
+
                 $payment->save();
 
                 $errorMessage = sprintf('Request TakenVoucher to Sepulsa is failed. CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());

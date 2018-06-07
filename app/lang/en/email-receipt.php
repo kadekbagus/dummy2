@@ -2,7 +2,7 @@
 
 return [
     'header' => [
-        'invoice'       => 'Invoice',
+        'invoice'       => 'Receipt',
         'order_number'  => 'Transaction ID: :transactionId',
     ],
 
