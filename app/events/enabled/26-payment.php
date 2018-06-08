@@ -79,7 +79,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
                 // If this is the first failure, then we should notify developer via email.
                 if ($retries === 0) {
                     $devUser            = new User;
-                    $devUser->email     = Config::get('orbit.contact_information.developer.email');
+                    $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@gotomalls.com');
                     $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries));
                 }
 
@@ -90,7 +90,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
                         Carbon::now('UTC')->addSeconds($delay),
                         'Orbit\\Queue\\Coupon\\Sepulsa\\RetryTakeVoucher', 
                         compact('paymentId', 'voucherToken', 'retries'),
-                        Config::get('orbit.registration.mobile.queue_name')
+                        Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
                     );
 
                     $errorMessage = sprintf('TakeVoucher Request: Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s', $delay, $payment->object_id, $takenVouchers->getMessage());
