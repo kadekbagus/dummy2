@@ -71,7 +71,7 @@ class PaymentTransaction extends Eloquent
      */
     public function completed()
     {
-        return in_array($this->status, ['success', 'paid', 'settlement']);
+        return in_array($this->status, ['success', 'success_no_coupon', 'paid', 'settlement']);
     }
 
     /**
@@ -88,6 +88,18 @@ class PaymentTransaction extends Eloquent
         }
 
         return false;
+    }
+
+    /**
+     * Determine if the coupon related to this payment is issued.
+     * For sepulsa: 
+     *     It means the TakeVoucher request is success and we created the IssuedCoupon record in DB.
+     *     
+     * @return [type] [description]
+     */
+    public function couponIssued()
+    {
+        return ! empty($this->issued_coupon);
     }
 
     /**
