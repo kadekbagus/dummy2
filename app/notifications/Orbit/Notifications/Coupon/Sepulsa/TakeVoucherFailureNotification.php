@@ -67,7 +67,7 @@ class TakeVoucherFailureNotification extends Notification
             $emailTemplate = 'emails.coupon.sepulsa-take-voucher-failed';
             if ($this->retries > 0) {
                 $emailTemplate = 'emails.coupon.sepulsa-take-max-retry-reached';
-                $data['maxRetry'] = Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', 0);
+                $data['maxRetry'] = Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', $this->retries);
             }
 
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
@@ -89,7 +89,8 @@ class TakeVoucherFailureNotification extends Notification
             })->bury();
 
         } catch (Exception $e) {
-            Log::debug('Take Voucher Failure Notification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::info('TakeVoucher email data: ' . serialize($data));
+            Log::info('TakeVoucher Failure Notification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
     }
 

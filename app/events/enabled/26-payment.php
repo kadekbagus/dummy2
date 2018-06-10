@@ -79,15 +79,19 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
                 // If this is the first failure, then we should notify developer via email.
                 if ($retries === 0) {
                     $devUser            = new User;
-                    $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@gotomalls.com');
+                    $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
                     $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries));
+
+                    $errorMessage = sprintf('TakeVoucher Request: First try failed. Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
+                    Log::info($errorMessage);
                 }
 
-                // Let's retry...
+                // Let's retry TakeVoucher request...
                 if ($retries < Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', 3)) {
-                    $delay = Config::get('orbit.partners_api.sepulsa.take_voucher_retry_timeout', 60);
+                    $delay = Config::get('orbit.partners_api.sepulsa.take_voucher_retry_timeout', 30);
+
                     Queue::later(
-                        Carbon::now('UTC')->addSeconds($delay),
+                        $delay,
                         'Orbit\\Queue\\Coupon\\Sepulsa\\RetryTakeVoucher', 
                         compact('paymentId', 'voucherToken', 'retries'),
                         Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
@@ -98,7 +102,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
                 else {
                     // Oh, no more retry, huh?
                     $devUser            = new User;
-                    $devUser->email     = Config::get('orbit.contact_information.developer.email');
+                    $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
                     $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries));
 
                     $errorMessage = sprintf('TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());

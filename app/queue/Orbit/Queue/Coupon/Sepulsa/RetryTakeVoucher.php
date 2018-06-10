@@ -32,9 +32,10 @@ class RetryTakeVoucher
         try {
             $data['retries']++;
 
-            Log::info('Request TakeVoucher retry #' . $data['retries'] . '....');
+            // Log::info('Request TakeVoucher retry #' . $data['retries'] . ' ...');
 
-            $payment = PaymentTransaction::where('payment_transaction_id', $data['paymentId'])->first();
+            $payment = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])
+                                            ->where('payment_transaction_id', $data['paymentId'])->first();
 
             DB::connection()->beginTransaction();
             
@@ -47,6 +48,8 @@ class RetryTakeVoucher
 
             // Send receipt if necessary...
             Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment]);
+
+            $job->delete();
 
             // Bury the job for later inspection
             JobBurier::create($job, function($theJob) {
