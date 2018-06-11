@@ -28,7 +28,7 @@ class SepulsaRedeemCallbackController extends ControllerAPI
         $customResponse->result = new stdclass();
 
         try {
-            if (Request::header('Content-Type') !== 'application/json') {
+            if (strtolower(Request::header('Content-Type')) !== 'application/json') {
                 $this->responseCode = 415;
                 throw new Exception("Unsupported Media Type.", 1);
             }
@@ -60,9 +60,10 @@ class SepulsaRedeemCallbackController extends ControllerAPI
             // get the issued coupon
             $issuedCoupon = IssuedCoupon::leftJoin('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
                 ->leftJoin('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
-                ->where('issued_coupon_code', $result['code'])
-                ->where('coupon_sepulsa.token', $result['token'])
                 ->where('issued_coupons.status', 'issued')
+                ->where('issued_coupon_code', $result['code'])
+                ->where('issued_coupons.redeem_verification_code', $result['id'])
+                ->where('coupon_sepulsa.token', $result['token'])
                 ->first();
 
             if (is_object($issuedCoupon)) {
