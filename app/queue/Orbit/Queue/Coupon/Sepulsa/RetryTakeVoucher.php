@@ -44,8 +44,6 @@ class RetryTakeVoucher
 
             DB::connection()->commit();
 
-            $payment->load('issued_coupon');
-
             // Send receipt if necessary...
             Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment]);
 
