@@ -13,9 +13,9 @@ use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
-// Notifications
-// use Orbit\Notifications\Coupon\IssuedCouponNotification;
+// User Notifications
 use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification as SepulsaReceiptNotification;
+use Orbit\Notifications\Coupon\Sepulsa\TakeVoucherFailureNotification;
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
 
 /**
@@ -25,24 +25,19 @@ use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNo
  *
  * @param PaymentTransaction $payment - Instance of PaymentTransaction model
  */
-Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
+Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $retries = 0)
 {
     // If payment completed...
     if ($payment->completed()) {
 
-        // For sepulsa deals...
-        if ($payment->forSepulsa()) {
+        // For sepulsa deals, we need to claim the voucher with TakeVoucher request.
+        if ($payment->forSepulsa() && ! $payment->couponIssued()) {
 
-            // If coupon issued, then do nothing.
-            if (! empty($payment->issued_coupon)) {
-                return;
-            }
-
-            // If not issued, then issue one.
             $voucherToken = $payment->coupon_sepulsa->token;
+            $paymentId = $payment->payment_transaction_id;
 
-            // Take voucher
-            $takenVouchers = TakeVoucher::create()->take($payment->payment_transaction_id, [['token' => $voucherToken]]);
+            // Take the voucher from Sepulsa...
+            $takenVouchers = TakeVoucher::create()->take($paymentId, [['token' => $voucherToken]]);
             $takenVouchers = new TakeVoucherResponse($takenVouchers);
 
             if ($takenVouchers->isValid() && $takenVouchers->isSuccess()) {
@@ -52,11 +47,11 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
 
                 $issuedCoupon->redeem_verification_code       = $takenVoucherData->id;
                 $issuedCoupon->promotion_id       = $payment->object_id;
-                $issuedCoupon->transaction_id     = $payment->payment_transaction_id;
+                $issuedCoupon->transaction_id     = $paymentId;
                 $issuedCoupon->user_id            = $payment->user_id;
                 $issuedCoupon->user_email         = $payment->user_email;
-                $issuedCoupon->issued_coupon_code = $takenVoucherData->code; // see todos
-                $issuedCoupon->url                = $takenVoucherData->redeem_url; // see todos
+                $issuedCoupon->issued_coupon_code = $takenVoucherData->code;
+                $issuedCoupon->url                = $takenVoucherData->redeem_url;
                 $issuedCoupon->issued_date        = $takenVoucherData->taken_date;
                 $issuedCoupon->expired_date       = $takenVoucherData->expired_date;
                 $issuedCoupon->issuer_user_id     = $payment->coupon->created_by;
@@ -65,24 +60,55 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
 
                 $issuedCoupon->save();
 
-                // Update payment transaction
+                // Update payment transaction data
                 $payment->coupon_redemption_code = $takenVoucherData->code;
                 // $payment->notes = ''; // clear the notes?
                 $payment->save();
             }
             else {
-                // Record failure...
-                $paymentNotes = $payment->notes;
-                $payment->notes = $paymentNotes . "--- " . $takenVouchers->getMessage() . "\n";
+                // This means the TakeVoucher request failed.
+                // We need to record the failure...
 
-                // success_no_coupon means the payment was success but we can not get/take the coupon from Sepulsa API
+                // Status 'success_no_coupon' means the payment was success but we can not get/take the coupon from Sepulsa API
                 // either it is not available (all taken) or inactive.
+                $payment->notes = $payment->notes . "--- " . $takenVouchers->getMessage() . "\n";
                 $payment->status = 'success_no_coupon';
 
                 $payment->save();
 
-                $errorMessage = sprintf('Request TakenVoucher to Sepulsa is failed. CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
-                throw new Exception($errorMessage, 500);
+                // If this is the first failure, then we should notify developer via email.
+                if ($retries === 0) {
+                    $devUser            = new User;
+                    $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
+                    $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries));
+
+                    $errorMessage = sprintf('TakeVoucher Request: First try failed. Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
+                    Log::info($errorMessage);
+                }
+
+                // Let's retry TakeVoucher request...
+                if ($retries < Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', 3)) {
+                    $delay = Config::get('orbit.partners_api.sepulsa.take_voucher_retry_timeout', 30);
+
+                    Queue::later(
+                        $delay,
+                        'Orbit\\Queue\\Coupon\\Sepulsa\\RetryTakeVoucher', 
+                        compact('paymentId', 'voucherToken', 'retries'),
+                        Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
+                    );
+
+                    $errorMessage = sprintf('TakeVoucher Request: Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s', $delay, $payment->object_id, $takenVouchers->getMessage());
+                }
+                else {
+                    // Oh, no more retry, huh?
+                    $devUser            = new User;
+                    $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
+                    $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries));
+
+                    $errorMessage = sprintf('TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
+                }
+
+                Log::info($errorMessage);
             }
         }
         else if ($payment->forHotDeals()) {
@@ -126,13 +152,8 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function($payment)
     // If payment completed and coupon issued.
     if ($payment->completed()) {
 
-        // Reload issued coupon relationship.
-        $payment->load('issued_coupon');
-
-        // Notify user for the IssuedCoupon detail...
-        // $payment->user->notify(new IssuedCouponNotification($payment->issued_coupon, $payment));
-
-        if ($payment->forSepulsa()) {
+        if ($payment->forSepulsa() && $payment->couponIssued()) {
+            // Only send receipt if payment success and the coupon issued.
             $payment->user->notify(new SepulsaReceiptNotification($payment));
         }
         else if ($payment->forHotDeals()) {
