@@ -354,6 +354,18 @@ Route::get('/api/v1/pub/coupon-purchased/list', function()
 Route::get('/app/v1/pub/coupon-purchased/list', ['as' => 'pub-coupon-purchased-list', 'uses' => 'IntermediatePubAuthController@Coupon\CouponPurchasedList_getCouponPurchasedList']);
 
 
+/**
+ * Coupon purchased detail
+ */
+Route::get('/api/v1/pub/coupon-purchased/detail', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponPurchasedDetailAPIController::create()->getCouponPurchasedDetail();
+});
+
+Route::get('/app/v1/pub/coupon-purchased/detail', ['as' => 'pub-coupon-purchased-detail', 'uses' => 'IntermediatePubAuthController@Coupon\CouponPurchasedDetail_getCouponPurchasedDetail']);
+
+
+
 
 /**
  * Create new coupon sepulsa
