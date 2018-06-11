@@ -66,12 +66,12 @@ class PaymentTransaction extends Eloquent
      *
      * @author Budi <budi@dominopos.com>
      *
-     * @todo  use proper status for indicating completed payment. At the moment these statuses are assumption.
+     * @todo  use proper status to indicate completed payment. At the moment these statuses are assumption.
      * @return [type] [description]
      */
     public function completed()
     {
-        return in_array($this->status, ['success', 'paid', 'settlement']);
+        return in_array($this->status, ['success', 'success_no_coupon', 'success_no_coup', 'paid', 'settlement']);
     }
 
     /**
@@ -88,6 +88,16 @@ class PaymentTransaction extends Eloquent
         }
 
         return false;
+    }
+
+    /**
+     * Determine if the coupon related to this payment is issued.
+     * 
+     * @return [type] [description]
+     */
+    public function couponIssued()
+    {
+        return ! empty($this->issued_coupon);
     }
 
     /**

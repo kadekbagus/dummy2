@@ -7251,6 +7251,11 @@ return array(
             'session_key_name' => 'sepulsa_token',
             // redeem callback secret_token, to be given to sepulsa
             'callback_secret_token' => 'HXJQluD4hGV1UqgaaR4YJomdv0zsQXny',
+
+            // How many times maximum we retry if the first take voucher request failed?
+            'take_voucher_max_retry' => 5,
+            // How many SECONDS should we wait before retrying the TakeVoucher request?
+            'take_voucher_retry_timeout' => 5,
         ],
     ],
 );

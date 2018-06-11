@@ -86,6 +86,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	        // Commit the changes
             $this->commit();
 
+            $payment_update->load('issued_coupon');
+
             Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
 
 	        $this->response->data = $payment_update;
