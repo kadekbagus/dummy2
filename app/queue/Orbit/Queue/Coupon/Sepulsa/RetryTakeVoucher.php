@@ -32,7 +32,7 @@ class RetryTakeVoucher
         try {
             $data['retries']++;
 
-            // Log::info('Request TakeVoucher retry #' . $data['retries'] . ' ...');
+            Log::info('Request TakeVoucher retry #' . $data['retries'] . ' ...');
 
             $payment = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])
                                             ->where('payment_transaction_id', $data['paymentId'])->first();
@@ -43,6 +43,8 @@ class RetryTakeVoucher
             Event::fire('orbit.payment.postupdatepayment.after.save', [$payment, $data['retries']]);
 
             DB::connection()->commit();
+
+            $payment->load('issued_coupon');
 
             // Send receipt if necessary...
             Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment]);

@@ -150,8 +150,6 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function($payment)
     // If payment completed and coupon issued.
     if ($payment->completed()) {
 
-        $payment->load('issued_coupon');
-
         if ($payment->forSepulsa() && $payment->couponIssued()) {
             // Only send receipt if payment success and the coupon issued.
             $payment->user->notify(new SepulsaReceiptNotification($payment));
