@@ -13,10 +13,10 @@ use Orbit\Helper\OneSignal\OneSignal;
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
-// Notifications 
+// Notifications
 // use Orbit\Notifications\Coupon\IssuedCouponNotification;
-use Orbit\Notifications\Coupon\Sepulsa\InvoiceNotification as SepulsaInvoiceNotification;
-use Orbit\Notifications\Coupon\HotDeals\InvoiceNotification as HotDealsInvoiceNotification;
+use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification as SepulsaReceiptNotification;
+use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
 
 /**
  * Listen on:    `orbit.payment.postupdatepayment.after.save`
@@ -50,6 +50,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
 
                 $issuedCoupon = new IssuedCoupon;
 
+                $issuedCoupon->redeem_verification_code       = $takenVoucherData->id;
                 $issuedCoupon->promotion_id       = $payment->object_id;
                 $issuedCoupon->transaction_id     = $payment->payment_transaction_id;
                 $issuedCoupon->user_id            = $payment->user_id;
@@ -66,10 +67,21 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
 
                 // Update payment transaction
                 $payment->coupon_redemption_code = $takenVoucherData->code;
+                // $payment->notes = ''; // clear the notes?
                 $payment->save();
             }
             else {
-                $errorMessage = sprintf('Taken Voucher request to Sepulsa failed. CouponID = %s. %s', $payment->object_id, $takenVouchers->getMessage());
+                // Record failure...
+                $paymentNotes = $payment->notes;
+                $payment->notes = $paymentNotes . "--- " . $takenVouchers->getMessage() . "\n";
+
+                // success_no_coupon means the payment was success but we can not get/take the coupon from Sepulsa API
+                // either it is not available (all taken) or inactive.
+                $payment->status = 'success_no_coupon';
+
+                $payment->save();
+
+                $errorMessage = sprintf('Request TakenVoucher to Sepulsa is failed. CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
                 throw new Exception($errorMessage, 500);
             }
         }
@@ -79,6 +91,10 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment)
             $issuedCoupon = IssuedCoupon::where('promotion_id', $payment->object_id)
                                             ->where('status', 'available')
                                             ->first();
+
+            if (empty($issuedCoupon)) {
+                throw new Exception('No issued coupons is available for purchase.', 500);
+            }
 
             // Claim the coupon...
             $issuedCoupon->transaction_id     = $payment->payment_transaction_id;
@@ -109,18 +125,18 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function($payment)
 {
     // If payment completed and coupon issued.
     if ($payment->completed()) {
-        
+
         // Reload issued coupon relationship.
         $payment->load('issued_coupon');
-        
+
         // Notify user for the IssuedCoupon detail...
         // $payment->user->notify(new IssuedCouponNotification($payment->issued_coupon, $payment));
 
         if ($payment->forSepulsa()) {
-            $payment->user->notify(new SepulsaInvoiceNotification($payment));
+            $payment->user->notify(new SepulsaReceiptNotification($payment));
         }
         else if ($payment->forHotDeals()) {
-            $payment->user->notify(new HotDealsInvoiceNotification($payment));
+            $payment->user->notify(new HotDealsReceiptNotification($payment));
         }
     }
 });

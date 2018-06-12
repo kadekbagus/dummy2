@@ -154,10 +154,12 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.price_selling as price_new',
                             'coupon_sepulsa.how_to_buy_and_redeem',
                             'coupon_sepulsa.terms_and_conditions',
+                            'issued_coupons.url as redeem_url',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
                             DB::Raw($issuedCouponId),
+                            'payment_transactions.status as payment_status',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -214,6 +216,11 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
                                 $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
+                            })
+                        ->leftJoin('payment_transactions', function ($q) use ($user) {
+                                $q->on('payment_transactions.object_id', '=', 'promotions.promotion_id');
+                                $q->on('payment_transactions.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
+                                $q->on('payment_transactions.object_type', '=', DB::Raw("'coupon'"));
                             })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
