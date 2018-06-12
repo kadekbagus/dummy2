@@ -57,11 +57,9 @@ class CheckTransactionStatusQueue
             else if ($payment->completed() && ! $payment->couponIssued()) {
                 $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed BUT the coupon NOT ISSUED YET.');
             }
-
-            $config = Config::get('orbit.partners_api.midtrans');
         
-            Veritrans_Config::$serverKey = $config['server_key'];
-            Veritrans_Config::$isProduction = $config['is_production'];
+            Veritrans_Config::$serverKey = Config::get('orbit.partners_api.midtrans.server_key', '');
+            Veritrans_Config::$isProduction = Config::get('orbit.partners_api.midtrans.is_production', false);
 
             $this->log('Midtrans::CheckTransactionStatusQueue: Checking transaction status... ' . $data['transactionId']);
 
@@ -70,7 +68,7 @@ class CheckTransactionStatusQueue
             $data['check']++;
 
             // Re-run this queue if the status is still pending (and not reached maximum try yet)
-            if ($transaction->isPending() && $data['check'] < $config['transaction_status_max_retry']) {
+            if ($transaction->isPending() && $data['check'] < Config::get('orbit.partners_api.midtrans.transaction_status_max_retry', 60)) {
 
                 // NOTE delay can be passed as queue's data, so no need to get it from config everytime?
                 $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
