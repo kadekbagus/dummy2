@@ -33,6 +33,10 @@ class Coupon extends Eloquent
     const NOT_FOUND_ERROR_CODE = 404;
     const INACTIVE_ERROR_CODE = 4040;
 
+    const TYPE_NORMAL = 'mall';
+    const TYPE_SEPULSA = 'sepulsa';
+    const TYPE_HOT_DEALS = 'hot_deals';
+
     protected $table = 'promotions';
 
     protected $primaryKey = 'promotion_id';
