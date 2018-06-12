@@ -55,7 +55,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
                 $issuedCoupon->issued_date        = $takenVoucherData->taken_date;
                 $issuedCoupon->expired_date       = $takenVoucherData->expired_date;
                 $issuedCoupon->issuer_user_id     = $payment->coupon->created_by;
-                $issuedCoupon->status             = 'issued';
+                $issuedCoupon->status             = IssuedCoupon::STATUS_ISSUED;
                 $issuedCoupon->record_exists      = 'Y';
 
                 $issuedCoupon->save();
@@ -69,10 +69,8 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
                 // This means the TakeVoucher request failed.
                 // We need to record the failure...
 
-                // Status 'success_no_coupon' means the payment was success but we can not get/take the coupon from Sepulsa API
-                // either it is not available (all taken) or inactive.
-                $payment->notes = $payment->notes . "--- " . $takenVouchers->getMessage() . "\n";
-                $payment->status = 'success_no_coupon';
+                $payment->notes = $payment->notes . $takenVouchers->getMessage() . "\n------\n";
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
 
                 $payment->save();
 
@@ -127,7 +125,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
             $issuedCoupon->user_id            = $payment->user_id;
             $issuedCoupon->user_email         = $payment->user_email;
             $issuedCoupon->issued_date        = Carbon::now('UTC');
-            $issuedCoupon->status             = 'issued';
+            $issuedCoupon->status             = IssuedCoupon::STATUS_ISSUED;
             $issuedCoupon->record_exists      = 'Y';
 
             $issuedCoupon->save();

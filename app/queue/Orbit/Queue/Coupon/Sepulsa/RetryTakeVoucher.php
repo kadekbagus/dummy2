@@ -32,7 +32,7 @@ class RetryTakeVoucher
         try {
             $data['retries']++;
 
-            // Log::info('Request TakeVoucher retry #' . $data['retries'] . ' ...');
+            Log::info('Request TakeVoucher retry #' . $data['retries'] . ' ...');
 
             $payment = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])
                                             ->where('payment_transaction_id', $data['paymentId'])->first();

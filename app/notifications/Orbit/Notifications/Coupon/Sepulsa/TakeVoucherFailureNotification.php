@@ -66,7 +66,7 @@ class TakeVoucherFailureNotification extends Notification
 
             $emailTemplate = 'emails.coupon.sepulsa-take-voucher-failed';
             if ($this->retries > 0) {
-                $emailTemplate = 'emails.coupon.sepulsa-take-max-retry-reached';
+                $emailTemplate = 'emails.coupon.sepulsa-take-voucher-max-retry-reached';
                 $data['maxRetry'] = Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', $this->retries);
             }
 
