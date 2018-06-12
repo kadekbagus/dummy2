@@ -15,6 +15,15 @@ class PaymentTransaction extends Eloquent
 
     protected $table = 'payment_transactions';
 
+    const STATUS_STARTING           = 'starting';
+    const STATUS_PENDING            = 'pending';
+    const STATUS_FAILED             = 'failed';
+    const STATUS_SUCCESS            = 'success';
+
+    // Status 'success_no_coupon' means the payment was success but we can not get/take the coupon from Sepulsa API
+    // either it is not available (all taken) or inactive.
+    const STATUS_SUCCESS_NO_COUPON  = 'success_no_coupon';
+
     /**
      * Payment - Coupon Sepulsa relation.
      *
@@ -66,12 +75,18 @@ class PaymentTransaction extends Eloquent
      *
      * @author Budi <budi@dominopos.com>
      *
-     * @todo  use proper status for indicating completed payment. At the moment these statuses are assumption.
+     * @todo  use proper status to indicate completed payment. At the moment these statuses are assumption.
      * @return [type] [description]
      */
     public function completed()
     {
-        return in_array($this->status, ['success', 'paid', 'settlement']);
+        return in_array($this->status, [
+            self::STATUS_SUCCESS, 
+            self::STATUS_SUCCESS_NO_COUPON, 
+            'success_no_coup', 
+            'paid', 
+            'settlement'
+        ]);
     }
 
     /**
@@ -88,6 +103,16 @@ class PaymentTransaction extends Eloquent
         }
 
         return false;
+    }
+
+    /**
+     * Determine if the coupon related to this payment is issued.
+     * 
+     * @return [type] [description]
+     */
+    public function couponIssued()
+    {
+        return ! empty($this->issued_coupon);
     }
 
     /**
