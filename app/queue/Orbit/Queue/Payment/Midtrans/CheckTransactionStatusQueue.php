@@ -10,6 +10,10 @@ use Orbit\Helper\Util\JobBurier;
 use Veritrans\Veritrans_Config;
 use Veritrans\Veritrans_Transaction;
 
+use PaymentTransaction;
+
+use Orbit\Helper\Midtrans\API\Response\TransactionStatusResponse;
+
 /**
  * Get transaction status from Midtrans and update our internal payment status if necessary.
  * 
@@ -66,7 +70,7 @@ class CheckTransactionStatusQueue
             $data['check']++;
 
             // Re-run this queue if the status is still pending (and not reached maximum try yet)
-            if ($transaction->isPending() && $data['check'] <= $config['transaction_status_max_retry']) {
+            if ($transaction->isPending() && $data['check'] < $config['transaction_status_max_retry']) {
 
                 // NOTE delay can be passed as queue's data, so no need to get it from config everytime?
                 $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
