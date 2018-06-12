@@ -5,6 +5,7 @@ use Log;
 use Queue;
 use Config;
 use Exception;
+use Orbit\Helper\Util\JobBurier;
 
 use Veritrans\Veritrans_Config;
 use Veritrans\Veritrans_Transaction;
@@ -45,9 +46,12 @@ class CheckTransactionStatusQueue
 
             // If payment completed then do nothing.
             // (It maybe completed by notification callback/ping from Midtrans)
-            if ($payment->completed()) {
-                $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed. Nothing to do.');
+            if ($payment->completed() && $payment->couponIssued()) {
+                $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed and the coupon issued. Nothing to do.');
                 return;
+            }
+            else if ($payment->completed() && ! $payment->couponIssued()) {
+                $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed BUT the coupon NOT ISSUED YET.');
             }
 
             $config = Config::get('orbit.partners_api.midtrans');
