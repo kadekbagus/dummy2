@@ -120,9 +120,9 @@ class CheckTransactionStatusQueue
 
             $job->delete();
 
-            JobBurier::create($job, function($theJob) {
-                $theJob->delete();
-            })->bury();
+            // JobBurier::create($job, function($theJob) {
+            //     $theJob->delete();
+            // })->bury();
 
         } catch(Exception $e) {
             DB::connection()->rollback();
