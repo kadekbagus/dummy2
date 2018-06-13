@@ -56,6 +56,17 @@ class CheckTransactionStatusQueue
             }
             else if ($payment->completed() && ! $payment->couponIssued()) {
                 $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed BUT the coupon NOT ISSUED YET.');
+
+                // Fire event to issue coupon...
+                Event::fire('orbit.payment.postupdatepayment.after.save', [$payment]);
+
+                DB::connection()->commit();
+
+                $payment->load('issued_coupon');
+
+                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment]);
+
+                return;
             }
         
             Veritrans_Config::$serverKey = Config::get('orbit.partners_api.midtrans.server_key', '');
