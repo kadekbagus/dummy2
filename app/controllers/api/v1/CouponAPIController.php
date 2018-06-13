@@ -3838,14 +3838,24 @@ class CouponAPIController extends ControllerAPI
                 $body['merchant_bank_address'] = $merchantBankAddress;
             }
 
-            $paymentConfig = Config::get('orbit.payment_server');
-            $paymentClient = PaymentClient::create($paymentConfig)->setFormParam($body);
-            $response = $paymentClient->setEndPoint('api/v1/pay')
-                                    ->request('POST');
+            // Only send payment request to orbit-payment API if the coupon is NOT hot_deals and sepulsa
+            $transactionId = '';
+            if (in_array($coupon->promotion_type, [Coupon::TYPE_SEPULSA, Coupon::TYPE_HOT_DEALS])) {
+                // IssuedCoupon record should have transaction_id set...
+                $transactionId = $issuedCoupon->transaction_id;
+            }
+            else {
+                $paymentConfig = Config::get('orbit.payment_server');
+                $paymentClient = PaymentClient::create($paymentConfig)->setFormParam($body);
+                $response = $paymentClient->setEndPoint('api/v1/pay')
+                                        ->request('POST');
 
-            if ($response->status !== 'success') {
-                $errorMessage = 'Transaction Failed';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                if ($response->status !== 'success') {
+                    $errorMessage = 'Transaction Failed';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $transactionId = $response->data->transaction_id;
             }
 
             $mall = App::make('orbit.empty.merchant');
@@ -3875,7 +3885,7 @@ class CouponAPIController extends ControllerAPI
 
             $data = new stdclass();
             $data->issued_coupon_code = $issuedcoupon->issued_coupon_code;
-            $data->transaction_id = $response->data->transaction_id;
+            $data->transaction_id = $transactionId;
 
             $this->response->message = 'Coupon has been successfully redeemed.';
             $this->response->data = $data;
