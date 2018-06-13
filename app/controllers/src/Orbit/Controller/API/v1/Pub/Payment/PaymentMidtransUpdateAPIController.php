@@ -62,6 +62,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	        									->where('payment_transaction_id', '=', $payment_transaction_id)
 	        									->first();
 
+            $oldStatus = $payment_update->status;
+
 	        OrbitInput::post('status', function($status) use ($payment_update) {
                 $payment_update->status = $status;
             });
@@ -89,6 +91,19 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $payment_update->load('issued_coupon');
 
             Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
+
+            // If status before is starting and now is pending, we should trigger job transaction status check.
+            // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of check.
+            if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
+                $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
+                Queue::later(
+                    $delay,
+                    'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
+                    ['transactionId' => $payment_update->external_payment_transaction_id, 'check' => 0]
+                );
+
+                Log::info('First time TransactionStatus check is scheduled to run in ' . $delay . ' seconds.');
+            }
 
 	        $this->response->data = $payment_update;
 	        $this->response->code = 0;
