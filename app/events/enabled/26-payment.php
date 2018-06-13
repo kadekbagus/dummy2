@@ -25,7 +25,7 @@ use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNo
  *
  * @param PaymentTransaction $payment - Instance of PaymentTransaction model
  */
-Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $retries = 0)
+Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $retries = 0, $sendNotification = false)
 {
     // If payment completed...
     if ($payment->completed()) {
@@ -152,9 +152,9 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
 Event::listen('orbit.payment.postupdatepayment.after.commit', function($payment)
 {
     // If payment completed and coupon issued.
-    if ($payment->completed()) {
+    if ($payment->completed() && $payment->couponIssued()) {
 
-        if ($payment->forSepulsa() && $payment->couponIssued()) {
+        if ($payment->forSepulsa()) {
             // Only send receipt if payment success and the coupon issued.
             $payment->user->notify(new SepulsaReceiptNotification($payment));
         }
