@@ -30,6 +30,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
     // If payment completed...
     if ($payment->completed()) {
 
+        // If coupon issued, do nothing...
         if ($payment->couponIssued()) {
             return;
         }

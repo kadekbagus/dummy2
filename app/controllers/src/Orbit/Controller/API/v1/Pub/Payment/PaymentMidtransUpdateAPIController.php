@@ -15,6 +15,7 @@ use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use \DB;
 use Validator;
+use Queue;
 use PaymentTransaction;
 use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
