@@ -78,7 +78,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
                 if ($retries === 0) {
                     $devUser            = new User;
                     $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
-                    $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries));
+                    $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), 3);
 
                     $errorMessage = sprintf('TakeVoucher Request: First try failed. Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
                     Log::info($errorMessage);
@@ -90,9 +90,8 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
 
                     Queue::later(
                         $delay,
-                        'Orbit\\Queue\\Coupon\\Sepulsa\\RetryTakeVoucher', 
-                        compact('paymentId', 'voucherToken', 'retries'),
-                        Config::get('orbit.registration.mobile.queue_name', 'gtm_email')
+                        'Orbit\\Queue\\Coupon\\Sepulsa\\RetryTakeVoucherQueue', 
+                        compact('paymentId', 'voucherToken', 'retries')
                     );
 
                     $errorMessage = sprintf('TakeVoucher Request: Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s', $delay, $payment->object_id, $takenVouchers->getMessage());
@@ -101,7 +100,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
                     // Oh, no more retry, huh?
                     $devUser            = new User;
                     $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
-                    $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries));
+                    $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), 3);
 
                     $errorMessage = sprintf('TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
                 }
