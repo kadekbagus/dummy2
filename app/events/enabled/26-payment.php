@@ -30,8 +30,12 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
     // If payment completed...
     if ($payment->completed()) {
 
+        if ($payment->couponIssued()) {
+            return;
+        }
+
         // For sepulsa deals, we need to claim the voucher with TakeVoucher request.
-        if ($payment->forSepulsa() && ! $payment->couponIssued()) {
+        if ($payment->forSepulsa()) {
 
             $voucherToken = $payment->coupon_sepulsa->token;
             $paymentId = $payment->payment_transaction_id;
