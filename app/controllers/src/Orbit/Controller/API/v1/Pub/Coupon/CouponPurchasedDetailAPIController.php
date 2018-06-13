@@ -23,7 +23,7 @@ use PromotionRetailer;
 use PaymentTransaction;
 use Helper\EloquentRecordCounter as RecordCounter;
 
-class CouponPurchasedListAPIController extends PubControllerAPI
+class CouponPurchasedDetailAPIController extends PubControllerAPI
 {
     /**
      * GET - get all coupon wallet in all mall
@@ -40,7 +40,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
      *
      * @return Illuminate\Support\Facades\Response
      */
-    public function getCouponPurchasedList()
+    public function getCouponPurchasedDetail()
     {
         $httpCode = 200;
         $activity = Activity::mobileci()->setActivityType('view');
@@ -57,18 +57,19 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $sort_by = OrbitInput::get('sortby', 'coupon_name');
-            $sort_mode = OrbitInput::get('sortmode','asc');
             $language = OrbitInput::get('language', 'id');
+            $payment_transaction_id = OrbitInput::get('payment_transaction_id');
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
             $validator = Validator::make(
                 array(
-                    'language' => $language,
+                    'language'               => $language,
+                    'payment_transaction_id' => $payment_transaction_id
                 ),
                 array(
-                    'language' => 'required|orbit.empty.language_default',
+                    'language'               => 'required|orbit.empty.language_default',
+                    'payment_transaction_id' => 'required',
                 )
             );
 
@@ -83,15 +84,15 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             $coupon = PaymentTransaction::select(DB::raw("
-                                    {$prefix}payment_transactions.object_id as object_id,
-                                    {$prefix}payment_transactions.amount,
-                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
-                                    CONCAT({$prefix}payment_transactions.store_name,' @ ', {$prefix}payment_transactions.building_name) as store_at_building,
                                     {$prefix}payment_transactions.payment_transaction_id,
-                                    convert_tz( {$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz,
+                                    {$prefix}payment_transactions.external_payment_transaction_id,
+                                    {$prefix}payment_transactions.user_name,
+                                    {$prefix}payment_transactions.user_email,
+                                    {$prefix}payment_transactions.amount,
                                     {$prefix}payment_transactions.status,
+                                    CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                    convert_tz( {$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz,
                                     {$prefix}payment_transactions.payment_method,
-                                    CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
                                     CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath,
                                     (SELECT substring_index(group_concat(distinct om.name SEPARATOR ', '), ', ', 2)
@@ -102,7 +103,6 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                                     GROUP BY opr.promotion_id
                                                     ORDER BY om.name
                                                 ) as link_to_tenant
-
                             "))
                             ->join('promotions', 'promotions.promotion_id', '=', 'payment_transactions.object_id')
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
@@ -142,88 +142,15 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             ->where('payment_transactions.user_id', $user->user_id)
                             ->where('payment_transactions.object_type', 'coupon')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
-                            ->where('payment_transactions.status', '!=', 'starting')
-                            ->groupBy('payment_transactions.payment_transaction_id');
+                            ->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                            ->first();
 
-            OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
-                if (! empty($filterName)) {
-                    if ($filterName === '#') {
-                        $coupon->whereRaw("SUBSTR({$prefix}coupon_translations.promotion_name,1,1) not between 'a' and 'z'");
-                    } else {
-                        $filter = explode("-", $filterName);
-                        $coupon->whereRaw("SUBSTR({$prefix}coupon_translations.promotion_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
-                    }
-                }
-            });
 
-            OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
-                $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END as mall_id"));
-                $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN m.name ELSE t.name END as mall_name"));
-                $coupon->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                    ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                    ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
-                $coupon->where(function($q) use ($mallId) {
-                    $q->where(DB::raw('t.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
-                    $q->orWhere(DB::raw('m.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
-                });
-
-                $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $mallId)
-                        ->first();
-            });
-
-            // need subquery to order my coupon
-            $querySql = $coupon->toSql();
-            $coupon = $coupon->orderBy(DB::raw("{$prefix}payment_transactions.created_at"), 'desc');
-
-            $_coupon = clone $coupon;
-
-            $take = PaginationNumber::parseTakeFromGet('coupon');
-            $coupon->take($take);
-
-            $skip = PaginationNumber::parseSkipFromGet();
-            $coupon->skip($skip);
-
-            $listcoupon = $coupon->get();
-            $count = RecordCounter::create($_coupon)->count();
-
-            $cdnConfig = Config::get('orbit.cdn');
-            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
-            $localPath = '';
-            $cdnPath = '';
-            $listId = '';
-
-            if (count($listcoupon) > 0) {
-                foreach ($listcoupon as $list) {
-                    if ($listId != $list->promotion_id) {
-                        $localPath = '';
-                        $cdnPath = '';
-                        $list->image_url = '';
-                    }
-                    $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
-                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
-                    $list->original_media_path = $imgUrl->getImageUrl($localPath, $cdnPath);
-                    $listId = $list->promotion_id;
-                }
+            if (!$coupon) {
+                OrbitShopAPI::throwInvalidArgument('purchased detail not found');
             }
 
-            if (empty($skip)) {
-                $activityNotes = sprintf('Page viewed: Landing Page Coupon Wallet List Page');
-                $activity->setUser($user)
-                    ->setActivityName('view_landing_page_coupon_wallet_list')
-                    ->setActivityNameLong('View GoToMalls Coupon Wallet List')
-                    ->setObject(NULL)
-                    ->setLocation($mall)
-                    ->setModuleName('Coupon')
-                    ->setNotes($activityNotes)
-                    ->responseOK()
-                    ->save();
-            }
-
-            $this->response->data = new stdClass();
-            $this->response->data->total_records = $count;
-            $this->response->data->returned_records = count($listcoupon);
-            $this->response->data->records = $listcoupon;
+            $this->response->data = $coupon;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
@@ -236,11 +163,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
+            $this->response->data = null;
             $httpCode = 403;
         } catch (QueryException $e) {
 
