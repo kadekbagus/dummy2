@@ -9,12 +9,14 @@ use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
-use \Config;
-use \Exception;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use \DB;
+use DB;
 use Validator;
+use Queue;
+use Log;
+use Config;
+use Exception;
 use PaymentTransaction;
 use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
@@ -62,6 +64,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	        									->where('payment_transaction_id', '=', $payment_transaction_id)
 	        									->first();
 
+            $oldStatus = $payment_update->status;
+
 	        OrbitInput::post('status', function($status) use ($payment_update) {
                 $payment_update->status = $status;
             });
@@ -89,6 +93,19 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $payment_update->load('issued_coupon');
 
             Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
+
+            // If status before is starting and now is pending, we should trigger job transaction status check.
+            // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of check.
+            if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
+                $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
+                Queue::later(
+                    $delay,
+                    'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
+                    ['transactionId' => $payment_update->external_payment_transaction_id, 'check' => 0]
+                );
+
+                Log::info('First time TransactionStatus check is scheduled to run in ' . $delay . ' seconds.');
+            }
 
 	        $this->response->data = $payment_update;
 	        $this->response->code = 0;
