@@ -83,9 +83,7 @@ class PaymentTransaction extends Eloquent
         return in_array($this->status, [
             self::STATUS_SUCCESS, 
             self::STATUS_SUCCESS_NO_COUPON, 
-            'success_no_coup', 
-            'paid', 
-            'settlement'
+            'success_no_coup', // @todo should be removed.
         ]);
     }
 

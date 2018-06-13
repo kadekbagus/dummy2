@@ -7257,5 +7257,23 @@ return array(
             // How many SECONDS should we wait before retrying the TakeVoucher request?
             'take_voucher_retry_timeout' => 5,
         ],
+
+        // Payment Gateway Config
+        // Midtrans
+        'midtrans' => [
+            // Gotomalls secret key from Midtrans
+            'server_key' => 'SB-Mid-server-2x8IKwAQh-ZNkXC2Q5XrtuGl',
+            // Gotomalls client key from Midtrans
+            'client_key' => 'SB-Mid-client-l2uVyYh08A1FpsBZ',
+            // set to true when in production, false for sandbox
+            'is_production' => false,
+
+            // What is the maximum number of check we should perform before stopping?
+            // With the default values it means, at the maximum, we check 20 times every 60 seconds (1 minute).
+            'transaction_status_max_retry' => 20,
+
+            // How many seconds we should wait before re-checking the transaction status?
+            'transaction_status_timeout' => 60,
+        ],
     ],
 );

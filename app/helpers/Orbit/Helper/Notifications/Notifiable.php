@@ -13,9 +13,9 @@ trait Notifiable {
      * @param  [type] $notificationClass [description]
      * @return [type]                    [description]
      */
-    public function notify($notificationClass)
+    public function notify($notificationClass, $delay = 1)
     {
         // $this refer to the object/model that will be notified.
-        $notificationClass->setNotifiable($this)->send();
+        $notificationClass->setNotifiable($this)->send($delay);
     }
 }
