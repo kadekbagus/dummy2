@@ -57,7 +57,7 @@ class TransactionStatusResponse
      */
     public function isPending()
     {
-        return $this->data->status_code === MidtransResponse::STATUS_PENDING;
+        return $this->data->status_code === MidtransResponse::STATUS_PENDING || $this->data->transaction_status === 'pending';
     }
 
     /**
@@ -68,6 +68,18 @@ class TransactionStatusResponse
     public function isExpired()
     {
         return $this->data->status_code === MidtransResponse::STATUS_EXPIRED;
+    }
+
+    /**
+     * Decide if we should retry or not based on status_code from Midtrans.
+     * 
+     * @param  integer $code [description]
+     * @return [type]        [description]
+     */
+    public function shouldRetryChecking($checkTimes = 0)
+    {
+        return ($this->isPending() || in_array($this->getCode(), [500, 502, 503, 505])) && 
+               $checkTimes < Config::get('orbit.partners_api.midtrans.transaction_status_max_retry', 60);
     }
 
     /**
