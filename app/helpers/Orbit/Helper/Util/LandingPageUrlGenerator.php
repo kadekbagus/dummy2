@@ -148,7 +148,7 @@ class LandingPageUrlGenerator
     /**
      * @return url
      */
-    public function generateUrl() {
+    public function generateUrl($showCountry=false) {
 
         if ($this->objectType === 'event' || $this->objectType === 'news') {
             $this->objectType = 'event';
@@ -181,6 +181,45 @@ class LandingPageUrlGenerator
                 break;
         }
 
+        if ($showCountry) {
+            $country = $this->getCountry($this->objectId, $this->objectType);
+            $url = $url . '?country=' . $country;
+        }
+
         return $url;
+    }
+
+    public function getCountry($objectType, $objectId) {
+        $country = null;
+
+        switch ($objectType) {
+            case 'coupon':
+                $coupon = PromotionRetailer::select('merchants.country')
+                                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                            ->where('promotion_retailer.promotion_id', '=', $objectId)
+                                            ->first();
+                $country = ($coupon) ? $coupon->country : null;
+                break;
+
+            case 'mall':
+                $mall = Mall::select('country')->where('merchant_id', '=', $objectId)->first();
+                $country = ($mall) ? $mall->country : null;
+                break;
+
+            case 'store':
+                $store = Tenant::select('country')->where('merchant_id', '=', $objectId)->first();
+                $country = ($store) ? $store->country : null;
+                break;
+
+            default;
+                $news = NewsMerchant::select('merchants.country')
+                                    ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.retailer_id')
+                                    ->where('news_merchant.news_id', '=', $objectId)
+                                    ->first();
+                $country = ($news) ? $news->country : null;
+                break;
+        }
+
+        return $country
     }
 }
