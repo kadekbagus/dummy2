@@ -194,7 +194,7 @@ class ReceiptNotification extends Notification
                         ->first();
 
         if ($coupon) {
-            $launchUrl = LandingPageUrlGenerator::create('coupon', $coupon->promotion_id, $coupon->promotion_name)->generateUrl();
+            $launchUrl = LandingPageUrlGenerator::create('coupon', $coupon->promotion_id, $coupon->promotion_name)->generateUrl(true);
 
             $headings = new stdClass();
             $headings->en = $coupon->promotion_name;
