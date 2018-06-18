@@ -113,10 +113,10 @@ class ReceiptNotification extends Notification
             $job->delete();
 
             // Bury the job for later inspection
-            JobBurier::create($job, function($theJob) {
-                // The queue driver does not support bury.
-                $theJob->delete();
-            })->bury();
+            // JobBurier::create($job, function($theJob) {
+            //     // The queue driver does not support bury.
+            //     $theJob->delete();
+            // })->bury();
 
         } catch (Exception $e) {
             Log::debug('Notification: ReceiptNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
@@ -141,8 +141,8 @@ class ReceiptNotification extends Notification
      */
     public function send()
     {
-        // Log::debug('Notification: Pushing ReceiptNotification email to queue..');
-        Queue::push(
+        Queue::later(
+            3,
             'Orbit\\Notifications\\Coupon\\HotDeals\\ReceiptNotification@toEmail', 
             $this->getEmailData(),
             $this->queueName
