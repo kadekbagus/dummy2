@@ -17,7 +17,7 @@ use Coupon;
 
 /**
  * Receipt Notification for Customer after purchasing Hot Deals (Paid Coupon).
- * 
+ *
  */
 class ReceiptNotification extends Notification
 {
@@ -37,7 +37,7 @@ class ReceiptNotification extends Notification
 
     /**
      * Custom field email address if not reading from field 'email'
-     * 
+     *
      * @return [type] [description]
      */
     protected function getEmailAddress()
@@ -47,7 +47,7 @@ class ReceiptNotification extends Notification
 
     /**
      * Custom name if not reading from field 'name'.
-     * 
+     *
      * @return [type] [description]
      */
     protected function getName()
@@ -57,7 +57,7 @@ class ReceiptNotification extends Notification
 
     /**
      * Get the email data.
-     * 
+     *
      * @return [type] [description]
      */
     protected function getEmailData()
@@ -65,7 +65,7 @@ class ReceiptNotification extends Notification
         $transaction = [];
 
         $amount = $this->payment->getAmount();
-        
+
         $transaction['id']    = $this->payment->payment_transaction_id;
         $transaction['date']  = Carbon::parse($this->payment->transaction_date_and_time)->format('j M Y');
         $transaction['total'] = $amount;
@@ -97,7 +97,7 @@ class ReceiptNotification extends Notification
     /**
      * Notify via email.
      * This method act as custom Queue handler.
-     * 
+     *
      * @param  [type] $notifiable [description]
      * @return [type]             [description]
      */
@@ -133,7 +133,7 @@ class ReceiptNotification extends Notification
     /**
      * Notify to web / user's notification.
      * MongoDB record, appear in user's notifications list page
-     * 
+     *
      * @return [type] [description]
      */
     public function toWeb($bodyInApps = null)
@@ -148,14 +148,14 @@ class ReceiptNotification extends Notification
 
     /**
      * Send notification.
-     * 
+     *
      * @return [type] [description]
      */
     public function send()
     {
         Queue::later(
             3,
-            'Orbit\\Notifications\\Coupon\\HotDeals\\ReceiptNotification@toEmail', 
+            'Orbit\\Notifications\\Coupon\\HotDeals\\ReceiptNotification@toEmail',
             $this->getEmailData(),
             $this->queueName
         );
@@ -171,7 +171,8 @@ class ReceiptNotification extends Notification
         $userId = $this->payment->user_id;
         $couponId = $this->payment->object_id;
         $prefix = DB::getTablePrefix();
-        $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_name,
+        $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id,
+                                    {$prefix}promotions.promotion_name,
                                     CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
                                     CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
                             "))
