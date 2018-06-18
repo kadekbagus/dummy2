@@ -171,7 +171,8 @@ class ReceiptNotification extends Notification
         $userId = $this->payment->user_id;
         $couponId = $this->payment->object_id;
         $prefix = DB::getTablePrefix();
-        $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_name,
+        $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id,
+                                    {$prefix}promotions.promotion_name,
                                     CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
                                     CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
                             "))
