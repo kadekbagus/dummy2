@@ -10,6 +10,7 @@ use Mall;
 use Tenant;
 use NewsMerchant;
 use PromotionRetailer;
+use DB;
 
 class LandingPageUrlGenerator
 {
