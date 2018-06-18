@@ -6,6 +6,10 @@
  */
 
 use Str;
+use Mall;
+use Tenant;
+use NewsMerchant;
+use PromotionRetailer;
 
 class LandingPageUrlGenerator
 {
@@ -213,13 +217,13 @@ class LandingPageUrlGenerator
 
             default;
                 $news = NewsMerchant::select('merchants.country')
-                                    ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.retailer_id')
+                                    ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
                                     ->where('news_merchant.news_id', '=', $objectId)
                                     ->first();
                 $country = ($news) ? $news->country : null;
                 break;
         }
 
-        return $country
+        return $country;
     }
 }
