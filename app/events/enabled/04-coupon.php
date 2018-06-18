@@ -523,7 +523,7 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
                          ->where('promotions.promotion_id', '=', $coupon->promotion_id)
                          ->first();
 
-            $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl();
+            $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl(true);
 
             $headings = new stdClass();
             $contents = new stdClass();
@@ -815,7 +815,7 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
             }
         }
 
-        $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl();
+        $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl(true);
         $attachmentPath = null;
         $attachmentRealPath = null;
         $cdnUrl = null;
