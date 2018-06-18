@@ -2,6 +2,8 @@
 
 use Orbit\Helper\Midtrans\API\Response\Response as MidtransResponse;
 
+use Config;
+
 /**
  * Transaction Status Response mapper for Midtrans API.
  * 

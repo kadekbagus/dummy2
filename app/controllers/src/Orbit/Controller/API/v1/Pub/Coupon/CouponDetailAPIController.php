@@ -159,6 +159,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
                             DB::Raw($issuedCouponId),
+                            'payment_transactions.payment_transaction_id as transaction_id',
                             'payment_transactions.status as payment_status',
                             // query for get status active based on timezone
                             DB::raw("
@@ -234,7 +235,8 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $pt->groupBy('product_tag');
                             }])
                         ->where('promotions.promotion_id', $couponId)
-                        ->where('promotions.is_visible', 'Y');
+                        ->where('promotions.is_visible', 'Y')
+                        ->orderBy('payment_transactions.created_at', 'desc'); // get the last payment.
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");

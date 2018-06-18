@@ -5,6 +5,7 @@ use Log;
 use Queue;
 use Config;
 use Exception;
+use Event;
 use Orbit\Helper\Util\JobBurier;
 
 use PaymentTransaction;
@@ -50,7 +51,7 @@ class CheckTransactionStatusQueue
             // If payment completed then do nothing.
             // (It maybe completed by notification callback/ping from Midtrans)
             if ($payment->completed()) {
-                $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed and the coupon issued. Nothing to do.');
+                $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed. Nothing to do.');
 
                 if (! $payment->couponIssued()) {
                     $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' Coupon NOT ISSUED YET.');
