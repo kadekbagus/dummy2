@@ -7,6 +7,7 @@ use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Carbon\Carbon;
 
+use DB;
 use Mail;
 use Config;
 use Log;
@@ -24,12 +25,14 @@ class ReceiptNotification extends Notification
 
     protected $contact = null;
 
+    protected $mongoConfig = null;
+
     function __construct($payment = null)
     {
         $this->payment      = $payment;
         $this->queueName    = Config::get('orbit.registration.mobile.queue_name');
         $this->contact      = Config::get('orbit.contact_information');
-        $this->$mongoConfig = Config::get('database.mongodb');
+        $this->mongoConfig  = Config::get('database.mongodb');
     }
 
     /**
@@ -174,7 +177,7 @@ class ReceiptNotification extends Notification
                             "))
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
-                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                            ->leftJoin('coupon_translations', function ($q) {
                                 $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id');
                             })
                             ->leftJoin('coupon_translations as default_translation', function ($q) {
@@ -197,12 +200,12 @@ class ReceiptNotification extends Notification
         if ($coupon) {
             $launchUrl = LandingPageUrlGenerator::create('coupon', $coupon->promotion_id, $coupon->promotion_name)->generateUrl(true);
 
-            $headings = new stdClass();
+            $headings = new \stdClass();
             $headings->en = $coupon->promotion_name;
-            $contents = new stdClass();
+            $contents = new \stdClass();
             $contents->en = 'Your voucher is ready! Click here to redeem your voucher';
 
-            $notificationData = new stdClass();
+            $notificationData = new \stdClass();
             $notificationData->title = $coupon->promotion_name;
             $notificationData->launch_url = $launchUrl;
             $notificationData->default_language = 'en';
