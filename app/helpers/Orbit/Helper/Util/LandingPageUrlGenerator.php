@@ -10,6 +10,7 @@ use Mall;
 use Tenant;
 use NewsMerchant;
 use PromotionRetailer;
+use DB;
 
 class LandingPageUrlGenerator
 {
@@ -186,7 +187,7 @@ class LandingPageUrlGenerator
         }
 
         if ($showCountry) {
-            $country = $this->getCountry($this->objectId, $this->objectType);
+            $country = $this->getCountry($this->objectType, $this->objectId);
             $url = $url . '?country=' . $country;
         }
 
