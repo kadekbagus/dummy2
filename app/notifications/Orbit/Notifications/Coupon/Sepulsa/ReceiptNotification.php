@@ -107,7 +107,7 @@ class ReceiptNotification extends Notification
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Your Invoice from Gotomalls.com';
+                $subject = 'Your Receipt from Gotomalls.com';
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
@@ -117,10 +117,10 @@ class ReceiptNotification extends Notification
             $job->delete();
 
             // Bury the job for later inspection
-            JobBurier::create($job, function($theJob) {
-                // The queue driver does not support bury.
-                $theJob->delete();
-            })->bury();
+            // JobBurier::create($job, function($theJob) {
+            //     // The queue driver does not support bury.
+            //     $theJob->delete();
+            // })->bury();
 
         } catch (Exception $e) {
             Log::debug('Notification: ReceiptNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
@@ -136,10 +136,10 @@ class ReceiptNotification extends Notification
     public function toWeb($bodyInApps)
     {
         if (!empty($bodyInApps)) {
-        $mongoClient = MongoClient::create($this->mongoConfig);
-        $inApps = $mongoClient->setFormParam($bodyInApps)
-                              ->setEndPoint('user-notifications')
-                              ->request('POST');
+            $mongoClient = MongoClient::create($this->mongoConfig);
+            $inApps = $mongoClient->setFormParam($bodyInApps)
+                                  ->setEndPoint('user-notifications')
+                                  ->request('POST');
         }
     }
 
@@ -150,7 +150,8 @@ class ReceiptNotification extends Notification
      */
     public function send()
     {
-        Queue::push(
+        Queue::later(
+            3,
             'Orbit\\Notifications\\Coupon\\Sepulsa\\ReceiptNotification@toEmail',
             $this->getEmailData(),
             $this->queueName
@@ -194,7 +195,7 @@ class ReceiptNotification extends Notification
                         ->first();
 
         if ($coupon) {
-            $launchUrl = LandingPageUrlGenerator::create('coupon', $coupon->promotion_id, $coupon->promotion_name)->generateUrl();
+            $launchUrl = LandingPageUrlGenerator::create('coupon', $coupon->promotion_id, $coupon->promotion_name)->generateUrl(true);
 
             $headings = new stdClass();
             $headings->en = $coupon->promotion_name;

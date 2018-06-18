@@ -4,6 +4,7 @@
  *
  * @author Shelgi <shelgi@dominopos.com>
  */
+use Exception;
 use \GuzzleHttp\Client as Guzzle;
 use Orbit\Helper\Exception\OrbitCustomException;
 
@@ -99,7 +100,7 @@ class OneSignal
             $response = $this->client->request($method, self::API_URL.$uri, $param);
 
             return json_decode($response->getBody()->getContents());
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new OrbitCustomException($e->getMessage(), self::CURL_CONNECT_ERROR_CODE, NULL);
         }
     }
