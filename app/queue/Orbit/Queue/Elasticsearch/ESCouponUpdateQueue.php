@@ -326,7 +326,15 @@ class ESCouponUpdateQueue
 
             $emptyRedeem = FALSE;
             $emptyIssued = FALSE;
-            $available = IssuedCoupon::totalAvailable($coupon->promotion_id);
+
+            // If it's sepulsa, don't count availability based on issued coupon because
+            // sepulsa has no issued coupons before user buy it.
+            if ($coupon->promotion_type === 'sepulsa') {
+                $available = $coupon->maximum_issued_coupon;
+            }
+            else {
+                $available = IssuedCoupon::totalAvailable($coupon->promotion_id);
+            }
 
             if ($coupon->maximum_redeem > 0) {
                 $notAvailable = IssuedCoupon::where('status', '=', 'redeemed')
@@ -345,6 +353,10 @@ class ESCouponUpdateQueue
 
                 if ($notAvailable >= $coupon->maximum_issued_coupon) {
                     $emptyIssued = TRUE;
+                }
+                else {
+                    // Update availability 
+                    $available = $coupon->maximum_issued_coupon - $notAvailable;
                 }
             }
             if($emptyRedeem || $emptyIssued) {

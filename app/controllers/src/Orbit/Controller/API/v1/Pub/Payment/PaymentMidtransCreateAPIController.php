@@ -35,11 +35,12 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-	        $user_email = $user->user_email;
-	        $user_name = $user->user_firstname.' '.$user->user_lastname;
 	        $user_id = $user->user_id;
-	        $country_id = OrbitInput::post('country_id');
+	        $first_name = OrbitInput::post('first_name');
+	        $last_name = OrbitInput::post('last_name');
+	        $email = OrbitInput::post('email');
 	        $phone = OrbitInput::post('phone');
+	        $country_id = OrbitInput::post('country_id');
 	        $amount = OrbitInput::post('amount');
 	        $currency_id = OrbitInput::post('currency_id', '1');
 	        $currency = OrbitInput::post('currency', 'IDR');
@@ -47,14 +48,21 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	        $object_id = OrbitInput::post('object_id');
 	        $object_type = OrbitInput::post('object_type');
 	        $object_name = OrbitInput::post('object_name');
+	        $user_name = (!empty($last_name) ? $first_name.' '.$last_name : $first_name);
 
 	        $validator = Validator::make(
 	            array(
+	                'first_name'  => $first_name,
+	                'last_name'   => $last_name,
+	                'email'       => $email,
 	                'phone'       => $phone,
 	                'amount'      => $amount,
 	                'post_data'   => $post_data,
 	            ),
 	            array(
+	                'first_name'  => 'required',
+	                'last_name'   => 'required',
+	                'email'       => 'required',
 	                'phone'       => 'required',
 	                'amount'      => 'required',
 	                'post_data'   => 'required',
@@ -71,7 +79,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 	        }
 
 	        $payment_new = new PaymentTransaction;
-	        $payment_new->user_email = $user_email;
+	        $payment_new->user_email = $email;
 	        $payment_new->user_name = $user_name;
 	        $payment_new->user_id = $user_id;
 	        $payment_new->country_id = $country_id;

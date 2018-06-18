@@ -95,7 +95,7 @@ class MenuCounterAPIController extends PubControllerAPI
 
             $campaignJsonQuery = array('from' => 0, 'size' => 1, 'aggs' => array('campaign_index' => array('terms' => array('field' => '_index'))), 'query' => array('bool' => array('must' => array(  array('match' => array('status' => 'active')), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
-            $couponJsonQuery = array('from' => 0, 'size' => 1, 'aggs' => array('campaign_index' => array('terms' => array('field' => '_index'))), 'query' => array('bool' => array('must' => array( array('match' => array('status' => 'active')), array('range' => array('available' => array('gt' => 0))), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
+            $couponJsonQuery = array('from' => 0, 'size' => 1, 'aggs' => array('campaign_index' => array('terms' => array('field' => '_index'))), 'query' => array('bool' => array('must' => array( array('match' => array('status' => 'active')), array('range' => array('begin_date' => array('lte' => $dateTimeEs))), array('range' => array('end_date' => array('gte' => $dateTimeEs)))))));
 
             $mallJsonQuery = array('from' => 0, 'size' => 1, 'query' => array('bool' => array('filter' => array( array('query' => array('match' => array('is_subscribed' => 'Y'))), array('query' => array('match' => array('status' => 'active')))))));
 

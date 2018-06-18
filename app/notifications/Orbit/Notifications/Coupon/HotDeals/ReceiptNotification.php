@@ -1,4 +1,4 @@
-<?php namespace Orbit\Notifications\Sepulsa;
+<?php namespace Orbit\Notifications\Coupon\HotDeals;
 
 use Orbit\Helper\Notifications\Notification;
 use Orbit\Helper\Util\JobBurier;
@@ -12,17 +12,20 @@ use Queue;
 use Exception;
 
 /**
- * Notify user after completing and getting Sepulsa Voucher.
+ * Receipt Notification for Customer after purchasing Hot Deals (Paid Coupon).
  * 
  */
-class InvoiceNotification extends Notification
+class ReceiptNotification extends Notification
 {
     protected $payment = null;
 
+    protected $contact = null;
+
     function __construct($payment = null)
     {
-        $this->payment = $payment;
-        $this->queueName = Config::get('orbit.registration.mobile.queue_name');
+        $this->payment      = $payment;
+        $this->queueName    = Config::get('orbit.registration.mobile.queue_name');
+        $this->contact      = Config::get('orbit.contact_information');
     }
 
     /**
@@ -59,11 +62,16 @@ class InvoiceNotification extends Notification
         $transaction['id']    = $this->payment->payment_transaction_id;
         $transaction['date']  = Carbon::parse($this->payment->transaction_date_and_time)->format('j M Y');
         $transaction['total'] = $amount;
+        $redeemUrl            = Config::get('orbit.coupon.direct_redemption_url');
+        $cs = [
+            'phone' => $this->contact['customer_service']['phone'],
+            'email' => $this->contact['customer_service']['email'],
+        ];
 
         $transaction['items'] = [
             [
                 'name'      => $this->payment->object_name,
-                'quantity'  => '1',
+                'quantity'  => 1,
                 'price'     => $amount,
                 'total'     => $amount, // should be quantity * $this->payment->amount
             ],
@@ -74,6 +82,8 @@ class InvoiceNotification extends Notification
             'customerName'      => $this->getName(),
             'customerPhone'     => $this->payment->phone,
             'transaction'       => $transaction,
+            'redeemUrl'         => $redeemUrl,
+            'cs'                => $cs,
         ];
     }
 
@@ -87,9 +97,8 @@ class InvoiceNotification extends Notification
     public function toEmail($job, $data)
     {
         try {
-            // Log::debug('Notification(' . $data['transactionId'] . '): Sending InvoiceNotification email...');
 
-            $emailTemplate = 'emails.receipt.sepulsa-voucher';
+            $emailTemplate = 'emails.receipt.hot-deals';
 
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
@@ -103,8 +112,6 @@ class InvoiceNotification extends Notification
 
             $job->delete();
 
-            // Log::debug('Notification(' . $data['transactionId'] . '): InvoiceNotification email should be sent by now.');
-
             // Bury the job for later inspection
             JobBurier::create($job, function($theJob) {
                 // The queue driver does not support bury.
@@ -112,7 +119,7 @@ class InvoiceNotification extends Notification
             })->bury();
 
         } catch (Exception $e) {
-            Log::debug('Notification: InvoiceNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::debug('Notification: ReceiptNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
     }
 
@@ -134,9 +141,9 @@ class InvoiceNotification extends Notification
      */
     public function send()
     {
-        // Log::debug('Notification: Pushing InvoiceNotification email to queue..');
+        // Log::debug('Notification: Pushing ReceiptNotification email to queue..');
         Queue::push(
-            'Orbit\\Notifications\\Sepulsa\\InvoiceNotification@toEmail', 
+            'Orbit\\Notifications\\Coupon\\HotDeals\\ReceiptNotification@toEmail', 
             $this->getEmailData(),
             $this->queueName
         );

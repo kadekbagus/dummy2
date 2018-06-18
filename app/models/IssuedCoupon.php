@@ -17,6 +17,10 @@ class IssuedCoupon extends Eloquent
 
     const ISSUE_COUPON_INCREMENT = 1111110;
 
+    const STATUS_AVAILABLE      = 'available';
+    const STATUS_ISSUED         = 'issued';
+    const STATUS_REDEEMED       = 'redeemed';
+
     protected $table = 'issued_coupons';
 
     protected $primaryKey = 'issued_coupon_id';
@@ -29,6 +33,16 @@ class IssuedCoupon extends Eloquent
     public function user()
     {
         return $this->belongsTo('User', 'user_id', 'user_id');
+    }
+
+    /**
+     * IssuedCoupon - PaymentTransaction relation.
+     * 
+     * @return [type] [description]
+     */
+    public function payment()
+    {
+        return $this->belongsTo('PaymentTransaction', 'transaction_id', 'payment_transaction_id');
     }
 
     public function issuerretailer()
@@ -54,21 +68,21 @@ class IssuedCoupon extends Eloquent
 
     public function scopeAvailable($query)
     {
-        return $query->where('issued_coupons.status', 'available');
+        return $query->where('issued_coupons.status', self::STATUS_AVAILABLE);
     }
 
     public function scopeIssued($query)
     {
-        return $query->where('issued_coupons.status', 'issued');
+        return $query->where('issued_coupons.status', self::STATUS_ISSUED);
     }
 
     public function scopeRedeemed($query)
     {
-        return $query->where('issued_coupons.status', 'redeemed');
+        return $query->where('issued_coupons.status', self::STATUS_REDEEMED);
     }
 
     public static function totalAvailable($promotionId) {
-        $available = static::where('status', 'available')->where('promotion_id', $promotionId)->count();
+        $available = static::where('status', self::STATUS_AVAILABLE)->where('promotion_id', $promotionId)->count();
         return $available;
     }
 
@@ -131,7 +145,7 @@ class IssuedCoupon extends Eloquent
                     'issued_coupon_code' => $couponCodes[$i],
                     'expired_date' => $couponValidityDate,
                     'issuer_user_id' => $issuerUserId,
-                    'status' => 'available',
+                    'status' => self::STATUS_AVAILABLE,
                     'created_at' => $now,
                     'updated_at' => $now
                 );
@@ -203,7 +217,7 @@ class IssuedCoupon extends Eloquent
                 $issuedCoupon->user_id = $userId;
                 $issuedCoupon->user_email = $userEmail;
                 $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-                $issuedCoupon->status = 'issued';
+                $issuedCoupon->status = self::STATUS_ISSUED;
                 $issuedCoupon->save();
             }
         }
@@ -228,7 +242,7 @@ class IssuedCoupon extends Eloquent
         $issuedCoupon = static::join('users', 'users.user_id', '=', 'issued_coupons.user_id')
             ->join('roles', 'users.user_role_id', '=', 'roles.role_id')
             ->where('roles.role_name', 'Guest')
-            ->where('issued_coupons.status', 'issued')
+            ->where('issued_coupons.status', self::STATUS_ISSUED)
             ->where('promotion_id', $promotionId)
             ->where('users.user_email', $userEmail)
             ->first();
@@ -243,7 +257,7 @@ class IssuedCoupon extends Eloquent
                 $issuedCoupon->user_id = $userId;
                 $issuedCoupon->user_email = $userEmail;
                 $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-                $issuedCoupon->status = 'issued';
+                $issuedCoupon->status = self::STATUS_ISSUED;
                 $issuedCoupon->save();
             } else {
                 $issuedCoupon = NULL;

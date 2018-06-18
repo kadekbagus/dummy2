@@ -24,12 +24,12 @@ abstract class Notification {
 
     protected function getEmailData()
     {
-        
+        return [];
     }
 
     protected function getWebNotificationData()
     {
-        
+        return [];
     }
 
     protected function getEmailAddress()
