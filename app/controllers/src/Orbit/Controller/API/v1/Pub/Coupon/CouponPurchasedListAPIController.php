@@ -200,8 +200,8 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                         $cdnPath = '';
                         $list->image_url = '';
                     }
-                    $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
-                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
+                    $localPath = (! empty($list->localPath)) ? $list->localPath : '';
+                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : '';
                     $list->original_media_path = $imgUrl->getImageUrl($localPath, $cdnPath);
                     $listId = $list->promotion_id;
                 }
