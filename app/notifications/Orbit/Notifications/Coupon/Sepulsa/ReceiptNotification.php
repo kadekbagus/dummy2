@@ -204,7 +204,7 @@ class ReceiptNotification extends Notification
             $headings = new \stdClass();
             $headings->en = $coupon->promotion_name;
             $contents = new \stdClass();
-            $contents->en = 'Your voucher is ready! Click here to redeem your voucher';
+            $contents->en = 'Your voucher is ready! Click here to redeem';
 
             $notificationData = new \stdClass();
             $notificationData->title = $coupon->promotion_name;
