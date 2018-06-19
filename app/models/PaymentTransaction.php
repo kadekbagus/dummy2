@@ -18,6 +18,7 @@ class PaymentTransaction extends Eloquent
     const STATUS_STARTING           = 'starting';
     const STATUS_PENDING            = 'pending';
     const STATUS_FAILED             = 'failed';
+    const STATUS_EXPIRED            = 'expired';
     const STATUS_SUCCESS            = 'success';
 
     // Status 'success_no_coupon' means the payment was success but we can not get/take the coupon from Sepulsa API

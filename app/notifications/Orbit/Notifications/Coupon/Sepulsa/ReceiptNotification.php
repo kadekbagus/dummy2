@@ -16,7 +16,7 @@ use Exception;
 use Coupon;
 
 /**
- * Notify user after completing and getting Sepulsa Voucher.
+ * Receipt Notification for Customer after purchasing Sepulsa Voucher.
  *
  */
 class ReceiptNotification extends Notification
@@ -136,9 +136,9 @@ class ReceiptNotification extends Notification
      *
      * @return [type] [description]
      */
-    public function toWeb($bodyInApps)
+    public function toWeb($bodyInApps = null)
     {
-        if (!empty($bodyInApps)) {
+        if (! empty($bodyInApps)) {
             $mongoClient = MongoClient::create($this->mongoConfig);
             $inApps = $mongoClient->setFormParam($bodyInApps)
                                   ->setEndPoint('user-notifications')
