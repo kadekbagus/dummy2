@@ -23,3 +23,8 @@ Route::post('/app/v1/notification/update', 'IntermediateAuthController@Notificat
  * notification detail
  */
 Route::get('/app/v1/notification/detail', 'IntermediateAuthController@NotificationDetail_getNotificationDetail');
+
+/**
+ * notification cancel
+ */
+Route::post('/app/v1/notification/cancel', 'IntermediateAuthController@NotificationCancel_postCancelNotification');

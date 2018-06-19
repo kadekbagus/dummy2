@@ -3,11 +3,15 @@
 use Illuminate\Auth\UserTrait;
 use Illuminate\Auth\UserInterface;
 
+use Orbit\Helper\Notifications\Notifiable;
+
 class User extends Eloquent implements UserInterface
 {
     use UserTrait;
     use ModelStatusTrait;
     use UserRoleTrait;
+
+    use Notifiable;
 
     const USER_ALREADY_ACTIVE_ERROR_CODE = 1401;
 

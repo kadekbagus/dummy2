@@ -6513,7 +6513,7 @@ return array(
     'coupon' => [
         // URL redemption page which should be on main page (not CI)
         // e.g: https://www.gotomalls.cool/#!/coupon-redemption?cid=%s&uid=%s
-        'direct_redemption_url' => NULL,
+        'direct_redemption_url' => 'https://www.gotomalls.com/my/coupons',
         // URL coupon canvas
         // e.g: https://www.gotomalls.cool/#!/coupon-blasting?cid=%s&pid=%s
         'sms_direct_redemption_url' => NULL,
@@ -6839,6 +6839,9 @@ return array(
                 'cache_ttl' => 60
             ],
         ],
+
+        // If value is TRUE, Redis key will be deleted when store / campaign inactive
+        'ng_redis_enabled' => FALSE
     ],
 
     /**
@@ -7220,5 +7223,57 @@ return array(
             // if not then only given mall id can be accessed
             'whitelist_mall_ids' => [],
         ]
-    ]
+    ],
+
+    // config regarding third party partners API
+    'partners_api' => [
+        'sepulsa' => [
+            // GTM Sepulsa ID
+            'partner_id' => null,
+            // set to true to switch base uri to production
+            'is_production' => false,
+            // use sandbox base uri for development (with trailing slash)
+            'base_uri' => [
+                'production' => '',
+                'sandbox' => 'https://bonabo.sepulsa.co.id/api/v1/'
+            ],
+            'auth' => [
+                'production' => [
+                    'username' => '',
+                    'password' => '',
+                ],
+                'sandbox' => [
+                    'username' => 'buzzebees@sepulsa.com',
+                    'password' => 'masukaja',
+                ]
+            ],
+            // cache key, the session will be saved to cache
+            'session_key_name' => 'sepulsa_token',
+            // redeem callback secret_token, to be given to sepulsa
+            'callback_secret_token' => 'HXJQluD4hGV1UqgaaR4YJomdv0zsQXny',
+
+            // How many times maximum we retry if the first take voucher request failed?
+            'take_voucher_max_retry' => 5,
+            // How many SECONDS should we wait before retrying the TakeVoucher request?
+            'take_voucher_retry_timeout' => 5,
+        ],
+
+        // Payment Gateway Config
+        // Midtrans
+        'midtrans' => [
+            // Gotomalls secret key from Midtrans
+            'server_key' => 'SB-Mid-server-2x8IKwAQh-ZNkXC2Q5XrtuGl',
+            // Gotomalls client key from Midtrans
+            'client_key' => 'SB-Mid-client-l2uVyYh08A1FpsBZ',
+            // set to true when in production, false for sandbox
+            'is_production' => false,
+
+            // What is the maximum number of check we should perform before stopping?
+            // With the default values it means, at the maximum, we check 20 times every 60 seconds (1 minute).
+            'transaction_status_max_retry' => 20,
+
+            // How many seconds we should wait before re-checking the transaction status?
+            'transaction_status_timeout' => 60,
+        ],
+    ],
 );

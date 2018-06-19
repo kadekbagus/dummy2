@@ -21,22 +21,24 @@
         "artdarek/oauth-4-laravel": "^1.0",
         "elasticsearch/elasticsearch": "2.0",
         "defuse/php-encryption": "~2.0",
-        "aws/aws-sdk-php": "^3.20.13"
+        "aws/aws-sdk-php": "^3.20.13",
+        "veritrans/veritrans-php": "dev-master"
     },
     "autoload": {
-                "psr-0": {
-                    "Facebook": "vendor/facebook/src",
-                    "DominoPOS\\OrbitAPI\\": "vendor/dominopos/orbit-api/",
-                    "OrbitShop\\API\\": "vendor/dominopos/orbit-shop-api/",
-                    "DominoPOS\\OrbitACL\\": "vendor/dominopos/orbit-acl/",
-                    "DominoPOS\\OrbitUploader\\": "vendor/dominopos/orbit-uploader/",
-                    "DominoPOS\\OrbitSession\\": "vendor/dominopos/orbit-session/",
-                    "Orbit\\Database\\": "vendor/dominopos/orbit-database/",
-                    "Orbit\\Queue\\": "app/queue/",
-                    "Orbit\\Controller\\": "app/controllers/src",
-                    "Orbit\\Helper\\": "app/helpers",
-                    "Orbit\\Mailchimp\\": "vendor/dominopos/orbit-mailchimp/"
-                },
+        "psr-0": {
+            "Facebook": "vendor/facebook/src",
+            "DominoPOS\\OrbitAPI\\": "vendor/dominopos/orbit-api/",
+            "OrbitShop\\API\\": "vendor/dominopos/orbit-shop-api/",
+            "DominoPOS\\OrbitACL\\": "vendor/dominopos/orbit-acl/",
+            "DominoPOS\\OrbitUploader\\": "vendor/dominopos/orbit-uploader/",
+            "DominoPOS\\OrbitSession\\": "vendor/dominopos/orbit-session/",
+            "Orbit\\Database\\": "vendor/dominopos/orbit-database/",
+            "Orbit\\Queue\\": "app/queue/",
+            "Orbit\\Controller\\": "app/controllers/src",
+            "Orbit\\Helper\\": "app/helpers",
+            "Orbit\\Mailchimp\\": "vendor/dominopos/orbit-mailchimp/",
+            "Orbit\\Notifications\\": "app/notifications/"
+        },
         "classmap": [
             "app/commands",
             "app/controllers",

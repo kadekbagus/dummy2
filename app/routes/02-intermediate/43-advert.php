@@ -86,3 +86,10 @@ Route::get('/app/v1/featured-city/{search}', 'IntermediateAuthController@Feature
  * Create new featured slot
  */
 Route::post('/app/v1/featured-slot/new', 'IntermediateAuthController@FeaturedSlotNew_postNewFeaturedSlot');
+
+
+/**
+ * List/Search featured advert slot
+ */
+Route::get('/app/v1/featured-slot/{search}', 'IntermediateAuthController@FeaturedSlotList_getListFeaturedSlot')
+     ->where('search', '(list|search)');

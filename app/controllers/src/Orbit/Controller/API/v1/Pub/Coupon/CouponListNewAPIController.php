@@ -42,6 +42,33 @@ class CouponListNewAPIController extends PubControllerAPI
     protected $withoutScore = FALSE;
 
     /**
+     * Enable / disable scroll function on ES
+     */
+    protected $useScroll = FALSE;
+
+    /**
+     * Scroll duration when $useScroll is TRUE
+     */
+    protected $scrollDuration = '20s';
+
+    /**
+     * Searcher
+     */
+    protected $searcher = null;
+
+    /**
+     * ES Config
+     */
+    protected $esConfig = [];
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->esConfig = Config::get('orbit.elasticsearch');
+        $this->searcher = new CouponSearch($this->esConfig);
+    }
+
+    /**
      * GET - get all coupon in all mall
      *
      * @author Shelgi Prasetyo <shelgi@dominopos.com>
@@ -78,9 +105,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $this->checkAuth();
             $user = $this->api->user;
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', 'created_date');
             $sortBy = OrbitInput::get('sortby', 'created_date');
-            $sort_mode = OrbitInput::get('sortmode','desc');
             $sortMode = OrbitInput::get('sortmode','desc');
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $location = OrbitInput::get('location', null);
@@ -115,7 +140,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $validator = Validator::make(
                 array(
                     'language' => $language,
-                    'sortby'   => $sort_by,
+                    'sortby'   => $sortBy,
                     'list_type'   => $list_type,
                 ),
                 array(
@@ -130,7 +155,7 @@ class CouponListNewAPIController extends PubControllerAPI
             // Pass all possible parameters to be used as cache key.
             // Make sure there is no missing one.
             $cacheKey = [
-                'sort_by' => $sort_by, 'sort_mode' => $sort_mode, 'language' => $language,
+                'sort_by' => $sortBy, 'sort_mode' => $sortMode, 'language' => $language,
                 'location' => $location,
                 'user_location_cookie_name' => isset($_COOKIE[$userLocationCookieName]) ? $_COOKIE[$userLocationCookieName] : NULL,
                 'distance' => $distance, 'mall_id' => $mallId,
@@ -172,18 +197,17 @@ class CouponListNewAPIController extends PubControllerAPI
 
             // Create the search...
             $esIndex = $esConfig['indices_prefix'] . $esConfig['indices']['coupons']['index'];
-            $couponSearch = new CouponSearch($esConfig);
 
-            $couponSearch->setPaginationParams(['from' => $skip, 'size' => $take]);
+            $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
 
             // Only search active promotions..
-            $couponSearch->isActive(compact('dateTimeEs'));
-            
+            $this->searcher->isActive(compact('dateTimeEs'));
+
             // Filter by given keyword...
             $keyword = OrbitInput::get('keyword', null);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
-                $couponSearch->filterByKeyword($keyword);
+                $this->searcher->filterByKeyword($keyword);
             }
 
             $countryData = null;
@@ -208,36 +232,36 @@ class CouponListNewAPIController extends PubControllerAPI
 
             // If under mall page, we should ignore any other area/location filter.
             if (! empty($mall)) {
-                $couponSearch->filterByMall($mallId);
+                $this->searcher->filterByMall($mallId);
             }
             else {
                 // Filter by country/city only if no mall is set.
-                $couponSearch->filterByCountryAndCities($area);
+                $this->searcher->filterByCountryAndCities($area);
             }
 
             // Filter by my credit card or choose manually
             $sponsorProviderIds = OrbitInput::get('sponsor_provider_ids', []);
             if ($myCCFilter) {
-                $sponsorProviderIds = $couponSearch->filterByMyCC(compact('myCCFilter', 'user'));
+                $sponsorProviderIds = $this->searcher->filterByMyCC(compact('myCCFilter', 'user'));
 
                 if (count($sponsorProviderIds) > 0) {
                     $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
                 }
             } else if (! empty($sponsorProviderIds)) {
                 $cacheKey['sponsor_provider_ids'] = $sponsorProviderIds;
-                $couponSearch->filterBySponsors($sponsorProviderIds);
+                $this->searcher->filterBySponsors($sponsorProviderIds);
             }
 
             // Filter by selected categories...
             if (! empty($categoryIds)) {
-                $couponSearch->filterByCategories($categoryIds);
+                $this->searcher->filterByCategories($categoryIds);
             }
 
             // Filter by partner...
             $partnerId = OrbitInput::get('partner_id', null);
             if (! empty($partnerId)) {
                 $cacheKey['partner_id'] = $partnerId;
-                $couponSearch->filterByPartner($partnerId);
+                $this->searcher->filterByPartner($partnerId);
             }
 
             $sortByPageType = array();
@@ -261,8 +285,8 @@ class CouponListNewAPIController extends PubControllerAPI
             $sortPageScript = "if (doc.containsKey('" . $pageTypeScore . "')) { if(! doc['" . $pageTypeScore . "'].empty) { return doc['" . $pageTypeScore . "'].value } else { return 0}} else {return 0}";
             $advertSorting = [
                 '_script' => [
-                    'script' => $sortPageScript, 
-                    'type' => 'string', 
+                    'script' => $sortPageScript,
+                    'type' => 'string',
                     'order' => 'desc'
                 ]
             ];
@@ -270,35 +294,46 @@ class CouponListNewAPIController extends PubControllerAPI
             $locationId = ! empty($mallId) ? $mallId : 0;
             if ($withAdvert) {
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
-                $couponSearch->filterWithAdvert(compact('dateTimeEs', 'mallId', 'list_type', 'advertType', 'locationId', 'advertSorting'));
+
+                $this->searcher->filterWithAdvert(compact('dateTimeEs', 'mallId', 'list_type', 'advertType', 'locationId', 'advertSorting'));
             }
 
             // Add script fields...
-            $scriptFields = $couponSearch->addReviewFollowScript(compact(
+            $scriptFields = $this->searcher->addReviewFollowScript(compact(
                 'mallId', 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
 
             if (! empty($keyword)) {
                 $sortBy = 'relevance';
             }
-            
+
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
                 case 'relevance':
-                    $couponSearch->sortByRelevance();
+                    $this->searcher->sortByRelevance();
                     break;
                 case 'rating':
-                    $couponSearch->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
                     break;
                 case 'created_date':
-                    $couponSearch->sortByCreatedDate($sortMode);
+                    $this->searcher->sortByCreatedDate($sortMode);
                     break;
                 case 'updated_date':
-                    $couponSearch->sortByUpdatedDate($sortMode);
+                    $this->searcher->sortByUpdatedDate($sortMode);
                     break;
                 default:
-                    $couponSearch->sortByName($language, $sortMode);
+                    $this->searcher->sortByName($language, $sortMode);
                     break;
+            }
+
+            if ($this->useScroll) {
+                $this->searcher->setParams([
+                    'search_type' => 'scan',
+                    'scroll' => $this->scrollDuration,
+                ]);
+                $this->searcher->removeParamItem('body.aggs');
+
+                return $this->searcher->getResult();
             }
 
             // Exclude specific document Ids, useful for some cases e.g You May Also Like
@@ -309,9 +344,9 @@ class CouponListNewAPIController extends PubControllerAPI
                 foreach ($excludedIds as $excludedId) {
                     $jsonExcludedIds[] = array('term' => ['_id' => $excludedId]);
                 }
-                
+
                 if (count($jsonExcludedIds) > 0) {
-                    $couponSearch->exclude($jsonExcludedIds);
+                    $this->searcher->exclude($jsonExcludedIds);
                 }
 
                 $withAdvert = FALSE;
@@ -319,12 +354,12 @@ class CouponListNewAPIController extends PubControllerAPI
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() use ($couponSearch, &$esParam) {
-                    return $couponSearch->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() {
+                    return $this->searcher->getResult();
                 });
                 $recordCache->put($serializedCacheKey, $response);
             } else {
-                $response = $couponSearch->getResult();
+                $response = $this->searcher->getResult();
             }
 
             $records = $response['hits'];
@@ -375,9 +410,14 @@ class CouponListNewAPIController extends PubControllerAPI
                                 }
 
                                 // image
-                                if (! empty($dt['image_url'])) {
-                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                if ($record['_source']['promotion_type'] == 'sepulsa') {
+                                    $data['image_url'] = $localPath;
+                                } else {
+                                    if (! empty($dt['image_url'])) {
+                                        $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                    }
                                 }
+
                             } elseif ($dt['language_code'] === $default_lang) {
                                 // name
                                 if (! empty($dt['name']) && empty($data['coupon_name'])) {
@@ -390,10 +430,25 @@ class CouponListNewAPIController extends PubControllerAPI
                                 }
 
                                 // image
-                                if (empty($data['image_url'])) {
-                                    $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                if ($record['_source']['promotion_type'] == 'sepulsa') {
+                                    $data['image_url'] = $localPath;
+                                } else {
+                                    if (empty($data['image_url'])) {
+                                        $data['image_url'] = $imgUrl->getImageUrl($localPath, $cdnPath);
+                                    }
                                 }
                             }
+                        }
+                    }
+
+                    // Calculation percentage discount for sepulsa and hot delas
+                    $data['price_discount'] = '0';
+                    if ($record['_source']['promotion_type'] != 'mall') {
+                        $priceOld = $record['_source']['price_old'];
+                        $priceNew = $record['_source']['price_selling'];
+
+                        if ($priceOld != '0' && $priceNew != '0') {
+                            $data['price_discount'] = round((($priceOld - $priceNew) / $priceOld) * 100, 1, PHP_ROUND_HALF_DOWN);
                         }
                     }
 
@@ -622,6 +677,36 @@ class CouponListNewAPIController extends PubControllerAPI
         $this->withoutScore = TRUE;
 
         return $this;
+    }
+
+    /**
+     * Force $useScroll value to TRUE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setUseScroll()
+    {
+        $this->useScroll = TRUE;
+
+        return $this;
+    }
+
+    /**
+     * Set $scrollDuration, use less when $useScroll is FALSE
+     * @param $scrollDuration int
+     */
+    public function setScrollDuration($scrollDuration=20)
+    {
+        $this->scrollDuration = $scrollDuration . 's';
+
+        return $this;
+    }
+
+    /**
+     * Get Searcher
+     */
+    public function getSearcher()
+    {
+        return $this->searcher->getActiveClient();
     }
 
     protected function quote($arg)

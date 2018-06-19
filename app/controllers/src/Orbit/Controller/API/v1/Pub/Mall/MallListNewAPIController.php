@@ -50,6 +50,33 @@ class MallListNewAPIController extends PubControllerAPI
     protected $withoutScore = FALSE;
 
     /**
+     * Enable / disable scroll function on ES
+     */
+    protected $useScroll = FALSE;
+
+    /**
+     * Scroll duration when $useScroll is TRUE
+     */
+    protected $scrollDuration = '20s';
+
+    /**
+     * Searcher
+     */
+    protected $searcher = null;
+
+    /**
+     * ES Config
+     */
+    protected $esConfig = [];
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->esConfig = Config::get('orbit.elasticsearch');
+        $this->searcher = new MallSearch($this->esConfig);
+    }
+
+    /**
      *
      *
      * @return [type] [description]
@@ -74,11 +101,9 @@ class MallListNewAPIController extends PubControllerAPI
             $countryFilter = OrbitInput::get('country', null);
             $usingDemo = Config::get('orbit.is_demo', FALSE);
             $host = Config::get('orbit.elasticsearch');
-            $sort_by = OrbitInput::get('sortby', null);
             $sortBy = OrbitInput::get('sortby', 'name');
-            $partner_id = OrbitInput::get('partner_id', null);
-            $sort_mode = OrbitInput::get('sortmode','asc');
             $sortMode = OrbitInput::get('sortmode','asc');
+            $partner_id = OrbitInput::get('partner_id', null);
             $ul = OrbitInput::get('ul', null);
             $language = OrbitInput::get('language', 'id');
             $radius = Config::get('orbit.geo_location.distance', 10);
@@ -123,16 +148,9 @@ class MallListNewAPIController extends PubControllerAPI
 
             $prefix = DB::getTablePrefix();
 
-            // Get ES config only once, avoid calling Config::get() everytime. :)
-            $esConfig = Config::get('orbit.elasticsearch');
+            $this->searcher->setPaginationParams(['from' => $skip, 'size' => $take]);
 
-            // Create the search...
-            $esStoreIndex = $esConfig['indices_prefix'] . $esConfig['indices']['malldata']['index'];
-            $mallSearch = new MallSearch($esConfig);
-
-            $mallSearch->setPaginationParams(['from' => $skip, 'size' => 50]);
-
-            $mallSearch->filterBase();
+            $this->searcher->filterBase();
 
             $countryData = null;
             $area = ['country' => '', 'cities' => $cityFilters];
@@ -144,17 +162,17 @@ class MallListNewAPIController extends PubControllerAPI
 
             // Otherwise, we filter based on user's selection of country
             // and/or cities
-            $mallSearch->filterByCountryAndCities($area);
+            $this->searcher->filterByCountryAndCities($area);
 
             $keyword = OrbitInput::get('keyword', null);
             if (! empty($keyword)) {
                 $cacheKey['keyword'] = $keyword;
-                $mallSearch->filterByKeyword($keyword);
+                $this->searcher->filterByKeyword($keyword);
             }
 
             // Filter by partner
             // Check for competitor first.
-            OrbitInput::get('partner_id', function($partnerId) use (&$searchFlag, &$cacheKey, &$mallSearch) {
+            OrbitInput::get('partner_id', function($partnerId) use (&$searchFlag, &$cacheKey) {
                 $cacheKey['partner_id'] = $partnerId;
                 if (! empty($partnerId)) {
                     $searchFlag = $searchFlag || TRUE;
@@ -171,21 +189,42 @@ class MallListNewAPIController extends PubControllerAPI
                         if (in_array($partnerId, $exception)) {
                             $partnerIds = PartnerCompetitor::where('partner_id', $partnerId)->lists('competitor_id');
 
-                            $mallSearch->excludePartnerCompetitors($partnerIds);
+                            $this->searcher->excludePartnerCompetitors($partnerIds);
                         }
                         else {
-                            $mallSearch->filterByPartner($partnerId);
+                            $this->searcher->filterByPartner($partnerId);
                         }
                     }
                 }
             });
 
-            // Make sure to prioritize mall order from config 
+            // Make sure to prioritize mall order from config
             // (At the moment, until we add feature to set ordering in admin portal)
             $bypassMallOrder = OrbitInput::get('by_pass_mall_order', 'n');
+            $mallFeaturedIds = array();
             if ($bypassMallOrder === 'n') {
                 $cacheKey['by_pass_mall_order'] = $bypassMallOrder;
-                $mallSearch->bypassMallOrder(compact('countryFilter', 'cityFilters'));
+                $this->searcher->bypassMallOrder(compact('countryFilter', 'cityFilters'));
+
+                // Get featured IDS for set as featured
+                if (! empty($countryFilter)) {
+                    $countryFilter = strtolower($countryFilter);
+                    $mallFeaturedIds = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.all', []);
+
+                    if (! empty($cityFilters)) {
+                        $mallFeaturedIds = [];
+                        foreach ($cityFilters as $key => $cityName) {
+                            $cityName = str_replace(' ', '_', strtolower($cityName));
+                            $cityValue = Config::get('orbit.featured.mall_ids.' . $countryFilter . '.' . $cityName, []);
+
+                            if (! empty($cityValue)) {
+                                $mallFeaturedIds = array_merge($cityValue, $mallFeaturedIds);
+                            }
+                        }
+                    }
+                } else {
+                    $mallFeaturedIds = Config::get('orbit.featured.mall_ids.all', []);
+                }
             }
 
             // Get Advertised Malls...
@@ -194,11 +233,11 @@ class MallListNewAPIController extends PubControllerAPI
                 $locationId = 0;
                 $advertType = ($list_type === 'featured') ? ['featured_list', 'preferred_list_regular', 'preferred_list_large'] : ['preferred_list_regular', 'preferred_list_large'];
 
-                $advertResult = $mallSearch->filterWithAdvert(compact('dateTimeEs', 'advertType', 'locationId', 'list_type'));
+                $advertResult = $this->searcher->filterWithAdvert(compact('dateTimeEs', 'advertType', 'locationId', 'list_type'));
                 $withPreferred = $advertResult['withPreferred'];
             }
 
-            $scriptFields = $mallSearch->addReviewFollowScript(compact(
+            $scriptFields = $this->searcher->addReviewFollowScript(compact(
                 'cityFilters', 'countryFilter', 'countryData', 'user', 'sortBy'
             ));
 
@@ -212,33 +251,43 @@ class MallListNewAPIController extends PubControllerAPI
             // Next sorting based on Visitor's selection.
             switch ($sortBy) {
                 case 'relevance':
-                    $mallSearch->sortByRelevance();
+                    $this->searcher->sortByRelevance();
                     break;
                 case 'updated_at':
-                    $mallSearch->sortByUpdatedAt();
+                    $this->searcher->sortByUpdatedAt();
                     break;
                 case 'rating':
-                    $mallSearch->sortByRating($scriptFields['scriptFieldRating']);
+                    $this->searcher->sortByRating($scriptFields['scriptFieldRating']);
                     break;
                 case 'followed':
-                    $mallSearch->sortByFavorite($scriptFields['scriptFieldFollow']);
+                    $this->searcher->sortByFavorite($scriptFields['scriptFieldFollow']);
                     break;
                 default:
-                    $mallSearch->sortByName();
+                    $this->searcher->sortByName();
                     break;
             }
 
             // Add any constant scoring to search body if set.
-            $mallSearch->addConstantScoringToQuery();
+            $this->searcher->addConstantScoringToQuery();
+
+            if ($this->useScroll) {
+                $this->searcher->setParams([
+                    'search_type' => 'scan',
+                    'scroll' => $this->scrollDuration,
+                ]);
+                $this->searcher->removeParamItem('body.aggs');
+
+                return $this->searcher->getResult();
+            }
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
-                $response = $recordCache->get($serializedCacheKey, function() use ($mallSearch) {
-                    return $mallSearch->getResult();
+                $response = $recordCache->get($serializedCacheKey, function() {
+                    return $this->searcher->getResult();
                 });
                 $recordCache->put($serializedCacheKey, $response);
             } else {
-                $response = $mallSearch->getResult();
+                $response = $this->searcher->getResult();
             }
 
             $area_data = $response['hits'];
@@ -250,8 +299,16 @@ class MallListNewAPIController extends PubControllerAPI
             foreach ($area_data['hits'] as $dt) {
                 $areadata = array();
 
-                $areadata['placement_type'] = null;
-                $areadata['placement_type_orig'] = null;
+                $placementType = null;
+                $placementTypeOrig = null;
+                if (in_array($dt['_source']['merchant_id'], $mallFeaturedIds)) {
+                    $placementType = 'featured';
+                    $placementTypeOrig = 'featured';
+                    $areadata['is_featured'] = true;
+                }
+
+                $areadata['placement_type'] = $placementType;
+                $areadata['placement_type_orig'] = $placementTypeOrig;
                 $areadata['average_rating'] = (! empty($dt['fields']['average_rating'][0])) ? number_format(round($dt['fields']['average_rating'][0], 1), 1) : 0;
                 $areadata['total_review'] = (! empty($dt['fields']['total_review'][0])) ? round($dt['fields']['total_review'][0], 1) : 0;
                 $mallId = $dt['_source']['merchant_id'];
@@ -442,5 +499,36 @@ class MallListNewAPIController extends PubControllerAPI
         $this->withoutScore = TRUE;
 
         return $this;
+    }
+
+
+    /**
+     * Force $useScroll value to TRUE, ignoring previously set value
+     * @param $bool boolean
+     */
+    public function setUseScroll()
+    {
+        $this->useScroll = TRUE;
+
+        return $this;
+    }
+
+    /**
+     * Set $scrollDuration, use less when $useScroll is FALSE
+     * @param $scrollDuration int
+     */
+    public function setScrollDuration($scrollDuration=20)
+    {
+        $this->scrollDuration = $scrollDuration . 's';
+
+        return $this;
+    }
+
+    /**
+     * Get Searcher
+     */
+    public function getSearcher()
+    {
+        return $this->searcher->getActiveClient();
     }
 }

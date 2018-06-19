@@ -161,16 +161,17 @@ class PromotionLocationAPIController extends PubControllerAPI
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN CONCAT({$prefix}merchants.name, ' at ', oms.name) ELSE {$prefix}merchants.name END as name"),
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.name ELSE {$prefix}merchants.name END as mall_name"),
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.address_line1 ELSE {$prefix}merchants.address_line1 END as address"),
-                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.floor ELSE '' END as floor"),
-                                        DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.unit ELSE '' END as unit"),
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.operating_hours ELSE {$prefix}merchants.operating_hours END as operating_hours"),
                                         DB::raw("CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN oms.is_subscribed ELSE {$prefix}merchants.is_subscribed END as is_subscribed"),
                                         DB::raw("{$prefix}merchants.object_type as location_type"),
                                         DB::raw("{$mallLogo}"),
                                         DB::raw("{$locationLogo}"),
                                         DB::raw("{$mallMap}"),
-                                        DB::raw("{$prefix}merchants.phone as phone"),
                                         DB::raw("{$prefix}merchants.name as name_orig"),
+                                        DB::raw("GROUP_CONCAT( CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.floor ELSE '' END SEPARATOR '||') as floor"),
+                                        DB::raw("GROUP_CONCAT( CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN {$prefix}merchants.unit ELSE '' END SEPARATOR '||') as unit"),
+                                        DB::raw("GROUP_CONCAT( {$prefix}merchants.phone SEPARATOR '||') as phone"),
+                                        DB::raw("oms.phone as mall_phone"),
                                         DB::raw("x(position) as latitude"),
                                         DB::raw("y(position) as longitude")
                                     )
@@ -268,7 +269,8 @@ class PromotionLocationAPIController extends PubControllerAPI
                 $promotionLocation->having('name_orig', '=', $storeName);
             });
 
-            $promotionLocation->groupBy('merchants.merchant_id');
+            // Grouping per merchant per mall, so we group from store@mall format
+            $promotionLocation->groupBy(DB::raw('name'));
 
             $_promotionLocation = clone($promotionLocation);
 

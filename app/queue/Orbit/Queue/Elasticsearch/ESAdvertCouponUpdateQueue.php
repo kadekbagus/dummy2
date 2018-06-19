@@ -569,6 +569,7 @@ class ESAdvertCouponUpdateQueue
                 $body = [
                     'promotion_id'            => $coupon->promotion_id,
                     'name'                    => $coupon->promotion_name,
+                    'promotion_type'          => $coupon->promotion_type,
                     'description'             => $coupon->description,
                     'object_type'             => 'coupon',
                     'begin_date'              => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
@@ -610,7 +611,10 @@ class ESAdvertCouponUpdateQueue
                     'wallet_operator'         => $paymentOperator,
                     'featured_slot_gtm'       => $featuredSlotGTM,
                     'featured_slot_mall'      => $featuredSlotMall,
-                   'sponsor_provider'         => $sponsorProviderES
+                    'sponsor_provider'        => $sponsorProviderES,
+                    'price_old'               => $coupon->price_old,
+                    'merchant_commision'      => $coupon->merchant_commision,
+                    'price_selling'           => $coupon->price_selling
                 ];
 
                 $body = array_merge($body, $translationBody);

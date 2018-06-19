@@ -149,10 +149,18 @@ class CouponDetailAPIController extends PubControllerAPI
                             'promotions.is_unique_redeem',
                             'promotions.maximum_redeem',
                             'promotions.maximum_issued_coupon',
+                            'promotions.promotion_type as coupon_type',
+                            'promotions.price_old',
+                            'promotions.price_selling as price_new',
+                            'coupon_sepulsa.how_to_buy_and_redeem',
+                            'coupon_sepulsa.terms_and_conditions',
+                            'issued_coupons.url as redeem_url',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
                             DB::Raw($issuedCouponId),
+                            'payment_transactions.payment_transaction_id as transaction_id',
+                            'payment_transactions.status as payment_status',
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -210,8 +218,14 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
                                 $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
                             })
+                        ->leftJoin('payment_transactions', function ($q) use ($user) {
+                                $q->on('payment_transactions.object_id', '=', 'promotions.promotion_id');
+                                $q->on('payment_transactions.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
+                                $q->on('payment_transactions.object_type', '=', DB::Raw("'coupon'"));
+                            })
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
+                        ->leftJoin('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
                         ->with(['keywords' => function ($q) {
                                 $q->addSelect('keyword', 'object_id');
                                 $q->groupBy('keyword');
@@ -221,7 +235,8 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $pt->groupBy('product_tag');
                             }])
                         ->where('promotions.promotion_id', $couponId)
-                        ->where('promotions.is_visible', 'Y');
+                        ->where('promotions.is_visible', 'Y')
+                        ->orderBy('payment_transactions.created_at', 'desc'); // get the last payment.
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
