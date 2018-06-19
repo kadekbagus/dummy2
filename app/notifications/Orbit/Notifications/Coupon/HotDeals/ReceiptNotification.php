@@ -110,7 +110,7 @@ class ReceiptNotification extends Notification
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Your Invoice from Gotomalls.com';
+                $subject = 'Your Receipt from Gotomalls.com';
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
