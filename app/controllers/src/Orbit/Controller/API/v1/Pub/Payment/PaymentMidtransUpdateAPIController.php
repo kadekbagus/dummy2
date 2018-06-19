@@ -44,7 +44,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	            ),
 	            array(
 	                'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-	                'status'                   => 'required|in:pending,success,failed'
+	                'status'                   => 'required|in:pending,success,failed,expired'
 	            ),
 	            array(
 	            	'orbit.exist.payment_transaction_id' => 'payment transaction id not found'

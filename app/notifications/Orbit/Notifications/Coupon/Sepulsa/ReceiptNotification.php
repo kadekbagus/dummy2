@@ -7,6 +7,7 @@ use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Carbon\Carbon;
 
+use DB;
 use Mail;
 use Config;
 use Log;
@@ -24,12 +25,14 @@ class ReceiptNotification extends Notification
 
     protected $contact = null;
 
+    protected $mongoConfig = null;
+
     function __construct($payment = null)
     {
         $this->payment      = $payment;
         $this->queueName    = Config::get('orbit.registration.mobile.queue_name');
         $this->contact      = Config::get('orbit.contact_information');
-        $this->$mongoConfig = Config::get('database.mongodb');
+        $this->mongoConfig  = Config::get('database.mongodb');
     }
 
     /**
@@ -107,7 +110,7 @@ class ReceiptNotification extends Notification
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Your Invoice from Gotomalls.com';
+                $subject = 'Your Receipt from Gotomalls.com';
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
@@ -117,10 +120,10 @@ class ReceiptNotification extends Notification
             $job->delete();
 
             // Bury the job for later inspection
-            JobBurier::create($job, function($theJob) {
-                // The queue driver does not support bury.
-                $theJob->delete();
-            })->bury();
+            // JobBurier::create($job, function($theJob) {
+            //     // The queue driver does not support bury.
+            //     $theJob->delete();
+            // })->bury();
 
         } catch (Exception $e) {
             Log::debug('Notification: ReceiptNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
@@ -136,10 +139,10 @@ class ReceiptNotification extends Notification
     public function toWeb($bodyInApps)
     {
         if (!empty($bodyInApps)) {
-        $mongoClient = MongoClient::create($this->mongoConfig);
-        $inApps = $mongoClient->setFormParam($bodyInApps)
-                              ->setEndPoint('user-notifications')
-                              ->request('POST');
+            $mongoClient = MongoClient::create($this->mongoConfig);
+            $inApps = $mongoClient->setFormParam($bodyInApps)
+                                  ->setEndPoint('user-notifications')
+                                  ->request('POST');
         }
     }
 
@@ -150,7 +153,8 @@ class ReceiptNotification extends Notification
      */
     public function send()
     {
-        Queue::push(
+        Queue::later(
+            3,
             'Orbit\\Notifications\\Coupon\\Sepulsa\\ReceiptNotification@toEmail',
             $this->getEmailData(),
             $this->queueName
@@ -167,13 +171,14 @@ class ReceiptNotification extends Notification
         $userId = $this->payment->user_id;
         $couponId = $this->payment->object_id;
         $prefix = DB::getTablePrefix();
-        $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_name,
+        $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id,
+                                    {$prefix}promotions.promotion_name,
                                     CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
                                     CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath
                             "))
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
-                            ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
+                            ->leftJoin('coupon_translations', function ($q) {
                                 $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id');
                             })
                             ->leftJoin('coupon_translations as default_translation', function ($q) {
@@ -194,14 +199,14 @@ class ReceiptNotification extends Notification
                         ->first();
 
         if ($coupon) {
-            $launchUrl = LandingPageUrlGenerator::create('coupon', $coupon->promotion_id, $coupon->promotion_name)->generateUrl();
+            $launchUrl = LandingPageUrlGenerator::create('coupon', $coupon->promotion_id, $coupon->promotion_name)->generateUrl(true);
 
-            $headings = new stdClass();
+            $headings = new \stdClass();
             $headings->en = $coupon->promotion_name;
-            $contents = new stdClass();
+            $contents = new \stdClass();
             $contents->en = 'Your voucher is ready! Click here to redeem your voucher';
 
-            $notificationData = new stdClass();
+            $notificationData = new \stdClass();
             $notificationData->title = $coupon->promotion_name;
             $notificationData->launch_url = $launchUrl;
             $notificationData->default_language = 'en';
