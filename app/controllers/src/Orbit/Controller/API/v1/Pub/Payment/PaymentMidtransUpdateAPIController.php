@@ -85,6 +85,10 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	                $payment_update->provider_response_message = $provider_response_message;
 	            });
 
+	            OrbitInput::post('payment_midtrans_info', function($payment_midtrans_info) use ($payment_update) {
+	                $payment_update->payment_midtrans_info = serialize($payment_midtrans_info);
+	            });
+
 		        $payment_update->responded_at = Carbon::now('UTC');
 		        $payment_update->save();
 

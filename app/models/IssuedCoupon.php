@@ -18,6 +18,7 @@ class IssuedCoupon extends Eloquent
     const ISSUE_COUPON_INCREMENT = 1111110;
 
     const STATUS_AVAILABLE      = 'available';
+    const STATUS_RESERVED       = 'reserved';
     const STATUS_ISSUED         = 'issued';
     const STATUS_REDEEMED       = 'redeemed';
 
