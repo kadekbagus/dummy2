@@ -144,11 +144,20 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                             ->where('payment_transactions.object_type', 'coupon')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
                             ->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
-                            ->first();
-
+                            ->first()
+                            ;
 
             if (!$coupon) {
                 OrbitShopAPI::throwInvalidArgument('purchased detail not found');
+            }
+
+            // get Imahe from local when image cdn is null
+            if ($coupon->cdnPath == null) {
+                $cdnConfig = Config::get('orbit.cdn');
+                $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+                $localPath = (! empty($coupon->localPath)) ? $coupon->localPath : '';
+                $cdnPath = (! empty($coupon->cdnPath)) ? $coupon->cdnPath : '';
+                $coupon->cdnPath = $imgUrl->getImageUrl($localPath, $cdnPath);
             }
 
             $this->response->data = $coupon;
