@@ -136,13 +136,18 @@ class ReceiptNotification extends Notification
      *
      * @return [type] [description]
      */
-    public function toWeb($bodyInApps = null)
+    public function toWeb($job, $data)
     {
-        if (! empty($bodyInApps)) {
+        try {
             $mongoClient = MongoClient::create($this->mongoConfig);
-            $inApps = $mongoClient->setFormParam($bodyInApps)
+            $inApps = $mongoClient->setFormParam($data)
                                   ->setEndPoint('user-notifications')
                                   ->request('POST');
+
+            $job->delete();
+
+        } catch (Exception $e) {
+            Log::debug('Notification: ReceiptNotification inApp sepulsa exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
     }
 
@@ -161,8 +166,11 @@ class ReceiptNotification extends Notification
         );
 
         // Other notification method can be added here...
-        $bodyInApps = $this->getInAppData();
-        $this->toWeb($bodyInApps);
+        Queue::later(
+            3,
+            'Orbit\\Notifications\\Coupon\\Sepulsa\\ReceiptNotification@toWeb',
+            $this->getInAppData()
+        );
     }
 
     public function getInAppData()
