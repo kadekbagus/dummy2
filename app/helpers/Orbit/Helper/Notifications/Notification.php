@@ -58,7 +58,7 @@ abstract class Notification {
      * 
      * @return [type] [description]
      */
-    public function toWeb()
+    public function toWeb($job, $data)
     {
         // Implemented in the child class...
     }
