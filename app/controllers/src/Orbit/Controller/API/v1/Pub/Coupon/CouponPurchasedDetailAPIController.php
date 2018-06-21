@@ -161,6 +161,8 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                 $coupon->cdnPath = $imgUrl->getImageUrl($localPath, $cdnPath);
             }
 
+            $coupon->payment_midtrans_info = json_decode(unserialize($coupon->payment_midtrans_info));
+
             $this->response->data = $coupon;
         } catch (ACLForbiddenException $e) {
 
