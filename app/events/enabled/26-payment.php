@@ -21,6 +21,9 @@ use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification as Sepuls
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
+use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
+use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
+
 /**
  * Listen on:    `orbit.payment.postupdatepayment.after.save`
  *
@@ -31,6 +34,7 @@ use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDea
 Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTransaction $payment, $retries = 0, $sendNotification = false)
 {
     $notificationDelay = 5;
+
     // TODO: Move to config?
     $adminEmails = [
         Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com'),
@@ -41,6 +45,28 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
 
         // If coupon issued, do nothing...
         if ($payment->couponIssued()) {
+            return;
+        }
+
+        // Notify admin and customer if the coupon not available.
+        if ($payment->coupon->notAvailable()) {
+            Log::info('Coupon not available. Will notify admin and customer.');
+            $errorMessage = 'Coupon might be expired, inactive, or no more coupon available for purchase.';
+
+            // Notify Admin...
+            foreach($adminEmails as $email) {
+                $admin          = new User;
+                $admin->email   = $email;
+                $admin->notify(new CouponNotAvailableNotification($payment, $errorMessage), $notificationDelay);
+            }
+
+            // Notify customer...
+            $payment->user->notify(new CustomerCouponNotAvailableNotification($payment), $notificationDelay);
+
+            $payment->notes = $errorMessage;
+            $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+            $payment->save();
+
             return;
         }
 
