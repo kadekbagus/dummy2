@@ -10,8 +10,6 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\OneSignal\OneSignal;
 
-use IssuedCoupon;
-
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
@@ -80,6 +78,9 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
                 $payment->coupon_redemption_code = $takenVoucherData->code;
                 // $payment->notes = ''; // clear the notes?
                 $payment->save();
+
+                // Update availability
+                $payment->coupon->updateAvailability();
             }
             else {
                 // This means the TakeVoucher request failed.
@@ -159,6 +160,10 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
                 $issuedCoupon->save();
 
                 $payment->coupon_redemption_code = $issuedCoupon->issued_coupon_code;
+
+                // Update availability
+                Log::info('Updating coupon availability..');
+                $payment->coupon->updateAvailability();
             }
 
             $payment->save();
