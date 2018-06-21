@@ -67,6 +67,9 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
             $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
             $payment->save();
 
+            // TODO: This update should be removed in the future.
+            $payment->coupon->updateAvailability();
+
             return;
         }
 
@@ -149,6 +152,9 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
 
                     // Notify customer that the coupon is not available and the money will be refunded.
                     $payment->user->notify(new SepulsaVoucherNotAvailableNotification($payment), $notificationDelay);
+
+                    // Remove temporary created IssuedCoupon, since we can not get the voucher from Sepulsa.
+                    IssuedCoupon::where('transaction_id', $payment->payment_transaction_id)->delete();
 
                     $errorMessage = sprintf('TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
                 }
