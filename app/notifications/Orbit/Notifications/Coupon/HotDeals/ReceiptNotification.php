@@ -139,7 +139,7 @@ class ReceiptNotification extends Notification
     public function toWeb($job, $data)
     {
         try {
-            $mongoClient = MongoClient::create($this->mongoConfig);
+            $mongoClient = MongoClient::create(Config::get('database.mongodb'));
             $inApps = $mongoClient->setFormParam($data)
                                   ->setEndPoint('user-notifications')
                                   ->request('POST');
@@ -167,7 +167,7 @@ class ReceiptNotification extends Notification
 
         // Other notification method can be added here...
         Queue::later(
-            3,
+            1,
             'Orbit\\Notifications\\Coupon\\HotDeals\\ReceiptNotification@toWeb',
             $this->getInAppData()
         );
