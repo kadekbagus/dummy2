@@ -10,13 +10,18 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\OneSignal\OneSignal;
 
+use IssuedCoupon;
+
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
 // User Notifications
 use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification as SepulsaReceiptNotification;
 use Orbit\Notifications\Coupon\Sepulsa\TakeVoucherFailureNotification;
+use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification as SepulsaVoucherNotAvailableNotification;
+
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
+use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
 /**
  * Listen on:    `orbit.payment.postupdatepayment.after.save`
@@ -25,8 +30,14 @@ use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNo
  *
  * @param PaymentTransaction $payment - Instance of PaymentTransaction model
  */
-Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $retries = 0, $sendNotification = false)
+Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTransaction $payment, $retries = 0, $sendNotification = false)
 {
+    $notificationDelay = 5;
+    // TODO: Move to config?
+    $adminEmails = [
+        Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com'),
+    ];
+
     // If payment completed...
     if ($payment->completed()) {
 
@@ -35,7 +46,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
             return;
         }
 
-        // For sepulsa deals, we need to claim the voucher with TakeVoucher request.
+        // For sepulsa deals, we need to claim the voucher with TakeVoucher API.
         if ($payment->forSepulsa()) {
 
             $voucherToken = $payment->coupon_sepulsa->token;
@@ -73,7 +84,6 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
             else {
                 // This means the TakeVoucher request failed.
                 // We need to record the failure...
-
                 $payment->notes = $payment->notes . $takenVouchers->getMessage() . "\n------\n";
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
 
@@ -83,7 +93,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
                 if ($retries === 0) {
                     $devUser            = new User;
                     $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
-                    $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), 3);
+                    $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), $notificationDelay);
 
                     $errorMessage = sprintf('TakeVoucher Request: First try failed. Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
                     Log::info($errorMessage);
@@ -103,9 +113,15 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
                 }
                 else {
                     // Oh, no more retry, huh?
-                    $devUser            = new User;
-                    $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
-                    $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), 3);
+                    // Notify Admin that the voucher is failed and customer's money should be refunded.
+                    foreach($adminEmails as $email) {
+                        $devUser            = new User;
+                        $devUser->email     = $email;
+                        $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), $notificationDelay);
+                    }
+
+                    // Notify customer that the coupon is not available and the money will be refunded.
+                    $payment->user->notify(new SepulsaVoucherNotAvailableNotification($payment), $notificationDelay);
 
                     $errorMessage = sprintf('TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
                 }
@@ -114,27 +130,37 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
             }
         }
         else if ($payment->forHotDeals()) {
-            // For hot-deals, issuing a coupon is updating the status to 'issued' (after 'available')
-            // (This means, the issued coupon record is already exists and is 'available')
-            $issuedCoupon = IssuedCoupon::where('promotion_id', $payment->object_id)
-                                            ->where('status', 'available')
-                                            ->first();
+            // For hot-deals, issuing a coupon means updating the status to 'issued'
+            
+            // First look for reserved coupon by this user...
+            $issuedCoupon = IssuedCoupon::where('promotion_id', $payment->object_id)->where('status', IssuedCoupon::STATUS_RESERVED)
+                                          ->where('user_id', $payment->user_id)->first();
 
             if (empty($issuedCoupon)) {
-                throw new Exception('No issued coupons is available for purchase.', 500);
+                $issuedCoupon = IssuedCoupon::where('promotion_id', $payment->object_id)->available()->first();
             }
 
-            // Claim the coupon...
-            $issuedCoupon->transaction_id     = $payment->payment_transaction_id;
-            $issuedCoupon->user_id            = $payment->user_id;
-            $issuedCoupon->user_email         = $payment->user_email;
-            $issuedCoupon->issued_date        = Carbon::now('UTC');
-            $issuedCoupon->status             = IssuedCoupon::STATUS_ISSUED;
-            $issuedCoupon->record_exists      = 'Y';
+            // If no more coupon available to be purchased, then notify customer.
+            if (empty($issuedCoupon)) {
+                $payment->notes = 'Can not issue coupon anymore. Limit reached.';
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
 
-            $issuedCoupon->save();
+                $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment), $notificationDelay);
+            }
+            else {
+                // Claim the coupon...
+                $issuedCoupon->transaction_id     = $payment->payment_transaction_id;
+                $issuedCoupon->user_id            = $payment->user_id;
+                $issuedCoupon->user_email         = $payment->user_email;
+                $issuedCoupon->issued_date        = Carbon::now('UTC');
+                $issuedCoupon->status             = IssuedCoupon::STATUS_ISSUED;
+                $issuedCoupon->record_exists      = 'Y';
 
-            $payment->coupon_redemption_code = $issuedCoupon->issued_coupon_code;
+                $issuedCoupon->save();
+
+                $payment->coupon_redemption_code = $issuedCoupon->issued_coupon_code;
+            }
+
             $payment->save();
         }
     }
@@ -149,7 +175,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function($payment, $
  *
  * @param PaymentTransaction $payment - Instance of PaymentTransaction model
  */
-Event::listen('orbit.payment.postupdatepayment.after.commit', function($payment)
+Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment)
 {
     // If payment completed and coupon issued.
     if ($payment->completed() && $payment->couponIssued()) {
