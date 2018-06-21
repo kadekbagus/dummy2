@@ -718,7 +718,7 @@ class Coupon extends Eloquent
      */
     public function notAvailable()
     {
-        return $this->status === 'inactive' || Carbon::now('UTC')->gt(Carbon::parse($this->end_date, 'UTC'));
+        return $this->available === 0 || $this->status === 'inactive' || Carbon::now('UTC')->gt(Carbon::parse($this->end_date, 'UTC'));
     }
 
     /**
