@@ -43,6 +43,11 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
     // If payment completed...
     if ($payment->completed()) {
 
+        // If coupon issued, do nothing...
+        if ($payment->couponIssued()) {
+            return;
+        }
+
         // Notify admin and customer if the coupon not available.
         if ($payment->coupon->notAvailable()) {
             Log::info('Coupon not available. Will notify admin and customer.');
@@ -62,11 +67,6 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
             $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
             $payment->save();
 
-            return;
-        }
-
-        // If coupon issued, do nothing...
-        if ($payment->couponIssued()) {
             return;
         }
 
