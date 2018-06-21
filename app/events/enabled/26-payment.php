@@ -10,8 +10,6 @@ use Carbon\Carbon as Carbon;
 use Orbit\Helper\Util\CdnUrlGenerator;
 use Orbit\Helper\OneSignal\OneSignal;
 
-use IssuedCoupon;
-
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
