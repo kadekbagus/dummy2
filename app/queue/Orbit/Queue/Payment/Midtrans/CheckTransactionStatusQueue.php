@@ -93,6 +93,9 @@ class CheckTransactionStatusQueue
                 if ($transaction->isSuccess()) {
                     $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 }
+                else if ($transaction->isPending()) {
+                    $payment->status = PaymentTransaction::STATUS_PENDING;
+                }
                 else if ($transaction->isExpired()) {
                     $payment->status = PaymentTransaction::STATUS_EXPIRED;
                 }
