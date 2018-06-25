@@ -6501,7 +6501,7 @@ return array(
             // View transaction detail of successful payment and got Sepulsa coupon/voucher
             '173' => array(
                 'name' => 'view_transaction_page_payment_successful_got_coupon_sepulsa',
-                'name_long' => 'View Transaction Page Payment Success Sepulsa',
+                'name_long' => 'View Transaction Page Payment Success Got Coupon Sepulsa',
                 'module_name' => 'Coupon',
                 'type' => 'click',
                 'object_type' => null,
@@ -6510,7 +6510,7 @@ return array(
             // View transaction detail of successful payment but waiting for coupon
             '174' => array(
                 'name' => 'view_transaction_page_payment_successful_waiting_coupon_sepulsa',
-                'name_long' => 'View Transaction Page Payment Success Sepulsa',
+                'name_long' => 'View Transaction Page Payment Success Waiting Coupon Sepulsa',
                 'module_name' => 'Coupon',
                 'type' => 'click',
                 'object_type' => null,
