@@ -21,9 +21,16 @@ class PaymentTransaction extends Eloquent
     const STATUS_EXPIRED            = 'expired';
     const STATUS_SUCCESS            = 'success';
 
-    // Status 'success_no_coupon' means the payment was success but we can not get/take the coupon from Sepulsa API
-    // either it is not available (all taken) or inactive.
+    /**
+     * It means we are in the process of getting coupon/voucher from Sepulsa. 
+     * This status specific for Sepulsa Deals only.
+     */
     const STATUS_SUCCESS_NO_COUPON  = 'success_no_coupon';
+
+    /**
+     * It means system can not get the voucher or after trying for a few times for Sepulsa).
+     */
+    const STATUS_SUCCESS_NO_COUPON_FAILED = 'success_no_coupon_failed';
 
     /**
      * Payment - Coupon Sepulsa relation.
@@ -76,7 +83,6 @@ class PaymentTransaction extends Eloquent
      *
      * @author Budi <budi@dominopos.com>
      *
-     * @todo  use proper status to indicate completed payment. At the moment these statuses are assumption.
      * @return [type] [description]
      */
     public function completed()
@@ -84,8 +90,20 @@ class PaymentTransaction extends Eloquent
         return in_array($this->status, [
             self::STATUS_SUCCESS, 
             self::STATUS_SUCCESS_NO_COUPON, 
-            'success_no_coup', // @todo should be removed.
+            self::STATUS_SUCCESS_NO_COUPON_FAILED,
         ]);
+    }
+
+    /**
+     * Determine if the payment is expired or not.
+     *
+     * @author Budi <budi@dominopos.com>
+     *
+     * @return [type] [description]
+     */
+    public function expired()
+    {
+        return $this->status === self::STATUS_EXPIRED;
     }
 
     /**
