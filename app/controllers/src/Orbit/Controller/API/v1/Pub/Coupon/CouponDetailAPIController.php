@@ -155,6 +155,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             'coupon_sepulsa.how_to_buy_and_redeem',
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
+                            'payment_transactions.payment_midtrans_info',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
