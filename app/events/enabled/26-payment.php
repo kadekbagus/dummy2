@@ -21,6 +21,9 @@ use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification as Sepuls
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
+use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
+use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
+
 /**
  * Listen on:    `orbit.payment.postupdatepayment.after.save`
  *
@@ -31,16 +34,47 @@ use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDea
 Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTransaction $payment, $retries = 0, $sendNotification = false)
 {
     $notificationDelay = 5;
+
     // TODO: Move to config?
     $adminEmails = [
         Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com'),
     ];
+
+    if ($payment->expired()) {
+        Log::info('Payment expired. Nothing to do.');
+        return;
+    }
 
     // If payment completed...
     if ($payment->completed()) {
 
         // If coupon issued, do nothing...
         if ($payment->couponIssued()) {
+            return;
+        }
+
+        // Notify admin and customer if the coupon not available.
+        if ($payment->coupon->notAvailable()) {
+            Log::info('Coupon not available. Will notify admin and customer.');
+            $errorMessage = 'Coupon might be expired, inactive, or no more coupon available for purchase.';
+
+            // Notify Admin...
+            foreach($adminEmails as $email) {
+                $admin          = new User;
+                $admin->email   = $email;
+                $admin->notify(new CouponNotAvailableNotification($payment, $errorMessage), $notificationDelay);
+            }
+
+            // Notify customer...
+            $payment->user->notify(new CustomerCouponNotAvailableNotification($payment), $notificationDelay);
+
+            $payment->notes = $errorMessage;
+            $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+            $payment->save();
+
+            // TODO: This update should be removed in the future.
+            $payment->coupon->updateAvailability();
+
             return;
         }
 
@@ -114,6 +148,11 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
                 }
                 else {
                     // Oh, no more retry, huh?
+
+                    // We should set new status for the payment to indicate success payment but no coupon after trying for a few times.
+                    $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                    $payment->save();
+
                     // Notify Admin that the voucher is failed and customer's money should be refunded.
                     foreach($adminEmails as $email) {
                         $devUser            = new User;
@@ -123,6 +162,9 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
 
                     // Notify customer that the coupon is not available and the money will be refunded.
                     $payment->user->notify(new SepulsaVoucherNotAvailableNotification($payment), $notificationDelay);
+
+                    // Remove temporary created IssuedCoupon, since we can not get the voucher from Sepulsa.
+                    IssuedCoupon::where('transaction_id', $payment->payment_transaction_id)->delete();
 
                     $errorMessage = sprintf('TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
                 }
@@ -144,7 +186,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
             // If no more coupon available to be purchased, then notify customer.
             if (empty($issuedCoupon)) {
                 $payment->notes = 'Can not issue coupon anymore. Limit reached.';
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
 
                 $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment), $notificationDelay);
             }
@@ -182,6 +224,11 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
  */
 Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment)
 {
+    if ($payment->expired()) {
+        Log::info('Payment expired. Nothing to do.');
+        return;
+    }
+
     // If payment completed and coupon issued.
     if ($payment->completed() && $payment->couponIssued()) {
 
