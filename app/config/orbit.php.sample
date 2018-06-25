@@ -6586,7 +6586,7 @@ return array(
             ),
 
             // click on redeem
-            '181' => array(
+            '182' => array(
                 'name' => 'click_on_redeem',
                 'name_long' => 'Click on Redeem',
                 'module_name' => 'Coupon',
