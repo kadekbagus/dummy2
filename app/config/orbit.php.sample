@@ -6557,8 +6557,8 @@ return array(
 
             // view payment page
             '179' => array(
-                'name' => 'view_payment_page',
-                'name_long' => 'View Payment Page',
+                'name' => 'view_payment_page_midtrans_payment_page',
+                'name_long' => 'View Payment Page (Midtrans Payment Page)',
                 'module_name' => 'Coupon',
                 'type' => 'view',
                 'object_type' => null,
