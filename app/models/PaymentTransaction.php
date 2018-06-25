@@ -107,6 +107,16 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Determine if the payment is failed or not.
+     * 
+     * @return [type] [description]
+     */
+    public function failed()
+    {
+        return $this->status === self::STATUS_FAILED;
+    }
+
+    /**
      * Determine if the payment is for Sepulsa Deals.
      *
      * @author Budi <budi@dominopos.com>
