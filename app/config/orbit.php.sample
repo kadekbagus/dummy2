@@ -6498,9 +6498,18 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
-            // View transaction detail of successful Sepulsa purchase
+            // View transaction detail of successful payment and got Sepulsa coupon/voucher
             '173' => array(
-                'name' => 'view_transaction_page_payment_successful_sepulsa',
+                'name' => 'view_transaction_page_payment_successful_got_coupon_sepulsa',
+                'name_long' => 'View Transaction Page Payment Success Sepulsa',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => null,
+                'parameter_name' => null
+            ),
+            // View transaction detail of successful payment but waiting for coupon
+            '174' => array(
+                'name' => 'view_transaction_page_payment_successful_waiting_coupon_sepulsa',
                 'name_long' => 'View Transaction Page Payment Success Sepulsa',
                 'module_name' => 'Coupon',
                 'type' => 'click',
@@ -6508,7 +6517,7 @@ return array(
                 'parameter_name' => null
             ),
             // View transaction detail of waiting payment Sepulsa purchase
-            '174' => array(
+            '175' => array(
                 'name' => 'view_transaction_page_payment_waiting_sepulsa',
                 'name_long' => 'View Transaction Page Payment Waiting Sepulsa',
                 'module_name' => 'Coupon',
@@ -6517,7 +6526,7 @@ return array(
                 'parameter_name' => null
             ),
             // View transaction detail of failed Sepulsa purchase
-            '175' => array(
+            '176' => array(
                 'name' => 'view_transaction_page_payment_failed_sepulsa',
                 'name_long' => 'View Transaction Page Payment Failed Sepulsa',
                 'module_name' => 'Coupon',
