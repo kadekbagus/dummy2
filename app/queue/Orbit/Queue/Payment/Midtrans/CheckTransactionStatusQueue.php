@@ -50,8 +50,8 @@ class CheckTransactionStatusQueue
 
             // If payment completed or expired then do nothing.
             // (It maybe completed by notification callback/ping from Midtrans)
-            if ($payment->completed() || $payment->expired()) {
-                $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed or expired. Nothing to do.');
+            if ($payment->completed() || $payment->expired() || $payment->failed()) {
+                $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed, expired, or failed. Nothing to do.');
 
                 if (! $payment->couponIssued()) {
                     $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' Coupon NOT ISSUED YET.');
