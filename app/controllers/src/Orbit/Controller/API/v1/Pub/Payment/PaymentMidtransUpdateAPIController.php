@@ -67,7 +67,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $oldStatus = $payment_update->status;
 
             // if payment transaction already success don't update again
-            if ($oldStatus !== PaymentTransaction::STATUS_SUCCESS) {
+            if (! in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS, PaymentTransaction::STATUS_SUCCESS_NO_COUPON])) {
 
 		        OrbitInput::post('status', function($status) use ($payment_update) {
 	                $payment_update->status = $status;
