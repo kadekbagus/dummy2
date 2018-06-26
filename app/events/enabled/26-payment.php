@@ -33,58 +33,7 @@ use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
  */
 Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTransaction $payment, $retries = 0, $sendNotification = false)
 {
-    // $notificationDelay = 5;
-
-    // // TODO: Move to config?
-    // $adminEmails = [
-    //     Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com'),
-    // ];
-
-    // if ($payment->expired()) {
-    //     Log::info('Payment expired. Nothing to do.');
-    //     return;
-    // }
-
-    // If payment completed...
-    // if ($payment->completed()) {
-
-    //     // If coupon issued, do nothing...
-    //     if ($payment->couponIssued()) {
-    //         return;
-    //     }
-
-    //     // Notify admin and customer if the coupon not available.
-    //     if ($payment->coupon->notAvailable()) {
-    //         Log::info('Coupon not available. Will notify admin and customer.');
-    //         $errorMessage = 'Coupon might be expired, inactive, or no more coupon available for purchase.';
-
-    //         // Notify Admin...
-    //         foreach($adminEmails as $email) {
-    //             $admin          = new User;
-    //             $admin->email   = $email;
-    //             $admin->notify(new CouponNotAvailableNotification($payment, $errorMessage), $notificationDelay);
-    //         }
-
-    //         // Notify customer...
-    //         $payment->user->notify(new CustomerCouponNotAvailableNotification($payment), $notificationDelay);
-
-    //         $payment->notes = $errorMessage;
-    //         $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
-    //         $payment->save();
-
-    //         // TODO: This update should be removed in the future.
-    //         $payment->coupon->updateAvailability();
-
-    //         return;
-    //     }
-
-    //     // Payment success, but at this point we dont issue the coupon yet.
-    //     // We can push a job to Queue to do that and let the request end.
-    //     $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
-    //     $payment->save();
-    // }
-
-    // @todo add always-do tasks here...
+    
 });
 
 /**
@@ -96,8 +45,8 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
  */
 Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment)
 {
-    if ($payment->expired() || $payment->failed()) {
-        Log::info('PaidCoupon: Payment failed/expired. Nothing to do.');
+    if ($payment->expired() || $payment->failed() || $payment->pending()) {
+        Log::info('PaidCoupon: Payment failed/expired/pending. Nothing to do.');
         return;
     }
 
@@ -113,21 +62,10 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         }
 
         Queue::later(
-            $delay, $queue,
+            $delay, 
+            $queue,
             ['paymentId' => $payment->payment_transaction_id, 'retries' => 0],
             Config::get('queue.coupon', 'coupon')
         );
     }
-
-    // // If payment completed and coupon issued.
-    // if ($payment->completed() && $payment->couponIssued()) {
-
-    //     if ($payment->forSepulsa()) {
-    //         // Only send receipt if payment success and the coupon issued.
-    //         $payment->user->notify(new SepulsaReceiptNotification($payment));
-    //     }
-    //     else if ($payment->forHotDeals()) {
-    //         $payment->user->notify(new HotDealsReceiptNotification($payment));
-    //     }
-    // }
 });

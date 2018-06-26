@@ -19,9 +19,6 @@ use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
-use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
-use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
-
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
  *
@@ -49,13 +46,12 @@ class GetCouponQueue
             $paymentId = $data['paymentId'];
             $retries = $data['retries'];
 
-            $payment = PaymentTransaction::with(['coupon', 'issued_coupon', 'user'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['issued_coupon', 'user'])->findOrFail($paymentId);
 
             Log::info(sprintf('PaidCoupon: Getting coupon %s for PaymentID: %s', $payment->object_id, $paymentId));
 
             // Claim the coupon...
-            $payment->issued_coupon->transaction_id     = $paymentId;
-            $payment->issued_coupon->issued_date        = Carbon::now('UTC');
+            $payment->issued_coupon->issued_date = Carbon::now('UTC');
 
             // Coupon already issued...
             $payment->issued_coupon->save();
@@ -64,16 +60,17 @@ class GetCouponQueue
             $payment->status = PaymentTransaction::STATUS_SUCCESS;
             $payment->save();
 
-            $payment->coupon->updateAvailability();
-
+            // Commit the changes ASAP.
             DB::connection()->commit();
+
+            Log::info('PaidCoupon: Coupon issued..');
 
             // Notify Customer.
             $payment->user->notify(new HotDealsReceiptNotification($payment), $notificationDelay);
 
         } catch (Exception $e) {
             DB::connection()->rollback();
-            Log::info(sprintf('PaidCoupon: Get Coupon exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
+            Log::info(sprintf('PaidCoupon: Get HotDeals Coupon exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
             Log::info('PaidCoupon: Data: ' . serialize($data));
         }
     }

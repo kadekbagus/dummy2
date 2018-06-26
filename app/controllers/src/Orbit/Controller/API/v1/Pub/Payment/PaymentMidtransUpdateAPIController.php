@@ -102,7 +102,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
                 }
 
-                // If Update transaction_id in the issued coupon record related to this payment.
+                // Update transaction_id in the issued coupon record related to this payment.
                 if ($status === PaymentTransaction::STATUS_PENDING && ! empty($payment_update->issued_coupon)) {
                     $payment_update->issued_coupon->transaction_id = $payment_update->payment_transaction_id;
                     $payment_update->issued_coupon->save();
@@ -110,7 +110,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                 $payment_update->save();
 
-               // Commit the changes asap
+               // Commit the changes ASAP.
                 $this->commit();
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
