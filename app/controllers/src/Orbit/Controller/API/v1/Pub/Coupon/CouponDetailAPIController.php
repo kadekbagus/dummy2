@@ -155,10 +155,12 @@ class CouponDetailAPIController extends PubControllerAPI
                             'coupon_sepulsa.how_to_buy_and_redeem',
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
+                            'payment_transactions.payment_midtrans_info',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
                             DB::Raw($issuedCouponId),
+                            'payment_transactions.payment_transaction_id as transaction_id',
                             'payment_transactions.status as payment_status',
                             // query for get status active based on timezone
                             DB::raw("
@@ -234,7 +236,8 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $pt->groupBy('product_tag');
                             }])
                         ->where('promotions.promotion_id', $couponId)
-                        ->where('promotions.is_visible', 'Y');
+                        ->where('promotions.is_visible', 'Y')
+                        ->orderBy('payment_transactions.created_at', 'desc'); // get the last payment.
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");

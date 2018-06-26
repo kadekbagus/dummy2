@@ -34,7 +34,6 @@ class TakeVoucherFailureNotification extends Notification
         $this->takeVoucherResponse  = $takeVoucherResponse;
         $this->retries              = $retries;
         $this->queueName            = Config::get('orbit.registration.mobile.queue_name');
-        $this->contact              = Config::get('orbit.contact_information');
     }
 
     /**
@@ -50,6 +49,7 @@ class TakeVoucherFailureNotification extends Notification
             'externalPaymentId' => $this->payment->external_payment_transaction_id,
             'paymentMethod'     => $this->payment->payment_method,
             'sepulsaResponse'   => $this->takeVoucherResponse->getMessage(),
+            'retries'           => $this->retries,
         ];
     }
 
@@ -64,10 +64,12 @@ class TakeVoucherFailureNotification extends Notification
     {
         try {
 
+            Log::info('Retry #' . $data['retries']);
+
             $emailTemplate = 'emails.coupon.sepulsa-take-voucher-failed';
-            if ($this->retries > 0) {
-                $emailTemplate = 'emails.coupon.sepulsa-take-max-retry-reached';
-                $data['maxRetry'] = Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', $this->retries);
+            if ($data['retries'] > 0) {
+                $emailTemplate = 'emails.coupon.sepulsa-take-voucher-max-retry-reached';
+                $data['maxRetry'] = Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', $data['retries']);
             }
 
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
@@ -80,18 +82,18 @@ class TakeVoucherFailureNotification extends Notification
                 $mail->to($data['recipientEmail']);
             });
 
-            $job->delete();
-
-            // Bury the job for later inspection
-            JobBurier::create($job, function($theJob) {
-                // The queue driver does not support bury.
-                $theJob->delete();
-            })->bury();
-
         } catch (Exception $e) {
             Log::info('TakeVoucher email data: ' . serialize($data));
             Log::info('TakeVoucher Failure Notification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
+
+        $job->delete();
+
+        // Bury the job for later inspection
+        // JobBurier::create($job, function($theJob) {
+        //     // The queue driver does not support bury.
+        //     $theJob->delete();
+        // })->bury();
     }
 
     /**
@@ -99,10 +101,11 @@ class TakeVoucherFailureNotification extends Notification
      * 
      * @return [type] [description]
      */
-    public function send()
+    public function send($delay = 1)
     {
-        Queue::push(
-            'Orbit\\Notifications\\Coupon\\Sepulsa\\TakeVoucherFailureNotification@toEmail', 
+        Queue::later(
+            $delay,
+            "Orbit\Notifications\Coupon\Sepulsa\TakeVoucherFailureNotification@toEmail", 
             $this->getEmailData(),
             $this->queueName
         );

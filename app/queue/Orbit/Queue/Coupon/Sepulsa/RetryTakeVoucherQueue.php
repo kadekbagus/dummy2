@@ -17,7 +17,7 @@ use PaymentTransaction;
  *
  * @author Budi <budi@dominopos.com>
  */
-class RetryTakeVoucher
+class RetryTakeVoucherQueue
 {
     /**
      * It is basically re-fire the paymentupdate events after some delay...
@@ -30,17 +30,18 @@ class RetryTakeVoucher
     public function fire($job, $data)
     {
         try {
-            $data['retries']++;
+            $retries = $data['retries'];
+            $retries++;
 
-            // Log::info('Request TakeVoucher retry #' . $data['retries'] . ' ...');
+            Log::info('Request TakeVoucher retry #' . $retries . ' ...');
+
+            DB::connection()->beginTransaction();
 
             $payment = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])
                                             ->where('payment_transaction_id', $data['paymentId'])->first();
-
-            DB::connection()->beginTransaction();
             
             // Take voucher...
-            Event::fire('orbit.payment.postupdatepayment.after.save', [$payment, $data['retries']]);
+            Event::fire('orbit.payment.postupdatepayment.after.save', [$payment, $retries]);
 
             DB::connection()->commit();
 
@@ -52,13 +53,14 @@ class RetryTakeVoucher
             $job->delete();
 
             // Bury the job for later inspection
-            JobBurier::create($job, function($theJob) {
-                // The queue driver does not support bury.
-                $theJob->delete();
-            })->bury();
+            // JobBurier::create($job, function($theJob) {
+            //     // The queue driver does not support bury.
+            //     $theJob->delete();
+            // })->bury();
 
         } catch (Exception $e) {
-            Log::info('Request TakeVoucher retry exception: %s, %s', $e->getLine(), $e->getMessage());
+            DB::connection()->rollback();
+            Log::info(sprintf('Request TakeVoucher retry exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
         }
     }
 }

@@ -142,6 +142,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             ->where('payment_transactions.user_id', $user->user_id)
                             ->where('payment_transactions.object_type', 'coupon')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
+                            ->where('payment_transactions.status', '!=', 'starting')
                             ->groupBy('payment_transactions.payment_transaction_id');
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
@@ -199,8 +200,8 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                         $cdnPath = '';
                         $list->image_url = '';
                     }
-                    $localPath = (! empty($list->localPath)) ? $list->localPath : $localPath;
-                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : $cdnPath;
+                    $localPath = (! empty($list->localPath)) ? $list->localPath : '';
+                    $cdnPath = (! empty($list->cdnPath)) ? $list->cdnPath : '';
                     $list->original_media_path = $imgUrl->getImageUrl($localPath, $cdnPath);
                     $listId = $list->promotion_id;
                 }

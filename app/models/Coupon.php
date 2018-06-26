@@ -33,6 +33,10 @@ class Coupon extends Eloquent
     const NOT_FOUND_ERROR_CODE = 404;
     const INACTIVE_ERROR_CODE = 4040;
 
+    const TYPE_NORMAL = 'mall';
+    const TYPE_SEPULSA = 'sepulsa';
+    const TYPE_HOT_DEALS = 'hot_deals';
+
     protected $table = 'promotions';
 
     protected $primaryKey = 'promotion_id';
@@ -705,5 +709,36 @@ class Coupon extends Eloquent
         }
 
         return $age;
+    }
+
+    /**
+     * Determine if coupon is available for purchase or not.
+     * 
+     * @return [type] [description]
+     */
+    public function notAvailable()
+    {
+        return $this->available === 0 || $this->status === 'inactive' || Carbon::now('UTC')->gt(Carbon::parse($this->end_date, 'UTC'));
+    }
+
+    /**
+     * Update availability of current coupon.
+     * 
+     * @return [type] [description]
+     */
+    public function updateAvailability()
+    {
+        $issued = IssuedCoupon::where('promotion_id', $this->promotion_id)->whereIn('status', [
+                                    IssuedCoupon::STATUS_RESERVED,
+                                    IssuedCoupon::STATUS_ISSUED,
+                                    IssuedCoupon::STATUS_REDEEMED,
+                                ])->count();
+
+        $available = $this->maximum_issued_coupon - $issued;
+        $available = $available < 0 ? 0 : $available;
+
+        $this->available = $available;
+
+        $this->save();
     }
 }

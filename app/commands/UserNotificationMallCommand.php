@@ -114,7 +114,7 @@ class UserNotificationMallCommand extends Command {
                         $cdnConfig = Config::get('orbit.cdn');
                         $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
                         $imageUrl = $imgUrl->getImageUrl($attachmentPath, $cdnUrl);
-                        $launchUrl = LandingPageUrlGenerator::create('mall', $mall->merchant_id, $mall->name)->generateUrl();
+                        $launchUrl = LandingPageUrlGenerator::create('mall', $mall->merchant_id, $mall->name)->generateUrl(true);
                         $headings = new stdClass();
                         $contents = new stdClass();
                         $headings->en = $mall->name;

@@ -6436,6 +6436,147 @@ return array(
                 'object_type' => null,
                 'parameter_name' => null
             ),
+            // Go to my wallet from transaction detail.
+            '166' => array(
+                'name' => 'click_go_to_my_wallet_from_transaction_detail',
+                'name_long' => 'Click Go to My Wallet from Transaction Detail',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // Back to purchase list from transaction detail.
+            '167' => array(
+                'name' => 'click_back_to_purchase_list_from_transaction_detail',
+                'name_long' => 'Click Back to Purchase List from Transaction Detail',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // Back to coupon detail from transaction detail.
+            '168' => array(
+                'name' => 'click_back_to_coupon_detail_from_transaction_detail',
+                'name_long' => 'Click Back to Coupon Detail from Transaction Detail',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // Go to purchase history from transaction detail.
+            '169' => array(
+                'name' => 'click_go_to_purchase_history_from_transaction_detail',
+                'name_long' => 'Click Go to Purchase History from Transaction Detail',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of successful
+            '170' => array(
+                'name' => 'view_transaction_page_payment_successful',
+                'name_long' => 'View Transaction Page Payment Success',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of waiting payment
+            '171' => array(
+                'name' => 'view_transaction_page_payment_waiting',
+                'name_long' => 'View Transaction Page Payment Waiting',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of failed
+            '172' => array(
+                'name' => 'view_transaction_page_payment_failed',
+                'name_long' => 'View Transaction Page Payment Failed',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of successful payment and got coupon/voucher
+            '173' => array(
+                'name' => 'view_transaction_page_payment_successful_got_coupon',
+                'name_long' => 'View Transaction Page Payment Success Got Coupon',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // View transaction detail of successful payment but waiting for coupon
+            '174' => array(
+                'name' => 'view_transaction_page_payment_successful_waiting_coupon',
+                'name_long' => 'View Transaction Page Payment Success Waiting Coupon',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+
+            // Click buy now step 1
+            '175' => array(
+                'name' => 'click_buy_now_step_1',
+                'name_long' => 'Click Buy Now Step 1',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+
+            // Click buy now step 2
+            '176' => array(
+                'name' => 'click_buy_now_step_2',
+                'name_long' => 'Click Buy Now Step 2',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+
+            // view payment page
+            '177' => array(
+                'name' => 'view_payment_page_midtrans_payment_page',
+                'name_long' => 'View Payment Page (Midtrans Payment Page)',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+
+            // view sold out popup step 1
+            '178' => array(
+                'name' => 'view_sold_out_popup_step_1',
+                'name_long' => 'View Sold Out Popup Step 1',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+
+            // view sold out popup step 2
+            '179' => array(
+                'name' => 'view_sold_out_popup_step_2',
+                'name_long' => 'View Sold Out Popup Step 2',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+
+            // click on redeem
+            '180' => array(
+                'name' => 'click_on_redeem',
+                'name_long' => 'Click on Redeem',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
@@ -7256,6 +7397,24 @@ return array(
             'take_voucher_max_retry' => 5,
             // How many SECONDS should we wait before retrying the TakeVoucher request?
             'take_voucher_retry_timeout' => 5,
+        ],
+
+        // Payment Gateway Config
+        // Midtrans
+        'midtrans' => [
+            // Gotomalls secret key from Midtrans
+            'server_key' => 'SB-Mid-server-2x8IKwAQh-ZNkXC2Q5XrtuGl',
+            // Gotomalls client key from Midtrans
+            'client_key' => 'SB-Mid-client-l2uVyYh08A1FpsBZ',
+            // set to true when in production, false for sandbox
+            'is_production' => false,
+
+            // What is the maximum number of check we should perform before stopping?
+            // With the default values it means, at the maximum, we check 20 times every 60 seconds (1 minute).
+            'transaction_status_max_retry' => 20,
+
+            // How many seconds we should wait before re-checking the transaction status?
+            'transaction_status_timeout' => 60,
         ],
     ],
 );
