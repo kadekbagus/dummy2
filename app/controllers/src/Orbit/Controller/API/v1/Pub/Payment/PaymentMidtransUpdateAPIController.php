@@ -71,6 +71,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             	PaymentTransaction::STATUS_SUCCESS, 
             	PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
             	PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
+                PaymentTransaction::STATUS_EXPIRED,
+                PaymentTransaction::STATUS_FAILED,
             ];
 
             if (! in_array($oldStatus, $successStatus)) {
