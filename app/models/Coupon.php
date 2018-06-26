@@ -710,4 +710,35 @@ class Coupon extends Eloquent
 
         return $age;
     }
+
+    /**
+     * Determine if coupon is available for purchase or not.
+     * 
+     * @return [type] [description]
+     */
+    public function notAvailable()
+    {
+        return $this->available === 0 || $this->status === 'inactive' || Carbon::now('UTC')->gt(Carbon::parse($this->end_date, 'UTC'));
+    }
+
+    /**
+     * Update availability of current coupon.
+     * 
+     * @return [type] [description]
+     */
+    public function updateAvailability()
+    {
+        $issued = IssuedCoupon::where('promotion_id', $this->promotion_id)->whereIn('status', [
+                                    IssuedCoupon::STATUS_RESERVED,
+                                    IssuedCoupon::STATUS_ISSUED,
+                                    IssuedCoupon::STATUS_REDEEMED,
+                                ])->count();
+
+        $available = $this->maximum_issued_coupon - $issued;
+        $available = $available < 0 ? 0 : $available;
+
+        $this->available = $available;
+
+        $this->save();
+    }
 }

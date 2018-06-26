@@ -24,7 +24,7 @@ class CheckTransactionStatusQueue
     /**
      * $data should have 2 items:
      * 1. transactionId -- the transaction ID we want to check. Should be equivalent with external_payment_transaction_id.
-     * 2. check -- counter to track the number of check status API we've been calling for this transactionId. We increase the value right after TransactionStatus request made.
+     * 2. check -- counter to track the number of check status API we've been calling for this transactionId.
      * 
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
@@ -48,10 +48,10 @@ class CheckTransactionStatusQueue
                 throw new Exception('Transaction with ExternalID: ' . $data['transactionId'] . ' not found!');
             }
 
-            // If payment completed then do nothing.
+            // If payment completed or expired then do nothing.
             // (It maybe completed by notification callback/ping from Midtrans)
-            if ($payment->completed()) {
-                $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed. Nothing to do.');
+            if ($payment->completed() || $payment->expired() || $payment->failed()) {
+                $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed, expired, or failed. Nothing to do.');
 
                 if (! $payment->couponIssued()) {
                     $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' Coupon NOT ISSUED YET.');
@@ -72,14 +72,12 @@ class CheckTransactionStatusQueue
 
             $payment->save();
 
-            // Re-run this queue if the status is still pending (and not reached maximum try yet)
+            // Re-run this job if the status is still pending (and not reached maximum try yet)
             if ($transaction->shouldRetryChecking($data['check'])) {
 
                 // Commit the provider response changes in DB.
                 DB::connection()->commit();
 
-                // Then schedule check status...
-                // NOTE delay can be passed as queue's data, so no need to get it from config everytime?
                 $this->retryChecking($data);
             }
             else {
@@ -92,6 +90,9 @@ class CheckTransactionStatusQueue
 
                 if ($transaction->isSuccess()) {
                     $payment->status = PaymentTransaction::STATUS_SUCCESS;
+                }
+                else if ($transaction->isPending()) {
+                    $payment->status = PaymentTransaction::STATUS_PENDING;
                 }
                 else if ($transaction->isExpired()) {
                     $payment->status = PaymentTransaction::STATUS_EXPIRED;

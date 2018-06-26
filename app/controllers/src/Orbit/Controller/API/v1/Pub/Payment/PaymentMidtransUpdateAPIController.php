@@ -66,45 +66,61 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
             $oldStatus = $payment_update->status;
 
-	        OrbitInput::post('status', function($status) use ($payment_update) {
-                $payment_update->status = $status;
-            });
+            // if payment transaction already success don't update again
+            $successStatus = [
+            	PaymentTransaction::STATUS_SUCCESS, 
+            	PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
+            	PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
+                PaymentTransaction::STATUS_EXPIRED,
+                PaymentTransaction::STATUS_FAILED,
+            ];
 
-           	OrbitInput::post('external_payment_transaction_id', function($external_payment_transaction_id) use ($payment_update) {
-                $payment_update->external_payment_transaction_id = $external_payment_transaction_id;
-            });
+            if (! in_array($oldStatus, $successStatus)) {
 
-            OrbitInput::post('provider_response_code', function($provider_response_code) use ($payment_update) {
-                $payment_update->provider_response_code = $provider_response_code;
-            });
+		        OrbitInput::post('status', function($status) use ($payment_update) {
+	                $payment_update->status = $status;
+	            });
 
-            OrbitInput::post('provider_response_message', function($provider_response_message) use ($payment_update) {
-                $payment_update->provider_response_message = $provider_response_message;
-            });
+	           	OrbitInput::post('external_payment_transaction_id', function($external_payment_transaction_id) use ($payment_update) {
+	                $payment_update->external_payment_transaction_id = $external_payment_transaction_id;
+	            });
 
-	        $payment_update->responded_at = Carbon::now('UTC');
-	        $payment_update->save();
+	            OrbitInput::post('provider_response_code', function($provider_response_code) use ($payment_update) {
+	                $payment_update->provider_response_code = $provider_response_code;
+	            });
 
-            Event::fire('orbit.payment.postupdatepayment.after.save', [$payment_update]);
+	            OrbitInput::post('provider_response_message', function($provider_response_message) use ($payment_update) {
+	                $payment_update->provider_response_message = $provider_response_message;
+	            });
 
-	        // Commit the changes
-            $this->commit();
+	            OrbitInput::post('payment_midtrans_info', function($payment_midtrans_info) use ($payment_update) {
+	                $payment_update->payment_midtrans_info = serialize($payment_midtrans_info);
+	            });
 
-            $payment_update->load('issued_coupon');
+		        $payment_update->responded_at = Carbon::now('UTC');
+		        $payment_update->save();
 
-            Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
+	            Event::fire('orbit.payment.postupdatepayment.after.save', [$payment_update]);
 
-            // If status before is starting and now is pending, we should trigger job transaction status check.
-            // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of check.
-            if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
-                $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
-                Queue::later(
-                    $delay,
-                    'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
-                    ['transactionId' => $payment_update->external_payment_transaction_id, 'check' => 0]
-                );
+		        // Commit the changes
+	            $this->commit();
 
-                Log::info('First time TransactionStatus check is scheduled to run in ' . $delay . ' seconds.');
+	            $payment_update->load('issued_coupon');
+
+	            Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
+
+	            // If status before is starting and now is pending, we should trigger job transaction status check.
+	            // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of check.
+	            if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
+	                $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
+	                Queue::later(
+	                    $delay,
+	                    'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
+	                    ['transactionId' => $payment_update->external_payment_transaction_id, 'check' => 0]
+	                );
+
+	                Log::info('First time TransactionStatus check is scheduled to run in ' . $delay . ' seconds.');
+	            }
             }
 
 	        $this->response->data = $payment_update;
