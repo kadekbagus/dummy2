@@ -6442,8 +6442,8 @@ return array(
                 'name_long' => 'Click Go to My Wallet from Transaction Detail',
                 'module_name' => 'Coupon',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
             // Back to purchase list from transaction detail.
             '167' => array(
@@ -6451,8 +6451,8 @@ return array(
                 'name_long' => 'Click Back to Purchase List from Transaction Detail',
                 'module_name' => 'Coupon',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
             // Back to coupon detail from transaction detail.
             '168' => array(
@@ -6460,7 +6460,8 @@ return array(
                 'name_long' => 'Click Back to Coupon Detail from Transaction Detail',
                 'module_name' => 'Coupon',
                 'type' => 'click',
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
             // Go to purchase history from transaction detail.
             '169' => array(
@@ -6468,71 +6469,53 @@ return array(
                 'name_long' => 'Click Go to Purchase History from Transaction Detail',
                 'module_name' => 'Coupon',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
-            // View transaction detail of successful hot deals purchase
+            // View transaction detail of successful
             '170' => array(
-                'name' => 'view_transaction_page_payment_successful_hot_deals',
-                'name_long' => 'View Transaction Page Payment Success Hot Deals',
+                'name' => 'view_transaction_page_payment_successful',
+                'name_long' => 'View Transaction Page Payment Success',
                 'module_name' => 'Coupon',
-                'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
-            // View transaction detail of waiting payment hot deals purchase
+            // View transaction detail of waiting payment
             '171' => array(
-                'name' => 'view_transaction_page_payment_waiting_hot_deals',
-                'name_long' => 'View Transaction Page Payment Waiting Hot Deals',
+                'name' => 'view_transaction_page_payment_waiting',
+                'name_long' => 'View Transaction Page Payment Waiting',
                 'module_name' => 'Coupon',
-                'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
-            // View transaction detail of failed hot deals purchase
+            // View transaction detail of failed
             '172' => array(
-                'name' => 'view_transaction_page_payment_failed_hot_deals',
-                'name_long' => 'View Transaction Page Payment Failed Hot Deals',
+                'name' => 'view_transaction_page_payment_failed',
+                'name_long' => 'View Transaction Page Payment Failed',
                 'module_name' => 'Coupon',
-                'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
-            // View transaction detail of successful payment and got Sepulsa coupon/voucher
+            // View transaction detail of successful payment and got coupon/voucher
             '173' => array(
-                'name' => 'view_transaction_page_payment_successful_got_coupon_sepulsa',
-                'name_long' => 'View Transaction Page Payment Success Got Coupon Sepulsa',
+                'name' => 'view_transaction_page_payment_successful_got_coupon',
+                'name_long' => 'View Transaction Page Payment Success Got Coupon',
                 'module_name' => 'Coupon',
-                'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
             // View transaction detail of successful payment but waiting for coupon
             '174' => array(
-                'name' => 'view_transaction_page_payment_successful_waiting_coupon_sepulsa',
-                'name_long' => 'View Transaction Page Payment Success Waiting Coupon Sepulsa',
+                'name' => 'view_transaction_page_payment_successful_waiting_coupon',
+                'name_long' => 'View Transaction Page Payment Success Waiting Coupon',
                 'module_name' => 'Coupon',
-                'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
-            ),
-            // View transaction detail of waiting payment Sepulsa purchase
-            '175' => array(
-                'name' => 'view_transaction_page_payment_waiting_sepulsa',
-                'name_long' => 'View Transaction Page Payment Waiting Sepulsa',
-                'module_name' => 'Coupon',
-                'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
-            ),
-            // View transaction detail of failed Sepulsa purchase
-            '176' => array(
-                'name' => 'view_transaction_page_payment_failed_sepulsa',
-                'name_long' => 'View Transaction Page Payment Failed Sepulsa',
-                'module_name' => 'Coupon',
-                'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // Click buy now step 1
@@ -6557,8 +6540,8 @@ return array(
 
             // view payment page
             '179' => array(
-                'name' => 'view_payment_page',
-                'name_long' => 'View Payment Page',
+                'name' => 'view_payment_page_midtrans_payment_page',
+                'name_long' => 'View Payment Page (Midtrans Payment Page)',
                 'module_name' => 'Coupon',
                 'type' => 'view',
                 'object_type' => null,
