@@ -97,9 +97,10 @@ class CouponBuyAPIController extends PubControllerAPI
 
             if ($with_reserved === 'Y') {
 
-                $this->beginTransaction();
 
                 if (empty($userIssuedCoupon)) {
+                    $this->beginTransaction();
+
                     // Insert to oeb_issued_coupon for reserve the coupon
                     $issuedCoupon = new IssuedCoupon;
                     $issuedCoupon->promotion_id             = $coupon_id;
@@ -124,29 +125,34 @@ class CouponBuyAPIController extends PubControllerAPI
                     } elseif ($availableCoupon->available == 0) {
                         // Delete the coupon and also suggestion
                         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
-                            'coupon_id' => $coupon->promotion_id
+                            'coupon_id' => $coupon_id
                         ]);
 
                         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
-                            'coupon_id' => $coupon->promotion_id
+                            'coupon_id' => $coupon_id
                         ]);
                     }
 
+                    $this->commit();
+
                     // Register to queue for check payment progress, time will be set configurable
-                    // $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 10);
-                    $date = Carbon::now()->addMinutes(15);
+                    $date = Carbon::now()->addMinutes(10);
+                    Log::info(' ======= Send queue running at = ' . $date . ' ========');
+
                     Queue::later(
                         $date,
                         'Orbit\\Queue\\Coupon\\CheckReservedCoupon',
                         ['coupon_id' => $coupon_id, 'user_id' => $user->user_id]
                     );
 
+                    $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+10 minutes", strtotime($issuedCoupon->issued_date)));
+
                     // Return the data
                     $response = $issuedCoupon;
                 }
+
             }
 
-            $this->commit();
 
             $this->response->data = $response;
 
@@ -154,7 +160,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getFile();
             $this->response->data = null;
             $httpCode = 403;
             $this->rollBack();
@@ -162,7 +168,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getFile();
             $this->response->data = null;
             $httpCode = 403;
             $this->rollBack();
@@ -173,7 +179,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
             // Only shows full query error when we are in debug mode
             if (Config::get('app.debug')) {
-                $this->response->message = $e->getMessage();
+                $this->response->message = $e->getFile();
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
@@ -184,7 +190,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getMessage();
+            $this->response->message = $e->getFile();
             $this->response->data = null;
             $httpCode = 500;
             $this->rollBack();

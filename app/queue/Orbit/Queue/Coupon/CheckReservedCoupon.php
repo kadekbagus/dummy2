@@ -12,6 +12,7 @@ use Orbit\Helper\Util\JobBurier;
 
 use PaymentTransaction;
 use IssuedCoupon;
+use Coupon;
 
 /**
  * Queue to check reserved coupon and returning the available coupon value if user cancel . . .
@@ -31,21 +32,21 @@ class CheckReservedCoupon
     public function fire($job, $data)
     {
         try {
-            $newsId = $data['coupon_id'];
             $userId = $data['user_id'];
+            $couponId = $data['coupon_id'];
 
             DB::connection()->beginTransaction();
 
             // Check reserved coupon status per user
             $userIssuedCoupon = IssuedCoupon::where('user_id', $userId)
                                             ->where('transaction_id', NULL)
-                                            ->where('promotion_id', $coupon_id)
+                                            ->where('promotion_id', $couponId)
                                             ->where('status', IssuedCoupon::STATUS_ISSUED)
                                             ->delete();
 
             if ($userIssuedCoupon) {
                 // If coupon didn't pay, change the issued coupon status and return the available coupon (+1)
-                $availableCoupon = Coupon::where('promotion_id', $coupon_id)
+                $availableCoupon = Coupon::where('promotion_id', $couponId)
                                     ->first();
 
                 // Update available coupon +1
@@ -58,20 +59,20 @@ class CheckReservedCoupon
                 if ($availableCoupon->available > 0) {
                     // Re sync the coupon data
                     Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                        'coupon_id' => $coupon_id
+                        'coupon_id' => $couponId
                     ]);
                 } elseif ($availableCoupon->available == 0) {
                     // Delete the coupon and also suggestion
                     Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
-                        'coupon_id' => $coupon->promotion_id
+                        'coupon_id' => $couponId
                     ]);
 
                     Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
-                        'coupon_id' => $coupon->promotion_id
+                        'coupon_id' => $couponId
                     ]);
                 }
 
-                Log::info(' CheckReservedCoupon by Firmansyah news_id_________ : ' .  $userId);
+                Log::info(' Deleted unpay coupon with id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
 
             }
 
