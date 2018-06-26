@@ -6524,8 +6524,8 @@ return array(
                 'name_long' => 'Click Buy Now Step 1',
                 'module_name' => 'Coupon',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // Click buy now step 2
@@ -6534,8 +6534,8 @@ return array(
                 'name_long' => 'Click Buy Now Step 2',
                 'module_name' => 'Coupon',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // view payment page
@@ -6544,8 +6544,8 @@ return array(
                 'name_long' => 'View Payment Page (Midtrans Payment Page)',
                 'module_name' => 'Coupon',
                 'type' => 'view',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // view sold out popup step 1
@@ -6554,8 +6554,8 @@ return array(
                 'name_long' => 'View Sold Out Popup Step 1',
                 'module_name' => 'Coupon',
                 'type' => 'view',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // view sold out popup step 2
@@ -6564,8 +6564,8 @@ return array(
                 'name_long' => 'View Sold Out Popup Step 2',
                 'module_name' => 'Coupon',
                 'type' => 'view',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // click on redeem
@@ -6574,8 +6574,8 @@ return array(
                 'name_long' => 'Click on Redeem',
                 'module_name' => 'Coupon',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
         ),
     ),
