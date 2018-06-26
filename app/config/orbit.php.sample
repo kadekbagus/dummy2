@@ -6519,63 +6519,63 @@ return array(
             ),
 
             // Click buy now step 1
-            '177' => array(
+            '175' => array(
                 'name' => 'click_buy_now_step_1',
                 'name_long' => 'Click Buy Now Step 1',
                 'module_name' => 'Coupon',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // Click buy now step 2
-            '178' => array(
+            '176' => array(
                 'name' => 'click_buy_now_step_2',
                 'name_long' => 'Click Buy Now Step 2',
                 'module_name' => 'Coupon',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // view payment page
-            '179' => array(
+            '177' => array(
                 'name' => 'view_payment_page_midtrans_payment_page',
                 'name_long' => 'View Payment Page (Midtrans Payment Page)',
                 'module_name' => 'Coupon',
                 'type' => 'view',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // view sold out popup step 1
-            '180' => array(
+            '178' => array(
                 'name' => 'view_sold_out_popup_step_1',
                 'name_long' => 'View Sold Out Popup Step 1',
                 'module_name' => 'Coupon',
                 'type' => 'view',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // view sold out popup step 2
-            '181' => array(
+            '179' => array(
                 'name' => 'view_sold_out_popup_step_2',
                 'name_long' => 'View Sold Out Popup Step 2',
                 'module_name' => 'Coupon',
                 'type' => 'view',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
 
             // click on redeem
-            '182' => array(
+            '180' => array(
                 'name' => 'click_on_redeem',
                 'name_long' => 'Click on Redeem',
                 'module_name' => 'Coupon',
                 'type' => 'click',
-                'object_type' => null,
-                'parameter_name' => null
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
             ),
         ),
     ),
