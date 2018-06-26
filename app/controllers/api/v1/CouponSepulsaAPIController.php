@@ -1,6 +1,6 @@
 <?php
 /**
- * An API controller for managing Coupon.
+ * An API controller for managing Coupon sepulsa.
  */
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -34,9 +34,8 @@ class CouponSepulsaAPIController extends ControllerAPI
     protected $pmpAccountDefaultLanguage = NULL;
 
     /**
-     * POST - Create New Coupon
+     * POST - Create New Coupon for sepulsa
      *
-     * @author Tian <tian@dominopos.com>
      * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
@@ -332,6 +331,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->is_exclusive = $is_exclusive;
             $newcoupon->is_visible = $isVisible;
             $newcoupon->maximum_redeem = $maximum_issued_coupon;
+            $newcoupon->available = $maximum_issued_coupon;
             $newcoupon->is_payable_by_wallet = $payByWallet;
             $newcoupon->is_payable_by_normal = $payByNormal;
             $newcoupon->transaction_amount_commission = $amountCommission;
