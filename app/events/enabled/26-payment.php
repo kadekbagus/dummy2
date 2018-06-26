@@ -96,10 +96,28 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
  */
 Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment)
 {
-    // if ($payment->expired()) {
-    //     Log::info('Payment expired. Nothing to do.');
-    //     return;
-    // }
+    if ($payment->expired() || $payment->failed()) {
+        Log::info('PaidCoupon: Payment failed/expired. Nothing to do.');
+        return;
+    }
+
+    if ($payment->completed()) {
+        Log::info('PaidCoupon: Payment verified! Issuing coupon...');
+
+        // Push a job to Queue to get the Coupon.
+        $queue = 'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue';
+        $delay = 1;
+        if ($payment->forSepulsa()) {
+            $queue = 'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue';
+            $delay = 3;
+        }
+
+        Queue::later(
+            $delay, $queue,
+            ['paymentId' => $payment->payment_transaction_id, 'retries' => 0],
+            Config::get('queue.coupon', 'coupon')
+        );
+    }
 
     // // If payment completed and coupon issued.
     // if ($payment->completed() && $payment->couponIssued()) {
