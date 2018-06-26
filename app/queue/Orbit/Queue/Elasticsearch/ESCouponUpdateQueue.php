@@ -327,15 +327,6 @@ class ESCouponUpdateQueue
             $emptyRedeem = FALSE;
             $emptyIssued = FALSE;
 
-            // If it's sepulsa, don't count availability based on issued coupon because
-            // sepulsa has no issued coupons before user buy it.
-            if ($coupon->promotion_type === 'sepulsa') {
-                $available = $coupon->maximum_issued_coupon;
-            }
-            else {
-                $available = IssuedCoupon::totalAvailable($coupon->promotion_id);
-            }
-
             if ($coupon->maximum_redeem > 0) {
                 $notAvailable = IssuedCoupon::where('status', '=', 'redeemed')
                                             ->where('promotion_id', $coupon->promotion_id)
@@ -355,12 +346,18 @@ class ESCouponUpdateQueue
                     $emptyIssued = TRUE;
                 }
                 else {
-                    // Update availability 
+                    // Update availability
                     $available = $coupon->maximum_issued_coupon - $notAvailable;
                 }
             }
             if($emptyRedeem || $emptyIssued) {
                 $available = 0;
+            }
+
+            // If it's sepulsa, don't count availability based on issued coupon because
+            // sepulsa has no issued coupons before user buy it.
+            if ($coupon->promotion_type === 'sepulsa') {
+                $available = $coupon->available;
             }
 
             // Get url prefix
