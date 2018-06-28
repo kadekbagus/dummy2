@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
 
+use User;
 use PaymentTransaction;
 
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
@@ -81,6 +82,8 @@ class GetCouponQueue
 
                 // Notify customer for receipt/inApp.
                 $payment->user->notify(new SepulsaReceiptNotification($payment), $notificationDelay);
+
+                Log::info('PaidCoupon: Coupon issued for paymentID: ' . $paymentId);
 
                 return;
             }
