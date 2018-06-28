@@ -149,6 +149,21 @@ class CouponBuyAPIController extends PubControllerAPI
                         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
                             'coupon_id' => $coupon_id
                         ]);
+
+                        // To Do : Delete all coupon cache
+                        if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                            $redis = Cache::getRedis();
+                            $keyName = array('coupon','home');
+                            foreach ($keyName as $value) {
+                                $keys = $redis->keys("*$value*");
+                                if (! empty($keys)) {
+                                    foreach ($keys as $key) {
+                                        $redis->del($key);
+                                    }
+                                }
+                            }
+                        }
+
                     }
 
                     $this->commit();
