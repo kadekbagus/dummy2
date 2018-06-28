@@ -10,7 +10,6 @@ use Carbon\Carbon;
 use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
 
-use PaymentTransaction;
 use IssuedCoupon;
 use Coupon;
 
@@ -34,34 +33,48 @@ class CheckReservedCoupon
         try {
             $userId = $data['user_id'];
             $couponId = $data['coupon_id'];
+            $cancelReservedCoupon = false;
 
             DB::connection()->beginTransaction();
 
-            // Check reserved coupon status per user
-            $userIssuedCoupon = IssuedCoupon::where('user_id', $userId)
-                                            ->where('transaction_id', NULL)
-                                            ->where('promotion_id', $couponId)
-                                            ->where('status', IssuedCoupon::STATUS_ISSUED)
-                                            ->delete();
+            // Check detail coupon
+            $coupon = Coupon::where('promotion_id', $couponId)->first();
 
-            if ($userIssuedCoupon) {
-                // If coupon didn't pay, change the issued coupon status and return the available coupon (+1)
-                $availableCoupon = Coupon::where('promotion_id', $couponId)
-                                    ->first();
+            if (! empty($coupon)) {
+                $cancelReservedCoupon = IssuedCoupon::where('user_id', $userId)
+                                                ->where('transaction_id', NULL)
+                                                ->where('promotion_id', $couponId)
+                                                ->where('status', IssuedCoupon::STATUS_ISSUED)
+                                                ->first();
+
+                // Action based on promotion_type
+                if ($coupon->promotion_type === 'sepulsa') {
+                    $cancelReservedCoupon->delete();
+                } elseif ($coupon->promotion_type === 'hot_deals') {
+                    $cancelReservedCoupon->user_id     = NULL;
+                    $cancelReservedCoupon->user_email  = NULL;
+                    $cancelReservedCoupon->issued_date = NULL;
+                    $cancelReservedCoupon->status      = 'availablex';
+                    $cancelReservedCoupon->save();
+                }
+            }
+
+            // Update available coupon and es data
+            if ($cancelReservedCoupon) {
 
                 // Update available coupon +1
-                $availableCoupon->available = $availableCoupon->available + 1;
-                $availableCoupon->setUpdatedAt($availableCoupon->freshTimestamp());
-                $availableCoupon->save();
+                $coupon->available = $coupon->available + 1;
+                $coupon->setUpdatedAt($coupon->freshTimestamp());
+                $coupon->save();
 
 
                 // Re sync the coupon data to make sure deleted when coupon sold out
-                if ($availableCoupon->available > 0) {
+                if ($coupon->available > 0) {
                     // Re sync the coupon data
                     Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
                         'coupon_id' => $couponId
                     ]);
-                } elseif ($availableCoupon->available == 0) {
+                } elseif ($coupon->available == 0) {
                     // Delete the coupon and also suggestion
                     Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
                         'coupon_id' => $couponId
@@ -88,7 +101,7 @@ class CheckReservedCoupon
 
         } catch (Exception $e) {
             DB::connection()->rollback();
-            Log::info(sprintf('Request check reserved coupon exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
+            Log::info(sprintf('Request check reserved coupon queue exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
         }
     }
 }
