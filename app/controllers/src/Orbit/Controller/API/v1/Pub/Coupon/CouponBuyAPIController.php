@@ -151,7 +151,7 @@ class CouponBuyAPIController extends PubControllerAPI
                         ]);
 
                         // To Do : Delete all coupon cache
-                        if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                        /* if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
                             $redis = Cache::getRedis();
                             $keyName = array('coupon','home');
                             foreach ($keyName as $value) {
@@ -162,7 +162,7 @@ class CouponBuyAPIController extends PubControllerAPI
                                     }
                                 }
                             }
-                        }
+                        } */
 
                     }
 
