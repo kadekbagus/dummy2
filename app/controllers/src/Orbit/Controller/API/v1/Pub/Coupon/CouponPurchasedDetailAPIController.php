@@ -92,6 +92,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                     {$prefix}payment_transactions.status,
                                     {$prefix}payment_transactions.payment_midtrans_info,
                                     {$prefix}promotions.promotion_id  as coupon_id,
+                                    {$prefix}promotions.promotion_type  as coupon_type,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                     convert_tz( {$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz,
                                     {$prefix}payment_transactions.payment_method,
