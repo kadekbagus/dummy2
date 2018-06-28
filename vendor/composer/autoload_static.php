@@ -395,6 +395,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'AlterExtendedActivityTableAddNotificationToken' => __DIR__ . '/../..' . '/app/database/migrations/2017_09_15_023055_alter_extended_activity_table_add_notification_token.php',
         'AlterIndexesUserSignin' => __DIR__ . '/../..' . '/app/database/migrations/2016_01_21_230428_alter_indexes_user_signin.php',
         'AlterIssuedCouponsAddRecordExists' => __DIR__ . '/../..' . '/app/database/migrations/2016_10_19_041235_alter_issued_coupons_add_record_exists.php',
+        'AlterPaymentRefundsTableAddMoreFields' => __DIR__ . '/../..' . '/app/database/migrations/2018_06_28_065042_alter_payment_refunds_table_add_more_fields.php',
         'AlterSessionsAddApplicationId' => __DIR__ . '/../..' . '/app/database/migrations/2015_10_30_112636_alter_sessions_add_application_id.php',
         'AlterSessionsAddIndexExpireAt' => __DIR__ . '/../..' . '/app/database/migrations/2015_10_27_094038_alter_sessions_add_index_expire_at.php',
         'AlterTableAccountTypeAddFieldAccountOrder' => __DIR__ . '/../..' . '/app/database/migrations/2016_07_22_034157_alter_table_account_type_add_field_account_order.php',
