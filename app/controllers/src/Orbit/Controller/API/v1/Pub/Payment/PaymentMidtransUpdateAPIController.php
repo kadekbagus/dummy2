@@ -97,15 +97,20 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                 $payment_update->responded_at = Carbon::now('UTC');
 
+                // Update transaction_id in the issued coupon record related to this payment.
+                if (empty($payment->issued_coupon)) {
+                	IssuedCoupon::where('user_id', $payment_update->user_id)
+                				  ->where('promotion_id', $payment_update->object_id)
+                				  ->where('status', IssuedCoupon::STATUS_ISSUED)
+                				  ->update(['transaction_id' => $payment_transaction_id]);
+
+                	// Reload the relationship to IssuedCoupon.
+                	// $payment_update->load('issued_coupon');
+                }
+
                 // If payment is success, then we should assume the status to be success but no coupon.
                 if ($status === PaymentTransaction::STATUS_SUCCESS) {
                     $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
-                }
-
-                // Update transaction_id in the issued coupon record related to this payment.
-                if ($status === PaymentTransaction::STATUS_PENDING && ! empty($payment_update->issued_coupon)) {
-                    $payment_update->issued_coupon->transaction_id = $payment_update->payment_transaction_id;
-                    $payment_update->issued_coupon->save();
                 }
 
                 $payment_update->save();
