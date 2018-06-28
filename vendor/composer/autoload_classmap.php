@@ -37,6 +37,7 @@ return array(
     'AlterExtendedActivityTableAddNotificationToken' => $baseDir . '/app/database/migrations/2017_09_15_023055_alter_extended_activity_table_add_notification_token.php',
     'AlterIndexesUserSignin' => $baseDir . '/app/database/migrations/2016_01_21_230428_alter_indexes_user_signin.php',
     'AlterIssuedCouponsAddRecordExists' => $baseDir . '/app/database/migrations/2016_10_19_041235_alter_issued_coupons_add_record_exists.php',
+    'AlterPaymentRefundsTableAddMoreFields' => $baseDir . '/app/database/migrations/2018_06_28_065042_alter_payment_refunds_table_add_more_fields.php',
     'AlterSessionsAddApplicationId' => $baseDir . '/app/database/migrations/2015_10_30_112636_alter_sessions_add_application_id.php',
     'AlterSessionsAddIndexExpireAt' => $baseDir . '/app/database/migrations/2015_10_27_094038_alter_sessions_add_index_expire_at.php',
     'AlterTableAccountTypeAddFieldAccountOrder' => $baseDir . '/app/database/migrations/2016_07_22_034157_alter_table_account_type_add_field_account_order.php',

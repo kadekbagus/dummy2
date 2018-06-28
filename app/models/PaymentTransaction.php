@@ -111,6 +111,16 @@ class PaymentTransaction extends Eloquent
      * 
      * @return [type] [description]
      */
+    public function pending()
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Determine if the payment is failed or not.
+     * 
+     * @return [type] [description]
+     */
     public function failed()
     {
         return $this->status === self::STATUS_FAILED;
