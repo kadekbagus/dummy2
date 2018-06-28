@@ -6,6 +6,7 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
 use OrbitShop\API\v1\Exception\InvalidArgsException;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
+use \Orbit\Helper\Exception\OrbitCustomException;
 use Illuminate\Database\QueryException;
 use Config;
 use stdClass;
@@ -53,8 +54,8 @@ class CouponBuyAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
-            $coupon_id = OrbitInput::get('coupon_id');
-            $with_reserved = OrbitInput::get('with_reserved', 'N');
+            $coupon_id = OrbitInput::post('coupon_id');
+            $with_reserved = OrbitInput::post('with_reserved', 'N');
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -160,7 +161,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-            $this->response->message = $e->getFile();
+            $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
             $this->rollBack();
@@ -168,7 +169,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
-            $this->response->message = $e->getFile();
+            $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 403;
             $this->rollBack();
@@ -179,7 +180,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
             // Only shows full query error when we are in debug mode
             if (Config::get('app.debug')) {
-                $this->response->message = $e->getFile();
+                $this->response->message = $e->getMessage();
             } else {
                 $this->response->message = Lang::get('validation.orbit.queryerror');
             }
@@ -190,7 +191,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
             $this->response->code = $this->getNonZeroCode($e->getCode());
             $this->response->status = 'error';
-            $this->response->message = $e->getFile();
+            $this->response->message = $e->getMessage();
             $this->response->data = null;
             $httpCode = 500;
             $this->rollBack();
