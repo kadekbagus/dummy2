@@ -136,13 +136,18 @@ class ReceiptNotification extends Notification
      *
      * @return [type] [description]
      */
-    public function toWeb($bodyInApps = null)
+    public function toWeb($job, $data)
     {
-        if (! empty($bodyInApps)) {
-            $mongoClient = MongoClient::create($this->mongoConfig);
-            $inApps = $mongoClient->setFormParam($bodyInApps)
+        try {
+            $mongoClient = MongoClient::create(Config::get('database.mongodb'));
+            $inApps = $mongoClient->setFormParam($data)
                                   ->setEndPoint('user-notifications')
                                   ->request('POST');
+
+            $job->delete();
+
+        } catch (Exception $e) {
+            Log::debug('Notification: ReceiptNotification inApp hotdeals exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
     }
 
@@ -161,8 +166,11 @@ class ReceiptNotification extends Notification
         );
 
         // Other notification method can be added here...
-        $bodyInApps = $this->getInAppData();
-        $this->toWeb($bodyInApps);
+        Queue::later(
+            1,
+            'Orbit\\Notifications\\Coupon\\HotDeals\\ReceiptNotification@toWeb',
+            $this->getInAppData()
+        );
     }
 
     public function getInAppData()
