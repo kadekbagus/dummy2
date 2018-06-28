@@ -266,4 +266,21 @@ class IssuedCoupon extends Eloquent
         }
         return $issuedCoupon;
     }
+
+    /**
+     * Make this issued coupon available for purchase again.
+     * 
+     * @return [type] [description]
+     */
+    public function makeAvailable()
+    {
+        if ($this->status !== self::STATUS_AVAILABLE) {
+            $this->user_id = NULL;
+            $this->user_email = NULL;
+            $this->transaction_id = NULL;
+            $this->status = self::STATUS_AVAILABLE;
+
+            $this->touch();
+        }
+    }
 }

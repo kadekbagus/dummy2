@@ -19,8 +19,8 @@ use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification as SepulsaReceiptNoti
 use Orbit\Notifications\Coupon\Sepulsa\TakeVoucherFailureNotification;
 use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification as SepulsaVoucherNotAvailableNotification;
 
-use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
-use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
+// use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
+// use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
 
 /**
  * A job to issue Sepulsa Voucher after payment completed.
@@ -30,7 +30,7 @@ use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
 class GetCouponQueue
 {
     /**
-     * 
+     * Get Sepulsa Voucher after payment completed.
      * 
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
@@ -127,8 +127,8 @@ class GetCouponQueue
                     // Remove temporary created IssuedCoupon, since we can not get the voucher from Sepulsa.
                     IssuedCoupon::where('transaction_id', $paymentId)->delete();
 
-                    $payment->coupon->available = $payment->coupon->available + 1;
-                    $payment->coupon->save();
+                    // Restore the coupon to stock.
+                    $payment->coupon->updateAvailability();
                     
                     DB::connection()->commit();
 

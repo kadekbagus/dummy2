@@ -36,7 +36,7 @@ class CheckTransactionStatusQueue
 
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::with(['coupon', 'issued_coupon'])
+            $payment = PaymentTransaction::with(['coupon', 'issued_coupon.coupon'])
                                                 ->where('external_payment_transaction_id', $data['transactionId'])->first();
 
             if (empty($payment)) {
@@ -46,12 +46,33 @@ class CheckTransactionStatusQueue
 
             // If payment completed or expired then do nothing.
             // (It maybe completed by notification callback/ping from Midtrans)
-            if ($payment->completed() || $payment->expired() || $payment->failed()) {
-                Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed, expired, or failed. Nothing to do.');
+            if ($payment->completed()) {
+                Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed. Nothing to do.');
 
-                if (! $payment->couponIssued()) {
-                    Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' Coupon NOT ISSUED YET.');
+                return;
+            }
+            else if ($payment->expired() || $payment->failed()) {
+                Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' expired/failed. Removing related issued coupon.');
+
+                // If it is Sepulsa, then remove the IssuedCoupon record.
+                if ($payment->forSepulsa()) {
+                    Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' expired/failed. Removing issued sepulsa coupon.');
+                    
+                    IssuedCoupon::where('transaction_id', $data['transactionId'])->delete();
                 }
+                // If it is Hot Deals, then reset the IssuedCoupon state.
+                else if ($payment->forHotDeals()) {
+                    Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' expired/failed. Revert issued hot deals coupon status.');
+
+                    if (! empty($payment->issued_coupon)) {
+                        $payment->issued_coupon->makeAvailable();
+                    }
+                }
+
+                // Update the availability...
+                $payment->coupon->updateAvailability();
+
+                DB::connection()->commit();
 
                 return;
             }

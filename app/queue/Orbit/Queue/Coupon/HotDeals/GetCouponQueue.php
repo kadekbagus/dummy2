@@ -12,12 +12,12 @@ use Orbit\Helper\Util\JobBurier;
 
 use PaymentTransaction;
 
-use Orbit\Helper\Sepulsa\API\TakeVoucher;
-use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
+// use Orbit\Helper\Sepulsa\API\TakeVoucher;
+// use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
 // Notifications
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
-use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
+// use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.

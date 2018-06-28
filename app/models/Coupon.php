@@ -1,8 +1,6 @@
 <?php
 use Carbon\Carbon as Carbon;
 
-use Queue;
-
 class Coupon extends Eloquent
 {
     /**
@@ -741,7 +739,23 @@ class Coupon extends Eloquent
 
         $this->available = $available;
 
-        $this->save();
+        $this->touch();
+
+        if ($this->available > 0) {
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                'coupon_id' => $this->promotion_id
+            ]);
+        }
+        else if ($this->available === 0) {
+            // Delete the coupon and also suggestion
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
+                'coupon_id' => $this->promotion_id
+            ]);
+
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
+                'coupon_id' => $this->promotion_id
+            ]);
+        }
     }
 
     /**

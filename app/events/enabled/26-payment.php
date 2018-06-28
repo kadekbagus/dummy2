@@ -62,10 +62,10 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         }
 
         Queue::later(
-            $delay, 
+            $delay,
             $queue,
             ['paymentId' => $payment->payment_transaction_id, 'retries' => 0],
-            Config::get('queue.coupon', 'coupon')
+            Config::get('queue.coupon', 'default')
         );
     }
 });
