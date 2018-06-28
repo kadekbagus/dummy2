@@ -51,7 +51,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
     }
 
     if ($payment->completed()) {
-        Log::info('PaidCoupon: Payment verified! Issuing coupon...');
+        Log::info('PaidCoupon: Payment verified! Issuing coupon in few seconds...');
 
         // Push a job to Queue to get the Coupon.
         $queue = 'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue';

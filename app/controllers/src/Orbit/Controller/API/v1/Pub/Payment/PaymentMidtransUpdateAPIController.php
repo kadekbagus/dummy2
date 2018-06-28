@@ -18,6 +18,7 @@ use Log;
 use Config;
 use Exception;
 use PaymentTransaction;
+use IssuedCoupon;
 use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Event;
@@ -60,7 +61,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $payment_update = PaymentTransaction::with(['coupon', 'issued_coupon'])->where('payment_transaction_id', '=', $payment_transaction_id)->first();
+            $payment_update = PaymentTransaction::with(['coupon', 'issued_coupon'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 
@@ -103,9 +104,6 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 				  ->where('promotion_id', $payment_update->object_id)
                 				  ->where('status', IssuedCoupon::STATUS_ISSUED)
                 				  ->update(['transaction_id' => $payment_transaction_id]);
-
-                	// Reload the relationship to IssuedCoupon.
-                	// $payment_update->load('issued_coupon');
                 }
 
                 // If payment is success, then we should assume the status to be success but no coupon.

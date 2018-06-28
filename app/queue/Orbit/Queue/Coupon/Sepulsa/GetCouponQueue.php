@@ -81,6 +81,8 @@ class GetCouponQueue
 
                 // Notify customer for receipt/inApp.
                 $payment->user->notify(new SepulsaReceiptNotification($payment), $notificationDelay);
+
+                return;
             }
             else {
                 // This means the TakeVoucher request failed.
@@ -106,7 +108,7 @@ class GetCouponQueue
                     $delay = Config::get('orbit.partners_api.sepulsa.take_voucher_retry_timeout', 30);
                     $retries++;
 
-                    // Retry job by pushing itself to the Queue.
+                    // Retry this job by re-pushing it to Queue.
                     Queue::later(
                         $delay,
                         'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue', 
@@ -122,6 +124,18 @@ class GetCouponQueue
                     $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                     $payment->save();
 
+                    // Remove temporary created IssuedCoupon, since we can not get the voucher from Sepulsa.
+                    IssuedCoupon::where('transaction_id', $paymentId)->delete();
+
+                    $payment->coupon->available = $payment->coupon->available + 1;
+                    $payment->coupon->save();
+                    
+                    DB::connection()->commit();
+
+                    $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
+
+                    Log::info($errorMessage);
+
                     // Notify Admin that the voucher is failed and customer's money should be refunded.
                     foreach($adminEmails as $email) {
                         $devUser            = new User;
@@ -132,19 +146,13 @@ class GetCouponQueue
                     // Notify customer that the coupon is not available and the money will be refunded.
                     $payment->user->notify(new SepulsaVoucherNotAvailableNotification($payment), $notificationDelay);
 
-                    // Remove temporary created IssuedCoupon, since we can not get the voucher from Sepulsa.
-                    IssuedCoupon::where('transaction_id', $paymentId)->delete();
-
-                    // Update coupon availability
-                    $payment->coupon->updateAvailability();
-
-                    $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
+                    return;
                 }
 
                 Log::info($errorMessage);
-
-                DB::connection()->commit();
             }
+
+            DB::connection()->commit();
 
         } catch (Exception $e) {
             DB::connection()->rollback();
