@@ -21,8 +21,8 @@ use Coupon;
 use IssuedCoupon;
 use \Queue;
 use Carbon\Carbon as Carbon;
-
 use Log;
+
 class CouponBuyAPIController extends PubControllerAPI
 {
     /**
@@ -79,7 +79,7 @@ class CouponBuyAPIController extends PubControllerAPI
             // Check the user already have coupon or not
             $userIssuedCoupon = IssuedCoupon::where('user_id', $user->user_id)
                                             ->where('promotion_id', $coupon_id)
-                                            ->where('status', IssuedCoupon::STATUS_ISSUED)
+                                            ->where('status', IssuedCoupon::STATUS_RESERVED)
                                             ->first();
 
             if (! empty($userIssuedCoupon)) {
@@ -106,12 +106,12 @@ class CouponBuyAPIController extends PubControllerAPI
                     if ($coupon->promotion_type === 'sepulsa') {
 
                         $issuedCoupon = new IssuedCoupon;
-                        $issuedCoupon->promotion_id             = $coupon_id;
-                        $issuedCoupon->user_id                  = $user->user_id;
-                        $issuedCoupon->user_email               = $user->user_email;
-                        $issuedCoupon->issued_date              = date('Y-m-d H:i:s');
-                        $issuedCoupon->status                   = IssuedCoupon::STATUS_ISSUED;
-                        $issuedCoupon->record_exists            = 'Y';
+                        $issuedCoupon->promotion_id  = $coupon_id;
+                        $issuedCoupon->user_id       = $user->user_id;
+                        $issuedCoupon->user_email    = $user->user_email;
+                        $issuedCoupon->issued_date   = date('Y-m-d H:i:s');
+                        $issuedCoupon->status        = IssuedCoupon::STATUS_RESERVED;
+                        $issuedCoupon->record_exists = 'Y';
                         $issuedCoupon->save();
 
                     } elseif ($coupon->promotion_type === 'hot_deals') {
@@ -124,7 +124,7 @@ class CouponBuyAPIController extends PubControllerAPI
                         $issuedCoupon->user_id     = $user->user_id;
                         $issuedCoupon->user_email  = $user->user_email;
                         $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-                        $issuedCoupon->status      = IssuedCoupon::STATUS_ISSUED;
+                        $issuedCoupon->status      = IssuedCoupon::STATUS_RESERVED;
                         $issuedCoupon->save();
 
                     }
@@ -149,6 +149,21 @@ class CouponBuyAPIController extends PubControllerAPI
                         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
                             'coupon_id' => $coupon_id
                         ]);
+
+                        // To Do : Delete all coupon cache
+                        /* if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                            $redis = Cache::getRedis();
+                            $keyName = array('coupon','home');
+                            foreach ($keyName as $value) {
+                                $keys = $redis->keys("*$value*");
+                                if (! empty($keys)) {
+                                    foreach ($keys as $key) {
+                                        $redis->del($key);
+                                    }
+                                }
+                            }
+                        } */
+
                     }
 
                     $this->commit();
