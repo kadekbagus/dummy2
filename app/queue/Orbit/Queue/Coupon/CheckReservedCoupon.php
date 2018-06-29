@@ -9,7 +9,6 @@ use Exception;
 use Carbon\Carbon;
 use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
-
 use IssuedCoupon;
 use Coupon;
 
@@ -44,7 +43,7 @@ class CheckReservedCoupon
                 $cancelReservedCoupon = IssuedCoupon::where('user_id', $userId)
                                                 ->where('transaction_id', NULL)
                                                 ->where('promotion_id', $couponId)
-                                                ->where('status', IssuedCoupon::STATUS_ISSUED)
+                                                ->where('status', IssuedCoupon::STATUS_RESERVED)
                                                 ->first();
 
                 if (! empty($cancelReservedCoupon)) {
@@ -100,19 +99,18 @@ class CheckReservedCoupon
 
                         }
 
-                        Log::info('Queue CheckReservedCoupon Runnning :  Canceled unpay coupon with id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
+                        Log::info('Queue CheckReservedCoupon Runnning :  Canceled unpay, coupon_id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
 
                     } else {
 
-                        Log::info('Queue CheckReservedCoupon Runnning : There is no coupon issued canceled = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
+                        Log::info('Queue CheckReservedCoupon Runnning : No coupon canceled, coupon_id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
 
                     }
                 } else {
-                    Log::info(' Queue CheckReservedCoupon Runnning : There is no coupon issued canceled = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
+                    Log::info('Queue CheckReservedCoupon Runnning : No coupon canceled, coupon_id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
                 }
 
             }
-
 
             DB::connection()->commit();
 
