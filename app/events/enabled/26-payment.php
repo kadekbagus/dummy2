@@ -55,7 +55,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
         $delay = 3;
 
-        $paymentInfo = json_decode($payment->payment_midtrans_info);
+        $paymentInfo = json_decode(unserialize($payment->payment_midtrans_info));
         if (! empty($paymentInfo)) {
             if ($paymentInfo->payment_type === 'bank_transfer' || $paymentInfo->payment_type === 'echannel') {
                 $delay = Config::get('orbit.transaction.delay_before_issuing_coupon', 60);
