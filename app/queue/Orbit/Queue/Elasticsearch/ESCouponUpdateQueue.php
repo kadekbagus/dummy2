@@ -20,6 +20,7 @@ use Orbit\Helper\MongoDB\Client as MongoClient;
 use ObjectSponsor;
 use SponsorCreditCard;
 use ObjectSponsorCreditCard;
+use Queue;
 
 class ESCouponUpdateQueue
 {
@@ -91,12 +92,22 @@ class ESCouponUpdateQueue
                         ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                         ->where('promotions.promotion_id', $couponId)
+                        ->where('promotions.available', '!=', 0)
                         ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                         ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
                         ->orderBy('promotions.promotion_id', 'asc')
                         ->first();
 
             if (! is_object($coupon)) {
+
+                $fakeJob = new FakeJob();
+
+                $esCouponDelete = new \Orbit\Queue\Elasticsearch\ESCouponDeleteQueue();
+                $doESCouponDelete = $esCouponDelete->fire($fakeJob, ['coupon_id' => $couponId]);
+
+                $esCouponSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionDeleteQueue();
+                $doESCouponSuggestionDelete = $esCouponSuggestionDelete->fire($fakeJob, ['coupon_id' => $couponId]);
+
                 $job->delete();
 
                 return [
