@@ -3657,7 +3657,7 @@ class CouponAPIController extends ControllerAPI
 
                 if (! is_object($tenant) && ! is_object($csVerificationNumber)) {
                     // @Todo replace with language
-                    $message = 'Tenant is not found.';
+                    $message = Lang::get('validation.orbit.formaterror.verification_code');
                     ACL::throwAccessForbidden($message);
                 } else {
                     if (is_object($tenant)) {
