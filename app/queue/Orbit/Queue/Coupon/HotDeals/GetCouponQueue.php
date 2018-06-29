@@ -11,9 +11,7 @@ use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
 
 use PaymentTransaction;
-
-// use Orbit\Helper\Sepulsa\API\TakeVoucher;
-// use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
+use IssuedCoupon;
 
 // Notifications
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
@@ -27,7 +25,7 @@ use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNo
 class GetCouponQueue
 {
     /**
-     * 
+     * Issue hot deals coupon.
      * 
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
@@ -52,6 +50,7 @@ class GetCouponQueue
 
             // Claim the coupon...
             $payment->issued_coupon->issued_date = Carbon::now('UTC');
+            $payment->issued_coupon->status      = IssuedCoupon::STATUS_ISSUED;
 
             // Coupon already issued...
             $payment->issued_coupon->save();
