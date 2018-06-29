@@ -18,6 +18,7 @@ use Log;
 use Config;
 use Exception;
 use PaymentTransaction;
+use IssuedCoupon;
 use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Event;
@@ -37,19 +38,19 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
 	        $paymentHelper = PaymentHelper::create();
             $paymentHelper->registerCustomValidation();
-	        $validator = Validator::make(
-	            array(
-	                'payment_transaction_id'   => $payment_transaction_id,
-	                'status'                   => $status,
-	            ),
-	            array(
-	                'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-	                'status'                   => 'required|in:pending,success,failed,expired,denied'
-	            ),
-	            array(
-	            	'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
-	            )
-	        );
+            $validator = Validator::make(
+                array(
+                    'payment_transaction_id'   => $payment_transaction_id,
+                    'status'                   => $status,
+                ),
+                array(
+                    'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
+                    'status'                   => 'required|in:pending,success,failed,expired,dont-update,denied'
+                ),
+                array(
+                    'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
+                )
+            );
 
 	        // Begin database transaction
             $this->beginTransaction();
@@ -60,41 +61,38 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	            OrbitShopAPI::throwInvalidArgument($errorMessage);
 	        }
 
-	        $payment_update = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])
-	        									->where('payment_transaction_id', '=', $payment_transaction_id)
-	        									->first();
-            $successStatus = [
-            	PaymentTransaction::STATUS_SUCCESS,
+            $payment_update = PaymentTransaction::with(['coupon', 'issued_coupon'])->findOrFail($payment_transaction_id);
+
+            $oldStatus = $payment_update->status;
+
+            // if payment transaction already success don't update again
+            $finalStatus = [
+            	PaymentTransaction::STATUS_SUCCESS, 
             	PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
             	PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
                 PaymentTransaction::STATUS_EXPIRED,
                 PaymentTransaction::STATUS_FAILED,
-                PaymentTransaction::STATUS_DENIED,
             ];
 
-            $oldStatus = $payment_update->status;
-
-            if ($status == 'denied') {
-            	if (($key = array_search(PaymentTransaction::STATUS_SUCCESS, $successStatus)) !== false) {
-				    unset($successStatus[$key]);
+			if ($status == 'denied') {
+            	if (($key = array_search(PaymentTransaction::STATUS_SUCCESS, $finalStatus)) !== false) {
+				    unset($finalStatus[$key]);
 				}
 
-				if (($key = array_search(PaymentTransaction::STATUS_SUCCESS_NO_COUPON, $successStatus)) !== false) {
-				    unset($successStatus[$key]);
+				if (($key = array_search(PaymentTransaction::STATUS_SUCCESS_NO_COUPON, $finalStatus)) !== false) {
+				    unset($finalStatus[$key]);
 				}
 
-				if (($key = array_search(PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED, $successStatus)) !== false) {
-				    unset($successStatus[$key]);
+				if (($key = array_search(PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED, $finalStatus)) !== false) {
+				    unset($finalStatus[$key]);
 				}
             }
 
+            if (! in_array($oldStatus, $finalStatus)) {
 
-            // if payment transaction already success don't update again
-            if (! in_array($oldStatus, $successStatus)) {
-
-		        OrbitInput::post('status', function($status) use ($payment_update) {
-	                $payment_update->status = $status;
-	            });
+                if ($status !== 'dont-update') {
+                    $payment_update->status = $status;
+                }
 
 	           	OrbitInput::post('external_payment_transaction_id', function($external_payment_transaction_id) use ($payment_update) {
 	                $payment_update->external_payment_transaction_id = $external_payment_transaction_id;
@@ -113,9 +111,22 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	            });
 
 		        $payment_update->responded_at = Carbon::now('UTC');
+
+                // Update transaction_id in the issued coupon record related to this payment.
+                if (empty($payment->issued_coupon)) {
+                	IssuedCoupon::where('user_id', $payment_update->user_id)
+                				  ->where('promotion_id', $payment_update->object_id)
+                				  ->where('status', IssuedCoupon::STATUS_ISSUED)
+                				  ->update(['transaction_id' => $payment_transaction_id]);
+                }
+
+                // If payment is success, then we should assume the status to be success but no coupon.
+                if ($status === PaymentTransaction::STATUS_SUCCESS) {
+                    $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                }
+
 		        $payment_update->save();
 
-	            Event::fire('orbit.payment.postupdatepayment.after.save', [$payment_update]);
 
 		        // Commit the changes
 	            $this->commit();
@@ -134,7 +145,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	                    ['transactionId' => $payment_update->external_payment_transaction_id, 'check' => 0]
 	                );
 
-	                Log::info('First time TransactionStatus check is scheduled to run in ' . $delay . ' seconds.');
+	                Log::info('PaidCoupon: First time TransactionStatus check is scheduled to run in ' . $delay . ' seconds.');
 	            }
             }
 

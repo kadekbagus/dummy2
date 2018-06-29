@@ -47,47 +47,72 @@ class CheckReservedCoupon
                                                 ->where('status', IssuedCoupon::STATUS_ISSUED)
                                                 ->first();
 
-                // Action based on promotion_type
-                if ($coupon->promotion_type === 'sepulsa') {
-                    $cancelReservedCoupon->delete();
-                } elseif ($coupon->promotion_type === 'hot_deals') {
-                    $cancelReservedCoupon->user_id     = NULL;
-                    $cancelReservedCoupon->user_email  = NULL;
-                    $cancelReservedCoupon->issued_date = NULL;
-                    $cancelReservedCoupon->status      = 'availablex';
-                    $cancelReservedCoupon->save();
+                if (! empty($cancelReservedCoupon)) {
+                    // Action based on promotion_type
+                    if ($coupon->promotion_type === 'sepulsa') {
+                        $cancelReservedCoupon->delete();
+                    } elseif ($coupon->promotion_type === 'hot_deals') {
+                        $cancelReservedCoupon->user_id     = NULL;
+                        $cancelReservedCoupon->user_email  = NULL;
+                        $cancelReservedCoupon->issued_date = NULL;
+                        $cancelReservedCoupon->status      = 'available';
+                        $cancelReservedCoupon->save();
+                    }
+
+                    // Update available coupon and es data
+                    if ($cancelReservedCoupon) {
+
+                        // Update available coupon +1
+                        $coupon->available = $coupon->available + 1;
+                        $coupon->setUpdatedAt($coupon->freshTimestamp());
+                        $coupon->save();
+
+
+                        // Re sync the coupon data to make sure deleted when coupon sold out
+                        if ($coupon->available > 0) {
+                            // Re sync the coupon data
+                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                                'coupon_id' => $couponId
+                            ]);
+                        } elseif ($coupon->available == 0) {
+                            // Delete the coupon and also suggestion
+                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
+                                'coupon_id' => $couponId
+                            ]);
+
+                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
+                                'coupon_id' => $couponId
+                            ]);
+
+                            // To Do : Delete all coupon cache
+                            /* if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                                $redis = Cache::getRedis();
+                                $keyName = array('coupon','home');
+                                foreach ($keyName as $value) {
+                                    $keys = $redis->keys("*$value*");
+                                    if (! empty($keys)) {
+                                        foreach ($keys as $key) {
+                                            $redis->del($key);
+                                        }
+                                    }
+                                }
+                            } */
+
+                        }
+
+                        Log::info('Queue CheckReservedCoupon Runnning :  Canceled unpay coupon with id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
+
+                    } else {
+
+                        Log::info('Queue CheckReservedCoupon Runnning : There is no coupon issued canceled = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
+
+                    }
+                } else {
+                    Log::info(' Queue CheckReservedCoupon Runnning : There is no coupon issued canceled = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
                 }
+
             }
 
-            // Update available coupon and es data
-            if ($cancelReservedCoupon) {
-
-                // Update available coupon +1
-                $coupon->available = $coupon->available + 1;
-                $coupon->setUpdatedAt($coupon->freshTimestamp());
-                $coupon->save();
-
-
-                // Re sync the coupon data to make sure deleted when coupon sold out
-                if ($coupon->available > 0) {
-                    // Re sync the coupon data
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                        'coupon_id' => $couponId
-                    ]);
-                } elseif ($coupon->available == 0) {
-                    // Delete the coupon and also suggestion
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
-                        'coupon_id' => $couponId
-                    ]);
-
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
-                        'coupon_id' => $couponId
-                    ]);
-                }
-
-                Log::info(' Deleted unpay coupon with id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
-
-            }
 
             DB::connection()->commit();
 
