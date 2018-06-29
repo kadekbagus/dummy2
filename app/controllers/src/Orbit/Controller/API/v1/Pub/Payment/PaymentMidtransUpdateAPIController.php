@@ -44,7 +44,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	            ),
 	            array(
 	                'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-	                'status'                   => 'required|in:pending,success,failed,expired'
+	                'status'                   => 'required|in:pending,success,failed,expired,denied'
 	            ),
 	            array(
 	            	'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
@@ -63,18 +63,33 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	        $payment_update = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])
 	        									->where('payment_transaction_id', '=', $payment_transaction_id)
 	        									->first();
-
-            $oldStatus = $payment_update->status;
-
-            // if payment transaction already success don't update again
             $successStatus = [
-            	PaymentTransaction::STATUS_SUCCESS, 
+            	PaymentTransaction::STATUS_SUCCESS,
             	PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
             	PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
                 PaymentTransaction::STATUS_EXPIRED,
                 PaymentTransaction::STATUS_FAILED,
+                PaymentTransaction::STATUS_DENIED,
             ];
 
+            $oldStatus = $payment_update->status;
+
+            if ($status == 'denied') {
+            	if (($key = array_search(PaymentTransaction::STATUS_SUCCESS, $successStatus)) !== false) {
+				    unset($successStatus[$key]);
+				}
+
+				if (($key = array_search(PaymentTransaction::STATUS_SUCCESS_NO_COUPON, $successStatus)) !== false) {
+				    unset($successStatus[$key]);
+				}
+
+				if (($key = array_search(PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED, $successStatus)) !== false) {
+				    unset($successStatus[$key]);
+				}
+            }
+
+
+            // if payment transaction already success don't update again
             if (! in_array($oldStatus, $successStatus)) {
 
 		        OrbitInput::post('status', function($status) use ($payment_update) {

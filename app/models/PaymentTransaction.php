@@ -20,9 +20,10 @@ class PaymentTransaction extends Eloquent
     const STATUS_FAILED             = 'failed';
     const STATUS_EXPIRED            = 'expired';
     const STATUS_SUCCESS            = 'success';
+    const STATUS_DENIED             = 'denied';
 
     /**
-     * It means we are in the process of getting coupon/voucher from Sepulsa. 
+     * It means we are in the process of getting coupon/voucher from Sepulsa.
      * This status specific for Sepulsa Deals only.
      */
     const STATUS_SUCCESS_NO_COUPON  = 'success_no_coupon';
@@ -36,7 +37,7 @@ class PaymentTransaction extends Eloquent
      * Payment - Coupon Sepulsa relation.
      *
      * @author Budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function coupon_sepulsa()
@@ -48,7 +49,7 @@ class PaymentTransaction extends Eloquent
      * Payment - Coupon relation.
      *
      * @author Budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function coupon()
@@ -58,7 +59,7 @@ class PaymentTransaction extends Eloquent
 
     /**
      * Payment - IssuedCoupon relation.
-     * 
+     *
      * @return [type] [description]
      */
     public function issued_coupon()
@@ -70,7 +71,7 @@ class PaymentTransaction extends Eloquent
      * Payment - User relation.
      *
      * @author Budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function user()
@@ -88,8 +89,8 @@ class PaymentTransaction extends Eloquent
     public function completed()
     {
         return in_array($this->status, [
-            self::STATUS_SUCCESS, 
-            self::STATUS_SUCCESS_NO_COUPON, 
+            self::STATUS_SUCCESS,
+            self::STATUS_SUCCESS_NO_COUPON,
             self::STATUS_SUCCESS_NO_COUPON_FAILED,
         ]);
     }
@@ -108,7 +109,7 @@ class PaymentTransaction extends Eloquent
 
     /**
      * Determine if the payment is failed or not.
-     * 
+     *
      * @return [type] [description]
      */
     public function failed()
@@ -117,10 +118,20 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Determine if the payment is denied or not.
+     *
+     * @return [type] [description]
+     */
+    public function denied()
+    {
+        return $this->status === self::STATUS_DENIED;
+    }
+
+    /**
      * Determine if the payment is for Sepulsa Deals.
      *
      * @author Budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function forSepulsa()
@@ -134,7 +145,7 @@ class PaymentTransaction extends Eloquent
 
     /**
      * Determine if the coupon related to this payment is issued.
-     * 
+     *
      * @return [type] [description]
      */
     public function couponIssued()
@@ -146,7 +157,7 @@ class PaymentTransaction extends Eloquent
      * Determine if the payment is for Hot Deals.
      *
      * @author Budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function forHotDeals()
@@ -160,7 +171,7 @@ class PaymentTransaction extends Eloquent
 
     /**
      * Get formatted amount.
-     * 
+     *
      * @return [type] [description]
      */
     public function getAmount()

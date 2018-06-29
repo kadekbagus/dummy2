@@ -40,7 +40,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
         Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com'),
     ];
 
-    if ($payment->expired()) {
+    if ($payment->expired() || $payment->denied()) {
         Log::info('Payment expired. Nothing to do.');
         return;
     }
@@ -140,7 +140,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
 
                     Queue::later(
                         $delay,
-                        'Orbit\\Queue\\Coupon\\Sepulsa\\RetryTakeVoucherQueue', 
+                        'Orbit\\Queue\\Coupon\\Sepulsa\\RetryTakeVoucherQueue',
                         compact('paymentId', 'voucherToken', 'retries')
                     );
 
@@ -174,7 +174,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
         }
         else if ($payment->forHotDeals()) {
             // For hot-deals, issuing a coupon means updating the status to 'issued'
-            
+
             // First look for reserved coupon by this user...
             $issuedCoupon = IssuedCoupon::where('promotion_id', $payment->object_id)->where('status', IssuedCoupon::STATUS_RESERVED)
                                           ->where('user_id', $payment->user_id)->first();
@@ -224,7 +224,7 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
  */
 Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment)
 {
-    if ($payment->expired()) {
+    if ($payment->expired() || $payment->denied()) {
         Log::info('Payment expired. Nothing to do.');
         return;
     }
