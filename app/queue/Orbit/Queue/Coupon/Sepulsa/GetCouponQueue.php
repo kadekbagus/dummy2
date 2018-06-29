@@ -69,6 +69,7 @@ class GetCouponQueue
                 $payment->issued_coupon->url                = $takenVoucherData->redeem_url;
                 $payment->issued_coupon->issued_date        = $takenVoucherData->taken_date;
                 $payment->issued_coupon->expired_date       = $takenVoucherData->expired_date;
+                $payment->issued_coupon->status             = IssuedCoupon::STATUS_ISSUED;
 
                 $payment->issued_coupon->save();
 
