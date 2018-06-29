@@ -67,11 +67,12 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
             // if payment transaction already success don't update again
             $finalStatus = [
-            	PaymentTransaction::STATUS_SUCCESS, 
+            	PaymentTransaction::STATUS_SUCCESS,
             	PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
             	PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED,
                 PaymentTransaction::STATUS_EXPIRED,
                 PaymentTransaction::STATUS_FAILED,
+                PaymentTransaction::STATUS_DENIED,
             ];
 
 			if ($status == 'denied') {
@@ -127,11 +128,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
 		        $payment_update->save();
 
-
 		        // Commit the changes
 	            $this->commit();
-
-	            $payment_update->load('issued_coupon');
 
 	            Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
 
