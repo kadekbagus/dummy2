@@ -278,6 +278,7 @@ class IssuedCoupon extends Eloquent
             $this->user_id = NULL;
             $this->user_email = NULL;
             $this->transaction_id = NULL;
+            $this->issued_date = NULL;
             $this->status = self::STATUS_AVAILABLE;
 
             $this->touch();
