@@ -33,7 +33,7 @@ use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
  */
 Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTransaction $payment, $retries = 0, $sendNotification = false)
 {
-    
+
 });
 
 /**
@@ -45,20 +45,27 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
  */
 Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment)
 {
-    if ($payment->expired() || $payment->failed() || $payment->pending()) {
-        Log::info('PaidCoupon: PaymentID: ' . $payment->payment_transaction_id . ' failed/expired/pending. Nothing to do.');
+    if ($payment->expired() || $payment->failed() || $payment->pending() || $payment->denied()) {
+        Log::info('PaidCoupon: PaymentID: ' . $payment->payment_transaction_id . ' failed/expired/pending/denied. Nothing to do.');
         return;
     }
 
     if ($payment->completed()) {
         Log::info('PaidCoupon: PaymentID: ' . $payment->payment_transaction_id . ' verified! Issuing coupon in few seconds...');
 
+        $delay = 3;
+
+        $paymentInfo = json_decode(unserialize($payment->payment_midtrans_info));
+        if (! empty($paymentInfo)) {
+            if ($paymentInfo->payment_type === 'bank_transfer' || $paymentInfo->payment_type === 'echannel') {
+                $delay = Config::get('orbit.transaction.delay_before_issuing_coupon', 60);
+            }
+        }
+
         // Push a job to Queue to get the Coupon.
         $queue = 'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue';
-        $delay = 1;
         if ($payment->forSepulsa()) {
             $queue = 'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue';
-            $delay = 3;
         }
 
         Queue::later(
