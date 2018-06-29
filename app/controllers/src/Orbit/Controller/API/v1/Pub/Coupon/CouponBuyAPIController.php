@@ -91,13 +91,13 @@ class CouponBuyAPIController extends PubControllerAPI
             $coupon = Coupon::where('promotion_id', $coupon_id)
                                 ->first();
 
-            if ($coupon->available == 0) {
+            $availableCoupon = $coupon->available;
+
+            if ($availableCoupon == 0) {
                 OrbitShopAPI::throwInvalidArgument('This coupon has been sold out');
             }
 
-
             if ($with_reserved === 'Y') {
-
 
                 if (empty($userIssuedCoupon)) {
                     $this->beginTransaction();
@@ -130,17 +130,18 @@ class CouponBuyAPIController extends PubControllerAPI
                     }
 
                     // Update available coupon -1
-                    $coupon->available = $coupon->available - 1;
+                    $availableCoupon = $availableCoupon - 1;
+                    $coupon->available = $availableCoupon;
                     $coupon->setUpdatedAt($coupon->freshTimestamp());
                     $coupon->save();
 
                     // Re sync the coupon data to make sure deleted when coupon sold out
-                    if ($coupon->available > 0) {
+                    if ($availableCoupon > 0) {
                         // Re sync the coupon data
                         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
                             'coupon_id' => $coupon_id
                         ]);
-                    } elseif ($coupon->available == 0) {
+                    } elseif ($availableCoupon == 0) {
                         // Delete the coupon and also suggestion
                         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
                             'coupon_id' => $coupon_id
@@ -170,7 +171,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
                     // Register to queue for check payment progress, time will be set configurable
                     $date = Carbon::now()->addMinutes(10);
-                    Log::info(' ======= Send queue for check reserved issued_coupon_id =  '. $issuedCoupon->issued_coupon_id .', will running at = ' . $date . ' ========');
+                    Log::info('Send CheckReservedCoupon queue, issued_coupon_id =  '. $issuedCoupon->issued_coupon_id .', will running at = ' . $date);
 
                     Queue::later(
                         $date,
