@@ -33,7 +33,7 @@ use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
  */
 Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTransaction $payment, $retries = 0, $sendNotification = false)
 {
-    
+
 });
 
 /**
@@ -45,8 +45,8 @@ Event::listen('orbit.payment.postupdatepayment.after.save', function(PaymentTran
  */
 Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment)
 {
-    if ($payment->expired() || $payment->failed() || $payment->pending()) {
-        Log::info('PaidCoupon: PaymentID: ' . $payment->payment_transaction_id . ' failed/expired/pending. Nothing to do.');
+    if ($payment->expired() || $payment->failed() || $payment->pending() || $payment->denied()) {
+        Log::info('PaidCoupon: PaymentID: ' . $payment->payment_transaction_id . ' failed/expired/pending/denied. Nothing to do.');
         return;
     }
 
