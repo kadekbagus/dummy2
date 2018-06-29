@@ -75,7 +75,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 PaymentTransaction::STATUS_DENIED,
             ];
 
-			if ($status == 'denied') {
+			if ($status == PaymentTransaction::STATUS_DENIED) {
             	if (($key = array_search(PaymentTransaction::STATUS_SUCCESS, $finalStatus)) !== false) {
 				    unset($finalStatus[$key]);
 				}
@@ -117,7 +117,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 if (empty($payment->issued_coupon)) {
                 	IssuedCoupon::where('user_id', $payment_update->user_id)
                 				  ->where('promotion_id', $payment_update->object_id)
-                				  ->where('status', IssuedCoupon::STATUS_ISSUED)
+                				  ->where('status', IssuedCoupon::STATUS_RESERVED)
                 				  ->update(['transaction_id' => $payment_transaction_id]);
                 }
 
