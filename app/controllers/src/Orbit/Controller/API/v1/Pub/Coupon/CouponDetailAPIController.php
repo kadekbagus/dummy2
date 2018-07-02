@@ -202,7 +202,11 @@ class CouponDetailAPIController extends PubControllerAPI
                                 ORDER BY CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) ASC
                                 LIMIT 1
                                 ) as timezone
-                            ")
+                            "),
+                            DB::raw("
+                                CASE WHEN reserved_issued_coupons.status = 'reserved'
+                                    THEN 'true'
+                                ELSE 'false' END as is_reserved")
                         )
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -220,6 +224,11 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
                                 $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
                             })
+                        ->leftJoin('issued_coupons as reserved_issued_coupons', function ($q) use ($user) {
+                                $q->on(DB::raw('reserved_issued_coupons.promotion_id'), '=', 'promotions.promotion_id');
+                                $q->on(DB::raw('reserved_issued_coupons.user_id'), '=', DB::Raw("{$this->quote($user->user_id)}"));
+                                $q->on(DB::raw('reserved_issued_coupons.status'), '=', DB::Raw("'reserved'"));
+                        })
                         ->leftJoin('payment_transactions', function ($q) use ($user) {
                                 $q->on('payment_transactions.object_id', '=', 'promotions.promotion_id');
                                 $q->on('payment_transactions.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
