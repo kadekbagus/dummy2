@@ -1045,7 +1045,6 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $statusdb = $updatedcoupon->status;
             $enddatedb = $updatedcoupon->end_date;
-            $available = $updatedcoupon->available;
 
             // save Coupon
             OrbitInput::post('merchant_id', function($merchant_id) use ($updatedcoupon) {
@@ -1111,8 +1110,6 @@ class CouponSepulsaAPIController extends ControllerAPI
             });
 
             $updatedcoupon->is_unique_redeem = 'N';
-
-            $updatedcoupon->available = $available;
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
