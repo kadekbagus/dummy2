@@ -354,12 +354,15 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
         'mode'               => 'update'
     ]);
 
-    // update total available coupon
-    $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
 
-    $coupon = Coupon::findOnWriteConnection($coupon->promotion_id);
-    $coupon->available = $availableCoupons;
-    $coupon->save();
+    if ($coupon->promotion_type != 'sepulsa') {
+        // update total available coupon
+        $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
+
+        $coupon = Coupon::findOnWriteConnection($coupon->promotion_id);
+        $coupon->available = $availableCoupons;
+        $coupon->save();
+    }
 
     // check coupon before update elasticsearch
     $prefix = DB::getTablePrefix();
