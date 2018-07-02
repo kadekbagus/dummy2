@@ -62,18 +62,19 @@ class CheckReservedCoupon
                     if ($cancelReservedCoupon) {
 
                         // Update available coupon +1
-                        $coupon->available = $coupon->available + 1;
+                        $couponAvailable = $coupon->available + 1
+                        $coupon->available = $couponAvailable;
                         $coupon->setUpdatedAt($coupon->freshTimestamp());
                         $coupon->save();
 
 
                         // Re sync the coupon data to make sure deleted when coupon sold out
-                        if ($coupon->available > 0) {
+                        if ($couponAvailable > 0) {
                             // Re sync the coupon data
                             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
                                 'coupon_id' => $couponId
                             ]);
-                        } elseif ($coupon->available == 0) {
+                        } elseif ($couponAvailable == 0) {
                             // Delete the coupon and also suggestion
                             Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
                                 'coupon_id' => $couponId

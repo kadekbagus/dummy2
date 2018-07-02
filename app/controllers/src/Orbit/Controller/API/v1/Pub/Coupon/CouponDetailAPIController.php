@@ -364,7 +364,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $coupon->available_for_redeem = $availableForRedeem;
 
             // get total issued
-            $totalIssued = IssuedCoupon::whereIn('status', ['issued', 'redeemed'])
+            $totalIssued = IssuedCoupon::whereIn('status', ['issued', 'redeemed', 'reserved'])
                                         ->where('promotion_id', $coupon->promotion_id)
                                         ->count();
             $coupon->total_issued = $totalIssued;

@@ -60,7 +60,7 @@ class SepulsaRedeemCallbackController extends ControllerAPI
             // get the issued coupon
             $issuedCoupon = IssuedCoupon::leftJoin('promotions', 'promotions.promotion_id', '=', 'issued_coupons.promotion_id')
                 ->leftJoin('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
-                ->where('issued_coupons.status', 'issued')
+                ->where('issued_coupons.status', IssuedCoupon::STATUS_ISSUED)
                 ->where('issued_coupon_code', $result['code'])
                 ->where('issued_coupons.redeem_verification_code', $result['id'])
                 ->where('coupon_sepulsa.token', $result['token'])
@@ -68,7 +68,7 @@ class SepulsaRedeemCallbackController extends ControllerAPI
 
             if (is_object($issuedCoupon)) {
                 $issuedCoupon->redeemed_date = date('Y-m-d H:i:s');
-                $issuedCoupon->status = 'redeemed';
+                $issuedCoupon->status = IssuedCoupon::STATUS_REDEEMED;
                 $issuedCoupon->save();
                 Log::error(sprintf('>> SEPULSA REDEEM OK FOR CODE: %s; TOKEN: %s', $result['code'], $result['token']));
 
