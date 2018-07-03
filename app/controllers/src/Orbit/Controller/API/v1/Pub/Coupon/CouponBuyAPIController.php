@@ -170,7 +170,8 @@ class CouponBuyAPIController extends PubControllerAPI
                     $this->commit();
 
                     // Register to queue for check payment progress, time will be set configurable
-                    $date = Carbon::now()->addMinutes(10);
+                    $limitTime = Config::get('orbit.coupon_reserved_limit_time');
+                    $date = Carbon::now()->addMinutes($limitTime);
                     Log::info('Send CheckReservedCoupon queue, issued_coupon_id =  '. $issuedCoupon->issued_coupon_id .', will running at = ' . $date);
 
                     Queue::later(
@@ -179,7 +180,7 @@ class CouponBuyAPIController extends PubControllerAPI
                         ['coupon_id' => $coupon_id, 'user_id' => $user->user_id]
                     );
 
-                    $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+10 minutes", strtotime($issuedCoupon->issued_date)));
+                    $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTime minutes", strtotime($issuedCoupon->issued_date)));
 
                     // Return the data
                     $response = $issuedCoupon;

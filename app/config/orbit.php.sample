@@ -6577,6 +6577,17 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'object_id'
             ),
+
+            // payment transaction expired
+            '181' => array(
+                'name' => 'payment_transaction_expired',
+                'name_long' => 'Payment Transaction Expired',
+                'module_name' => 'Transaction',
+                'type' => 'payment',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
@@ -7430,4 +7441,7 @@ return array(
         // Delay before issuing coupon for ATM/Bank Transfer/Echannel (in seconds)
         'delay_before_issuing_coupon' => 60,
     ],
+
+    // Coupon reserved limit time for sepulsa and hot deals, set in minutes
+    'coupon_reserved_limit_time' => '10'
 );
