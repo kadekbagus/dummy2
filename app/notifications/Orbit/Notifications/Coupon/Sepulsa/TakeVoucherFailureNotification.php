@@ -50,6 +50,7 @@ class TakeVoucherFailureNotification extends Notification
             'paymentMethod'     => $this->payment->payment_method,
             'sepulsaResponse'   => $this->takeVoucherResponse->getMessage(),
             'retries'           => $this->retries,
+            'couponId'          => $this->payment->object_id,
         ];
     }
 

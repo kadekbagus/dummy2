@@ -7,9 +7,11 @@
         <p>
             Hello Admin! Take voucher from Sepulsa FAILED for following transaction:
             <ul>
+
                 <li>Internal Transaction ID: {{ $paymentId }}</li>
                 <li>External Transaction ID: {{ $externalPaymentId }}</li>
                 <li>Payment Provider: {{ $paymentMethod }}</li>
+                <li>Coupon ID: {{ $couponId }}</li>
             </ul>
 
             <br>
