@@ -21,6 +21,7 @@ class PaymentTransaction extends Eloquent
     const STATUS_EXPIRED            = 'expired';
     const STATUS_SUCCESS            = 'success';
     const STATUS_DENIED             = 'denied';
+    const STATUS_SUSPICIOUS         = 'suspicious';
 
     /**
      * It means we are in the process of getting coupon/voucher from Sepulsa.
@@ -218,7 +219,7 @@ class PaymentTransaction extends Eloquent
 
             if (! empty($issuedCoupon)) {
                 $issuedCoupon->makeAvailable();
-                Log::info('Payment: hot deals coupon reverted.');
+                Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
             }
         }
 
