@@ -6577,6 +6577,17 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'object_id'
             ),
+
+            // payment transaction expired
+            '181' => array(
+                'name' => 'payment_transaction_expired',
+                'name_long' => 'Payment Transaction Expired',
+                'module_name' => 'Transaction',
+                'type' => 'payment',
+                'object_type' => '--SET BY object_type_parameter_name--',
+                'object_type_parameter_name' => 'object_type',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
