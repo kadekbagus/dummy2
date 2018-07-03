@@ -211,8 +211,13 @@ class PaymentTransaction extends Eloquent
         else if ($this->forHotDeals()) {
             Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Reverting issued hot deals coupon status.');
 
-            if (! empty($this->issued_coupon)) {
-                $this->issued_coupon->makeAvailable();
+            $issuedCoupon = $this->issued_coupon;
+            if (empty($issuedCoupon)) {
+                $issuedCoupon = IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->first();
+            }
+
+            if (! empty($issuedCoupon)) {
+                $issuedCoupon->makeAvailable();
             }
         }
 
