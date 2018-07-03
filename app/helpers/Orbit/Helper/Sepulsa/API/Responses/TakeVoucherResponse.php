@@ -45,7 +45,18 @@ class TakeVoucherResponse
      */
     public function isSuccess()
     {
-        return ! empty($this->data->result);
+        return ! empty($this->data->result) && $this->data->meta->status === true;
+    }
+
+    /**
+     * Determine if the take voucher request failed because of the voucher is expired.
+     *
+     * @todo  should use a better approach to determine expired status (maybe ask Sepulsa to provide a specific code/etc)
+     * @return boolean [description]
+     */
+    public function isExpired()
+    {
+        return stripos($this->message, 'expired') !== false;
     }
 
     /**

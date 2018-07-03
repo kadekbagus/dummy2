@@ -7430,4 +7430,7 @@ return array(
         // Delay before issuing coupon for ATM/Bank Transfer/Echannel (in seconds)
         'delay_before_issuing_coupon' => 60,
     ],
+
+    // Coupon reserved limit time for sepulsa and hot deals, set in minutes
+    'coupon_reserved_limit_time' => '10'
 );

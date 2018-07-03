@@ -12,6 +12,7 @@ use Orbit\Helper\Util\JobBurier;
 
 use User;
 use PaymentTransaction;
+use IssuedCoupon;
 
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
@@ -32,6 +33,8 @@ class GetCouponQueue
 {
     /**
      * Get Sepulsa Voucher after payment completed.
+     *
+     * @todo  do we still need to send notification on the first failure?
      * 
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
@@ -90,25 +93,27 @@ class GetCouponQueue
             }
             else {
                 // This means the TakeVoucher request failed.
-                // We need to record the failure...
                 $payment->notes = $payment->notes . $takenVouchers->getMessage() . "\n------\n";
-                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
-
-                $payment->save();
-
-                // If this is the first failure, then we should notify developer via email.
-                if ($retries === 0) {
-                    $devUser            = new User;
-                    $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
-                    $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), $notificationDelay);
-
-                    $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: First try failed. Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
-                    Log::info($errorMessage);
-                }
 
                 // Let's retry TakeVoucher request...
-                $maxRetry = Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', 3);
-                if ($retries < $maxRetry) {
+                if ($this->jobShouldRetry($retries, $takenVouchers)) {
+
+                    $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                    $payment->save();
+
+                    DB::connection()->commit();
+
+                    // If this is the first failure, then we should notify developer via email.
+                    // NOTE do we still need this?
+                    if ($retries === 0) {
+                        $devUser            = new User;
+                        $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
+                        $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), $notificationDelay);
+
+                        $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: First try failed. Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
+                        Log::info($errorMessage);
+                    }
+
                     $delay = Config::get('orbit.partners_api.sepulsa.take_voucher_retry_timeout', 30);
                     $retries++;
 
@@ -128,17 +133,19 @@ class GetCouponQueue
                     $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                     $payment->save();
 
-                    // Remove temporary created IssuedCoupon, since we can not get the voucher from Sepulsa.
-                    IssuedCoupon::where('transaction_id', $paymentId)->delete();
-
-                    // Restore the coupon to stock.
-                    $payment->coupon->updateAvailability();
+                    // Clean up payment since we can not issue the coupon.
+                    $payment->cleanUp();
                     
                     DB::connection()->commit();
 
-                    $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
+                    if ($takenVouchers->isExpired()) {
+                        $errorMessage = sprintf('PaidCoupon: Can not issue coupon, Sepulsa Voucher is EXPIRED. CouponID: %s, Voucher Token: %s', $payment->object_id, $voucherToken);
+                    }
+                    else {
+                        $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
+                    }
 
-                    Log::info($errorMessage);
+                    // Log::info($errorMessage);
 
                     // Notify Admin that the voucher is failed and customer's money should be refunded.
                     foreach($adminEmails as $email) {
@@ -149,19 +156,30 @@ class GetCouponQueue
 
                     // Notify customer that the coupon is not available and the money will be refunded.
                     $payment->user->notify(new SepulsaVoucherNotAvailableNotification($payment), $notificationDelay);
-
-                    return;
                 }
 
                 Log::info($errorMessage);
             }
-
-            DB::connection()->commit();
 
         } catch (Exception $e) {
             DB::connection()->rollback();
             Log::info(sprintf('PaidCoupon: Can not get voucher, exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
             Log::info('PaidCoupon: data: ' . serialize($data));
         }
+    }
+
+    /**
+     * Determine if we should retry the TakeVoucher request or not.
+     * It should check the maximum allowed retry and the voucher expiration status.
+     * 
+     * @param  integer             $retries       [description]
+     * @param  TakeVoucherResponse $takenVouchers [description]
+     * @return [type]                             [description]
+     */
+    private function jobShouldRetry($retries = 1, TakeVoucherResponse $takenVouchers)
+    {
+        $maxRetry = Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', 3);
+
+        return $retries < $maxRetry && ! $takenVouchers->isExpired();
     }
 }
