@@ -218,6 +218,7 @@ class PaymentTransaction extends Eloquent
 
             if (! empty($issuedCoupon)) {
                 $issuedCoupon->makeAvailable();
+                Log::info('Payment: hot deals coupon reverted.');
             }
         }
 
