@@ -147,7 +147,7 @@ class PaymentTransaction extends Eloquent
     public function forSepulsa()
     {
         if (! empty($this->coupon)) {
-            return $this->coupon->promotion_type === 'sepulsa';
+            return $this->coupon->promotion_type === Coupon::TYPE_SEPULSA;
         }
 
         return false;
@@ -173,7 +173,7 @@ class PaymentTransaction extends Eloquent
     public function forHotDeals()
     {
         if (! empty($this->coupon)) {
-            return $this->coupon->promotion_type === 'hot_deals';
+            return $this->coupon->promotion_type === Coupon::TYPE_HOT_DEALS;
         }
 
         return false;
@@ -187,5 +187,38 @@ class PaymentTransaction extends Eloquent
     public function getAmount()
     {
         return $this->currency . ' ' . number_format($this->amount, 0, ',', '.');
+    }
+
+    /**
+     * Clean up anything related to this payment. 
+     * If payment expired, failed, etc, it should reset/remove any related issued coupon.
+     *
+     * Should be called ONLY after checking if payment is expired, failed, or denied.
+     * 
+     * @return [type] [description]
+     */
+    public function cleanUp()
+    {
+        Log::info('Payment: Cleaning up payment... TransactionID: ' . $this->payment_transaction_id . ', current status: ' . $this->status);
+
+        // If it is Sepulsa, then remove the IssuedCoupon record.
+        if ($this->forSepulsa()) {
+            Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Removing issued sepulsa coupon.');
+
+            IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->delete();
+        }
+        // If it is Hot Deals, then reset the IssuedCoupon state.
+        else if ($this->forHotDeals()) {
+            Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Reverting issued hot deals coupon status.');
+
+            if (! empty($this->issued_coupon)) {
+                $this->issued_coupon->makeAvailable();
+            }
+        }
+
+        // Update the availability...
+        if (! empty($this->coupon)) {
+            $this->coupon->updateAvailability();
+        }
     }
 }
