@@ -12,6 +12,7 @@ use Orbit\Helper\Util\JobBurier;
 
 use User;
 use PaymentTransaction;
+use IssuedCoupon;
 
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
