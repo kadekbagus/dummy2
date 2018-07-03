@@ -52,25 +52,8 @@ class CheckTransactionStatusQueue
                 return;
             }
             else if ($payment->expired() || $payment->failed() || $payment->denied()) {
-                Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' expired/failed. Removing related issued coupon.');
-
-                // If it is Sepulsa, then remove the IssuedCoupon record.
-                if ($payment->forSepulsa()) {
-                    Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . '. Removing issued sepulsa coupon.');
-                    
-                    IssuedCoupon::where('transaction_id', $data['transactionId'])->delete();
-                }
-                // If it is Hot Deals, then reset the IssuedCoupon state.
-                else if ($payment->forHotDeals()) {
-                    Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . '. Reverting issued hot deals coupon status.');
-
-                    if (! empty($payment->issued_coupon)) {
-                        $payment->issued_coupon->makeAvailable();
-                    }
-                }
-
-                // Update the availability...
-                $payment->coupon->updateAvailability();
+                
+                $payment->cleanUp();
 
                 DB::connection()->commit();
 
