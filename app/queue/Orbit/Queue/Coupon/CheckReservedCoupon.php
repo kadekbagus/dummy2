@@ -62,7 +62,7 @@ class CheckReservedCoupon
                     if ($cancelReservedCoupon) {
 
                         // Update available coupon +1
-                        $couponAvailable = $coupon->available + 1
+                        $couponAvailable = $coupon->available + 1;
                         $coupon->available = $couponAvailable;
                         $coupon->setUpdatedAt($coupon->freshTimestamp());
                         $coupon->save();

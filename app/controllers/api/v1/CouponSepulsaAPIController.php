@@ -340,9 +340,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->price_selling = $price_selling;
             $newcoupon->price_old = $price_value;
 
-            if ($rule_type === 'unique_coupon_per_user') {
-                $newcoupon->is_unique_redeem = 'Y';
-            }
+            $newcoupon->is_unique_redeem = 'N';
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -1047,7 +1045,6 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             $statusdb = $updatedcoupon->status;
             $enddatedb = $updatedcoupon->end_date;
-            $available = $updatedcoupon->available;
 
             // save Coupon
             OrbitInput::post('merchant_id', function($merchant_id) use ($updatedcoupon) {
@@ -1112,7 +1109,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
 
-            $updatedcoupon->available = $available;
+            $updatedcoupon->is_unique_redeem = 'N';
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
