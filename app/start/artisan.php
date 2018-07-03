@@ -288,3 +288,6 @@ Artisan::add(new ReinsertUnobtainedPromotionalEventCodeCommand);
 
 // Fetch Sepulsa voucher list
 Artisan::add(new GetSepulsaVoucherListCommand);
+
+// Check coupon reserved
+Artisan::add(new CouponCheckReserved);
