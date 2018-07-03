@@ -48,8 +48,12 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
     if ($payment->expired() || $payment->failed() || $payment->denied()) {
         Log::info('PaidCoupon: PaymentID: ' . $payment->payment_transaction_id . ' failed/expired/denied.');
 
+        DB::connection()->beginTransaction();
+
         // Clean up the payment...
         $payment->cleanUp();
+
+        DB::connection()->commit();
 
         return;
     }
@@ -57,7 +61,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
     if ($payment->completed()) {
         Log::info('PaidCoupon: PaymentID: ' . $payment->payment_transaction_id . ' verified! Issuing coupon in few seconds...');
 
-        $delay = 3;
+        $delay = 15;
 
         $paymentInfo = json_decode(unserialize($payment->payment_midtrans_info));
         if (! empty($paymentInfo)) {
