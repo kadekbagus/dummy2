@@ -21,8 +21,8 @@ use Coupon;
 use IssuedCoupon;
 use \Queue;
 use Carbon\Carbon as Carbon;
-
 use Log;
+
 class CouponBuyAPIController extends PubControllerAPI
 {
     /**
@@ -79,7 +79,7 @@ class CouponBuyAPIController extends PubControllerAPI
             // Check the user already have coupon or not
             $userIssuedCoupon = IssuedCoupon::where('user_id', $user->user_id)
                                             ->where('promotion_id', $coupon_id)
-                                            ->where('status', IssuedCoupon::STATUS_ISSUED)
+                                            ->where('status', IssuedCoupon::STATUS_RESERVED)
                                             ->first();
 
             if (! empty($userIssuedCoupon)) {
@@ -91,13 +91,13 @@ class CouponBuyAPIController extends PubControllerAPI
             $coupon = Coupon::where('promotion_id', $coupon_id)
                                 ->first();
 
-            if ($coupon->available == 0) {
+            $availableCoupon = $coupon->available;
+
+            if ($availableCoupon == 0) {
                 OrbitShopAPI::throwInvalidArgument('This coupon has been sold out');
             }
 
-
             if ($with_reserved === 'Y') {
-
 
                 if (empty($userIssuedCoupon)) {
                     $this->beginTransaction();
@@ -106,12 +106,12 @@ class CouponBuyAPIController extends PubControllerAPI
                     if ($coupon->promotion_type === 'sepulsa') {
 
                         $issuedCoupon = new IssuedCoupon;
-                        $issuedCoupon->promotion_id             = $coupon_id;
-                        $issuedCoupon->user_id                  = $user->user_id;
-                        $issuedCoupon->user_email               = $user->user_email;
-                        $issuedCoupon->issued_date              = date('Y-m-d H:i:s');
-                        $issuedCoupon->status                   = IssuedCoupon::STATUS_ISSUED;
-                        $issuedCoupon->record_exists            = 'Y';
+                        $issuedCoupon->promotion_id  = $coupon_id;
+                        $issuedCoupon->user_id       = $user->user_id;
+                        $issuedCoupon->user_email    = $user->user_email;
+                        $issuedCoupon->issued_date   = date('Y-m-d H:i:s');
+                        $issuedCoupon->status        = IssuedCoupon::STATUS_RESERVED;
+                        $issuedCoupon->record_exists = 'Y';
                         $issuedCoupon->save();
 
                     } elseif ($coupon->promotion_type === 'hot_deals') {
@@ -124,23 +124,24 @@ class CouponBuyAPIController extends PubControllerAPI
                         $issuedCoupon->user_id     = $user->user_id;
                         $issuedCoupon->user_email  = $user->user_email;
                         $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-                        $issuedCoupon->status      = IssuedCoupon::STATUS_ISSUED;
+                        $issuedCoupon->status      = IssuedCoupon::STATUS_RESERVED;
                         $issuedCoupon->save();
 
                     }
 
                     // Update available coupon -1
-                    $coupon->available = $coupon->available - 1;
+                    $availableCoupon = $availableCoupon - 1;
+                    $coupon->available = $availableCoupon;
                     $coupon->setUpdatedAt($coupon->freshTimestamp());
                     $coupon->save();
 
                     // Re sync the coupon data to make sure deleted when coupon sold out
-                    if ($coupon->available > 0) {
+                    if ($availableCoupon > 0) {
                         // Re sync the coupon data
                         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
                             'coupon_id' => $coupon_id
                         ]);
-                    } elseif ($coupon->available == 0) {
+                    } elseif ($availableCoupon == 0) {
                         // Delete the coupon and also suggestion
                         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
                             'coupon_id' => $coupon_id
@@ -149,13 +150,29 @@ class CouponBuyAPIController extends PubControllerAPI
                         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
                             'coupon_id' => $coupon_id
                         ]);
+
+                        // To Do : Delete all coupon cache
+                        /* if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
+                            $redis = Cache::getRedis();
+                            $keyName = array('coupon','home');
+                            foreach ($keyName as $value) {
+                                $keys = $redis->keys("*$value*");
+                                if (! empty($keys)) {
+                                    foreach ($keys as $key) {
+                                        $redis->del($key);
+                                    }
+                                }
+                            }
+                        } */
+
                     }
 
                     $this->commit();
 
                     // Register to queue for check payment progress, time will be set configurable
-                    $date = Carbon::now()->addMinutes(10);
-                    Log::info(' ======= Send queue for check reserved issued_coupon_id =  '. $issuedCoupon->issued_coupon_id .', will running at = ' . $date . ' ========');
+                    $limitTime = Config::get('orbit.coupon_reserved_limit_time');
+                    $date = Carbon::now()->addMinutes($limitTime);
+                    Log::info('Send CheckReservedCoupon queue, issued_coupon_id =  '. $issuedCoupon->issued_coupon_id .', will running at = ' . $date);
 
                     Queue::later(
                         $date,
@@ -163,7 +180,7 @@ class CouponBuyAPIController extends PubControllerAPI
                         ['coupon_id' => $coupon_id, 'user_id' => $user->user_id]
                     );
 
-                    $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+10 minutes", strtotime($issuedCoupon->issued_date)));
+                    $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTime minutes", strtotime($issuedCoupon->issued_date)));
 
                     // Return the data
                     $response = $issuedCoupon;

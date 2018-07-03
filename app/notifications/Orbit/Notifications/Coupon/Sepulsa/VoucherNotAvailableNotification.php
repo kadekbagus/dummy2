@@ -53,7 +53,7 @@ class VoucherNotAvailableNotification extends Notification
             'recipientEmail'    => $this->getEmailAddress(),
             'customerName'      => $this->getName(),
             'couponName'        => $this->payment->object_name,
-            'maxRefundDate'     => Carbon::now('Asia/Jakarta')->addDay()->format('j M Y') . ' 16:00 WIB (GTM +7)',
+            'maxRefundDate'     => Carbon::now('Asia/Jakarta')->addDay()->format('j M Y') . ' 16:00 WIB (GMT +7)',
             'paymentId'         => $this->payment->payment_transaction_id,
             'contact'           => $this->getContactInfo(),
         ];
