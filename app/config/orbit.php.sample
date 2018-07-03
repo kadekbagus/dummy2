@@ -6580,12 +6580,11 @@ return array(
 
             // payment transaction expired
             '181' => array(
-                'name' => 'payment_transaction_expired',
-                'name_long' => 'Payment Transaction Expired',
-                'module_name' => 'Transaction',
-                'type' => 'payment',
-                'object_type' => '--SET BY object_type_parameter_name--',
-                'object_type_parameter_name' => 'object_type',
+                'name' => 'view_transaction_page_payment_expired',
+                'name_long' => 'View Transaction Page Payment Expired',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
                 'parameter_name' => 'object_id'
             ),
         ),
