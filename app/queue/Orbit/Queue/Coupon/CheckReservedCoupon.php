@@ -47,15 +47,22 @@ class CheckReservedCoupon
                                                 ->first();
 
                 if (! empty($cancelReservedCoupon)) {
+
+                    $isCancelReservedCoupon = FALSE;
+
                     // Action based on promotion_type
                     if ($coupon->promotion_type === 'sepulsa') {
-                        $cancelReservedCoupon->delete();
+                        $cancelReservedCoupon->delete(TRUE);
+
+                        $isCancelReservedCoupon = TRUE;
                     } elseif ($coupon->promotion_type === 'hot_deals') {
                         $cancelReservedCoupon->user_id     = NULL;
                         $cancelReservedCoupon->user_email  = NULL;
                         $cancelReservedCoupon->issued_date = NULL;
                         $cancelReservedCoupon->status      = 'available';
                         $cancelReservedCoupon->save();
+
+                        $isCancelReservedCoupon = TRUE;
                     }
 
                     // Update available coupon and es data
@@ -100,7 +107,7 @@ class CheckReservedCoupon
 
                         }
 
-                        Log::info('Queue CheckReservedCoupon Runnning :  Canceled unpay, coupon_id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
+                        Log::info('Queue CheckReservedCoupon Runnning : Coupon unpay canceled, coupon_id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
 
                     } else {
 
