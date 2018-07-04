@@ -103,19 +103,17 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                     // Flag to send suspicious payment notification.
                     $paymentSuspicious = true;
-                    $payment->notes = $payment->notes . 'Payment suspicious.' . "\n----\n";
+                    $payment_update->notes = $payment_update->notes . 'Payment suspicious.' . "\n----\n";
                 }
 
-                if ($oldStatus === PaymentTransaction::STATUS_SUCCESS && $status === PaymentTransaction::STATUS_DENIED) {
+                if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS, PaymentTransaction::STATUS_SUCCESS_NO_COUPON]) && $status === PaymentTransaction::STATUS_DENIED) {
                     $paymentDenied = true;
-                    $payment->notes = $payment->notes . 'Payment denied.' . "\n----\n";
+                    $payment_update->notes = $payment_update->notes . 'Payment denied.' . "\n----\n";
                 }
 
-                if ($status !== 'dont-update') {
-                    $payment_update->status = $status;
-                }
+                $payment_update->status = $status;
 
-                   OrbitInput::post('external_payment_transaction_id', function($external_payment_transaction_id) use ($payment_update) {
+                OrbitInput::post('external_payment_transaction_id', function($external_payment_transaction_id) use ($payment_update) {
                     $payment_update->external_payment_transaction_id = $external_payment_transaction_id;
                 });
 
@@ -134,7 +132,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 $payment_update->responded_at = Carbon::now('UTC');
 
                 // Update transaction_id in the issued coupon record related to this payment.
-                if (empty($payment->issued_coupon)) {
+                if (empty($payment_update->issued_coupon)) {
                     IssuedCoupon::where('user_id', $payment_update->user_id)
                                   ->where('promotion_id', $payment_update->object_id)
                                   ->where('status', IssuedCoupon::STATUS_RESERVED)
