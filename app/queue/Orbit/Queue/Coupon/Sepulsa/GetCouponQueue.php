@@ -57,6 +57,19 @@ class GetCouponQueue
             Log::info("PaidCoupon: Getting Sepulsa Voucher for paymentID: {$paymentId}");
 
             $payment = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])->findOrFail($paymentId);
+
+            // Dont issue coupon if after some delay the payment was canceled.
+            if ($payment->denied() || $payment->failed() || $payment->expired()) {
+                
+                Log::info('PaidCoupon: Payment ' . $paymentId . ' was denied/canceled.');
+                
+                $payment->cleanUp();
+
+                DB::connection()->commit();
+
+                return;
+            }
+
             $voucherToken = $payment->coupon_sepulsa->token;
 
             $takenVouchers = TakeVoucher::create()->take($paymentId, [['token' => $voucherToken]]);
