@@ -44,9 +44,21 @@ class GetCouponQueue
             $paymentId = $data['paymentId'];
             $retries = $data['retries'];
 
+            Log::info(sprintf('PaidCoupon: Getting coupon PaymentID: %s', $paymentId));
+
             $payment = PaymentTransaction::with(['issued_coupon', 'user'])->findOrFail($paymentId);
 
-            Log::info(sprintf('PaidCoupon: Getting coupon %s for PaymentID: %s', $payment->object_id, $paymentId));
+            // Dont issue coupon if after some delay the payment was canceled.
+            if ($payment->denied() || $payment->failed() || $payment->expired()) {
+                
+                Log::info('PaidCoupon: Payment ' . $paymentId . ' was denied/canceled.');
+                
+                $payment->cleanUp();
+
+                DB::connection()->commit();
+
+                return;
+            }
 
             // Claim the coupon...
             $payment->issued_coupon->issued_date = Carbon::now('UTC');

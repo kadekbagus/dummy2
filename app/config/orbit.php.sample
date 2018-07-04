@@ -6577,6 +6577,16 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'object_id'
             ),
+
+            // payment transaction expired
+            '181' => array(
+                'name' => 'view_transaction_page_payment_expired',
+                'name_long' => 'View Transaction Page Payment Expired',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
@@ -7424,7 +7434,6 @@ return array(
         // Email addresses that will be notified if system can not issue coupon.
         'notify_emails' => [
             'developer@dominopos.com',
-            'budi@dominopos.com',
         ],
 
         // Delay before issuing coupon for ATM/Bank Transfer/Echannel (in seconds)
