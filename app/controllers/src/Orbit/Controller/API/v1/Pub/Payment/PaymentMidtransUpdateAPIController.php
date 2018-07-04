@@ -19,9 +19,12 @@ use Config;
 use Exception;
 use PaymentTransaction;
 use IssuedCoupon;
+use User;
 use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Event;
+
+use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 
 class PaymentMidtransUpdateAPIController extends PubControllerAPI
 {
@@ -45,7 +48,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 ),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,failed,expired,dont-update,denied'
+                    'status'                   => 'required|in:pending,success,failed,expired,dont-update,denied,suspicious'
                 ),
                 array(
                     'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
@@ -61,6 +64,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 	            OrbitShopAPI::throwInvalidArgument($errorMessage);
 	        }
 
+            $paymentSuspicious = false;
             $payment_update = PaymentTransaction::with(['coupon', 'issued_coupon'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
@@ -90,6 +94,15 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             }
 
             if (! in_array($oldStatus, $finalStatus)) {
+
+                // Supicious payment should be treated as pending payment.
+                if ($status === PaymentTransaction::STATUS_SUSPICIOUS) {
+                    $status = PaymentTransaction::STATUS_PENDING;
+
+                    // Flag to send suspicious payment notification.
+                    $paymentSuspicious = true;
+                    $payment->notes = $payment->notes . 'Payment suspicious.' . "\n----\n";
+                }
 
                 if ($status !== 'dont-update') {
                     $payment_update->status = $status;
@@ -145,6 +158,19 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
 	                Log::info('PaidCoupon: First time TransactionStatus check is scheduled to run in ' . $delay . ' seconds.');
 	            }
+
+                // If Payment is suspicious, then notify admin.
+                // @todo should only send this once.
+                if ($paymentSuspicious) {
+
+                    $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
+
+                    foreach($adminEmails as $email) {
+                        $admin         = new User;
+                        $admin->email  = $email;
+                        $admin->notify(new SuspiciousPaymentNotification($payment_update), 3);
+                    }
+                }
             }
 
 	        $this->response->data = $payment_update;
