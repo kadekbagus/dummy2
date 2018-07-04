@@ -147,7 +147,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                             ->where('payment_transactions.payment_method', '!=', 'normal')
 
                             // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
-                            ->where(function($query) use($payment_transaction_id, $external_payment_transaction_id) {
+                            ->where(function($query) use($payment_transaction_id) {
                                 $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
                                       ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
                               })
