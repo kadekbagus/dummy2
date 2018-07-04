@@ -21,7 +21,7 @@ class DeniedPaymentNotification extends Notification
 {
     protected $payment = null;
 
-    function __construct($payment)
+    function __construct($payment = null)
     {
         $this->payment      = $payment;
         $this->queueName    = Config::get('orbit.registration.mobile.queue_name');
