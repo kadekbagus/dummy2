@@ -164,7 +164,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                         ['transactionId' => $payment_transaction_id, 'check' => 0]
                     );
 
-                    Log::info('PaidCoupon: First time TransactionStatus check is scheduled to run in ' . $delay . ' seconds.');
+                    Log::info('PaidCoupon: First time TransactionStatus check is scheduled to run after ' . $delay . ' seconds.');
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.
