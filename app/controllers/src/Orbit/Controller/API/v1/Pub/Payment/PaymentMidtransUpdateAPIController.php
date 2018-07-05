@@ -161,7 +161,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     Queue::later(
                         $delay,
                         'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
-                        ['transactionId' => $payment_update->external_payment_transaction_id, 'check' => 0]
+                        ['transactionId' => $payment_transaction_id, 'check' => 0]
                     );
 
                     Log::info('PaidCoupon: First time TransactionStatus check is scheduled to run in ' . $delay . ' seconds.');

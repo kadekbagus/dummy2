@@ -37,11 +37,11 @@ class CheckTransactionStatusQueue
             DB::connection()->beginTransaction();
 
             $payment = PaymentTransaction::with(['coupon', 'issued_coupon'])
-                                                ->where('external_payment_transaction_id', $data['transactionId'])->first();
+                                                ->where('payment_transaction_id', $data['transactionId'])->first();
 
             if (empty($payment)) {
                 // If no transaction found, so we should not do/schedule any check.
-                throw new Exception('Transaction with ExternalID: ' . $data['transactionId'] . ' not found!');
+                throw new Exception('Transaction ' . $data['transactionId'] . ' not found!');
             }
 
             // If payment completed or expired then do nothing.
@@ -64,7 +64,8 @@ class CheckTransactionStatusQueue
 
             $data['check']++;
 
-            $transaction = TransactionStatus::create()->getStatus($data['transactionId']);
+            $midtransTransactionId = $payment->external_payment_transaction_id;
+            $transaction = TransactionStatus::create()->getStatus($midtransTransactionId);
 
             // Record Midtrans' response Code & Message.
             $payment->provider_response_code = $transaction->getCode();
