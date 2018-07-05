@@ -104,14 +104,9 @@ class CheckTransactionStatusQueue
 
                 $payment->save();
 
-                // Fire event to issue the coupon.
-                // Event::fire('orbit.payment.postupdatepayment.after.save', [$payment]);
-
                 DB::connection()->commit();
 
-                // $payment->load('issued_coupon');
-
-                // Fire event to send receipt/notification if necessary.
+                // Fire event to get the coupon if necessary.
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment]);
 
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
@@ -151,7 +146,6 @@ class CheckTransactionStatusQueue
                 DB::connection()->rollback();
 
                 Log::info('Midtrans::CheckTransactionStatusQueue: (E) ' . $e->getFile()  . ':' . $e->getLine() . ' >> ' . $e->getMessage());
-                // Log::info('Midtrans::CheckTransactionStatusQueue: (E) Data: ' . serialize($data), true);
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
             }
         }
@@ -174,6 +168,6 @@ class CheckTransactionStatusQueue
             ['transactionId' => $data['transactionId'], 'check' => $data['check']]
         );
 
-        Log::info('Midtrans::CheckTransactionStatusQueue: Check #' . ($data['check'] + 1) . ' is scheduled to run in ' . $delay . ' seconds.');
+        Log::info('Midtrans::CheckTransactionStatusQueue: Check #' . ($data['check'] + 1) . ' is scheduled to run after ' . $delay . ' seconds.');
     }
 }
