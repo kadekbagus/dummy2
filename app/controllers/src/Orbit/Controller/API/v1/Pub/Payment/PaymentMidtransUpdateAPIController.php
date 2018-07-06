@@ -97,7 +97,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
             if (! in_array($oldStatus, $finalStatus)) {
 
-                // Supicious payment should be treated as pending payment.
+                // Supicious payment will be treated as pending payment.
                 if ($status === PaymentTransaction::STATUS_SUSPICIOUS) {
                     $status = PaymentTransaction::STATUS_PENDING;
 
@@ -139,15 +139,18 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                                   ->update(['transaction_id' => $payment_transaction_id]);
                 }
 
-                // If payment is success, then we should assume the status to be success but no coupon.
+                // If payment is success and not with credit card (not realtime), 
+                // then we assume the status as success_no_coupon (so frontend will show preparing voucher page).
                 if ($status === PaymentTransaction::STATUS_SUCCESS) {
-                    $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                    if ($payment_update->paidWith(['bank_transfer', 'echannel']) || $payment_update->forSepulsa()) {
+                        $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                    }
                 }
 
                 $payment_update->save();
 
                 // Commit the changes ASAP so if there are any other requests that trigger this controller 
-                // will use the updated payment data.
+                // will use the updated payment data/status.
                 $this->commit();
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
