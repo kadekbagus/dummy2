@@ -252,7 +252,7 @@ class PaymentTransaction extends Eloquent
      */
     public function paidWith($paymentTypes = [])
     {
-        $paymentInfo = json_decode(unserialize($payment->payment_midtrans_info));
+        $paymentInfo = json_decode(unserialize($this->payment_midtrans_info));
         if (! empty($paymentInfo)) {
             if (in_array($paymentInfo->payment_type, $paymentTypes)) {
                 return true;
