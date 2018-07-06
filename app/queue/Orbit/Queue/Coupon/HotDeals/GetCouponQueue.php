@@ -10,12 +10,15 @@ use Carbon\Carbon;
 use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
 
+use User;
 use PaymentTransaction;
 use IssuedCoupon;
 
 // Notifications
+use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
-// use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
+use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
+
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
@@ -36,7 +39,7 @@ class GetCouponQueue
         $notificationDelay = 5;
 
         // TODO: Move to config?
-        // $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
+        $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
         try {
             DB::connection()->beginTransaction();
@@ -51,7 +54,7 @@ class GetCouponQueue
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
                 
-                Log::info('PaidCoupon: Payment ' . $paymentId . ' was denied/canceled.');
+                Log::info('PaidCoupon: Payment ' . $paymentId . ' was denied/canceled. We should not issuing any coupon.');
                 
                 $payment->cleanUp();
 
@@ -60,11 +63,32 @@ class GetCouponQueue
                 return;
             }
 
-            // Claim the coupon...
+            // It means we can not get related issued coupon.
+            if (empty($payment->issued_coupon)) {
+
+                Log::info('PaidCoupon: Can not get related IssuedCoupon for payment ' . $paymentId);
+
+                $payment->cleanUp();
+
+                DB::connection()->commit();
+
+                // Notify admin for this failure.
+                foreach($adminEmails as $email) {
+                    $admin              = new User;
+                    $admin->email       = $email;
+                    $admin->notify(new CouponNotAvailableNotification($payment, 'Related IssuedCoupon not found.'), 3);
+                }
+
+                // Notify customer that coupon is not available.
+                $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment), 3);
+
+                return;
+            }
+
+            // Issue the coupon...
             $payment->issued_coupon->issued_date = Carbon::now('UTC');
             $payment->issued_coupon->status      = IssuedCoupon::STATUS_ISSUED;
 
-            // Coupon already issued...
             $payment->issued_coupon->save();
 
             $payment->coupon_redemption_code = $payment->issued_coupon->issued_coupon_code;
