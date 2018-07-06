@@ -45,7 +45,6 @@ class GetCouponQueue
             DB::connection()->beginTransaction();
 
             $paymentId = $data['paymentId'];
-            $retries = $data['retries'];
 
             Log::info(sprintf('PaidCoupon: Getting coupon PaymentID: %s', $paymentId));
 
@@ -85,6 +84,12 @@ class GetCouponQueue
                 return;
             }
 
+            // If coupon already issued...
+            if ($payment->issued_coupon->status === IssuedCoupon::STATUS_ISSUED) {
+                Log::info('PaidCoupon: Coupon already issued. Nothing to do.');
+                return;
+            }
+
             // Issue the coupon...
             $payment->issued_coupon->issued_date = Carbon::now('UTC');
             $payment->issued_coupon->status      = IssuedCoupon::STATUS_ISSUED;
@@ -107,6 +112,10 @@ class GetCouponQueue
             DB::connection()->rollback();
             Log::info(sprintf('PaidCoupon: Get HotDeals Coupon exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
             Log::info('PaidCoupon: Data: ' . serialize($data));
+        }
+
+        if (! empty($job)) {
+            $job->delete();
         }
     }
 }
