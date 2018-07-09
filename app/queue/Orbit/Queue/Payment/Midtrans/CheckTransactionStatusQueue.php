@@ -37,11 +37,11 @@ class CheckTransactionStatusQueue
             DB::connection()->beginTransaction();
 
             $payment = PaymentTransaction::with(['coupon', 'issued_coupon'])
-                                                ->where('external_payment_transaction_id', $data['transactionId'])->first();
+                                                ->where('payment_transaction_id', $data['transactionId'])->first();
 
             if (empty($payment)) {
                 // If no transaction found, so we should not do/schedule any check.
-                throw new Exception('Transaction with ExternalID: ' . $data['transactionId'] . ' not found!');
+                throw new Exception('Transaction ' . $data['transactionId'] . ' not found!');
             }
 
             // If payment completed or expired then do nothing.
@@ -64,7 +64,8 @@ class CheckTransactionStatusQueue
 
             $data['check']++;
 
-            $transaction = TransactionStatus::create()->getStatus($data['transactionId']);
+            $midtransTransactionId = $payment->external_payment_transaction_id;
+            $transaction = TransactionStatus::create()->getStatus($midtransTransactionId);
 
             // Record Midtrans' response Code & Message.
             $payment->provider_response_code = $transaction->getCode();
@@ -86,31 +87,13 @@ class CheckTransactionStatusQueue
 
                 // Set the internal payment status based on transaction status from Midtrans.
                 // @todo Should we assume the payment is failed or just let it as what it is (pending or whatever its status is)?
-                $payment->status = PaymentTransaction::STATUS_FAILED;
-
-                if ($transaction->isSuccess()) {
-                    $payment->status = PaymentTransaction::STATUS_SUCCESS;
-                }
-                else if ($transaction->isPending()) {
-                    $payment->status = PaymentTransaction::STATUS_PENDING;
-                }
-                else if ($transaction->isExpired()) {
-                    $payment->status = PaymentTransaction::STATUS_EXPIRED;
-                }
-                else if ($transaction->isDenied()) {
-                    $payment->status = PaymentTransaction::STATUS_DENIED;
-                }
+                $payment->status = $transaction->mapToInternalStatus();
 
                 $payment->save();
 
-                // Fire event to issue the coupon.
-                // Event::fire('orbit.payment.postupdatepayment.after.save', [$payment]);
-
                 DB::connection()->commit();
 
-                // $payment->load('issued_coupon');
-
-                // Fire event to send receipt/notification if necessary.
+                // Fire event to get the coupon if necessary.
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment]);
 
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
@@ -150,7 +133,6 @@ class CheckTransactionStatusQueue
                 DB::connection()->rollback();
 
                 Log::info('Midtrans::CheckTransactionStatusQueue: (E) ' . $e->getFile()  . ':' . $e->getLine() . ' >> ' . $e->getMessage());
-                // Log::info('Midtrans::CheckTransactionStatusQueue: (E) Data: ' . serialize($data), true);
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
             }
         }
@@ -173,6 +155,6 @@ class CheckTransactionStatusQueue
             ['transactionId' => $data['transactionId'], 'check' => $data['check']]
         );
 
-        Log::info('Midtrans::CheckTransactionStatusQueue: Check #' . ($data['check'] + 1) . ' is scheduled to run in ' . $delay . ' seconds.');
+        Log::info('Midtrans::CheckTransactionStatusQueue: Check #' . ($data['check'] + 1) . ' is scheduled to run after ' . $delay . ' seconds.');
     }
 }

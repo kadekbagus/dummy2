@@ -7434,7 +7434,6 @@ return array(
         // Email addresses that will be notified if system can not issue coupon.
         'notify_emails' => [
             'developer@dominopos.com',
-            'budi@dominopos.com',
         ],
 
         // Delay before issuing coupon for ATM/Bank Transfer/Echannel (in seconds)
