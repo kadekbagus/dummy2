@@ -98,7 +98,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 Log::info("PaidCoupon: Payment {$payment_transaction_id} was marked as FINAL, but there is new request to change status to " . $tmpNewStatus);
                 Log::info("PaidCoupon: Getting correct status from Midtrans for payment {$payment_transaction_id}...");
 
-                $transactionStatus = TransactionStatus::create()->getStatus($payment_update->external_payment_transaction_id);
+                $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
                 $status = $transactionStatus->mapToInternalStatus();
 
                 // If the new status doesnt match with what midtrans gave us, then
