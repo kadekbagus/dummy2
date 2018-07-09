@@ -64,8 +64,7 @@ class CheckTransactionStatusQueue
 
             $data['check']++;
 
-            $midtransTransactionId = $payment->external_payment_transaction_id;
-            $transaction = TransactionStatus::create()->getStatus($midtransTransactionId);
+            $transaction = TransactionStatus::create()->getStatus($data['transactionId']);
 
             // Record Midtrans' response Code & Message.
             $payment->provider_response_code = $transaction->getCode();
@@ -87,20 +86,7 @@ class CheckTransactionStatusQueue
 
                 // Set the internal payment status based on transaction status from Midtrans.
                 // @todo Should we assume the payment is failed or just let it as what it is (pending or whatever its status is)?
-                $payment->status = PaymentTransaction::STATUS_FAILED;
-
-                if ($transaction->isSuccess()) {
-                    $payment->status = PaymentTransaction::STATUS_SUCCESS;
-                }
-                else if ($transaction->isPending()) {
-                    $payment->status = PaymentTransaction::STATUS_PENDING;
-                }
-                else if ($transaction->isExpired()) {
-                    $payment->status = PaymentTransaction::STATUS_EXPIRED;
-                }
-                else if ($transaction->isDenied()) {
-                    $payment->status = PaymentTransaction::STATUS_DENIED;
-                }
+                $payment->status = $transaction->mapToInternalStatus();
 
                 $payment->save();
 
