@@ -56,6 +56,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
             $coupon_id = OrbitInput::post('coupon_id');
             $with_reserved = OrbitInput::post('with_reserved', 'N');
+            $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time');
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -85,6 +86,7 @@ class CouponBuyAPIController extends PubControllerAPI
             $isUserHavingReservedCoupon = false;
             if (! empty($userIssuedCoupon)) {
                 $isUserHavingReservedCoupon = true;
+                $userIssuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTimeCfg minutes", strtotime($userIssuedCoupon->issued_date)));
             }
 
             $coupon = Coupon::where('promotion_id', $coupon_id)->first();
@@ -163,8 +165,7 @@ class CouponBuyAPIController extends PubControllerAPI
                     $this->commit();
 
                     // Register to queue for check payment progress, time will be set configurable
-                    $limitTime = Config::get('orbit.coupon_reserved_limit_time');
-                    $date = Carbon::now()->addMinutes($limitTime);
+                    $date = Carbon::now()->addMinutes($limitTimeCfg);
                     Log::info('Send CheckReservedCoupon queue, issued_coupon_id =  '. $issuedCoupon->issued_coupon_id .', will running at = ' . $date);
 
                     Queue::later(
@@ -173,7 +174,7 @@ class CouponBuyAPIController extends PubControllerAPI
                         ['coupon_id' => $coupon_id, 'user_id' => $user->user_id]
                     );
 
-                    $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTime minutes", strtotime($issuedCoupon->issued_date)));
+                    $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTimeCfg minutes", strtotime($issuedCoupon->issued_date)));
 
                     // Return the data
                     $response = $issuedCoupon;
