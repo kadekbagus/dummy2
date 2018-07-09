@@ -73,6 +73,18 @@ class TransactionStatusResponse
     }
 
     /**
+     * Determine if the transaction is suspicious.
+     * 
+     * @return boolean [description]
+     */
+    public function isSuspicious()
+    {
+        return $this->data->transaction_status === 'capture' && 
+               $this->data->fraud_status === 'challenge' && 
+               $this->data->status_code === 201;
+    }
+
+    /**
      * Decide if we should retry or not based on status_code from Midtrans.
      * 
      * @param  integer $code [description]
@@ -112,5 +124,31 @@ class TransactionStatusResponse
     public function getData()
     {
         return $this->data;
+    }
+
+    /**
+     * Map midtrans response to our internal payment status.
+     * 
+     * @return [type] [description]
+     */
+    public function mapToInternalStatus()
+    {
+        if ($this->isSuccess()) {
+            return PaymentTransaction::STATUS_SUCCESS;
+        }
+        else if ($this->isExpired()) {
+            return PaymentTransaction::STATUS_EXPIRED;
+        }
+        else if ($this->isDenied()) {
+            return PaymentTransaction::STATUS_DENIED;
+        }
+        else if ($this->isPending()) {
+            return PaymentTransaction::STATUS_PENDING;
+        }
+        else if ($this->isSuspicious()) {
+            return PaymentTransaction::STATUS_PENDING;
+        }
+
+        return PaymentTransaction::STATUS_FAILED;
     }
 }

@@ -57,6 +57,49 @@ class GetCouponQueue
             Log::info("PaidCoupon: Getting Sepulsa Voucher for paymentID: {$paymentId}");
 
             $payment = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])->findOrFail($paymentId);
+
+            // Dont issue coupon if after some delay the payment was canceled.
+            if ($payment->denied() || $payment->failed() || $payment->expired()) {
+                
+                Log::info('PaidCoupon: Payment ' . $paymentId . ' was denied/canceled.');
+                
+                $payment->cleanUp();
+
+                DB::connection()->commit();
+
+                $job->delete();
+
+                return;
+            }
+
+            // It means we can not get related issued coupon.
+            if (empty($payment->issued_coupon)) {
+
+                Log::info('PaidCoupon: Can not get related IssuedCoupon for payment ' . $paymentId);
+
+                $payment->cleanUp();
+
+                DB::connection()->commit();
+
+                // Notify admin for this failure.
+                foreach($adminEmails as $email) {
+                    $admin              = new User;
+                    $admin->email       = $email;
+                    $admin->notify(new CouponNotAvailableNotification($payment, 'Related IssuedCoupon not found.'), 3);
+                }
+
+                // Notify customer that coupon is not available.
+                $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment), 3);
+
+                return;
+            }
+
+            // If coupon already issued...
+            if ($payment->issued_coupon->status === IssuedCoupon::STATUS_ISSUED) {
+                Log::info('PaidCoupon: Coupon already issued. Nothing to do.');
+                return;
+            }
+
             $voucherToken = $payment->coupon_sepulsa->token;
 
             $takenVouchers = TakeVoucher::create()->take($paymentId, [['token' => $voucherToken]]);
@@ -88,6 +131,8 @@ class GetCouponQueue
                 $payment->user->notify(new SepulsaReceiptNotification($payment), $notificationDelay);
 
                 Log::info('PaidCoupon: Coupon issued for paymentID: ' . $paymentId);
+
+                $job->delete();
 
                 return;
             }
@@ -145,8 +190,6 @@ class GetCouponQueue
                         $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
                     }
 
-                    // Log::info($errorMessage);
-
                     // Notify Admin that the voucher is failed and customer's money should be refunded.
                     foreach($adminEmails as $email) {
                         $devUser            = new User;
@@ -166,6 +209,8 @@ class GetCouponQueue
             Log::info(sprintf('PaidCoupon: Can not get voucher, exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
             Log::info('PaidCoupon: data: ' . serialize($data));
         }
+
+        $job->delete();
     }
 
     /**
