@@ -10,12 +10,14 @@ use Queue;
 use Exception;
 
 /**
- * Notification for supsicious payment.
+ * Notification for denied payment.
+ * Denied means the payment was rejected by payment gateway/provider or 
+ * canceled by customer (after paying).
  *
  * @author Budi <budi@dominopos.com>
  * 
  */
-class SuspiciousPaymentNotification extends Notification
+class DeniedPaymentNotification extends Notification
 {
     protected $payment = null;
 
@@ -45,14 +47,14 @@ class SuspiciousPaymentNotification extends Notification
     {
         try {
 
-            Log::info('Payment: Sending notification for Suspicious Payment... PaymentID: ' . $data['paymentId']);
+            Log::info('Payment: Sending notification for Denied Payment... PaymentID: ' . $data['paymentId']);
 
-            $emailTemplate = 'emails.payment.suspicious';
+            $emailTemplate = 'emails.payment.denied';
 
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Payment Need Validation (Suspicious)';
+                $subject = 'Payment was Denied';
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
@@ -60,8 +62,8 @@ class SuspiciousPaymentNotification extends Notification
             });
 
         } catch (Exception $e) {
-            Log::info('SuspiciousPayment: exception @ ' . $e->getFile() . ':' . $e->getLine() . ' >> ' . $e->getMessage());
-            Log::info('SuspiciousPayment: email data: ' . serialize($data));
+            Log::info('DeniedPayment: exception @ ' . $e->getFile() . ':' . $e->getLine() . ' >> ' . $e->getMessage());
+            Log::info('DeniedPayment: email data: ' . serialize($data));
         }
 
         $job->delete();
@@ -76,7 +78,7 @@ class SuspiciousPaymentNotification extends Notification
     {
         Queue::later(
             $delay,
-            "Orbit\Notifications\Payment\SuspiciousPaymentNotification@toEmail", 
+            "Orbit\Notifications\Payment\DeniedPaymentNotification@toEmail", 
             $this->getEmailData(),
             $this->queueName
         );
