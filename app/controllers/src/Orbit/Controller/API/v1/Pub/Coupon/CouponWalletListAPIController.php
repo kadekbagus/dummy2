@@ -258,6 +258,7 @@ class CouponWalletListAPIController extends PubControllerAPI
 
             $coupon = $coupon->orderBy(DB::raw("redeem_order"), 'asc');
             $coupon = $coupon->orderBy(DB::raw("redeemed_date"), 'desc');
+            $coupon = $coupon->orderBy(DB::raw("issued_date"), 'desc');
 
             $_coupon = clone $coupon;
 
