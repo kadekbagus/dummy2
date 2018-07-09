@@ -85,9 +85,15 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 PaymentTransaction::STATUS_DENIED,
             ];
 
+            // Assume status as success if it is success_no_coupon/success_no_coupon_failed, so no need re-check to Midtrans.
+            $tmpOldStatus = $oldStatus;
+            if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_COUPON, PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED])) {
+                $tmpOldStatus = PaymentTransaction::STATUS_SUCCESS;
+            }
+
             // If old status was marked as final and doesnt match with the new one, then
             // ask Midtrans for the correct one.
-            if (in_array($oldStatus, $finalStatus) && $oldStatus !== $status) {
+            if (in_array($oldStatus, $finalStatus) && $tmpOldStatus !== $status) {
                 $tmpNewStatus = $status;
                 Log::info("PaidCoupon: Payment {$payment_transaction_id} was marked as FINAL, but there is new request to change status to " . $tmpNewStatus);
                 Log::info("PaidCoupon: Getting correct status from Midtrans for payment {$payment_transaction_id}...");
@@ -95,9 +101,9 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 $transactionStatus = TransactionStatus::create()->getStatus($payment_update->external_payment_transaction_id);
                 $status = $transactionStatus->mapToInternalStatus();
 
-                // If the new status does not match with what midtrans gave us, then
+                // If the new status doesnt match with what midtrans gave us, then
                 // we can ignored this request (dont update).
-                if ($status !== $oldStatus) {
+                if ($tmpNewStatus !== $status) {
                     Log::info("PaidCoupon: New status {$tmpNewStatus} for payment {$payment_transaction_id} will be IGNORED since the correct status is {$status}!");
                 }
                 else {
