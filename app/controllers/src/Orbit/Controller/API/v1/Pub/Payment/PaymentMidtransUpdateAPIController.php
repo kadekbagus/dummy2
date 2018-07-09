@@ -24,6 +24,8 @@ use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Event;
 
+use Orbit\Helper\Midtrans\API\TransactionStatus;
+
 use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
 
@@ -67,11 +69,13 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
             $paymentSuspicious = false;
             $paymentDenied = false;
+            $shouldUpdate = false;
+
             $payment_update = PaymentTransaction::with(['coupon', 'issued_coupon'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 
-            // if payment transaction already success don't update again
+            // List of status which considered as final (should not be changed again except some conditions met).
             $finalStatus = [
                 PaymentTransaction::STATUS_SUCCESS,
                 PaymentTransaction::STATUS_SUCCESS_NO_COUPON,
@@ -81,34 +85,57 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 PaymentTransaction::STATUS_DENIED,
             ];
 
-            if ($status == PaymentTransaction::STATUS_DENIED) {
-                if (($key = array_search(PaymentTransaction::STATUS_SUCCESS, $finalStatus)) !== false) {
-                    unset($finalStatus[$key]);
-                }
-
-                if (($key = array_search(PaymentTransaction::STATUS_SUCCESS_NO_COUPON, $finalStatus)) !== false) {
-                    unset($finalStatus[$key]);
-                }
-
-                if (($key = array_search(PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED, $finalStatus)) !== false) {
-                    unset($finalStatus[$key]);
-                }
+            // Assume status as success if it is success_no_coupon/success_no_coupon_failed, so no need re-check to Midtrans.
+            $tmpOldStatus = $oldStatus;
+            if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_COUPON, PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED])) {
+                $tmpOldStatus = PaymentTransaction::STATUS_SUCCESS;
             }
 
-            if (! in_array($oldStatus, $finalStatus)) {
+            // If old status was marked as final and doesnt match with the new one, then
+            // ask Midtrans for the correct one.
+            if (in_array($oldStatus, $finalStatus) && $tmpOldStatus !== $status) {
+                $tmpNewStatus = $status;
+                Log::info("PaidCoupon: Payment {$payment_transaction_id} was marked as FINAL, but there is new request to change status to " . $tmpNewStatus);
+                Log::info("PaidCoupon: Getting correct status from Midtrans for payment {$payment_transaction_id}...");
 
-                // Supicious payment should be treated as pending payment.
+                $transactionStatus = TransactionStatus::create()->getStatus($payment_update->external_payment_transaction_id);
+                $status = $transactionStatus->mapToInternalStatus();
+
+                // If the new status doesnt match with what midtrans gave us, then
+                // we can ignored this request (dont update).
+                if ($tmpNewStatus !== $status) {
+                    Log::info("PaidCoupon: New status {$tmpNewStatus} for payment {$payment_transaction_id} will be IGNORED since the correct status is {$status}!");
+                }
+                else {
+                    Log::info("PaidCoupon: New status {$status} for payment {$payment_transaction_id} will be set!");
+                    $shouldUpdate = true;
+                }
+            }
+            else if (! in_array($oldStatus, $finalStatus)) {
+                $shouldUpdate = true;
+            }
+            else {
+                Log::info("PaidCoupon: Payment {$payment_transaction_id} is good. Nothing to do.");
+            }
+
+            // If old status is not final, then we should update...
+            if ($shouldUpdate) {
+                // Supicious payment will be treated as pending payment.
                 if ($status === PaymentTransaction::STATUS_SUSPICIOUS) {
-                    $status = PaymentTransaction::STATUS_PENDING;
-
                     // Flag to send suspicious payment notification.
                     $paymentSuspicious = true;
+                    $status = PaymentTransaction::STATUS_PENDING;
                     $payment_update->notes = $payment_update->notes . 'Payment suspicious.' . "\n----\n";
+                    Log::info("PaidCoupon: Payment {$payment_transaction_id} is suspicious.");
                 }
 
-                if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS, PaymentTransaction::STATUS_SUCCESS_NO_COUPON]) && $status === PaymentTransaction::STATUS_DENIED) {
+                if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS, PaymentTransaction::STATUS_SUCCESS_NO_COUPON]) && 
+                    $status === PaymentTransaction::STATUS_DENIED) {
+
+                    // Flag to send denied payment.
                     $paymentDenied = true;
                     $payment_update->notes = $payment_update->notes . 'Payment denied.' . "\n----\n";
+                    Log::info("PaidCoupon: Payment {$payment_transaction_id} is denied after success.");
                 }
 
                 $payment_update->status = $status;
@@ -139,15 +166,18 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                                   ->update(['transaction_id' => $payment_transaction_id]);
                 }
 
-                // If payment is success, then we should assume the status to be success but no coupon.
+                // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher, 
+                // then we assume the status as success_no_coupon (so frontend will show preparing voucher page).
                 if ($status === PaymentTransaction::STATUS_SUCCESS) {
-                    $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                    if ($payment_update->paidWith(['bank_transfer', 'echannel']) || $payment_update->forSepulsa()) {
+                        $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                    }
                 }
 
                 $payment_update->save();
 
                 // Commit the changes ASAP so if there are any other requests that trigger this controller 
-                // will use the updated payment data.
+                // they will use the updated payment data/status.
                 $this->commit();
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
@@ -164,7 +194,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                         ['transactionId' => $payment_transaction_id, 'check' => 0]
                     );
 
-                    Log::info('PaidCoupon: First time TransactionStatus check is scheduled to run after ' . $delay . ' seconds.');
+                    Log::info('PaidCoupon: First time TransactionStatus check for Payment: ' . $payment_transaction_id . ' is scheduled to run after ' . $delay . ' seconds.');
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.

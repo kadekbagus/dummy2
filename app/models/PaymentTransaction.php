@@ -243,4 +243,22 @@ class PaymentTransaction extends Eloquent
             Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
         }
     }
+
+    /**
+     * Determine if the payment type is match certain type.
+     * 
+     * @param  array  $paymentTypes [description]
+     * @return [type]               [description]
+     */
+    public function paidWith($paymentTypes = [])
+    {
+        $paymentInfo = json_decode(unserialize($this->payment_midtrans_info));
+        if (! empty($paymentInfo)) {
+            if (in_array($paymentInfo->payment_type, $paymentTypes)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

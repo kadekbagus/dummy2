@@ -2,6 +2,7 @@
 
 use Orbit\Helper\Midtrans\API\Response\Response as MidtransResponse;
 
+use PaymentTransaction;
 use Config;
 
 /**
@@ -34,9 +35,11 @@ class TransactionStatusResponse
      */
     public function isSuccess()
     {
+        $fraudStatus = isset($this->data->fraud_status) ? $this->data->fraud_status : 'accept';
         return $this->data->status_code === MidtransResponse::STATUS_SUCCESS &&
-                strtolower($this->data->fraud_status) === 'accept' &&
+                strtolower($fraudStatus) === 'accept' &&
                 in_array(strtolower($this->data->transaction_status), ['settlement', 'capture']);
+        
     }
 
     /**
@@ -70,6 +73,19 @@ class TransactionStatusResponse
     public function isExpired()
     {
         return $this->data->status_code === MidtransResponse::STATUS_EXPIRED;
+    }
+
+    /**
+     * Determine if the transaction is suspicious.
+     * 
+     * @return boolean [description]
+     */
+    public function isSuspicious()
+    {
+        $fraudStatus = isset($this->data->fraud_status) ? $this->data->fraud_status : 'challenge';
+        return $this->data->transaction_status === 'capture' && 
+               strtolower($fraudStatus) && 
+               $this->data->status_code === 201;
     }
 
     /**
@@ -112,5 +128,31 @@ class TransactionStatusResponse
     public function getData()
     {
         return $this->data;
+    }
+
+    /**
+     * Map midtrans response to our internal payment status.
+     * 
+     * @return [type] [description]
+     */
+    public function mapToInternalStatus()
+    {
+        if ($this->isSuccess()) {
+            return PaymentTransaction::STATUS_SUCCESS;
+        }
+        else if ($this->isExpired()) {
+            return PaymentTransaction::STATUS_EXPIRED;
+        }
+        else if ($this->isDenied()) {
+            return PaymentTransaction::STATUS_DENIED;
+        }
+        else if ($this->isPending()) {
+            return PaymentTransaction::STATUS_PENDING;
+        }
+        else if ($this->isSuspicious()) {
+            return PaymentTransaction::STATUS_PENDING;
+        }
+
+        return PaymentTransaction::STATUS_FAILED;
     }
 }

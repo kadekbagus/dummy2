@@ -26,7 +26,7 @@ use Log;
 class CouponBuyAPIController extends PubControllerAPI
 {
     /**
-     * GET - get all coupon wallet in all mall
+     * POST - For check and reserved the coupon per user
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      *
@@ -82,24 +82,32 @@ class CouponBuyAPIController extends PubControllerAPI
                                             ->where('status', IssuedCoupon::STATUS_RESERVED)
                                             ->first();
 
+            $isUserHavingReservedCoupon = false;
             if (! empty($userIssuedCoupon)) {
-                OrbitShopAPI::throwInvalidArgument('This user already issued this coupon, you cannot get twice coupon before you redeem the coupon');
-            } else {
-                $response = $userIssuedCoupon;
+                $isUserHavingReservedCoupon = true;
             }
 
-            $coupon = Coupon::where('promotion_id', $coupon_id)
-                                ->first();
+            $coupon = Coupon::where('promotion_id', $coupon_id)->first();
 
             $availableCoupon = $coupon->available;
 
-            if ($availableCoupon == 0) {
+            if ($availableCoupon == 0 && ! $isUserHavingReservedCoupon) {
                 OrbitShopAPI::throwInvalidArgument('This coupon has been sold out');
             }
 
-            if ($with_reserved === 'Y') {
 
-                if (empty($userIssuedCoupon)) {
+            if ($with_reserved === 'N') {
+
+                $response = $userIssuedCoupon;
+
+            } elseif ($with_reserved === 'Y') {
+
+                if ($isUserHavingReservedCoupon) {
+
+                    $response = $userIssuedCoupon;
+
+                } else {
+
                     $this->beginTransaction();
 
                     //insert for sepulsa and update for hot_deals
@@ -150,21 +158,6 @@ class CouponBuyAPIController extends PubControllerAPI
                         Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
                             'coupon_id' => $coupon_id
                         ]);
-
-                        // To Do : Delete all coupon cache
-                        /* if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
-                            $redis = Cache::getRedis();
-                            $keyName = array('coupon','home');
-                            foreach ($keyName as $value) {
-                                $keys = $redis->keys("*$value*");
-                                if (! empty($keys)) {
-                                    foreach ($keys as $key) {
-                                        $redis->del($key);
-                                    }
-                                }
-                            }
-                        } */
-
                     }
 
                     $this->commit();
