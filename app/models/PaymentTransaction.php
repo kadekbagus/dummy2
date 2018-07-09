@@ -202,30 +202,63 @@ class PaymentTransaction extends Eloquent
     {
         Log::info('Payment: Cleaning up payment... TransactionID: ' . $this->payment_transaction_id . ', current status: ' . $this->status);
 
+        $issuedCoupon = $this->issued_coupon;
+
+        if (empty($issuedCoupon)) {
+            $issuedCoupon = IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->first();
+
+            if (empty($issuedCoupon)) {
+                Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Related issuedCoupon not found. Nothing to do.');
+                return;
+            }
+        }
+
         // If it is Sepulsa, then remove the IssuedCoupon record.
         if ($this->forSepulsa()) {
-            Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Removing reserved sepulsa voucher.');
+            // TODO: Check if the coupon is already issued. If so, then what should we do?
+            if ($issuedCoupon->status === IssuedCoupon::STATUS_RESERVED) {
+                Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Removing reserved sepulsa voucher.');
+                IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->delete();
 
-            IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->delete();
+                // Update the availability...
+                if (! empty($this->coupon)) {
+                    $this->coupon->updateAvailability();
+                }
+            }
+            else {
+                Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Voucher is already issued. Do NOTHING at the moment.');
+            }
         }
         // If it is Hot Deals, then reset the IssuedCoupon state.
         else if ($this->forHotDeals()) {
             Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Reverting reserved hot deals coupon status.');
 
-            $issuedCoupon = $this->issued_coupon;
-            if (empty($issuedCoupon)) {
-                $issuedCoupon = IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->first();
+            $issuedCoupon->makeAvailable();
+
+            // Update the availability...
+            if (! empty($this->coupon)) {
+                $this->coupon->updateAvailability();
             }
 
-            if (! empty($issuedCoupon)) {
-                $issuedCoupon->makeAvailable();
-                Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
+            Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
+        }
+    }
+
+    /**
+     * Determine if the payment type is match certain type.
+     * 
+     * @param  array  $paymentTypes [description]
+     * @return [type]               [description]
+     */
+    public function paidWith($paymentTypes = [])
+    {
+        $paymentInfo = json_decode(unserialize($this->payment_midtrans_info));
+        if (! empty($paymentInfo)) {
+            if (in_array($paymentInfo->payment_type, $paymentTypes)) {
+                return true;
             }
         }
 
-        // Update the availability...
-        if (! empty($this->coupon)) {
-            $this->coupon->updateAvailability();
-        }
+        return false;
     }
 }
