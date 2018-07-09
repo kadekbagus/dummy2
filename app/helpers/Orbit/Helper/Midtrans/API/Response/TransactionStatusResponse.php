@@ -2,6 +2,7 @@
 
 use Orbit\Helper\Midtrans\API\Response\Response as MidtransResponse;
 
+use PaymentTransaction;
 use Config;
 
 /**
@@ -34,9 +35,11 @@ class TransactionStatusResponse
      */
     public function isSuccess()
     {
+        $fraudStatus = isset($this->data->fraud_status) ? $this->data->fraud_status : 'accept';
         return $this->data->status_code === MidtransResponse::STATUS_SUCCESS &&
-                strtolower($this->data->fraud_status) === 'accept' &&
+                strtolower($fraudStatus) === 'accept' &&
                 in_array(strtolower($this->data->transaction_status), ['settlement', 'capture']);
+        
     }
 
     /**
@@ -79,8 +82,9 @@ class TransactionStatusResponse
      */
     public function isSuspicious()
     {
+        $fraudStatus = isset($this->data->fraud_status) ? $this->data->fraud_status : 'challenge';
         return $this->data->transaction_status === 'capture' && 
-               $this->data->fraud_status === 'challenge' && 
+               strtolower($fraudStatus) && 
                $this->data->status_code === 201;
     }
 

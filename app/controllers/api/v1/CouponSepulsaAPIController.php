@@ -933,6 +933,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'id_language_default'     => $id_language_default,
                 'is_visible'              => $is_visible,
                 'is_3rd_party_promotion'  => $is_3rd_party_promotion,
+                'campaign_status'         => $campaignStatus,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -956,6 +957,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     'id_language_default'     => 'required|orbit.empty.language_default',
                     'is_visible'              => 'in:Y,N',
                     'is_3rd_party_promotion'  => 'in:Y,N',
+                    'campaign_status'         => 'orbit.check.issued_coupon',
                 ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
@@ -966,6 +968,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     'discount_value.min'        => 'The coupon value must be greater than zero',
                     'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
                     'orbit.empty.exclusive_partner' => 'Partner is not exclusive / inactive',
+                    'orbit.check.issued_coupon' => 'There is one or more coupon unredeemed',
                 )
             );
 
@@ -2925,6 +2928,17 @@ class CouponSepulsaAPIController extends ControllerAPI
                 } else {
                     $valid = false;
                 }
+            }
+
+            return $valid;
+        });
+
+        Validator::extend('orbit.check.issued_coupon', function ($attribute, $value, $parameters) {
+            $valid = true;
+            if (strtolower($value) === 'stopped') {
+                $couponId = OrbitInput::post('promotion_id');
+                $couponIssued = IssuedCoupon::where('promotion_id', '=', $couponId)->where('status', '=', 'issued')->first();
+                $valid = ($couponIssued) ? false : true;
             }
 
             return $valid;
