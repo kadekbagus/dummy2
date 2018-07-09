@@ -162,7 +162,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 if (empty($payment_update->issued_coupon)) {
 
                     // Dont link to IssuedCoupon if the payment is denied/failed/expired.
-                    if (! in_array($status, [PaymentTransaction::DENIED, PaymentTransaction::STATUS_EXPIRED])) {
+                    if (! in_array($status, [PaymentTransaction::DENIED, PaymentTransaction::STATUS_EXPIRED, PaymentTransaction::STATUS_FAILED])) {
                         IssuedCoupon::where('user_id', $payment_update->user_id)
                                       ->where('promotion_id', $payment_update->object_id)
                                       ->where('status', IssuedCoupon::STATUS_RESERVED)
