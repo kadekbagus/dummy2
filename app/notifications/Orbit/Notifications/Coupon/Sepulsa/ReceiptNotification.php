@@ -217,7 +217,7 @@ class ReceiptNotification extends Notification
                             ->where('promotion_retailer.promotion_id', '=', $couponId)
                             ->first();
 
-            $launchUrl = 'my/coupons?country='.$couponCountry->country;
+            $launchUrl = '/my/coupons?country='.$couponCountry->country;
 
             $headings = new \stdClass();
             $headings->en = $coupon->promotion_name;
