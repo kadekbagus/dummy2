@@ -14,6 +14,7 @@ use Log;
 use Queue;
 use Exception;
 use Coupon;
+use PromotionRetailer;
 
 /**
  * Receipt Notification for Customer after purchasing Hot Deals (Paid Coupon).
@@ -216,7 +217,7 @@ class ReceiptNotification extends Notification
                             ->where('promotion_retailer.promotion_id', '=', $couponId)
                             ->first();
 
-            $launchUrl = 'my/coupons?country='.$couponCountry->country;
+            $launchUrl = '/my/coupons?country='.$couponCountry->country;
 
             $headings = new \stdClass();
             $headings->en = $coupon->promotion_name;
