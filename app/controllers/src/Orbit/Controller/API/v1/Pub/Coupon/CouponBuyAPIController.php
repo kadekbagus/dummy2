@@ -90,7 +90,7 @@ class CouponBuyAPIController extends PubControllerAPI
             }
 
             $coupon = Coupon::where('promotion_id', $coupon_id)->first();
-            $issued = IssuedCoupon::where('promotion_id', $this->promotion_id)->whereIn('status', [
+            $issued = IssuedCoupon::where('promotion_id', $coupon_id)->whereIn('status', [
                                         IssuedCoupon::STATUS_ISSUED,
                                         IssuedCoupon::STATUS_REDEEMED,
                                         IssuedCoupon::STATUS_RESERVED,
