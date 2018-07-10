@@ -54,6 +54,16 @@ class PaymentTransactionDetail extends Eloquent
     }
 
     /**
+     * Link to detail normal/paypro.
+     * 
+     * @return [type] [description]
+     */
+    public function normal_paypro_detail()
+    {
+        return $this->hasOne('PaymentTransactionDetailNormalPaypro', 'payment_transaction_detail_id', 'payment_transaction_detail_id');
+    }
+
+    /**
      * Determine if the payment is for Sepulsa Deals.
      *
      * @return [type] [description]
