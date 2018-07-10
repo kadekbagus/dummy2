@@ -14,6 +14,7 @@ use Log;
 use Queue;
 use Exception;
 use Coupon;
+use PromotionRetailer;
 
 /**
  * Receipt Notification for Customer after purchasing Sepulsa Voucher.
