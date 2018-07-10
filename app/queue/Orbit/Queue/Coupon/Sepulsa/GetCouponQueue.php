@@ -35,7 +35,7 @@ class GetCouponQueue
      * Get Sepulsa Voucher after payment completed.
      *
      * @todo  do we still need to send notification on the first failure?
-     * 
+     *
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
      * @return [type]       [description]
@@ -60,9 +60,9 @@ class GetCouponQueue
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
-                
+
                 Log::info('PaidCoupon: Payment ' . $paymentId . ' was denied/canceled.');
-                
+
                 $payment->cleanUp();
 
                 DB::connection()->commit();
@@ -124,6 +124,8 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
+                $payment->cleanUp();
+
                 // Commit ASAP.
                 DB::connection()->commit();
 
@@ -165,7 +167,7 @@ class GetCouponQueue
                     // Retry this job by re-pushing it to Queue.
                     Queue::later(
                         $delay,
-                        'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue', 
+                        'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue',
                         compact('paymentId', 'retries')
                     );
 
@@ -180,7 +182,7 @@ class GetCouponQueue
 
                     // Clean up payment since we can not issue the coupon.
                     $payment->cleanUp();
-                    
+
                     DB::connection()->commit();
 
                     if ($takenVouchers->isExpired()) {
@@ -216,7 +218,7 @@ class GetCouponQueue
     /**
      * Determine if we should retry the TakeVoucher request or not.
      * It should check the maximum allowed retry and the voucher expiration status.
-     * 
+     *
      * @param  integer             $retries       [description]
      * @param  TakeVoucherResponse $takenVouchers [description]
      * @return [type]                             [description]
