@@ -64,8 +64,7 @@ class CheckTransactionStatusQueue
 
             $data['check']++;
 
-            $midtransTransactionId = $payment->external_payment_transaction_id;
-            $transaction = TransactionStatus::create()->getStatus($midtransTransactionId);
+            $transaction = TransactionStatus::create()->getStatus($data['transactionId']);
 
             // Record Midtrans' response Code & Message.
             $payment->provider_response_code = $transaction->getCode();

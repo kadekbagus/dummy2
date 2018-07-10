@@ -98,7 +98,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 Log::info("PaidCoupon: Payment {$payment_transaction_id} was marked as FINAL, but there is new request to change status to " . $tmpNewStatus);
                 Log::info("PaidCoupon: Getting correct status from Midtrans for payment {$payment_transaction_id}...");
 
-                $transactionStatus = TransactionStatus::create()->getStatus($payment_update->external_payment_transaction_id);
+                $transactionStatus = TransactionStatus::create()->getStatus($payment_transaction_id);
                 $status = $transactionStatus->mapToInternalStatus();
 
                 // If the new status doesnt match with what midtrans gave us, then
@@ -158,12 +158,16 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                 $payment_update->responded_at = Carbon::now('UTC');
 
-                // Update transaction_id in the issued coupon record related to this payment.
+                // Link this payment to reserved IssuedCoupon.
                 if (empty($payment_update->issued_coupon)) {
-                    IssuedCoupon::where('user_id', $payment_update->user_id)
-                                  ->where('promotion_id', $payment_update->object_id)
-                                  ->where('status', IssuedCoupon::STATUS_RESERVED)
-                                  ->update(['transaction_id' => $payment_transaction_id]);
+
+                    // Dont link to IssuedCoupon if the payment is denied/failed/expired.
+                    if (! in_array($status, [PaymentTransaction::STATUS_DENIED, PaymentTransaction::STATUS_EXPIRED, PaymentTransaction::STATUS_FAILED])) {
+                        IssuedCoupon::where('user_id', $payment_update->user_id)
+                                      ->where('promotion_id', $payment_update->object_id)
+                                      ->where('status', IssuedCoupon::STATUS_RESERVED)
+                                      ->update(['transaction_id' => $payment_transaction_id]);
+                    }
                 }
 
                 // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher, 
