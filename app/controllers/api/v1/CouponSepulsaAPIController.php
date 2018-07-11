@@ -2360,11 +2360,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
+            $this->response->data = null;
             $httpCode = 403;
         } catch (QueryException $e) {
             Event::fire('orbit.coupon.getsearchcouponbyissueretailer.query.error', array($this, $e));
@@ -2968,8 +2964,18 @@ class CouponSepulsaAPIController extends ControllerAPI
             $valid = true;
             $production = Config::get('orbit.partners_api.sepulsa.unique_token', TRUE);
             if ($production) {
-                $couponSepulsa = CouponSepulsa::where('token', $value)->first();
-                $valid = ($couponSepulsa) ? false : true;
+                $couponSepulsa = CouponSepulsa::select('promotions.promotion_id',
+                                                       'promotions.promotion_name',
+                                                       'promotions.promotion_type',
+                                                       'campaign_status.campaign_status_name',
+                                                       'coupon_sepulsa.token')
+                                               ->join('promotions', 'promotions.promotion_id', '=', 'coupon_sepulsa.promotion_id')
+                                               ->join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                                               ->where('coupon_sepulsa.token', '=', $value)
+                                               ->whereNotIn('campaign_status.campaign_status_name', ['stopped'])
+                                               ->get();
+
+                $valid = count($couponSepulsa) == 0 ? true : false;
             }
 
             return $valid;
