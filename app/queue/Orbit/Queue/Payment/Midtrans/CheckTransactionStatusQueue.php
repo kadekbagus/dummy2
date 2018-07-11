@@ -86,7 +86,16 @@ class CheckTransactionStatusQueue
 
                 // Set the internal payment status based on transaction status from Midtrans.
                 // @todo Should we assume the payment is failed or just let it as what it is (pending or whatever its status is)?
-                $payment->status = $transaction->mapToInternalStatus();
+                if ($transaction->isSuccess()) {
+                    if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel'])) {
+                        $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                    }
+                }
+                else {
+                    $transactionStatus = $transaction->mapToInternalStatus();
+                }
+
+                $payment->status = $transactionStatus;
 
                 $payment->save();
 
