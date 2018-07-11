@@ -29,7 +29,7 @@ class GetCouponQueue
 {
     /**
      * Issue hot deals coupon.
-     * 
+     *
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
      * @return [type]       [description]
@@ -52,9 +52,9 @@ class GetCouponQueue
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
-                
+
                 Log::info('PaidCoupon: Payment ' . $paymentId . ' was denied/canceled. We should not issuing any coupon.');
-                
+
                 $payment->cleanUp();
 
                 DB::connection()->commit();
@@ -99,6 +99,9 @@ class GetCouponQueue
             $payment->coupon_redemption_code = $payment->issued_coupon->issued_coupon_code;
             $payment->status = PaymentTransaction::STATUS_SUCCESS;
             $payment->save();
+
+            $payment->cleanUp();
+
 
             // Commit the changes ASAP.
             DB::connection()->commit();
