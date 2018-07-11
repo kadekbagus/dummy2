@@ -97,32 +97,8 @@ class CouponCheckReserved extends Command {
                     }
                 }
 
-                // Update available coupon
-                $couponAvailable = $coupon->available + $totalCouponCanceled;
-                $coupon->available = $couponAvailable;
-                $coupon->setUpdatedAt($coupon->freshTimestamp());
-                $coupon->save();
-
-                // Commit the changes
-                DB::commit();
-
-                // Re sync the coupon data to make sure deleted when coupon sold out
-                if ($couponAvailable > 0) {
-                    // Re sync the coupon data
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                        'coupon_id' => $couponId
-                    ]);
-                } elseif ($couponAvailable == 0) {
-                    // Delete the coupon and also suggestion
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
-                        'coupon_id' => $couponId
-                    ]);
-
-                    Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
-                        'coupon_id' => $couponId
-                    ]);
-
-                }
+                 // Commit the changes
+                 DB::commit();
 
                 $this->info('Artisan CheckReservedCoupon Runnning : Coupon unpay canceled, coupon_id = ' . $couponId . ', total canceled coupon = '. $totalCouponCanceled);
 
