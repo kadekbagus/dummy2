@@ -2309,7 +2309,27 @@ class CouponSepulsaAPIController extends ControllerAPI
             $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
             $this->client = SepulsaClient::create($this->config);
 
+            $this->registerCustomValidation();
+
             $token = OrbitInput::get('token');
+
+            $validator = Validator::make(
+                array(
+                    'token' => $token,
+                ),
+                array(
+                    'token' => 'orbit.unique.token',
+                ),
+                array(
+                    'orbit.unique.token' => 'Token already used for another coupon',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $listOfCoupons = VoucherDetail::create($this->config)->getDetail($token)->result;
 
@@ -2939,6 +2959,17 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $couponId = OrbitInput::post('promotion_id');
                 $couponIssued = IssuedCoupon::where('promotion_id', '=', $couponId)->where('status', '=', 'issued')->first();
                 $valid = ($couponIssued) ? false : true;
+            }
+
+            return $valid;
+        });
+
+        Validator::extend('orbit.unique.token', function ($attribute, $value, $parameters) {
+            $valid = true;
+            $production = Config::get('orbit.partners_api.sepulsa.unique_token', TRUE);
+            if ($production) {
+                $couponSepulsa = CouponSepulsa::where('token', $value)->first();
+                $valid = ($couponSepulsa) ? false : true;
             }
 
             return $valid;
