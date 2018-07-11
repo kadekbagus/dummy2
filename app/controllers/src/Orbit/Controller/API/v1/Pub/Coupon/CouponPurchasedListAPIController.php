@@ -122,7 +122,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             })
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '!=', 'deleted');
+                                $join->on('issued_coupons.status', 'IN', DB::raw("('issued', 'redeemed')"));
                             })
                             ->leftJoin('merchants', function ($q) {
                                 $q->on('merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id');
