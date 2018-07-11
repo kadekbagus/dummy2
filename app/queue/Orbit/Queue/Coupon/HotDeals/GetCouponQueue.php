@@ -49,7 +49,7 @@ class GetCouponQueue
 
             Log::info(sprintf('PaidCoupon: Getting coupon PaymentID: %s', $paymentId));
 
-            $payment = PaymentTransaction::with(['issued_coupon', 'user'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['coupon', 'issued_coupon', 'user'])->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
@@ -101,12 +101,9 @@ class GetCouponQueue
             $payment->status = PaymentTransaction::STATUS_SUCCESS;
             $payment->save();
 
-            Log::info('UpdateAvailableCoupon START, coupon_id = ' . $payment->issued_coupon->promotion_id);
             $availableCoupon = Coupon::where('promotion_id', $payment->issued_coupon->promotion_id)->first();
             if (! empty($availableCoupon)) {
-                Log::info('UpdateAvailableCoupon HotDeals BEFORE, coupon_id = ' . $payment->issued_coupon->promotion_id . ', available = ' . $availableCoupon->available);
                 $availableCoupon->updateAvailability();
-                Log::info('UpdateAvailableCoupon HotDeals AFTER, coupon_id = ' . $payment->issued_coupon->promotion_id . ', available = ' . $availableCoupon->available);
             }
 
 
