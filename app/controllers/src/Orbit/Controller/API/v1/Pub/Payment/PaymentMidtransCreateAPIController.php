@@ -17,6 +17,7 @@ use \DB;
 use Validator;
 use PaymentTransaction;
 use PaymentTransactionDetail;
+use PaymentMidtrans;
 use Carbon\Carbon as Carbon;
 
 class PaymentMidtransCreateAPIController extends PubControllerAPI
@@ -117,6 +118,10 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             });
 
             $payment_new->details()->save($paymentDetail);
+
+            // Insert midtrans info
+            $paymentMidtransDetail = new PaymentMidtrans;
+            $payment_new->midtrans()->save($paymentMidtransDetail);
 
             // Commit the changes
             $this->commit();
