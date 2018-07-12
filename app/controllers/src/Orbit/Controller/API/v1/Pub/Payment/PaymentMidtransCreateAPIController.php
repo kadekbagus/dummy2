@@ -18,6 +18,7 @@ use Validator;
 use PaymentTransaction;
 use PaymentTransactionDetail;
 use PaymentMidtrans;
+use Mall;
 use Carbon\Carbon as Carbon;
 
 class PaymentMidtransCreateAPIController extends PubControllerAPI
@@ -45,6 +46,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $country_id = OrbitInput::post('country_id');
             $quantity = OrbitInput::post('quantity', 1);
             $amount = OrbitInput::post('amount');
+            $mall_id = OrbitInput::post('mall_id', 'gtm');
             $currency_id = OrbitInput::post('currency_id', '1');
             $currency = OrbitInput::post('currency', 'IDR');
             $post_data = OrbitInput::post('post_data');
@@ -55,20 +57,22 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 
             $validator = Validator::make(
                 array(
-                    'first_name'  => $first_name,
-                    'last_name'   => $last_name,
-                    'email'       => $email,
-                    'phone'       => $phone,
-                    'amount'      => $amount,
-                    'post_data'   => $post_data,
+                    'first_name' => $first_name,
+                    'last_name'  => $last_name,
+                    'email'      => $email,
+                    'phone'      => $phone,
+                    'amount'     => $amount,
+                    'post_data'  => $post_data,
+                    'mall_id'    => $mall_id,
                 ),
                 array(
-                    'first_name'  => 'required',
-                    'last_name'   => 'required',
-                    'email'       => 'required',
-                    'phone'       => 'required',
-                    'amount'      => 'required',
-                    'post_data'   => 'required',
+                    'first_name' => 'required',
+                    'last_name'  => 'required',
+                    'email'      => 'required',
+                    'phone'      => 'required',
+                    'amount'     => 'required',
+                    'post_data'  => 'required',
+                    'mall_id'    => 'required',
                 )
             );
 
@@ -79,6 +83,15 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             if ($validator->fails()) {
                 $errorMessage = $validator->messages()->first();
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            // Get mall timezone
+            $mallTimeZone = 'Asia/Jakarta';
+            if ($mall_id !== 'gtm') {
+                $mall = Mall::where('merchant_id', $mall_id)->first();
+                if (!empty($mall)) {
+                    $mallTimeZone = $mall->getTimezone($mall_id);
+                }
             }
 
             $payment_new = new PaymentTransaction;
@@ -93,7 +106,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             // $payment_new->currency_id = $currency_id;
             $payment_new->currency = $currency;
             $payment_new->status = 'starting';
-            $payment_new->timezone_name = 'UTC';
+            $payment_new->timezone_name = $mallTimeZone;
             // $payment_new->transaction_date_and_time = Carbon::now('UTC');
             $payment_new->post_data = serialize($post_data);
 
