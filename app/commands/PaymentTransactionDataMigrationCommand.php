@@ -20,9 +20,9 @@ class PaymentTransactionDataMigrationCommand extends Command {
      */
     protected $description = 'Migrate Payment Transaction data from old table structure to the new one.';
 
-    private $sourceTableName = null;
+    private $dryRun = false;
 
-    private $itemsPerBatch = 10;
+    private $defaultItemsPerBatch = 15;
 
     /**
      * Create a new command instance.
@@ -41,91 +41,59 @@ class PaymentTransactionDataMigrationCommand extends Command {
      */
     public function fire()
     {
-        $this->info("Payment Transaction Data Migration!");
+        $this->info("[ PAYMENT TRANSACTION DATA MIGRATION ]");
         try {
-            $this->info("Checking options...");
-            // Check options..
-            $this->sourceTableName = $this->option('source');
-            $this->sourceTableName = trim($this->sourceTableName);
 
-            if (empty($this->sourceTableName)) {
-                throw new Exception('Please set the source table name.', 1);
+            $options = $this->option();
+            $this->dryRun = $options['dry-run'];
+
+            if ($this->dryRun) {
+                $this->error("*** RUNNING IN DRY-RUN MODE ***");
+            }
+            $this->info("");
+
+            if (! $options['source']) {
+                throw new Exception('Source table name is required!');
             }
 
-            $customBatch = $this->option('batch');
-            $customBatch = trim($customBatch);
+            $options['items-per-batch']     = (int) $options['items-per-batch'];
+            $options['payment-id']          = trim($options['payment-id']);
 
-            $customBatch = ! empty($customBatch) ? (int) $customBatch : false;
-
-            $customItemsPerBatch = $this->option('items-per-batch');
-            $customItemsPerBatch = trim($customItemsPerBatch);
-            $customItemsPerBatch = (int) $customItemsPerBatch;
-
-            if ($customItemsPerBatch !== $this->itemsPerBatch && $customItemsPerBatch !== 0) {
-                $this->itemsPerBatch = $customItemsPerBatch;
+            if (empty($options['payment-id'])) {
+                if (! $options['items-per-batch']) {
+                    $options['items-per-batch'] = $this->defaultItemsPerBatch;
+                }
             }
 
-            $totalMigrated = 0;
-
-            $this->info("Data source: " . $this->sourceTableName);
-            $this->info("---------------------------------------------");
-            $this->info("Counting all data...");
-
-            // Get all data..
-            $totalData = DB::table($this->sourceTableName)->count();
-
-            if ($totalData === 0) {
-                throw new Exception('No data found!', 1);
-            }
-
-            $batches = $customBatch ? $customBatch : ceil($totalData / $this->itemsPerBatch);
-
-            $this->info("Data count: " . $totalData);
-            $this->info("Data will be processed per batch: " . $this->itemsPerBatch);
-            $this->info("Batch count: " . $batches);
-            $this->info("--------------------------------------------");
-            $this->info("\n");
-
-            // TODO: Should we use transaction one time? 
-            // Or each batch we start new transaction?
-            $this->info("Migration started...");
-            if ($this->option('dry-run')) {
-                $this->error("RUNNING IN DRY RUN MODE");
-            }
+            $this->info("Starting migration...");
+            $this->info("---------------------------------------------------");
 
             DB::connection()->beginTransaction();
 
-            if (! $customBatch) {
-                for($batch = 1; $batch <= $batches; $batch++) {
-                    $totalMigrated += $this->migrateBatch($batch);
-                }
+            $totalMigrated = 0;
+            if (! empty($options['payment-id'])) {
+                $totalMigrated = $this->migrateSinglePayment($options['source'], $options['payment-id']);
             }
             else {
-                $totalMigrated = $this->migrateBatch($customBatch);
+                $totalMigrated = $this->migrateBatchPayment($options['source'], $options);
             }
 
-            $this->info("\n");
-            if ($this->option('dry-run')) {
-                $this->error("RUNNING IN DRY-RUN MODE");
-                $this->error('ROLLING BACK CHANGES...');
+            $this->info("");
+            $this->info("All data migrated successfully!");
+            $this->info("Total migrated: {$totalMigrated}");
+
+            if ($this->dryRun) {
                 DB::connection()->rollback();
-                $this->error('DATA ROLLED BACK. NO CHANGES WERE SAVED TO DATABASE');
             }
             else {
                 DB::connection()->commit();
             }
 
-            $this->info("Migration ended.");
-            $this->info("Total migrated data: {$totalMigrated}");
-
         } catch (Exception $e) {
             DB::connection()->rollback();
-            $this->info("Unable to complete the migration. Check log file.");
-            Log::error(sprintf("Exception at %s:%s >> %s", $e->getFile(), $e->getLine(), $e->getMessage()));
+            $this->error("Unable to complete the migration.");
+            $this->error($e->getMessage());
         }
-
-        $this->info('Payment Transaction Data Migration Done!');
-
     }
 
     /**
@@ -147,10 +115,67 @@ class PaymentTransactionDataMigrationCommand extends Command {
     {
         return [
             ['source', null, InputOption::VALUE_REQUIRED, 'Table name which contains the old payment transaction data.', null],
-            ['batch', null, InputOption::VALUE_OPTIONAL, 'Migrate specific batch number. Do not set this option to migrate all data.', null],
+            ['payment-id', null, InputOption::VALUE_OPTIONAL, 'Payment ID that will be migrated. If set, it will ignore option batch.', null],
             ['items-per-batch', null, InputOption::VALUE_OPTIONAL, 'Number of data will be processed per batch.', null],
-            ['dry-run', null, InputOption::VALUE_NONE, 'Run in dry-run mode, doesnt commit changes to DB.', null],
+            ['dry-run', null, InputOption::VALUE_NONE, 'Run in DRY-RUN mode, doesnt commit changes to DB.', null],
         ];
+    }
+
+    /**
+     * Migrate a single payment.
+     * 
+     * @param  [type] $source    [description]
+     * @param  [type] $paymentId [description]
+     * @return [type]            [description]
+     */
+    public function migrateSinglePayment($source, $paymentId)
+    {
+        // $this->info("Migrating payment {$paymentId}...");
+
+        $oldPayment = DB::table($source)->where('payment_transaction_id', $paymentId)->first();
+
+        if (! empty($oldPayment)) {
+
+            $this->migratePayment($oldPayment);
+
+            $this->info("Payment {$paymentId} migrated successfully!");
+
+            $this->info("---------------------------------------------------");
+
+            return 1;
+        }
+
+        $this->error("Payment {$paymentId} not found in table {$source}!");
+    }
+
+    private function migrateBatchPayment($source, $options)
+    {
+        $this->info("Counting all records...");
+
+        $totalRecords = DB::table($source)->count();
+
+        if ($totalRecords === 0) {
+            $this->error("Whoops! No records found in table {$source}!");
+            return 0;
+        }
+        else {
+
+            $this->info("Found {$totalRecords} records in table {$source}...");
+            $this->info("Calculating batches...");
+
+            $batches = ceil($totalRecords / $options['items-per-batch']);
+
+            $this->info("Migration will be splitted into {$batches} batches...");
+            $this->info("");
+            $this->info("---------------------------------------------------");
+
+            $totalMigrated = 0;
+            for($batch = 1; $batch <= $batches; $batch++) {
+                $totalMigrated += $this->migrateBatch($source, $batch, $options['items-per-batch']);
+            }
+
+            return $totalMigrated;
+        }
     }
 
     /**
@@ -159,25 +184,25 @@ class PaymentTransactionDataMigrationCommand extends Command {
      * @param  integer $batch [description]
      * @return [type]         [description]
      */
-    private function migrateBatch($batch = 1)
+    private function migrateBatch($source, $batch = 1, $itemsPerBatch = 15)
     {
-        $this->info("---- Migrating data Batch #{$batch} ----");
+        $this->info("Migrating data Batch #{$batch}...");
 
-        $skip = $batch > 1 ? (($batch - 1) * $this->itemsPerBatch) : 0;
+        $skip = $batch > 1 ? (($batch - 1) * $itemsPerBatch) : 0;
 
-        // Select based on the page.
-        $payments = DB::table($this->sourceTableName)->skip($skip)->take($this->itemsPerBatch)->orderBy('created_at', 'asc')->get();
+        $payments = DB::table($source)->skip($skip)->take($itemsPerBatch)->orderBy('created_at', 'asc')->get();
 
         $migrated = 0;
         foreach($payments as $payment) {
 
             $this->migratePayment($payment);
 
-            $this->info("     - PaymentID: {$payment->payment_transaction_id} migrated.");
+            $this->info("[BATCH {$batch}]: Payment {$payment->payment_transaction_id} migrated successfully.");
             $migrated++;
         }
 
-        $this->info("---- Batch #{$batch} done. ----");
+        $this->info("Migration Batch #{$batch} done.");
+        $this->info("-------------------------------------------------------");
 
         return $migrated;
     }
