@@ -83,11 +83,11 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             $coupon = PaymentTransaction::select(DB::raw("
-                                    {$prefix}payment_transactions.object_id as object_id,
+                                    {$prefix}payment_transaction_details.object_id as object_id,
                                     {$prefix}payment_transactions.amount,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
-                                    CONCAT({$prefix}payment_transactions.store_name,' @ ', {$prefix}payment_transactions.building_name) as store_at_building,
                                     {$prefix}payment_transactions.payment_transaction_id,
+                                    {$prefix}payment_transactions.created_at,
                                     convert_tz( {$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz,
                                     {$prefix}payment_transactions.status,
                                     {$prefix}payment_transactions.payment_method,
@@ -102,9 +102,11 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                                     GROUP BY opr.promotion_id
                                                     ORDER BY om.name
                                                 ) as link_to_tenant
-
                             "))
-                            ->join('promotions', 'promotions.promotion_id', '=', 'payment_transactions.object_id')
+
+                            ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+
+                            ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
@@ -140,10 +142,11 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                             AND m.media_name_long = 'coupon_translation_image_orig'
                                         GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
                             ->where('payment_transactions.user_id', $user->user_id)
-                            ->where('payment_transactions.object_type', 'coupon')
+                            ->where('payment_transaction_details.object_type', 'coupon')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
                             ->where('payment_transactions.status', '!=', 'starting')
                             ->groupBy('payment_transactions.payment_transaction_id');
+
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
