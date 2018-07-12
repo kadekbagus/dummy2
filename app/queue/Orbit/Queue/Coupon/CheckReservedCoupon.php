@@ -68,45 +68,6 @@ class CheckReservedCoupon
                     // Update available coupon and es data
                     if ($cancelReservedCoupon) {
 
-                        // Update available coupon +1
-                        $couponAvailable = $coupon->available + 1;
-                        $coupon->available = $couponAvailable;
-                        $coupon->setUpdatedAt($coupon->freshTimestamp());
-                        $coupon->save();
-
-
-                        // Re sync the coupon data to make sure deleted when coupon sold out
-                        if ($couponAvailable > 0) {
-                            // Re sync the coupon data
-                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                                'coupon_id' => $couponId
-                            ]);
-                        } elseif ($couponAvailable == 0) {
-                            // Delete the coupon and also suggestion
-                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
-                                'coupon_id' => $couponId
-                            ]);
-
-                            Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
-                                'coupon_id' => $couponId
-                            ]);
-
-                            // To Do : Delete all coupon cache
-                            /* if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
-                                $redis = Cache::getRedis();
-                                $keyName = array('coupon','home');
-                                foreach ($keyName as $value) {
-                                    $keys = $redis->keys("*$value*");
-                                    if (! empty($keys)) {
-                                        foreach ($keys as $key) {
-                                            $redis->del($key);
-                                        }
-                                    }
-                                }
-                            } */
-
-                        }
-
                         Log::info('Queue CheckReservedCoupon Runnning : Coupon unpay canceled, coupon_id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
 
                     } else {

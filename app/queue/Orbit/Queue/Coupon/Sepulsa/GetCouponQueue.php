@@ -13,6 +13,7 @@ use Orbit\Helper\Util\JobBurier;
 use User;
 use PaymentTransaction;
 use IssuedCoupon;
+use Coupon;
 
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
@@ -35,7 +36,7 @@ class GetCouponQueue
      * Get Sepulsa Voucher after payment completed.
      *
      * @todo  do we still need to send notification on the first failure?
-     * 
+     *
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
      * @return [type]       [description]
@@ -60,9 +61,9 @@ class GetCouponQueue
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
-                
+
                 Log::info('PaidCoupon: Payment ' . $paymentId . ' was denied/canceled.');
-                
+
                 $payment->cleanUp();
 
                 DB::connection()->commit();
@@ -113,8 +114,8 @@ class GetCouponQueue
                 $payment->issued_coupon->redeem_verification_code       = $takenVoucherData->id;
                 $payment->issued_coupon->issued_coupon_code = $takenVoucherData->code;
                 $payment->issued_coupon->url                = $takenVoucherData->redeem_url;
-                $payment->issued_coupon->issued_date        = $takenVoucherData->taken_date;
-                $payment->issued_coupon->expired_date       = $takenVoucherData->expired_date;
+                $payment->issued_coupon->issued_date        = Carbon::now();
+                $payment->issued_coupon->expired_date       = $payment->coupon->coupon_validity_in_date;
                 $payment->issued_coupon->status             = IssuedCoupon::STATUS_ISSUED;
 
                 $payment->issued_coupon->save();
@@ -123,6 +124,12 @@ class GetCouponQueue
                 $payment->coupon_redemption_code = $takenVoucherData->code;
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
+
+                $availableCoupon = Coupon::where('promotion_id', $payment->issued_coupon->promotion_id)->first();
+                if (! empty($availableCoupon)) {
+                    $availableCoupon->updateAvailability();
+                }
+
 
                 // Commit ASAP.
                 DB::connection()->commit();
@@ -165,7 +172,7 @@ class GetCouponQueue
                     // Retry this job by re-pushing it to Queue.
                     Queue::later(
                         $delay,
-                        'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue', 
+                        'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue',
                         compact('paymentId', 'retries')
                     );
 
@@ -180,7 +187,7 @@ class GetCouponQueue
 
                     // Clean up payment since we can not issue the coupon.
                     $payment->cleanUp();
-                    
+
                     DB::connection()->commit();
 
                     if ($takenVouchers->isExpired()) {
@@ -216,7 +223,7 @@ class GetCouponQueue
     /**
      * Determine if we should retry the TakeVoucher request or not.
      * It should check the maximum allowed retry and the voucher expiration status.
-     * 
+     *
      * @param  integer             $retries       [description]
      * @param  TakeVoucherResponse $takenVouchers [description]
      * @return [type]                             [description]

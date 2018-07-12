@@ -7407,6 +7407,8 @@ return array(
             'take_voucher_max_retry' => 5,
             // How many SECONDS should we wait before retrying the TakeVoucher request?
             'take_voucher_retry_timeout' => 5,
+            // Set false for QA testing, true for production
+            'unique_token' => true,
         ],
 
         // Payment Gateway Config

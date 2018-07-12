@@ -25,7 +25,8 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         Log::info('PaidCoupon: PaymentID: ' . $payment->payment_transaction_id . ' verified!');
 
         // If we should delay the issuance...
-        if ($payment->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON) {
+        // TODO: maybe add new status to indicate that the coupon is in the process of issuing?
+        if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel'])) {
             $delay = Config::get('orbit.transaction.delay_before_issuing_coupon', 75);
 
             Log::info('PaidCoupon: Issuing coupon for PaymentID ' . $payment->payment_transaction_id . ' after ' . $delay . ' seconds...');
