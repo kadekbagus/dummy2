@@ -100,14 +100,11 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $payment_new->user_id = $user_id;
             $payment_new->phone = $phone;
             $payment_new->country_id = $country_id;
-            // $payment_new->payment_provider_id = $payment_provider_id;
             $payment_new->payment_method = 'midtrans';
             $payment_new->amount = $amount;
-            // $payment_new->currency_id = $currency_id;
             $payment_new->currency = $currency;
-            $payment_new->status = 'starting';
+            $payment_new->status = PaymentTransaction::STATUS_STARTING;
             $payment_new->timezone_name = $mallTimeZone;
-            // $payment_new->transaction_date_and_time = Carbon::now('UTC');
             $payment_new->post_data = serialize($post_data);
 
             $payment_new->save();

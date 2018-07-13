@@ -73,7 +73,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupon'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupon.coupon'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 
@@ -184,6 +184,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                 // Commit the changes ASAP so if there are any other requests that trigger this controller 
                 // they will use the updated payment data/status.
+                // Try not doing any expensive operation above.
                 $this->commit();
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
