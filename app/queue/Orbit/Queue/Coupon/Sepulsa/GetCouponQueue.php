@@ -57,7 +57,7 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting Sepulsa Voucher for paymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.coupon', 'issued_coupon.coupon', 'user'])->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
@@ -101,7 +101,9 @@ class GetCouponQueue
                 return;
             }
 
-            $voucherToken = $payment->coupon_sepulsa->token;
+            $coupon = $payment->details->first()->coupon;
+            $couponId = $coupon->promotion_id;
+            $voucherToken = $coupon->coupon_sepulsa->token;
 
             $takenVouchers = TakeVoucher::create()->take($paymentId, [['token' => $voucherToken]]);
             $takenVouchers = new TakeVoucherResponse($takenVouchers);
@@ -115,21 +117,16 @@ class GetCouponQueue
                 $payment->issued_coupon->issued_coupon_code = $takenVoucherData->code;
                 $payment->issued_coupon->url                = $takenVoucherData->redeem_url;
                 $payment->issued_coupon->issued_date        = Carbon::now();
-                $payment->issued_coupon->expired_date       = $payment->coupon->coupon_validity_in_date;
+                $payment->issued_coupon->expired_date       = $coupon->coupon_validity_in_date;
                 $payment->issued_coupon->status             = IssuedCoupon::STATUS_ISSUED;
 
                 $payment->issued_coupon->save();
 
                 // Update payment transaction data
-                $payment->coupon_redemption_code = $takenVoucherData->code;
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
-                $availableCoupon = Coupon::where('promotion_id', $payment->issued_coupon->promotion_id)->first();
-                if (! empty($availableCoupon)) {
-                    $availableCoupon->updateAvailability();
-                }
-
+                $coupon->updateAvailability();
 
                 // Commit ASAP.
                 DB::connection()->commit();
@@ -138,10 +135,6 @@ class GetCouponQueue
                 $payment->user->notify(new SepulsaReceiptNotification($payment), $notificationDelay);
 
                 Log::info('PaidCoupon: Coupon issued for paymentID: ' . $paymentId);
-
-                $job->delete();
-
-                return;
             }
             else {
                 // This means the TakeVoucher request failed.
@@ -162,7 +155,7 @@ class GetCouponQueue
                         $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
                         $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), $notificationDelay);
 
-                        $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: First try failed. Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
+                        $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: First try failed. Status: FAILED, CouponID: %s --- Message: %s', $couponId, $takenVouchers->getMessage());
                         Log::info($errorMessage);
                     }
 
@@ -176,7 +169,7 @@ class GetCouponQueue
                         compact('paymentId', 'retries')
                     );
 
-                    $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s', $delay, $payment->object_id, $takenVouchers->getMessage());
+                    $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s', $delay, $couponId, $takenVouchers->getMessage());
                 }
                 else {
                     // Oh, no more retry, huh?
@@ -191,10 +184,10 @@ class GetCouponQueue
                     DB::connection()->commit();
 
                     if ($takenVouchers->isExpired()) {
-                        $errorMessage = sprintf('PaidCoupon: Can not issue coupon, Sepulsa Voucher is EXPIRED. CouponID: %s, Voucher Token: %s', $payment->object_id, $voucherToken);
+                        $errorMessage = sprintf('PaidCoupon: Can not issue coupon, Sepulsa Voucher is EXPIRED. CouponID: %s, Voucher Token: %s', $couponId, $voucherToken);
                     }
                     else {
-                        $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
+                        $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $couponId, $takenVouchers->getMessage());
                     }
 
                     // Notify Admin that the voucher is failed and customer's money should be refunded.
