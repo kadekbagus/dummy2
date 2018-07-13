@@ -91,4 +91,24 @@ class PaymentTransactionDetail extends Eloquent
         return false;
     }
 
+    /**
+     * Get the formatted price with currency code.
+     * 
+     * @return [type] [description]
+     */
+    public function getPrice()
+    {
+        return $this->currency . ' ' . number_format($this->price, 0, ',', '');
+    }
+
+    /**
+     * Get the formatted total with currency code.
+     * 
+     * @return [type] [description]
+     */
+    public function getTotal()
+    {
+        return $this->currency . ' ' . number_format($this->price * $this->quantity, 0, ',', '');
+    }
+
 }
