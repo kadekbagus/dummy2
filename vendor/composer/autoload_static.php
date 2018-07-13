@@ -222,10 +222,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
             array (
                 0 => __DIR__ . '/../..' . '/app/queue',
             ),
-            'Orbit\\Presenters\\' => 
-            array (
-                0 => __DIR__ . '/../..' . '/app/presenters',
-            ),
             'Orbit\\Notifications\\' => 
             array (
                 0 => __DIR__ . '/../..' . '/app/notifications',
@@ -2606,7 +2602,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Orbit\\Notifications\\Payment\\DeniedPaymentNotification' => __DIR__ . '/../..' . '/app/notifications/Orbit/Notifications/Payment/DeniedPaymentNotification.php',
         'Orbit\\Notifications\\Payment\\SuspiciousPaymentNotification' => __DIR__ . '/../..' . '/app/notifications/Orbit/Notifications/Payment/SuspiciousPaymentNotification.php',
         'Orbit\\OS\\Shutdown' => __DIR__ . '/../..' . '/app/helpers/Orbit/OS/Shutdown.php',
-        'Orbit\\Presenters\\Payment\\TransactionPresenter' => __DIR__ . '/../..' . '/app/presenters/Orbit/Presenters/Payment/TransactionPresenter.php',
         'Orbit\\Queue\\Activity\\AdditionalActivityQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Activity/AdditionalActivityQueue.php',
         'Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Activity/ObjectPageViewActivityQueue.php',
         'Orbit\\Queue\\AdvertUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/AdvertUpdateQueue.php',

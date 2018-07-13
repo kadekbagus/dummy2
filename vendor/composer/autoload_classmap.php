@@ -2244,7 +2244,6 @@ return array(
     'Orbit\\Notifications\\Payment\\DeniedPaymentNotification' => $baseDir . '/app/notifications/Orbit/Notifications/Payment/DeniedPaymentNotification.php',
     'Orbit\\Notifications\\Payment\\SuspiciousPaymentNotification' => $baseDir . '/app/notifications/Orbit/Notifications/Payment/SuspiciousPaymentNotification.php',
     'Orbit\\OS\\Shutdown' => $baseDir . '/app/helpers/Orbit/OS/Shutdown.php',
-    'Orbit\\Presenters\\Payment\\TransactionPresenter' => $baseDir . '/app/presenters/Orbit/Presenters/Payment/TransactionPresenter.php',
     'Orbit\\Queue\\Activity\\AdditionalActivityQueue' => $baseDir . '/app/queue/Orbit/Queue/Activity/AdditionalActivityQueue.php',
     'Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue' => $baseDir . '/app/queue/Orbit/Queue/Activity/ObjectPageViewActivityQueue.php',
     'Orbit\\Queue\\AdvertUpdateQueue' => $baseDir . '/app/queue/Orbit/Queue/AdvertUpdateQueue.php',
