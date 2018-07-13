@@ -16,6 +16,7 @@ use Orbit\Helper\Midtrans\API\TransactionStatus;
  * Get transaction status from Midtrans and update our internal payment status if necessary.
  * 
  * @author Budi <budi@dominopos.com>
+ * @todo Remove logging.
  */
 class CheckTransactionStatusQueue
 {
@@ -36,7 +37,7 @@ class CheckTransactionStatusQueue
 
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::with(['coupon', 'issued_coupon'])
+            $payment = PaymentTransaction::with(['details.coupon', 'issued_coupon.coupon'])
                                                 ->where('payment_transaction_id', $data['transactionId'])->first();
 
             if (empty($payment)) {
