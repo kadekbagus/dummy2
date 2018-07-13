@@ -22,13 +22,13 @@ use PromotionRetailer;
  */
 class ReceiptNotification extends Notification
 {
-    protected $payment = null;
+    private $payment = null;
 
-    protected $contact = null;
+    private $contact = null;
 
-    protected $mongoConfig = null;
+    private $mongoConfig = null;
 
-    function __construct($payment = null)
+    function __construct($payment)
     {
         $this->payment      = $payment;
         $this->queueName    = Config::get('orbit.registration.mobile.queue_name');
@@ -36,21 +36,11 @@ class ReceiptNotification extends Notification
         $this->mongoConfig  = Config::get('database.mongodb');
     }
 
-    /**
-     * Custom field email address if not reading from field 'email'
-     *
-     * @return [type] [description]
-     */
     protected function getEmailAddress()
     {
         return $this->payment->user_email;
     }
 
-    /**
-     * Custom name if not reading from field 'name'.
-     *
-     * @return [type] [description]
-     */
     protected function getName()
     {
         return $this->payment->user_name;
@@ -63,27 +53,27 @@ class ReceiptNotification extends Notification
      */
     protected function getEmailData()
     {
-        $transaction = [];
-
-        $amount = $this->payment->getAmount();
-
-        $transaction['id']    = $this->payment->payment_transaction_id;
-        $transaction['date']  = Carbon::parse($this->payment->transaction_date_and_time)->format('j M Y');
-        $transaction['total'] = $amount;
-        $redeemUrl            = Config::get('orbit.coupon.direct_redemption_url');
+        $redeemUrl = Config::get('orbit.coupon.direct_redemption_url');
         $cs = [
             'phone' => $this->contact['customer_service']['phone'],
             'email' => $this->contact['customer_service']['email'],
         ];
 
-        $transaction['items'] = [
-            [
-                'name'      => $this->payment->object_name,
-                'quantity'  => 1,
-                'price'     => $amount,
-                'total'     => $amount, // should be quantity * $this->payment->amount
-            ],
-        ];
+        $transaction          = [];
+        $transaction['id']    = $this->payment->payment_transaction_id;
+        $transaction['date']  = Carbon::parse($this->payment->created_at)->format('j M Y');
+        $transaction['items'] = [];
+
+        foreach ($this->payment->details as $item) {
+            $transaction['items'][] = [
+                'name'      => $item->object_name,
+                'quantity'  => $item->quantity,
+                'price'     => $item->getPrice(),
+                'total'     => $item->getTotal(),
+            ];
+        }
+
+        $transaction['total'] = $this->payment->getAmount();
 
         return [
             'customerEmail'     => $this->getEmailAddress(),
@@ -105,7 +95,6 @@ class ReceiptNotification extends Notification
     public function toEmail($job, $data)
     {
         try {
-
             $emailTemplate = 'emails.receipt.sepulsa';
 
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
@@ -178,7 +167,7 @@ class ReceiptNotification extends Notification
     {
         $bodyInApps = null;
         $userId = $this->payment->user_id;
-        $couponId = $this->payment->object_id;
+        $couponId = $this->payment->details->first()->object_id;
         $prefix = DB::getTablePrefix();
         $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id,
                                     {$prefix}promotions.promotion_name,
