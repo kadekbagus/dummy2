@@ -22,8 +22,7 @@ use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification as SepulsaReceiptNoti
 use Orbit\Notifications\Coupon\Sepulsa\TakeVoucherFailureNotification;
 use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification as SepulsaVoucherNotAvailableNotification;
 
-// use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
-// use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
+use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 
 /**
  * A job to issue Sepulsa Voucher after payment completed.
@@ -36,6 +35,7 @@ class GetCouponQueue
      * Get Sepulsa Voucher after payment completed.
      *
      * @todo  do we still need to send notification on the first failure?
+     * @todo  remove logging.
      *
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
@@ -57,7 +57,7 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting Sepulsa Voucher for paymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::with(['details.coupon', 'issued_coupon.coupon', 'user'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.coupon.coupon_sepulsa', 'issued_coupon.coupon', 'user'])->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
@@ -90,7 +90,7 @@ class GetCouponQueue
                 }
 
                 // Notify customer that coupon is not available.
-                $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment), 3);
+                // $payment->user->notify(new SepulsaVoucherNotAvailableNotification($payment), 3);
 
                 return;
             }

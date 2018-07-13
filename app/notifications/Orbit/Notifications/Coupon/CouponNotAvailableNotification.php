@@ -48,8 +48,8 @@ class CouponNotAvailableNotification extends Notification
         return [
             'recipientEmail'    => $this->getEmailAddress(),
             'customerName'      => $this->getName(),
-            'couponId'          => $this->payment->object_id,
-            'couponName'        => $this->payment->object_name,
+            'couponId'          => $this->payment->details->first()->object_id,
+            'couponName'        => $this->payment->details->first()->object_name,
             'paymentId'         => $this->payment->payment_transaction_id,
             'reason'            => $this->reason,
         ];
