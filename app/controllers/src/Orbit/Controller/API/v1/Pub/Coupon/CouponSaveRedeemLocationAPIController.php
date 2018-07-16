@@ -22,7 +22,7 @@ use Coupon;
 use BaseStore;
 use Helper\EloquentRecordCounter as RecordCounter;
 
-class CouponSaveRedeemLocation extends PubControllerAPI
+class CouponSaveRedeemLocationAPIController extends PubControllerAPI
 {
     /**
      * POST - Save the selected redeem location.
