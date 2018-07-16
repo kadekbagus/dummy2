@@ -17,6 +17,7 @@ use \DB;
 use Validator;
 use PaymentTransaction;
 use PaymentTransactionDetail;
+use PaymentTransactionDetailNormalPaypro;
 use PaymentMidtrans;
 use Mall;
 use Carbon\Carbon as Carbon;
@@ -111,6 +112,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 
             // Insert detail information
             $paymentDetail = new PaymentTransactionDetail;
+            $paymentDetail->payment_transaction_id = $payment_new->payment_transaction_id;
             $paymentDetail->currency = $currency;
             $paymentDetail->price = $amount;
             $paymentDetail->quantity = $quantity;
@@ -127,7 +129,11 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 $paymentDetail->object_name = $object_name;
             });
 
-            $payment_new->details()->save($paymentDetail);
+            $paymentDetail->save();
+
+            // Insert normal/paypro details
+            $paymentDetailNormalPaypro = new PaymentTransactionDetailNormalPaypro;
+            $paymentDetail->normal_paypro_detail()->save($paymentDetailNormalPaypro);
 
             // Insert midtrans info
             $paymentMidtransDetail = new PaymentMidtrans;
