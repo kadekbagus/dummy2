@@ -129,6 +129,7 @@ return array(
     'AlterTablePaymentTransactionChangeColumnCountryIdNullable' => $baseDir . '/app/database/migrations/2018_05_16_062411_alter_table_payment_transaction_change_column_country_id_nullable.php',
     'AlterTablePaymentTransactionChangeColumnLength' => $baseDir . '/app/database/migrations/2018_05_23_021542_alter_table_payment_transaction_change_column_length.php',
     'AlterTablePaymentTransactionDetailsAddPrimaryKey' => $baseDir . '/app/database/migrations/2018_07_11_093909_alter_table_payment_transaction_details_add_primary_key.php',
+    'AlterTablePaymentTransactionDetailsChangeColumnObjectIdToNullable' => $baseDir . '/app/database/migrations/2018_07_16_033849_alter_table_payment_transaction_details_change_column_object_id_to_nullable.php',
     'AlterTablePaymentTransactionDetailsChangeColumnsToNullable' => $baseDir . '/app/database/migrations/2018_07_12_095307_alter_table_payment_transaction_details_change_columns_to_nullable.php',
     'AlterTablePaymentTransactionsAddPostData' => $baseDir . '/app/database/migrations/2017_12_11_055433_alter_table_payment_transactions_add_post_data.php',
     'AlterTablePaymentTransactionsChangeColumnStatusLength' => $baseDir . '/app/database/migrations/2018_06_09_235818_alter_table_payment_transactions_change_column_status_length.php',

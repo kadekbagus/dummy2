@@ -487,6 +487,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'AlterTablePaymentTransactionChangeColumnCountryIdNullable' => __DIR__ . '/../..' . '/app/database/migrations/2018_05_16_062411_alter_table_payment_transaction_change_column_country_id_nullable.php',
         'AlterTablePaymentTransactionChangeColumnLength' => __DIR__ . '/../..' . '/app/database/migrations/2018_05_23_021542_alter_table_payment_transaction_change_column_length.php',
         'AlterTablePaymentTransactionDetailsAddPrimaryKey' => __DIR__ . '/../..' . '/app/database/migrations/2018_07_11_093909_alter_table_payment_transaction_details_add_primary_key.php',
+        'AlterTablePaymentTransactionDetailsChangeColumnObjectIdToNullable' => __DIR__ . '/../..' . '/app/database/migrations/2018_07_16_033849_alter_table_payment_transaction_details_change_column_object_id_to_nullable.php',
         'AlterTablePaymentTransactionDetailsChangeColumnsToNullable' => __DIR__ . '/../..' . '/app/database/migrations/2018_07_12_095307_alter_table_payment_transaction_details_change_columns_to_nullable.php',
         'AlterTablePaymentTransactionsAddPostData' => __DIR__ . '/../..' . '/app/database/migrations/2017_12_11_055433_alter_table_payment_transactions_add_post_data.php',
         'AlterTablePaymentTransactionsChangeColumnStatusLength' => __DIR__ . '/../..' . '/app/database/migrations/2018_06_09_235818_alter_table_payment_transactions_change_column_status_length.php',
