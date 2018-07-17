@@ -26,7 +26,7 @@ use Log;
 class CouponBuyAPIController extends PubControllerAPI
 {
     /**
-     * GET - get all coupon wallet in all mall
+     * POST - For check and reserved the coupon per user
      *
      * @author Firmansyah <firmansyah@dominopos.com>
      *
@@ -56,6 +56,7 @@ class CouponBuyAPIController extends PubControllerAPI
 
             $coupon_id = OrbitInput::post('coupon_id');
             $with_reserved = OrbitInput::post('with_reserved', 'N');
+            $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time');
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -82,24 +83,38 @@ class CouponBuyAPIController extends PubControllerAPI
                                             ->where('status', IssuedCoupon::STATUS_RESERVED)
                                             ->first();
 
+            $isUserHavingReservedCoupon = false;
             if (! empty($userIssuedCoupon)) {
-                OrbitShopAPI::throwInvalidArgument('This user already issued this coupon, you cannot get twice coupon before you redeem the coupon');
-            } else {
-                $response = $userIssuedCoupon;
+                $isUserHavingReservedCoupon = true;
+                $userIssuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTimeCfg minutes", strtotime($userIssuedCoupon->issued_date)));
             }
 
-            $coupon = Coupon::where('promotion_id', $coupon_id)
-                                ->first();
+            $coupon = Coupon::where('promotion_id', $coupon_id)->first();
+            $issued = IssuedCoupon::where('promotion_id', $coupon_id)->whereIn('status', [
+                                        IssuedCoupon::STATUS_ISSUED,
+                                        IssuedCoupon::STATUS_REDEEMED,
+                                        IssuedCoupon::STATUS_RESERVED,
+                                    ])->count();
 
-            $availableCoupon = $coupon->available;
+            $availableCoupon = $coupon->maximum_issued_coupon - $issued;
 
-            if ($availableCoupon == 0) {
+            if ($availableCoupon == 0 && ! $isUserHavingReservedCoupon) {
                 OrbitShopAPI::throwInvalidArgument('This coupon has been sold out');
             }
 
-            if ($with_reserved === 'Y') {
 
-                if (empty($userIssuedCoupon)) {
+            if ($with_reserved === 'N') {
+
+                $response = $userIssuedCoupon;
+
+            } elseif ($with_reserved === 'Y') {
+
+                if ($isUserHavingReservedCoupon) {
+
+                    $response = $userIssuedCoupon;
+
+                } else {
+
                     $this->beginTransaction();
 
                     //insert for sepulsa and update for hot_deals
@@ -129,49 +144,10 @@ class CouponBuyAPIController extends PubControllerAPI
 
                     }
 
-                    // Update available coupon -1
-                    $availableCoupon = $availableCoupon - 1;
-                    $coupon->available = $availableCoupon;
-                    $coupon->setUpdatedAt($coupon->freshTimestamp());
-                    $coupon->save();
-
-                    // Re sync the coupon data to make sure deleted when coupon sold out
-                    if ($availableCoupon > 0) {
-                        // Re sync the coupon data
-                        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                            'coupon_id' => $coupon_id
-                        ]);
-                    } elseif ($availableCoupon == 0) {
-                        // Delete the coupon and also suggestion
-                        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
-                            'coupon_id' => $coupon_id
-                        ]);
-
-                        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
-                            'coupon_id' => $coupon_id
-                        ]);
-
-                        // To Do : Delete all coupon cache
-                        /* if (Config::get('orbit.cache.ng_redis_enabled', FALSE)) {
-                            $redis = Cache::getRedis();
-                            $keyName = array('coupon','home');
-                            foreach ($keyName as $value) {
-                                $keys = $redis->keys("*$value*");
-                                if (! empty($keys)) {
-                                    foreach ($keys as $key) {
-                                        $redis->del($key);
-                                    }
-                                }
-                            }
-                        } */
-
-                    }
-
                     $this->commit();
 
                     // Register to queue for check payment progress, time will be set configurable
-                    $limitTime = Config::get('orbit.coupon_reserved_limit_time');
-                    $date = Carbon::now()->addMinutes($limitTime);
+                    $date = Carbon::now()->addMinutes($limitTimeCfg);
                     Log::info('Send CheckReservedCoupon queue, issued_coupon_id =  '. $issuedCoupon->issued_coupon_id .', will running at = ' . $date);
 
                     Queue::later(
@@ -180,7 +156,7 @@ class CouponBuyAPIController extends PubControllerAPI
                         ['coupon_id' => $coupon_id, 'user_id' => $user->user_id]
                     );
 
-                    $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTime minutes", strtotime($issuedCoupon->issued_date)));
+                    $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTimeCfg minutes", strtotime($issuedCoupon->issued_date)));
 
                     // Return the data
                     $response = $issuedCoupon;

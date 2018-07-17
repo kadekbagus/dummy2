@@ -89,11 +89,11 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     CASE WHEN {$prefix}promotions.promotion_type = 'sepulsa'
                                         THEN {$prefix}coupon_sepulsa.coupon_image_url
                                         ELSE (
-                                            CASE WHEN {$prefix}media.cdn_url is null 
-                                            THEN med.cdn_url 
-                                            ELSE {$prefix}media.cdn_url 
+                                            CASE WHEN {$prefix}media.cdn_url is null
+                                            THEN med.cdn_url
+                                            ELSE {$prefix}media.cdn_url
                                             END
-                                        ) 
+                                        )
                                         END as cdnPath,
                                     {$prefix}issued_coupons.issued_coupon_code,
                                     {$prefix}promotions.end_date,
@@ -195,7 +195,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                             })
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '!=', 'deleted');
+                                $join->on('issued_coupons.status', 'IN', DB::raw("('issued', 'redeemed')"));
                             })
                             ->leftJoin('merchants', function ($q) {
                                 $q->on('merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id');
@@ -257,6 +257,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                             );
 
             $coupon = $coupon->orderBy(DB::raw("redeem_order"), 'asc');
+            $coupon = $coupon->orderBy(DB::raw("redeemed_date"), 'desc');
             $coupon = $coupon->orderBy(DB::raw("issued_date"), 'desc');
 
             $_coupon = clone $coupon;

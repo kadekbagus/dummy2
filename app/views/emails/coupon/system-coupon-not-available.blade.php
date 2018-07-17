@@ -11,6 +11,7 @@
             <ul>
                 <li>Transaction ID: <strong>{{ $paymentId }}</strong></li>
                 <li>Customer Name: <strong>{{ $customerName }}</strong></li>
+                <li>Customer Email: <strong>{{ $recipientEmail }}</strong></li>
                 <li>Coupon ID: {{ $couponId }}</li>
                 <li>Coupon Name: {{ $couponName }}</li>
             </ul>
