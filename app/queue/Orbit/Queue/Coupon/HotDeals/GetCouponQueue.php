@@ -70,13 +70,16 @@ class GetCouponQueue
 
                 $payment->cleanUp();
 
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                $payment->save();
+
                 DB::connection()->commit();
 
                 // Notify admin for this failure.
                 foreach($adminEmails as $email) {
                     $admin              = new User;
                     $admin->email       = $email;
-                    $admin->notify(new CouponNotAvailableNotification($payment, 'Related IssuedCoupon not found.'), 3);
+                    $admin->notify(new CouponNotAvailableNotification($payment, 'Related IssuedCoupon not found. Might be put to stock again by system queue before customer complete the payment.'), 3);
                 }
 
                 // Notify customer that coupon is not available.
