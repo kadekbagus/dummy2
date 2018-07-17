@@ -20,7 +20,7 @@ use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
 use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification as SepulsaReceiptNotification;
 use Orbit\Notifications\Coupon\Sepulsa\TakeVoucherFailureNotification;
-use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification as SepulsaVoucherNotAvailableNotification;
+use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification;
 
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 
@@ -43,7 +43,7 @@ class GetCouponQueue
      */
     public function fire($job, $data)
     {
-        $notificationDelay = 5;
+        $notificationDelay = 1;
 
         // TODO: Move to config?
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
@@ -80,17 +80,20 @@ class GetCouponQueue
 
                 $payment->cleanUp();
 
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                $payment->save();
+
                 DB::connection()->commit();
 
                 // Notify admin for this failure.
                 foreach($adminEmails as $email) {
                     $admin              = new User;
                     $admin->email       = $email;
-                    $admin->notify(new CouponNotAvailableNotification($payment, 'Related IssuedCoupon not found.'), 3);
+                    $admin->notify(new CouponNotAvailableNotification($payment, 'Related IssuedCoupon not found. Might be put to stock again by system queue before customer complete the payment.'), 3);
                 }
 
                 // Notify customer that coupon is not available.
-                // $payment->user->notify(new SepulsaVoucherNotAvailableNotification($payment), 3);
+                $payment->user->notify(new VoucherNotAvailableNotification($payment), $notificationDelay);
 
                 return;
             }
@@ -198,7 +201,7 @@ class GetCouponQueue
                     }
 
                     // Notify customer that the coupon is not available and the money will be refunded.
-                    $payment->user->notify(new SepulsaVoucherNotAvailableNotification($payment), $notificationDelay);
+                    $payment->user->notify(new VoucherNotAvailableNotification($payment), $notificationDelay);
                 }
 
                 Log::info($errorMessage);
