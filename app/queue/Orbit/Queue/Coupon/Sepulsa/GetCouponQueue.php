@@ -125,12 +125,9 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
-                Log::info('UpdateAvailableCoupon START, coupon_id = ' . $payment->issued_coupon->promotion_id);
                 $availableCoupon = Coupon::where('promotion_id', $payment->issued_coupon->promotion_id)->first();
                 if (! empty($availableCoupon)) {
-                    Log::info('UpdateAvailableCoupon HotDeals BEFORE, coupon_id = ' . $payment->issued_coupon->promotion_id . ', available = ' . $availableCoupon->available);
                     $availableCoupon->updateAvailability();
-                    Log::info('UpdateAvailableCoupon HotDeals AFTER, coupon_id = ' . $payment->issued_coupon->promotion_id . ', available = ' . $availableCoupon->available);
                 }
 
 
