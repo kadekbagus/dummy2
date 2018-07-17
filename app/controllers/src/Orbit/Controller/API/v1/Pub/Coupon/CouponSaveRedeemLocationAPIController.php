@@ -9,19 +9,21 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Config;
 use stdClass;
-use Orbit\Helper\Util\PaginationNumber;
 use DB;
 use Validator;
 use App;
 use Lang;
-use \Exception;
+use Exception;
 use PromotionRetailer;
-use CouponRetailerRedeem;
-use CouponPaymentProvider;
-use Coupon;
+use PaymentTransaction;
 use BaseStore;
-use Helper\EloquentRecordCounter as RecordCounter;
 
+/**
+ * Controller which handle saving the redeem location before we redirect 
+ * customer to Sepulsa redeem page.
+ *
+ * @author Budi <budi@dominopos.com>
+ */
 class CouponSaveRedeemLocationAPIController extends PubControllerAPI
 {
     /**
@@ -32,8 +34,10 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
      *
      * List of API Parameters
      * ----------------------
-     * @param  payment_transaction_id $paymentId internal payment transaction id.
-     * @param string merchant_id merchant id where the customer WANT to redeem.
+     * @param  string transaction_id internal payment transaction id.
+     * @param string store_id the store id where the customer WANT to redeem.
+     * @param string current_mall the mall where the redeem store is located.
+     * @param string coupon_id the coupon id that the customer want to redeem.
      *
      * @return Illuminate\Support\Facades\Response
      */
@@ -52,24 +56,24 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
 
             $couponId = OrbitInput::post('coupon_id');
             $storeId = OrbitInput::post('store_id');
-            $mallId = OrbitInput::post('mall_id');
-            $paymentId = OrbitInput::post('payment_transaction_id');
+            $mallId = OrbitInput::post('current_mall');
+            $paymentId = OrbitInput::post('transaction_id');
 
             $this->beginTransaction();
-
-            $prefix = DB::getTablePrefix();
 
             // TODO: Validate payment exists.
             $validator = Validator::make(
                 array(
                     'coupon_id' => $couponId,
-                    'merchant_id' => $merchantId,
-                    'payment_transaction_id' => $paymentId,
+                    'store_id' => $storeId,
+                    'current_mall' => $mallId,
+                    'transaction_id' => $paymentId,
                 ),
                 array(
                     'coupon_id' => 'required',
-                    'merchant_id' => 'required',
-                    'payment_transaction_id' => 'required',
+                    'store_id' => 'required',
+                    'current_mall' => 'required',
+                    'transaction_id' => 'required',
                 )
             );
 
@@ -79,7 +83,7 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $redeemLocation = PromotionRetailer::where('promotion_id', $couponId)->where('retailer_id', $merchantId)->first();
+            $redeemLocation = PromotionRetailer::where('promotion_id', $couponId)->whereIn('retailer_id', [$storeId, $mallId])->first();
 
             if (empty($redeemLocation)) {
                 $errorMessage = 'Cannot redeem coupon at the given location! Redeem location is not valid.';
@@ -94,18 +98,23 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
                                   ->where('base_stores.merchant_id', $mallId)
                                   ->first();
 
+            if (empty($baseStore)) {
+                $errorMessage = "Can not find detailed redeem location.";
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
             $payment = PaymentTransaction::with(['details.normal_paypro_detail', 'issued_coupon.coupon'])->findOrFail($paymentId);
+
+            if (empty($payment->issued_coupon)) {
+                $errorMessage = 'Can not find issued coupon related to this coupon.';
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             // TODO: Get detail according to coupon ID, not details->first()
             $transactionDetailNormalPaypro = $payment->details->first()->normal_paypro_detail;
 
             if (empty($transactionDetailNormalPaypro)) {
                 $errorMessage = 'Transaction not found!';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
-            }
-
-            if (empty($payment->issued_coupon)) {
-                $errorMessage = 'Can not find issued coupon related to this coupon.';
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
@@ -116,6 +125,11 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
             $transactionDetailNormalPaypro->building_id = $baseStore->merchant_id;
             $transactionDetailNormalPaypro->building_name = $baseStore->mall_name;
             $transactionDetailNormalPaypro->save();
+
+            if (! empty($baseStore->timezone_name)) {
+                $payment->timezone_name = $baseStore->timezone_name;
+                $payment->save();
+            }
 
             $this->commit();
 
@@ -175,4 +189,5 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
     {
         return DB::connection()->getPdo()->quote($arg);
     }
+
 }

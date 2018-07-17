@@ -2,8 +2,12 @@
 
 /**
  * Payment Transcations Detail Model.
+ * 
+ * Store the detail of transaction, such as the item(s) that is being bought.
+ * This model should be linked to a real purchasable model, e.g Coupon.
  *
  * @author Budi <budi@dominopos.com>
+ * @todo  add polymorphic relationship for easier access to the real purchasable model.
  */
 class PaymentTransactionDetail extends Eloquent
 {
