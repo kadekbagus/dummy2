@@ -84,7 +84,7 @@ class TransactionStatusResponse
     {
         $fraudStatus = isset($this->data->fraud_status) ? $this->data->fraud_status : 'challenge';
         return $this->data->transaction_status === 'capture' && 
-               strtolower($fraudStatus) && 
+               strtolower($fraudStatus) === 'challenge' && 
                $this->data->status_code === 201;
     }
 
@@ -132,6 +132,7 @@ class TransactionStatusResponse
 
     /**
      * Map midtrans response to our internal payment status.
+     * This method MUST BE synced to Frontend transaction status/midtrans notification response mapper.
      * 
      * @return [type] [description]
      */

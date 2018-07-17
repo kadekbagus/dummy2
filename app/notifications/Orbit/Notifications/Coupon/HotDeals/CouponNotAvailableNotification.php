@@ -48,11 +48,13 @@ class CouponNotAvailableNotification extends Notification
      */
     protected function getEmailData()
     {
+        $maxRefundDate = $this->payment->created_at->timezone($this->payment->timezone_name)->addDay()->format('j M Y');
+        $maxRefundDate .= " 16:00 ({$this->payment->timezone_name})";
         return [
             'recipientEmail'    => $this->getEmailAddress(),
             'customerName'      => $this->getName(),
-            'couponName'        => $this->payment->object_name,
-            'maxRefundDate'     => Carbon::now('Asia/Jakarta')->addDay()->format('j M Y') . ' 16:00 WIB (GMT +7)',
+            'couponName'        => $this->payment->details->first()->object_name,
+            'maxRefundDate'     => $maxRefundDate,
             'paymentId'         => $this->payment->payment_transaction_id,
             'contact'           => $this->getContactInfo(),
         ];

@@ -2498,6 +2498,7 @@ return array(
     'PaymentMidtrans' => $baseDir . '/app/models/PaymentMidtrans.php',
     'PaymentProvider' => $baseDir . '/app/models/PaymentProvider.php',
     'PaymentTransaction' => $baseDir . '/app/models/PaymentTransaction.php',
+    'PaymentTransactionDataMigrationCommand' => $baseDir . '/app/commands/PaymentTransactionDataMigrationCommand.php',
     'PaymentTransactionDetail' => $baseDir . '/app/models/PaymentTransactionDetail.php',
     'PaymentTransactionDetailNormalPaypro' => $baseDir . '/app/models/PaymentTransactionDetailNormalPaypro.php',
     'Permission' => $baseDir . '/app/models/Permission.php',

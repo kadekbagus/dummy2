@@ -17,6 +17,7 @@ use \DB;
 use Validator;
 use PaymentTransaction;
 use PaymentTransactionDetail;
+use PaymentTransactionDetailNormalPaypro;
 use PaymentMidtrans;
 use Mall;
 use Carbon\Carbon as Carbon;
@@ -100,20 +101,18 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $payment_new->user_id = $user_id;
             $payment_new->phone = $phone;
             $payment_new->country_id = $country_id;
-            // $payment_new->payment_provider_id = $payment_provider_id;
             $payment_new->payment_method = 'midtrans';
             $payment_new->amount = $amount;
-            // $payment_new->currency_id = $currency_id;
             $payment_new->currency = $currency;
-            $payment_new->status = 'starting';
+            $payment_new->status = PaymentTransaction::STATUS_STARTING;
             $payment_new->timezone_name = $mallTimeZone;
-            // $payment_new->transaction_date_and_time = Carbon::now('UTC');
             $payment_new->post_data = serialize($post_data);
 
             $payment_new->save();
 
             // Insert detail information
             $paymentDetail = new PaymentTransactionDetail;
+            $paymentDetail->payment_transaction_id = $payment_new->payment_transaction_id;
             $paymentDetail->currency = $currency;
             $paymentDetail->price = $amount;
             $paymentDetail->quantity = $quantity;
@@ -130,7 +129,11 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 $paymentDetail->object_name = $object_name;
             });
 
-            $payment_new->details()->save($paymentDetail);
+            $paymentDetail->save();
+
+            // Insert normal/paypro details
+            $paymentDetailNormalPaypro = new PaymentTransactionDetailNormalPaypro;
+            $paymentDetail->normal_paypro_detail()->save($paymentDetailNormalPaypro);
 
             // Insert midtrans info
             $paymentMidtransDetail = new PaymentMidtrans;

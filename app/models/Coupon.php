@@ -200,6 +200,11 @@ class Coupon extends Eloquent
                     ->join('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id');
     }
 
+    public function coupon_sepulsa()
+    {
+        return $this->hasOne('CouponSepulsa', 'promotion_id', 'promotion_id');
+    }
+
     /**
      * Add Filter coupons based on user who request it.
      *

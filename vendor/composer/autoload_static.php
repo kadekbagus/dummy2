@@ -222,10 +222,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
             array (
                 0 => __DIR__ . '/../..' . '/app/queue',
             ),
-            'Orbit\\Presenters\\' => 
-            array (
-                0 => __DIR__ . '/../..' . '/app/presenters',
-            ),
             'Orbit\\Notifications\\' => 
             array (
                 0 => __DIR__ . '/../..' . '/app/notifications',
@@ -491,6 +487,8 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'AlterTablePaymentTransactionChangeColumnCountryIdNullable' => __DIR__ . '/../..' . '/app/database/migrations/2018_05_16_062411_alter_table_payment_transaction_change_column_country_id_nullable.php',
         'AlterTablePaymentTransactionChangeColumnLength' => __DIR__ . '/../..' . '/app/database/migrations/2018_05_23_021542_alter_table_payment_transaction_change_column_length.php',
         'AlterTablePaymentTransactionDetailsAddPrimaryKey' => __DIR__ . '/../..' . '/app/database/migrations/2018_07_11_093909_alter_table_payment_transaction_details_add_primary_key.php',
+        'AlterTablePaymentTransactionDetailsChangeColumnObjectIdToNullable' => __DIR__ . '/../..' . '/app/database/migrations/2018_07_16_033849_alter_table_payment_transaction_details_change_column_object_id_to_nullable.php',
+        'AlterTablePaymentTransactionDetailsChangeColumnsToNullable' => __DIR__ . '/../..' . '/app/database/migrations/2018_07_12_095307_alter_table_payment_transaction_details_change_columns_to_nullable.php',
         'AlterTablePaymentTransactionsAddPostData' => __DIR__ . '/../..' . '/app/database/migrations/2017_12_11_055433_alter_table_payment_transactions_add_post_data.php',
         'AlterTablePaymentTransactionsChangeColumnStatusLength' => __DIR__ . '/../..' . '/app/database/migrations/2018_06_09_235818_alter_table_payment_transactions_change_column_status_length.php',
         'AlterTablePaymentTransactionsChangeColumnUserNameLength' => __DIR__ . '/../..' . '/app/database/migrations/2018_07_10_052757_alter_table_payment_transactions_change_column_user_name_length.php',
@@ -2605,7 +2603,6 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'Orbit\\Notifications\\Payment\\DeniedPaymentNotification' => __DIR__ . '/../..' . '/app/notifications/Orbit/Notifications/Payment/DeniedPaymentNotification.php',
         'Orbit\\Notifications\\Payment\\SuspiciousPaymentNotification' => __DIR__ . '/../..' . '/app/notifications/Orbit/Notifications/Payment/SuspiciousPaymentNotification.php',
         'Orbit\\OS\\Shutdown' => __DIR__ . '/../..' . '/app/helpers/Orbit/OS/Shutdown.php',
-        'Orbit\\Presenters\\Payment\\TransactionPresenter' => __DIR__ . '/../..' . '/app/presenters/Orbit/Presenters/Payment/TransactionPresenter.php',
         'Orbit\\Queue\\Activity\\AdditionalActivityQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Activity/AdditionalActivityQueue.php',
         'Orbit\\Queue\\Activity\\ObjectPageViewActivityQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/Activity/ObjectPageViewActivityQueue.php',
         'Orbit\\Queue\\AdvertUpdateQueue' => __DIR__ . '/../..' . '/app/queue/Orbit/Queue/AdvertUpdateQueue.php',
@@ -2869,6 +2866,7 @@ class ComposerStaticInit5d0768605fbee9f9a8baea68c9de5854
         'PaymentMidtrans' => __DIR__ . '/../..' . '/app/models/PaymentMidtrans.php',
         'PaymentProvider' => __DIR__ . '/../..' . '/app/models/PaymentProvider.php',
         'PaymentTransaction' => __DIR__ . '/../..' . '/app/models/PaymentTransaction.php',
+        'PaymentTransactionDataMigrationCommand' => __DIR__ . '/../..' . '/app/commands/PaymentTransactionDataMigrationCommand.php',
         'PaymentTransactionDetail' => __DIR__ . '/../..' . '/app/models/PaymentTransactionDetail.php',
         'PaymentTransactionDetailNormalPaypro' => __DIR__ . '/../..' . '/app/models/PaymentTransactionDetailNormalPaypro.php',
         'Permission' => __DIR__ . '/../..' . '/app/models/Permission.php',
