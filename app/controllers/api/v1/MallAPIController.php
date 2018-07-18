@@ -3629,4 +3629,260 @@ class MallAPIController extends ControllerAPI
     {
         return DB::connection()->getPdo()->quote($arg);
     }
+
+    /**
+     * API Controller to get Mall name and merchant ID only
+     */
+    public function getSearchMallName()
+    {
+        try {
+            $httpCode = 200;
+
+            Event::fire('orbit.mall.getsearchmall.before.auth', array($this));
+
+            // Require authentication
+            $this->checkAuth();
+
+            Event::fire('orbit.mall.getsearchmall.after.auth', array($this));
+
+            // Try to check access control list, does this mall allowed to
+            // perform this action
+            $user = $this->api->user;
+            Event::fire('orbit.mall.getsearchmall.before.authz', array($this, $user));
+
+            // @Todo: Use ACL authentication instead
+            $role = $user->role;
+            $validRoles = ['super admin', 'mall admin', 'mall owner', 'merchant database admin'];
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'Your role are not allowed to access this resource.';
+                ACL::throwAccessForbidden($message);
+            }
+
+            Event::fire('orbit.mall.getsearchmall.after.authz', array($this, $user));
+
+            $this->registerCustomValidation();
+
+            $sort_by = OrbitInput::get('sortby');
+            $validator = Validator::make(
+                array(
+                    'sort_by' => $sort_by,
+                ),
+                array(
+                    'sort_by' => 'in:merchant_name',
+                ),
+                array(
+                    'in' => Lang::get('validation.orbit.empty.merchant_sortby'),
+                )
+            );
+
+            Event::fire('orbit.mall.getsearchmall.before.validation', array($this, $validator));
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
+
+            Event::fire('orbit.mall.getsearchmall.after.validation', array($this, $validator));
+
+            // Get the maximum record
+            $maxRecord = (int) Config::get('orbit.pagination.mall.max_record');
+            if ($maxRecord <= 0) {
+                // Fallback
+                $maxRecord = (int) Config::get('orbit.pagination.max_record');
+                if ($maxRecord <= 0) {
+                    $maxRecord = 20;
+                }
+            }
+            // Get default per page (take)
+            $perPage = (int) Config::get('orbit.pagination.mall.per_page');
+            if ($perPage <= 0) {
+                // Fallback
+                $perPage = (int) Config::get('orbit.pagination.per_page');
+                if ($perPage <= 0) {
+                    $perPage = 20;
+                }
+            }
+
+            // Get Facebook social media ID
+            $facebookSocmedId = SocialMedia::whereSocialMediaCode('facebook')->first()->social_media_id;
+
+            $malls = Mall::excludeDeleted('merchants')
+                ->select(
+                    'merchants.name',
+                    'merchants.merchant_id',
+                    'merchants.country',
+                    'merchants.is_subscribed',
+                    'merchants.status',
+                    'merchants.description',
+                    'merchants.operating_hours',
+                    'merchants.email',
+                    'merchants.postal_code',
+                    'merchants.city',
+                    'merchants.province',
+                    'merchants.phone',
+                    'merchants.url',
+                    'merchants.contact_person_email',
+                    'merchants.contact_person_firstname',
+                    'merchants.contact_person_lastname',
+                    'merchants.contact_person_position',
+                    'merchants.contact_person_phone',
+                    'merchants.start_date_activity',
+                    'merchants.end_date_activity',
+                    'merchants.timezone_id',
+                    'merchants.country_id',
+                    'merchants.address_line1',
+                    'merchants.mobile_default_language',
+                    'merchants.parent_id',
+                    'countries.code as country_code',
+                    DB::raw('mall_group.name AS mall_group_name'),
+                )
+                ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
+                ->join('countries', 'countries.country_id', '=', 'merchants.country_id')
+                ->groupBy('merchants.merchant_id');
+
+            // Filter mall by Ids
+            OrbitInput::get('merchant_id', function ($merchantIds) use ($malls) {
+                $malls->whereIn('merchants.merchant_id', $merchantIds);
+            });
+
+            // Filter mall by name
+            OrbitInput::get('name', function ($name) use ($malls) {
+                $malls->whereIn('merchants.name', $name);
+            });
+
+            // Filter mall by name pattern
+            OrbitInput::get('name_like', function ($name) use ($malls) {
+                $malls->where('merchants.name', 'like', "%$name%");
+            });
+
+            // Filter mall by countryID
+            OrbitInput::get('country_id', function ($countryId) use ($malls) {
+                $malls->where('merchants.country_id', $countryId);
+            });
+
+            // Filter mall by country
+            OrbitInput::get('country', function ($country) use ($malls) {
+                $malls->whereIn('merchants.country', $country);
+            });
+
+            $_malls = clone $malls;
+
+            // if not printing / exporting data then do pagination.
+            if (! $this->returnBuilder) {
+                // Get the take args
+                $take = $perPage;
+                OrbitInput::get('take', function ($_take) use (&$take, $maxRecord) {
+                    if ($_take > $maxRecord) {
+                        $_take = $maxRecord;
+                    }
+                    $take = $_take;
+
+                    if ((int)$take <= 0) {
+                        $take = $maxRecord;
+                    }
+                });
+                $malls->take($take);
+
+                $skip = 0;
+                OrbitInput::get('skip', function ($_skip) use (&$skip, $malls) {
+                    if ($_skip < 0) {
+                        $_skip = 0;
+                    }
+
+                    $skip = $_skip;
+                });
+                $malls->skip($skip);
+            }
+
+            // Default sort by
+            $sortBy = 'merchants.name';
+            // Default sort mode
+            $sortMode = 'asc';
+
+            OrbitInput::get('sortby', function ($_sortBy) use (&$sortBy) {
+                // Map the sortby request to the real column name
+                $sortByMapping = array(
+                    'merchant_name'        => 'merchants.name',
+                    'merchantid'           => 'merchants.merchant_id',
+                );
+
+                $sortBy = $sortByMapping[$_sortBy];
+            });
+
+            OrbitInput::get('sortmode', function ($_sortMode) use (&$sortMode) {
+                if (strtolower($_sortMode) !== 'asc') {
+                    $sortMode = 'desc';
+                }
+            });
+            $malls->orderBy($sortBy, $sortMode);
+
+            // Return the instance of Query Builder
+            if ($this->returnBuilder) {
+                return ['builder' => $malls, 'count' => RecordCounter::create($_malls)->count()];
+            }
+
+            $totalRec = RecordCounter::create($_malls)->count();
+            $listOfRec = $malls->get();
+
+            $data = new stdclass();
+            $data->total_records = $totalRec;
+            $data->returned_records = count($listOfRec);
+            $data->records = $listOfRec;
+
+            if ($totalRec === 0) {
+                $data->records = null;
+                $this->response->message = Lang::get('statuses.orbit.nodata.mall');
+            }
+
+            $this->response->data = $data;
+
+        } catch (ACLForbiddenException $e) {
+            Event::fire('orbit.mall.getsearchmall.access.forbidden', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            Event::fire('orbit.mall.getsearchmall.invalid.arguments', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $result['total_records'] = 0;
+            $result['returned_records'] = 0;
+            $result['records'] = null;
+
+            $this->response->data = $result;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            Event::fire('orbit.mall.getsearchmall.query.error', array($this, $e));
+
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            Event::fire('orbit.mall.getsearchmall.general.exception', array($this, $e));
+
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+        $output = $this->render($httpCode);
+        Event::fire('orbit.mall.getsearchmall.before.render', array($this, &$output));
+
+        return $output;
+
+    }
 }
