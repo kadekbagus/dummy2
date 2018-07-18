@@ -90,8 +90,13 @@ class CouponBuyAPIController extends PubControllerAPI
             }
 
             $coupon = Coupon::where('promotion_id', $coupon_id)->first();
+            $issued = IssuedCoupon::where('promotion_id', $coupon_id)->whereIn('status', [
+                                        IssuedCoupon::STATUS_ISSUED,
+                                        IssuedCoupon::STATUS_REDEEMED,
+                                        IssuedCoupon::STATUS_RESERVED,
+                                    ])->count();
 
-            $availableCoupon = $coupon->available;
+            $availableCoupon = $coupon->maximum_issued_coupon - $issued;
 
             if ($availableCoupon == 0 && ! $isUserHavingReservedCoupon) {
                 OrbitShopAPI::throwInvalidArgument('This coupon has been sold out');
@@ -139,40 +144,17 @@ class CouponBuyAPIController extends PubControllerAPI
 
                     }
 
-                    // Update available coupon -1
-                    $availableCoupon = $availableCoupon - 1;
-                    $coupon->available = $availableCoupon;
-                    $coupon->setUpdatedAt($coupon->freshTimestamp());
-                    $coupon->save();
-
-                    // Re sync the coupon data to make sure deleted when coupon sold out
-                    if ($availableCoupon > 0) {
-                        // Re sync the coupon data
-                        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
-                            'coupon_id' => $coupon_id
-                        ]);
-                    } elseif ($availableCoupon == 0) {
-                        // Delete the coupon and also suggestion
-                        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
-                            'coupon_id' => $coupon_id
-                        ]);
-
-                        Queue::push('Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
-                            'coupon_id' => $coupon_id
-                        ]);
-                    }
-
                     $this->commit();
 
                     // Register to queue for check payment progress, time will be set configurable
                     $date = Carbon::now()->addMinutes($limitTimeCfg);
-                    // Log::info('Send CheckReservedCoupon queue, issued_coupon_id =  '. $issuedCoupon->issued_coupon_id .', will running at = ' . $date);
+                    Log::info('Send CheckReservedCoupon queue, issued_coupon_id =  '. $issuedCoupon->issued_coupon_id .', will running at = ' . $date);
 
-                    // Queue::later(
-                    //     $date,
-                    //     'Orbit\\Queue\\Coupon\\CheckReservedCoupon',
-                    //     ['coupon_id' => $coupon_id, 'user_id' => $user->user_id]
-                    // );
+                    Queue::later(
+                        $date,
+                        'Orbit\\Queue\\Coupon\\CheckReservedCoupon',
+                        ['coupon_id' => $coupon_id, 'user_id' => $user->user_id]
+                    );
 
                     $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTimeCfg minutes", strtotime($issuedCoupon->issued_date)));
 

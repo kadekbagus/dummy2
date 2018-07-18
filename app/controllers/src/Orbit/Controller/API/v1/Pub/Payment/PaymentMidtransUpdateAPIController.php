@@ -3,6 +3,7 @@
 /**
  * @author kadek <kadek@dominopos.com>
  * @desc Controller for update payment with midtrans
+ * @todo  Remove unused log commands.
  */
 
 use OrbitShop\API\v1\PubControllerAPI;
@@ -18,6 +19,7 @@ use Log;
 use Config;
 use Exception;
 use PaymentTransaction;
+use PaymentTransactionDetail;
 use IssuedCoupon;
 use User;
 use Carbon\Carbon as Carbon;
@@ -71,7 +73,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['coupon', 'issued_coupon'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupon.coupon'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 
@@ -85,7 +87,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 PaymentTransaction::STATUS_DENIED,
             ];
 
-            // Assume status as success if it is success_no_coupon/success_no_coupon_failed, so no need re-check to Midtrans.
+            // Assume status as success if it is success_no_coupon/success_no_coupon_failed,
+            // because Midtrans and landing_page doesn't send those status. (They only know 'success')
             $tmpOldStatus = $oldStatus;
             if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_COUPON, PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED])) {
                 $tmpOldStatus = PaymentTransaction::STATUS_SUCCESS;
@@ -126,16 +129,14 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     $paymentSuspicious = true;
                     $status = PaymentTransaction::STATUS_PENDING;
                     $payment_update->notes = $payment_update->notes . 'Payment suspicious.' . "\n----\n";
-                    Log::info("PaidCoupon: Payment {$payment_transaction_id} is suspicious.");
+                    // Log::info("PaidCoupon: Payment {$payment_transaction_id} is suspicious.");
                 }
 
-                if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS, PaymentTransaction::STATUS_SUCCESS_NO_COUPON]) && 
-                    $status === PaymentTransaction::STATUS_DENIED) {
-
+                if ($payment_update->completed() && $status === PaymentTransaction::STATUS_DENIED) {
                     // Flag to send denied payment.
                     $paymentDenied = true;
                     $payment_update->notes = $payment_update->notes . 'Payment denied.' . "\n----\n";
-                    Log::info("PaidCoupon: Payment {$payment_transaction_id} is denied after success.");
+                    // Log::info("PaidCoupon: Payment {$payment_transaction_id} is denied after paid.");
                 }
 
                 $payment_update->status = $status;
@@ -153,17 +154,22 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 });
 
                 OrbitInput::post('payment_midtrans_info', function($payment_midtrans_info) use ($payment_update) {
-                    $payment_update->payment_midtrans_info = serialize($payment_midtrans_info);
+                    $payment_update->midtrans->payment_midtrans_info = serialize($payment_midtrans_info);
+                    $payment_update->midtrans->save();
                 });
 
                 $payment_update->responded_at = Carbon::now('UTC');
 
-                // Update transaction_id in the issued coupon record related to this payment.
+                // Link this payment to reserved IssuedCoupon.
                 if (empty($payment_update->issued_coupon)) {
-                    IssuedCoupon::where('user_id', $payment_update->user_id)
-                                  ->where('promotion_id', $payment_update->object_id)
-                                  ->where('status', IssuedCoupon::STATUS_RESERVED)
-                                  ->update(['transaction_id' => $payment_transaction_id]);
+
+                    // Dont link to IssuedCoupon if the payment is denied/failed/expired.
+                    if (! in_array($status, [PaymentTransaction::STATUS_DENIED, PaymentTransaction::STATUS_EXPIRED, PaymentTransaction::STATUS_FAILED])) {
+                        IssuedCoupon::where('user_id', $payment_update->user_id)
+                                      ->where('promotion_id', $payment_update->details->first()->object_id)
+                                      ->where('status', IssuedCoupon::STATUS_RESERVED)
+                                      ->update(['transaction_id' => $payment_transaction_id]);
+                    }
                 }
 
                 // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher, 
@@ -178,6 +184,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                 // Commit the changes ASAP so if there are any other requests that trigger this controller 
                 // they will use the updated payment data/status.
+                // Try not doing any expensive operation above.
                 $this->commit();
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);

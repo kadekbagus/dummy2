@@ -13,6 +13,7 @@ use Orbit\Helper\Util\JobBurier;
 use User;
 use PaymentTransaction;
 use IssuedCoupon;
+use Coupon;
 
 // Notifications
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
@@ -29,7 +30,7 @@ class GetCouponQueue
 {
     /**
      * Issue hot deals coupon.
-     * 
+     *
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
      * @return [type]       [description]
@@ -48,13 +49,13 @@ class GetCouponQueue
 
             Log::info(sprintf('PaidCoupon: Getting coupon PaymentID: %s', $paymentId));
 
-            $payment = PaymentTransaction::with(['issued_coupon', 'user'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.coupon', 'issued_coupon.coupon', 'user'])->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
-                
+
                 Log::info('PaidCoupon: Payment ' . $paymentId . ' was denied/canceled. We should not issuing any coupon.');
-                
+
                 $payment->cleanUp();
 
                 DB::connection()->commit();
@@ -96,9 +97,10 @@ class GetCouponQueue
 
             $payment->issued_coupon->save();
 
-            $payment->coupon_redemption_code = $payment->issued_coupon->issued_coupon_code;
             $payment->status = PaymentTransaction::STATUS_SUCCESS;
             $payment->save();
+
+            $payment->issued_coupon->coupon->updateAvailability();
 
             // Commit the changes ASAP.
             DB::connection()->commit();

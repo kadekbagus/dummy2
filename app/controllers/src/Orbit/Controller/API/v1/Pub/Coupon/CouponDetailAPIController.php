@@ -155,7 +155,9 @@ class CouponDetailAPIController extends PubControllerAPI
                             'coupon_sepulsa.how_to_buy_and_redeem',
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
-                            'payment_transactions.payment_midtrans_info',
+
+                            'payment_midtrans.payment_midtrans_info',
+
                             'promotions.promotion_type',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
@@ -210,6 +212,7 @@ class CouponDetailAPIController extends PubControllerAPI
                         )
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
+
                         ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
                             $q->on('coupon_translations.promotion_id', '=', 'promotions.promotion_id')
                               ->on('coupon_translations.merchant_language_id', '=', DB::raw("{$this->quote($valid_language->language_id)}"));
@@ -230,10 +233,13 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->on(DB::raw('reserved_issued_coupons.status'), '=', DB::Raw("'reserved'"));
                         })
                         ->leftJoin('payment_transactions', function ($q) use ($user) {
-                                $q->on('payment_transactions.object_id', '=', 'promotions.promotion_id');
                                 $q->on('payment_transactions.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
-                                $q->on('payment_transactions.object_type', '=', DB::Raw("'coupon'"));
                             })
+                        ->leftJoin('payment_transaction_details', function ($q) {
+                                $q->on('payment_transaction_details.object_id', '=', 'promotions.promotion_id');
+                                $q->on('payment_transaction_details.object_type', '=', DB::Raw("'coupon'"));
+                            })
+                        ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
                         ->leftJoin('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
@@ -373,7 +379,7 @@ class CouponDetailAPIController extends PubControllerAPI
             $coupon->available_for_redeem = $availableForRedeem;
 
             // get total issued
-            $totalIssued = IssuedCoupon::whereIn('status', ['issued', 'redeemed', 'reserved'])
+            $totalIssued = IssuedCoupon::whereIn('status', ['issued', 'redeemed'])
                                         ->where('promotion_id', $coupon->promotion_id)
                                         ->count();
             $coupon->total_issued = $totalIssued;

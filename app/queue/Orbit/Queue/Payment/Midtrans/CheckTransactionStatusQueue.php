@@ -16,6 +16,7 @@ use Orbit\Helper\Midtrans\API\TransactionStatus;
  * Get transaction status from Midtrans and update our internal payment status if necessary.
  * 
  * @author Budi <budi@dominopos.com>
+ * @todo Remove logging.
  */
 class CheckTransactionStatusQueue
 {
@@ -36,7 +37,7 @@ class CheckTransactionStatusQueue
 
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::with(['coupon', 'issued_coupon'])
+            $payment = PaymentTransaction::with(['details.coupon', 'issued_coupon.coupon'])
                                                 ->where('payment_transaction_id', $data['transactionId'])->first();
 
             if (empty($payment)) {
@@ -86,7 +87,14 @@ class CheckTransactionStatusQueue
 
                 // Set the internal payment status based on transaction status from Midtrans.
                 // @todo Should we assume the payment is failed or just let it as what it is (pending or whatever its status is)?
-                $payment->status = $transaction->mapToInternalStatus();
+                $transactionStatus = $transaction->mapToInternalStatus();
+                if ($transaction->isSuccess()) {
+                    if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel'])) {
+                        $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                    }
+                }
+
+                $payment->status = $transactionStatus;
 
                 $payment->save();
 

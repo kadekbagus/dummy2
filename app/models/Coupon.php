@@ -200,6 +200,11 @@ class Coupon extends Eloquent
                     ->join('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id');
     }
 
+    public function coupon_sepulsa()
+    {
+        return $this->hasOne('CouponSepulsa', 'promotion_id', 'promotion_id');
+    }
+
     /**
      * Add Filter coupons based on user who request it.
      *
@@ -713,7 +718,7 @@ class Coupon extends Eloquent
 
     /**
      * Determine if coupon is available for purchase or not.
-     * 
+     *
      * @return [type] [description]
      */
     public function notAvailable()
@@ -723,13 +728,12 @@ class Coupon extends Eloquent
 
     /**
      * Update availability of current coupon.
-     * 
+     *
      * @return [type] [description]
      */
     public function updateAvailability()
     {
         $issued = IssuedCoupon::where('promotion_id', $this->promotion_id)->whereIn('status', [
-                                    IssuedCoupon::STATUS_RESERVED,
                                     IssuedCoupon::STATUS_ISSUED,
                                     IssuedCoupon::STATUS_REDEEMED,
                                 ])->count();
@@ -760,7 +764,7 @@ class Coupon extends Eloquent
 
     /**
      * Restore the availability of coupon.
-     * 
+     *
      * @return [type] [description]
      */
     public function restore($amount = 1)

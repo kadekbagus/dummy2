@@ -1,5 +1,7 @@
 <?php
 
+// use Orbit\Helper\Presenters\Presentable;
+
 class PaymentTransaction extends Eloquent
 {
     /**
@@ -14,6 +16,10 @@ class PaymentTransaction extends Eloquent
     protected $primaryKey = 'payment_transaction_id';
 
     protected $table = 'payment_transactions';
+
+    // use Presentable;
+
+    // protected $presenter = 'Orbit\\Presenters\\Payment\\TransactionPresenter';
 
     const STATUS_STARTING           = 'starting';
     const STATUS_PENDING            = 'pending';
@@ -37,8 +43,6 @@ class PaymentTransaction extends Eloquent
     /**
      * Payment - Coupon Sepulsa relation.
      *
-     * @author Budi <budi@dominopos.com>
-     *
      * @return [type] [description]
      */
     public function coupon_sepulsa()
@@ -48,8 +52,6 @@ class PaymentTransaction extends Eloquent
 
     /**
      * Payment - Coupon relation.
-     *
-     * @author Budi <budi@dominopos.com>
      *
      * @return [type] [description]
      */
@@ -71,13 +73,26 @@ class PaymentTransaction extends Eloquent
     /**
      * Payment - User relation.
      *
-     * @author Budi <budi@dominopos.com>
-     *
      * @return [type] [description]
      */
     public function user()
     {
         return $this->belongsTo('User', 'user_id', 'user_id');
+    }
+
+    public function items()
+    {
+        return $this->hasMany('PaymentTransactionDetail');
+    }
+
+    public function details()
+    {
+        return $this->hasMany('PaymentTransactionDetail');
+    }
+
+    public function midtrans()
+    {
+        return $this->hasOne('PaymentMidtrans');
     }
 
     /**
@@ -147,8 +162,8 @@ class PaymentTransaction extends Eloquent
      */
     public function forSepulsa()
     {
-        if (! empty($this->coupon)) {
-            return $this->coupon->promotion_type === Coupon::TYPE_SEPULSA;
+        if (! empty($this->details)) {
+            return $this->details->first()->coupon->promotion_type === Coupon::TYPE_SEPULSA;
         }
 
         return false;
@@ -173,21 +188,11 @@ class PaymentTransaction extends Eloquent
      */
     public function forHotDeals()
     {
-        if (! empty($this->coupon)) {
-            return $this->coupon->promotion_type === Coupon::TYPE_HOT_DEALS;
+        if (! empty($this->details)) {
+            return $this->details->first()->coupon->promotion_type === Coupon::TYPE_HOT_DEALS;
         }
 
         return false;
-    }
-
-    /**
-     * Get formatted amount.
-     *
-     * @return [type] [description]
-     */
-    public function getAmount()
-    {
-        return $this->currency . ' ' . number_format($this->amount, 0, ',', '.');
     }
 
     /**
@@ -205,7 +210,7 @@ class PaymentTransaction extends Eloquent
         $issuedCoupon = $this->issued_coupon;
 
         if (empty($issuedCoupon)) {
-            $issuedCoupon = IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->first();
+            $issuedCoupon = IssuedCoupon::with(['coupon'])->where('transaction_id', $this->payment_transaction_id)->first();
 
             if (empty($issuedCoupon)) {
                 Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Related issuedCoupon not found. Nothing to do.');
@@ -221,8 +226,8 @@ class PaymentTransaction extends Eloquent
                 IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->delete();
 
                 // Update the availability...
-                if (! empty($this->coupon)) {
-                    $this->coupon->updateAvailability();
+                if (! empty($issuedCoupon->coupon)) {
+                    $issuedCoupon->coupon->updateAvailability();
                 }
             }
             else {
@@ -236,8 +241,8 @@ class PaymentTransaction extends Eloquent
             $issuedCoupon->makeAvailable();
 
             // Update the availability...
-            if (! empty($this->coupon)) {
-                $this->coupon->updateAvailability();
+            if (! empty($issuedCoupon->coupon)) {
+                $issuedCoupon->coupon->updateAvailability();
             }
 
             Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
@@ -252,7 +257,7 @@ class PaymentTransaction extends Eloquent
      */
     public function paidWith($paymentTypes = [])
     {
-        $paymentInfo = json_decode(unserialize($this->payment_midtrans_info));
+        $paymentInfo = json_decode(unserialize($this->midtrans->payment_midtrans_info));
         if (! empty($paymentInfo)) {
             if (in_array($paymentInfo->payment_type, $paymentTypes)) {
                 return true;
