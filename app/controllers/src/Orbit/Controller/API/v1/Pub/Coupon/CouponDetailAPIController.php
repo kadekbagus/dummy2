@@ -162,7 +162,7 @@ class CouponDetailAPIController extends PubControllerAPI
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
                             DB::Raw($issuedCouponId),
-                            DB::raw('payment.payment_transaction_id'),
+                            DB::raw('payment.payment_transaction_id as transaction_id'),
                             DB::raw('payment.status as payment_status'),
 
                             // query for get status active based on timezone
