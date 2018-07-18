@@ -86,6 +86,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                     {$prefix}payment_transaction_details.object_id as object_id,
                                     {$prefix}payment_transactions.amount,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
+                                    CONCAT({$prefix}payment_normal_paypro_details.store_name,' @ ', {$prefix}payment_normal_paypro_details.building_name) as store_at_building,
                                     {$prefix}payment_transactions.payment_transaction_id,
                                     {$prefix}payment_transactions.created_at,
                                     convert_tz( {$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz,
@@ -105,6 +106,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             "))
 
                             ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                            ->leftJoin('payment_normal_paypro_details', 'payment_normal_paypro_details.payment_transaction_detail_id', '=', 'payment_transaction_details.payment_transaction_detail_id')
 
                             ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
@@ -146,7 +148,6 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             ->where('payment_transactions.payment_method', '!=', 'normal')
                             ->where('payment_transactions.status', '!=', 'starting')
                             ->groupBy('payment_transactions.payment_transaction_id');
-
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
