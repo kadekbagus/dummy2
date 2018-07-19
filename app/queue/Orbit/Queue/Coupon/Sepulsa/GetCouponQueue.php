@@ -35,6 +35,7 @@ class GetCouponQueue
      * Get Sepulsa Voucher after payment completed.
      *
      * @todo  do we still need to send notification on the first failure?
+     * @todo  move retry routine to a unified method.
      *
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
@@ -44,15 +45,11 @@ class GetCouponQueue
     {
         $notificationDelay = 1;
 
-        // TODO: Move to config?
-        $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
-
         try {
 
             DB::connection()->beginTransaction();
 
             $paymentId = $data['paymentId'];
-            $retries = $data['retries'];
 
             Log::info("PaidCoupon: Getting Sepulsa Voucher for paymentID: {$paymentId}");
 
@@ -75,8 +72,6 @@ class GetCouponQueue
             // It means we can not get related issued coupon.
             if (empty($payment->issued_coupon)) {
 
-                Log::info('PaidCoupon: Can not get related IssuedCoupon for payment ' . $paymentId);
-
                 $payment->cleanUp();
 
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
@@ -84,15 +79,9 @@ class GetCouponQueue
 
                 DB::connection()->commit();
 
-                // Notify admin for this failure.
-                foreach($adminEmails as $email) {
-                    $admin              = new User;
-                    $admin->email       = $email;
-                    $admin->notify(new CouponNotAvailableNotification($payment, 'Related IssuedCoupon not found. Might be put to stock again by system queue before customer complete the payment.'), 3);
-                }
+                $this->notifyFailedCoupon($payment, 'Related IssuedCoupon not found. Might be put to stock again by system queue before customer complete the payment.');
 
-                // Notify customer that coupon is not available.
-                $payment->user->notify(new VoucherNotAvailableNotification($payment), $notificationDelay);
+                $job->delete();
 
                 return;
             }
@@ -100,6 +89,9 @@ class GetCouponQueue
             // If coupon already issued...
             if ($payment->issued_coupon->status === IssuedCoupon::STATUS_ISSUED) {
                 Log::info('PaidCoupon: Coupon already issued. Nothing to do.');
+
+                $job->delete();
+
                 return;
             }
 
@@ -127,11 +119,9 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
-                $availableCoupon = Coupon::where('promotion_id', $payment->issued_coupon->promotion_id)->first();
-                if (! empty($availableCoupon)) {
-                    $availableCoupon->updateAvailability();
+                if (! empty($payment->coupon)) {
+                    $payment->coupon->updateAvailability();
                 }
-
 
                 // Commit ASAP.
                 DB::connection()->commit();
@@ -140,86 +130,37 @@ class GetCouponQueue
                 $payment->user->notify(new SepulsaReceiptNotification($payment), $notificationDelay);
 
                 Log::info('PaidCoupon: Coupon issued for paymentID: ' . $paymentId);
-
-                $job->delete();
-
-                return;
             }
             else {
                 // This means the TakeVoucher request failed.
                 $payment->notes = $payment->notes . $takenVouchers->getMessage() . "\n------\n";
 
-                // Let's retry TakeVoucher request...
-                if ($this->jobShouldRetry($retries, $takenVouchers)) {
-
-                    $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
-                    $payment->save();
-
-                    DB::connection()->commit();
-
-                    // If this is the first failure, then we should notify developer via email.
-                    // NOTE do we still need this?
-                    if ($retries === 0) {
-                        $devUser            = new User;
-                        $devUser->email     = Config::get('orbit.contact_information.developer.email', 'developer@dominopos.com');
-                        $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), $notificationDelay);
-
-                        $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: First try failed. Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
-                        Log::info($errorMessage);
-                    }
-
-                    $delay = Config::get('orbit.partners_api.sepulsa.take_voucher_retry_timeout', 30);
-                    $retries++;
-
-                    // Retry this job by re-pushing it to Queue.
-                    Queue::later(
-                        $delay,
-                        'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue',
-                        compact('paymentId', 'retries')
-                    );
-
-                    $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s', $delay, $payment->object_id, $takenVouchers->getMessage());
-                }
-                else {
-                    // Oh, no more retry, huh?
-
-                    // We should set new status for the payment to indicate success payment but no coupon after trying for a few times.
-                    $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
-                    $payment->save();
-
-                    // Clean up payment since we can not issue the coupon.
-                    $payment->cleanUp();
-
-                    DB::connection()->commit();
-
-                    if ($takenVouchers->isExpired()) {
-                        $errorMessage = sprintf('PaidCoupon: Can not issue coupon, Sepulsa Voucher is EXPIRED. CouponID: %s, Voucher Token: %s', $payment->object_id, $voucherToken);
-                    }
-                    else {
-                        $errorMessage = sprintf('PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', $payment->object_id, $takenVouchers->getMessage());
-                    }
-
-                    // Notify Admin that the voucher is failed and customer's money should be refunded.
-                    foreach($adminEmails as $email) {
-                        $devUser            = new User;
-                        $devUser->email     = $email;
-                        $devUser->notify(new TakeVoucherFailureNotification($payment, $takenVouchers, $retries), $notificationDelay);
-                    }
-
-                    // Notify customer that the coupon is not available and the money will be refunded.
-                    $payment->user->notify(new VoucherNotAvailableNotification($payment), $notificationDelay);
-                }
-
-                Log::info($errorMessage);
+                $this->retryJob($data, $payment, $takenVouchers, null);
             }
 
         } catch (Exception $e) {
-            DB::connection()->rollback();
-            Log::info(sprintf('PaidCoupon: Can not get voucher, exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
-            Log::info('PaidCoupon: data: ' . serialize($data));
+
+            // Failed to get token...
+            if ($e->getCode() === 501) {
+                Log::info('PaidCoupon: Failed to get token.');
+                $this->retryJob($data, $payment, null, $e);
+            }
+            else {
+                // Assume unhandled exception or payment not found.
+                if (! isset($payment)) {
+                    $payment = null;
+                }
+                if (! isset($takenVouchers)) {
+                    $takenVouchers = null;
+                }
+
+                $this->retryJob($data, $payment, $takenVouchers, $e);
+            }
         }
 
-        $job->delete();
+        if (! empty($job)) {
+            $job->delete();
+        }
     }
 
     /**
@@ -230,10 +171,108 @@ class GetCouponQueue
      * @param  TakeVoucherResponse $takenVouchers [description]
      * @return [type]                             [description]
      */
-    private function jobShouldRetry($retries = 1, TakeVoucherResponse $takenVouchers)
+    private function jobShouldRetry($retries = 1, TakeVoucherResponse $takenVouchers = null)
     {
         $maxRetry = Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', 3);
 
-        return $retries < $maxRetry && ! $takenVouchers->isExpired();
+        if (! empty($takenVouchers)) {
+            return $retries < $maxRetry && ! $takenVouchers->isExpired();
+        }
+
+        return $retries < $maxRetry;
     }
+
+    /**
+     * Retry this job if we need.
+     * 
+     * @param  [type] $data          [description]
+     * @param  [type] $payment       [description]
+     * @param  [type] $takenVouchers [description]
+     * @param  [type] $e             [description]
+     * @return [type]                [description]
+     */
+    private function retryJob($data, $payment = null, $takenVouchers = null, $e = null)
+    {
+        if (! empty($payment)) {
+
+            $failureMessage = ! empty($takenVouchers) ?  $takenVouchers->getMessage() : $e->getMessage();
+
+            // Let's retry TakeVoucher request...
+            if ($this->jobShouldRetry($data['retries'], $takenVouchers)) {
+
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                $payment->save();
+
+                DB::connection()->commit();
+
+                $delay = Config::get('orbit.partners_api.sepulsa.take_voucher_retry_timeout', 30);
+                $data['retries']++;
+
+                // Retry this job by re-pushing it to Queue.
+                Queue::later(
+                    $delay,
+                    'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue',
+                    $data
+                );
+
+                Log::info(sprintf(
+                    'PaidCoupon: TakeVoucher Request: Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s',
+                    $delay,
+                    $payment->object_id,
+                    $failureMessage
+                ));
+            }
+            else {
+                // Oh, no more retry, huh?
+                // We should set new status for the payment to indicate success payment but no coupon after trying for a few times.
+                $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                $payment->save();
+
+                // Clean up payment since we can not issue the coupon.
+                $payment->cleanUp();
+
+                DB::connection()->commit();
+
+                Log::info(sprintf(
+                    'PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', 
+                    $payment->object_id, 
+                    $failureMessage
+                ));
+
+                $this->notifyFailedCoupon($payment, $failureMessage);
+            }
+        }
+        else {
+            Log::info(sprintf(
+                'PaidCoupon: Can not get voucher, exception: %s:%s, %s', 
+                $e->getFile(),
+                $e->getLine(),
+                $e->getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Notify admin and customer that we fail to issue the coupon.
+     * 
+     * @param  [type]  $payment        [description]
+     * @param  [type]  $failureMessage [description]
+     * @param  integer $delay          [description]
+     * @return [type]                  [description]
+     */
+    private function notifyFailedCoupon($payment, $failureMessage, $delay = 3)
+    {
+        $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
+
+        // Notify Admin that the voucher is failed and customer's money should be refunded.
+        foreach($adminEmails as $email) {
+            $devUser            = new User;
+            $devUser->email     = $email;
+            $devUser->notify(new CouponNotAvailableNotification($payment, $failureMessage), $delay);
+        }
+
+        // Notify customer that the coupon is not available and the money will be refunded.
+        $payment->user->notify(new VoucherNotAvailableNotification($payment));
+    }
+
 }
