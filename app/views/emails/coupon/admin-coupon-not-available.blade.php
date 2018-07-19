@@ -4,7 +4,7 @@
     <meta charset="utf-8"> <!-- utf-8 works for most cases -->
     <meta name="viewport" content="width=device-width"> <!-- Forcing initial-scale shouldn't be necessary -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Use the latest (edge) version of IE rendering engine -->
-    <title>Unable to Get the Coupon for Youp</title>
+    <title>Unable to Get the Coupon for You</title>
     <!-- Web Font / @font-face : BEGIN -->
     <!-- NOTE: If web fonts are not required, lines 10 - 27 can be safely removed. -->
     <!-- All other clients get the webfont reference; some will render the font and others will silently fail to the fallbacks. More on that here: http://stylecampaign.com/blog/2015/02/webfont-support-in-email/ -->
@@ -158,31 +158,36 @@
               <img src="https://s3-ap-southeast-1.amazonaws.com/asset1.gotomalls.com/themes/default/images/logo-en.png?t=1523326836" alt="Logo" class="logo" style="-ms-interpolation-mode:bicubic;width:80%;">
             </th>
             <th class="text-right" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-bottom:30px;">
-              <span class="text-red invoice-title" style="color:#f43d3c;font-size:28px;font-weight:bold;">{{{ trans('email-coupon-not-available.header.invoice') }}}</span>
+              <span class="text-red invoice-title" style="color:#f43d3c;font-size:28px;font-weight:bold;">{{{ trans('email-coupon-not-available-admin.header.invoice') }}}</span>
             </th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td class="text-left invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-coupon-not-available.header.order_number', ['transactionId' => $transaction['id']]) }}}</strong></td>
-            <td class="text-right invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transaction['date'] }}}</td>
+            <td class="text-right invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+                {{{ $transaction['date'] }}}
+                <br>
+                <span class="text-red invoice-title" style="font-size:24px;font-weight:bold;">{{{ trans('email-coupon-not-available-admin.header.title') }}}</span>
+            </td>
           </tr>
           <tr>
             <td colspan="2" class="invoice-body" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:10px;padding-bottom:80px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-coupon-not-available.body.greeting', ['customerName' => $customerName]) }}
+                {{ trans('email-coupon-not-available-admin.body.greeting') }}
               </p>
               <br>
               <table class="no-border customer" width="100%" style="line-height:1.7em;font-size:14px;color:#222;width:100%;border:0;margin-top:30px;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                 <thead>
                   <tr>
-                    <th class="text-left first" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;padding-left:0;">{{{ trans('email-coupon-not-available.table_customer_info.header.customer') }}}</th>
-                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-coupon-not-available.table_customer_info.header.email') }}}</th>
-                    <th class="text-left" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-coupon-not-available.table_customer_info.header.phone') }}}</th>
+                    <th class="text-left first" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;padding-left:0;">{{{ trans('email-coupon-not-available-admin.table_customer_info.header.transaction_id') }}}</th>
+                    <th class="text-left first" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;padding-left:0;">{{{ trans('email-coupon-not-available-admin.table_customer_info.header.customer') }}}</th>
+                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-coupon-not-available-admin.table_customer_info.header.email') }}}</th>
+                    <th class="text-left" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding-left:15px;">{{{ trans('email-coupon-not-available-admin.table_customer_info.header.phone') }}}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
+                    <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transaction['id'] }}}</td>
                     <td class="first" style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;padding-left:0;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $customerName }}}</td>
                     <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $customerEmail }}}</td>
                     <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $customerPhone }}}</td>
@@ -193,10 +198,10 @@
               <table class="no-border transaction" width="100%" style="line-height:1.7em;font-size:14px;color:#222;width:100%;border:0;margin-top:30px;border-spacing:0 !important;border-collapse:collapse !important;table-layout:fixed !important;margin:0 auto !important;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                 <thead class="bordered">
                   <tr>
-                    <th class="text-left first" width="30%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;padding-left:0;">{{{ trans('email-coupon-not-available.table_transaction.header.item') }}}</th>
-                    <th class="text-left" width="20%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;">{{{ trans('email-coupon-not-available.table_transaction.header.quantity') }}}</th>
-                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;">{{{ trans('email-coupon-not-available.table_transaction.header.price') }}}</th>
-                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;">{{{ trans('email-coupon-not-available.table_transaction.header.subtotal') }}}</th>
+                    <th class="text-left first" width="30%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;padding-left:0;">{{{ trans('email-coupon-not-available-admin.table_transaction.header.item') }}}</th>
+                    <th class="text-left" width="20%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;">{{{ trans('email-coupon-not-available-admin.table_transaction.header.quantity') }}}</th>
+                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;">{{{ trans('email-coupon-not-available-admin.table_transaction.header.price') }}}</th>
+                    <th class="text-left" width="25%" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;padding:8px;border-top:1px solid #999;border-bottom:1px solid #999;">{{{ trans('email-coupon-not-available-admin.table_transaction.header.subtotal') }}}</th>
                   </tr>
                 </thead>
                 <tbody class="transaction-items">
@@ -212,7 +217,7 @@
                 <tfoot class="transaction-footer">
                   <tr>
                     <td colspan="2" style="font-family:'Roboto', 'Arial', sans-serif;padding:15px 8px;border-top:1px solid #999;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"></td>
-                    <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px 8px;border-top:1px solid #999;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-coupon-not-available.table_transaction.footer.total') }}}</strong></td>
+                    <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px 8px;border-top:1px solid #999;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;"><strong>{{{ trans('email-coupon-not-available-admin.table_transaction.footer.total') }}}</strong></td>
                     <td style="font-family:'Roboto', 'Arial', sans-serif;padding:15px 8px;border-top:1px solid #999;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">{{{ $transaction['total'] }}}</td>
                   </tr>
                 </tfoot>
@@ -220,22 +225,13 @@
               <br>
               <br>
               <p style="font-family:'Roboto', 'Arial', sans-serif;margin:0;">
-                {{ trans('email-coupon-not-available.body.help', $cs) }}
+                {{ trans('email-coupon-not-available-admin.body.help', ['total' => $transaction['total']]) }}
                 <br>
-                {{{ trans('email-coupon-not-available.body.thank_you') }}}
+                {{{ trans('email-coupon-not-available-admin.body.thank_you') }}}
               </p>
             </td>
           </tr>
         </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="2" class="text-left footer" style="font-family:'Roboto', 'Arial', sans-serif;text-align:left;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
-              <small>
-                @include('emails.components.basic-footer', $cs)
-              </small>
-            </td>
-          </tr>
-        </tfoot>
       </table>
     </body>
 </html>
