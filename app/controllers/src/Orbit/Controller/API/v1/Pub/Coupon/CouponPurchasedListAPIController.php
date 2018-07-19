@@ -157,12 +157,6 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             ->leftJoin('timezones', function ($q) use($prefix) {
                                 $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
                             })
-                            ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
-                                        FROM {$prefix}coupon_translations ct
-                                        JOIN {$prefix}media m
-                                            ON m.object_id = ct.coupon_translation_id
-                                            AND m.media_name_long = 'coupon_translation_image_orig'
-                                        GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
                             ->where('payment_transactions.user_id', $user->user_id)
                             ->where('payment_transaction_details.object_type', 'coupon')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
