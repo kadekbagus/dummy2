@@ -68,7 +68,6 @@ class CouponNotAvailableNotification extends Notification
             'customerName'      => $this->getCustomerName(),
             'customerPhone'     => $this->payment->phone,
             'transaction'       => $transaction,
-            'cs'                => $cs,
         ];
     }
 
