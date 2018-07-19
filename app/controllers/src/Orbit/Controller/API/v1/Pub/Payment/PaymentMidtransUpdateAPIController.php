@@ -161,19 +161,31 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // Link this payment to reserved IssuedCoupon.
                 if (empty($payment_update->issued_coupon)) {
 
-                    // Dont link to IssuedCoupon if the payment is denied/failed/expired.
+                    // Link to IssuedCoupon if the payment is not denied/failed/expired.
                     if (! in_array($status, [PaymentTransaction::STATUS_DENIED, PaymentTransaction::STATUS_EXPIRED, PaymentTransaction::STATUS_FAILED])) {
-                        IssuedCoupon::where('user_id', $payment_update->user_id)
+                        $reservedCoupon = IssuedCoupon::where('user_id', $payment_update->user_id)
                                       ->where('promotion_id', $payment_update->object_id)
                                       ->where('status', IssuedCoupon::STATUS_RESERVED)
-                                      ->update(['transaction_id' => $payment_transaction_id]);
+                                      ->whereNull('transaction_id')
+                                      ->first(); // Can update transaction_id directly here, but for now just get the record.
+
+                        if (! empty($reservedCoupon)) {
+                            $reservedCoupon->transaction_id = $payment_transaction_id;
+                            $reservedCoupon->save();
+                        }
+                        else {
+                            Log::info("PaidCoupon: Can not link coupon, it is being reserved by the same user {$payment_update->user_id}.");
+                        }
                     }
                 }
 
                 // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher, 
                 // then we assume the status as success_no_coupon (so frontend will show preparing voucher page).
                 if ($status === PaymentTransaction::STATUS_SUCCESS) {
-                    if ($payment_update->paidWith(['bank_transfer', 'echannel']) || $payment_update->forSepulsa()) {
+                    if (isset($reservedCoupon) && empty($reservedCoupon)) {
+                        $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                    }
+                    else if ($payment_update->paidWith(['bank_transfer', 'echannel']) || $payment_update->forSepulsa()) {
                         $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
                     }
                 }
