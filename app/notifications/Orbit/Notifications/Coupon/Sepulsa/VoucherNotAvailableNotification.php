@@ -19,11 +19,14 @@ use Exception;
  */
 class VoucherNotAvailableNotification extends Notification
 {
-    protected $payment = null;
+    private $payment = null;
+
+    private $contact = null;
 
     function __construct($payment = null)
     {
         $this->payment              = $payment;
+        $this->contact              = Config::get('orbit.contact_information');
         $this->queueName            = Config::get('orbit.registration.mobile.queue_name');
     }
 
@@ -37,11 +40,6 @@ class VoucherNotAvailableNotification extends Notification
         return $this->payment->user_name;
     }
 
-    public function getContactInfo()
-    {
-        return Config::get('orbit.contact_information.customer_service');
-    }
-
     /**
      * Get the email data.
      * 
@@ -49,13 +47,36 @@ class VoucherNotAvailableNotification extends Notification
      */
     protected function getEmailData()
     {
+        $transaction = [];
+
+        $amount = $this->payment->getAmount();
+
+        $transaction['id']    = $this->payment->payment_transaction_id;
+        $transaction['date']  = Carbon::parse($this->payment->transaction_date_and_time)->format('j M Y');
+        $transaction['total'] = $amount;
+        $redeemUrl            = Config::get('orbit.coupon.direct_redemption_url');
+        $cs = [
+            'phone' => $this->contact['customer_service']['phone'],
+            'email' => $this->contact['customer_service']['email'],
+        ];
+
+        $transaction['items'] = [
+            [
+                'name'      => $this->payment->object_name,
+                'quantity'  => 1,
+                'price'     => $amount,
+                'total'     => $amount, // should be quantity * $this->payment->amount
+            ],
+        ];
+
         return [
             'recipientEmail'    => $this->getEmailAddress(),
+            'customerEmail'     => $this->getEmailAddress(),
             'customerName'      => $this->getName(),
-            'couponName'        => $this->payment->object_name,
-            'maxRefundDate'     => Carbon::now('Asia/Jakarta')->addDay()->format('j M Y') . ' 16:00 WIB (GMT +7)',
-            'paymentId'         => $this->payment->payment_transaction_id,
-            'contact'           => $this->getContactInfo(),
+            'customerPhone'     => $this->payment->phone,
+            'transaction'       => $transaction,
+            'redeemUrl'         => $redeemUrl,
+            'cs'                => $cs,
         ];
     }
 
@@ -75,7 +96,7 @@ class VoucherNotAvailableNotification extends Notification
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Voucher not Available';
+                $subject = 'Coupon not Available';
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
