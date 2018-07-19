@@ -85,12 +85,30 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}promotions.promotion_id as promotion_id,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
-                                    CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
+
+                                    CASE WHEN {$prefix}media.path is null THEN (
+                                        SELECT m.path
+                                        FROM {$prefix}coupon_translations ct
+                                        INNER JOIN {$prefix}media m
+                                        ON m.object_id = ct.coupon_translation_id
+                                        AND m.media_name_long = 'coupon_translation_image_orig'
+                                        WHERE ct.promotion_id = {$prefix}promotions.promotion_id
+                                        LIMIT 1
+                                    ) ELSE {$prefix}media.path END as localPath,
+
                                     CASE WHEN {$prefix}promotions.promotion_type = 'sepulsa'
                                         THEN {$prefix}coupon_sepulsa.coupon_image_url
                                         ELSE (
                                             CASE WHEN {$prefix}media.cdn_url is null
-                                            THEN med.cdn_url
+                                            THEN (
+                                                SELECT m.cdn_url
+                                                FROM {$prefix}coupon_translations ct
+                                                INNER JOIN {$prefix}media m
+                                                ON m.object_id = ct.coupon_translation_id
+                                                AND m.media_name_long = 'coupon_translation_image_orig'
+                                                WHERE ct.promotion_id = {$prefix}promotions.promotion_id
+                                                LIMIT 1
+                                            )
                                             ELSE {$prefix}media.cdn_url
                                             END
                                         )
@@ -206,12 +224,6 @@ class CouponWalletListAPIController extends PubControllerAPI
                             ->leftJoin('timezones', function ($q) use($prefix) {
                                 $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
                             })
-                            ->leftJoin(DB::raw("(SELECT m.path, m.cdn_url, ct.promotion_id
-                                        FROM {$prefix}coupon_translations ct
-                                        JOIN {$prefix}media m
-                                            ON m.object_id = ct.coupon_translation_id
-                                            AND m.media_name_long = 'coupon_translation_image_orig'
-                                        GROUP BY ct.promotion_id) AS med"), DB::raw("med.promotion_id"), '=', 'promotions.promotion_id')
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->havingRaw("(campaign_status = 'ongoing' OR campaign_status = 'expired')");
 
