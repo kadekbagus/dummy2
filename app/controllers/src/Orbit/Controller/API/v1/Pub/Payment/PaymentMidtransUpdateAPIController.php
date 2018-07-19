@@ -175,6 +175,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                         }
                         else {
                             Log::info("PaidCoupon: Can not link coupon, it is being reserved by the same user {$payment_update->user_id}.");
+                            $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                            $failed = true;
                         }
                     }
                 }
@@ -182,7 +184,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher, 
                 // then we assume the status as success_no_coupon (so frontend will show preparing voucher page).
                 if ($status === PaymentTransaction::STATUS_SUCCESS) {
-                    if (isset($reservedCoupon) && empty($reservedCoupon)) {
+                    if (isset($failed)) {
                         $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                     }
                     else if ($payment_update->paidWith(['bank_transfer', 'echannel']) || $payment_update->forSepulsa()) {

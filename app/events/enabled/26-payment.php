@@ -1,6 +1,7 @@
 <?php
 
 use Orbit\Queue\Coupon\HotDeals\GetCouponQueue as GetHotDealsCouponQueue;
+use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
