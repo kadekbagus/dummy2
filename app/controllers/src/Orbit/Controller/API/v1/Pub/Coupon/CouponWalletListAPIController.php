@@ -255,6 +255,8 @@ class CouponWalletListAPIController extends PubControllerAPI
             });
 
             // need subquery to order my coupon
+            //---------------START SLOW QUERY--------------------
+            // TODO:need to fix as this is SLOW DOWN actual query
             $querySql = $coupon->toSql();
             $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupon->getQuery())
                             ->select(
@@ -271,6 +273,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             $coupon = $coupon->orderBy(DB::raw("redeem_order"), 'asc');
             $coupon = $coupon->orderBy(DB::raw("redeemed_date"), 'desc');
             $coupon = $coupon->orderBy(DB::raw("issued_date"), 'desc');
+            //---------------END SLOW QUERY--------------------
 
             $_coupon = clone $coupon;
 
