@@ -3735,7 +3735,7 @@ class MallAPIController extends ControllerAPI
                     'merchants.mobile_default_language',
                     'merchants.parent_id',
                     'countries.code as country_code',
-                    DB::raw('mall_group.name AS mall_group_name'),
+                    DB::raw('mall_group.name AS mall_group_name')
                 )
                 ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
                 ->join('countries', 'countries.country_id', '=', 'merchants.country_id')
