@@ -164,7 +164,7 @@
         </thead>
         <tbody>
           <tr>
-            <td class="text-left invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;text-align:right;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
+            <td class="invoice-info" style="font-family:'Roboto', 'Arial', sans-serif;padding-top:20px;padding-bottom:20px;mso-table-lspace:0pt !important;mso-table-rspace:0pt !important;">
                 {{{ $transaction['date'] }}}
                 <br>
                 <span style="font-size:24px;font-weight:bold;">{{{ trans('email-coupon-not-available-admin.header.title') }}}</span>
