@@ -3710,34 +3710,8 @@ class MallAPIController extends ControllerAPI
             $malls = Mall::excludeDeleted('merchants')
                 ->select(
                     'merchants.name',
-                    'merchants.merchant_id',
-                    'merchants.country',
-                    'merchants.is_subscribed',
-                    'merchants.status',
-                    'merchants.description',
-                    'merchants.operating_hours',
-                    'merchants.email',
-                    'merchants.postal_code',
-                    'merchants.city',
-                    'merchants.province',
-                    'merchants.phone',
-                    'merchants.url',
-                    'merchants.contact_person_email',
-                    'merchants.contact_person_firstname',
-                    'merchants.contact_person_lastname',
-                    'merchants.contact_person_position',
-                    'merchants.contact_person_phone',
-                    'merchants.start_date_activity',
-                    'merchants.end_date_activity',
-                    'merchants.timezone_id',
-                    'merchants.country_id',
-                    'merchants.address_line1',
-                    'merchants.mobile_default_language',
-                    'merchants.parent_id',
-                    'countries.code as country_code',
-                    DB::raw('mall_group.name AS mall_group_name')
+                    'merchants.merchant_id'
                 )
-                ->leftJoin('merchants AS mall_group', DB::raw('mall_group.merchant_id'), '=', 'merchants.parent_id')
                 ->join('countries', 'countries.country_id', '=', 'merchants.country_id')
                 ->groupBy('merchants.merchant_id');
 
@@ -3759,11 +3733,6 @@ class MallAPIController extends ControllerAPI
             // Filter mall by countryID
             OrbitInput::get('country_id', function ($countryId) use ($malls) {
                 $malls->where('merchants.country_id', $countryId);
-            });
-
-            // Filter mall by country
-            OrbitInput::get('country', function ($country) use ($malls) {
-                $malls->whereIn('merchants.country', $country);
             });
 
             $_malls = clone $malls;
