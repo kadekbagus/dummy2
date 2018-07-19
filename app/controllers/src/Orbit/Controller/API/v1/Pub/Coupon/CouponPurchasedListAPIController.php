@@ -93,8 +93,27 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                     {$prefix}payment_transactions.status,
                                     {$prefix}payment_transactions.payment_method,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
-                                    CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
-                                    CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath,
+
+                                    CASE WHEN {$prefix}media.path is null THEN (
+                                        SELECT
+                                          m.path
+                                        FROM {$prefix}coupon_translations AS ct
+                                        JOIN {$prefix}media AS m
+                                        ON m.object_id = ct.coupon_translation_id AND m.media_name_long = 'coupon_translation_image_orig'
+                                        WHERE ct.promotion_id = {$prefix}promotions.promotion_id
+                                        LIMIT 1
+                                    ) ELSE {$prefix}media.path END as localPath,
+
+                                    CASE WHEN {$prefix}media.cdn_url is null THEN (
+                                        SELECT
+                                          m.cdn_url
+                                        FROM {$prefix}coupon_translations AS ct
+                                        JOIN {$prefix}media AS m
+                                        ON m.object_id = ct.coupon_translation_id AND m.media_name_long = 'coupon_translation_image_orig'
+                                        WHERE ct.promotion_id = {$prefix}promotions.promotion_id
+                                        LIMIT 1
+                                    ) ELSE {$prefix}media.cdn_url END as cdnPath,
+
                                     (SELECT substring_index(group_concat(distinct om.name SEPARATOR ', '), ', ', 2)
                                                     FROM {$prefix}promotion_retailer opr
                                                     JOIN {$prefix}merchants om
@@ -124,9 +143,10 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
-                            ->join('issued_coupons', function ($join) {
+                            ->join('issued_coupons', function ($join) use($user) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $join->where('issued_coupons.status', '!=', 'deleted');
+                                $join->where('issued_coupons.user_id', '=', $user->user_id);
                             })
                             ->leftJoin('merchants', function ($q) {
                                 $q->on('merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id');
