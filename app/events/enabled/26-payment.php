@@ -36,7 +36,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         foreach($adminEmails as $email) {
             $devUser            = new User;
             $devUser->email     = $email;
-            $devUser->notify(new CouponNotAvailableNotification($payment, $failureMessage), $delay);
+            $devUser->notify(new CouponNotAvailableNotification($payment, $failureMessage));
         }
 
         // Notify customer that the coupon is not available and the money will be refunded.
