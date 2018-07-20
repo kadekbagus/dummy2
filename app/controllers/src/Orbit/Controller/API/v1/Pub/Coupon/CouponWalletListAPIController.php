@@ -40,13 +40,13 @@ class CouponWalletListAPIController extends PubControllerAPI
 
         $prefix = DB::getTablePrefix();
         $issuedCoupons = IssuedCoupon::select(DB::raw("
-            {$prefix}.promotion_id,
-            COUNT({$prefix}.issued_coupon_id) AS total_issued,
-            SUM({$prefix}.status = 'redeemed') AS total_redeemed
+            {$prefix}issued_coupons.promotion_id,
+            COUNT({$prefix}issued_coupons.issued_coupon_id) AS total_issued,
+            SUM({$prefix}issued_coupons.status = 'redeemed') AS total_redeemed
         "))
-        ->whereIn("{$prefix}.promotion_id", $couponIds)
-        ->whereIn("{$prefix}.status", array('issued', 'redeemed'))
-        ->groupBy("{$prefix}.promotion_id")
+        ->whereIn("{$prefix}issued_coupons.promotion_id", $couponIds)
+        ->whereIn("{$prefix}issued_coupons.status", array('issued', 'redeemed'))
+        ->groupBy("{$prefix}issued_coupons.promotion_id")
         ->get();
 
         $couponStats = array_map(function($stat) {
