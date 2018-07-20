@@ -328,10 +328,8 @@ class CouponWalletListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $coupon->skip($skip);
 
-            $startTime = microtime(true);
             $listcoupon = $coupon->get();
             $listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
-            $execTime = microtime(true) - $startTime;
 
             $count = RecordCounter::create($_coupon)->count();
 
@@ -372,7 +370,6 @@ class CouponWalletListAPIController extends PubControllerAPI
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = count($listcoupon);
             $this->response->data->records = $listcoupon;
-            $this->response->data->executionTime = $execTime;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
