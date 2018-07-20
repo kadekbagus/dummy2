@@ -25,6 +25,7 @@ use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Event;
 
 use Orbit\Helper\Midtrans\API\TransactionStatus;
+use Orbit\Helper\Midtrans\API\TransactionCancel;
 
 use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
@@ -197,6 +198,17 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // Commit the changes ASAP so if there are any other requests that trigger this controller 
                 // they will use the updated payment data/status.
                 $this->commit();
+
+                // Try to cancel the payment...
+                if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED) {
+                    $transactionCancel = TransactionCancel::create()->cancel($payment_transaction_id);
+                    if ($transactionCancel->isSuccess()) {
+                        Log::info("PaidCoupon: Transaction canceled!");
+                    }
+                    else {
+                        Log::info("PaidCoupon: Transaction can not be canceled!");
+                    }
+                }
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
 
