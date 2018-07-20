@@ -263,7 +263,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                 $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
                             })
                             ->where('issued_coupons.user_id', $user->user_id)
-                            ->havingRaw("(campaign_status = 'ongoing' OR campaign_status = 'expired')");
+                            ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'));
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
