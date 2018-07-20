@@ -330,7 +330,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
-            $listCoupon = $this->getTotalRedeemAndIssued($listCoupon);
+            $listcoupon = $this->getTotalRedeemAndIssued($listcoupon);
             $count = RecordCounter::create($_coupon)->count();
 
             $cdnConfig = Config::get('orbit.cdn');
