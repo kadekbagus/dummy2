@@ -52,7 +52,7 @@ class CouponWalletListAPIController extends PubControllerAPI
         $couponStats = array();
         foreach ($issuedCoupons as $issued) {
             $couponStats[$issued->promotion_id] = array(
-                'total_issued' => $issued->total_issued
+                'total_issued' => $issued->total_issued,
                 'total_redeemed' => $issued->total_redeemed
             );
         }
