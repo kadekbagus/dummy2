@@ -49,20 +49,25 @@ class CouponWalletListAPIController extends PubControllerAPI
         ->groupBy("promotion_id")
         ->get();
 
-        $couponStats = array_map(function($stat) {
-            return array(
-                $stat->promotion_id => array(
-                    'total_issued' => $stat->total_issued,
-                    'total_redeemed' => $stat->total_redeemed
-                )
-            );
-        }, $issuedCoupons);
+        if (is_array($issuedCoupons)) {
+            $couponStats = array_map(function($stat) {
+                return array(
+                    $stat->promotion_id => array(
+                        'total_issued' => $stat->total_issued,
+                        'total_redeemed' => $stat->total_redeemed
+                    )
+                );
+            }, $issuedCoupons);
 
-        return array_map(function($coupon) use($couponStats) {
-            $coupon->total_issued = $couponStats[$coupon->promotion_id]['total_issued'];
-            $coupon->total_redeemed = $couponStats[$coupon->promotion_id]['total_redeemed'];
-            return $coupon;
-        }, $coupons);
+            return array_map(function($coupon) use($couponStats) {
+                $coupon->total_issued = $couponStats[$coupon->promotion_id]['total_issued'];
+                $coupon->total_redeemed = $couponStats[$coupon->promotion_id]['total_redeemed'];
+                return $coupon;
+            }, $coupons);
+        }
+
+        return $coupons;
+
     }
 
     /**
