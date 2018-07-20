@@ -50,7 +50,7 @@ class CouponWalletListAPIController extends PubControllerAPI
         ->get();
 
         $couponStats = array();
-        foreach ($issuedCoupons) {
+        foreach ($issuedCoupons as $stat) {
             $couponStats[] = array(
                 $stat->promotion_id => array(
                     'total_issued' => $stat->total_issued,
@@ -58,6 +58,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                 )
             );
         }
+
         return array_map(function($coupon) use($couponStats) {
             $coupon->total_issued = $couponStats[$coupon->promotion_id]['total_issued'];
             $coupon->total_redeemed = $couponStats[$coupon->promotion_id]['total_redeemed'];
