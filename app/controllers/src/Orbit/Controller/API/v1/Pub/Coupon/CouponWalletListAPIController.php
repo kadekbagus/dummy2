@@ -44,9 +44,9 @@ class CouponWalletListAPIController extends PubControllerAPI
             COUNT({$prefix}issued_coupons.issued_coupon_id) AS total_issued,
             SUM({$prefix}issued_coupons.status = 'redeemed') AS total_redeemed
         "))
-        ->whereIn("{$prefix}issued_coupons.promotion_id", $couponIds)
-        ->whereIn("{$prefix}issued_coupons.status", array('issued', 'redeemed'))
-        ->groupBy("{$prefix}issued_coupons.promotion_id")
+        ->whereIn("promotion_id", $couponIds)
+        ->whereIn("status", array('issued', 'redeemed'))
+        ->groupBy("promotion_id")
         ->get();
 
         $couponStats = array_map(function($stat) {
