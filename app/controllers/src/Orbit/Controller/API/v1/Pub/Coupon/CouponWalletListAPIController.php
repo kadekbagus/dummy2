@@ -34,9 +34,9 @@ class CouponWalletListAPIController extends PubControllerAPI
      */
     private function getTotalIssuedAndRedeemed($coupons)
     {
-        $couponIds = array_map(function($coupon) {
+        $couponIds = array_unique(array_map(function($coupon) {
             return $coupon->promotion_id;
-        }, $coupons);
+        }, $coupons));
 
         $prefix = DB::getTablePrefix();
         $issuedCoupons = IssuedCoupon::select(DB::raw("
