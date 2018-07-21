@@ -34,9 +34,9 @@ class CouponWalletListAPIController extends PubControllerAPI
      */
     private function getTotalIssuedAndRedeemed($coupons)
     {
-        $couponIds = array_map(function($coupon) {
+        $couponIds = array_unique(array_map(function($coupon) {
             return $coupon->promotion_id;
-        }, $coupons);
+        }, $coupons));
 
         $prefix = DB::getTablePrefix();
         $issuedCoupons = IssuedCoupon::select(DB::raw("
@@ -338,8 +338,10 @@ class CouponWalletListAPIController extends PubControllerAPI
             $skip = PaginationNumber::parseSkipFromGet();
             $coupon->skip($skip);
 
+            $startTime = microtime(true);
             $listcoupon = $coupon->get();
             $listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
+            $execTime = microtime(true) - $startTime;
 
             $count = RecordCounter::create($_coupon)->count();
 
@@ -380,6 +382,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = count($listcoupon);
             $this->response->data->records = $listcoupon;
+            $this->response->data->executionTime = $execTime;
         } catch (ACLForbiddenException $e) {
 
             $this->response->code = $e->getCode();
