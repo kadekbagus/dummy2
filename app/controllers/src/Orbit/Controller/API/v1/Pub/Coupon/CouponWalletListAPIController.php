@@ -41,18 +41,11 @@ class CouponWalletListAPIController extends PubControllerAPI
         $prefix = DB::getTablePrefix();
         $issuedCoupons = IssuedCoupon::select(DB::raw("
             {$prefix}issued_coupons.promotion_id,
-            SUM(
-                ({$prefix}issued_coupons.status = 'issued') OR
-                ({$prefix}issued_coupons.status = 'redeemed')
-            ) AS total_issued,
-            SUM({$prefix}issued_coupons.status = 'redeemed') AS total_redeemed,
-            SUM(
-                ({$prefix}issued_coupons.status <> 'redeemed') OR
-                ({$prefix}issued_coupons.status <> 'deleted') )
-            AS total_avail
+            COUNT({$prefix}issued_coupons.issued_coupon_id) AS total_issued,
+            SUM({$prefix}issued_coupons.status = 'redeemed') AS total_redeemed
         "))
         ->whereIn("promotion_id", $couponIds)
-        ->whereIn("status", array('issued', 'redeemed', 'available', 'reserved', 'deleted'))
+        ->whereIn("status", array('issued', 'redeemed'))
         ->groupBy("promotion_id")
         ->get();
 
@@ -60,23 +53,13 @@ class CouponWalletListAPIController extends PubControllerAPI
         foreach ($issuedCoupons as $issued) {
             $couponStats[$issued->promotion_id] = array(
                 'total_issued' => $issued->total_issued,
-                'total_redeemed' => $issued->total_redeemed,
-                'total_avail' => $issued->total_avail,
+                'total_redeemed' => $issued->total_redeemed
             );
         }
 
         foreach ($coupons as $coupon) {
             $coupon->total_issued = $couponStats[$coupon->promotion_id]['total_issued'];
             $coupon->total_redeemed = $couponStats[$coupon->promotion_id]['total_redeemed'];
-            if ($coupon->maximum_redeem > 0) {
-                if ($coupon->total_redeemed > $coupon->maximum_redeem) {
-                    $coupon->available_for_redeem = 0;
-                } else {
-                    $coupon->available_for_redeem = $coupon->maximum_redeem - $coupon->total_redeemed;
-                }
-            } else {
-                $coupon->available_for_redeem = $couponStats[$coupon->promotion_id]['total_avail'];
-            }
         }
         return $coupons;
     }
@@ -229,7 +212,14 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}promotions.available,
                                     {$prefix}promotions.is_unique_redeem,
 
-                                    0 AS available_for_redeem,
+                                    CASE WHEN {$prefix}promotions.maximum_redeem > 0
+                                    THEN
+                                        CASE WHEN (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id) >= {$prefix}promotions.maximum_redeem
+                                        THEN 0
+                                        ELSE ({$prefix}promotions.maximum_redeem - (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id))
+                                        END
+                                    ELSE (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status not in ('redeemed', 'deleted') AND oic.promotion_id = {$prefix}promotions.promotion_id)
+                                    END AS available_for_redeem,
 
                                     (SELECT substring_index(group_concat(distinct om.name SEPARATOR ', '), ', ', 2)
                                         FROM {$prefix}promotion_retailer opr
