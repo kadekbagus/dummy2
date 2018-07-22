@@ -245,7 +245,13 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         JOIN {$prefix}merchants om
                                             ON om.merchant_id = opr.retailer_id
                                         WHERE opr.promotion_id = {$prefix}promotions.promotion_id
-                                    ) as total_link_to_tenant
+                                    ) as total_link_to_tenant,
+
+                                    (SELECT distinct opr.object_type
+                                     FROM {$prefix}promotion_retailer opr
+                                     WHERE opr.promotion_id = {$prefix}promotions.promotion_id
+                                     LIMIT 1
+                                    ) as link_to_tenant_type
                                 "),
                                 'issued_coupons.issued_date'
                             )
