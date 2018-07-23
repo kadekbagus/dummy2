@@ -206,6 +206,21 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Get transaction date which should be based on mall location.
+     * 
+     * @param  string $format [description]
+     * @return [type]         [description]
+     */
+    public function getTransactionDate($format = 'j M Y')
+    {
+        if (! empty($this->payment->timezone_name)) {
+            return $this->payment->created_at->timezone($this->payment->timezone_name)->format($format);
+        }
+
+        return $this->payment->created_at->format($format);
+    }
+
+    /**
      * Clean up anything related to this payment. 
      * If payment expired, failed, etc, it should reset/remove any related issued coupon.
      *
