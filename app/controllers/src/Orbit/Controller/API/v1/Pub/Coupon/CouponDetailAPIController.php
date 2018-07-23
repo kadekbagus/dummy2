@@ -127,17 +127,17 @@ class CouponDetailAPIController extends PubControllerAPI
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as promotion_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN (SELECT {$image}
-                                        FROM orb_media m
+                                        FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
                                         AND m.object_id = {$prefix}coupon_translations.coupon_translation_id) is null
                                     THEN
                                         (SELECT {$image}
-                                        FROM orb_media m
+                                        FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
                                         AND m.object_id = default_translation.coupon_translation_id)
                                     ELSE
                                         (SELECT {$image}
-                                        FROM orb_media m
+                                        FROM {$prefix}media m
                                         WHERE m.media_name_long = 'coupon_translation_image_orig'
                                         AND m.object_id = {$prefix}coupon_translations.coupon_translation_id)
                                     END AS original_media_path
@@ -155,16 +155,16 @@ class CouponDetailAPIController extends PubControllerAPI
                             'coupon_sepulsa.how_to_buy_and_redeem',
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
-
-                            'payment_midtrans.payment_midtrans_info',
-
+                            DB::raw('payment.payment_midtrans_info'),
                             'promotions.promotion_type',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
+
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
                             DB::Raw($issuedCouponId),
-                            'payment_transactions.payment_transaction_id as transaction_id',
-                            'payment_transactions.status as payment_status',
+                            DB::raw('payment.payment_transaction_id as transaction_id'),
+                            DB::raw('payment.status as payment_status'),
+
                             // query for get status active based on timezone
                             DB::raw("
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
@@ -232,14 +232,29 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->on(DB::raw('reserved_issued_coupons.user_id'), '=', DB::Raw("{$this->quote($user->user_id)}"));
                                 $q->on(DB::raw('reserved_issued_coupons.status'), '=', DB::Raw("'reserved'"));
                         })
-                        ->leftJoin('payment_transactions', function ($q) use ($user) {
-                                $q->on('payment_transactions.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
-                            })
-                        ->leftJoin('payment_transaction_details', function ($q) {
-                                $q->on('payment_transaction_details.object_id', '=', 'promotions.promotion_id');
-                                $q->on('payment_transaction_details.object_type', '=', DB::Raw("'coupon'"));
-                            })
-                        ->leftJoin('payment_midtrans', 'payment_midtrans.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+
+                        // get the last user payment in this coupon
+                        ->leftJoin(
+                                    DB::raw("
+                                        (
+                                            SELECT
+                                                object_id,
+                                                pt.payment_transaction_id,
+                                                payment_midtrans_info,
+                                                pt.created_at,
+                                                status
+                                            FROM {$prefix}payment_transactions as pt
+                                            INNER JOIN {$prefix}payment_transaction_details ptd ON ptd.payment_transaction_id = pt.payment_transaction_id
+                                            LEFT JOIN {$prefix}payment_midtrans pm ON pm.payment_transaction_id = pt.payment_transaction_id
+                                            WHERE 1=1
+                                            AND pt.user_id = ".$this->quote($user->user_id)."
+                                            AND ptd.object_id= ".$this->quote($couponId)."
+                                            AND ptd.object_type = 'coupon'
+                                            ORDER BY pt.created_at DESC
+                                            LIMIT 1
+                                        ) as payment")
+                                    , DB::raw('payment.object_id'), '=', 'promotions.promotion_id')
+
                         ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
                         ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', 'promotion_retailer.retailer_id')
                         ->leftJoin('coupon_sepulsa', 'coupon_sepulsa.promotion_id', '=', 'promotions.promotion_id')
@@ -252,8 +267,7 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $pt->groupBy('product_tag');
                             }])
                         ->where('promotions.promotion_id', $couponId)
-                        ->where('promotions.is_visible', 'Y')
-                        ->orderBy('payment_transactions.created_at', 'desc'); // get the last payment.
+                        ->where('promotions.is_visible', 'Y');
 
             OrbitInput::get('mall_id', function($mallId) use ($coupon, &$mall) {
                 $coupon->havingRaw("mall_id = {$this->quote($mallId)}");
