@@ -1,20 +1,48 @@
 <?php namespace Orbit\Helper\Notifications;
 
+use Orbit\Helper\Notifications\Exceptions\NotificationMethodsEmptyException;
+
 /**
  * Base Notification class.
  *
- * @author Budi <budi@dominopos.com>
+ * @todo  use a single sender class for each method. Not living in final/child notification class.
+ * @todo  support bulk recipients.
  *
- * @todo  add support for delaying notification.
+ * @author Budi <budi@dominopos.com>
  */
 abstract class Notification {
 
+    /**
+     * The notifiable instance.
+     * 
+     * @var null
+     */
     protected $notifiable = null;
 
-    protected $queueName = '';
+    /**
+     * Indicate if we should add notification job to Queue.
+     * 
+     * @var boolean
+     */
+    protected $shouldQueue = false;
 
-    abstract public function send();
+    /**
+     * The delay before we make the notification ready to be sent.
+     * 
+     * @var integer
+     */
+    protected $notificationDelay = 3;
 
+    function __construct($notifable = null)
+    {
+        $this->setNotifiable($notifiable);
+    }
+
+    /**
+     * Set the notifiable instance/object.
+     * 
+     * @param [type] $notifiable [description]
+     */
     public function setNotifiable($notifiable)
     {
         $this->notifiable = $notifiable;
@@ -22,44 +50,97 @@ abstract class Notification {
         return $this;
     }
 
-    protected function getEmailData()
-    {
-        return [];
-    }
-
-    protected function getWebNotificationData()
-    {
-        return [];
-    }
-
-    protected function getEmailAddress()
-    {
-        return $this->notifiable->email;
-    }
-
-    protected function getName()
-    {
-        return $this->notifiable->name;
-    }
-
     /**
-     * Notify to Email.
+     * Get the notification methods for the notification.
      * 
      * @return [type] [description]
      */
-    public function toEmail($job, $data)
-    {
-        // Implemented in the child class...
+    protected function notificationMethods() {
+        return [];
     }
 
     /**
-     * Notify to Web...
-     * Applicable for notifiable type User.
+     * Get the queue name that will be used.
+     * 
+     * @return string queue name.
+     */
+    protected function getQueueName()
+    {
+        // empty string means use the whatever default queue name set in config.
+        return '';
+    }
+
+    /**
+     * Send to email.
      * 
      * @return [type] [description]
      */
-    public function toWeb($job, $data)
+    protected function sendEmail($customDelay = 0)
     {
-        // Implemented in the child class...
+        if ($this->shouldQueue) {
+            
+            // Override the delay if needed.
+            $this->notificationDelay = $customDelay === 0 ? $this->notificationDelay : $customDelay;
+
+            Queue::later(
+                $this->notificationDelay,
+                get_class($this) . '@toEmail',
+                $this->getEmailData(),
+                $this->getQueueName()
+            );
+        }
+        else {
+            $this->toEmail(null, $this->getEmailData());
+        }
     }
+
+    /**
+     * Send to in-app notification.
+     * 
+     * @return [type] [description]
+     */
+    protected function sendInApp($customDelay = 0)
+    {
+        if ($this->shouldQueue) {
+
+            // Override the delay if needed.
+            $this->notificationDelay = $customDelay === 0 ? $this->notificationDelay : $customDelay;
+
+            Queue::later(
+                $this->notificationDelay,
+                get_class($this) . '@toWeb',
+                $this->getInAppData(),
+                $this->getQueueName()
+            );
+        }
+        else {
+            $this->toWeb(null, $this->getInAppData());
+        }
+    }
+
+    /**
+     * Send the notification.
+     * Will check for enabled methods.
+     * Will use queue if it is set to true.
+     * 
+     * @param  integer $delay [description]
+     * @return [type]         [description]
+     */
+    public function send($customDelay = 0)
+    {
+        $notificationMethods = $this->notificationMethods();
+
+        if (empty($notificationMethods)) {
+            throw new NotificationMethodsEmptyException();
+        }
+
+        if (in_array('email', $notificationMethods)) {
+            $this->sendEmail($customDelay);
+        }
+
+        if (in_array('inApp', $notificationMethods)) {
+            $this->sendInApp($customDelay);
+        }
+    }
+
 }
