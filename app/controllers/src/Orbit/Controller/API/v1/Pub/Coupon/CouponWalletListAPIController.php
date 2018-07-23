@@ -9,6 +9,7 @@ use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
 use Illuminate\Database\QueryException;
 use Config;
 use Coupon;
+use IssuedCoupon;
 use stdClass;
 use Orbit\Helper\Util\PaginationNumber;
 use DB;
@@ -24,6 +25,45 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class CouponWalletListAPIController extends PubControllerAPI
 {
+    /**
+     * calculate aggregate for limited number of coupons.
+     * Note: instead of directly join with promotions table
+     * we only do aggreates on very limited amount of coupons
+     * @param  array $coupons [description]
+     * @return [type]          [description]
+     */
+    private function getTotalIssuedAndRedeemed($coupons)
+    {
+        $couponIds = array_unique(array_map(function($coupon) {
+            return $coupon->promotion_id;
+        }, $coupons));
+
+        $prefix = DB::getTablePrefix();
+        $issuedCoupons = IssuedCoupon::select(DB::raw("
+            {$prefix}issued_coupons.promotion_id,
+            COUNT({$prefix}issued_coupons.issued_coupon_id) AS total_issued,
+            SUM({$prefix}issued_coupons.status = 'redeemed') AS total_redeemed
+        "))
+        ->whereIn("promotion_id", $couponIds)
+        ->whereIn("status", array('issued', 'redeemed'))
+        ->groupBy("promotion_id")
+        ->get();
+
+        $couponStats = array();
+        foreach ($issuedCoupons as $issued) {
+            $couponStats[$issued->promotion_id] = array(
+                'total_issued' => $issued->total_issued,
+                'total_redeemed' => $issued->total_redeemed
+            );
+        }
+
+        foreach ($coupons as $coupon) {
+            $coupon->total_issued = $couponStats[$coupon->promotion_id]['total_issued'];
+            $coupon->total_redeemed = $couponStats[$coupon->promotion_id]['total_redeemed'];
+        }
+        return $coupons;
+    }
+
     /**
      * GET - get all coupon wallet in all mall
      *
@@ -163,12 +203,15 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}merchants.name as store_name,
                                     CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN malls.name ELSE NULL END as mall_name,
                                     {$prefix}issued_coupons.redeemed_date,
-                                    (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status = 'redeemed') as total_redeemed,
-                                    (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status in ('issued','redeemed')) as total_issued,
+
+                                    0 as total_redeemed,
+                                    0 as total_issued,
+
                                     CASE WHEN {$prefix}promotions.maximum_redeem = '0' THEN {$prefix}promotions.maximum_issued_coupon ELSE {$prefix}promotions.maximum_redeem END maximum_redeem,
                                     {$prefix}promotions.maximum_issued_coupon,
                                     {$prefix}promotions.available,
                                     {$prefix}promotions.is_unique_redeem,
+
                                     CASE WHEN {$prefix}promotions.maximum_redeem > 0
                                     THEN
                                         CASE WHEN (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id) >= {$prefix}promotions.maximum_redeem
@@ -177,6 +220,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         END
                                     ELSE (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status not in ('redeemed', 'deleted') AND oic.promotion_id = {$prefix}promotions.promotion_id)
                                     END AS available_for_redeem,
+
                                     (SELECT substring_index(group_concat(distinct om.name SEPARATOR ', '), ', ', 2)
                                         FROM {$prefix}promotion_retailer opr
                                         JOIN {$prefix}merchants om
@@ -185,12 +229,19 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         GROUP BY opr.promotion_id
                                         ORDER BY om.name
                                     ) as link_to_tenant,
+
                                     (SELECT count(distinct om.name) - 2
                                         FROM {$prefix}promotion_retailer opr
                                         JOIN {$prefix}merchants om
                                             ON om.merchant_id = opr.retailer_id
                                         WHERE opr.promotion_id = {$prefix}promotions.promotion_id
-                                    ) as total_link_to_tenant
+                                    ) as total_link_to_tenant,
+
+                                    (SELECT distinct opr.object_type
+                                     FROM {$prefix}promotion_retailer opr
+                                     WHERE opr.promotion_id = {$prefix}promotions.promotion_id
+                                     LIMIT 1
+                                    ) as link_to_tenant_type
                                 "),
                                 'issued_coupons.issued_date'
                             )
@@ -225,7 +276,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                 $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
                             })
                             ->where('issued_coupons.user_id', $user->user_id)
-                            ->havingRaw("(campaign_status = 'ongoing' OR campaign_status = 'expired')");
+                            ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'));
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
                 if (! empty($filterName)) {
@@ -284,6 +335,8 @@ class CouponWalletListAPIController extends PubControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
+            $listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
+
             $count = RecordCounter::create($_coupon)->count();
 
             $cdnConfig = Config::get('orbit.cdn');

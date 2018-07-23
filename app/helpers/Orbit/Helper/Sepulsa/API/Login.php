@@ -76,8 +76,11 @@ class Login
 
     public function saveToken()
     {
-        if (isset($this->response)) {
+        if (isset($this->response) && ! empty($this->response->result)) {
             Cache::put($this->config['session_key_name'], 'Bearer ' . $this->response->result->token, 60);
+        }
+        else {
+            throw new Exception("Exception: Unable to parse token from response.", 501);
         }
     }
 
