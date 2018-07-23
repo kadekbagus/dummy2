@@ -1301,6 +1301,10 @@ class AccountAPIController extends ControllerAPI
                 $update_user_detail->country_id = $country_id;
             });
 
+            OrbitInput::post('gender', function($gender) use ($update_user_detail) {
+                $update_user_detail->gender = $gender;
+            });
+
             $update_user_detail->save();
 
             // Save to campaign_account table (1 to 1)
