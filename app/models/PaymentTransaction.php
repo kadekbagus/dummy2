@@ -196,6 +196,16 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Get formatted amount.
+     *
+     * @return [type] [description]
+     */
+    public function getAmount()
+    {
+        return $this->currency . ' ' . number_format($this->amount, 0, ',', '.');
+    }
+
+    /**
      * Clean up anything related to this payment. 
      * If payment expired, failed, etc, it should reset/remove any related issued coupon.
      *
