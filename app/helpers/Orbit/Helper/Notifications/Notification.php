@@ -1,5 +1,9 @@
 <?php namespace Orbit\Helper\Notifications;
 
+use Queue;
+use Config;
+use Orbit\FakeJob;
+
 use Orbit\Helper\Notifications\Exceptions\NotificationMethodsEmptyException;
 
 /**
@@ -32,6 +36,11 @@ abstract class Notification {
      * @var integer
      */
     protected $notificationDelay = 3;
+
+    private $notificationMethodsActions = [
+        'email' => 'sendEmail',
+        'inApp' => 'sendInApp',
+    ];
 
     function __construct($notifable = null)
     {
@@ -77,6 +86,8 @@ abstract class Notification {
      */
     protected function sendEmail($customDelay = 0)
     {
+        $fakeJob = new FakeJob();
+
         if ($this->shouldQueue) {
             
             // Override the delay if needed.
@@ -90,7 +101,7 @@ abstract class Notification {
             );
         }
         else {
-            $this->toEmail(null, $this->getEmailData());
+            $this->toEmail($fakeJob, $this->getEmailData());
         }
     }
 
@@ -101,6 +112,8 @@ abstract class Notification {
      */
     protected function sendInApp($customDelay = 0)
     {
+        $fakeJob = new FakeJob();
+
         if ($this->shouldQueue) {
 
             // Override the delay if needed.
@@ -114,7 +127,7 @@ abstract class Notification {
             );
         }
         else {
-            $this->toWeb(null, $this->getInAppData());
+            $this->toWeb($fakeJob, $this->getInAppData());
         }
     }
 
@@ -134,12 +147,8 @@ abstract class Notification {
             throw new NotificationMethodsEmptyException();
         }
 
-        if (in_array('email', $notificationMethods)) {
-            $this->sendEmail($customDelay);
-        }
-
-        if (in_array('inApp', $notificationMethods)) {
-            $this->sendInApp($customDelay);
+        foreach($notificationMethods as $method) {
+            $this->{$this->notificationMethodsActions[$method]}($customDelay);
         }
     }
 

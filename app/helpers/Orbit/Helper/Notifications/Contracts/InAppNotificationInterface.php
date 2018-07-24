@@ -10,7 +10,7 @@ interface InAppNotificationInterface
      * 
      * @return array
      */
-    protected function getInAppData();
+    public function getInAppData();
 
     /**
      * We need $job and $data because this method 

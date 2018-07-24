@@ -1,5 +1,7 @@
 <?php namespace Orbit\Helper\Notifications;
 
+use Config;
+
 use Orbit\Helper\Notifications\Notification;
 use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
 
@@ -29,7 +31,7 @@ abstract class AdminNotification extends Notification implements EmailNotificati
      * 
      * @return [type] [description]
      */
-    protected function getRecipientEmail()
+    public function getRecipientEmail()
     {
         return $this->notifiable->email;
     }
@@ -39,7 +41,7 @@ abstract class AdminNotification extends Notification implements EmailNotificati
      * 
      * @return [type] [description]
      */
-    protected function getRecipientName()
+    public function getRecipientName()
     {
         return $this->notifiable->name;
     }

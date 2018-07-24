@@ -1,14 +1,13 @@
 <?php namespace Orbit\Helper\Notifications;
 
 use Orbit\Helper\Notifications\Notification;
-use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
 
 /**
  * Base Customer Notification class.
  *
  * @author Budi <budi@dominopos.com>
  */
-abstract class CustomerNotification extends Notification implements EmailNotificationInterface 
+abstract class CustomerNotification extends Notification
 {
     /**
      * @return [type] [description]
@@ -26,16 +25,6 @@ abstract class CustomerNotification extends Notification implements EmailNotific
     {
         // Set default to notify via email
         return ['email'];
-    }
-
-    protected function getRecipientEmail()
-    {
-        return $this->getCustomerEmail();
-    }
-
-    protected function getRecipientName()
-    {
-        return $this->getCustomerName();
     }
 
 }

@@ -12,20 +12,27 @@ interface EmailNotificationInterface
      * 
      * @return string
      */
-    protected function getRecipientEmail();
+    public function getRecipientEmail();
 
     /**
      * Get the recipient name.
      * @return [type] [description]
      */
-    protected function getRecipientName();
+    public function getRecipientName();
+
+    /**
+     * Get the email templates that will be used.
+     * 
+     * @return [type] [description]
+     */
+    public function getEmailTemplates();
 
     /**
      * Get the email data.
      * 
      * @return array
      */
-    protected function getEmailData();
+    public function getEmailData();
 
     /**
      * We need $job and $data because this method 
