@@ -23,80 +23,85 @@ class PaymentMidtransVerifyAPIController extends PubControllerAPI
 
     public function getPaymentMidtransVerify()
     {
-	    $httpCode = 200;
-	    try {
-	    	$this->checkAuth();
-	    	$user = $this->api->user;
+        $httpCode = 200;
+        try {
+            $this->checkAuth();
+            $user = $this->api->user;
 
-	        $payment_transaction_id = OrbitInput::get('payment_transaction_id');
+            $payment_transaction_id = OrbitInput::get('payment_transaction_id');
 
-	        $validator = Validator::make(
-	            array(
-	                'payment_transaction_id'  => $payment_transaction_id
-	            ),
-	            array(
-	                'payment_transaction_id'  => 'required'
-	            )
-	        );
+            $validator = Validator::make(
+                array(
+                    'payment_transaction_id'  => $payment_transaction_id
+                ),
+                array(
+                    'payment_transaction_id'  => 'required'
+                )
+            );
 
-	      	// Begin database transaction
+            // Begin database transaction
             $this->beginTransaction();
 
-	        // Run the validation
-	        if ($validator->fails()) {
-	            $errorMessage = $validator->messages()->first();
-	            OrbitShopAPI::throwInvalidArgument($errorMessage);
-	        }
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
-	        // validate payment data
-	        $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status')
-	        							 ->where('payment_transaction_id', '=', $payment_transaction_id)
-	        							 ->first();
+            // validate payment data
+            $payment = PaymentTransaction::select('payment_transaction_id', 'external_payment_transaction_id', 'amount', 'status')
 
-	 		if (empty($payment)) {
-	 			$httpCode = 404;
-	 			$this->response->data = null;
-		        $this->response->code = 404;
-		        $this->response->status = 'error';
-		        $this->response->message = 'Transaction not found';
-	 		} else {
-	 			$this->response->data = $payment;
-		        $this->response->code = 0;
-		        $this->response->status = 'success';
-		        $this->response->message = 'Request OK';
-	 		}
+                                            // payment_transaction_id is value of payment_transaction_id or external_payment_transaction_id
+                                            ->where(function($query) use($payment_transaction_id) {
+                                            $query->where('payment_transactions.payment_transaction_id', '=', $payment_transaction_id)
+                                                  ->orWhere('payment_transactions.external_payment_transaction_id', '=', $payment_transaction_id);
+                                            })
+                                            ->first();
 
-	    } catch (ACLForbiddenException $e) {
-	        $this->response->code = $e->getCode();
-	        $this->response->status = 'error';
-	        $this->response->message = $e->getMessage();
-	        $this->response->data = null;
-	        $httpCode = 403;
-	    } catch (InvalidArgsException $e) {
-	        $this->response->code = $e->getCode();
-	        $this->response->status = 'error';
-	        $this->response->message = $e->getMessage();
-	        $this->response->data = null;
-	        $httpCode = 403;
-	    } catch (QueryException $e) {
-	        $this->response->code = $e->getCode();
-	        $this->response->status = 'error';
-	        // Only shows full query error when we are in debug mode
-	        if (Config::get('app.debug')) {
-	            $this->response->message = $e->getMessage();
-	        } else {
-	            $this->response->message = Lang::get('validation.orbit.queryerror');
-	        }
-	        $this->response->data = null;
-	        $httpCode = 500;
-	    } catch (Exception $e) {
-	        $this->response->code = $this->getNonZeroCode($e->getCode());
-	        $this->response->status = 'error';
-	        $this->response->message = $e->getMessage();
-	        $this->response->data = null;
-	        $httpCode = 500;
-	    }
+            if (empty($payment)) {
+                $httpCode = 404;
+                $this->response->data = null;
+                $this->response->code = 404;
+                $this->response->status = 'error';
+                $this->response->message = 'Transaction not found';
+            } else {
+                $this->response->data = $payment;
+                $this->response->code = 0;
+                $this->response->status = 'success';
+                $this->response->message = 'Request OK';
+            }
 
-	    return $this->render($httpCode);
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 500;
+        }
+
+        return $this->render($httpCode);
     }
 }

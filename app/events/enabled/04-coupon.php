@@ -305,11 +305,13 @@ Event::listen('orbit.coupon.after.image1.translation.save', function($controller
 Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $coupon)
 {
     // update total available coupon
-    $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
+    if ($coupon->promotion_type != 'sepulsa') {
+        $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
 
-    $coupon = Coupon::findOnWriteConnection($coupon->promotion_id);
-    $coupon->available = $availableCoupons;
-    $coupon->save();
+        $coupon = Coupon::findOnWriteConnection($coupon->promotion_id);
+        $coupon->available = $availableCoupons;
+        $coupon->save();
+    }
 
     $timestamp = new DateTime($coupon->created_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
@@ -354,12 +356,15 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
         'mode'               => 'update'
     ]);
 
-    // update total available coupon
-    $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
 
-    $coupon = Coupon::findOnWriteConnection($coupon->promotion_id);
-    $coupon->available = $availableCoupons;
-    $coupon->save();
+    if ($coupon->promotion_type != 'sepulsa') {
+        // update total available coupon
+        $availableCoupons = IssuedCoupon::totalAvailable($coupon->promotion_id);
+
+        $coupon = Coupon::findOnWriteConnection($coupon->promotion_id);
+        $coupon->available = $availableCoupons;
+        $coupon->save();
+    }
 
     // check coupon before update elasticsearch
     $prefix = DB::getTablePrefix();
@@ -523,7 +528,7 @@ Event::listen('orbit.coupon.postupdatecoupon-mallnotification.after.save', funct
                          ->where('promotions.promotion_id', '=', $coupon->promotion_id)
                          ->first();
 
-            $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl();
+            $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl(true);
 
             $headings = new stdClass();
             $contents = new stdClass();
@@ -815,7 +820,7 @@ Event::listen('orbit.coupon.postupdatecoupon-storenotificationupdate.after.commi
             }
         }
 
-        $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl();
+        $launchUrl = LandingPageUrlGenerator::create('coupon', $_coupon->promotion_id, $_coupon->promotion_name)->generateUrl(true);
         $attachmentPath = null;
         $attachmentRealPath = null;
         $cdnUrl = null;

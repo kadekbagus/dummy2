@@ -1,6 +1,6 @@
 <?php
 /**
- * An API controller for managing Coupon.
+ * An API controller for managing Coupon sepulsa.
  */
 use OrbitShop\API\v1\ControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
@@ -34,9 +34,8 @@ class CouponSepulsaAPIController extends ControllerAPI
     protected $pmpAccountDefaultLanguage = NULL;
 
     /**
-     * POST - Create New Coupon
+     * POST - Create New Coupon for sepulsa
      *
-     * @author Tian <tian@dominopos.com>
      * @author Firmansyah <firmansyah@dominopos.com>
      *
      * List of API Parameters
@@ -332,6 +331,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->is_exclusive = $is_exclusive;
             $newcoupon->is_visible = $isVisible;
             $newcoupon->maximum_redeem = $maximum_issued_coupon;
+            $newcoupon->available = $maximum_issued_coupon;
             $newcoupon->is_payable_by_wallet = $payByWallet;
             $newcoupon->is_payable_by_normal = $payByNormal;
             $newcoupon->transaction_amount_commission = $amountCommission;
@@ -340,9 +340,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->price_selling = $price_selling;
             $newcoupon->price_old = $price_value;
 
-            if ($rule_type === 'unique_coupon_per_user') {
-                $newcoupon->is_unique_redeem = 'Y';
-            }
+            $newcoupon->is_unique_redeem = 'N';
 
             Event::fire('orbit.coupon.postnewcoupon.before.save', array($this, $newcoupon));
 
@@ -935,6 +933,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 'id_language_default'     => $id_language_default,
                 'is_visible'              => $is_visible,
                 'is_3rd_party_promotion'  => $is_3rd_party_promotion,
+                'campaign_status'         => $campaignStatus,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -958,6 +957,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     'id_language_default'     => 'required|orbit.empty.language_default',
                     'is_visible'              => 'in:Y,N',
                     'is_3rd_party_promotion'  => 'in:Y,N',
+                    'campaign_status'         => 'orbit.check.issued_coupon',
                 ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
@@ -968,6 +968,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                     'discount_value.min'        => 'The coupon value must be greater than zero',
                     'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
                     'orbit.empty.exclusive_partner' => 'Partner is not exclusive / inactive',
+                    'orbit.check.issued_coupon' => 'There is one or more coupon unredeemed',
                 )
             );
 
@@ -1110,6 +1111,8 @@ class CouponSepulsaAPIController extends ControllerAPI
 
                 $updatedcoupon->coupon_validity_in_date = $coupon_validity_in_date;
             });
+
+            $updatedcoupon->is_unique_redeem = 'N';
 
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
@@ -2306,7 +2309,27 @@ class CouponSepulsaAPIController extends ControllerAPI
             $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
             $this->client = SepulsaClient::create($this->config);
 
+            $this->registerCustomValidation();
+
             $token = OrbitInput::get('token');
+
+            $validator = Validator::make(
+                array(
+                    'token' => $token,
+                ),
+                array(
+                    'token' => 'orbit.unique.token',
+                ),
+                array(
+                    'orbit.unique.token' => 'Token already used for another coupon',
+                )
+            );
+
+            // Run the validation
+            if ($validator->fails()) {
+                $errorMessage = $validator->messages()->first();
+                OrbitShopAPI::throwInvalidArgument($errorMessage);
+            }
 
             $listOfCoupons = VoucherDetail::create($this->config)->getDetail($token)->result;
 
@@ -2337,11 +2360,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
             $this->response->message = $e->getMessage();
-            $result['total_records'] = 0;
-            $result['returned_records'] = 0;
-            $result['records'] = null;
-
-            $this->response->data = $result;
+            $this->response->data = null;
             $httpCode = 403;
         } catch (QueryException $e) {
             Event::fire('orbit.coupon.getsearchcouponbyissueretailer.query.error', array($this, $e));
@@ -2925,6 +2944,38 @@ class CouponSepulsaAPIController extends ControllerAPI
                 } else {
                     $valid = false;
                 }
+            }
+
+            return $valid;
+        });
+
+        Validator::extend('orbit.check.issued_coupon', function ($attribute, $value, $parameters) {
+            $valid = true;
+            if (strtolower($value) === 'stopped') {
+                $couponId = OrbitInput::post('promotion_id');
+                $couponIssued = IssuedCoupon::where('promotion_id', '=', $couponId)->where('status', '=', 'issued')->first();
+                $valid = ($couponIssued) ? false : true;
+            }
+
+            return $valid;
+        });
+
+        Validator::extend('orbit.unique.token', function ($attribute, $value, $parameters) {
+            $valid = true;
+            $production = Config::get('orbit.partners_api.sepulsa.unique_token', TRUE);
+            if ($production) {
+                $couponSepulsa = CouponSepulsa::select('promotions.promotion_id',
+                                                       'promotions.promotion_name',
+                                                       'promotions.promotion_type',
+                                                       'campaign_status.campaign_status_name',
+                                                       'coupon_sepulsa.token')
+                                               ->join('promotions', 'promotions.promotion_id', '=', 'coupon_sepulsa.promotion_id')
+                                               ->join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                                               ->where('coupon_sepulsa.token', '=', $value)
+                                               ->whereNotIn('campaign_status.campaign_status_name', ['stopped'])
+                                               ->get();
+
+                $valid = count($couponSepulsa) == 0 ? true : false;
             }
 
             return $valid;
