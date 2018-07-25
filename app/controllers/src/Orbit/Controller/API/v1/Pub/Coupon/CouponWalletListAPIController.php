@@ -335,7 +335,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
-            $listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
+            //$listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
 
             $count = RecordCounter::create($_coupon)->count();
 
