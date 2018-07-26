@@ -270,6 +270,10 @@ class CouponWalletListAPIController extends PubControllerAPI
                             })
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'))
+                            // requirement need us to order coupon that is redeemable and payable
+                            // to display first, redeemed and expired will come after that
+                            //->orderByRaw(DB::Raw("FIELD({$prefix}issued_coupons.status, 'issued', 'redeemed', 'expired')"))
+                            ->orderByRaw(DB::Raw("CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 0 ELSE 1 END ASC"))
                             ->orderBy('issued_coupons.redeemed_date', 'desc')
                             ->orderBy('issued_coupons.issued_date', 'desc');
 
@@ -278,32 +282,14 @@ class CouponWalletListAPIController extends PubControllerAPI
             //does not affected by GTM/mall page also remove code related to
             //filter because we do not have filtering in my wallet
 
-            // requirement need us to order coupon that is redeemable and payable
-            // to display on top and everithing else
-
-            $take = PaginationNumber::parseTakeFromGet('coupon');
-            $skip = PaginationNumber::parseSkipFromGet();
-
-            $topPriorityCoupon = clone $coupon;
-            $topPriorityCoupon->where('issued_coupons.status', '=', 'issued');
-            $topPriorityCoupon->take($take);
-            $topPriorityCoupon->skip($skip);
-
-            $lowPriorityCoupon = clone $coupon;
-            $lowPriorityCoupon->where('issued_coupons.status', '!=', 'issued');
-            $lowPriorityCoupon->take($take);
-            $lowPriorityCoupon->skip($skip);
-
-            $topPriorityCouponList = $topPriorityCoupon->toSql();
-            $lowPriorityCouponList = $lowPriorityCoupon->toSql();
-            $myCoupon = DB::table(DB::Raw("(({$topPriorityCouponList}) UNION ({$lowPriorityCouponList})) AS txt"))
-                ->mergeBindings($topPriorityCoupon->getQuery())
-                ->mergeBindings($lowPriorityCoupon->getQuery());
-            $myCoupon->take($take);
-
             $_coupon = clone $coupon;
 
-            $listcoupon = $myCoupon->get();
+            $take = PaginationNumber::parseTakeFromGet('coupon');
+            $coupon->take($take);
+            $skip = PaginationNumber::parseSkipFromGet();
+            $coupon->skip($skip);
+
+            $listcoupon = $coupon->get();
             //$listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
 
             $count = RecordCounter::create($_coupon)->count();
