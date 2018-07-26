@@ -269,13 +269,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                 $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
                             })
                             ->where('issued_coupons.user_id', $user->user_id)
-                            ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'))
-                            // requirement need us to order coupon that is redeemable and payable
-                            // to display first, redeemed and expired will come after that
-                            //->orderByRaw(DB::Raw("FIELD({$prefix}issued_coupons.status, 'issued', 'redeemed', 'expired')"))
-                            ->orderByRaw(DB::Raw("CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 0 ELSE 1 END ASC"))
-                            ->orderBy('issued_coupons.redeemed_date', 'desc')
-                            ->orderBy('issued_coupons.issued_date', 'desc');
+                            ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'));
 
 
             //remove code related to Mall because Coupon list in My wallet
@@ -283,6 +277,13 @@ class CouponWalletListAPIController extends PubControllerAPI
             //filter because we do not have filtering in my wallet
 
             $_coupon = clone $coupon;
+
+            // requirement need us to order coupon that is redeemable and payable
+            // to display first, redeemed and expired will come after that
+            //->orderByRaw(DB::Raw("FIELD({$prefix}issued_coupons.status, 'issued', 'redeemed', 'expired')"))
+            $coupon->orderByRaw(DB::Raw("CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 0 ELSE 1 END ASC"))
+                    ->orderBy('issued_coupons.redeemed_date', 'desc')
+                    ->orderBy('issued_coupons.issued_date', 'desc');
 
             $take = PaginationNumber::parseTakeFromGet('coupon');
             $coupon->take($take);
