@@ -212,7 +212,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}promotions.available,
                                     {$prefix}promotions.is_unique_redeem,
 
-                                    0 AS available_for_redeem,
+                                    {$prefix}promotions.available AS available_for_redeem,
 
                                     (SELECT substring_index(group_concat(distinct om.name SEPARATOR ', '), ', ', 2)
                                         FROM {$prefix}promotion_retailer opr
