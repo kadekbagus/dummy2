@@ -178,7 +178,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                         }
                         else {
                             Log::info("PaidCoupon: Can not link coupon, it is being reserved by the same user {$payment_update->user_id}.");
-                            $payment_update->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
+                            $payment_update->status = PaymentTransaction::STATUS_FAILED;
                             $failed = true;
                         }
                     }
@@ -203,7 +203,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 $this->commit();
 
                 // Try to cancel the payment...
-                if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED) {
+                if ($payment_update->status === PaymentTransaction::STATUS_FAILED && isset($failed)) {
                     $transactionCancel = TransactionCancel::create()->cancel($payment_transaction_id);
                     if ($transactionCancel->isSuccess()) {
                         Log::info("PaidCoupon: Transaction canceled!");
