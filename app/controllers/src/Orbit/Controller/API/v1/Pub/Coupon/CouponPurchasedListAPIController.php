@@ -25,6 +25,27 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class CouponPurchasedListAPIController extends PubControllerAPI
 {
+    private function calculateCount($prefix, $user)
+    {
+        $transact = PaymentTransaction::select(DB::raw("
+                                COUNT(DISTINCT {$prefix}payment_transactions.payment_transaction_id) AS tot
+                        "))
+
+                        ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                        ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
+                        ->join('issued_coupons', function ($join) use($user) {
+                            $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
+                            $join->where('issued_coupons.status', '!=', 'deleted');
+                            $join->where('issued_coupons.user_id', '=', $user->user_id);
+                        })
+                        ->where('payment_transactions.user_id', $user->user_id)
+                        ->where('payment_transaction_details.object_type', 'coupon')
+                        ->where('payment_transactions.payment_method', '!=', 'normal')
+                        ->whereNotIn('payment_transactions.status', array('starting', 'denied'))
+                        ->take(1);
+        return (int) $transact->first()->tot;
+    }
+
     /**
      * GET - get all coupon wallet in all mall
      *
@@ -160,7 +181,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             ->where('payment_transactions.user_id', $user->user_id)
                             ->where('payment_transaction_details.object_type', 'coupon')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
-                            ->where('payment_transactions.status', '!=', 'starting')
+                            ->whereNotIn('payment_transactions.status', array('starting', 'denied'))
                             ->groupBy('payment_transactions.payment_transaction_id');
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
@@ -203,7 +224,8 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
-            $count = RecordCounter::create($_coupon)->count();
+            //$count = RecordCounter::create($_coupon)->count();
+            $count = $this->calculateCount($prefix, $user);
 
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');

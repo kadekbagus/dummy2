@@ -64,6 +64,23 @@ class CouponWalletListAPIController extends PubControllerAPI
         return $coupons;
     }
 
+    private function calculateCount($prefix, $user)
+    {
+        $coupon = Coupon::select(DB::raw("
+                                COUNT({$prefix}promotions.promotion_id) as tot_promotion_id
+                            ")
+                        )
+                        ->join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                        ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                        ->join('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                        ->where('issued_coupons.user_id', $user->user_id)
+                        ->where('is_coupon', 'Y')
+                        ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'))
+                        ->take(1);
+        $totPromo = $coupon->first();
+        return (int) $totPromo->tot_promotion_id;
+    }
+
     /**
      * GET - get all coupon wallet in all mall
      *
@@ -124,7 +141,10 @@ class CouponWalletListAPIController extends PubControllerAPI
             $coupon = Coupon::select(DB::raw("
                                     {$prefix}promotions.promotion_id as promotion_id,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
-                                    CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
+                                    /* ----description is not used in my coupon page---
+                                        CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
+                                    */
+                                   '' AS description,
 
                                     CASE WHEN {$prefix}media.path is null THEN (
                                         SELECT m.path
@@ -212,14 +232,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     {$prefix}promotions.available,
                                     {$prefix}promotions.is_unique_redeem,
 
-                                    CASE WHEN {$prefix}promotions.maximum_redeem > 0
-                                    THEN
-                                        CASE WHEN (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id) >= {$prefix}promotions.maximum_redeem
-                                        THEN 0
-                                        ELSE ({$prefix}promotions.maximum_redeem - (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status = 'redeemed' AND oic.promotion_id = {$prefix}promotions.promotion_id))
-                                        END
-                                    ELSE (SELECT COUNT(oic.issued_coupon_id) FROM {$prefix}issued_coupons oic WHERE oic.status not in ('redeemed', 'deleted') AND oic.promotion_id = {$prefix}promotions.promotion_id)
-                                    END AS available_for_redeem,
+                                    {$prefix}promotions.available AS available_for_redeem,
 
                                     (SELECT substring_index(group_concat(distinct om.name SEPARATOR ', '), ', ', 2)
                                         FROM {$prefix}promotion_retailer opr
@@ -246,7 +259,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                 'issued_coupons.issued_date'
                             )
                             ->leftJoin('coupon_sepulsa', 'promotions.promotion_id', '=', 'coupon_sepulsa.promotion_id')
-                            ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                            ->Join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
@@ -278,66 +291,27 @@ class CouponWalletListAPIController extends PubControllerAPI
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'));
 
-            OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
-                if (! empty($filterName)) {
-                    if ($filterName === '#') {
-                        $coupon->whereRaw("SUBSTR({$prefix}coupon_translations.promotion_name,1,1) not between 'a' and 'z'");
-                    } else {
-                        $filter = explode("-", $filterName);
-                        $coupon->whereRaw("SUBSTR({$prefix}coupon_translations.promotion_name,1,1) between {$this->quote($filter[0])} and {$this->quote($filter[1])}");
-                    }
-                }
-            });
 
-            OrbitInput::get('mall_id', function ($mallId) use ($coupon, $prefix, &$mall) {
-                $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN t.parent_id ELSE t.merchant_id END as mall_id"));
-                $coupon->addSelect(DB::raw("CASE WHEN t.object_type = 'tenant' THEN m.name ELSE t.name END as mall_name"));
-                $coupon->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
-                    ->leftJoin('merchants as t', DB::raw("t.merchant_id"), '=', 'promotion_retailer.retailer_id')
-                    ->leftJoin('merchants as m', DB::raw("m.merchant_id"), '=', DB::raw("t.parent_id"));
-                $coupon->where(function($q) use ($mallId) {
-                    $q->where(DB::raw('t.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
-                    $q->orWhere(DB::raw('m.merchant_id'), '=', DB::raw("{$this->quote($mallId)}"));
-                });
+            //remove code related to Mall because Coupon list in My wallet
+            //does not affected by GTM/mall page also remove code related to
+            //filter because we do not have filtering in my wallet
 
-                $mall = Mall::excludeDeleted()
-                        ->where('merchant_id', $mallId)
-                        ->first();
-            });
-
-            // need subquery to order my coupon
-            //---------------START SLOW QUERY--------------------
-            // TODO:need to fix as this is SLOW DOWN actual query
-            $querySql = $coupon->toSql();
-            $coupon = DB::table(DB::Raw("({$querySql}) as sub_query"))->mergeBindings($coupon->getQuery())
-                            ->select(
-                                DB::raw("sub_query.*"),
-                                DB::raw("CASE WHEN issued_coupon_status = 'redeemed' THEN 2
-                                            ELSE CASE WHEN available_for_redeem = 0 THEN 3
-                                                ELSE CASE WHEN is_exceeding_validity_date = 'true' THEN 3
-                                                    ELSE 1
-                                                    END
-                                                END
-                                        END as redeem_order")
-                            );
-
-            $coupon = $coupon->orderBy(DB::raw("redeem_order"), 'asc');
-            $coupon = $coupon->orderBy(DB::raw("redeemed_date"), 'desc');
-            $coupon = $coupon->orderBy(DB::raw("issued_date"), 'desc');
-            //---------------END SLOW QUERY--------------------
-
-            $_coupon = clone $coupon;
+            // requirement need us to order coupon that is redeemable and payable
+            // to display first, redeemed and expired will come after that
+            //->orderByRaw(DB::Raw("FIELD({$prefix}issued_coupons.status, 'issued', 'redeemed', 'expired')"))
+            $coupon->orderByRaw(DB::Raw("CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 0 ELSE 1 END ASC"))
+                    ->orderBy('issued_coupons.redeemed_date', 'desc')
+                    ->orderBy('issued_coupons.issued_date', 'desc');
 
             $take = PaginationNumber::parseTakeFromGet('coupon');
             $coupon->take($take);
-
             $skip = PaginationNumber::parseSkipFromGet();
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
             //$listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
 
-            $count = RecordCounter::create($_coupon)->count();
+            $count = $this->calculateCount($prefix, $user);
 
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
