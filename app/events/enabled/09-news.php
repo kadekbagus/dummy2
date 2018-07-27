@@ -411,7 +411,7 @@ Event::listen('orbit.news.postupdatenews-mallnotification.after.save', function(
                          ->where('news_id', '=', $news->news_id)
                          ->first();
 
-            $launchUrl = LandingPageUrlGenerator::create($_news->object_type , $_news->news_id, $_news->news_name)->generateUrl();
+            $launchUrl = LandingPageUrlGenerator::create($_news->object_type , $_news->news_id, $_news->news_name)->generateUrl(true);
 
             $headings = new stdClass();
             $contents = new stdClass();
@@ -703,7 +703,7 @@ Event::listen('orbit.news.postupdatenews-storenotificationupdate.after.commit', 
             }
         }
 
-        $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl();
+        $launchUrl = LandingPageUrlGenerator::create($_news->object_type, $_news->news_id, $_news->news_name)->generateUrl(true);
         $attachmentPath = null;
         $attachmentRealPath = null;
         $cdnUrl = null;

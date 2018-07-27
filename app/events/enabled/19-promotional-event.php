@@ -524,7 +524,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-mallnotificatio
                          ->where('news_id', '=', $news->news_id)
                          ->first();
 
-            $launchUrl = LandingPageUrlGenerator::create('promotional-event', $_news->news_id, $_news->news_name)->generateUrl();
+            $launchUrl = LandingPageUrlGenerator::create('promotional-event', $_news->news_id, $_news->news_name)->generateUrl(true);
 
             $headings = new stdClass();
             $contents = new stdClass();
@@ -812,7 +812,7 @@ Event::listen('orbit.promotionalevent.postupdatepromotionalevent-storenotificati
             }
         }
 
-        $launchUrl = LandingPageUrlGenerator::create('promotional-event', $_news->news_id, $_news->news_name)->generateUrl();
+        $launchUrl = LandingPageUrlGenerator::create('promotional-event', $_news->news_id, $_news->news_name)->generateUrl(true);
         $attachmentPath = null;
         $attachmentRealPath = null;
         $cdnUrl = null;

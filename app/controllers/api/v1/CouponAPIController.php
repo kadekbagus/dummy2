@@ -127,7 +127,7 @@ class CouponAPIController extends ControllerAPI
 
             $merchant_id = OrbitInput::post('current_mall');
             $promotion_name = OrbitInput::post('promotion_name');
-            $promotion_type = OrbitInput::post('promotion_type');
+            $promotion_type = OrbitInput::post('promotion_type','mall');
             $campaignStatus = OrbitInput::post('campaign_status');
             $description = OrbitInput::post('description');
             $long_description = OrbitInput::post('long_description');
@@ -199,6 +199,11 @@ class CouponAPIController extends ControllerAPI
             $amountCommission = OrbitInput::post('amount_commission', null);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
+            // hot deals
+            $price_old = OrbitInput::post('price_old', 0);
+            $merchant_commision = OrbitInput::post('merchant_commision', 0);
+            $price_selling = OrbitInput::post('price_selling', 0);
+
             if ($payByNormal === 'N') {
                 $fixedAmountCommission = 0;
             }
@@ -241,7 +246,7 @@ class CouponAPIController extends ControllerAPI
             ];
             $validator_validation = [
                 'promotion_name'          => 'required|max:255',
-                'promotion_type'          => 'required|orbit.empty.coupon_type',
+                'promotion_type'          => 'required|in:mall,tenant,hot_deals',
                 'begin_date'              => 'required|date_format:Y-m-d H:i:s',
                 'end_date'                => 'required|date_format:Y-m-d H:i:s',
                 'rule_type'               => 'orbit.empty.coupon_rule_type',
@@ -313,6 +318,25 @@ class CouponAPIController extends ControllerAPI
                 $thirdValidator = Validator::make(
                     $thirdPartyValidatorValue,
                     $thirdPartyValidatorValidation,
+                    []
+                );
+            }
+
+            // validation for hot deals
+            if ($promotion_type === 'hot_deals') {
+                $hotDealsValue = [
+                    'price_old' => $price_old,
+                    'merchant_commision' => $merchant_commision,
+                    'price_selling' => $price_selling,
+                ];
+                $hotDealsValidation = [
+                    'price_old' => 'required',
+                    'merchant_commision' => 'required',
+                    'price_selling' => 'required',
+                ];
+                $thirdValidator = Validator::make(
+                    $hotDealsValue,
+                    $hotDealsValidation,
                     []
                 );
             }
@@ -636,6 +660,9 @@ class CouponAPIController extends ControllerAPI
             $newcoupon->transaction_amount_commission = $amountCommission;
             $newcoupon->fixed_amount_commission = $fixedAmountCommission;
             $newcoupon->is_sponsored = $is_sponsored;
+            $newcoupon->price_old = $price_old;
+            $newcoupon->merchant_commision = $merchant_commision;
+            $newcoupon->price_selling = $price_selling;
 
             // save 3rd party coupon fields
             if ($is3rdPartyPromotion === 'Y') {
@@ -1241,7 +1268,7 @@ class CouponAPIController extends ControllerAPI
 
             $promotion_id = OrbitInput::post('promotion_id');
             $merchant_id = OrbitInput::post('current_mall');
-            $promotion_type = OrbitInput::post('promotion_type');
+            $promotion_type = OrbitInput::post('promotion_type','mall');
             $campaignStatus = OrbitInput::post('campaign_status');
             $rule_type = OrbitInput::post('rule_type');
             $rule_object_type = OrbitInput::post('rule_object_type');
@@ -1300,6 +1327,11 @@ class CouponAPIController extends ControllerAPI
             $amountCommission = OrbitInput::post('amount_commission', null);
             $fixedAmountCommission = OrbitInput::post('fixed_amount_commission', null);
 
+            // hot deals
+            $price_old = OrbitInput::post('price_old');
+            $merchant_commision = OrbitInput::post('merchant_commision');
+            $price_selling = OrbitInput::post('price_selling');
+
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
 
@@ -1328,6 +1360,7 @@ class CouponAPIController extends ControllerAPI
                 'is_visible'              => $is_visible,
                 'is_3rd_party_promotion'  => $is_3rd_party_promotion,
                 'maximum_redeem'          => $maximumRedeem,
+                'campaign_status'         => $campaignStatus,
             );
 
             // Validate promotion_name only if exists in POST.
@@ -1340,7 +1373,7 @@ class CouponAPIController extends ControllerAPI
                 array(
                     'promotion_id'            => 'required|orbit.update.coupon',
                     'promotion_name'          => 'sometimes|required|max:255',
-                    'promotion_type'          => 'orbit.empty.coupon_type',
+                    'promotion_type'          => 'required|in:mall,tenant,hot_deals',
                     'status'                  => 'orbit.empty.coupon_status',
                     'begin_date'              => 'date_format:Y-m-d H:i:s',
                     'end_date'                => 'date_format:Y-m-d H:i:s',
@@ -1356,7 +1389,8 @@ class CouponAPIController extends ControllerAPI
                     'partner_exclusive'       => 'in:Y,N|orbit.empty.exclusive_partner',
                     'is_visible'              => 'in:Y,N',
                     'is_3rd_party_promotion'  => 'in:Y,N',
-                    'maximum_redeem'          => 'numeric'
+                    'maximum_redeem'          => 'numeric',
+                    'campaign_status'         => 'orbit.check.issued_coupon',
                 ),
                 array(
                     'rule_value.required'       => 'The amount to obtain is required',
@@ -1367,6 +1401,7 @@ class CouponAPIController extends ControllerAPI
                     'discount_value.min'        => 'The coupon value must be greater than zero',
                     'orbit.update.coupon'       => 'Cannot update campaign with status ' . $campaignStatus,
                     'orbit.empty.exclusive_partner' => 'Partner is not exclusive / inactive',
+                    'orbit.check.issued_coupon' => 'There is one or more coupon unredeemed',
                 )
             );
 
@@ -1598,6 +1633,32 @@ class CouponAPIController extends ControllerAPI
                 }
             }
 
+            if ($promotion_type === 'hot_deals') {
+                // validation for hot deals
+                $hotDealsValue = [
+                    'price_old' => $price_old,
+                    'merchant_commision' => $merchant_commision,
+                    'price_selling' => $price_selling,
+                ];
+                $hotDealsValidation = [
+                    'price_old' => 'required',
+                    'merchant_commision' => 'required',
+                    'price_selling' => 'required',
+                ];
+                $thirdValidator = Validator::make(
+                    $hotDealsValue,
+                    $hotDealsValidation,
+                    []
+                );
+
+                if ($thirdValidator->fails()) {
+                    $errorMessage = $thirdValidator->messages()->first();
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+            }
+
+
             Event::fire('orbit.coupon.postupdatecoupon.after.validation', array($this, $validator));
 
             // Redeem to tenant
@@ -1652,6 +1713,12 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::post('merchant_id', function($merchant_id) use ($updatedcoupon) {
                 $updatedcoupon->merchant_id = $merchant_id;
             });
+
+            if ($promotion_type === 'hot_deals') {
+                $updatedcoupon->price_old = $price_old;
+                $updatedcoupon->merchant_commision = $merchant_commision;
+                $updatedcoupon->price_selling = $price_selling;
+            }
 
             OrbitInput::post('promotion_type', function($promotion_type) use ($updatedcoupon) {
                 $updatedcoupon->promotion_type = $promotion_type;
@@ -3025,6 +3092,12 @@ class CouponAPIController extends ControllerAPI
                 $coupons->where('promotions.promotion_name', '=', $promotionName);
             });
 
+            // Filter coupon by promotion type
+            OrbitInput::get('promotion_type', function($promotionTypes) use ($coupons)
+            {
+                $coupons->whereIn('promotions.promotion_type', $promotionTypes);
+            });
+
             // Filter coupon by matching promotion name pattern
             OrbitInput::get('promotion_name_like', function($promotionName) use ($coupons)
             {
@@ -3035,12 +3108,6 @@ class CouponAPIController extends ControllerAPI
             OrbitInput::get('keywords', function($keywords) use ($coupons)
             {
                 $coupons->where('coupon_translations.promotion_name', 'like', "$keywords%");
-            });
-
-            // Filter coupon by promotion type
-            OrbitInput::get('promotion_type', function($promotionTypes) use ($coupons)
-            {
-                $coupons->whereIn('promotions.promotion_type', $promotionTypes);
             });
 
             // Filter coupon by description
@@ -3765,14 +3832,24 @@ class CouponAPIController extends ControllerAPI
                 $body['merchant_bank_address'] = $merchantBankAddress;
             }
 
-            $paymentConfig = Config::get('orbit.payment_server');
-            $paymentClient = PaymentClient::create($paymentConfig)->setFormParam($body);
-            $response = $paymentClient->setEndPoint('api/v1/pay')
-                                    ->request('POST');
+            // Only send payment request to orbit-payment API if the coupon is NOT hot_deals and sepulsa
+            $transactionId = '';
+            if (in_array($coupon->promotion_type, [Coupon::TYPE_SEPULSA, Coupon::TYPE_HOT_DEALS])) {
+                // IssuedCoupon record should have transaction_id set...
+                $transactionId = $issuedCoupon->transaction_id;
+            }
+            else {
+                $paymentConfig = Config::get('orbit.payment_server');
+                $paymentClient = PaymentClient::create($paymentConfig)->setFormParam($body);
+                $response = $paymentClient->setEndPoint('api/v1/pay')
+                                        ->request('POST');
 
-            if ($response->status !== 'success') {
-                $errorMessage = 'Transaction Failed';
-                OrbitShopAPI::throwInvalidArgument($errorMessage);
+                if ($response->status !== 'success') {
+                    $errorMessage = 'Transaction Failed';
+                    OrbitShopAPI::throwInvalidArgument($errorMessage);
+                }
+
+                $transactionId = $response->data->transaction_id;
             }
 
             $mall = App::make('orbit.empty.merchant');
@@ -3802,7 +3879,7 @@ class CouponAPIController extends ControllerAPI
 
             $data = new stdclass();
             $data->issued_coupon_code = $issuedcoupon->issued_coupon_code;
-            $data->transaction_id = $response->data->transaction_id;
+            $data->transaction_id = $transactionId;
 
             $this->response->message = 'Coupon has been successfully redeemed.';
             $this->response->data = $data;
@@ -4940,6 +5017,17 @@ class CouponAPIController extends ControllerAPI
                 } else {
                     $valid = false;
                 }
+            }
+
+            return $valid;
+        });
+
+        Validator::extend('orbit.check.issued_coupon', function ($attribute, $value, $parameters) {
+            $valid = true;
+            if (strtolower($value) === 'stopped') {
+                $couponId = OrbitInput::post('promotion_id');
+                $couponIssued = IssuedCoupon::where('promotion_id', '=', $couponId)->where('status', '=', 'issued')->first();
+                $valid = ($couponIssued) ? false : true;
             }
 
             return $valid;

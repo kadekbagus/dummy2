@@ -86,10 +86,20 @@ class CouponWalletListAPIController extends PubControllerAPI
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
                                     CASE WHEN {$prefix}media.path is null THEN med.path ELSE {$prefix}media.path END as localPath,
-                                    CASE WHEN {$prefix}media.cdn_url is null THEN med.cdn_url ELSE {$prefix}media.cdn_url END as cdnPath,
+                                    CASE WHEN {$prefix}promotions.promotion_type = 'sepulsa'
+                                        THEN {$prefix}coupon_sepulsa.coupon_image_url
+                                        ELSE (
+                                            CASE WHEN {$prefix}media.cdn_url is null
+                                            THEN med.cdn_url
+                                            ELSE {$prefix}media.cdn_url
+                                            END
+                                        )
+                                        END as cdnPath,
+                                    {$prefix}issued_coupons.issued_coupon_code,
                                     {$prefix}promotions.end_date,
                                     {$prefix}promotions.coupon_validity_in_date,
                                     {$prefix}promotions.status,
+                                    {$prefix}promotions.promotion_type,
                                     CASE WHEN {$prefix}campaign_status.campaign_status_name = 'expired'
                                         THEN {$prefix}campaign_status.campaign_status_name
                                         ELSE (
@@ -134,7 +144,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                         ELSE 'redeemed' END as issued_coupon_status,
                                     {$prefix}merchants.name as store_name,
                                     CASE WHEN {$prefix}merchants.object_type = 'tenant' THEN malls.name ELSE NULL END as mall_name,
-                                    CONVERT_TZ({$prefix}issued_coupons.redeemed_date, '+00:00', {$prefix}timezones.timezone_name) as redeemed_date,
+                                    {$prefix}issued_coupons.redeemed_date,
                                     (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status = 'redeemed') as total_redeemed,
                                     (SELECT COUNT(ic.issued_coupon_id) FROM {$prefix}issued_coupons ic where ic.promotion_id = {$prefix}promotions.promotion_id and ic.status in ('issued','redeemed')) as total_issued,
                                     CASE WHEN {$prefix}promotions.maximum_redeem = '0' THEN {$prefix}promotions.maximum_issued_coupon ELSE {$prefix}promotions.maximum_redeem END maximum_redeem,
@@ -166,6 +176,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                                 "),
                                 'issued_coupons.issued_date'
                             )
+                            ->leftJoin('coupon_sepulsa', 'promotions.promotion_id', '=', 'coupon_sepulsa.promotion_id')
                             ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
@@ -184,7 +195,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                             })
                             ->join('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '!=', 'deleted');
+                                $join->on('issued_coupons.status', 'IN', DB::raw("('issued', 'redeemed')"));
                             })
                             ->leftJoin('merchants', function ($q) {
                                 $q->on('merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id');
@@ -246,6 +257,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                             );
 
             $coupon = $coupon->orderBy(DB::raw("redeem_order"), 'asc');
+            $coupon = $coupon->orderBy(DB::raw("redeemed_date"), 'desc');
             $coupon = $coupon->orderBy(DB::raw("issued_date"), 'desc');
 
             $_coupon = clone $coupon;

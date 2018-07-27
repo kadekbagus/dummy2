@@ -66,9 +66,6 @@ class ESActivityUpdateQueue
             $activityId = $data['activity_id'];
             $activity = Activity::findOnWriteConnection($activityId);
 
-            Log::info('ES Queue Update HTTP_REFERER value: ' . $data['referer']);
-            Log::info('ES Queue Update HTTP_X_ORBIT_REFERER value: ' . $data['orbit_referer']);
-
             if (! is_object($activity)) {
                 $job->delete();
 
@@ -184,8 +181,6 @@ class ESActivityUpdateQueue
                                                 ->setUrls($urlForTracking)
                                                 ->getCampaignSource();
 
-            Log::info('ES Queue Update current url value: ' . $fullCurrentUrl);
-            Log::info('ES Queue Update Campaign tracking value: ' . serialize($campaignData));
             $esBody = [
                 'activity_name' =>  $activity->activity_name,
                 'activity_name_long' =>  $activity->activity_name_long,

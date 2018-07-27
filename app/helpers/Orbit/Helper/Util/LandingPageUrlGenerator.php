@@ -6,6 +6,11 @@
  */
 
 use Str;
+use Mall;
+use Tenant;
+use NewsMerchant;
+use PromotionRetailer;
+use DB;
 
 class LandingPageUrlGenerator
 {
@@ -148,7 +153,7 @@ class LandingPageUrlGenerator
     /**
      * @return url
      */
-    public function generateUrl() {
+    public function generateUrl($showCountry=false) {
 
         if ($this->objectType === 'event' || $this->objectType === 'news') {
             $this->objectType = 'event';
@@ -181,6 +186,56 @@ class LandingPageUrlGenerator
                 break;
         }
 
+        if ($showCountry) {
+            $country = $this->getCountry($this->objectType, $this->objectId);
+            $url = $url . '?country=' . $country;
+        }
+
         return $url;
+    }
+
+    public function getCountry($objectType, $objectId) {
+        $country = null;
+
+        switch ($objectType) {
+            case 'coupon':
+                $coupon = PromotionRetailer::select(DB::raw("malls.country"))
+                                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                            ->join('merchants as malls', function ($q) {
+                                                $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
+                                            })
+                                            ->where('promotion_retailer.promotion_id', '=', $objectId)
+                                            ->first();
+                $country = ($coupon) ? $coupon->country : null;
+                break;
+
+            case 'mall':
+                $mall = Mall::select('country')->where('merchant_id', '=', $objectId)->first();
+                $country = ($mall) ? $mall->country : null;
+                break;
+
+            case 'store':
+                $store = Tenant::select(DB::raw("malls.country"))
+                                ->join('merchants as malls', function ($q) {
+                                    $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
+                                })
+                                ->where('merchants.merchant_id', '=', $objectId)
+                                ->first();
+                $country = ($store) ? $store->country : null;
+                break;
+
+            default;
+                $news = NewsMerchant::select(DB::raw("malls.country"))
+                                    ->join('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                    ->join('merchants as malls', function ($q) {
+                                        $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
+                                    })
+                                    ->where('news_merchant.news_id', '=', $objectId)
+                                    ->first();
+                $country = ($news) ? $news->country : null;
+                break;
+        }
+
+        return $country;
     }
 }

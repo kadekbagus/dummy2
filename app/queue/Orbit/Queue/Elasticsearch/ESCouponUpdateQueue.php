@@ -20,6 +20,7 @@ use Orbit\Helper\MongoDB\Client as MongoClient;
 use ObjectSponsor;
 use SponsorCreditCard;
 use ObjectSponsorCreditCard;
+use Queue;
 
 class ESCouponUpdateQueue
 {
@@ -91,12 +92,22 @@ class ESCouponUpdateQueue
                         ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                         ->where('promotions.promotion_id', $couponId)
+                        ->where('promotions.available', '!=', 0)
                         ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                         ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
                         ->orderBy('promotions.promotion_id', 'asc')
                         ->first();
 
             if (! is_object($coupon)) {
+
+                $fakeJob = new FakeJob();
+
+                $esCouponDelete = new \Orbit\Queue\Elasticsearch\ESCouponDeleteQueue();
+                $doESCouponDelete = $esCouponDelete->fire($fakeJob, ['coupon_id' => $couponId]);
+
+                $esCouponSuggestionDelete = new \Orbit\Queue\Elasticsearch\ESCouponSuggestionDeleteQueue();
+                $doESCouponSuggestionDelete = $esCouponSuggestionDelete->fire($fakeJob, ['coupon_id' => $couponId]);
+
                 $job->delete();
 
                 return [
@@ -326,7 +337,6 @@ class ESCouponUpdateQueue
 
             $emptyRedeem = FALSE;
             $emptyIssued = FALSE;
-            $available = IssuedCoupon::totalAvailable($coupon->promotion_id);
 
             if ($coupon->maximum_redeem > 0) {
                 $notAvailable = IssuedCoupon::where('status', '=', 'redeemed')
@@ -346,9 +356,19 @@ class ESCouponUpdateQueue
                 if ($notAvailable >= $coupon->maximum_issued_coupon) {
                     $emptyIssued = TRUE;
                 }
+                else {
+                    // Update availability
+                    $available = $coupon->maximum_issued_coupon - $notAvailable;
+                }
             }
             if($emptyRedeem || $emptyIssued) {
                 $available = 0;
+            }
+
+            // If it's sepulsa, don't count availability based on issued coupon because
+            // sepulsa has no issued coupons before user buy it.
+            if ($coupon->promotion_type === 'sepulsa') {
+                $available = $coupon->available;
             }
 
             // Get url prefix
@@ -434,6 +454,7 @@ class ESCouponUpdateQueue
             $body = [
                 'promotion_id'            => $coupon->promotion_id,
                 'name'                    => $coupon->promotion_name,
+                'promotion_type'          => $coupon->promotion_type,
                 'description'             => $coupon->description,
                 'object_type'             => 'coupon',
                 'begin_date'              => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
@@ -468,7 +489,10 @@ class ESCouponUpdateQueue
                 'location_rating'         => $locationRating,
                 'mall_rating'             => $mallRating,
                 'wallet_operator'         => $paymentOperator,
-                'sponsor_provider'        => $sponsorProviderES
+                'sponsor_provider'        => $sponsorProviderES,
+                'price_old'               => $coupon->price_old,
+                'merchant_commision'      => $coupon->merchant_commision,
+                'price_selling'           => $coupon->price_selling
             ];
 
             $body = array_merge($body, $translationBody);

@@ -20,3 +20,19 @@ Route::post('/app/v1/pub/payment/activity-callback', function()
 {
     return Orbit\Controller\API\v1\Pub\PaymentActivityAPIController::create()->postNewPaymentActivity();
 });
+
+
+Route::post('/api/v1/pub/payment/midtrans/create', function()
+{
+    return Orbit\Controller\API\v1\Pub\Payment\PaymentMidtransCreateAPIController::create()->postPaymentMidtransCreate();
+});
+
+Route::post('/api/v1/pub/payment/midtrans/update', function()
+{
+    return Orbit\Controller\API\v1\Pub\Payment\PaymentMidtransUpdateAPIController::create()->postPaymentMidtransUpdate();
+});
+
+Route::get('/api/v1/pub/payment/midtrans/verify', function()
+{
+    return Orbit\Controller\API\v1\Pub\Payment\PaymentMidtransVerifyAPIController::create()->getPaymentMidtransVerify();
+});

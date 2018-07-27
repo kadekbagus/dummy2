@@ -120,12 +120,38 @@ class ESAdvertCouponUpdateQueue
                     ->leftJoin('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
                     ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                     ->where('promotions.promotion_id', $couponId)
+                    ->where('promotions.available', '!=', 0)
                     ->whereRaw("{$prefix}promotions.is_coupon = 'Y'")
                     ->whereRaw("{$prefix}promotions.is_visible = 'Y'")
                     ->orderBy('promotions.promotion_id', 'asc')
                     ->first();
 
         if (! is_object($coupon)) {
+
+            // check exist elasticsearch index
+            $params_search = [
+                'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
+                'type' => Config::get('orbit.elasticsearch.indices.advert_coupons.type'),
+                'body' => [
+                    'query' => [
+                        'match' => [
+                            '_id' => $adverts->advert_id
+                        ]
+                    ]
+                ]
+            ];
+            $response_search = $this->poster->search($params_search);
+
+            if ($response_search['hits']['total'] > 0) {
+                $params = [
+                    'index' => $esPrefix . Config::get('orbit.elasticsearch.indices.advert_coupons.index'),
+                    'type' => Config::get('orbit.elasticsearch.indices.advert_coupons.type'),
+                    'id' => $response_search['hits']['hits'][0]['_id']
+                ];
+
+                $response = $this->poster->delete($params);
+            }
+
             $job->delete();
 
             return [
@@ -569,6 +595,7 @@ class ESAdvertCouponUpdateQueue
                 $body = [
                     'promotion_id'            => $coupon->promotion_id,
                     'name'                    => $coupon->promotion_name,
+                    'promotion_type'          => $coupon->promotion_type,
                     'description'             => $coupon->description,
                     'object_type'             => 'coupon',
                     'begin_date'              => date('Y-m-d', strtotime($coupon->begin_date)) . 'T' . date('H:i:s', strtotime($coupon->begin_date)) . 'Z',
@@ -610,7 +637,10 @@ class ESAdvertCouponUpdateQueue
                     'wallet_operator'         => $paymentOperator,
                     'featured_slot_gtm'       => $featuredSlotGTM,
                     'featured_slot_mall'      => $featuredSlotMall,
-                   'sponsor_provider'         => $sponsorProviderES
+                    'sponsor_provider'        => $sponsorProviderES,
+                    'price_old'               => $coupon->price_old,
+                    'merchant_commision'      => $coupon->merchant_commision,
+                    'price_selling'           => $coupon->price_selling
                 ];
 
                 $body = array_merge($body, $translationBody);
