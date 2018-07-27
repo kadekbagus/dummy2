@@ -160,7 +160,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             ->where('payment_transactions.user_id', $user->user_id)
                             ->where('payment_transaction_details.object_type', 'coupon')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
-                            ->where('payment_transactions.status', '!=', 'starting')
+                            ->whereNotIn('payment_transactions.status', array('starting', 'denied'))
                             ->groupBy('payment_transactions.payment_transaction_id');
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
