@@ -79,7 +79,7 @@ class MyWalletItemCountAPIController extends PubControllerAPI
                 {$prefix}issued_coupons.status != 'deleted' AND
                 {$prefix}payment_transaction_details.`object_type` = 'coupon' AND
                 {$prefix}payment_transactions.`payment_method` != 'normal' AND
-                {$prefix}payment_transactions.`status` != 'starting'
+                {$prefix}payment_transactions.`status` NOT IN ('starting', 'denied')
         ";
     }
 
