@@ -64,6 +64,23 @@ class CouponWalletListAPIController extends PubControllerAPI
         return $coupons;
     }
 
+    private function calculateCount($prefix, $user)
+    {
+        $coupon = Coupon::select(DB::raw("
+                                COUNT({$prefix}promotions.promotion_id) as tot_promotion_id
+                            ")
+                        )
+                        ->join('campaign_status', 'promotions.campaign_status_id', '=', 'campaign_status.campaign_status_id')
+                        ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
+                        ->join('issued_coupons', 'issued_coupons.promotion_id', '=', 'promotions.promotion_id')
+                        ->where('issued_coupons.user_id', $user->user_id)
+                        ->where('is_coupon', 'Y')
+                        ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'))
+                        ->take(1);
+        $totPromo = $coupon->first();
+        return (int) $totPromo->tot_promotion_id;
+    }
+
     /**
      * GET - get all coupon wallet in all mall
      *
@@ -279,8 +296,6 @@ class CouponWalletListAPIController extends PubControllerAPI
             //does not affected by GTM/mall page also remove code related to
             //filter because we do not have filtering in my wallet
 
-            $_coupon = clone $coupon;
-
             // requirement need us to order coupon that is redeemable and payable
             // to display first, redeemed and expired will come after that
             //->orderByRaw(DB::Raw("FIELD({$prefix}issued_coupons.status, 'issued', 'redeemed', 'expired')"))
@@ -296,7 +311,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             $listcoupon = $coupon->get();
             //$listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
 
-            $count = RecordCounter::create($_coupon)->count();
+            $count = $this->calculateCount($prefix, $user);
 
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
