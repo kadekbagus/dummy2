@@ -4,8 +4,6 @@
  * A trait that indicate that the using object/model 
  * *should* have PaymentTransaction instance as property in it.
  *
- * @todo  use presenter helper.
- *
  * @author Budi <budi@dominopos.com>
  */
 trait HasPaymentTrait 
@@ -14,6 +12,7 @@ trait HasPaymentTrait
      * Get the transaction data.
      *
      * @todo  return transaction as object instead of array. (need to adjust the view/email templates)
+     * @todo  use presenter helper.
      * 
      * @return [type] [description]
      */

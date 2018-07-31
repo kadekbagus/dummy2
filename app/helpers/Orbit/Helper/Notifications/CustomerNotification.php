@@ -1,5 +1,6 @@
 <?php namespace Orbit\Helper\Notifications;
 
+use Illuminate\Support\Facades\Config;
 use Orbit\Helper\Notifications\Notification;
 
 /**

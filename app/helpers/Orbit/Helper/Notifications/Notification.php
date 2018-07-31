@@ -70,6 +70,8 @@ abstract class Notification {
 
     /**
      * Get the queue name that will be used.
+     *
+     * @todo  should return array so each notification method can use its own queue name.
      * 
      * @return string queue name.
      */
