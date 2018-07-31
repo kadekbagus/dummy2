@@ -3,6 +3,7 @@
 use Exception;
 use Log;
 use Mail;
+use Config;
 use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
 use Orbit\Helper\Notifications\CustomerNotification;
 use Orbit\Notifications\Traits\HasContactTrait;
