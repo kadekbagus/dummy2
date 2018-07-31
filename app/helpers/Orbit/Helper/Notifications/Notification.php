@@ -9,7 +9,7 @@ use Orbit\Helper\Notifications\Exceptions\NotificationMethodsEmptyException;
 /**
  * Base Notification class.
  *
- * @todo  use a single sender class for each method. Not living in final/child notification class.
+ * @todo  use a single sender class for each notification method.
  * @todo  support bulk recipients.
  *
  * @author Budi <budi@dominopos.com>
@@ -144,7 +144,7 @@ abstract class Notification {
         $notificationMethods = $this->notificationMethods();
 
         if (empty($notificationMethods)) {
-            throw new NotificationMethodsEmptyException();
+            throw new NotificationMethodsEmptyException("Please set at least 1 notification method.");
         }
 
         foreach($notificationMethods as $method) {

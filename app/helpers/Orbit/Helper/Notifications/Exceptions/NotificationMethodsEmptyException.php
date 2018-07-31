@@ -7,9 +7,5 @@
  */
 class NotificationMethodsNotSetException extends \Exception
 {
-    public function getMessage()
-    {
-        return "Please set at least 1 method for notification!";
-    }
 
 }

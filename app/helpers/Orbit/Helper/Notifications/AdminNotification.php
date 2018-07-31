@@ -22,7 +22,7 @@ abstract class AdminNotification extends Notification implements EmailNotificati
 
     protected function notificationMethods()
     {
-        // Set to notify via email by default.
+        // Set to ONLY notify via email.
         return ['email'];
     }
 
