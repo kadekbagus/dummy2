@@ -1,8 +1,10 @@
 <?php namespace Orbit\Notifications\Coupon;
 
-use Orbit\Helper\Notifications\Notification;
+use Orbit\Helper\Notifications\AdminNotification;
 use Orbit\Helper\Util\JobBurier;
 use Carbon\Carbon;
+
+use Orbit\Notifications\Traits\HasPaymentTrait as HasPayment;
 
 use Mail;
 use Config;
@@ -15,32 +17,46 @@ use Exception;
  *
  * @author Budi <budi@dominopos.com>
  */
-class CouponNotAvailableNotification extends Notification
+class CouponNotAvailableNotification extends AdminNotification
 {
+    use HasPayment;
+
+    /**
+     * Required if we use HasPayment trait.
+     * @var null
+     */
     protected $payment = null;
 
     protected $reason = null;
 
-    function __construct($payment = null, $reason = 'Unknown error.')
+    /**
+     * Indicate if we should push this job to queue.
+     * @var boolean
+     */
+    protected $shouldQueue = true;
+
+    /**
+     * @var integer
+     */
+    protected $notificationDelay = 3;
+
+    function __construct($payment = null, $reason = 'Internal Server Error.')
     {
         $this->payment              = $payment;
         $this->reason               = $reason;
         $this->queueName            = Config::get('orbit.registration.mobile.queue_name');
     }
 
-    protected function getEmailAddress()
+    /**
+     * Get the email templates.
+     * 
+     * @return [type] [description]
+     */
+    public function getEmailTemplates()
     {
-        return $this->getCustomerEmail();
-    }
-
-    private function getCustomerEmail()
-    {
-        return $this->payment->user_email;
-    }
-
-    private function getCustomerName()
-    {
-        return $this->payment->user_name;
+        return [
+            'html' => 'emails.coupon.admin-coupon-not-available',
+        ];
     }
 
     /**
@@ -48,29 +64,14 @@ class CouponNotAvailableNotification extends Notification
      * 
      * @return [type] [description]
      */
-    protected function getEmailData()
+    public function getEmailData()
     {
-        $transaction          = [];
-        $transaction['id']    = $this->payment->payment_transaction_id;
-        $transaction['date']  = $this->payment->getTransactionDate('j M Y');
-        $transaction['items'] = [];
-        $transaction['total'] = $this->payment->getAmount();
-
-        foreach ($this->payment->details as $item) {
-            $transaction['items'][] = [
-                'name'      => $item->object_name,
-                'quantity'  => $item->quantity,
-                'price'     => $item->getPrice(),
-                'total'     => $item->getTotal(),
-            ];
-        }
-
         return [
-            'recipientEmail'    => $this->getEmailAddress(),
+            'recipientEmail'    => $this->getRecipientEmail(),
             'customerEmail'     => $this->getCustomerEmail(),
             'customerName'      => $this->getCustomerName(),
-            'customerPhone'     => $this->payment->phone,
-            'transaction'       => $transaction,
+            'customerPhone'     => $this->getCustomerPhone(),
+            'transaction'       => $this->getTransactionData(),
         ];
     }
 
@@ -84,10 +85,7 @@ class CouponNotAvailableNotification extends Notification
     public function toEmail($job, $data)
     {
         try {
-
-            $emailTemplate = 'emails.coupon.admin-coupon-not-available';
-
-            Mail::send($emailTemplate, $data, function($mail) use ($data) {
+            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
                 $subject = '[Admin] Can not Issue Coupon';
@@ -103,24 +101,6 @@ class CouponNotAvailableNotification extends Notification
         }
 
         $job->delete();
-
-    }
-
-    /**
-     * Send notification.
-     * 
-     * @return [type] [description]
-     */
-    public function send($delay = 3)
-    {
-        Queue::later(
-            $delay,
-            "Orbit\Notifications\Coupon\CouponNotAvailableNotification@toEmail", 
-            $this->getEmailData(),
-            $this->queueName
-        );
-
-        // Other notification method can be added here...
     }
 
 }
