@@ -7,8 +7,6 @@ use Queue;
 use Config;
 use Exception;
 use Carbon\Carbon;
-use Orbit\FakeJob;
-use Orbit\Helper\Util\JobBurier;
 
 use User;
 use PaymentTransaction;
@@ -20,10 +18,9 @@ use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
-
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
- * At this point, we assume the payment was completed (paid) so anything wrong with 
+ * At this point, we assume the payment was completed (paid) so anything wrong 
  * while trying to issue the coupon will make the status success_no_coupon_failed.
  *
  * @author Budi <budi@dominopos.com>
@@ -33,9 +30,9 @@ class GetCouponQueue
     /**
      * Issue hot deals coupon.
      *
-     * @param  [type] $job  [description]
-     * @param  [type] $data [description]
-     * @return [type]       [description]
+     * @param  Illuminate\Queue\Jobs\Job | Orbit\FakeJob $job  the job
+     * @param  array $data the data needed to run this job
+     * @return void
      */
     public function fire($job, $data)
     {
@@ -87,8 +84,8 @@ class GetCouponQueue
                 $payment->save();
 
                 // $availableCoupon = Coupon::where('promotion_id', $payment->issued_coupon->promotion_id)->first();
-                if (! empty($payment->coupon)) {
-                    $payment->coupon->updateAvailability();
+                if (! empty($payment->issued_coupon->coupon)) {
+                    $payment->issued_coupon->coupon->updateAvailability();
                 }
 
                 // Commit the changes ASAP.
@@ -127,8 +124,7 @@ class GetCouponQueue
             Log::info('PaidCoupon: Data: ' . serialize($data));
         }
 
-        if (! empty($job)) {
-            $job->delete();
-        }
+        $job->delete();
     }
+
 }
