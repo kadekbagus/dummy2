@@ -294,3 +294,6 @@ Artisan::add(new CouponCheckReserved);
 
 // Data Migration for new Payment Transaction table structure
 Artisan::add(new PaymentTransactionDataMigrationCommand);
+
+// Check Sepulsa vs GTM stat
+Artisan::add(new SepulsaRedemptionStatCommand);
