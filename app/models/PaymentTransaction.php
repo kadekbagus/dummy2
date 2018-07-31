@@ -213,11 +213,16 @@ class PaymentTransaction extends Eloquent
      */
     public function getTransactionDate($format = 'j M Y')
     {
-        if (! empty($this->payment->timezone_name)) {
-            return $this->payment->created_at->timezone($this->payment->timezone_name)->format($format);
+        if (! empty($this->timezone_name)) {
+            return $this->created_at->timezone($this->timezone_name)->format($format);
         }
 
-        return $this->payment->created_at->format($format);
+        return $this->created_at->format($format);
+    }
+
+    public function getGrandTotal()
+    {
+        return $this->getAmount();
     }
 
     /**

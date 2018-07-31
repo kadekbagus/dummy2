@@ -1,5 +1,6 @@
 <?php
 
+use Orbit\FakeJob;
 use Orbit\Queue\Coupon\HotDeals\GetCouponQueue as GetHotDealsCouponQueue;
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification;
@@ -69,10 +70,11 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
             );
         }
         else {
+            $fakeJob = new FakeJob();
             // Otherwise, issue the coupon right away!
             Log::info('PaidCoupon: Issuing coupon directly for PaymentID ' . $payment->payment_transaction_id . '...');
 
-            (new GetHotDealsCouponQueue())->fire(null, [
+            (new GetHotDealsCouponQueue())->fire($fakeJob, [
                 'paymentId' => $payment->payment_transaction_id
             ]);
         }

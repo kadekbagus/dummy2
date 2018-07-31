@@ -1,38 +1,65 @@
 <?php namespace Orbit\Notifications\Coupon;
 
-use Orbit\Helper\Notifications\Notification;
-use Orbit\Helper\Util\JobBurier;
-use Carbon\Carbon;
-
+use Exception;
+use Log;
 use Mail;
 use Config;
-use Log;
-use Queue;
-use Exception;
+use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
+use Orbit\Helper\Notifications\CustomerNotification;
+use Orbit\Notifications\Traits\HasContactTrait;
+use Orbit\Notifications\Traits\HasPaymentTrait;
 
 /**
- * Notify Customer that the coupon we try to issue is not available.
+ * Notify Admin that the coupon we try to issue is not available.
  *
  * @author Budi <budi@dominopos.com>
  */
-class CustomerCouponNotAvailableNotification extends Notification
+class CustomerCouponNotAvailableNotification extends CustomerNotification implements EmailNotificationInterface
 {
+    use HasPaymentTrait, HasContactTrait;
+
+    /**
+     * Required if we use HasPayment trait.
+     * @var null
+     */
     protected $payment = null;
+
+    /**
+     * Indicate if we should push this job to queue.
+     * @var boolean
+     */
+    protected $shouldQueue = true;
+
+    /**
+     * @var integer
+     */
+    protected $notificationDelay = 3;
 
     function __construct($payment = null)
     {
-        $this->payment              = $payment;
-        $this->queueName            = Config::get('orbit.registration.mobile.queue_name');
+        $this->payment = $payment;
     }
 
-    public function getEmailAddress()
+    public function getRecipientEmail()
     {
-        return $this->payment->user_email;
+        return $this->getCustomerEmail();
     }
 
-    public function getName()
+    public function getRecipientName()
     {
-        return $this->payment->user_name;
+        return $this->customerEmail();
+    }
+
+    /**
+     * Get the email templates that will be used.
+     * 
+     * @return [type] [description]
+     */
+    public function getEmailTemplates()
+    {
+        return [
+            'html' => 'emails.coupon.customer-coupon-not-available',
+        ];
     }
 
     /**
@@ -40,15 +67,15 @@ class CustomerCouponNotAvailableNotification extends Notification
      * 
      * @return [type] [description]
      */
-    protected function getEmailData()
+    public function getEmailData()
     {
         return [
-            'recipientEmail'    => $this->getEmailAddress(),
-            'customerName'      => $this->getName(),
-            'couponId'          => $this->payment->object_id,
-            'couponName'        => $this->payment->object_name,
-            'paymentId'         => $this->payment->payment_transaction_id,
-            'maxRefundDate'     => Carbon::now('Asia/Jakarta')->addDay()->format('j M Y') . ' 16:00 WIB (GMT +7)',
+            'recipientEmail'    => $this->getRecipientEmail(),
+            'customerEmail'     => $this->getCustomerEmail(),
+            'customerName'      => $this->getCustomerName(),
+            'customerPhone'     => $this->getCustomerPhone(),
+            'transaction'       => $this->getTransactionData(),
+            'cs'                => $this->getContactData(),
         ];
     }
 
@@ -62,10 +89,7 @@ class CustomerCouponNotAvailableNotification extends Notification
     public function toEmail($job, $data)
     {
         try {
-
-            $emailTemplate = 'emails.coupon.customer-coupon-not-available';
-
-            Mail::send($emailTemplate, $data, function($mail) use ($data) {
+            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
                 $subject = 'Coupon not Available';
@@ -76,33 +100,11 @@ class CustomerCouponNotAvailableNotification extends Notification
             });
 
         } catch (Exception $e) {
-            Log::info('CouponNotAvailable: email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::info('CouponNotAvailable: email exception. File: ' . $e->getFile() . ', Lines:' . $e->getLine() . ', Message: ' . $e->getMessage());
             Log::info('CouponNotAvailable: email data: ' . serialize($data));
         }
 
         $job->delete();
-
-        // Bury the job for later inspection
-        // JobBurier::create($job, function($theJob) {
-        //     // The queue driver does not support bury.
-        //     $theJob->delete();
-        // })->bury();
     }
 
-    /**
-     * Send notification.
-     * 
-     * @return [type] [description]
-     */
-    public function send($delay = 1)
-    {
-        Queue::later(
-            $delay,
-            "Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification@toEmail", 
-            $this->getEmailData(),
-            $this->queueName
-        );
-
-        // Other notification method can be added here...
-    }
 }
