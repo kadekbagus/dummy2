@@ -220,9 +220,19 @@ class PaymentTransaction extends Eloquent
         return $this->created_at->format($format);
     }
 
+    /**
+     * Get formatted grand total with currency code.
+     * 
+     * @return string
+     */
     public function getGrandTotal()
     {
-        return $this->getAmount();
+        $grandTotal = 0.0;
+        foreach($this->details as $item) {
+            $grandTotal += $item->quantity * $item->price;
+        }
+
+        return $this->currency . ' ' . number_format($grandTotal, 0, ',', '.');
     }
 
     /**

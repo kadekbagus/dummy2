@@ -15,7 +15,7 @@ use Coupon;
 
 // Notifications
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
-use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
+use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
 /**
@@ -36,8 +36,6 @@ class GetCouponQueue
      */
     public function fire($job, $data)
     {
-        $notificationDelay = 5;
-
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
         try {
@@ -94,7 +92,7 @@ class GetCouponQueue
                 Log::info('PaidCoupon: Coupon issued..');
 
                 // Notify Customer.
-                $payment->user->notify(new HotDealsReceiptNotification($payment), $notificationDelay);
+                $payment->user->notify(new ReceiptNotification($payment));
             }
 
         } catch (Exception $e) {
