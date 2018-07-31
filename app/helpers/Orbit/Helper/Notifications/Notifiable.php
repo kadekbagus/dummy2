@@ -2,6 +2,7 @@
 
 /**
  * Notifiable trait that indicate the using object/model can be notified.
+ * This helper inspired by Laravel 5's Notification feature.
  * 
  * @author Budi <budi@dominopos.com>
  */

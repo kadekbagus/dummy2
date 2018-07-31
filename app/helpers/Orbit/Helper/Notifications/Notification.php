@@ -8,6 +8,7 @@ use Orbit\Helper\Notifications\Exceptions\NotificationMethodsEmptyException;
 
 /**
  * Base Notification class.
+ * This helper inspired by Laravel 5's Notification feature.
  *
  * @todo  use a single sender class for each notification method.
  * @todo  support bulk recipients.
@@ -88,8 +89,6 @@ abstract class Notification {
      */
     protected function sendEmail($customDelay = 0)
     {
-        $fakeJob = new FakeJob();
-
         if ($this->shouldQueue) {
             
             // Override the delay if needed.
@@ -103,6 +102,7 @@ abstract class Notification {
             );
         }
         else {
+            $fakeJob = new FakeJob();
             $this->toEmail($fakeJob, $this->getEmailData());
         }
     }
@@ -114,8 +114,6 @@ abstract class Notification {
      */
     protected function sendInApp($customDelay = 0)
     {
-        $fakeJob = new FakeJob();
-
         if ($this->shouldQueue) {
 
             // Override the delay if needed.
@@ -129,6 +127,7 @@ abstract class Notification {
             );
         }
         else {
+            $fakeJob = new FakeJob();
             $this->toWeb($fakeJob, $this->getInAppData());
         }
     }
