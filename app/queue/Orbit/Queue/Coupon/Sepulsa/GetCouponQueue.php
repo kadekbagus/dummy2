@@ -16,9 +16,9 @@ use Coupon;
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
-use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification as SepulsaReceiptNotification;
+use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification;
 use Orbit\Notifications\Coupon\Sepulsa\TakeVoucherFailureNotification;
-use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification;
+use Orbit\Notifications\Coupon\Sepulsa\CouponNotAvailableNotification as SepulsaCouponNotAvailable;
 
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 
@@ -42,8 +42,6 @@ class GetCouponQueue
      */
     public function fire($job, $data)
     {
-        $notificationDelay = 1;
-
         try {
 
             DB::connection()->beginTransaction();
@@ -125,7 +123,7 @@ class GetCouponQueue
                 DB::connection()->commit();
 
                 // Notify customer for receipt/inApp.
-                $payment->user->notify(new SepulsaReceiptNotification($payment), $notificationDelay);
+                $payment->user->notify(new ReceiptNotification($payment));
 
                 Log::info('PaidCoupon: Coupon issued for paymentID: ' . $paymentId);
             }
@@ -215,7 +213,7 @@ class GetCouponQueue
                 );
 
                 Log::info(sprintf(
-                    'PaidCoupon: TakeVoucher Request: Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s',
+                    'PaidCoupon: Take Voucher Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s',
                     $delay,
                     $payment->object_id,
                     $failureMessage
@@ -233,7 +231,7 @@ class GetCouponQueue
                 DB::connection()->commit();
 
                 Log::info(sprintf(
-                    'PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', 
+                    'PaidCoupon: TakeVoucher Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', 
                     $payment->object_id, 
                     $failureMessage
                 ));
@@ -271,7 +269,7 @@ class GetCouponQueue
         }
 
         // Notify customer that the coupon is not available and the money will be refunded.
-        $payment->user->notify(new VoucherNotAvailableNotification($payment));
+        $payment->user->notify(new SepulsaCouponNotAvailable($payment));
     }
 
 }
