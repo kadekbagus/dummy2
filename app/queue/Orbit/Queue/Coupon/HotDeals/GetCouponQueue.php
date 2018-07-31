@@ -56,13 +56,15 @@ class GetCouponQueue
 
                 DB::connection()->commit();
 
+                $job->delete();
+
                 return;
             }
 
             // It means we can not get related issued coupon.
             if (empty($payment->issued_coupon)) {
                 $payment->cleanUp();
-                throw new Exception("Related IssuedCoupon not found. Might be put to stock again by system queue before customer complete the payment.", 1);
+                throw new Exception("Related IssuedCoupon not found. Might be put to stock again by system queue before customer completes the payment.", 1);
             }
 
             // If coupon already issued/redeemed...
@@ -108,11 +110,11 @@ class GetCouponQueue
                 foreach($adminEmails as $email) {
                     $admin              = new User;
                     $admin->email       = $email;
-                    $admin->notify(new CouponNotAvailableNotification($payment, $e->getMessage()), 3);
+                    $admin->notify(new CouponNotAvailableNotification($payment, $e->getMessage()));
                 }
 
                 // Notify customer that coupon is not available.
-                $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment), 3);
+                $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment));
             }
             else {
                 DB::connection()->rollback();

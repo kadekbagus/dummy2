@@ -18,7 +18,7 @@ use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
 use Orbit\Notifications\Coupon\Sepulsa\ReceiptNotification;
 use Orbit\Notifications\Coupon\Sepulsa\TakeVoucherFailureNotification;
-use Orbit\Notifications\Coupon\Sepulsa\CouponNotAvailableNotification as SepulsaCouponNotAvailable;
+use Orbit\Notifications\Coupon\Sepulsa\CouponNotAvailableNotification as SepulsaCouponNotAvailableNotification;
 
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 
@@ -155,9 +155,7 @@ class GetCouponQueue
             }
         }
 
-        if (! empty($job)) {
-            $job->delete();
-        }
+        $job->delete();
     }
 
     /**
@@ -269,7 +267,7 @@ class GetCouponQueue
         }
 
         // Notify customer that the coupon is not available and the money will be refunded.
-        $payment->user->notify(new SepulsaCouponNotAvailable($payment));
+        $payment->user->notify(new SepulsaCouponNotAvailableNotification($payment));
     }
 
 }

@@ -3,7 +3,7 @@
 use Orbit\FakeJob;
 use Orbit\Queue\Coupon\HotDeals\GetCouponQueue as GetHotDealsCouponQueue;
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
-use Orbit\Notifications\Coupon\Sepulsa\VoucherNotAvailableNotification;
+use Orbit\Notifications\Coupon\Sepulsa\CouponNotAvailableNotification as SepulsaCouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
 
 /**
@@ -30,7 +30,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         // Only the first transaction which pending/paid should get the coupon.
         Log::info("PaidCoupon: Payment {$payment->payment_transaction_id} success but can not issue coupon...");
 
-        $failureMessage = "Transaction with the same user and coupon is still in progress.";
+        $failureMessage = "Transactions with the same user and coupon are still in progress.";
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
         // Notify Admin that the voucher is failed and customer's money should be refunded.
@@ -42,7 +42,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
         // Notify customer that the coupon is not available and the money will be refunded.
         if ($payment->forSepulsa()) {
-            $payment->user->notify(new VoucherNotAvailableNotification($payment));
+            $payment->user->notify(new SepulsaCouponNotAvailableNotification($payment));
         }
         else if ($payment->forHotDeals()) {
             $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment));
