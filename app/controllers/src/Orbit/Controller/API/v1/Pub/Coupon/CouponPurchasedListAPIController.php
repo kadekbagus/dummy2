@@ -211,8 +211,6 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                         ->first();
             });
 
-            // need subquery to order my coupon
-            $querySql = $coupon->toSql();
             $coupon = $coupon->orderBy(DB::raw("{$prefix}payment_transactions.created_at"), 'desc');
 
             $_coupon = clone $coupon;
