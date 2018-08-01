@@ -212,7 +212,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             });
 
             $coupon = $coupon->orderBy(DB::raw("{$prefix}payment_transactions.created_at"), 'desc');
-            $qrySql = $coupon->toSql();
+
             $_coupon = clone $coupon;
 
             $take = PaginationNumber::parseTakeFromGet('coupon');
@@ -259,7 +259,6 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             }
 
             $this->response->data = new stdClass();
-            $this->response->data->sql = $qrySql;
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = count($listcoupon);
             $this->response->data->records = $listcoupon;
