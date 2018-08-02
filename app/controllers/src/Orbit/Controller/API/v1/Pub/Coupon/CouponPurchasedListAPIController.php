@@ -33,11 +33,6 @@ class CouponPurchasedListAPIController extends PubControllerAPI
 
                         ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                         ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
-                        ->join('issued_coupons', function ($join) use($user) {
-                            $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                            $join->where('issued_coupons.status', '!=', 'deleted');
-                            $join->where('issued_coupons.user_id', '=', $user->user_id);
-                        })
                         ->where('payment_transactions.user_id', $user->user_id)
                         ->where('payment_transaction_details.object_type', 'coupon')
                         ->where('payment_transactions.payment_method', '!=', 'normal')
@@ -145,10 +140,16 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                                 ) as link_to_tenant
                             "))
 
-                            ->leftJoin('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                            ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                            ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
+                            ->join('merchants', function ($q) {
+                                $q->on('merchants.merchant_id', '=', 'promotions.merchant_id');
+                            })
+                            ->join('merchants as malls', function ($q) {
+                                $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
+                            })
                             ->leftJoin('payment_normal_paypro_details', 'payment_normal_paypro_details.payment_transaction_detail_id', '=', 'payment_transaction_details.payment_transaction_detail_id')
 
-                            ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
@@ -163,17 +164,6 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             ->leftJoin('media', function ($q) {
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
-                            })
-                            ->join('issued_coupons', function ($join) use($user) {
-                                $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '!=', 'deleted');
-                                $join->where('issued_coupons.user_id', '=', $user->user_id);
-                            })
-                            ->leftJoin('merchants', function ($q) {
-                                $q->on('merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id');
-                            })
-                            ->leftJoin('merchants as malls', function ($q) {
-                                $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
                             })
                             ->leftJoin('timezones', function ($q) use($prefix) {
                                 $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
@@ -211,8 +201,6 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                         ->first();
             });
 
-            // need subquery to order my coupon
-            $querySql = $coupon->toSql();
             $coupon = $coupon->orderBy(DB::raw("{$prefix}payment_transactions.created_at"), 'desc');
 
             $_coupon = clone $coupon;

@@ -1,4 +1,4 @@
-<?php namespace Orbit\Notifications\Coupon\HotDeals;
+<?php namespace Orbit\Notifications\Coupon\Sepulsa;
 
 use Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification;
 
