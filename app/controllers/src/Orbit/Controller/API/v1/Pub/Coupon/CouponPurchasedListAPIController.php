@@ -33,11 +33,6 @@ class CouponPurchasedListAPIController extends PubControllerAPI
 
                         ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                         ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
-                        ->join('issued_coupons', function ($join) use($user) {
-                            $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                            $join->where('issued_coupons.status', '!=', 'deleted');
-                            $join->where('issued_coupons.user_id', '=', $user->user_id);
-                        })
                         ->where('payment_transactions.user_id', $user->user_id)
                         ->where('payment_transaction_details.object_type', 'coupon')
                         ->where('payment_transactions.payment_method', '!=', 'normal')
