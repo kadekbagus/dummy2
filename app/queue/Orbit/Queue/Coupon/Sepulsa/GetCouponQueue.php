@@ -213,7 +213,7 @@ class GetCouponQueue
                 Log::info(sprintf(
                     'PaidCoupon: Take Voucher Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s',
                     $delay,
-                    $payment->object_id,
+                    $payment->issued_coupon->promotion_id,
                     $failureMessage
                 ));
             }
@@ -230,7 +230,7 @@ class GetCouponQueue
 
                 Log::info(sprintf(
                     'PaidCoupon: TakeVoucher Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', 
-                    $payment->object_id, 
+                    $payment->issued_coupon->promotion_id, 
                     $failureMessage
                 ));
 

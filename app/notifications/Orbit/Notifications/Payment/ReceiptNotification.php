@@ -137,7 +137,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
     {
         $bodyInApps = null;
         $userId = $this->payment->user_id;
-        $couponId = $this->payment->object_id;
+        $couponId = $this->payment->details->first()->object_id;
         $prefix = DB::getTablePrefix();
         $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id,
                                     {$prefix}promotions.promotion_name,
