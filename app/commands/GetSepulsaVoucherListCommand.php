@@ -62,6 +62,7 @@ class GetSepulsaVoucherListCommand extends Command {
                             $newRecord = new stdClass();
                             $newRecord->token = $record->token;
                             $newRecord->title = $record->title;
+                            $newRecord->merchant_name = $record->merchant_name;
                             $outputArr[] = $newRecord;
                         }
                         $output = json_encode($outputArr);
@@ -136,7 +137,7 @@ class GetSepulsaVoucherListCommand extends Command {
             array('email-to', null, InputOption::VALUE_OPTIONAL, 'Send output to email(s) separated by comma.', null),
             array('take', null, InputOption::VALUE_OPTIONAL, 'Set the take parameter. Default: 100', null),
             array('get-current-config', null, InputOption::VALUE_NONE, 'Return currently used sepulsa config.', null),
-            array('min', null, InputOption::VALUE_NONE, 'Output only voucher token and voucher title.', null),
+            array('min', null, InputOption::VALUE_NONE, 'Output only voucher token, voucher title and merchant name.', null),
         );
     }
 
