@@ -1,6 +1,6 @@
 <?php namespace Orbit\Notifications\Coupon\Sepulsa;
 
-use Orbit\Helper\Notifications\Payment\ReceiptNotification as BaseReceiptNotification;
+use Orbit\Notifications\Payment\ReceiptNotification as BaseReceiptNotification;
 
 /**
  * Receipt Notification for Customer after purchasing Sepulsa Voucher.
