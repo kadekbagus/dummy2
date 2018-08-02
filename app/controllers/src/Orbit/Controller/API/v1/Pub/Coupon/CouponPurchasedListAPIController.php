@@ -148,7 +148,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
                             ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
                             ->join('merchants', function ($q) {
-                                $q->on('merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id');
+                                $q->on('merchants.merchant_id', '=', 'promotions.merchant_id');
                             })
                             ->join('merchants as malls', function ($q) {
                                 $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
