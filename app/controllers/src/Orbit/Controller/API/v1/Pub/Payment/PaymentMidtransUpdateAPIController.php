@@ -167,7 +167,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     // Link to IssuedCoupon if the payment is not denied/failed/expired.
                     if (! in_array($status, [PaymentTransaction::STATUS_DENIED, PaymentTransaction::STATUS_EXPIRED, PaymentTransaction::STATUS_FAILED])) {
                         $reservedCoupon = IssuedCoupon::where('user_id', $payment_update->user_id)
-                                      ->where('promotion_id', $payment_update->object_id)
+                                      ->where('promotion_id', $payment_update->details->first()->object_id)
                                       ->where('status', IssuedCoupon::STATUS_RESERVED)
                                       ->whereNull('transaction_id')
                                       ->first(); // Can update transaction_id directly here, but for now just get the record.
