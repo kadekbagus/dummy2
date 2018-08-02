@@ -3855,7 +3855,6 @@ class CouponAPIController extends ControllerAPI
                     $redeemLocationInfo->merchant_name          = $baseStore->store_name;
                     $redeemLocationInfo->store_id               = $baseStore->base_store_id;
                     $redeemLocationInfo->store_name             = $baseStore->store_name;
-                    $redeemLocationInfo->timezone_name          = $baseStore->timezone_name;
                     $redeemLocationInfo->building_id            = $baseStore->merchant_id;
                     $redeemLocationInfo->building_name          = $baseStore->mall_name;
 
