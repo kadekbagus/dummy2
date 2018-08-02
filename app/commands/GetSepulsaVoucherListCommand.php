@@ -80,7 +80,7 @@ class GetSepulsaVoucherListCommand extends Command {
                     $filename = sprintf('/tmp/sepulsa-voucher-list-%s.csv', date('Ymd-His'));
                     $fileIO = fopen($filename, 'w+');
                     if ($this->option('min')) {
-                        $csvTitle = fputcsv($fileIO, ['token', 'title']);
+                        $csvTitle = fputcsv($fileIO, ['token', 'title', 'merchant_name']);
                     } else {
                         $csvTitle = fputcsv($fileIO, array_keys((array) $response->result->data[0]));
                     }
@@ -89,6 +89,7 @@ class GetSepulsaVoucherListCommand extends Command {
                             $newRecord = new stdClass();
                             $newRecord->token = $record->token;
                             $newRecord->title = $record->title;
+                            $newRecord->merchant_name = $record->merchant_name;
                             $record = $newRecord;
                         }
                         $record = (array) $record;
