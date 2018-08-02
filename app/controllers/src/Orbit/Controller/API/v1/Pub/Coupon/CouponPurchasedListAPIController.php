@@ -146,15 +146,15 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                             "))
 
                             ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
-                            ->leftJoin('payment_normal_paypro_details', 'payment_normal_paypro_details.payment_transaction_detail_id', '=', 'payment_transaction_details.payment_transaction_detail_id')
-
                             ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
                             ->join('merchants', function ($q) {
-                                $q->on('merchants.merchant_id', '=', 'promotions.merchant_id');
+                                $q->on('merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id');
                             })
                             ->join('merchants as malls', function ($q) {
                                 $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
                             })
+                            ->leftJoin('payment_normal_paypro_details', 'payment_normal_paypro_details.payment_transaction_detail_id', '=', 'payment_transaction_details.payment_transaction_detail_id')
+
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
