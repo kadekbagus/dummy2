@@ -79,7 +79,6 @@ class GetCouponQueue
 
                 $payment->issued_coupon->save();
 
-                $payment->coupon_redemption_code = $payment->issued_coupon->issued_coupon_code;
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
