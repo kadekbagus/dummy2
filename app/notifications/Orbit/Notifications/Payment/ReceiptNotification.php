@@ -42,14 +42,6 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
     }
 
     /**
-     * @return [type] [description]
-     */
-    protected function getQueueName()
-    {
-        return Config::get('orbit.registration.mobile.queue_name');
-    }
-
-    /**
      * @override
      * @return [type] [description]
      */
@@ -71,6 +63,8 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
 
     /**
      * Get the email templates.
+     * At the moment we can use same template for both Sepulsa and Hot Deals.
+     * Can be overriden in each receipt class if needed.
      * 
      * @return [type] [description]
      */
@@ -88,8 +82,6 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
      */
     public function getEmailData()
     {
-        $redeemUrl = Config::get('orbit.coupon.direct_redemption_url');
-
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
             'customerEmail'     => $this->getCustomerEmail(),
@@ -97,7 +89,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             'customerPhone'     => $this->getCustomerPhone(),
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
-            'redeemUrl'         => $redeemUrl,
+            'redeemUrl'         => Config::get('orbit.coupon.direct_redemption_url'),
         ];
     }
 
@@ -114,7 +106,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Your Receipt from Gotomalls.com';
+                $subject = trans('email-receipt.subject');
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
