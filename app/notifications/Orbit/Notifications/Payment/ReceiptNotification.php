@@ -56,11 +56,6 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
         return $this->getCustomerEmail();
     }
 
-    public function getRecipientName()
-    {
-        return $this->getCustomerName();
-    }
-
     /**
      * Get the email templates.
      * At the moment we can use same template for both Sepulsa and Hot Deals.

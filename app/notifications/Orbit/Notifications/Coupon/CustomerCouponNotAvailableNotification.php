@@ -45,11 +45,6 @@ class CustomerCouponNotAvailableNotification extends CustomerNotification implem
         return $this->getCustomerEmail();
     }
 
-    public function getRecipientName()
-    {
-        return $this->customerEmail();
-    }
-
     /**
      * Get the email templates that will be used.
      * 

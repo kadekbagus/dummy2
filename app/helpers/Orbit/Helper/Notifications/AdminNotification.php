@@ -36,34 +36,4 @@ abstract class AdminNotification extends Notification implements EmailNotificati
         return $this->notifiable->email;
     }
 
-    /**
-     * Get admin name.
-     * 
-     * @return [type] [description]
-     */
-    public function getRecipientName()
-    {
-        return $this->notifiable->name;
-    }
-
-    /**
-     * Get admin email (old method, for compatibility purpose)
-     * 
-     * @return [type] [description]
-     */
-    protected function getEmailAddress()
-    {
-        return $this->notifiable->email;
-    }
-
-    /**
-     * Get admin name (old method, for compatibility purpose)
-     * 
-     * @return [type] [description]
-     */
-    protected function getName()
-    {
-        return $this->notifiable->name;
-    }
-
 }
