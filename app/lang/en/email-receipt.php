@@ -1,7 +1,7 @@
 <?php 
 
 return [
-    'subjectt' => 'Your Receipt from Gotomalls.com',
+    'subject' => 'Your Receipt from Gotomalls.com',
 
     'header' => [
         'invoice'       => 'Receipt',
