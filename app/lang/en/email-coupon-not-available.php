@@ -1,21 +1,20 @@
 <?php 
 
 return [
-    'subject' => 'Your Receipt from Gotomalls.com',
+    'subject' => 'Coupon Not Available',
 
     'header' => [
-        'invoice'       => 'Receipt',
+        'invoice'       => 'Notice',
         'order_number'  => 'Transaction ID: :transactionId',
     ],
 
     'body' => [
         'greeting' => 'Dear, :customerName
                         <br>
-                        Thank you for purchasing :itemName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
+                        Sorry we could not provide the coupon you purchased. We apologize for this inconvenience.',
 
-        'redeem' => 'To see your purchased item and redeem/collect at the stores, please click the button below.',
+        'help' => 'Our Customer Service will contact shortly to refund your purchase. You can also contact our Customer Service at <a style="color:#f43d3c;text-decoration: none;" href="tel::phone">:phone</a> or email at <a style="text-decoration: none;color:#f43d3c;" href="mailto::email">:email</a> to get information about refund.',
 
-        'help' => 'Please contact our customer service at <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> or email at <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a> if you find any difficulties.',
         'thank_you' => 'Thank you and have a nice day.',
     ],
 
@@ -37,9 +36,5 @@ return [
         'footer' => [
             'total'     => 'Total',
         ]
-    ],
-
-    'buttons' => [
-        'redeem' => 'Go to My Wallet',
     ],
 ];

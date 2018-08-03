@@ -196,6 +196,46 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Get formatted amount.
+     *
+     * @return [type] [description]
+     */
+    public function getAmount()
+    {
+        return $this->currency . ' ' . number_format($this->amount, 0, ',', '.');
+    }
+
+    /**
+     * Get transaction date which should be based on mall location.
+     * 
+     * @param  string $format [description]
+     * @return [type]         [description]
+     */
+    public function getTransactionDate($format = 'j M Y')
+    {
+        if (! empty($this->timezone_name)) {
+            return $this->created_at->timezone($this->timezone_name)->format($format);
+        }
+
+        return $this->created_at->format($format);
+    }
+
+    /**
+     * Get formatted grand total with currency code.
+     * 
+     * @return string
+     */
+    public function getGrandTotal()
+    {
+        $grandTotal = 0.0;
+        foreach($this->details as $item) {
+            $grandTotal += $item->quantity * $item->price;
+        }
+
+        return $this->currency . ' ' . number_format($grandTotal, 0, ',', '.');
+    }
+
+    /**
      * Clean up anything related to this payment. 
      * If payment expired, failed, etc, it should reset/remove any related issued coupon.
      *

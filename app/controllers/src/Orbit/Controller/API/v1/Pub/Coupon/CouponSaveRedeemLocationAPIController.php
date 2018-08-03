@@ -118,7 +118,7 @@ class CouponSaveRedeemLocationAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($errorMessage);
             }
 
-            $transactionDetailNormalPaypro->store_id = $baseStore->store_id;
+            $transactionDetailNormalPaypro->store_id = $baseStore->base_store_id;
             $transactionDetailNormalPaypro->store_name = $baseStore->store_name;
             $transactionDetailNormalPaypro->merchant_id = $baseStore->base_merchant_id;
             $transactionDetailNormalPaypro->merchant_name = $baseStore->store_name;
