@@ -2243,6 +2243,8 @@ class TenantAPIController extends ControllerAPI
             $store_name = OrbitInput::get('store_name');
             $mall_name = OrbitInput::get('mall_name');
             $cities = OrbitInput::get('cities');
+            $country = OrbitInput::get('country');
+            $country_id = OrbitInput::get('country_id');
             $cities = (array) $cities;
             $parent = null;
             $parent_ids = [];
@@ -2439,6 +2441,16 @@ class TenantAPIController extends ControllerAPI
             // filter by mall name and store name
             if (!empty($parent_ids) && $account_name !== 'Mall') {
                 $tenants->whereIn('merchants.parent_id', $parent_ids);
+            }
+
+            // filter by country
+            if (!empty($country) && $account_name !== 'Mall') {
+                $tenants->where('merchants.country', '=', $country);
+            }
+
+            // filter by country_id
+            if (!empty($country_id) && $account_name !== 'Mall') {
+                $tenants->where('merchants.country_id', '=', $country_id);
             }
 
             // filter by mall name for account type mall (PMP account setup admin portal)
