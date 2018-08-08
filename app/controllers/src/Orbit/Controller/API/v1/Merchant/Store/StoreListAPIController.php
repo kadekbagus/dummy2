@@ -71,7 +71,7 @@ class StoreListAPIController extends ControllerAPI
                     'sortby'   => $sort_by,
                 ),
                 array(
-                    'sortby'   => 'in:merchant,location,created_date,floor',
+                    'sortby'   => 'in:merchant,location,created_date,floor,status',
                 )
             );
 
@@ -84,7 +84,7 @@ class StoreListAPIController extends ControllerAPI
             $prefix = DB::getTablePrefix();
             $store = BaseStore::with('bank', 'objectContact', 'financialContactDetail', 'paymentProvider', 'productTags')
                             ->excludeDeleted('base_stores')
-                            ->select('base_merchants.base_merchant_id', 'base_merchants.country_id',
+                            ->select('base_merchants.base_merchant_id', 'base_merchants.country_id', 'countries.name as country_name',
                                 DB::raw("{$prefix}base_merchants.name AS merchant"),
                                 'base_stores.base_store_id',
                                 DB::raw("{$prefix}merchants.merchant_id AS mall_id"),
@@ -99,7 +99,9 @@ class StoreListAPIController extends ControllerAPI
                             ->join('base_merchants', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                             ->leftJoin('objects', 'base_stores.floor_id', '=', 'objects.object_id')
                             ->leftJoin('merchants', 'base_stores.merchant_id', '=', 'merchants.merchant_id')
-                            ->groupBy('base_stores.base_store_id');
+                            ->leftJoin('countries', 'base_merchants.country_id', '=', 'countries.country_id')
+                            ->groupBy('base_stores.base_store_id')
+                            ;
 
             // Filter store by merchant name
             OrbitInput::get('merchant_name_like', function($merchant_name) use ($store)
@@ -123,6 +125,12 @@ class StoreListAPIController extends ControllerAPI
             OrbitInput::get('base_store_id', function($base_store_id) use ($store)
             {
                 $store->where('base_stores.base_store_id', $base_store_id);
+            });
+
+            // Filter store by country
+            OrbitInput::get('country_id', function($country_id) use ($store)
+            {
+                $store->where('base_merchants.country_id', $country_id);
             });
 
             // Add new relation based on request
@@ -159,13 +167,16 @@ class StoreListAPIController extends ControllerAPI
             });
 
             $_store = clone $store;
+            $_storeActiveInactive = clone $store;
 
             $sortByMapping = array(
-                'merchant'      => 'base_merchants.name',
-                'location'      => 'merchants.name',
-                'created_date'  => 'base_merchants.created_at',
-                'floor'         => 'floor',
+                'merchant'     => 'base_merchants.name',
+                'location'     => 'merchants.name',
+                'created_date' => 'base_merchants.created_at',
+                'floor'        => 'floor',
+                'status'       => 'base_stores.status',
             );
+
             $sort_by = $sortByMapping[$sort_by];
 
             OrbitInput::get('sortmode', function($_sortMode) use (&$sort_mode)
@@ -187,10 +198,43 @@ class StoreListAPIController extends ControllerAPI
             $storeList = $store->get();
             $count = RecordCounter::create($_store)->count();
 
+            // Get total active inactive stores
+            $totalActiveStore = 0;
+            $totalInactiveStore = 0;
+
+            if ($count > 0) {
+                $sql = $_storeActiveInactive->toSql();
+                foreach($_storeActiveInactive->getBindings() as $binding)
+                {
+                 // DB::connection()->getPdo()->quote()
+                  $value = is_numeric($binding) ? $binding : DB::connection()->getPdo()->quote($binding);
+                  $sql = preg_replace('/\?/', $value, $sql, 1);
+                }
+
+                $totalActiveInactiveStore = DB::table(DB::raw('(' . $sql . ')  as tbl'))
+                                                        ->select(DB::raw("count(tbl.base_merchant_id) as total "), DB::raw('tbl.status'))
+                                                        ->groupBy(DB::raw('tbl.status'))
+                                                        ->limit(15)
+                                                        ->get();
+
+                if (count($totalActiveInactiveStore) > 0) {
+                    foreach ($totalActiveInactiveStore as $key => $value) {
+                        if ($value->status == 'active') {
+                            $totalActiveStore = $value->total;
+                        } elseif ($value->status == 'inactive') {
+                            $totalInactiveStore = $value->total;
+                        }
+                    }
+                }
+            }
+
             $this->response->data = new stdClass();
             $this->response->data->total_records = $count;
             $this->response->data->returned_records = count($storeList);
+            $this->response->data->total_active_stores = $totalActiveStore;
+            $this->response->data->total_inactive_stores = $totalInactiveStore;
             $this->response->data->records = $storeList;
+
         } catch (ACLForbiddenException $e) {
             $this->response->code = $e->getCode();
             $this->response->status = 'error';
