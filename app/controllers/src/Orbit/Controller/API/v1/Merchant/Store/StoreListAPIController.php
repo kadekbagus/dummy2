@@ -133,6 +133,13 @@ class StoreListAPIController extends ControllerAPI
                 $store->where('base_merchants.country_id', $country_id);
             });
 
+            // Filter store by country
+            OrbitInput::get('status', function($status) use ($store)
+            {
+                $store->where('base_stores.status', 'like', $status);
+            });
+
+
             // Add new relation based on request
             OrbitInput::get('with', function ($with) use ($store) {
                 $with = (array) $with;
