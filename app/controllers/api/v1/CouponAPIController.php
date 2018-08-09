@@ -1794,6 +1794,14 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->is_exclusive = $is_exclusive;
             });
 
+            OrbitInput::post('gender', function($gender) use ($updatedcoupon, $promotion_id) {
+                if ($gender === 'A') {
+                    $gender = 'Y';
+                }
+
+                $updatedcoupon->is_all_gender = $gender;
+            });
+
             OrbitInput::post('is_sponsored', function($is_sponsored) use ($updatedcoupon, $promotion_id) {
                 $updatedcoupon->is_sponsored = $is_sponsored;
 
@@ -2153,14 +2161,6 @@ class CouponAPIController extends ControllerAPI
                     $updatedcoupon->linkToTenants()->detach($deleted_retailer_ids);
                     $updatedcoupon->load('linkToTenants');
                 }
-            });
-
-            OrbitInput::post('gender', function($gender) use ($updatedcoupon, $promotion_id) {
-                if ($gender === 'A') {
-                    $gender = 'Y';
-                }
-
-                $updatedcoupon->is_all_gender = $gender;
             });
 
             OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet) {
