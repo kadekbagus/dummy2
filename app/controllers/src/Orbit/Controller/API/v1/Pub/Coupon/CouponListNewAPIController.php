@@ -131,6 +131,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $viewType = OrbitInput::get('view_type', 'grid');
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
+            $gender = OrbitInput::get('gender', null);
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -255,6 +256,11 @@ class CouponListNewAPIController extends PubControllerAPI
             // Filter by selected categories...
             if (! empty($categoryIds)) {
                 $this->searcher->filterByCategories($categoryIds);
+            }
+
+            // Filter by gender
+            if (! empty($gender)) {
+                $this->searcher->filterByGender(strtolower($gender));
             }
 
             // Filter by partner...
