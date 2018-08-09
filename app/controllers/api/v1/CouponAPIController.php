@@ -1312,7 +1312,6 @@ class CouponAPIController extends ControllerAPI
             $partner_ids = (array) $partner_ids;
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
             $is_visible = OrbitInput::post('is_hidden', 'N') === 'Y' ? 'N' : 'Y';
-            $gender = OrbitInput::post('gender', 'Y');
 
             $is_3rd_party_promotion = OrbitInput::post('is_3rd_party_promotion', 'N');
             $promotion_value = OrbitInput::post('promotion_value', NULL);
@@ -1998,10 +1997,6 @@ class CouponAPIController extends ControllerAPI
                 $updatedcoupon->is_unique_redeem = 'Y';
             }
 
-            if ($gender === 'A') {
-                $gender = 'Y';
-            }
-
             $updatedcoupon->modified_by = $this->api->user->user_id;
 
             Event::fire('orbit.coupon.postupdatecoupon.before.save', array($this, $updatedcoupon));
@@ -2160,14 +2155,12 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-
-            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatedcoupon, $promotion_id) {
-                $updatedcoupon->is_all_gender = $is_all_gender;
-                if ($is_all_gender == 'Y') {
-                    $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $promotion_id)
-                                                            ->where('campaign_type', '=', 'coupon');
-                    $deleted_campaign_genders->delete();
+            OrbitInput::post('gender', function($gender) use ($updatedcoupon, $promotion_id) {
+                if ($gender === 'A') {
+                    $gender = 'Y';
                 }
+
+                $updatedcoupon->is_all_gender = $gender;
             });
 
             OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet) {
