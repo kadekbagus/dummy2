@@ -121,7 +121,7 @@ class UserNotificationMallCommand extends Command {
                         $contents->en = 'There are new happenings in '.$mall->name;
                         $mongoNotifId = (!empty($mallObjectNotification->notification_ids[0])) ? $mallObjectNotification->notification_ids[0]: '';
                         // add query string for activity recording
-                        $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
+                        $newUrl =  $launchUrl . '&notif_id=' . $mongoNotifId;
 
                         // Slice token where token up to 1500
                         if (count($notificationTokens) > 1500) {
