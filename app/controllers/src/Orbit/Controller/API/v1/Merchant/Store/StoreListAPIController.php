@@ -23,6 +23,7 @@ use Orbit\Controller\API\v1\Merchant\Store\StoreHelper;
 class StoreListAPIController extends ControllerAPI
 {
     protected $storeViewRoles = ['super admin', 'merchant database admin'];
+    protected $returnBuilder = FALSE;
     /**
      * GET - get store
      *
@@ -196,11 +197,13 @@ class StoreListAPIController extends ControllerAPI
             $store = $store->orderBy($sort_by, $sort_mode)
                            ->orderBy('location', 'asc');
 
-            $take = PaginationNumber::parseTakeFromGet('retailer');
-            $store->take($take);
+            if (! $this->returnBuilder) {
+                $take = PaginationNumber::parseTakeFromGet('retailer');
+                $store->take($take);
 
-            $skip = PaginationNumber::parseSkipFromGet();
-            $store->skip($skip);
+                $skip = PaginationNumber::parseSkipFromGet();
+                $store->skip($skip);
+            }
 
             $storeList = $store->get();
             $count = RecordCounter::create($_store)->count();
@@ -233,6 +236,10 @@ class StoreListAPIController extends ControllerAPI
                         }
                     }
                 }
+            }
+
+            if ($this->returnBuilder) {
+                return ['builder' => $store, 'count' => $count];
             }
 
             $this->response->data = new stdClass();
@@ -286,5 +293,12 @@ class StoreListAPIController extends ControllerAPI
         $output = $this->render($httpCode);
 
         return $output;
+    }
+
+    public function setReturnBuilder($bool)
+    {
+        $this->returnBuilder = $bool;
+
+        return $this;
     }
 }
