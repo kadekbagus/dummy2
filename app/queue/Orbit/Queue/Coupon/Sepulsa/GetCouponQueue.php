@@ -53,7 +53,11 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting Sepulsa Voucher for paymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])->find($paymentId);
+
+            if (empty($payment)) {
+                throw new Exception("Transaction {$paymentId} not found!");
+            }
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
@@ -158,9 +162,7 @@ class GetCouponQueue
             }
         }
 
-        if (! empty($job)) {
-            $job->delete();
-        }
+        $job->delete();
     }
 
     /**
