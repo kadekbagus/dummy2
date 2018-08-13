@@ -50,7 +50,7 @@ class GetCouponQueue
 
             Log::info(sprintf('PaidCoupon: Getting coupon PaymentID: %s', $paymentId));
 
-            $payment = PaymentTransaction::with(['coupon', 'issued_coupon', 'user'])->findOnWriteConnection($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'issued_coupon', 'user'])->find($paymentId);
 
             if (empty($payment)) {
                 throw new Exception("Transaction {$paymentId} not found!");
@@ -64,6 +64,10 @@ class GetCouponQueue
                 $payment->cleanUp();
 
                 DB::connection()->commit();
+
+                if (! empty($job)) {
+                    $job->delete();
+                }
 
                 return;
             }

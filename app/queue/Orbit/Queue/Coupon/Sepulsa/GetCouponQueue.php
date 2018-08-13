@@ -53,7 +53,7 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting Sepulsa Voucher for paymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])->findOnWriteConnection($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])->find($paymentId);
 
             if (empty($payment)) {
                 throw new Exception("Transaction {$paymentId} not found!");
