@@ -202,6 +202,8 @@ class Client
                 $options['headers'] = $this->headers;
             }
 
+            $options['headers']['User-Agent'] = 'gotomalls-kasih-lewat-please';
+
             $response = $this->client->request($method, $this->endpoint, $options);
             $response = $response->getBody()->getContents();
 

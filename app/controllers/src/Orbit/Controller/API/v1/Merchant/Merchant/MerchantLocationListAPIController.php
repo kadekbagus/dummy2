@@ -83,7 +83,8 @@ class MerchantLocationListAPIController extends ControllerAPI
                     'objects.object_name as floor',
                     'base_stores.unit',
                     'merchants.city',
-                    'merchants.country'
+                    'merchants.country',
+                    'base_stores.status'
                 )
                 ->join('base_stores', 'base_stores.base_merchant_id', '=', 'base_merchants.base_merchant_id')
                 ->join('merchants', 'merchants.merchant_id', '=', 'base_stores.merchant_id')
@@ -103,6 +104,7 @@ class MerchantLocationListAPIController extends ControllerAPI
             // Clone the query builder which still does not include the take,
             // skip, and order by
             $_merchantLocations = clone $merchantLocations;
+            $_merchantActiveInactive = clone $merchantLocations;
 
             $take = PaginationNumber::parseTakeFromGet('merchant');
             $merchantLocations->take($take);
@@ -140,9 +142,32 @@ class MerchantLocationListAPIController extends ControllerAPI
             $totalMerchants = RecordCounter::create($_merchantLocations)->count();
             $listOfMerchants = $merchantLocations->get();
 
+            // Get total active inactive stores
+            $totalActiveStore = 0;
+            $totalInactiveStore = 0;
+
+            if ($totalMerchants > 0) {
+                $totalActiveInactiveStore = $_merchantActiveInactive
+                                                ->select(DB::raw("count({$prefix}base_stores.base_merchant_id) as total "), 'base_stores.status')
+                                                ->groupBy('base_stores.status')
+                                                ->get();
+
+                if (count($totalActiveInactiveStore) > 0) {
+                    foreach ($totalActiveInactiveStore as $key => $value) {
+                        if ($value->status == 'active') {
+                            $totalActiveStore = $value->total;
+                        } elseif ($value->status == 'inactive') {
+                            $totalInactiveStore = $value->total;
+                        }
+                    }
+                }
+            }
+
             $data = new stdclass();
             $data->total_records = $totalMerchants;
             $data->returned_records = count($listOfMerchants);
+            $data->total_active_stores = $totalActiveStore;
+            $data->total_inactive_stores = $totalInactiveStore;
             $data->records = $listOfMerchants;
 
             if ($totalMerchants === 0) {
