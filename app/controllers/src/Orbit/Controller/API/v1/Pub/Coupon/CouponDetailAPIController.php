@@ -155,6 +155,8 @@ class CouponDetailAPIController extends PubControllerAPI
                             'coupon_sepulsa.how_to_buy_and_redeem',
                             'coupon_sepulsa.terms_and_conditions',
                             'issued_coupons.url as redeem_url',
+                            'payment_transactions.payment_midtrans_info',
+                            'promotions.promotion_type',
                             DB::raw("CASE WHEN m.object_type = 'tenant' THEN m.parent_id ELSE m.merchant_id END as mall_id"),
                             // 'media.path as original_media_path',
                             DB::Raw($getCouponStatusSql),
@@ -200,7 +202,11 @@ class CouponDetailAPIController extends PubControllerAPI
                                 ORDER BY CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', ot.timezone_name) ASC
                                 LIMIT 1
                                 ) as timezone
-                            ")
+                            "),
+                            DB::raw("
+                                CASE WHEN reserved_issued_coupons.status = 'reserved'
+                                    THEN 'true'
+                                ELSE 'false' END as is_reserved")
                         )
                         ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                         ->join('languages', 'languages.name', '=', 'campaign_account.mobile_default_language')
@@ -218,6 +224,11 @@ class CouponDetailAPIController extends PubControllerAPI
                                 $q->on('issued_coupons.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
                                 $q->on('issued_coupons.status', '=', DB::Raw("'issued'"));
                             })
+                        ->leftJoin('issued_coupons as reserved_issued_coupons', function ($q) use ($user) {
+                                $q->on(DB::raw('reserved_issued_coupons.promotion_id'), '=', 'promotions.promotion_id');
+                                $q->on(DB::raw('reserved_issued_coupons.user_id'), '=', DB::Raw("{$this->quote($user->user_id)}"));
+                                $q->on(DB::raw('reserved_issued_coupons.status'), '=', DB::Raw("'reserved'"));
+                        })
                         ->leftJoin('payment_transactions', function ($q) use ($user) {
                                 $q->on('payment_transactions.object_id', '=', 'promotions.promotion_id');
                                 $q->on('payment_transactions.user_id', '=', DB::Raw("{$this->quote($user->user_id)}"));
@@ -394,8 +405,14 @@ class CouponDetailAPIController extends PubControllerAPI
                  $coupon->wallet_operator = $walletOperators;
             }
 
+            if ($coupon->promotion_type === 'mall') {
+                $notes = 'normal';
+            } else {
+                $notes = $coupon->promotion_type;
+            }
+
             if (is_object($mall)) {
-                $activityNotes = sprintf('Page viewed: View mall coupon detail');
+                $activityNotes = $notes; //sprintf('Page viewed: View mall coupon detail');
                 $activity->setUser($user)
                     ->setActivityName('view_mall_coupon_detail')
                     ->setActivityNameLong('View mall coupon detail')
@@ -407,7 +424,7 @@ class CouponDetailAPIController extends PubControllerAPI
                     ->responseOK()
                     ->save();
             } else {
-                $activityNotes = sprintf('Page viewed: Landing Page Coupon Detail Page');
+                $activityNotes = $notes; //sprintf('Page viewed: Landing Page Coupon Detail Page');
                 $activity->setUser($user)
                     ->setActivityName('view_landing_page_coupon_detail')
                     ->setActivityNameLong('View GoToMalls Coupon Detail')

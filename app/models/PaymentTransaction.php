@@ -20,16 +20,25 @@ class PaymentTransaction extends Eloquent
     const STATUS_FAILED             = 'failed';
     const STATUS_EXPIRED            = 'expired';
     const STATUS_SUCCESS            = 'success';
+    const STATUS_DENIED             = 'denied';
+    const STATUS_SUSPICIOUS         = 'suspicious';
 
-    // Status 'success_no_coupon' means the payment was success but we can not get/take the coupon from Sepulsa API
-    // either it is not available (all taken) or inactive.
+    /**
+     * It means we are in the process of getting coupon/voucher from Sepulsa.
+     * This status specific for Sepulsa Deals only.
+     */
     const STATUS_SUCCESS_NO_COUPON  = 'success_no_coupon';
+
+    /**
+     * It means system can not get the voucher or after trying for a few times for Sepulsa).
+     */
+    const STATUS_SUCCESS_NO_COUPON_FAILED = 'success_no_coupon_failed';
 
     /**
      * Payment - Coupon Sepulsa relation.
      *
      * @author Budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function coupon_sepulsa()
@@ -41,7 +50,7 @@ class PaymentTransaction extends Eloquent
      * Payment - Coupon relation.
      *
      * @author Budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function coupon()
@@ -51,7 +60,7 @@ class PaymentTransaction extends Eloquent
 
     /**
      * Payment - IssuedCoupon relation.
-     * 
+     *
      * @return [type] [description]
      */
     public function issued_coupon()
@@ -63,7 +72,7 @@ class PaymentTransaction extends Eloquent
      * Payment - User relation.
      *
      * @author Budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function user()
@@ -76,29 +85,70 @@ class PaymentTransaction extends Eloquent
      *
      * @author Budi <budi@dominopos.com>
      *
-     * @todo  use proper status to indicate completed payment. At the moment these statuses are assumption.
      * @return [type] [description]
      */
     public function completed()
     {
         return in_array($this->status, [
-            self::STATUS_SUCCESS, 
-            self::STATUS_SUCCESS_NO_COUPON, 
-            'success_no_coup', // @todo should be removed.
+            self::STATUS_SUCCESS,
+            self::STATUS_SUCCESS_NO_COUPON,
+            self::STATUS_SUCCESS_NO_COUPON_FAILED,
         ]);
+    }
+
+    /**
+     * Determine if the payment is expired or not.
+     *
+     * @author Budi <budi@dominopos.com>
+     *
+     * @return [type] [description]
+     */
+    public function expired()
+    {
+        return $this->status === self::STATUS_EXPIRED;
+    }
+
+    /**
+     * Determine if the payment is failed or not.
+     *
+     * @return [type] [description]
+     */
+    public function pending()
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /**
+     * Determine if the payment is failed or not.
+     * 
+     * @return [type] [description]
+     */
+    public function failed()
+    {
+        return $this->status === self::STATUS_FAILED;
+    }
+
+    /**
+     * Determine if the payment is denied or not.
+     *
+     * @return [type] [description]
+     */
+    public function denied()
+    {
+        return $this->status === self::STATUS_DENIED;
     }
 
     /**
      * Determine if the payment is for Sepulsa Deals.
      *
      * @author Budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function forSepulsa()
     {
         if (! empty($this->coupon)) {
-            return $this->coupon->promotion_type === 'sepulsa';
+            return $this->coupon->promotion_type === Coupon::TYPE_SEPULSA;
         }
 
         return false;
@@ -106,7 +156,7 @@ class PaymentTransaction extends Eloquent
 
     /**
      * Determine if the coupon related to this payment is issued.
-     * 
+     *
      * @return [type] [description]
      */
     public function couponIssued()
@@ -118,13 +168,13 @@ class PaymentTransaction extends Eloquent
      * Determine if the payment is for Hot Deals.
      *
      * @author Budi <budi@dominopos.com>
-     * 
+     *
      * @return [type] [description]
      */
     public function forHotDeals()
     {
         if (! empty($this->coupon)) {
-            return $this->coupon->promotion_type === 'hot_deals';
+            return $this->coupon->promotion_type === Coupon::TYPE_HOT_DEALS;
         }
 
         return false;
@@ -132,11 +182,83 @@ class PaymentTransaction extends Eloquent
 
     /**
      * Get formatted amount.
-     * 
+     *
      * @return [type] [description]
      */
     public function getAmount()
     {
         return $this->currency . ' ' . number_format($this->amount, 0, ',', '.');
+    }
+
+    /**
+     * Clean up anything related to this payment. 
+     * If payment expired, failed, etc, it should reset/remove any related issued coupon.
+     *
+     * Should be called ONLY after checking if payment is expired, failed, or denied.
+     * 
+     * @return [type] [description]
+     */
+    public function cleanUp()
+    {
+        Log::info('Payment: Cleaning up payment... TransactionID: ' . $this->payment_transaction_id . ', current status: ' . $this->status);
+
+        $issuedCoupon = $this->issued_coupon;
+
+        if (empty($issuedCoupon)) {
+            $issuedCoupon = IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->first();
+
+            if (empty($issuedCoupon)) {
+                Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Related issuedCoupon not found. Nothing to do.');
+                return;
+            }
+        }
+
+        // If it is Sepulsa, then remove the IssuedCoupon record.
+        if ($this->forSepulsa()) {
+            // TODO: Check if the coupon is already issued. If so, then what should we do?
+            if ($issuedCoupon->status === IssuedCoupon::STATUS_RESERVED) {
+                Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Removing reserved sepulsa voucher.');
+                IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->delete();
+
+                // Update the availability...
+                if (! empty($this->coupon)) {
+                    $this->coupon->updateAvailability();
+                }
+            }
+            else {
+                Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Voucher is already issued. Do NOTHING at the moment.');
+            }
+        }
+        // If it is Hot Deals, then reset the IssuedCoupon state.
+        else if ($this->forHotDeals()) {
+            Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Reverting reserved hot deals coupon status.');
+
+            $issuedCoupon->makeAvailable();
+
+            // Update the availability...
+            if (! empty($this->coupon)) {
+                $this->coupon->updateAvailability();
+            }
+
+            Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
+        }
+    }
+
+    /**
+     * Determine if the payment type is match certain type.
+     * 
+     * @param  array  $paymentTypes [description]
+     * @return [type]               [description]
+     */
+    public function paidWith($paymentTypes = [])
+    {
+        $paymentInfo = json_decode(unserialize($this->payment_midtrans_info));
+        if (! empty($paymentInfo)) {
+            if (in_array($paymentInfo->payment_type, $paymentTypes)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

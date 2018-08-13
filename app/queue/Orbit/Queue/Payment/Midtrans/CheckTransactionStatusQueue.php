@@ -19,12 +19,10 @@ use Orbit\Helper\Midtrans\API\TransactionStatus;
  */
 class CheckTransactionStatusQueue
 {
-    protected $debug = false;
-
     /**
      * $data should have 2 items:
      * 1. transactionId -- the transaction ID we want to check. Should be equivalent with external_payment_transaction_id.
-     * 2. check -- counter to track the number of check status API we've been calling for this transactionId. We increase the value right after TransactionStatus request made.
+     * 2. check -- counter to track the number of check status API we've been calling for this transactionId.
      * 
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
@@ -36,31 +34,33 @@ class CheckTransactionStatusQueue
 
         try {
 
-            $this->debug = Config::get('app.debug');
-
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::with(['coupon', 'issued_coupon', 'user', 'coupon_sepulsa'])
-                                                ->where('external_payment_transaction_id', $data['transactionId'])->first();
+            $payment = PaymentTransaction::with(['coupon', 'issued_coupon'])
+                                                ->where('payment_transaction_id', $data['transactionId'])->first();
 
             if (empty($payment)) {
                 // If no transaction found, so we should not do/schedule any check.
-                throw new Exception('Transaction with ExternalID: ' . $data['transactionId'] . ' not found!');
+                throw new Exception('Transaction ' . $data['transactionId'] . ' not found!');
             }
 
-            // If payment completed then do nothing.
+            // If payment completed or expired then do nothing.
             // (It maybe completed by notification callback/ping from Midtrans)
             if ($payment->completed()) {
-                $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed. Nothing to do.');
+                Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed. Nothing to do.');
 
-                if (! $payment->couponIssued()) {
-                    $this->log('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' Coupon NOT ISSUED YET.');
-                }
+                return;
+            }
+            else if ($payment->expired() || $payment->failed() || $payment->denied()) {
+                
+                $payment->cleanUp();
+
+                DB::connection()->commit();
 
                 return;
             }
 
-            $this->log('Midtrans::CheckTransactionStatusQueue: Checking transaction status... ' . $data['transactionId']);
+            Log::info('Midtrans::CheckTransactionStatusQueue: Checking transaction status... ' . $data['transactionId']);
 
             $data['check']++;
 
@@ -72,14 +72,12 @@ class CheckTransactionStatusQueue
 
             $payment->save();
 
-            // Re-run this queue if the status is still pending (and not reached maximum try yet)
+            // Re-run this job if the status is still pending (and not reached maximum try yet)
             if ($transaction->shouldRetryChecking($data['check'])) {
 
                 // Commit the provider response changes in DB.
                 DB::connection()->commit();
 
-                // Then schedule check status...
-                // NOTE delay can be passed as queue's data, so no need to get it from config everytime?
                 $this->retryChecking($data);
             }
             else {
@@ -88,28 +86,23 @@ class CheckTransactionStatusQueue
 
                 // Set the internal payment status based on transaction status from Midtrans.
                 // @todo Should we assume the payment is failed or just let it as what it is (pending or whatever its status is)?
-                $payment->status = PaymentTransaction::STATUS_FAILED;
-
+                $transactionStatus = $transaction->mapToInternalStatus();
                 if ($transaction->isSuccess()) {
-                    $payment->status = PaymentTransaction::STATUS_SUCCESS;
+                    if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel'])) {
+                        $transactionStatus = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
+                    }
                 }
-                else if ($transaction->isExpired()) {
-                    $payment->status = PaymentTransaction::STATUS_EXPIRED;
-                }
+
+                $payment->status = $transactionStatus;
 
                 $payment->save();
 
-                // Fire event to issue the coupon.
-                Event::fire('orbit.payment.postupdatepayment.after.save', [$payment]);
-
                 DB::connection()->commit();
 
-                $payment->load('issued_coupon');
-
-                // Fire event to send receipt/notification if necessary.
+                // Fire event to get the coupon if necessary.
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment]);
 
-                $this->log('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
+                Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
             }
 
             $job->delete();
@@ -138,28 +131,16 @@ class CheckTransactionStatusQueue
 
                     $this->retryChecking($data);
                 }
+                else {
+                    Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
+                }
             }
             else {
                 DB::connection()->rollback();
 
-                $this->log('Midtrans::CheckTransactionStatusQueue: (E) ' . $e->getFile()  . ':' . $e->getLine() . ' >> ' . $e->getMessage(), true);
-                // $this->log('Midtrans::CheckTransactionStatusQueue: (E) Data: ' . serialize($data), true);
+                Log::info('Midtrans::CheckTransactionStatusQueue: (E) ' . $e->getFile()  . ':' . $e->getLine() . ' >> ' . $e->getMessage());
+                Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
             }
-
-            $this->log('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
-        }
-    }
-
-    /**
-     * Log message. Only log if in debug mode or forced.
-     * 
-     * @param  string $message [description]
-     * @return [type]          [description]
-     */
-    private function log($message = '', $forceLogging = false)
-    {
-        if ($this->debug || $forceLogging) {
-            Log::info($message);
         }
     }
 
@@ -180,6 +161,6 @@ class CheckTransactionStatusQueue
             ['transactionId' => $data['transactionId'], 'check' => $data['check']]
         );
 
-        $this->log('Midtrans::CheckTransactionStatusQueue: Check #' . ($data['check'] + 1) . ' is scheduled to run in ' . $delay . ' seconds.');
+        Log::info('Midtrans::CheckTransactionStatusQueue: Check #' . ($data['check'] + 1) . ' is scheduled to run after ' . $delay . ' seconds.');
     }
 }

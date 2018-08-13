@@ -1,11 +1,8 @@
-<?php namespace Orbit\Notifications\Coupon\Sepulsa;
+<?php namespace Orbit\Notifications\Coupon;
 
 use Orbit\Helper\Notifications\Notification;
 use Orbit\Helper\Util\JobBurier;
-use Orbit\Helper\MongoDB\Client as MongoClient;
 use Carbon\Carbon;
-
-use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
 
 use Mail;
 use Config;
@@ -14,26 +11,28 @@ use Queue;
 use Exception;
 
 /**
- * Notify developer if TakeVoucher request is failed (first time failure only).
+ * Notify Customer that the coupon we try to issue is not available.
  *
  * @author Budi <budi@dominopos.com>
  */
-class TakeVoucherFailureNotification extends Notification
+class CustomerCouponNotAvailableNotification extends Notification
 {
     protected $payment = null;
 
-    protected $takeVoucherResponse = '';
-
-    protected $retries = 0;
-
-    protected $contact = null;
-
-    function __construct($payment = null, TakeVoucherResponse $takeVoucherResponse, $retries = 0)
+    function __construct($payment = null)
     {
         $this->payment              = $payment;
-        $this->takeVoucherResponse  = $takeVoucherResponse;
-        $this->retries              = $retries;
         $this->queueName            = Config::get('orbit.registration.mobile.queue_name');
+    }
+
+    public function getEmailAddress()
+    {
+        return $this->payment->user_email;
+    }
+
+    public function getName()
+    {
+        return $this->payment->user_name;
     }
 
     /**
@@ -45,12 +44,11 @@ class TakeVoucherFailureNotification extends Notification
     {
         return [
             'recipientEmail'    => $this->getEmailAddress(),
-            'paymentId'         => $this->payment->payment_transaction_id,
-            'externalPaymentId' => $this->payment->external_payment_transaction_id,
-            'paymentMethod'     => $this->payment->payment_method,
-            'sepulsaResponse'   => $this->takeVoucherResponse->getMessage(),
-            'retries'           => $this->retries,
+            'customerName'      => $this->getName(),
             'couponId'          => $this->payment->object_id,
+            'couponName'        => $this->payment->object_name,
+            'paymentId'         => $this->payment->payment_transaction_id,
+            'maxRefundDate'     => Carbon::now('Asia/Jakarta')->addDay()->format('j M Y') . ' 16:00 WIB (GMT +7)',
         ];
     }
 
@@ -65,18 +63,12 @@ class TakeVoucherFailureNotification extends Notification
     {
         try {
 
-            Log::info('Retry #' . $data['retries']);
-
-            $emailTemplate = 'emails.coupon.sepulsa-take-voucher-failed';
-            if ($data['retries'] > 0) {
-                $emailTemplate = 'emails.coupon.sepulsa-take-voucher-max-retry-reached';
-                $data['maxRetry'] = Config::get('orbit.partners_api.sepulsa.take_voucher_max_retry', $data['retries']);
-            }
+            $emailTemplate = 'emails.coupon.customer-coupon-not-available';
 
             Mail::send($emailTemplate, $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Take Voucher Failure Notification';
+                $subject = 'Coupon not Available';
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
@@ -84,8 +76,8 @@ class TakeVoucherFailureNotification extends Notification
             });
 
         } catch (Exception $e) {
-            Log::info('TakeVoucher email data: ' . serialize($data));
-            Log::info('TakeVoucher Failure Notification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::info('CouponNotAvailable: email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
+            Log::info('CouponNotAvailable: email data: ' . serialize($data));
         }
 
         $job->delete();
@@ -106,7 +98,7 @@ class TakeVoucherFailureNotification extends Notification
     {
         Queue::later(
             $delay,
-            "Orbit\Notifications\Coupon\Sepulsa\TakeVoucherFailureNotification@toEmail", 
+            "Orbit\Notifications\Coupon\CustomerCouponNotAvailableNotification@toEmail", 
             $this->getEmailData(),
             $this->queueName
         );

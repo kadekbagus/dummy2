@@ -710,4 +710,78 @@ class Coupon extends Eloquent
 
         return $age;
     }
+
+    /**
+     * Determine if coupon is available for purchase or not.
+     *
+     * @return [type] [description]
+     */
+    public function notAvailable()
+    {
+        return $this->available === 0 || $this->status === 'inactive' || Carbon::now('UTC')->gt(Carbon::parse($this->end_date, 'UTC'));
+    }
+
+    /**
+     * Update availability of current coupon.
+     *
+     * @return [type] [description]
+     */
+    public function updateAvailability()
+    {
+        $issued = IssuedCoupon::where('promotion_id', $this->promotion_id)->whereIn('status', [
+                                    IssuedCoupon::STATUS_ISSUED,
+                                    IssuedCoupon::STATUS_REDEEMED,
+                                ])->count();
+
+        $available = $this->maximum_issued_coupon - $issued;
+        $available = $available < 0 ? 0 : $available;
+
+        $this->available = $available;
+
+        $this->touch();
+
+        if ($this->available > 0) {
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                'coupon_id' => $this->promotion_id
+            ]);
+        }
+        else if ($this->available === 0) {
+            // Delete the coupon and also suggestion
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
+                'coupon_id' => $this->promotion_id
+            ]);
+
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
+                'coupon_id' => $this->promotion_id
+            ]);
+        }
+    }
+
+    /**
+     * Restore the availability of coupon.
+     *
+     * @return [type] [description]
+     */
+    public function restore($amount = 1)
+    {
+        $this->available = $this->available + $amount;
+        $this->touch();
+
+        // Re sync the coupon data
+        if ($this->available > 0) {
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponUpdateQueue', [
+                'coupon_id' => $this->promotion_id
+            ]);
+        }
+        else if ($this->available === 0) {
+            // Delete the coupon and also suggestion
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponDeleteQueue', [
+                'coupon_id' => $this->promotion_id
+            ]);
+
+            Queue::later(2, 'Orbit\\Queue\\Elasticsearch\\ESCouponSuggestionDeleteQueue', [
+                'coupon_id' => $this->promotion_id
+            ]);
+        }
+    }
 }

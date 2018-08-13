@@ -14,6 +14,7 @@ use Log;
 use Queue;
 use Exception;
 use Coupon;
+use PromotionRetailer;
 
 /**
  * Receipt Notification for Customer after purchasing Sepulsa Voucher.
@@ -136,13 +137,18 @@ class ReceiptNotification extends Notification
      *
      * @return [type] [description]
      */
-    public function toWeb($bodyInApps = null)
+    public function toWeb($job, $data)
     {
-        if (! empty($bodyInApps)) {
-            $mongoClient = MongoClient::create($this->mongoConfig);
-            $inApps = $mongoClient->setFormParam($bodyInApps)
+        try {
+            $mongoClient = MongoClient::create(Config::get('database.mongodb'));
+            $inApps = $mongoClient->setFormParam($data)
                                   ->setEndPoint('user-notifications')
                                   ->request('POST');
+
+            $job->delete();
+
+        } catch (Exception $e) {
+            Log::debug('Notification: ReceiptNotification inApp sepulsa exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
     }
 
@@ -161,8 +167,11 @@ class ReceiptNotification extends Notification
         );
 
         // Other notification method can be added here...
-        $bodyInApps = $this->getInAppData();
-        $this->toWeb($bodyInApps);
+        Queue::later(
+            1,
+            'Orbit\\Notifications\\Coupon\\Sepulsa\\ReceiptNotification@toWeb',
+            $this->getInAppData()
+        );
     }
 
     public function getInAppData()
@@ -199,7 +208,16 @@ class ReceiptNotification extends Notification
                         ->first();
 
         if ($coupon) {
-            $launchUrl = LandingPageUrlGenerator::create('coupon', $coupon->promotion_id, $coupon->promotion_name)->generateUrl(true);
+            //$launchUrl = LandingPageUrlGenerator::create('coupon', $coupon->promotion_id, $coupon->promotion_name)->generateUrl(true);
+            $couponCountry = PromotionRetailer::select(DB::raw("malls.country"))
+                            ->join('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                            ->join('merchants as malls', function ($q) {
+                                $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
+                            })
+                            ->where('promotion_retailer.promotion_id', '=', $couponId)
+                            ->first();
+
+            $launchUrl = '/my/coupons?country='.$couponCountry->country;
 
             $headings = new \stdClass();
             $headings->en = $coupon->promotion_name;
