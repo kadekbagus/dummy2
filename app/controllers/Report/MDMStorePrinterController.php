@@ -14,9 +14,9 @@ use Mall;
 use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Merchant\Store\StoreListAPIController;
 
-class MdmMerchantStoreLocationPrinterController extends DataPrinterController
+class MDMStorePrinterController extends DataPrinterController
 {
-    public function getPrintMdmMerchantStoreLocationReport()
+    public function getPrintMDMStoreReport()
     {
         $this->preparePDO();
         $prefix = DB::getTablePrefix();
@@ -51,17 +51,6 @@ class MdmMerchantStoreLocationPrinterController extends DataPrinterController
         $statement = $pdo->prepare($sql);
         $statement->execute($binds);
 
-        // Filter mode
-        $couponName = OrbitInput::get('promotion_name_like');
-        $etcFrom = OrbitInput::get('etc_from');
-        $etcTo = OrbitInput::get('etc_to');
-        $status = OrbitInput::get('campaign_status');
-        $beginDate = OrbitInput::get('begin_date');
-        $endDate = OrbitInput::get('end_date');
-        $ruleType = OrbitInput::get('rule_type');
-        $tenantName = OrbitInput::get('tenant_name_like');
-        $mallName = OrbitInput::get('mall_name_like');
-
         $pageTitle = 'MDM Store List';
 
         switch ($mode) {
@@ -74,72 +63,22 @@ class MdmMerchantStoreLocationPrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'MDM Store List', '', '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Store', round($totalRec), '', '', '','');
 
-                // Filtering
-                if ($couponName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Name', htmlentities($couponName), '', '', '','');
-                }
-
-                if ($tenantName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Tenant Name', htmlentities($tenantName), '', '', '','');
-                }
-
-                if ($mallName != '') {
-                    printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Mall Name', htmlentities($mallName), '', '', '','');
-                }
-
-                // if ( is_array($ruleType) && count($ruleType) > 0) {
-                //     $rule_type_string = '';
-                //     foreach ($ruleType as $key => $valrule){
-                //         $rule_type = $valrule;
-                //         if ($rule_type === 'auto_issue_on_first_signin') {
-                //             $rule_type = 'Blast upon first sign in';
-                //         } elseif ($rule_type === 'auto_issue_on_signup') {
-                //             $rule_type = 'Blast upon sign up';
-                //         } elseif ($rule_type === 'auto_issue_on_every_signin') {
-                //             $rule_type = 'Blast upon every sign in';
-                //         } elseif ($rule_type === 'manual') {
-                //             $rule_type = 'Manual issued';
-                //         } elseif ($rule_type === 'blast_via_sms') {
-                //             $rule_type = 'Blast via SMS';
-                //         }
-
-                //         $rule_type_string .= $rule_type . ', ';
-                //     }
-                //     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Coupon Rule', htmlentities(rtrim($rule_type_string, ', ')), '', '', '','');
-                // }
-
-                // if ( is_array($status) && count($status) > 0) {
-                //     $statusString = '';
-                //     foreach ($status as $key => $valstatus){
-                //         $statusString .= ucwords($valstatus) . ', ';
-                //     }
-                //     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Filter by Status', htmlentities(rtrim($statusString, ', ')), '', '', '','');
-                // }
-
-                // if ($beginDate != '' && $endDate != ''){
-                //     $beginDateRangeMallTime = date('d F Y', strtotime($beginDate));
-                //     $endDateRangeMallTime = date('d F Y', strtotime($endDate));
-                //     $dateRange = $beginDateRangeMallTime . ' - ' . $endDateRangeMallTime;
-                //     if ($beginDateRangeMallTime === $endDateRangeMallTime) {
-                //         $dateRange = $beginDateRangeMallTime;
-                //     }
-                //     printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Campaign Date', $dateRange, '', '', '','');
-                // }
-
-                printf("%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,\n", 'No', 'Merchant', 'Country', 'Location', 'Floor', 'Unit', 'Phone');
-                printf("%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '', '', '');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,\n", 'No', 'Merchant', 'Country', 'Location', 'Floor', 'Unit', 'Phone', 'Verification Number', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
                             $row->merchant,
                             $row->country_name,
                             $row->location,
                             $row->floor,
                             $row->unit,
-                            $row->phone
+                            $row->phone,
+                            $row->verification_number,
+                            $row->status
                     );
                     $count++;
                 }

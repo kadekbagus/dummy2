@@ -14,9 +14,9 @@ use Mall;
 use Carbon\Carbon as Carbon;
 use Orbit\Controller\API\v1\Merchant\Store\StoreListAPIController;
 
-class MdmStorePrinterController extends DataPrinterController
+class MDMMerchantLocationPrinterController extends DataPrinterController
 {
-    public function getPrintMdmStoreReport()
+    public function getPrintMDMMerchantLocationReport()
     {
         $this->preparePDO();
         $prefix = DB::getTablePrefix();
@@ -51,7 +51,7 @@ class MdmStorePrinterController extends DataPrinterController
         $statement = $pdo->prepare($sql);
         $statement->execute($binds);
 
-        $pageTitle = 'MDM Store List';
+        $pageTitle = 'MDM Merchant Location List';
 
         switch ($mode) {
             case 'csv':
@@ -60,23 +60,21 @@ class MdmStorePrinterController extends DataPrinterController
                 @header('Content-Disposition: attachment; filename=' . $this->getFilename(preg_replace("/[\s_]/", "-", $pageTitle), '.csv', null) );
 
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'MDM Store List', '', '', '', '','');
-                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Store', round($totalRec), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'MDM Merchant Location List', '', '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Merchant', round($totalRec), '', '', '','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '', '', '');
-                printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,\n", 'No', 'Merchant', 'Country', 'Location', 'Floor', 'Unit', 'Phone', 'Verification Number', 'Status');
+                printf("%s,%s,%s,%s,%s,%s,%s,\n", 'No', 'Mall', 'Floor', 'Phone', 'Unit', 'V. Number', 'Status');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '', '', '');
 
                 $count = 1;
                 while ($row = $statement->fetch(PDO::FETCH_OBJ)) {
-                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
+                        printf("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                             $count,
-                            $row->merchant,
-                            $row->country_name,
                             $row->location,
                             $row->floor,
-                            $row->unit,
                             $row->phone,
+                            $row->unit,
                             $row->verification_number,
                             $row->status
                     );
