@@ -11,7 +11,6 @@ use Mail;
 use Config;
 use Token;
 use Mall;
-use TemporaryContent;
 use News;
 use Coupon;
 use DB;
@@ -43,14 +42,6 @@ class CampaignMail
                     break;
 
                 case 'update':
-                        $temporaryContentId = $data['temporaryContentId'];
-                        $tmpCampaign = TemporaryContent::where('temporary_content_id', $temporaryContentId)->first();
-
-                        if (! is_object($tmpCampaign)) {
-                            \Log::error('*** CampaignMail Queue: Temporary content not found. ***');
-                            return ;
-                        }
-
                         switch (ucfirst($data['campaignType'])) {
                             case 'News':
                             case 'Promotion':
@@ -83,7 +74,6 @@ class CampaignMail
                             'text' => 'emails.campaign-auto-email.campaign-update-text'
                         );
 
-                        $data['campaign_before'] = unserialize($tmpCampaign->contents);
                         if ($data['campaignType'] === 'Coupon') {
                             $data['campaign_after'] = $updatedCampaign->load([
                                 'translations.language',

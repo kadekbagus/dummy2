@@ -291,3 +291,6 @@ Artisan::add(new GetSepulsaVoucherListCommand);
 
 // Check coupon reserved
 Artisan::add(new CouponCheckReserved);
+
+// Check Sepulsa vs GTM stat
+Artisan::add(new SepulsaRedemptionStatCommand);
