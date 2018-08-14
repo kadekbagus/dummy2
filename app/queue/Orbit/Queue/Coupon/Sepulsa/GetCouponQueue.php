@@ -47,13 +47,19 @@ class GetCouponQueue
 
         try {
 
-            DB::connection()->beginTransaction();
+            \Log::info('GETCOUPON 1st CONNECTION NAME: ' . DB::connection()->getName());
+
+            DB::beginTransaction();
+
+            \Log::info('GETCOUPON 2nd CONNECTION NAME: ' . DB::connection()->getName());
 
             $paymentId = $data['paymentId'];
 
             Log::info("PaidCoupon: Getting Sepulsa Voucher for paymentID: {$paymentId}");
 
             $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])->find($paymentId);
+
+            \Log::info('GETCOUPON payment: ' . serialize($payment));
 
             if (empty($payment)) {
                 throw new Exception("Transaction {$paymentId} not found!");
@@ -66,7 +72,7 @@ class GetCouponQueue
 
                 $payment->cleanUp();
 
-                DB::connection()->commit();
+                DB::commit();
 
                 $job->delete();
 
@@ -81,7 +87,7 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                 $payment->save();
 
-                DB::connection()->commit();
+                DB::commit();
 
                 $this->notifyFailedCoupon($payment, 'Related IssuedCoupon not found. Might be put to stock again by system queue before customer complete the payment.');
 
@@ -109,7 +115,12 @@ class GetCouponQueue
                 $takenVoucherData = $takenVouchers->getVoucherData();
 
                 $issuedCoupon = IssuedCoupon::onWriteConnection()->where('transaction_id', $paymentId)->first();
+
+                \Log::info('GETCOUPON IssuedCoupon: ' . serialize($issuedCoupon));
+
                 $coupon = Coupon::onWriteConnection()->find($payment->object_id);
+
+                \Log::info('GETCOUPON Coupon: ' . serialize($coupon));
 
                 // Update related issued coupon based on data we get from Sepulsa.
                 $issuedCoupon->redeem_verification_code       = $takenVoucherData->id;
@@ -121,6 +132,8 @@ class GetCouponQueue
 
                 $issuedCoupon->save();
 
+                \Log::info('GETCOUPON IssuedCoupon After save(): ' . serialize($issuedCoupon));
+
                 // Update payment transaction data
                 $payment->coupon_redemption_code = $takenVoucherData->code;
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
@@ -128,8 +141,20 @@ class GetCouponQueue
 
                 $coupon->updateAvailability();
 
+                \Log::info('GETCOUPON 3rd CONNECTION NAME: ' . DB::connection()->getName());
+
                 // Commit ASAP.
-                DB::connection()->commit();
+                DB::commit();
+
+                \Log::info('GETCOUPON IssuedCoupon After commit(): ' . serialize($issuedCoupon));
+
+                $issuedCoupon2 = IssuedCoupon::onWriteConnection()->where('transaction_id', $paymentId)->first();
+
+                \Log::info('GETCOUPON IssuedCoupon After commit() fresh: ' . serialize($issuedCoupon2));
+
+                \Log::info('GETCOUPON 4nd CONNECTION NAME: ' . DB::connection()->getName());
+
+
 
                 // Notify customer for receipt/inApp.
                 $payment->user->notify(new SepulsaReceiptNotification($payment), $notificationDelay);
@@ -187,7 +212,7 @@ class GetCouponQueue
 
     /**
      * Retry this job if we need.
-     * 
+     *
      * @param  [type] $data          [description]
      * @param  [type] $payment       [description]
      * @param  [type] $takenVouchers [description]
@@ -206,7 +231,7 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
                 $payment->save();
 
-                DB::connection()->commit();
+                DB::commit();
 
                 $delay = Config::get('orbit.partners_api.sepulsa.take_voucher_retry_timeout', 30);
                 $data['retries']++;
@@ -234,11 +259,11 @@ class GetCouponQueue
                 // Clean up payment since we can not issue the coupon.
                 $payment->cleanUp();
 
-                DB::connection()->commit();
+                DB::commit();
 
                 Log::info(sprintf(
-                    'PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s', 
-                    $payment->object_id, 
+                    'PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s',
+                    $payment->object_id,
                     $failureMessage
                 ));
 
@@ -247,7 +272,7 @@ class GetCouponQueue
         }
         else {
             Log::info(sprintf(
-                'PaidCoupon: Can not get voucher, exception: %s:%s, %s', 
+                'PaidCoupon: Can not get voucher, exception: %s:%s, %s',
                 $e->getFile(),
                 $e->getLine(),
                 $e->getMessage()
@@ -257,7 +282,7 @@ class GetCouponQueue
 
     /**
      * Notify admin and customer that we fail to issue the coupon.
-     * 
+     *
      * @param  [type]  $payment        [description]
      * @param  [type]  $failureMessage [description]
      * @param  integer $delay          [description]
