@@ -50,7 +50,11 @@ class GetCouponQueue
 
             Log::info(sprintf('PaidCoupon: Getting coupon PaymentID: %s', $paymentId));
 
-            $payment = PaymentTransaction::with(['coupon', 'issued_coupon', 'user'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'issued_coupon', 'user'])->find($paymentId);
+
+            if (empty($payment)) {
+                throw new Exception("Transaction {$paymentId} not found!");
+            }
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
@@ -60,6 +64,10 @@ class GetCouponQueue
                 $payment->cleanUp();
 
                 DB::connection()->commit();
+
+                if (! empty($job)) {
+                    $job->delete();
+                }
 
                 return;
             }

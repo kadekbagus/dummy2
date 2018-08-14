@@ -36,8 +36,7 @@ class CheckTransactionStatusQueue
 
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::with(['coupon', 'issued_coupon'])
-                                                ->where('payment_transaction_id', $data['transactionId'])->first();
+            $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'issued_coupon'])->find($data['transactionId']);
 
             if (empty($payment)) {
                 // If no transaction found, so we should not do/schedule any check.
@@ -49,6 +48,8 @@ class CheckTransactionStatusQueue
             if ($payment->completed()) {
                 Log::info('Midtrans::CheckTransactionStatusQueue: Transaction ID ' . $data['transactionId'] . ' completed. Nothing to do.');
 
+                $job->delete();
+
                 return;
             }
             else if ($payment->expired() || $payment->failed() || $payment->denied()) {
@@ -56,6 +57,8 @@ class CheckTransactionStatusQueue
                 $payment->cleanUp();
 
                 DB::connection()->commit();
+
+                $job->delete();
 
                 return;
             }
@@ -105,12 +108,6 @@ class CheckTransactionStatusQueue
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
             }
 
-            $job->delete();
-
-            // JobBurier::create($job, function($theJob) {
-            //     $theJob->delete();
-            // })->bury();
-
         } catch(Exception $e) {
 
             // If the message contains veritrans text, then assume it is a veritrans error.
@@ -142,6 +139,8 @@ class CheckTransactionStatusQueue
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
             }
         }
+
+        $job->delete();
     }
 
     /**
