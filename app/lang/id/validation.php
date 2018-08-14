@@ -428,6 +428,7 @@ return array(
                 'email' => 'Anda harus memasukkan email yang benar',
             ),
             'email' => 'Anda harus memasukkan email yang benar',
+            'verification_code' => 'Kode verifikasi salah',
         ),
         'actionlist' => array(
             'change_password'           => 'update password',

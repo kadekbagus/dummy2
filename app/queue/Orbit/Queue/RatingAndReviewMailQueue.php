@@ -122,7 +122,7 @@ class RatingAndReviewMailQueue
             $dataView['date'] = $date;
             $dataView['type'] = $objectType;
             $dataView['location'] = $object->object_name;
-            $dataView['location_detail'] = $location->location_name;
+            $dataView['location_detail'] = 'Nan';
             $dataView['name'] = $user->user_name;
             $dataView['email'] = $user->user_email;
             $dataView['review_id'] = $reviewId;
