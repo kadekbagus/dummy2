@@ -47,13 +47,13 @@ class GetCouponQueue
 
         try {
 
-            DB::beginTransaction();
+            DB::connection()->beginTransaction();
 
             $paymentId = $data['paymentId'];
 
             Log::info("PaidCoupon: Getting Sepulsa Voucher for paymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])->find($paymentId);
+            $payment = PaymentTransaction::with(['coupon', 'coupon_sepulsa', 'issued_coupon', 'user'])->find($paymentId);
 
             \Log::info('GETCOUPON payment: ' . serialize($payment));
 
@@ -68,7 +68,7 @@ class GetCouponQueue
 
                 $payment->cleanUp();
 
-                DB::commit();
+                DB::connection()->commit();
 
                 $job->delete();
 
@@ -83,7 +83,7 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                 $payment->save();
 
-                DB::commit();
+                DB::connection()->commit();
 
                 $this->notifyFailedCoupon($payment, 'Related IssuedCoupon not found. Might be put to stock again by system queue before customer complete the payment.');
 
@@ -96,7 +96,7 @@ class GetCouponQueue
             if ($payment->issued_coupon->status === IssuedCoupon::STATUS_ISSUED) {
                 Log::info('PaidCoupon: Coupon already issued. Nothing to do.');
 
-                DB::commit();
+                DB::connection()->commit();
 
                 $job->delete();
 
@@ -112,11 +112,11 @@ class GetCouponQueue
 
                 $takenVoucherData = $takenVouchers->getVoucherData();
 
-                $issuedCoupon = IssuedCoupon::onWriteConnection()->where('transaction_id', $paymentId)->first();
+                $issuedCoupon = IssuedCoupon::where('transaction_id', $paymentId)->first();
 
                 \Log::info('GETCOUPON IssuedCoupon: ' . serialize($issuedCoupon));
 
-                $coupon = Coupon::onWriteConnection()->find($payment->object_id);
+                $coupon = Coupon::find($payment->object_id);
 
                 \Log::info('GETCOUPON Coupon: ' . serialize($coupon));
 
@@ -140,7 +140,7 @@ class GetCouponQueue
                 $coupon->updateAvailability();
 
                 // Commit ASAP.
-                DB::commit();
+                DB::connection()->commit();
 
                 \Log::info('GETCOUPON IssuedCoupon After commit(): ' . serialize($issuedCoupon));
 
@@ -164,6 +164,7 @@ class GetCouponQueue
                 $this->retryJob($data, $payment, null, $e);
             }
             else {
+                \Log::info('GETCOUPON EXCEPTION: ' . serialize([$e->getMessage(), $e->getFile(), $e->getLine()]));
                 // Assume unhandled exception or payment not found.
                 if (! isset($payment)) {
                     $payment = null;
@@ -176,7 +177,7 @@ class GetCouponQueue
             }
         }
 
-        $issuedCoupon2 = IssuedCoupon::onWriteConnection()->where('transaction_id', $paymentId)->first();
+        $issuedCoupon2 = IssuedCoupon::where('transaction_id', $paymentId)->first();
 
         \Log::info('GETCOUPON IssuedCoupon After commit() fresh: ' . serialize($issuedCoupon2));
 
@@ -223,7 +224,7 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
                 $payment->save();
 
-                DB::commit();
+                DB::connection()->commit();
 
                 $delay = Config::get('orbit.partners_api.sepulsa.take_voucher_retry_timeout', 30);
                 $data['retries']++;
@@ -251,7 +252,7 @@ class GetCouponQueue
                 // Clean up payment since we can not issue the coupon.
                 $payment->cleanUp();
 
-                DB::commit();
+                DB::connection()->commit();
 
                 Log::info(sprintf(
                     'PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s',
