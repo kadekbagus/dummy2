@@ -108,24 +108,25 @@ class GetCouponQueue
 
                 $takenVoucherData = $takenVouchers->getVoucherData();
 
-                // Update related issued coupon based on data we get from Sepulsa.
-                $payment->issued_coupon->redeem_verification_code       = $takenVoucherData->id;
-                $payment->issued_coupon->issued_coupon_code = $takenVoucherData->code;
-                $payment->issued_coupon->url                = $takenVoucherData->redeem_url;
-                $payment->issued_coupon->issued_date        = Carbon::now();
-                $payment->issued_coupon->expired_date       = $payment->coupon->coupon_validity_in_date;
-                $payment->issued_coupon->status             = IssuedCoupon::STATUS_ISSUED;
+                $issuedCoupon = IssuedCoupon::onWriteConnection()->where('transaction_id', $paymentId)->first();
+                $coupon = Coupon::onWriteConnection()->find($payment->object_id);
 
-                $payment->issued_coupon->save();
+                // Update related issued coupon based on data we get from Sepulsa.
+                $issuedCoupon->redeem_verification_code       = $takenVoucherData->id;
+                $issuedCoupon->issued_coupon_code = $takenVoucherData->code;
+                $issuedCoupon->url                = $takenVoucherData->redeem_url;
+                $issuedCoupon->issued_date        = Carbon::now();
+                $issuedCoupon->expired_date       = $coupon->coupon_validity_in_date;
+                $issuedCoupon->status             = IssuedCoupon::STATUS_ISSUED;
+
+                $issuedCoupon->save();
 
                 // Update payment transaction data
                 $payment->coupon_redemption_code = $takenVoucherData->code;
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
-                if (! empty($payment->coupon)) {
-                    $payment->coupon->updateAvailability();
-                }
+                $coupon->updateAvailability();
 
                 // Commit ASAP.
                 DB::connection()->commit();
