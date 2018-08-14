@@ -8,7 +8,6 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\FakeJob;
-use Orbit\Queue\SepulsaVoucherListMail;
 use Orbit\Helper\Sepulsa\API\VoucherList;
 
 class GetSepulsaVoucherListCommand extends Command {
@@ -149,18 +148,15 @@ class GetSepulsaVoucherListCommand extends Command {
      */
     protected function sendMail($data)
     {
-        Mail::send('emails.sepulsa-voucher-list.html', [], function($message) use ($data)
-        {
-            $from = 'mailer@dominopos.com';
-            $emails = explode(',', $this->option('email-to'));
+        $from = 'mailer@dominopos.com';
+        $emails = explode(',', $this->option('email-to'));
 
-            $message->from($from, 'Gotomalls Robot');
-            $message->subject('Sepulsa Voucher List');
-            $message->to($emails);
-            $message->attach($data);
-        });
-
-        $this->info('Mail Sent.');
+        // Send email process to the queue
+        \Queue::push('Orbit\\Queue\\SepulsaVoucherListMail', [
+            'attachment' => $data,
+            'emails'     => $emails,
+            'from'       => $from,
+        ]);
     }
 
 }
