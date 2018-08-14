@@ -324,7 +324,7 @@ class RegistrationAPIController extends IntermediateBaseController
                 if (! is_null($mall_id)) {
                     $user_detail->merchant_id = $mall_id;
                 }
-                $user_detail->gender = $gender === 'm' ? 'm' : ($gender === 'f' ? 'f' : NULL);
+                $user_detail->gender = substr($gender, 0, 1) === 'm' ? 'm' : (substr($gender, 0, 1) === 'f' ? 'f' : NULL);
                 if (! empty($birthdate)) {
                     $user_detail->birthdate = date('Y-m-d', strtotime($birthdate));
                 }

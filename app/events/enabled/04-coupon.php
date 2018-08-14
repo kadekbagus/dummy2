@@ -339,7 +339,7 @@ Event::listen('orbit.coupon.postnewcoupon.after.commit', function($controller, $
  * @param CouponAPIController $controller
  * @param Coupon $coupon
  */
-Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller, $coupon, $temporaryContentId)
+Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller, $coupon)
 {
     $timestamp = new DateTime($coupon->updated_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
@@ -352,7 +352,6 @@ Event::listen('orbit.coupon.postupdatecoupon.after.commit', function($controller
         'eventType'          => 'updated',
         'date'               => $date,
         'campaignId'         => $coupon->promotion_id,
-        'temporaryContentId' => $temporaryContentId,
         'mode'               => 'update'
     ]);
 
