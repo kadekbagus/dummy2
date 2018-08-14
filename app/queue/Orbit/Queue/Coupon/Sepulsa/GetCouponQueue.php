@@ -47,7 +47,7 @@ class GetCouponQueue
 
         try {
 
-            // DB::beginTransaction();
+            DB::beginTransaction();
 
             $paymentId = $data['paymentId'];
 
@@ -68,7 +68,7 @@ class GetCouponQueue
 
                 $payment->cleanUp();
 
-                // DB::commit();
+                DB::commit();
 
                 $job->delete();
 
@@ -83,7 +83,7 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
                 $payment->save();
 
-                // DB::commit();
+                DB::commit();
 
                 $this->notifyFailedCoupon($payment, 'Related IssuedCoupon not found. Might be put to stock again by system queue before customer complete the payment.');
 
@@ -95,6 +95,8 @@ class GetCouponQueue
             // If coupon already issued...
             if ($payment->issued_coupon->status === IssuedCoupon::STATUS_ISSUED) {
                 Log::info('PaidCoupon: Coupon already issued. Nothing to do.');
+
+                DB::commit();
 
                 $job->delete();
 
@@ -138,13 +140,9 @@ class GetCouponQueue
                 $coupon->updateAvailability();
 
                 // Commit ASAP.
-                // DB::commit();
+                DB::commit();
 
                 \Log::info('GETCOUPON IssuedCoupon After commit(): ' . serialize($issuedCoupon));
-
-                $issuedCoupon2 = IssuedCoupon::onWriteConnection()->where('transaction_id', $paymentId)->first();
-
-                \Log::info('GETCOUPON IssuedCoupon After commit() fresh: ' . serialize($issuedCoupon2));
 
                 // Notify customer for receipt/inApp.
                 $payment->user->notify(new SepulsaReceiptNotification($payment), $notificationDelay);
@@ -177,6 +175,10 @@ class GetCouponQueue
                 $this->retryJob($data, $payment, $takenVouchers, $e);
             }
         }
+
+        $issuedCoupon2 = IssuedCoupon::onWriteConnection()->where('transaction_id', $paymentId)->first();
+
+        \Log::info('GETCOUPON IssuedCoupon After commit() fresh: ' . serialize($issuedCoupon2));
 
         $job->delete();
     }
@@ -221,7 +223,7 @@ class GetCouponQueue
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON;
                 $payment->save();
 
-                // DB::commit();
+                DB::commit();
 
                 $delay = Config::get('orbit.partners_api.sepulsa.take_voucher_retry_timeout', 30);
                 $data['retries']++;
@@ -249,7 +251,7 @@ class GetCouponQueue
                 // Clean up payment since we can not issue the coupon.
                 $payment->cleanUp();
 
-                // DB::commit();
+                DB::commit();
 
                 Log::info(sprintf(
                     'PaidCoupon: TakeVoucher Request: Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s',
