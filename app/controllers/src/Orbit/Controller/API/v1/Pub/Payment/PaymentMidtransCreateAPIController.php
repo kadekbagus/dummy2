@@ -39,6 +39,8 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument($message);
             }
 
+            $this->registerCustomValidator();
+
             $user_id = $user->user_id;
             $first_name = OrbitInput::post('first_name');
             $last_name = OrbitInput::post('last_name');
@@ -47,6 +49,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $country_id = OrbitInput::post('country_id');
             $quantity = OrbitInput::post('quantity', 1);
             $amount = OrbitInput::post('amount');
+            $single_price = OrbitInput::post('single_price', 0.00);
             $mall_id = OrbitInput::post('mall_id', 'gtm');
             $currency_id = OrbitInput::post('currency_id', '1');
             $currency = OrbitInput::post('currency', 'IDR');
@@ -63,18 +66,29 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                     'email'      => $email,
                     'phone'      => $phone,
                     'amount'     => $amount,
+                    'quantity'   => $quantity,
+                    'single_price'   => $single_price,
                     'post_data'  => $post_data,
                     'mall_id'    => $mall_id,
+                    'object_id'  => $object_id,
                 ),
                 array(
                     'first_name' => 'required',
                     'last_name'  => 'required',
                     'email'      => 'required',
                     'phone'      => 'required',
-                    'amount'     => 'required',
+                    'amount'     => 'required|orbit.equals.total',
+                    'quantity'   => 'required|orbit.allowed.quantity',
+                    'single_price'   => $single_price,
                     'post_data'  => 'required',
                     'mall_id'    => 'required',
-                )
+                    'object_id'  => 'required|orbit.active.coupon',
+                ),
+                array(
+                    'orbit.equals.total' => 'Total amount does not match the quantity and single price.',
+                    'orbit.allowed.quantity' => 'Requested quantity is not available.',
+                    'orbit.active.coupon' => 'Requested coupon is not active.',
+                ),
             );
 
             // Begin database transaction
@@ -114,7 +128,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $paymentDetail = new PaymentTransactionDetail;
             $paymentDetail->payment_transaction_id = $payment_new->payment_transaction_id;
             $paymentDetail->currency = $currency;
-            $paymentDetail->price = $amount;
+            $paymentDetail->price = $single_price;
             $paymentDetail->quantity = $quantity;
 
             OrbitInput::post('object_id', function($object_id) use ($paymentDetail) {
@@ -191,4 +205,43 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
 
         return $this->render($httpCode);
     }
+
+    private function registerCustomValidator()
+    {
+        Validator::extend('orbit.allowed.quantity', function ($attribute, $value, $parameters) {
+
+            $maxQuantity = Config::get('orbit.transaction.max_quantity_per_item', 3);
+            $coupon = Coupon::select('available')->findOrFail(OrbitInput::post('object_id'));
+
+            if ($value <= $maxQuantity && $value <= $coupon->available) {
+                return TRUE;
+            }
+
+            return FALSE;
+        });
+
+        Validator::extend('orbit.equals.total', function ($attribute, $value, $parameters) {
+
+            $quantity = OrbitInput::post('quantity', 1);
+            $single_price = OrbitInput::post('single_price', 0);
+
+            if ($value === $quantity * $single_price) {
+                return TRUE;
+            }
+
+            return FALSE;
+        });
+
+        Validator::extend('orbit.active.coupon', function ($attribute, $value, $parameters) {
+
+            $coupon = Coupon::where('status', 'active')->findOrFail($value);
+
+            if (! empty($coupon)) {
+                return TRUE;
+            }
+
+            return FALSE;
+        });
+    }
+
 }
