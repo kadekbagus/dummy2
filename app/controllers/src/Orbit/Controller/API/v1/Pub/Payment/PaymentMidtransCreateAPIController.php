@@ -88,7 +88,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                     'orbit.equals.total' => 'Total amount does not match the quantity and single price.',
                     'orbit.allowed.quantity' => 'Requested quantity is not available.',
                     'orbit.active.coupon' => 'Requested coupon is not active.',
-                ),
+                )
             );
 
             // Begin database transaction
