@@ -17,6 +17,7 @@ use Mall;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
+use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Coupon;
 use IssuedCoupon;
 use \Queue;
@@ -56,7 +57,10 @@ class CouponBuyAPIController extends PubControllerAPI
 
             $coupon_id = OrbitInput::post('coupon_id');
             $with_reserved = OrbitInput::post('with_reserved', 'N');
-            $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time');
+            $quantity = OrbitInput::post('quantity');
+            $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10);
+
+            PaymentHelper::create()->registerCustomValidation();
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -64,10 +68,15 @@ class CouponBuyAPIController extends PubControllerAPI
                 array(
                     'coupon_id' => $coupon_id,
                     'with_reserved' => $with_reserved,
+                    'quantity' => $quantity,
                 ),
                 array(
                     'coupon_id' => 'required|orbit.exists.coupon',
                     'with_reserved' => 'required',
+                    'quantity' => 'required|orbit.allowed.quantity',
+                ),
+                array(
+                    'orbit.allowed.quantity' => 'Requested quantity not available.',
                 )
             );
 
@@ -120,28 +129,32 @@ class CouponBuyAPIController extends PubControllerAPI
                     //insert for sepulsa and update for hot_deals
                     if ($coupon->promotion_type === 'sepulsa') {
 
-                        $issuedCoupon = new IssuedCoupon;
-                        $issuedCoupon->promotion_id  = $coupon_id;
-                        $issuedCoupon->user_id       = $user->user_id;
-                        $issuedCoupon->user_email    = $user->user_email;
-                        $issuedCoupon->issued_date   = date('Y-m-d H:i:s');
-                        $issuedCoupon->status        = IssuedCoupon::STATUS_RESERVED;
-                        $issuedCoupon->record_exists = 'Y';
-                        $issuedCoupon->save();
+                        for($i = 1; $i <= $quantity; $i++) {
+                            $issuedCoupon = new IssuedCoupon;
+                            $issuedCoupon->promotion_id  = $coupon_id;
+                            $issuedCoupon->user_id       = $user->user_id;
+                            $issuedCoupon->user_email    = $user->user_email;
+                            $issuedCoupon->issued_date   = date('Y-m-d H:i:s');
+                            $issuedCoupon->status        = IssuedCoupon::STATUS_RESERVED;
+                            $issuedCoupon->record_exists = 'Y';
+                            $issuedCoupon->save();
+                        }
 
                     } elseif ($coupon->promotion_type === 'hot_deals') {
 
-                        $issuedCoupon = IssuedCoupon::where('promotion_id', $coupon_id)
-                                                        ->where('user_id', NULL)
-                                                        ->where('user_email', NULL)
-                                                        ->first();
+                        // Can use a single query to update?
+                        for($i = 1; $i <= $quantity; $i++) {
+                            $issuedCoupon = IssuedCoupon::where('promotion_id', $coupon_id)
+                                                            ->where('user_id', NULL)
+                                                            ->where('user_email', NULL)
+                                                            ->first();
 
-                        $issuedCoupon->user_id     = $user->user_id;
-                        $issuedCoupon->user_email  = $user->user_email;
-                        $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-                        $issuedCoupon->status      = IssuedCoupon::STATUS_RESERVED;
-                        $issuedCoupon->save();
-
+                            $issuedCoupon->user_id     = $user->user_id;
+                            $issuedCoupon->user_email  = $user->user_email;
+                            $issuedCoupon->issued_date = date('Y-m-d H:i:s');
+                            $issuedCoupon->status      = IssuedCoupon::STATUS_RESERVED;
+                            $issuedCoupon->save();
+                        }
                     }
 
                     $this->commit();
