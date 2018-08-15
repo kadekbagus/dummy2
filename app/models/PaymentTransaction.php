@@ -294,7 +294,7 @@ class PaymentTransaction extends Eloquent
         }
 
         // Update the availability...
-        Coupon::findOnWriteConnection($issuedCoupons->first()->promotion_id)->updateAvailability();
+        Coupon::find($issuedCoupons->first()->promotion_id)->updateAvailability();
     }
 
     /**
