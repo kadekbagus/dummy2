@@ -6,6 +6,7 @@ use Event;
 use Queue;
 use Config;
 use Exception;
+use Illuminate\Database\QueryException;
 use Carbon\Carbon;
 use Orbit\FakeJob;
 use Orbit\Helper\Util\JobBurier;
@@ -112,6 +113,8 @@ class GetCouponQueue
 
                 $takenVoucherData = $takenVouchers->getVoucherData();
 
+                \Log::info('GETCOUPON SEPULSA DATA: ' . serialize($takenVoucherData));
+
                 $issuedCoupon = IssuedCoupon::where('transaction_id', $paymentId)->first();
 
                 \Log::info('GETCOUPON IssuedCoupon: ' . serialize($issuedCoupon));
@@ -155,7 +158,8 @@ class GetCouponQueue
 
                 $this->retryJob($data, $payment, $takenVouchers, null);
             }
-
+        } catch (QueryException $e) {
+            \Log::info('GETCOUPON QUERY EXCEPTION: ' . serialize([$e->getMessage(), $e->getFile(), $e->getLine()]));
         } catch (Exception $e) {
 
             // Failed to get token...
@@ -230,11 +234,12 @@ class GetCouponQueue
                 $data['retries']++;
 
                 // Retry this job by re-pushing it to Queue.
-                Queue::later(
-                    $delay,
-                    'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue',
-                    $data
-                );
+                Queue::connection('sync')
+                    ->later(
+                        $delay,
+                        'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue',
+                        $data
+                    );
 
                 Log::info(sprintf(
                     'PaidCoupon: TakeVoucher Request: Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s',
