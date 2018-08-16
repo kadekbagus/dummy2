@@ -57,11 +57,7 @@ class CheckReservedCoupon
 
                             $isCancelReservedCoupon = TRUE;
                         } elseif ($coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
-                            $cancelReservedCoupon->user_id     = NULL;
-                            $cancelReservedCoupon->user_email  = NULL;
-                            $cancelReservedCoupon->issued_date = NULL;
-                            $cancelReservedCoupon->status      = IssuedCoupon::STATUS_AVAILABLE;
-                            $cancelReservedCoupon->save();
+                            $cancelReservedCoupon->makeAvailable();
 
                             $isCancelReservedCoupon = TRUE;
                         }
