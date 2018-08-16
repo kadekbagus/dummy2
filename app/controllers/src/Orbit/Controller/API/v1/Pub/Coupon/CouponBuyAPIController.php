@@ -111,7 +111,6 @@ class CouponBuyAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument('This coupon has been sold out');
             }
 
-
             if ($with_reserved === 'N') {
 
                 $response = $userIssuedCoupon;
@@ -126,34 +125,57 @@ class CouponBuyAPIController extends PubControllerAPI
 
                     $this->beginTransaction();
 
-                    //insert for sepulsa and update for hot_deals
-                    if ($coupon->promotion_type === 'sepulsa') {
+                    // Get the reserved coupons.
+                    $reservedCoupons = IssuedCoupon::where('user_id', $user->user_id)
+                                                        ->where('promotion_id', $coupon_id)
+                                                        ->where('status', IssuedCoupon::STATUS_RESERVED)
+                                                        ->get();
 
-                        for($i = 1; $i <= $quantity; $i++) {
-                            $issuedCoupon = new IssuedCoupon;
-                            $issuedCoupon->promotion_id  = $coupon_id;
-                            $issuedCoupon->user_id       = $user->user_id;
-                            $issuedCoupon->user_email    = $user->user_email;
-                            $issuedCoupon->issued_date   = date('Y-m-d H:i:s');
-                            $issuedCoupon->status        = IssuedCoupon::STATUS_RESERVED;
-                            $issuedCoupon->record_exists = 'Y';
-                            $issuedCoupon->save();
+                    // Calculate the remaining quantity to be added.
+                    $remainingQuantity = $quantity - $reservedCoupons->count();
+
+                    // If lower than what reserved before, then remove the unused coupon
+                    // and keep the requested quantity reserved.
+                    // Otherwise, we assume the new quantity is more than what reserved before
+                    // so we should reserve the remaining quantity.
+                    if ($remainingQuantity < 0) {
+                        $remainingQuantity = abs($remainingQuantity);
+                        $deleted = 0;
+                        foreach($reservedCoupons as $reservedCoupon) {
+
+                            if ($deleted === $remainingQuantity) {
+                                break;
+                            }
+
+                            $reservedCoupon->delete();
+                            $deleted++;
                         }
+                    }
+                    else if ($remainingQuantity > 0) {
 
-                    } elseif ($coupon->promotion_type === 'hot_deals') {
+                        for($i = 1; $i <= $remainingQuantity; $i++) {
+                            //insert for sepulsa and update for hot_deals
+                            if ($coupon->promotion_type === 'sepulsa') {
+                                $issuedCoupon = new IssuedCoupon;
+                                $issuedCoupon->promotion_id  = $coupon_id;
+                                $issuedCoupon->user_id       = $user->user_id;
+                                $issuedCoupon->user_email    = $user->user_email;
+                                $issuedCoupon->issued_date   = date('Y-m-d H:i:s');
+                                $issuedCoupon->status        = IssuedCoupon::STATUS_RESERVED;
+                                $issuedCoupon->record_exists = 'Y';
+                                $issuedCoupon->save();
+                            } elseif ($coupon->promotion_type === 'hot_deals') {
+                                $issuedCoupon = IssuedCoupon::where('promotion_id', $coupon_id)
+                                                                ->where('user_id', NULL)
+                                                                ->where('user_email', NULL)
+                                                                ->first();
 
-                        // Can use a single query to update?
-                        for($i = 1; $i <= $quantity; $i++) {
-                            $issuedCoupon = IssuedCoupon::where('promotion_id', $coupon_id)
-                                                            ->where('user_id', NULL)
-                                                            ->where('user_email', NULL)
-                                                            ->first();
-
-                            $issuedCoupon->user_id     = $user->user_id;
-                            $issuedCoupon->user_email  = $user->user_email;
-                            $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-                            $issuedCoupon->status      = IssuedCoupon::STATUS_RESERVED;
-                            $issuedCoupon->save();
+                                $issuedCoupon->user_id     = $user->user_id;
+                                $issuedCoupon->user_email  = $user->user_email;
+                                $issuedCoupon->issued_date = date('Y-m-d H:i:s');
+                                $issuedCoupon->status      = IssuedCoupon::STATUS_RESERVED;
+                                $issuedCoupon->save();
+                            }
                         }
                     }
 
@@ -174,9 +196,7 @@ class CouponBuyAPIController extends PubControllerAPI
                     // Return the data
                     $response = $issuedCoupon;
                 }
-
             }
-
 
             $this->response->data = $response;
 
