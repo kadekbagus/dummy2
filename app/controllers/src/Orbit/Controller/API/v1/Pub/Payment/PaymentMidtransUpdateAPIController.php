@@ -162,7 +162,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 $payment_update->responded_at = Carbon::now('UTC');
 
                 // Link this payment to reserved IssuedCoupon.
-                if (empty($payment_update->issued_coupons)) {
+                if ($payment_update->issued_coupons->count() === 0) {
 
                     // Link to IssuedCoupon if the payment is not denied/failed/expired.
                     if (! in_array($status, [PaymentTransaction::STATUS_DENIED, PaymentTransaction::STATUS_EXPIRED, PaymentTransaction::STATUS_FAILED])) {
@@ -186,7 +186,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     }
                 }
 
-                // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher, 
+                // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher,
                 // then we assume the status as success_no_coupon (so frontend will show preparing voucher page).
                 if ($status === PaymentTransaction::STATUS_SUCCESS) {
                     if (isset($failed)) {
@@ -199,7 +199,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                 $payment_update->save();
 
-                // Commit the changes ASAP so if there are any other requests that trigger this controller 
+                // Commit the changes ASAP so if there are any other requests that trigger this controller
                 // they will use the updated payment data/status.
                 // Try not doing any expensive operation above.
                 $this->commit();
