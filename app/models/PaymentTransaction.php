@@ -269,12 +269,16 @@ class PaymentTransaction extends Eloquent
             }
         }
 
+        $couponId = $issuedCoupons->first()->promotion_id;
+
         // If it is Sepulsa, then remove the IssuedCoupon record.
         if ($this->forSepulsa()) {
             foreach($issuedCoupons as $issuedCoupon) {
                 // TODO: Check if the coupon is already issued. If so, then what should we do?
                 if ($issuedCoupon->status === IssuedCoupon::STATUS_RESERVED) {
                     Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Removing reserved sepulsa voucher.');
+
+                    // Manual query for each IssuedCoupon
                     IssuedCoupon::where('issued_coupon_id', $issuedCoupon->issued_coupon_id)->delete();
                 }
                 else {
@@ -294,7 +298,7 @@ class PaymentTransaction extends Eloquent
         }
 
         // Update the availability...
-        Coupon::find($issuedCoupons->first()->promotion_id)->updateAvailability();
+        Coupon::find($couponId)->updateAvailability();
     }
 
     /**
