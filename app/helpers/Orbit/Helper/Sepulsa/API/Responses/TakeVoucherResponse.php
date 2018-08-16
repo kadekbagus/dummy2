@@ -79,17 +79,14 @@ class TakeVoucherResponse
     {
         $data = [];
 
-        $index = 0;
         foreach($this->data->result as $voucher) {
-            $data[$index] = new \stdClass;
-
-            $data[$index]->id               = $voucher->id;
-            $data[$index]->code             = $voucher->code;
-            $data[$index]->expired_date     = $voucher->expired_date;
-            $data[$index]->redeem_url       = $voucher->redeem_url;
-            $data[$index]->taken_date       = $voucher->taken_date;
-
-            $index++;
+            $data[] = (object) [
+                'id'               => $voucher->id,
+                'code'             => $voucher->code,
+                'expired_date'     => $voucher->expired_date,
+                'redeem_url'       => $voucher->redeem_url,
+                'taken_date'       => $voucher->taken_date,
+            ];
         }
 
         return $data;
