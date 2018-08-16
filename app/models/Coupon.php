@@ -736,6 +736,7 @@ class Coupon extends Eloquent
         $issued = IssuedCoupon::where('promotion_id', $this->promotion_id)->whereIn('status', [
                                     IssuedCoupon::STATUS_ISSUED,
                                     IssuedCoupon::STATUS_REDEEMED,
+                                    IssuedCoupon::STATUS_RESERVED,
                                 ])->count();
 
         $available = $this->maximum_issued_coupon - $issued;
