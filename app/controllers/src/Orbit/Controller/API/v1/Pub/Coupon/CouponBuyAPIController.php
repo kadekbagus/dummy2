@@ -136,6 +136,8 @@ class CouponBuyAPIController extends PubControllerAPI
                 // so we should reserve the remaining quantity.
                 if ($remainingQuantity < 0) {
                     $remainingQuantity = abs($remainingQuantity);
+                    Log::info("PaidCoupon: {$remainingQuantity} reserved coupons will be deleted...");
+
                     $deleted = 0;
                     foreach($reservedCoupons as $reservedCoupon) {
 
@@ -154,7 +156,7 @@ class CouponBuyAPIController extends PubControllerAPI
                     }
                 }
                 else if ($remainingQuantity > 0) {
-
+                    Log::info("PaidCoupon: Adding {$remainingQuantity} extra reserved coupons...");
                     for($i = 1; $i <= $remainingQuantity; $i++) {
                         //insert for sepulsa and update for hot_deals
                         if ($coupon->promotion_type === 'sepulsa') {
