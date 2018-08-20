@@ -38,7 +38,7 @@ class PaymentHelper
 
         Validator::extend('orbit.allowed.quantity', function ($attribute, $value, $parameters) {
 
-            $maxQuantity = Config::get('orbit.transaction.max_quantity_per_item', 3);
+            $maxQuantity = Config::get('orbit.transaction.max_quantity_per_purchase', 1);
 
             $couponId = OrbitInput::post('coupon_id');
             if (empty($couponId)) {
