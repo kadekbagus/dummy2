@@ -1,6 +1,8 @@
 <?php 
 
 return [
+    'subject' => 'Kuitansi Pembelian dari Gotomalls.com',
+
     'header' => [
         'invoice'       => 'Kuitansi',
         'order_number'  => 'No. Transaksi: :transactionId',
@@ -9,12 +11,12 @@ return [
     'body' => [
         'greeting' => 'Yth, :customerName
                         <br>
-                        Thank you for purchasing :itemName in Gotomalls.com. Your payment has been verified by our system. Below is the transaction summary of your purchase',
+                        Terima kasih telah melakukan pembelian :itemName di Gotomalls.com. Pembayaran Anda telah diverifikasi oleh sistem kami. Berikut ini detail dari pembelian Anda.',
 
         'redeem' => 'Untuk melihat barang yang telah dibeli dan melakukan redeem di toko, silakan klik tombol di bawah',
 
-        'help' => 'Please contact our customer service at :csPhone or email at <a href="mailto::csEmail">:csEmail</a> if you find any difficulties.',
-        'thank_you' => 'Thank you and have a nice day.',
+        'help' => 'Jika menemui kendala terkait pembelian, silakan hubungi layanan bantuan kami di nomor <a style="color:#f43d3c;text-decoration:none;" href="tel::csPhone">:csPhone</a> atau surel di <a style="color:#f43d3c;text-decoration:none;" href="mailto::csEmail">:csEmail</a>.',
+        'thank_you' => 'Terima kasih dan kami tunggu pembelian berikutnya!',
     ],
 
     'table_customer_info' => [

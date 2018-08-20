@@ -42,14 +42,6 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
     }
 
     /**
-     * @return [type] [description]
-     */
-    protected function getQueueName()
-    {
-        return Config::get('orbit.registration.mobile.queue_name');
-    }
-
-    /**
      * @override
      * @return [type] [description]
      */
@@ -64,14 +56,11 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
         return $this->getCustomerEmail();
     }
 
-    public function getRecipientName()
-    {
-        return $this->getCustomerName();
-    }
-
     /**
      * Get the email templates.
-     * 
+     * At the moment we can use same template for both Sepulsa and Hot Deals.
+     * Can be overriden in each receipt class if needed.
+     *
      * @return [type] [description]
      */
     public function getEmailTemplates()
@@ -88,8 +77,6 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
      */
     public function getEmailData()
     {
-        $redeemUrl = Config::get('orbit.coupon.direct_redemption_url');
-
         return [
             'recipientEmail'    => $this->getRecipientEmail(),
             'customerEmail'     => $this->getCustomerEmail(),
@@ -97,7 +84,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             'customerPhone'     => $this->getCustomerPhone(),
             'transaction'       => $this->getTransactionData(),
             'cs'                => $this->getContactData(),
-            'redeemUrl'         => $redeemUrl,
+            'redeemUrl'         => Config::get('orbit.coupon.direct_redemption_url'),
         ];
     }
 
@@ -114,30 +101,30 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Your Receipt from Gotomalls.com';
+                $subject = trans('email-receipt.subject');
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
                 $mail->to($data['recipientEmail']);
             });
 
-            $job->delete();
-
         } catch (Exception $e) {
             Log::debug('Notification: ReceiptNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
+
+        $job->delete();
     }
 
     /**
      * Get InApp notification data.
-     * 
+     *
      * @return [type] [description]
      */
     public function getInAppData()
     {
         $bodyInApps = null;
         $userId = $this->payment->user_id;
-        $couponId = $this->payment->object_id;
+        $couponId = $this->payment->details->first()->object_id;
         $prefix = DB::getTablePrefix();
         $coupon = Coupon::select(DB::raw("{$prefix}promotions.promotion_id,
                                     {$prefix}promotions.promotion_name,
@@ -231,11 +218,11 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
                                   ->setEndPoint('user-notifications')
                                   ->request('POST');
 
-            $job->delete();
-
         } catch (Exception $e) {
             Log::debug('Notification: ReceiptNotification inApp exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
+
+        $job->delete();
     }
 
 }

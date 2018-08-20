@@ -15,12 +15,6 @@ interface EmailNotificationInterface
     public function getRecipientEmail();
 
     /**
-     * Get the recipient name.
-     * @return [type] [description]
-     */
-    public function getRecipientName();
-
-    /**
      * Get the email templates that will be used.
      * 
      * @return [type] [description]

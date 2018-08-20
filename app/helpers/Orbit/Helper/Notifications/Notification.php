@@ -12,6 +12,7 @@ use Orbit\Helper\Notifications\Exceptions\NotificationMethodsEmptyException;
  *
  * @todo  use a single sender class for each notification method.
  * @todo  support bulk recipients.
+ * @todo  separate queue name for each notification method.
  *
  * @author Budi <budi@dominopos.com>
  */
@@ -134,10 +135,8 @@ abstract class Notification {
 
     /**
      * Send the notification.
-     * Will check for enabled methods.
-     * Will use queue if it is set to true.
      * 
-     * @param  integer $delay [description]
+     * @param  integer $customDelay [description]
      * @return [type]         [description]
      */
     public function send($customDelay = 0)

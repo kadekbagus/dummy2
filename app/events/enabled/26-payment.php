@@ -64,7 +64,7 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
                 $queue = 'Orbit\\Queue\\Coupon\\Sepulsa\\GetCouponQueue';
             }
 
-            Queue::later(
+            Queue::connection('sync')->later(
                 $delay, $queue,
                 ['paymentId' => $payment->payment_transaction_id, 'retries' => 0]
             );

@@ -85,7 +85,7 @@ class TransactionStatusResponse
         $fraudStatus = isset($this->data->fraud_status) ? $this->data->fraud_status : 'challenge';
         return $this->data->transaction_status === 'capture' && 
                strtolower($fraudStatus) === 'challenge' && 
-               $this->data->status_code === 201;
+               $this->data->status_code === MidtransResponse::STATUS_PENDING;
     }
 
     /**
