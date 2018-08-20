@@ -5,6 +5,10 @@
  */
 use Validator;
 use PaymentTransaction;
+use Coupon;
+
+use Config;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
 
 class PaymentHelper
 {
@@ -30,6 +34,36 @@ class PaymentHelper
             }
 
             return TRUE;
+        });
+
+        Validator::extend('orbit.allowed.quantity', function ($attribute, $value, $parameters) {
+
+            $maxQuantity = Config::get('orbit.transaction.max_quantity_per_item', 3);
+
+            $couponId = OrbitInput::post('coupon_id');
+            if (empty($couponId)) {
+                $couponId = OrbitInput::post('object_id');
+            }
+
+            $coupon = Coupon::select('available')->findOrFail($couponId);
+
+            if ($value <= $maxQuantity && $value <= $coupon->available) {
+                return TRUE;
+            }
+
+            return FALSE;
+        });
+
+        Validator::extend('orbit.equals.total', function ($attribute, $value, $parameters) {
+
+            $quantity = (double) OrbitInput::post($parameters[0], 1.00);
+            $single_price = (double) OrbitInput::post($parameters[1], 0.00);
+
+            if ($value == $quantity * $single_price) {
+                return TRUE;
+            }
+
+            return FALSE;
         });
     }
 

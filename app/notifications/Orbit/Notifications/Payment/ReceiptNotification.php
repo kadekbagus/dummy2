@@ -60,7 +60,7 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
      * Get the email templates.
      * At the moment we can use same template for both Sepulsa and Hot Deals.
      * Can be overriden in each receipt class if needed.
-     * 
+     *
      * @return [type] [description]
      */
     public function getEmailTemplates()
@@ -108,16 +108,16 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
                 $mail->to($data['recipientEmail']);
             });
 
-            $job->delete();
-
         } catch (Exception $e) {
             Log::debug('Notification: ReceiptNotification email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
+
+        $job->delete();
     }
 
     /**
      * Get InApp notification data.
-     * 
+     *
      * @return [type] [description]
      */
     public function getInAppData()
@@ -218,11 +218,11 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
                                   ->setEndPoint('user-notifications')
                                   ->request('POST');
 
-            $job->delete();
-
         } catch (Exception $e) {
             Log::debug('Notification: ReceiptNotification inApp exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
+
+        $job->delete();
     }
 
 }
