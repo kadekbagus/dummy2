@@ -678,4 +678,14 @@ class Mall extends Eloquent
 
         return $firstAcquired;
     }
+
+    public function getTimezone($current_mall)
+    {
+        $timezone = Mall::leftJoin('timezones', 'timezones.timezone_id', '=', 'merchants.timezone_id')
+            ->where('merchants.merchant_id', '=', $current_mall)
+            ->first();
+
+        return $timezone->timezone_name;
+    }
+
 }

@@ -7,8 +7,6 @@ use Queue;
 use Config;
 use Exception;
 use Carbon\Carbon;
-use Orbit\FakeJob;
-use Orbit\Helper\Util\JobBurier;
 
 use User;
 use PaymentTransaction;
@@ -17,13 +15,12 @@ use Coupon;
 
 // Notifications
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
-use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification as HotDealsReceiptNotification;
+use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
-
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
- * At this point, we assume the payment was completed (paid) so anything wrong with 
+ * At this point, we assume the payment was completed (paid) so anything wrong
  * while trying to issue the coupon will make the status success_no_coupon_failed.
  *
  * @author Budi <budi@dominopos.com>
@@ -33,14 +30,12 @@ class GetCouponQueue
     /**
      * Issue hot deals coupon.
      *
-     * @param  [type] $job  [description]
-     * @param  [type] $data [description]
-     * @return [type]       [description]
+     * @param  Illuminate\Queue\Jobs\Job | Orbit\FakeJob $job  the job
+     * @param  array $data the data needed to run this job
+     * @return void
      */
     public function fire($job, $data)
     {
-        $notificationDelay = 5;
-
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
         try {
@@ -48,68 +43,71 @@ class GetCouponQueue
 
             $paymentId = $data['paymentId'];
 
-            Log::info(sprintf('PaidCoupon: Getting coupon PaymentID: %s', $paymentId));
+            Log::info("PaidCoupon: Getting coupon PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'issued_coupon', 'user'])->find($paymentId);
-
-            if (empty($payment)) {
-                throw new Exception("Transaction {$paymentId} not found!");
-            }
+            $payment = PaymentTransaction::with(['details.coupon', 'user', 'issued_coupons'])->findOrFail($paymentId);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
 
-                Log::info('PaidCoupon: Payment ' . $paymentId . ' was denied/canceled. We should not issue any coupon.');
+                Log::info("PaidCoupon: Payment {$paymentId} was denied/canceled. We should not issue any coupon.");
 
                 $payment->cleanUp();
 
                 DB::connection()->commit();
 
-                if (! empty($job)) {
-                    $job->delete();
-                }
+                $job->delete();
 
                 return;
             }
 
             // It means we can not get related issued coupon.
-            if (empty($payment->issued_coupon)) {
-                $payment->cleanUp();
-                throw new Exception("Related IssuedCoupon not found. Might be put to stock again by system queue before customer complete the payment.", 1);
+            if (empty($payment->issued_coupons)) {
+                throw new Exception("Related IssuedCoupon not found. Might be put to stock again by system queue before customer completes the payment.", 1);
             }
 
             // If coupon already issued/redeemed...
-            if (in_array($payment->issued_coupon->status, [IssuedCoupon::STATUS_ISSUED, IssuedCoupon::STATUS_REDEEMED])) {
-                Log::info('PaidCoupon: Coupon already issued/redeemed. Nothing to do.');
-                DB::connection()->rollback();
+            $issuedCouponCount = 0;
+            foreach($payment->issued_coupons as $issuedCoupon) {
+                if ($issuedCoupon->status === IssuedCoupon::STATUS_RESERVED) {
+                    // Issue the coupon...
+                    $issuedCoupon->issued_date = Carbon::now('UTC');
+                    $issuedCoupon->status      = IssuedCoupon::STATUS_ISSUED;
+
+                    $issuedCoupon->save();
+
+                    $issuedCouponCount++;
+
+                    Log::info("PaidCoupon: IssuedCoupon {$issuedCoupon->issued_coupon_id} issued for payment {$paymentId}... ({$issuedCouponCount})");
+                }
+                else {
+                    Log::info("PaidCoupon: IssuedCoupon {$issuedCoupon->issued_coupon_id} status is {$issuedCoupon->status}. Nothing to do.");
+                }
             }
-            else {
-                // Issue the coupon...
-                $payment->issued_coupon->issued_date = Carbon::now('UTC');
-                $payment->issued_coupon->status      = IssuedCoupon::STATUS_ISSUED;
 
-                $payment->issued_coupon->save();
-
-                $payment->coupon_redemption_code = $payment->issued_coupon->issued_coupon_code;
+            if ($issuedCouponCount > 0) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS;
                 $payment->save();
 
-                // $availableCoupon = Coupon::where('promotion_id', $payment->issued_coupon->promotion_id)->first();
-                if (! empty($payment->coupon)) {
-                    $payment->coupon->updateAvailability();
-                }
+                $payment->details->first()->coupon->updateAvailability();
 
                 // Commit the changes ASAP.
                 DB::connection()->commit();
 
-                Log::info('PaidCoupon: Coupon issued..');
+                Log::info("PaidCoupon: {$issuedCouponCount} coupon issued for payment {$paymentId}..");
 
                 // Notify Customer.
-                $payment->user->notify(new HotDealsReceiptNotification($payment), $notificationDelay);
+                $payment->user->notify(new ReceiptNotification($payment));
+            }
+            else {
+                // Commit the changes ASAP.
+                DB::connection()->rollBack();
+
+                Log::info("PaidCoupon: NO COUPON ISSUED for payment {$paymentId} !");
             }
 
         } catch (Exception $e) {
-            
+
             // Mark as failed if we get any exception.
             if (! empty($payment)) {
                 $payment->status = PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED;
@@ -121,22 +119,20 @@ class GetCouponQueue
                 foreach($adminEmails as $email) {
                     $admin              = new User;
                     $admin->email       = $email;
-                    $admin->notify(new CouponNotAvailableNotification($payment, $e->getMessage()), 3);
+                    $admin->notify(new CouponNotAvailableNotification($payment, $e->getMessage()));
                 }
 
                 // Notify customer that coupon is not available.
-                $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment), 3);
+                $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment));
             }
             else {
-                DB::connection()->rollback();
+                DB::connection()->rollBack();
             }
 
             Log::info(sprintf('PaidCoupon: Get HotDeals Coupon exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
             Log::info('PaidCoupon: Data: ' . serialize($data));
         }
 
-        if (! empty($job)) {
-            $job->delete();
-        }
+        $job->delete();
     }
 }

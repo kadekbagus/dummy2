@@ -3667,7 +3667,8 @@ class CouponAPIController extends ControllerAPI
             $providerName = 'normal';
             $paymentType = 'normal';
 
-            $issuedCoupon = IssuedCoupon::where('issued_coupon_id', $issuedCouponId)
+            $issuedCoupon = IssuedCoupon::with(['payment.details.normal_paypro_detail'])
+                                        ->where('issued_coupon_id', $issuedCouponId)
                                         ->where('status', 'issued')
                                         ->first();
 
@@ -3837,6 +3838,19 @@ class CouponAPIController extends ControllerAPI
             if (in_array($coupon->promotion_type, [Coupon::TYPE_SEPULSA, Coupon::TYPE_HOT_DEALS])) {
                 // IssuedCoupon record should have transaction_id set...
                 $transactionId = $issuedCoupon->transaction_id;
+
+                if ($coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
+                    $redeemLocationInfo = $issuedCoupon->payment->details->first()->normal_paypro_detail;
+
+                    $redeemLocationInfo->merchant_id            = $baseStore->base_merchant_id;
+                    $redeemLocationInfo->merchant_name          = $baseStore->store_name;
+                    $redeemLocationInfo->store_id               = $baseStore->base_store_id;
+                    $redeemLocationInfo->store_name             = $baseStore->store_name;
+                    $redeemLocationInfo->building_id            = $baseStore->merchant_id;
+                    $redeemLocationInfo->building_name          = $baseStore->mall_name;
+
+                    $redeemLocationInfo->save();
+                }
             }
             else {
                 $paymentConfig = Config::get('orbit.payment_server');

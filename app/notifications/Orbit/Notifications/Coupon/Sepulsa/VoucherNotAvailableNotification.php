@@ -48,26 +48,22 @@ class VoucherNotAvailableNotification extends Notification
     protected function getEmailData()
     {
         $transaction = [];
-
-        $amount = $this->payment->getAmount();
-
         $transaction['id']    = $this->payment->payment_transaction_id;
-        $transaction['date']  = Carbon::parse($this->payment->transaction_date_and_time)->format('j M Y');
-        $transaction['total'] = $amount;
-        $redeemUrl            = Config::get('orbit.coupon.direct_redemption_url');
+        $transaction['date']  = $this->payment->getTransactionDate();
+        $transaction['total'] = $this->payment->getAmount();
         $cs = [
             'phone' => $this->contact['customer_service']['phone'],
             'email' => $this->contact['customer_service']['email'],
         ];
 
-        $transaction['items'] = [
-            [
-                'name'      => $this->payment->object_name,
-                'quantity'  => 1,
-                'price'     => $amount,
-                'total'     => $amount, // should be quantity * $this->payment->amount
-            ],
-        ];
+        foreach ($this->payment->details as $item) {
+            $transaction['items'][] = [
+                'name'      => $item->object_name,
+                'quantity'  => $item->quantity,
+                'price'     => $item->getPrice(),
+                'total'     => $item->getTotal(),
+            ];
+        }
 
         return [
             'recipientEmail'    => $this->getEmailAddress(),
@@ -75,7 +71,6 @@ class VoucherNotAvailableNotification extends Notification
             'customerName'      => $this->getName(),
             'customerPhone'     => $this->payment->phone,
             'transaction'       => $transaction,
-            'redeemUrl'         => $redeemUrl,
             'cs'                => $cs,
         ];
     }

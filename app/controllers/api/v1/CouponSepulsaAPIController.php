@@ -2395,7 +2395,87 @@ class CouponSepulsaAPIController extends ControllerAPI
         return $output;
     }
 
+    public function getAvailableSepulsaTokenList()
+    {
+        try {
+            $httpCode = 200;
 
+            $this->checkAuth();
+
+            $user = $this->api->user;
+
+            $role = $user->role;
+            $validRoles = $this->couponModifiyRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'You have to log in to continue';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
+            $this->client = SepulsaClient::create($this->config);
+
+            $take = OrbitInput::get('take', 100);
+
+            $sepulsaResponse = VoucherList::create($this->config)->getList('', $take, [], $page=1);
+            $sepulsaVouchers = isset($sepulsaResponse->result->data) ? $sepulsaResponse->result->data : null;
+
+            $availableToken = [];
+            if (! empty($sepulsaVouchers)) {
+                foreach ($sepulsaVouchers as $key => $value) {
+                    $checkToken = CouponSepulsa::where('token', '=', $value->token)->first();
+                    if (! $checkToken) {
+                        $availableToken[] = $value;
+                    }
+                }
+            }
+
+            $totalToken = count($availableToken);
+
+            $data = new stdclass();
+            $data->total_records = $totalToken;
+            $data->returned_records = $totalToken;
+            $data->records = $availableToken;
+
+            if (empty($availableToken)) {
+                $data->records = NULL;
+                $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
+            } else {
+                $this->response->data = $data;
+            }
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        return $output;
+    }
 
     protected function registerCustomValidation()
     {
