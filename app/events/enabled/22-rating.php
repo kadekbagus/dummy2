@@ -17,11 +17,6 @@ use OrbitShop\API\v1\Helper\Input as OrbitInput;
  */
 Event::listen('orbit.rating.postrating.after.commit', function($controller, $rating)
 {
-    // send email if review text is not empty
-    if (! empty($rating['review'])) {
-        Queue::push('Orbit\\Queue\\RatingAndReviewMailQueue', $rating, 'review_email');
-    }
-
     // update elasticsearch
     $objectType = $rating['object_type'];
     switch ($objectType) {

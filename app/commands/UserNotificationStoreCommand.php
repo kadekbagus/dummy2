@@ -133,7 +133,7 @@ class UserNotificationStoreCommand extends Command {
                     $notificationTokens = $storeObjectNotification->notification->notification_tokens;
 
                     // add query string for activity recording
-                    $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
+                    $newUrl =  $launchUrl . '&notif_id=' . $mongoNotifId;
 
                     // english is mandatory in onesignal, set en value with default language content
                     if (empty($headings->en)) {
