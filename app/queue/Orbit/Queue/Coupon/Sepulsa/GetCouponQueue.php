@@ -156,7 +156,6 @@ class GetCouponQueue
             else {
                 Log::info("PaidCoupon: All coupons issued/redeemed for payment {$paymentId}.");
             }
-
         } catch (Exception $e) {
 
             // Failed to get token...
@@ -169,7 +168,6 @@ class GetCouponQueue
                 if (! isset($payment)) {
                     $payment = null;
                 }
-
                 if (! isset($takenVouchers)) {
                     $takenVouchers = null;
                 }

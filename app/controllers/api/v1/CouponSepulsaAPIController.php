@@ -2019,9 +2019,13 @@ class CouponSepulsaAPIController extends ControllerAPI
                     } elseif ($relation === 'campaignLocations.mall') {
                         $coupons->with('campaignLocations.mall');
                     } elseif ($relation === 'keywords') {
-                        $coupons->with('keywords');
+                        $coupons->with(['keywords' => function($query) {
+                            $query->groupBy('keyword');
+                        }]);
                     } elseif ($relation === 'product_tags') {
-                        $coupons->with('product_tags');
+                        $coupons->with(['product_tags' => function($query) {
+                            $query->groupBy('product_tag');
+                        }]);
                     } elseif ($relation === 'campaignObjectPartners') {
                         $coupons->with('campaignObjectPartners');
                     }
