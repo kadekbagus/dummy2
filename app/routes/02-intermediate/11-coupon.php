@@ -108,3 +108,8 @@ Route::get('/app/v1/voucher-sepulsa/list', 'IntermediateAuthController@CouponSep
  * Get sepulsa voucher from token
  */
 Route::get('/app/v1/voucher-sepulsa/detail', 'IntermediateAuthController@CouponSepulsa_getVoucherSepulsaDetail');
+
+/**
+ * Get available sepulsa token
+ */
+Route::get('/app/v1/available-sepulsa-token/list', 'IntermediateAuthController@CouponSepulsa_getAvailableSepulsaTokenList');

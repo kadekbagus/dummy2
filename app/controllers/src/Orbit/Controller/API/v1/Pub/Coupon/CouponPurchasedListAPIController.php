@@ -25,6 +25,22 @@ use Helper\EloquentRecordCounter as RecordCounter;
 
 class CouponPurchasedListAPIController extends PubControllerAPI
 {
+    private function calculateCount($prefix, $user)
+    {
+        $transact = PaymentTransaction::select(DB::raw("
+                                COUNT(DISTINCT {$prefix}payment_transactions.payment_transaction_id) AS tot
+                        "))
+
+                        ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                        ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
+                        ->where('payment_transactions.user_id', $user->user_id)
+                        ->where('payment_transaction_details.object_type', 'coupon')
+                        ->where('payment_transactions.payment_method', '!=', 'normal')
+                        ->whereNotIn('payment_transactions.status', array('starting', 'denied'))
+                        ->take(1);
+        return (int) $transact->first()->tot;
+    }
+
     /**
      * GET - get all coupon wallet in all mall
      *
@@ -83,15 +99,17 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             $prefix = DB::getTablePrefix();
 
             $coupon = PaymentTransaction::select(DB::raw("
-                                    {$prefix}payment_transactions.object_id as object_id,
+                                    {$prefix}payment_transaction_details.object_id as object_id,
                                     {$prefix}payment_transactions.amount,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
-                                    CONCAT({$prefix}payment_transactions.store_name,' @ ', {$prefix}payment_transactions.building_name) as store_at_building,
+                                    CONCAT({$prefix}payment_normal_paypro_details.store_name,' @ ', {$prefix}payment_normal_paypro_details.building_name) as store_at_building,
                                     {$prefix}payment_transactions.payment_transaction_id,
+                                    {$prefix}payment_transactions.created_at,
                                     convert_tz( {$prefix}payment_transactions.created_at, '+00:00', {$prefix}payment_transactions.timezone_name) as date_tz,
                                     {$prefix}payment_transactions.status,
                                     {$prefix}payment_transactions.payment_method,
                                     CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
+
                                     CASE WHEN {$prefix}media.path is null THEN (
                                         SELECT
                                           m.path
@@ -111,6 +129,7 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                         WHERE ct.promotion_id = {$prefix}promotions.promotion_id
                                         LIMIT 1
                                     ) ELSE {$prefix}media.cdn_url END as cdnPath,
+
                                     (SELECT substring_index(group_concat(distinct om.name SEPARATOR ', '), ', ', 2)
                                                     FROM {$prefix}promotion_retailer opr
                                                     JOIN {$prefix}merchants om
@@ -119,9 +138,18 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                                     GROUP BY opr.promotion_id
                                                     ORDER BY om.name
                                                 ) as link_to_tenant
-
                             "))
-                            ->join('promotions', 'promotions.promotion_id', '=', 'payment_transactions.object_id')
+
+                            ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                            ->join('promotions', 'promotions.promotion_id', '=', 'payment_transaction_details.object_id')
+                            ->join('merchants', function ($q) {
+                                $q->on('merchants.merchant_id', '=', 'promotions.merchant_id');
+                            })
+                            ->join('merchants as malls', function ($q) {
+                                $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
+                            })
+                            ->leftJoin('payment_normal_paypro_details', 'payment_normal_paypro_details.payment_transaction_detail_id', '=', 'payment_transaction_details.payment_transaction_detail_id')
+
                             ->join('campaign_account', 'campaign_account.user_id', '=', 'promotions.created_by')
                             ->join('languages as default_languages', DB::raw('default_languages.name'), '=', 'campaign_account.mobile_default_language')
                             ->leftJoin('coupon_translations', function ($q) use ($valid_language) {
@@ -137,24 +165,13 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
-                            ->join('issued_coupons', function ($join) {
-                                $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
-                                $join->where('issued_coupons.status', '!=', 'deleted');
-                            })
-                            ->leftJoin('merchants', function ($q) {
-                                $q->on('merchants.merchant_id', '=', 'issued_coupons.redeem_retailer_id');
-                            })
-                            ->leftJoin('merchants as malls', function ($q) {
-                                $q->on('merchants.parent_id', '=', DB::raw("malls.merchant_id"));
-                            })
                             ->leftJoin('timezones', function ($q) use($prefix) {
                                 $q->on('timezones.timezone_id', '=', DB::raw("CASE WHEN {$prefix}merchants.object_type = 'mall' THEN {$prefix}merchants.timezone_id ELSE malls.timezone_id END"));
                             })
                             ->where('payment_transactions.user_id', $user->user_id)
-                            ->where('payment_transactions.object_type', 'coupon')
+                            ->where('payment_transaction_details.object_type', 'coupon')
                             ->where('payment_transactions.payment_method', '!=', 'normal')
-                            ->where('payment_transactions.status', '!=', 'starting')
-                            ->where('issued_coupons.user_id', $user->user_id)
+                            ->whereNotIn('payment_transactions.status', array('starting', 'denied'))
                             ->groupBy('payment_transactions.payment_transaction_id');
 
             OrbitInput::get('filter_name', function ($filterName) use ($coupon, $prefix) {
@@ -184,8 +201,6 @@ class CouponPurchasedListAPIController extends PubControllerAPI
                         ->first();
             });
 
-            // need subquery to order my coupon
-            $querySql = $coupon->toSql();
             $coupon = $coupon->orderBy(DB::raw("{$prefix}payment_transactions.created_at"), 'desc');
 
             $_coupon = clone $coupon;
@@ -197,7 +212,8 @@ class CouponPurchasedListAPIController extends PubControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
-            $count = RecordCounter::create($_coupon)->count();
+            //$count = RecordCounter::create($_coupon)->count();
+            $count = $this->calculateCount($prefix, $user);
 
             $cdnConfig = Config::get('orbit.cdn');
             $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');

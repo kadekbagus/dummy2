@@ -200,6 +200,11 @@ class Coupon extends Eloquent
                     ->join('languages', 'languages.language_id', '=', 'coupon_translations.merchant_language_id');
     }
 
+    public function coupon_sepulsa()
+    {
+        return $this->hasOne('CouponSepulsa', 'promotion_id', 'promotion_id');
+    }
+
     /**
      * Add Filter coupons based on user who request it.
      *
@@ -731,6 +736,7 @@ class Coupon extends Eloquent
         $issued = IssuedCoupon::where('promotion_id', $this->promotion_id)->whereIn('status', [
                                     IssuedCoupon::STATUS_ISSUED,
                                     IssuedCoupon::STATUS_REDEEMED,
+                                    IssuedCoupon::STATUS_RESERVED,
                                 ])->count();
 
         $available = $this->maximum_issued_coupon - $issued;

@@ -375,6 +375,15 @@ Route::post('/api/v1/pub/coupon-buy', function()
 
 Route::post('/app/v1/pub/coupon-buy', ['as' => 'pub-coupon-buy', 'uses' => 'IntermediatePubAuthController@Coupon\CouponBuy_postCouponBuy']);
 
+/**
+ * Save coupon redeem location.
+ */
+Route::post('/api/v1/pub/coupon-save-redeem-location', function()
+{
+    return Orbit\Controller\API\v1\Pub\Coupon\CouponSaveRedeemLocation::create()->postSaveRedeemLocation();
+});
+
+Route::post('/app/v1/pub/coupon-save-redeem-location', ['as' => 'pub-save-redeem-location', 'uses' => 'IntermediatePubAuthController@Coupon\CouponSaveRedeemLocation_postSaveRedeemLocation']);
 
 /**
  * Create new coupon sepulsa
@@ -414,4 +423,12 @@ Route::get('/api/v1/voucher-sepulsa/list', function()
 Route::get('/api/v1/voucher-sepulsa/detail', function()
 {
     return CouponSepulsaAPIController::create()->getVoucherSepulsaDetail();
+});
+
+/**
+ * Get available sepulsa token
+ */
+Route::get('/api/v1/available-sepulsa-token/list', function()
+{
+    return CouponSepulsaAPIController::create()->getAvailableSepulsaTokenList();
 });
