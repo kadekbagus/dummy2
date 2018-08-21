@@ -7432,14 +7432,14 @@ return array(
 
     // Config related to transaction.
     'transaction' => [
-
         // Email addresses that will be notified if system can not issue coupon.
         'notify_emails' => [
             'developer@dominopos.com',
         ],
-
         // Delay before issuing coupon for ATM/Bank Transfer/Echannel (in seconds)
         'delay_before_issuing_coupon' => 60,
+        // Maximum quantity per item that allowed to be purchased. Applied to all coupons.
+        'max_quantity_per_purchase' => 1,
     ],
 
     // Coupon reserved limit time for sepulsa and hot deals, set in minutes
