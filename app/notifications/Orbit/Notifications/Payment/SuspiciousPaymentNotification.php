@@ -37,15 +37,13 @@ class SuspiciousPaymentNotification extends Notification
             'paymentId'         => $this->payment->payment_transaction_id,
             'externalPaymentId' => $this->payment->external_payment_transaction_id,
             'paymentMethod'     => $this->payment->payment_method,
-            'couponId'          => $this->payment->object_id,
+            'couponId'          => $this->payment->details->first()->object_id,
         ];
     }
 
     public function toEmail($job, $data)
     {
         try {
-
-            Log::info('Payment: Sending notification for Suspicious Payment... PaymentID: ' . $data['paymentId']);
 
             $emailTemplate = 'emails.payment.suspicious';
 

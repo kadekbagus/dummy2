@@ -100,15 +100,19 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                                                                 'building_name',
                                                                 'object_name',
                                                                 'object_id',
-                                                                'coupon_redemption_code',
-                                                                DB::raw("DATE_FORMAT(convert_tz( created_at, '+00:00', timezone_name)  , '%d/%m/%Y %H:%i:%s') as date_tz"),
-                                                                'payment_transaction_id',
+                                                                'issued_coupons.issued_coupon_code as coupon_redemption_code',
+                                                                DB::raw("DATE_FORMAT(convert_tz({$prefix}payment_transactions.created_at, '+00:00', timezone_name)  , '%d/%m/%Y %H:%i:%s') as date_tz"),
+                                                                'payment_transactions.payment_transaction_id',
                                                                 'external_payment_transaction_id',
                                                                 'payment_method',
                                                                 'amount',
-                                                                'currency',
-                                                                'status'
-                                                            );
+                                                                'payment_transactions.currency',
+                                                                'payment_transactions.status'
+                                                            )
+
+                                    ->join('payment_transaction_details', 'payment_transaction_details.payment_transaction_id', '=', 'payment_transactions.payment_transaction_id')
+                                    ->leftJoin('payment_normal_paypro_details', 'payment_normal_paypro_details.payment_transaction_detail_id', '=', 'payment_transaction_details.payment_transaction_detail_id')
+                                    ->leftJoin('issued_coupons', 'issued_coupons.transaction_id', '=', 'payment_transactions.payment_transaction_id');
 
             // Filtering by user store or merchant
             if ($userType === 'merchant') {
@@ -153,12 +157,14 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                 $merchantTransactions->where('payment_transactions.payment_method', 'like', "%$payment_method%");
             });
 
+            $merchantTransactions->groupBy('payment_transactions.payment_transaction_id');
+
             $start_date = OrbitInput::get('start_date');
             $end_date = OrbitInput::get('end_date');
 
             if ($start_date != '' && $end_date != ''){
                 $merchantTransactions->where(function ($q) use ($start_date, $end_date) {
-                    $q->WhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d %H:%i:%s') <= convert_tz( created_at, '+00:00', timezone_name) and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d %H:%i:%s') >= convert_tz( created_at, '+00:00', timezone_name)");
+                    $q->WhereRaw("DATE_FORMAT({$this->quote($start_date)}, '%Y-%m-%d %H:%i:%s') <= convert_tz( payment_transactions.created_at, '+00:00', timezone_name) and DATE_FORMAT({$this->quote($end_date)}, '%Y-%m-%d %H:%i:%s') >= convert_tz( payment_transactions.created_at, '+00:00', timezone_name)");
                 });
             }
 
@@ -189,8 +195,8 @@ class MerchantTransactionReportAPIController extends ControllerAPI
                     'object_name' => 'object_name',
                     'object_id' => 'object_id',
                     'coupon_redemption_code' => 'coupon_redemption_code',
-                    'created_at' => 'created_at',
-                    'payment_transaction_id' => 'payment_transaction_id',
+                    'created_at' => 'payment_transactions.created_at',
+                    'payment_transaction_id' => 'payment_transactions.payment_transaction_id',
                     'external_payment_transaction_id' => 'external_payment_transaction_id',
                     'payment_method' => 'payment_method',
                     'amount' => 'amount',
