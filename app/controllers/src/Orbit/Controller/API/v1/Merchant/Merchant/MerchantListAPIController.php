@@ -89,7 +89,8 @@ class MerchantListAPIController extends ControllerAPI
                                                 ELSE 'available'
                                                 END
                                             END) as export_status"),
-                                        DB::raw("(SELECT count(base_store_id) FROM {$prefix}base_stores WHERE base_merchant_id = {$prefix}base_merchants.base_merchant_id) as location_count")
+                                        DB::raw("(SELECT count(base_store_id) FROM {$prefix}base_stores WHERE base_merchant_id = {$prefix}base_merchants.base_merchant_id) as location_count"),
+                                        'base_merchants.status'
                                     )
                                     ->leftJoin('media', function ($q){
                                         $q->on('media.object_id', '=', 'base_merchants.base_merchant_id')
@@ -136,6 +137,8 @@ class MerchantListAPIController extends ControllerAPI
                 }
             });
 
+            $_merchantActiveInactive = clone $merchants;
+
             $merchants->groupBy('base_merchants.base_merchant_id');
 
             // Clone the query builder which still does not include the take,
@@ -158,7 +161,8 @@ class MerchantListAPIController extends ControllerAPI
                 // Map the sortby request to the real column name
                 $sortByMapping = array(
                     'merchant_name' => 'base_merchants.name',
-                    'location_number' => 'location_count'
+                    'location_number' => 'location_count',
+                    'status' => 'base_merchants.status'
                 );
 
                 if (array_key_exists($_sortBy, $sortByMapping)) {
@@ -177,9 +181,32 @@ class MerchantListAPIController extends ControllerAPI
             $totalMerchants = RecordCounter::create($_merchants)->count();
             $listOfMerchants = $merchants->get();
 
+            // Get total active inactive stores
+            $totalActiveStore = 0;
+            $totalInactiveStore = 0;
+
+            if ($totalMerchants > 0) {
+                $totalActiveInactiveStore = $_merchantActiveInactive
+                                                ->select(DB::raw("count({$prefix}base_merchants.base_merchant_id) as total "), 'base_merchants.status')
+                                                ->groupBy('base_merchants.status')
+                                                ->get();
+
+                if (count($totalActiveInactiveStore) > 0) {
+                    foreach ($totalActiveInactiveStore as $key => $value) {
+                        if ($value->status == 'active') {
+                            $totalActiveStore = $value->total;
+                        } elseif ($value->status == 'inactive') {
+                            $totalInactiveStore = $value->total;
+                        }
+                    }
+                }
+            }
+
             $data = new stdclass();
             $data->total_records = $totalMerchants;
             $data->returned_records = count($listOfMerchants);
+            $data->total_active_stores = $totalActiveStore;
+            $data->total_inactive_stores = $totalInactiveStore;
             $data->records = $listOfMerchants;
 
             if ($totalMerchants === 0) {
