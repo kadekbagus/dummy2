@@ -2445,12 +2445,12 @@ class TenantAPIController extends ControllerAPI
 
             // filter by country
             if (!empty($country) && $account_name !== 'Mall') {
-                $tenants->where('merchants.country', '=', $country);
+                $tenants->where(DB::raw("(IF({$prefix}merchants.object_type = 'tenant', pm.country, {$prefix}merchants.country))"), '=', $country);
             }
 
             // filter by country_id
             if (!empty($country_id) && $account_name !== 'Mall') {
-                $tenants->where('merchants.country_id', '=', $country_id);
+                $tenants->where(DB::raw("(IF({$prefix}merchants.object_type = 'tenant', pm.country_id, {$prefix}merchants.country_id))"), '=', $country_id);
             }
 
             // filter by mall name for account type mall (PMP account setup admin portal)
