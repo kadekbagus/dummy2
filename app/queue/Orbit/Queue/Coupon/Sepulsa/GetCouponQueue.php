@@ -84,7 +84,7 @@ class GetCouponQueue
             }
 
             // Manual query Coupon.
-            $coupon = Coupon::with(['coupon_sepulsa'])->findOrFail($payment->issued_coupons->first()->promotion_id);
+            $coupon = Coupon::with(['coupon_sepulsa'])->findOrFail($payment->details->first()->object_id);
             $voucherToken = $coupon->coupon_sepulsa->token;
             $reservedCoupons = [];
             $reservedCouponsToken = [];
@@ -156,7 +156,6 @@ class GetCouponQueue
             else {
                 Log::info("PaidCoupon: All coupons issued/redeemed for payment {$paymentId}.");
             }
-
         } catch (Exception $e) {
 
             // Failed to get token...
@@ -169,7 +168,6 @@ class GetCouponQueue
                 if (! isset($payment)) {
                     $payment = null;
                 }
-
                 if (! isset($takenVouchers)) {
                     $takenVouchers = null;
                 }
@@ -236,7 +234,7 @@ class GetCouponQueue
                 Log::info(sprintf(
                     'PaidCoupon: Take Voucher Retrying in %s seconds... Status: FAILED, CouponID: %s --- Message: %s',
                     $delay,
-                    $payment->issued_coupon->promotion_id,
+                    $payment->details->first()->object_id,
                     $failureMessage
                 ));
             }
@@ -253,7 +251,7 @@ class GetCouponQueue
 
                 Log::info(sprintf(
                     'PaidCoupon: TakeVoucher Maximum Retry reached... Status: FAILED, CouponID: %s --- Message: %s',
-                    $payment->issued_coupon->promotion_id,
+                    $payment->details->first()->object_id,
                     $failureMessage
                 ));
 

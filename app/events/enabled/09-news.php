@@ -225,7 +225,7 @@ Event::listen('orbit.news.postnewnews.after.commit', function($controller, $news
  * @param NewsAPIController $controller
  * @param News $news
  */
-Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $news, $temporaryContentId)
+Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $news)
 {
     $timestamp = new DateTime($news->updated_at);
     $date = $timestamp->format('d F Y H:i').' (UTC)';
@@ -244,7 +244,6 @@ Event::listen('orbit.news.postupdatenews.after.commit', function($controller, $n
         'eventType'          => 'updated',
         'date'               => $date,
         'campaignId'         => $news->news_id,
-        'temporaryContentId' => $temporaryContentId,
         'mode'               => 'update'
     ]);
 
