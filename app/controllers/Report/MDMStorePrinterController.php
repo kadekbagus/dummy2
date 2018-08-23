@@ -40,6 +40,8 @@ class MDMStorePrinterController extends DataPrinterController
         // get total data
         $coupon = $response['builder'];
         $totalRec = $response['count'];
+        $activeStore = $response['active_store'];
+        $inactiveStore = $response['inactive_store'];
 
         $pdo = DB::Connection()->getPdo();
 
@@ -62,6 +64,8 @@ class MDMStorePrinterController extends DataPrinterController
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'MDM Store List', '', '', '', '','');
                 printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Total Store', round($totalRec), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Active Store', round($activeStore), '', '', '','');
+                printf("%s,%s,%s,%s,%s,%s,%s\n", '', 'Inactive Store', round($inactiveStore), '', '', '','');
 
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,\n", '', '', '', '', '', '', '', '', '');
                 printf("%s,%s,%s,%s,%s,%s,%s,%s,%s,\n", 'No', 'Merchant', 'Country', 'Location', 'Floor', 'Unit', 'Phone', 'Verification Number', 'Status');

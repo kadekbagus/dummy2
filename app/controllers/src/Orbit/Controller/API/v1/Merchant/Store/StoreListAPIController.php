@@ -239,7 +239,10 @@ class StoreListAPIController extends ControllerAPI
             }
 
             if ($this->returnBuilder) {
-                return ['builder' => $store, 'count' => $count];
+                return ['builder' => $store,
+                        'count' => $count,
+                        'active_store' => $totalActiveStore,
+                        'inactive_store' => $totalInactiveStore];
             }
 
             $this->response->data = new stdClass();
