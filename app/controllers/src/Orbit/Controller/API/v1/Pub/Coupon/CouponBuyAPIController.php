@@ -17,6 +17,7 @@ use Mall;
 use Lang;
 use \Exception;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
+use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Coupon;
 use IssuedCoupon;
 use \Queue;
@@ -56,7 +57,10 @@ class CouponBuyAPIController extends PubControllerAPI
 
             $coupon_id = OrbitInput::post('coupon_id');
             $with_reserved = OrbitInput::post('with_reserved', 'N');
-            $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time');
+            $quantity = OrbitInput::post('quantity');
+            $limitTimeCfg = Config::get('orbit.coupon_reserved_limit_time', 10);
+
+            PaymentHelper::create()->registerCustomValidation();
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -64,10 +68,15 @@ class CouponBuyAPIController extends PubControllerAPI
                 array(
                     'coupon_id' => $coupon_id,
                     'with_reserved' => $with_reserved,
+                    'quantity' => $quantity,
                 ),
                 array(
                     'coupon_id' => 'required|orbit.exists.coupon',
                     'with_reserved' => 'required',
+                    'quantity' => 'required|orbit.allowed.quantity',
+                ),
+                array(
+                    'orbit.allowed.quantity' => 'Requested quantity not available.',
                 )
             );
 
@@ -102,49 +111,82 @@ class CouponBuyAPIController extends PubControllerAPI
                 OrbitShopAPI::throwInvalidArgument('This coupon has been sold out');
             }
 
-
             if ($with_reserved === 'N') {
 
                 $response = $userIssuedCoupon;
 
             } elseif ($with_reserved === 'Y') {
 
-                if ($isUserHavingReservedCoupon) {
+                $this->beginTransaction();
 
-                    $response = $userIssuedCoupon;
+                // Get the reserved coupons.
+                $reservedCoupons = IssuedCoupon::where('user_id', $user->user_id)
+                                                    ->where('promotion_id', $coupon_id)
+                                                    ->where('status', IssuedCoupon::STATUS_RESERVED)
+                                                    ->oldest()
+                                                    ->get();
 
-                } else {
+                // Calculate the remaining quantity to be added.
+                $remainingQuantity = $quantity - $reservedCoupons->count();
+                Log::info("PaidCoupon: New quantity is {$quantity}, before was {$reservedCoupons->count()}, remaining {$remainingQuantity}");
 
-                    $this->beginTransaction();
+                // If lower than what reserved before, then remove the unused coupon
+                // and keep the requested quantity reserved.
+                // Otherwise, we assume the new quantity is more than what reserved before
+                // so we should reserve the remaining quantity.
+                if ($remainingQuantity < 0) {
+                    $remainingQuantity = abs($remainingQuantity);
+                    Log::info("PaidCoupon: {$remainingQuantity} reserved coupons will be deleted...");
 
-                    //insert for sepulsa and update for hot_deals
-                    if ($coupon->promotion_type === 'sepulsa') {
+                    $deleted = 0;
+                    foreach($reservedCoupons as $reservedCoupon) {
 
-                        $issuedCoupon = new IssuedCoupon;
-                        $issuedCoupon->promotion_id  = $coupon_id;
-                        $issuedCoupon->user_id       = $user->user_id;
-                        $issuedCoupon->user_email    = $user->user_email;
-                        $issuedCoupon->issued_date   = date('Y-m-d H:i:s');
-                        $issuedCoupon->status        = IssuedCoupon::STATUS_RESERVED;
-                        $issuedCoupon->record_exists = 'Y';
-                        $issuedCoupon->save();
+                        if ($deleted === $remainingQuantity) {
+                            break;
+                        }
 
-                    } elseif ($coupon->promotion_type === 'hot_deals') {
+                        if ($coupon->promotion_type === Coupon::TYPE_SEPULSA) {
+                            $reservedCoupon->delete(TRUE);
+                        }
+                        else if ($coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
+                            $reservedCoupon->makeAvailable();
+                        }
 
-                        $issuedCoupon = IssuedCoupon::where('promotion_id', $coupon_id)
-                                                        ->where('user_id', NULL)
-                                                        ->where('user_email', NULL)
-                                                        ->first();
-
-                        $issuedCoupon->user_id     = $user->user_id;
-                        $issuedCoupon->user_email  = $user->user_email;
-                        $issuedCoupon->issued_date = date('Y-m-d H:i:s');
-                        $issuedCoupon->status      = IssuedCoupon::STATUS_RESERVED;
-                        $issuedCoupon->save();
-
+                        $deleted++;
                     }
+                }
+                else if ($remainingQuantity > 0) {
+                    Log::info("PaidCoupon: Adding {$remainingQuantity} extra reserved coupons...");
+                    for($i = 1; $i <= $remainingQuantity; $i++) {
+                        //insert for sepulsa and update for hot_deals
+                        if ($coupon->promotion_type === 'sepulsa') {
+                            $issuedCoupon = new IssuedCoupon;
+                            $issuedCoupon->promotion_id  = $coupon_id;
+                            $issuedCoupon->user_id       = $user->user_id;
+                            $issuedCoupon->user_email    = $user->user_email;
+                            $issuedCoupon->issued_date   = date('Y-m-d H:i:s');
+                            $issuedCoupon->status        = IssuedCoupon::STATUS_RESERVED;
+                            $issuedCoupon->record_exists = 'Y';
+                            $issuedCoupon->save();
+                        } elseif ($coupon->promotion_type === 'hot_deals') {
+                            $issuedCoupon = IssuedCoupon::where('promotion_id', $coupon_id)
+                                                            ->where('user_id', NULL)
+                                                            ->where('user_email', NULL)
+                                                            ->first();
 
-                    $this->commit();
+                            $issuedCoupon->user_id     = $user->user_id;
+                            $issuedCoupon->user_email  = $user->user_email;
+                            $issuedCoupon->issued_date = date('Y-m-d H:i:s');
+                            $issuedCoupon->status      = IssuedCoupon::STATUS_RESERVED;
+                            $issuedCoupon->save();
+                        }
+                    }
+                }
+
+                $this->commit();
+
+                // Schedule check if no coupon was reserved before/new request
+                if ($reservedCoupons->count() === 0) {
 
                     // Register to queue for check payment progress, time will be set configurable
                     $date = Carbon::now()->addMinutes($limitTimeCfg);
@@ -155,15 +197,17 @@ class CouponBuyAPIController extends PubControllerAPI
                         'Orbit\\Queue\\Coupon\\CheckReservedCoupon',
                         ['coupon_id' => $coupon_id, 'user_id' => $user->user_id]
                     );
-
-                    $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTimeCfg minutes", strtotime($issuedCoupon->issued_date)));
-
-                    // Return the data
-                    $response = $issuedCoupon;
+                }
+                else {
+                    Log::info("PaidCoupon: Not scheduling any check because it was scheduled before.");
+                    $issuedCoupon = $reservedCoupons->last();
                 }
 
-            }
+                $issuedCoupon->limit_time = date('Y-m-d H:i:s', strtotime("+$limitTimeCfg minutes", strtotime($issuedCoupon->issued_date)));
 
+                // Return the data
+                $response = $issuedCoupon;
+            }
 
             $this->response->data = $response;
 

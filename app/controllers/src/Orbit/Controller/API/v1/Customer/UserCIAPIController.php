@@ -71,10 +71,12 @@ class UserCIAPIController extends BaseAPIController
             $data->email = $user->user_email;
             $data->firstname = $user->user_firstname;
             $data->lastname = $user->user_lastname;
+            $data->gender = $user->userdetail->gender;
             $data->phone = $user->phone;
             $data->role = $role->role_name;
             $data->image = $image;
             $data->phone = $userDetail->userdetail->phone;
+            $data->gender = $userDetail->userdetail->gender;
 
             $this->response->data = $data;
             $this->response->code = 0;

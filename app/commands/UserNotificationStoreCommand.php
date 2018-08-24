@@ -133,7 +133,7 @@ class UserNotificationStoreCommand extends Command {
                     $notificationTokens = $storeObjectNotification->notification->notification_tokens;
 
                     // add query string for activity recording
-                    $newUrl =  $launchUrl . '?notif_id=' . $mongoNotifId;
+                    $newUrl =  $launchUrl . '&notif_id=' . $mongoNotifId;
 
                     // english is mandatory in onesignal, set en value with default language content
                     if (empty($headings->en)) {
@@ -168,6 +168,7 @@ class UserNotificationStoreCommand extends Command {
                                 'adm_big_picture'    => $imageUrl,
                                 'chrome_big_picture' => $imageUrl,
                                 'chrome_web_image'   => $imageUrl,
+                                'web_push_topic'     => 'auto-store',
                             ];
 
                             $oneSignal = new OneSignal($oneSignalConfig);

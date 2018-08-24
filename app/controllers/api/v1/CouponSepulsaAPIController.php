@@ -171,6 +171,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
+            $gender = OrbitInput::post('gender', 'Y');
 
             $is3rdPartyPromotion = OrbitInput::post('is_3rd_party_promotion', 'N');
             $promotionValue = OrbitInput::post('promotion_value', NULL);
@@ -304,6 +305,11 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
+            // A means all gender
+            if ($gender === 'A') {
+                $gender = 'Y';
+            }
+
             // save Coupon.
             $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
 
@@ -326,7 +332,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->coupon_notification = $coupon_notification;
             $newcoupon->created_by = $this->api->user->user_id;
             $newcoupon->is_all_age = 'Y';
-            $newcoupon->is_all_gender = 'Y';
+            $newcoupon->is_all_gender = $gender;
             $newcoupon->is_popup = $is_popup;
             $newcoupon->is_exclusive = $is_exclusive;
             $newcoupon->is_visible = $isVisible;
@@ -1157,6 +1163,14 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedCouponSepulsa->voucher_benefit = $voucher_benefit;
             });
 
+            OrbitInput::post('gender', function($gender) use ($updatedCouponSepulsa) {
+                if ($gender === 'A') {
+                    $gender = 'Y';
+                }
+
+                $updatedCouponSepulsa->is_all_gender = $gender;
+            });
+
             $updatedCouponSepulsa->setUpdatedAt($updatedCouponSepulsa->freshTimestamp());
             $updatedCouponSepulsa->save();
 
@@ -1211,16 +1225,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                     $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
                     $updatedcoupon->linkToTenants()->detach($deleted_retailer_ids);
                     $updatedcoupon->load('linkToTenants');
-                }
-            });
-
-
-            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatedcoupon, $promotion_id) {
-                $updatedcoupon->is_all_gender = $is_all_gender;
-                if ($is_all_gender == 'Y') {
-                    $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $promotion_id)
-                                                            ->where('campaign_type', '=', 'coupon');
-                    $deleted_campaign_genders->delete();
                 }
             });
 
@@ -1816,7 +1820,8 @@ class CouponSepulsaAPIController extends ControllerAPI
                                 WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NULL THEN 'available'
                                 WHEN is_3rd_party_promotion = 'N' THEN 'not_available'
                             END AS export_status
-                        ")
+                        "),
+                    DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender")
                 )
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
@@ -2019,9 +2024,13 @@ class CouponSepulsaAPIController extends ControllerAPI
                     } elseif ($relation === 'campaignLocations.mall') {
                         $coupons->with('campaignLocations.mall');
                     } elseif ($relation === 'keywords') {
-                        $coupons->with('keywords');
+                        $coupons->with(['keywords' => function($query) {
+                            $query->groupBy('keyword');
+                        }]);
                     } elseif ($relation === 'product_tags') {
-                        $coupons->with('product_tags');
+                        $coupons->with(['product_tags' => function($query) {
+                            $query->groupBy('product_tag');
+                        }]);
                     } elseif ($relation === 'campaignObjectPartners') {
                         $coupons->with('campaignObjectPartners');
                     }
@@ -2391,7 +2400,87 @@ class CouponSepulsaAPIController extends ControllerAPI
         return $output;
     }
 
+    public function getAvailableSepulsaTokenList()
+    {
+        try {
+            $httpCode = 200;
 
+            $this->checkAuth();
+
+            $user = $this->api->user;
+
+            $role = $user->role;
+            $validRoles = $this->couponModifiyRoles;
+            if (! in_array( strtolower($role->role_name), $validRoles)) {
+                $message = 'You have to log in to continue';
+                ACL::throwAccessForbidden($message);
+            }
+
+            $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
+            $this->client = SepulsaClient::create($this->config);
+
+            $take = OrbitInput::get('take', 100);
+
+            $sepulsaResponse = VoucherList::create($this->config)->getList('', $take, [], $page=1);
+            $sepulsaVouchers = isset($sepulsaResponse->result->data) ? $sepulsaResponse->result->data : null;
+
+            $availableToken = [];
+            if (! empty($sepulsaVouchers)) {
+                foreach ($sepulsaVouchers as $key => $value) {
+                    $checkToken = CouponSepulsa::where('token', '=', $value->token)->first();
+                    if (! $checkToken) {
+                        $availableToken[] = $value;
+                    }
+                }
+            }
+
+            $totalToken = count($availableToken);
+
+            $data = new stdclass();
+            $data->total_records = $totalToken;
+            $data->returned_records = $totalToken;
+            $data->records = $availableToken;
+
+            if (empty($availableToken)) {
+                $data->records = NULL;
+                $this->response->message = Lang::get('statuses.orbit.nodata.coupon');
+            } else {
+                $this->response->data = $data;
+            }
+
+        } catch (ACLForbiddenException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (InvalidArgsException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+            $httpCode = 403;
+        } catch (QueryException $e) {
+            $this->response->code = $e->getCode();
+            $this->response->status = 'error';
+            // Only shows full query error when we are in debug mode
+            if (Config::get('app.debug')) {
+                $this->response->message = $e->getMessage();
+            } else {
+                $this->response->message = Lang::get('validation.orbit.queryerror');
+            }
+            $this->response->data = null;
+            $httpCode = 500;
+        } catch (Exception $e) {
+            $this->response->code = $this->getNonZeroCode($e->getCode());
+            $this->response->status = 'error';
+            $this->response->message = $e->getMessage();
+            $this->response->data = null;
+        }
+
+        $output = $this->render($httpCode);
+        return $output;
+    }
 
     protected function registerCustomValidation()
     {

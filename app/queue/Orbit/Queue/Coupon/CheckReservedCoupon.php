@@ -40,33 +40,31 @@ class CheckReservedCoupon
             $coupon = Coupon::where('promotion_id', $couponId)->first();
 
             if (! empty($coupon)) {
-                $cancelReservedCoupon = IssuedCoupon::where('user_id', $userId)
+                $cancelReservedCoupons = IssuedCoupon::where('user_id', $userId)
                                                 ->where('transaction_id', NULL)
                                                 ->where('promotion_id', $couponId)
                                                 ->where('status', IssuedCoupon::STATUS_RESERVED)
-                                                ->first();
+                                                ->get();
 
-                if (! empty($cancelReservedCoupon)) {
+                if (! empty($cancelReservedCoupons)) {
 
                     $isCancelReservedCoupon = FALSE;
 
-                    // Action based on promotion_type
-                    if ($coupon->promotion_type === 'sepulsa') {
-                        $cancelReservedCoupon->delete(TRUE);
+                    foreach($cancelReservedCoupons as $cancelReservedCoupon) {
+                        // Action based on promotion_type
+                        if ($coupon->promotion_type === Coupon::TYPE_SEPULSA) {
+                            $cancelReservedCoupon->delete(TRUE);
 
-                        $isCancelReservedCoupon = TRUE;
-                    } elseif ($coupon->promotion_type === 'hot_deals') {
-                        $cancelReservedCoupon->user_id     = NULL;
-                        $cancelReservedCoupon->user_email  = NULL;
-                        $cancelReservedCoupon->issued_date = NULL;
-                        $cancelReservedCoupon->status      = 'available';
-                        $cancelReservedCoupon->save();
+                            $isCancelReservedCoupon = TRUE;
+                        } elseif ($coupon->promotion_type === Coupon::TYPE_HOT_DEALS) {
+                            $cancelReservedCoupon->makeAvailable();
 
-                        $isCancelReservedCoupon = TRUE;
+                            $isCancelReservedCoupon = TRUE;
+                        }
                     }
 
                     // Update available coupon and es data
-                    if ($cancelReservedCoupon) {
+                    if ($isCancelReservedCoupon) {
 
                         Log::info('Queue CheckReservedCoupon Runnning : Coupon unpay canceled, coupon_id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
 
@@ -83,17 +81,11 @@ class CheckReservedCoupon
 
             DB::connection()->commit();
 
-            $job->delete();
-
-            // Bury the job for later inspection
-            // JobBurier::create($job, function($theJob) {
-            //     // The queue driver does not support bury.
-            //     $theJob->delete();
-            // })->bury();
-
         } catch (Exception $e) {
             DB::connection()->rollback();
             Log::info(sprintf('Request check reserved coupon queue exception: %s:%s, %s', $e->getFile(), $e->getLine(), $e->getMessage()));
         }
+
+        $job->delete();
     }
 }
