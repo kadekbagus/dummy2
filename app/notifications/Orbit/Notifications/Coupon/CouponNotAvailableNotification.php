@@ -1,8 +1,10 @@
 <?php namespace Orbit\Notifications\Coupon;
 
-use Orbit\Helper\Notifications\Notification;
+use Orbit\Helper\Notifications\AdminNotification;
 use Orbit\Helper\Util\JobBurier;
 use Carbon\Carbon;
+
+use Orbit\Notifications\Traits\HasPaymentTrait as HasPayment;
 
 use Mail;
 use Config;
@@ -15,27 +17,46 @@ use Exception;
  *
  * @author Budi <budi@dominopos.com>
  */
-class CouponNotAvailableNotification extends Notification
+class CouponNotAvailableNotification extends AdminNotification
 {
+    use HasPayment;
+
+    /**
+     * Required if we use HasPayment trait.
+     * @var null
+     */
     protected $payment = null;
 
     protected $reason = null;
 
-    function __construct($payment = null, $reason = 'Unknown error.')
+    /**
+     * Indicate if we should push this job to queue.
+     * @var boolean
+     */
+    protected $shouldQueue = true;
+
+    /**
+     * @var integer
+     */
+    protected $notificationDelay = 3;
+
+    function __construct($payment = null, $reason = 'Internal Server Error.')
     {
         $this->payment              = $payment;
         $this->reason               = $reason;
         $this->queueName            = Config::get('orbit.registration.mobile.queue_name');
     }
 
-    public function getEmailAddress()
+    /**
+     * Get the email templates.
+     * 
+     * @return [type] [description]
+     */
+    public function getEmailTemplates()
     {
-        return $this->payment->user_email;
-    }
-
-    public function getName()
-    {
-        return $this->payment->user_name;
+        return [
+            'html' => 'emails.coupon.admin-coupon-not-available',
+        ];
     }
 
     /**
@@ -43,15 +64,14 @@ class CouponNotAvailableNotification extends Notification
      * 
      * @return [type] [description]
      */
-    protected function getEmailData()
+    public function getEmailData()
     {
         return [
-            'recipientEmail'    => $this->getEmailAddress(),
-            'customerName'      => $this->getName(),
-            'couponId'          => $this->payment->object_id,
-            'couponName'        => $this->payment->object_name,
-            'paymentId'         => $this->payment->payment_transaction_id,
-            'reason'            => $this->reason,
+            'recipientEmail'    => $this->getRecipientEmail(),
+            'customerEmail'     => $this->getCustomerEmail(),
+            'customerName'      => $this->getCustomerName(),
+            'customerPhone'     => $this->getCustomerPhone(),
+            'transaction'       => $this->getTransactionData(),
         ];
     }
 
@@ -65,13 +85,10 @@ class CouponNotAvailableNotification extends Notification
     public function toEmail($job, $data)
     {
         try {
-
-            $emailTemplate = 'emails.coupon.system-coupon-not-available';
-
-            Mail::send($emailTemplate, $data, function($mail) use ($data) {
+            Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Coupon not Available';
+                $subject = '[Admin] Can not Issue Coupon';
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
@@ -84,28 +101,6 @@ class CouponNotAvailableNotification extends Notification
         }
 
         $job->delete();
-
-        // Bury the job for later inspection
-        // JobBurier::create($job, function($theJob) {
-        //     // The queue driver does not support bury.
-        //     $theJob->delete();
-        // })->bury();
     }
 
-    /**
-     * Send notification.
-     * 
-     * @return [type] [description]
-     */
-    public function send($delay = 1)
-    {
-        Queue::later(
-            $delay,
-            "Orbit\Notifications\Coupon\CouponNotAvailableNotification@toEmail", 
-            $this->getEmailData(),
-            $this->queueName
-        );
-
-        // Other notification method can be added here...
-    }
 }

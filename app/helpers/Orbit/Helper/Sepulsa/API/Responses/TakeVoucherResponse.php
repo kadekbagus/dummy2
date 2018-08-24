@@ -1,6 +1,8 @@
-<?php 
+<?php
 
 namespace Orbit\Helper\Sepulsa\API\Responses;
+
+// use Orbit\Helper\Sepulsa\API\Responses\SepulsaResponse;
 
 /**
  * Take Voucher response...
@@ -26,7 +28,7 @@ class TakeVoucherResponse
 
     /**
      * Determine if Taken response is valid.
-     * 
+     *
      * @return boolean [description]
      */
     public function isValid()
@@ -40,7 +42,7 @@ class TakeVoucherResponse
 
     /**
      * Means the order has been made in Sepulsa server.
-     * 
+     *
      * @return boolean [description]
      */
     public function isSuccess()
@@ -60,7 +62,7 @@ class TakeVoucherResponse
     }
 
     /**
-     * Get message 
+     * Get message
      * @return [type] [description]
      */
     public function getMessage()
@@ -70,20 +72,21 @@ class TakeVoucherResponse
 
     /**
      * Get Taken Voucher data. Only return needed ones.
-     * 
+     *
      * @return [type] [description]
      */
     public function getVoucherData()
     {
-        $data = new \stdClass;
+        $data = [];
 
-        // Only 1 voucher should exists in the result.
         foreach($this->data->result as $voucher) {
-            $data->id               = $voucher->id;
-            $data->code             = $voucher->code;
-            $data->expired_date     = $voucher->expired_date;
-            $data->redeem_url       = $voucher->redeem_url;
-            $data->taken_date       = $voucher->taken_date;
+            $data[] = (object) [
+                'id'               => $voucher->id,
+                'code'             => $voucher->code,
+                'expired_date'     => $voucher->expired_date,
+                'redeem_url'       => $voucher->redeem_url,
+                'taken_date'       => $voucher->taken_date,
+            ];
         }
 
         return $data;

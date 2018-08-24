@@ -430,6 +430,7 @@ return array(
                 'email' => 'The email must be a valid email address',
             ),
             'email' => 'The email must be a valid email address',
+            'verification_code' => 'Incorrect verification code',
         ),
         'actionlist' => array(
             'change_password'           => 'change password',

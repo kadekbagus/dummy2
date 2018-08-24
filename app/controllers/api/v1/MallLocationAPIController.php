@@ -273,7 +273,60 @@ class MallLocationAPIController extends ControllerAPI
                 }
             }
 
+            $prefix = DB::getTablePrefix();
             $mallCity = MallCity::select('mall_city_id', 'city', 'country_id');
+
+            OrbitInput::get('campaign_id', function ($campaign_id) use ($mallCity, $prefix) {
+                OrbitInput::get('link_type', function ($link_type) use ($mallCity, $campaign_id, $prefix) {
+                    // get city based on link to tenant
+                    $tenants = null;
+                    switch($link_type) {
+                        case 'promotion':
+                                $tenants = NewsMerchant::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                                                DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name"),
+                                                                DB::raw("pm.city"))
+                                                        ->leftjoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
+                                                        ->where('news_id', $campaign_id)
+                                                        ->groupBy('mall_id')
+                                                        ->get();
+                                break;
+                        case 'news':
+                                $tenants = NewsMerchant::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                                                DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name"),
+                                                                DB::raw("pm.city"))
+                                                        ->leftjoin('merchants', 'merchants.merchant_id', '=', 'news_merchant.merchant_id')
+                                                        ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
+                                                        ->where('news_id', $campaign_id)
+                                                        ->groupBy('mall_id')
+                                                        ->get();
+                                break;
+                        case 'coupon':
+                                $tenants = PromotionRetailer::select(DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.merchant_id, {$prefix}merchants.merchant_id) as mall_id"),
+                                                                     DB::raw("IF({$prefix}merchants.object_type = 'tenant', pm.name, `{$prefix}merchants`.`name`) AS display_name"),
+                                                                     DB::raw("pm.city"))
+                                                            ->leftjoin('merchants', 'merchants.merchant_id', '=', 'promotion_retailer.retailer_id')
+                                                            ->leftjoin('merchants as pm', DB::raw("pm.merchant_id"), '=', DB::raw("IF(isnull(`{$prefix}merchants`.`parent_id`), `{$prefix}merchants`.`merchant_id`, `{$prefix}merchants`.`parent_id`) "))
+                                                            ->where('promotion_id', $campaign_id)
+                                                            ->groupBy('mall_id')
+                                                            ->get();
+                                break;
+                    }
+
+                    $arrCity = [];
+                    if (!empty($tenants)) {
+                        foreach($tenants as $key => $value) {
+                            if (isset($tenants[$key]->city)) {
+                                $arrCity[] = $tenants[$key]->city;
+                            }
+                        }
+                    }
+
+                    if (!empty($arrCity)) {
+                        $mallCity->whereIn('city', $arrCity);
+                    }
+                });
+            });
 
             // Filter Mall City by mall_city_id
             OrbitInput::get('mall_city_id', function ($mallCityId) use ($mallCity) {
