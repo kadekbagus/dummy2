@@ -2419,9 +2419,12 @@ class CouponSepulsaAPIController extends ControllerAPI
             $this->config = ! empty($config) ? $config : Config::get('orbit.partners_api.sepulsa');
             $this->client = SepulsaClient::create($this->config);
 
-            $take = OrbitInput::get('take', 100);
+            $takeSepulsa = OrbitInput::get('take_sepulsa', 100);
+            $pageSepulsa = OrbitInput::get('page_sepulsa', 1);
+            $take = OrbitInput::get('take');
+            $skip = OrbitInput::get('skip');
 
-            $sepulsaResponse = VoucherList::create($this->config)->getList('', $take, [], $page=1);
+            $sepulsaResponse = VoucherList::create($this->config)->getList('', $takeSepulsa, [], $pageSepulsa);
             $sepulsaVouchers = isset($sepulsaResponse->result->data) ? $sepulsaResponse->result->data : null;
 
             $availableToken = [];
@@ -2435,11 +2438,12 @@ class CouponSepulsaAPIController extends ControllerAPI
             }
 
             $totalToken = count($availableToken);
+            $returnedRecord = (!empty($take) && !empty($skip)) ? array_slice($availableToken, $skip, $take) : $availableToken;
 
             $data = new stdclass();
             $data->total_records = $totalToken;
-            $data->returned_records = $totalToken;
-            $data->records = $availableToken;
+            $data->returned_records = count($returnedRecord);
+            $data->records = $returnedRecord;
 
             if (empty($availableToken)) {
                 $data->records = NULL;
