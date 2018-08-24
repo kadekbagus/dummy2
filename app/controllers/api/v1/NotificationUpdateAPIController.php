@@ -262,6 +262,7 @@ class NotificationUpdateAPIController extends ControllerAPI
                         'adm_big_picture'    => $imageUrl,
                         'chrome_big_picture' => $imageUrl,
                         'chrome_web_image'   => $imageUrl,
+                        'web_push_topic'     => 'manual',
                     ];
 
                     if (!empty($send_after)) {
