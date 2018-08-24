@@ -171,6 +171,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
             $is_sponsored = OrbitInput::post('is_sponsored', 'N');
             $sponsor_ids = OrbitInput::post('sponsor_ids');
+            $gender = OrbitInput::post('gender', 'Y');
 
             $is3rdPartyPromotion = OrbitInput::post('is_3rd_party_promotion', 'N');
             $promotionValue = OrbitInput::post('promotion_value', NULL);
@@ -304,6 +305,11 @@ class CouponSepulsaAPIController extends ControllerAPI
 
             Event::fire('orbit.coupon.postnewcoupon.after.validation', array($this, $validator));
 
+            // A means all gender
+            if ($gender === 'A') {
+                $gender = 'Y';
+            }
+
             // save Coupon.
             $idStatus = CampaignStatus::select('campaign_status_id','campaign_status_name')->where('campaign_status_name', $campaignStatus)->first();
 
@@ -326,7 +332,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $newcoupon->coupon_notification = $coupon_notification;
             $newcoupon->created_by = $this->api->user->user_id;
             $newcoupon->is_all_age = 'Y';
-            $newcoupon->is_all_gender = 'Y';
+            $newcoupon->is_all_gender = $gender;
             $newcoupon->is_popup = $is_popup;
             $newcoupon->is_exclusive = $is_exclusive;
             $newcoupon->is_visible = $isVisible;
@@ -1157,6 +1163,14 @@ class CouponSepulsaAPIController extends ControllerAPI
                 $updatedCouponSepulsa->voucher_benefit = $voucher_benefit;
             });
 
+            OrbitInput::post('gender', function($gender) use ($updatedCouponSepulsa) {
+                if ($gender === 'A') {
+                    $gender = 'Y';
+                }
+
+                $updatedCouponSepulsa->is_all_gender = $gender;
+            });
+
             $updatedCouponSepulsa->setUpdatedAt($updatedCouponSepulsa->freshTimestamp());
             $updatedCouponSepulsa->save();
 
@@ -1211,16 +1225,6 @@ class CouponSepulsaAPIController extends ControllerAPI
                     $deleted_retailer_ids = CouponRetailer::where('promotion_id', $updatedcoupon->promotion_id)->get(array('retailer_id'))->toArray();
                     $updatedcoupon->linkToTenants()->detach($deleted_retailer_ids);
                     $updatedcoupon->load('linkToTenants');
-                }
-            });
-
-
-            OrbitInput::post('is_all_gender', function($is_all_gender) use ($updatedcoupon, $promotion_id) {
-                $updatedcoupon->is_all_gender = $is_all_gender;
-                if ($is_all_gender == 'Y') {
-                    $deleted_campaign_genders = CampaignGender::where('campaign_id', '=', $promotion_id)
-                                                            ->where('campaign_type', '=', 'coupon');
-                    $deleted_campaign_genders->delete();
                 }
             });
 
@@ -1816,7 +1820,8 @@ class CouponSepulsaAPIController extends ControllerAPI
                                 WHEN is_3rd_party_promotion = 'Y' AND {$table_prefix}pre_exports.object_id IS NULL THEN 'available'
                                 WHEN is_3rd_party_promotion = 'N' THEN 'not_available'
                             END AS export_status
-                        ")
+                        "),
+                    DB::raw("IF({$table_prefix}promotions.is_all_gender = 'Y', 'A', {$table_prefix}promotions.is_all_gender) as gender")
                 )
                 ->leftJoin('campaign_status', 'campaign_status.campaign_status_id', '=', 'promotions.campaign_status_id')
                 ->leftJoin('promotion_retailer', 'promotion_retailer.promotion_id', '=', 'promotions.promotion_id')
