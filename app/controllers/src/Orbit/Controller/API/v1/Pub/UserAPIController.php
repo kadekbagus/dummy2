@@ -82,10 +82,7 @@ class UserAPIController extends PubControllerAPI
 
             $updateUser->save();
 
-            $updateUserDetail = UserDetail::where('user_id', $user->user_id)
-                                            ->first();
-
-            OrbitInput::post('phone', function($phone) use ($updateUserDetail) {
+            OrbitInput::post('phone', function($phone) use ($updateUser) {
                 $validator = Validator::make(
                     array('phone' => $phone),
                     array('phone' => 'required')
@@ -94,9 +91,14 @@ class UserAPIController extends PubControllerAPI
                     $errorMessage = $validator->messages()->first();
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
-                $updateUserDetail->phone = $phone;
+                $updateUser->userdetail->phone = $phone;
             });
-            $updateUserDetail->save();
+
+            OrbitInput::post('gender', function($gender) use ($updateUser) {
+                $updateUser->userdetail->gender = $gender;
+            });
+
+            $updateUser->save();
 
             // Update session fullname and email
             $sessionData = $session->read(NULL);
@@ -135,7 +137,8 @@ class UserAPIController extends PubControllerAPI
             $data->email = $updateUser->user_email;
             $data->firstname = $updateUser->user_firstname;
             $data->lastname = $updateUser->user_lastname;
-            $data->phone = $updateUserDetail->phone;
+            $data->phone = $updateUser->userdetail->phone;
+            $data->gender = $updateUser->userdetail->gender;
             $data->image = $image;
 
             $activityNote = sprintf('Update User Account, user Id: %s', $updateUser->user_id);

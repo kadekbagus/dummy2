@@ -8,7 +8,6 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Input\InputArgument;
 use Orbit\FakeJob;
-use Orbit\Queue\SepulsaVoucherListMail;
 use Orbit\Helper\Sepulsa\API\VoucherList;
 
 class GetSepulsaVoucherListCommand extends Command {
@@ -62,6 +61,7 @@ class GetSepulsaVoucherListCommand extends Command {
                             $newRecord = new stdClass();
                             $newRecord->token = $record->token;
                             $newRecord->title = $record->title;
+                            $newRecord->merchant_name = $record->merchant_name;
                             $outputArr[] = $newRecord;
                         }
                         $output = json_encode($outputArr);
@@ -79,7 +79,7 @@ class GetSepulsaVoucherListCommand extends Command {
                     $filename = sprintf('/tmp/sepulsa-voucher-list-%s.csv', date('Ymd-His'));
                     $fileIO = fopen($filename, 'w+');
                     if ($this->option('min')) {
-                        $csvTitle = fputcsv($fileIO, ['token', 'title']);
+                        $csvTitle = fputcsv($fileIO, ['token', 'title', 'merchant_name']);
                     } else {
                         $csvTitle = fputcsv($fileIO, array_keys((array) $response->result->data[0]));
                     }
@@ -88,6 +88,7 @@ class GetSepulsaVoucherListCommand extends Command {
                             $newRecord = new stdClass();
                             $newRecord->token = $record->token;
                             $newRecord->title = $record->title;
+                            $newRecord->merchant_name = $record->merchant_name;
                             $record = $newRecord;
                         }
                         $record = (array) $record;
@@ -136,7 +137,7 @@ class GetSepulsaVoucherListCommand extends Command {
             array('email-to', null, InputOption::VALUE_OPTIONAL, 'Send output to email(s) separated by comma.', null),
             array('take', null, InputOption::VALUE_OPTIONAL, 'Set the take parameter. Default: 100', null),
             array('get-current-config', null, InputOption::VALUE_NONE, 'Return currently used sepulsa config.', null),
-            array('min', null, InputOption::VALUE_NONE, 'Output only voucher token and voucher title.', null),
+            array('min', null, InputOption::VALUE_NONE, 'Output only voucher token, voucher title and merchant name.', null),
         );
     }
 
@@ -147,18 +148,15 @@ class GetSepulsaVoucherListCommand extends Command {
      */
     protected function sendMail($data)
     {
-        Mail::send('emails.sepulsa-voucher-list.html', [], function($message) use ($data)
-        {
-            $from = 'mailer@dominopos.com';
-            $emails = explode(',', $this->option('email-to'));
+        $from = 'mailer@dominopos.com';
+        $emails = explode(',', $this->option('email-to'));
 
-            $message->from($from, 'Gotomalls Robot');
-            $message->subject('Sepulsa Voucher List');
-            $message->to($emails);
-            $message->attach($data);
-        });
-
-        $this->info('Mail Sent.');
+        // Send email process to the queue
+        \Queue::push('Orbit\\Queue\\SepulsaVoucherListMail', [
+            'attachment' => $data,
+            'emails'     => $emails,
+            'from'       => $from,
+        ]);
     }
 
 }
