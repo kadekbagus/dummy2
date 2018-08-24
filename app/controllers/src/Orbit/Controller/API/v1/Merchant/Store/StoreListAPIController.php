@@ -208,7 +208,7 @@ class StoreListAPIController extends ControllerAPI
 
             if ($this->useChunk) {
                 $storeList = [];
-                $store->chunk(500, function($chunks) use($storeList) {
+                $store->chunk(500, function($chunks) use(&$storeList) {
                     foreach($chunks as $chunk) {
                         $storeList[] = $chunk;
                     }
