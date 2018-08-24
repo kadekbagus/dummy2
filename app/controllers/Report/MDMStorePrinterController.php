@@ -31,6 +31,7 @@ class MDMStorePrinterController extends DataPrinterController
         // Instantiate the CouponAPIController to get the query builder of Coupons
         $response = StoreListAPIController::create('raw')
                                             ->setReturnBuilder(TRUE)
+                                            ->setUseChunk(TRUE)
                                             ->getSearchStore();
 
         if (! is_array($response)) {

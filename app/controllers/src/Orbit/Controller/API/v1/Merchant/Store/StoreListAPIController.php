@@ -24,6 +24,8 @@ class StoreListAPIController extends ControllerAPI
 {
     protected $storeViewRoles = ['super admin', 'merchant database admin'];
     protected $returnBuilder = FALSE;
+    protected $useChunk = FALSE;
+
     /**
      * GET - get store
      *
@@ -205,7 +207,15 @@ class StoreListAPIController extends ControllerAPI
                 $store->skip($skip);
             }
 
-            $storeList = $store->get();
+            if ($this->useChunk) {
+                $storeList = [];
+                $store->chunk(200, function($stores) use($storeList) {
+                    $storeList = $storeList + $stores;
+                });
+            } else {
+                $storeList = $store->get();
+            }
+
             $count = RecordCounter::create($_store)->count();
 
             // Get total active inactive stores
@@ -301,6 +311,13 @@ class StoreListAPIController extends ControllerAPI
     public function setReturnBuilder($bool)
     {
         $this->returnBuilder = $bool;
+
+        return $this;
+    }
+
+    public function setUseChunk($bool)
+    {
+        $this->useChunk = $bool;
 
         return $this;
     }
