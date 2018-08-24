@@ -85,8 +85,7 @@ class StoreListAPIController extends ControllerAPI
             }
 
             $prefix = DB::getTablePrefix();
-            $store = BaseStore::with('bank', 'objectContact', 'financialContactDetail', 'paymentProvider', 'productTags')
-                            ->excludeDeleted('base_stores')
+            $store = BaseStore::excludeDeleted('base_stores')
                             ->select('base_merchants.base_merchant_id', 'base_merchants.country_id', 'countries.name as country_name',
                                 DB::raw("{$prefix}base_merchants.name AS merchant"),
                                 'base_stores.base_store_id',
@@ -209,10 +208,13 @@ class StoreListAPIController extends ControllerAPI
 
             if ($this->useChunk) {
                 $storeList = [];
-                $store->chunk(200, function($stores) use($storeList) {
-                    $storeList = $storeList + $stores;
+                $store->chunk(500, function($chunks) use($storeList) {
+                    foreach($chunks as $chunk) {
+                        $storeList[] = $chunk;
+                    }
                 });
             } else {
+                $store->with('bank', 'objectContact', 'financialContactDetail', 'paymentProvider', 'productTags');
                 $storeList = $store->get();
             }
 
@@ -246,6 +248,14 @@ class StoreListAPIController extends ControllerAPI
                         }
                     }
                 }
+            }
+
+            // for store csv report (MDMStorePrinterController)
+            if ($this->returnBuilder && $this->useChunk) {
+                return ['stores' => $storeList,
+                    'count' => $count,
+                    'active_store' => $totalActiveStore,
+                    'inactive_store' => $totalInactiveStore];
             }
 
             if ($this->returnBuilder) {
