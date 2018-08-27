@@ -80,8 +80,6 @@ class UserAPIController extends PubControllerAPI
                 $updateUser->user_password = Hash::make($newPassword);
             });
 
-            $updateUser->save();
-
             OrbitInput::post('phone', function($phone) use ($updateUser) {
                 $validator = Validator::make(
                     array('phone' => $phone),
