@@ -19,6 +19,7 @@ use DB;
 use Event;
 use Hash;
 use Queue;
+use Orbit\Helper\Util\CdnUrlGenerator;
 
 class UserAPIController extends PubControllerAPI
 {
@@ -82,7 +83,10 @@ class UserAPIController extends PubControllerAPI
 
             $updateUser->save();
 
-            OrbitInput::post('phone', function($phone) use ($updateUser) {
+            $updateUserDetail = UserDetail::where('user_id', $user->user_id)
+                                            ->first();
+
+            OrbitInput::post('phone', function($phone) use ($updateUserDetail) {
                 $validator = Validator::make(
                     array('phone' => $phone),
                     array('phone' => 'required')
@@ -91,14 +95,14 @@ class UserAPIController extends PubControllerAPI
                     $errorMessage = $validator->messages()->first();
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
-                $updateUser->userdetail->phone = $phone;
+                $updateUserDetail->phone = $phone;
             });
 
-            OrbitInput::post('gender', function($gender) use ($updateUser) {
-                $updateUser->userdetail->gender = $gender;
+            OrbitInput::post('gender', function($gender) use ($updateUserDetail) {
+                $updateUserDetail->gender = $gender;
             });
 
-            $updateUser->save();
+            $updateUserDetail->save();
 
             // Update session fullname and email
             $sessionData = $session->read(NULL);
@@ -123,13 +127,18 @@ class UserAPIController extends PubControllerAPI
             }
 
             $image = null;
+            $cdnConfig = Config::get('orbit.cdn');
+            $imgUrl = CdnUrlGenerator::create(['cdn' => $cdnConfig], 'cdn');
+
             $media = $user->profilePicture()
                 ->where('media_name_long', 'user_profile_picture_orig')
                 ->get();
 
             if (count($media) > 0) {
                 if (! empty($media[0]->path)) {
-                    $image = $media[0]->path;
+                    $localPath = (! empty($media[0]->path)) ? $media[0]->path : '';
+                    $cdnPath = (! empty($media[0]->cdn_url)) ? $media[0]->cdn_url : '';
+                    $image = $imgUrl->getImageUrl($localPath, $cdnPath);
                 }
             }
 
@@ -137,8 +146,8 @@ class UserAPIController extends PubControllerAPI
             $data->email = $updateUser->user_email;
             $data->firstname = $updateUser->user_firstname;
             $data->lastname = $updateUser->user_lastname;
-            $data->phone = $updateUser->userdetail->phone;
-            $data->gender = $updateUser->userdetail->gender;
+            $data->phone = $updateUserDetail->phone;
+            $data->gender = $updateUserDetail->gender;
             $data->image = $image;
 
             $activityNote = sprintf('Update User Account, user Id: %s', $updateUser->user_id);
