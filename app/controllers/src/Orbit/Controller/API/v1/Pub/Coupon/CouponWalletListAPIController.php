@@ -141,10 +141,6 @@ class CouponWalletListAPIController extends PubControllerAPI
             $coupon = Coupon::select(DB::raw("
                                     {$prefix}promotions.promotion_id as promotion_id,
                                     CASE WHEN ({$prefix}coupon_translations.promotion_name = '' or {$prefix}coupon_translations.promotion_name is null) THEN default_translation.promotion_name ELSE {$prefix}coupon_translations.promotion_name END as coupon_name,
-                                    /* ----description is not used in my coupon page---
-                                        CASE WHEN ({$prefix}coupon_translations.description = '' or {$prefix}coupon_translations.description is null) THEN default_translation.description ELSE {$prefix}coupon_translations.description END as description,
-                                    */
-                                   '' AS description,
 
                                     CASE WHEN {$prefix}media.path is null THEN (
                                         SELECT m.path
@@ -291,7 +287,6 @@ class CouponWalletListAPIController extends PubControllerAPI
                             ->where('issued_coupons.user_id', $user->user_id)
                             ->whereIn("campaign_status.campaign_status_name", array('ongoing', 'expired'));
 
-
             //remove code related to Mall because Coupon list in My wallet
             //does not affected by GTM/mall page also remove code related to
             //filter because we do not have filtering in my wallet
@@ -300,6 +295,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             // to display first, redeemed and expired will come after that
             //->orderByRaw(DB::Raw("FIELD({$prefix}issued_coupons.status, 'issued', 'redeemed', 'expired')"))
             $coupon->orderByRaw(DB::Raw("CASE WHEN {$prefix}issued_coupons.status = 'issued' THEN 0 ELSE 1 END ASC"))
+                    ->orderByRaw(DB::Raw("CASE WHEN campaign_status = 'ongoing' THEN 0 ELSE 1 END ASC"))
                     ->orderBy('issued_coupons.redeemed_date', 'desc')
                     ->orderBy('issued_coupons.issued_date', 'desc');
 
