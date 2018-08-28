@@ -180,6 +180,7 @@ class MerchantUpdateAPIController extends ControllerAPI
 
                     if ($key === $idLanguageEnglish->language_id) {
                         $updatedBaseMerchant->description = $val->description;
+                        $updatedBaseMerchant->custom_title = $val->custom_title;
                     }
                 }
             }
