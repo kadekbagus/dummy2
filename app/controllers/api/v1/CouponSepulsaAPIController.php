@@ -886,6 +886,7 @@ class CouponSepulsaAPIController extends ControllerAPI
             $retailer_ids = (array) $retailer_ids;
             $linkToTenantIds = OrbitInput::post('link_to_tenant_ids');
             $linkToTenantIds = (array) $linkToTenantIds;
+
             $partner_ids = OrbitInput::post('partner_ids');
             $partner_ids = (array) $partner_ids;
             $is_exclusive = OrbitInput::post('is_exclusive', 'N');
@@ -1223,7 +1224,7 @@ class CouponSepulsaAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $payByWallet) {
+            OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($promotion_id, $payByWallet) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
                     $data = @json_decode($retailer_id_json);
