@@ -2162,7 +2162,7 @@ class CouponAPIController extends ControllerAPI
                 }
             });
 
-            OrbitInput::post('retailer_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet) {
+            OrbitInput::post('link_to_tenant_ids', function($retailer_ids) use ($promotion_id, $paymentProviders, $payByWallet) {
                 // validating retailer_ids.
                 foreach ($retailer_ids as $retailer_id_json) {
                     $data = @json_decode($retailer_id_json);
