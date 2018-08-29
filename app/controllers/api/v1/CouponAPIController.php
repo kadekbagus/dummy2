@@ -3580,16 +3580,9 @@ class CouponAPIController extends ControllerAPI
             // Try to check access control list, does this user allowed to
             // perform this action
             $user = $this->api->user;
+
             Event::fire('orbit.coupon.redeemcoupon.before.authz', array($this, $user));
 
-/*
-            if (! ACL::create($user)->isAllowed('delete_coupon')) {
-                Event::fire('orbit.coupon.redeemcoupon.authz.notallowed', array($this, $user));
-                $deleteCouponLang = Lang::get('validation.orbit.actionlist.delete_coupon');
-                $message = Lang::get('validation.orbit.access.forbidden', array('action' => $deleteCouponLang));
-                ACL::throwAccessForbidden($message);
-            }
-*/
             // @Todo: Use ACL authentication instead
             $role = $user->role;
             $validRoles = $this->couponModifiyRolesWithConsumer;
@@ -3622,8 +3615,8 @@ class CouponAPIController extends ControllerAPI
                     'current_mall' => $mall_id,
                 ),
                 array(
-                    'store_id'                      => 'required',
-                    'current_mall'                  => 'required|orbit.empty.merchant',
+                    'store_id' => 'required',
+                    'current_mall' => 'required|orbit.empty.merchant',
                 )
             );
             $validator2 = Validator::make(
@@ -3631,7 +3624,7 @@ class CouponAPIController extends ControllerAPI
                     'issued_coupon_id' => $issuedCouponId,
                 ),
                 array(
-                    'issued_coupon_id'              => 'required',
+                    'issued_coupon_id' => 'required',
                 )
             );
             Event::fire('orbit.coupon.redeemcoupon.before.validation', array($this, $validator));
@@ -3709,7 +3702,7 @@ class CouponAPIController extends ControllerAPI
                 }
 
                 $tenant = Tenant::active()
-                    ->where('parent_id', $mall_id)
+                    ->where('merchant_id', $storeId)
                     ->where('masterbox_number', $verificationNumber)
                     ->first();
 
