@@ -1725,13 +1725,9 @@ class NewsAPIController extends ControllerAPI
                     } elseif ($relation === 'ages') {
                         $news->with('ages');
                     } elseif ($relation === 'keywords') {
-                        $news->with(['keywords' => function($query) {
-                            $query->groupBy('keyword');
-                        }]);
+                        $news->with('keywords');
                     } elseif ($relation === 'product_tags') {
-                        $news->with(['product_tags' => function($query) {
-                            $query->groupBy('product_tag');
-                        }]);
+                        $news->with('product_tags');
                     } elseif ($relation === 'campaignObjectPartners') {
                         $news->with('campaignObjectPartners');
                     }
