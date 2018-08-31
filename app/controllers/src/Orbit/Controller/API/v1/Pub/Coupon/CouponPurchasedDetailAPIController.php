@@ -127,7 +127,7 @@ class CouponPurchasedDetailAPIController extends PubControllerAPI
                                 $q->on('media.object_id', '=', 'coupon_translations.coupon_translation_id');
                                 $q->on('media.media_name_long', '=', DB::raw("'coupon_translation_image_orig'"));
                             })
-                            ->join('issued_coupons', function ($join) {
+                            ->leftJoin('issued_coupons', function ($join) {
                                 $join->on('issued_coupons.promotion_id', '=', 'promotions.promotion_id');
                                 $join->where('issued_coupons.status', '!=', 'deleted');
                             })
