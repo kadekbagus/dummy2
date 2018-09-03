@@ -74,7 +74,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupon.coupon', 'issued_coupons'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupons'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 
@@ -163,27 +163,9 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                 // Link this payment to reserved IssuedCoupon.
                 if ($payment_update->issued_coupons->count() === 0) {
-
-                    // Link to IssuedCoupon if the payment is not denied/failed/expired.
-                    if (! in_array($status, [PaymentTransaction::STATUS_DENIED, PaymentTransaction::STATUS_EXPIRED, PaymentTransaction::STATUS_FAILED])) {
-                        $reservedCoupons = IssuedCoupon::where('user_id', $payment_update->user_id)
-                                      ->where('promotion_id', $payment_update->details->first()->object_id)
-                                      ->where('status', IssuedCoupon::STATUS_RESERVED)
-                                      ->whereNull('transaction_id')
-                                      ->get(); // Can update transaction_id directly here, but for now just get the record.
-
-                        if (! empty($reservedCoupons)) {
-                            foreach($reservedCoupons as $reservedCoupon) {
-                                $reservedCoupon->transaction_id = $payment_transaction_id;
-                                $reservedCoupon->save();
-                            }
-                        }
-                        else {
-                            Log::info("PaidCoupon: Can not link coupon, it is being reserved by the same user {$payment_update->user_name} ({$payment_update->user_id}).");
-                            $payment_update->status = PaymentTransaction::STATUS_FAILED;
-                            $failed = true;
-                        }
-                    }
+                    Log::info("PaidCoupon: Can not link issued coupons to this payment! Must be removed by CheckReservedQueue.");
+                    $payment_update->status = PaymentTransaction::STATUS_FAILED;
+                    $failed = true;
                 }
 
                 // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher,
