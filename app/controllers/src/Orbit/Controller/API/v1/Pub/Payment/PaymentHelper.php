@@ -6,6 +6,7 @@
 use Validator;
 use PaymentTransaction;
 use Coupon;
+use IssuedCoupon;
 
 use Config;
 use OrbitShop\API\v1\Helper\Input as OrbitInput;
@@ -45,9 +46,18 @@ class PaymentHelper
                 $couponId = OrbitInput::post('object_id');
             }
 
-            $coupon = Coupon::select('available')->findOrFail($couponId);
+            $coupon = Coupon::select('maximum_issued_coupon')->findOrFail($couponId);
 
-            if ($value <= $maxQuantity && $value <= $coupon->available) {
+            $countedStatus = [IssuedCoupon::STATUS_ISSUED, IssuedCoupon::STATUS_REDEEMED];
+            if (isset($parameters[0]) && $parameters[0] === 'with_reserved') {
+                $countedStatus[] = IssuedCoupon::STATUS_RESERVED;
+            }
+
+            $issued = IssuedCoupon::where('promotion_id', $couponId)->whereIn('status', $countedStatus)->count();
+
+            $availableCoupon = $coupon->maximum_issued_coupon - $issued;
+
+            if ($value <= $maxQuantity && $value <= $availableCoupon) {
                 return TRUE;
             }
 
