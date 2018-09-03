@@ -38,7 +38,7 @@ class CheckReservedCoupon
             DB::connection()->beginTransaction();
 
             // Check detail coupon
-            $coupon = Coupon::where('promotion_id', $couponId)->first();
+            $coupon = Coupon::findOrFail($couponId);
 
             // TODO: what if the customer in the process of completing payment in snap window?
             // We still "remove" the issued coupons which will results to success payment but without coupon.
@@ -65,6 +65,9 @@ class CheckReservedCoupon
                     Log::info('Queue CheckReservedCoupon Runnning : No coupon canceled, coupon_id = ' . $couponId . ', user id = ' . $userId . ' at ' . date('Y-m-d H:i:s'));
                 }
             }
+
+            // Update coupon availability
+            // $coupon->updateAvailability();
 
             DB::connection()->commit();
 
