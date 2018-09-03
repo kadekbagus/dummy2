@@ -20,6 +20,7 @@ use PaymentTransaction;
 use PaymentTransactionDetail;
 use PaymentTransactionDetailNormalPaypro;
 use PaymentMidtrans;
+use IssuedCoupon;
 use Orbit\Controller\API\v1\Pub\Coupon\CouponHelper;
 use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Mall;
@@ -155,6 +156,14 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             // Insert midtrans info
             $paymentMidtransDetail = new PaymentMidtrans;
             $payment_new->midtrans()->save($paymentMidtransDetail);
+
+            // Link this payment to reserved coupons according to requested quantity.
+            IssuedCoupon::where('user_id', $user_id)
+                ->where('promotion_id', $object_id)
+                ->where('transaction_id', NULL)
+                ->where('status', IssuedCoupon::STATUS_RESERVED)
+                ->skip(0)->take($quantity)
+                ->update(['transaction_id' => $payment_new->payment_transaction_id]);
 
             // Commit the changes
             $this->commit();
