@@ -272,6 +272,7 @@ class PaymentTransaction extends Eloquent
         $couponId = $issuedCoupons->first()->promotion_id;
 
         // If it is Sepulsa, then remove the IssuedCoupon record.
+        // If it is Hot Deals, then reset the IssuedCoupon state.
         if ($this->forSepulsa()) {
             foreach($issuedCoupons as $issuedCoupon) {
                 // TODO: Check if the coupon is already issued. If so, then what should we do?
@@ -279,14 +280,13 @@ class PaymentTransaction extends Eloquent
                     Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Removing reserved sepulsa voucher.');
 
                     // Manual query for each IssuedCoupon
-                    IssuedCoupon::where('issued_coupon_id', $issuedCoupon->issued_coupon_id)->delete();
+                    IssuedCoupon::where('issued_coupon_id', $issuedCoupon->issued_coupon_id)->delete(TRUE);
                 }
                 else {
                     Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Voucher is already issued. Do NOTHING at the moment.');
                 }
             }
         }
-        // If it is Hot Deals, then reset the IssuedCoupon state.
         else if ($this->forHotDeals()) {
             Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Reverting reserved hot deals coupon status.');
 
