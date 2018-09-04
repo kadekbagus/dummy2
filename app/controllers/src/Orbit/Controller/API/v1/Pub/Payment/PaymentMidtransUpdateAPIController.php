@@ -1,11 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Payment;
 
-/**
- * @author kadek <kadek@dominopos.com>
- * @desc Controller for update payment with midtrans
- * @todo  Remove unused log commands.
- */
-
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -32,9 +26,24 @@ use Orbit\Helper\Midtrans\API\TransactionCancel;
 use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
 
+/**
+ * Controller for update payment with midtrans
+ *
+ * @author kadek <kadek@dominopos.com>
+ * @author  budi <budi@dominopos.com>
+ *
+ * @todo  Remove unused log commands.
+ */
 class PaymentMidtransUpdateAPIController extends PubControllerAPI
 {
-
+    /**
+     * POST - Update Payment data.
+     *
+     * @param string $payment_transaction_id the payment transaction id that will be updated.
+     * @param string $status the new status to be set for the payment.
+     *
+     * @return \Response
+     */
     public function postPaymentMidtransUpdate()
     {
         $httpCode = 200;
@@ -74,7 +83,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupon.coupon', 'issued_coupons'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupons'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 
@@ -89,7 +98,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             ];
 
             // Assume status as success if it is success_no_coupon/success_no_coupon_failed,
-            // because Midtrans and landing_page doesn't send those status. (They only know 'success')
+            // because Midtrans and landing_page don't send those status. (They only know 'success')
             $tmpOldStatus = $oldStatus;
             if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_COUPON, PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED])) {
                 $tmpOldStatus = PaymentTransaction::STATUS_SUCCESS;
@@ -163,27 +172,9 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                 // Link this payment to reserved IssuedCoupon.
                 if ($payment_update->issued_coupons->count() === 0) {
-
-                    // Link to IssuedCoupon if the payment is not denied/failed/expired.
-                    if (! in_array($status, [PaymentTransaction::STATUS_DENIED, PaymentTransaction::STATUS_EXPIRED, PaymentTransaction::STATUS_FAILED])) {
-                        $reservedCoupons = IssuedCoupon::where('user_id', $payment_update->user_id)
-                                      ->where('promotion_id', $payment_update->details->first()->object_id)
-                                      ->where('status', IssuedCoupon::STATUS_RESERVED)
-                                      ->whereNull('transaction_id')
-                                      ->get(); // Can update transaction_id directly here, but for now just get the record.
-
-                        if (! empty($reservedCoupons)) {
-                            foreach($reservedCoupons as $reservedCoupon) {
-                                $reservedCoupon->transaction_id = $payment_transaction_id;
-                                $reservedCoupon->save();
-                            }
-                        }
-                        else {
-                            Log::info("PaidCoupon: Can not link coupon, it is being reserved by the same user {$payment_update->user_name} ({$payment_update->user_id}).");
-                            $payment_update->status = PaymentTransaction::STATUS_FAILED;
-                            $failed = true;
-                        }
-                    }
+                    Log::info("PaidCoupon: Can not link issued coupons to this payment! Must be removed by CheckReservedQueue.");
+                    $payment_update->status = PaymentTransaction::STATUS_FAILED;
+                    $failed = true;
                 }
 
                 // If payment is success and not with credit card (not realtime) or the payment for Sepulsa voucher,
@@ -204,23 +195,23 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // Try not doing any expensive operation above.
                 $this->commit();
 
-                // Try to cancel the payment...
-                if ($payment_update->status === PaymentTransaction::STATUS_FAILED && isset($failed)) {
-                    $transactionCancel = TransactionCancel::create()->cancel($payment_transaction_id);
-                    if ($transactionCancel->isSuccess()) {
-                        Log::info("PaidCoupon: Transaction canceled!");
-                    }
-                    else {
-                        Log::info("PaidCoupon: Transaction can not be canceled!");
-                    }
-                }
+                // Try to cancel the payment if the status was failed
+                // if (in_array($payment_update->status, [PaymentTransaction::STATUS_FAILED, PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED]) && isset($failed)) {
+                //     $transactionCancel = TransactionCancel::create()->cancel($payment_transaction_id);
+                //     if ($transactionCancel->isSuccess()) {
+                //         Log::info("PaidCoupon: Transaction canceled!");
+                //     }
+                //     else {
+                //         Log::info("PaidCoupon: Transaction can not be canceled!");
+                //     }
+                // }
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
 
                 $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
-                // If status before is starting and now is pending, we should trigger job transaction status check.
-                // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of check.
+                // If previous status was starting and now is pending, we should trigger job transaction status check.
+                // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of allowed check.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
                     $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
                     Queue::later(
