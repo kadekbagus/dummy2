@@ -80,7 +80,7 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
                     'last_name'  => 'required',
                     'email'      => 'required',
                     'phone'      => 'required',
-                    'quantity'   => 'required|orbit.allowed.quantity',
+                    'quantity'   => 'required|orbit.allowed.quantity:without_requested',
                     'amount'     => 'required',
                     'post_data'  => 'required',
                     'mall_id'    => 'required',

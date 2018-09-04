@@ -37,6 +37,10 @@ class PaymentHelper
             return TRUE;
         });
 
+        /**
+         * Normally, available coupon = max_issued_coupon - sum(reserved, issued, redeemed).
+         * But when creating payment from PaymentMidtransCreate we should not count the quantity that we already reserved.
+         */
         Validator::extend('orbit.allowed.quantity', function ($attribute, $value, $parameters) {
 
             $maxQuantity = Config::get('orbit.transaction.max_quantity_per_purchase', 1);
@@ -47,13 +51,19 @@ class PaymentHelper
             }
 
             $coupon = Coupon::select('maximum_issued_coupon')->findOrFail($couponId);
+            $issued = IssuedCoupon::where('promotion_id', $couponId)
+                                    ->whereIn('status', [
+                                        IssuedCoupon::STATUS_ISSUED,
+                                        IssuedCoupon::STATUS_REDEEMED,
+                                        IssuedCoupon::STATUS_RESERVED
+                                    ])->count();
 
-            $countedStatus = [IssuedCoupon::STATUS_ISSUED, IssuedCoupon::STATUS_REDEEMED];
-            if (isset($parameters[0]) && $parameters[0] === 'with_reserved') {
-                $countedStatus[] = IssuedCoupon::STATUS_RESERVED;
+            // We should ignore the requested quantity when checking for availability
+            // from PaymentMidtransCreate.
+            if (isset($parameters[0]) && $parameters[0] === 'without_requested') {
+                $issued -= $value;
+                $issued = $issued < 0 ? 0 : $issued;
             }
-
-            $issued = IssuedCoupon::where('promotion_id', $couponId)->whereIn('status', $countedStatus)->count();
 
             $availableCoupon = $coupon->maximum_issued_coupon - $issued;
 

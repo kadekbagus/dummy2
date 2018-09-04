@@ -72,7 +72,7 @@ class CouponBuyAPIController extends PubControllerAPI
                 array(
                     'coupon_id' => 'required|orbit.exists.coupon',
                     'with_reserved' => 'required',
-                    'quantity' => 'required|orbit.allowed.quantity:with_reserved',
+                    'quantity' => 'required|orbit.allowed.quantity',
                 ),
                 array(
                     'orbit.allowed.quantity' => 'Requested quantity not available.',
