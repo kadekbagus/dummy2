@@ -292,9 +292,8 @@ class PaymentTransaction extends Eloquent
 
             foreach($issuedCoupons as $issuedCoupon) {
                 $issuedCoupon->makeAvailable();
+                Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
             }
-
-            Log::info('Payment: hot deals coupon reverted. IssuedCoupon ID: ' . $issuedCoupon->issued_coupon_id);
         }
 
         // Update the availability...
