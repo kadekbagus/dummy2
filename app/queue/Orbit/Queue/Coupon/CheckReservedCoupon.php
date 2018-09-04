@@ -46,6 +46,7 @@ class CheckReservedCoupon
                 $canceledCoupons = IssuedCoupon::whereHas('payment', function($payment) {
                                                     $payment->where('status', PaymentTransaction::STATUS_STARTING);
                                                 })
+                                                ->where('user_id', $userId)
                                                 ->whereIn('issued_coupon_id', $issuedCoupons)
                                                 ->get();
 
