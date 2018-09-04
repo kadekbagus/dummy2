@@ -1,11 +1,5 @@
 <?php namespace Orbit\Controller\API\v1\Pub\Payment;
 
-/**
- * @author kadek <kadek@dominopos.com>
- * @desc Controller for update payment with midtrans
- * @todo  Remove unused log commands.
- */
-
 use OrbitShop\API\v1\PubControllerAPI;
 use OrbitShop\API\v1\OrbitShopAPI;
 use Helper\EloquentRecordCounter as RecordCounter;
@@ -32,9 +26,24 @@ use Orbit\Helper\Midtrans\API\TransactionCancel;
 use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
 
+/**
+ * Controller for update payment with midtrans
+ *
+ * @author kadek <kadek@dominopos.com>
+ * @author  budi <budi@dominopos.com>
+ *
+ * @todo  Remove unused log commands.
+ */
 class PaymentMidtransUpdateAPIController extends PubControllerAPI
 {
-
+    /**
+     * POST - Update Payment data.
+     *
+     * @param string $payment_transaction_id the payment transaction id that will be updated.
+     * @param string $status the new status to be set for the payment.
+     *
+     * @return \Response
+     */
     public function postPaymentMidtransUpdate()
     {
         $httpCode = 200;
@@ -89,7 +98,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             ];
 
             // Assume status as success if it is success_no_coupon/success_no_coupon_failed,
-            // because Midtrans and landing_page doesn't send those status. (They only know 'success')
+            // because Midtrans and landing_page don't send those status. (They only know 'success')
             $tmpOldStatus = $oldStatus;
             if (in_array($oldStatus, [PaymentTransaction::STATUS_SUCCESS_NO_COUPON, PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED])) {
                 $tmpOldStatus = PaymentTransaction::STATUS_SUCCESS;
@@ -186,23 +195,23 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // Try not doing any expensive operation above.
                 $this->commit();
 
-                // Try to cancel the payment...
-                if ($payment_update->status === PaymentTransaction::STATUS_FAILED && isset($failed)) {
-                    $transactionCancel = TransactionCancel::create()->cancel($payment_transaction_id);
-                    if ($transactionCancel->isSuccess()) {
-                        Log::info("PaidCoupon: Transaction canceled!");
-                    }
-                    else {
-                        Log::info("PaidCoupon: Transaction can not be canceled!");
-                    }
-                }
+                // Try to cancel the payment if the status was failed
+                // if (in_array($payment_update->status, [PaymentTransaction::STATUS_FAILED, PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED]) && isset($failed)) {
+                //     $transactionCancel = TransactionCancel::create()->cancel($payment_transaction_id);
+                //     if ($transactionCancel->isSuccess()) {
+                //         Log::info("PaidCoupon: Transaction canceled!");
+                //     }
+                //     else {
+                //         Log::info("PaidCoupon: Transaction can not be canceled!");
+                //     }
+                // }
 
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
 
                 $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
-                // If status before is starting and now is pending, we should trigger job transaction status check.
-                // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of check.
+                // If previous status was starting and now is pending, we should trigger job transaction status check.
+                // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of allowed check.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
                     $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
                     Queue::later(
