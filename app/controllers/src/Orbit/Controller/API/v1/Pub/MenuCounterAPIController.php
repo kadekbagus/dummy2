@@ -447,10 +447,10 @@ class MenuCounterAPIController extends PubControllerAPI
                 $gender = strtolower($gender);
                 switch ($gender){
                     case 'male':
-                         $genderFilter = ['match' => ['is_all_gender' => 'M']];
+                         $genderFilter = ['match' => ['is_all_gender' => 'F']];
                          break;
                     case 'female':
-                         $genderFilter = ['match' => ['is_all_gender' => 'F']];
+                         $genderFilter = ['match' => ['is_all_gender' => 'M']];
                          break;
                     default:
                         // do nothing
@@ -466,7 +466,7 @@ class MenuCounterAPIController extends PubControllerAPI
 
             // filter by gender
             if (! empty($genderFilter)) {
-                $couponJsonQuery['query']['bool']['must'][] = $genderFilter;
+                $couponJsonQuery['query']['bool']['must_not'][] = $genderFilter;
             }
 
             if (! empty($campaignCountryFilter)) {
