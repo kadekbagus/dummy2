@@ -43,8 +43,13 @@ class CheckReservedCoupon
             // TODO: what if the customer in the process of completing payment in snap window?
             // We still "remove" the issued coupons which will results to success payment but without coupon.
             if (! empty($issuedCoupons)) {
-                $canceledCoupons = IssuedCoupon::whereHas('payment', function($payment) {
-                                                    $payment->where('status', PaymentTransaction::STATUS_STARTING);
+                $canceledCoupons = IssuedCoupon::where(function($query) {
+                                                    $query->whereHas('payment', function($payment) {
+                                                        $payment->where('status', PaymentTransaction::STATUS_STARTING);
+                                                    })
+                                                    ->orWhere(function($query) {
+                                                        $query->whereNull('transaction_id')->orWhere('transaction_id', '');
+                                                    });
                                                 })
                                                 ->where('user_id', $userId)
                                                 ->whereIn('issued_coupon_id', $issuedCoupons)
