@@ -62,7 +62,7 @@ class GetCouponQueue
             }
 
             // It means we can not get related issued coupon.
-            if (empty($payment->issued_coupons)) {
+            if ($payment->issued_coupons->count() === 0) {
                 throw new Exception("Related IssuedCoupon not found. Might be put to stock again by system queue before customer completes the payment.", 1);
             }
 
