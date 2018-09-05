@@ -34,33 +34,41 @@ class CouponWalletListAPIController extends PubControllerAPI
      */
     private function getTotalIssuedAndRedeemed($coupons)
     {
-        $couponIds = array_unique(array_map(function($coupon) {
-            return $coupon->promotion_id;
-        }, $coupons));
-
-        $prefix = DB::getTablePrefix();
-        $issuedCoupons = IssuedCoupon::select(DB::raw("
-            {$prefix}issued_coupons.promotion_id,
-            COUNT({$prefix}issued_coupons.issued_coupon_id) AS total_issued,
-            SUM({$prefix}issued_coupons.status = 'redeemed') AS total_redeemed
-        "))
-        ->whereIn("promotion_id", $couponIds)
-        ->whereIn("status", array('issued', 'redeemed'))
-        ->groupBy("promotion_id")
-        ->get();
-
-        $couponStats = array();
-        foreach ($issuedCoupons as $issued) {
-            $couponStats[$issued->promotion_id] = array(
-                'total_issued' => $issued->total_issued,
-                'total_redeemed' => $issued->total_redeemed
-            );
+        $couponIds = array();
+        foreach ($coupons as $key => $coupon) {
+            $couponIds[] = $coupon->promotion_id;
         }
 
-        foreach ($coupons as $coupon) {
-            $coupon->total_issued = $couponStats[$coupon->promotion_id]['total_issued'];
-            $coupon->total_redeemed = $couponStats[$coupon->promotion_id]['total_redeemed'];
+        $couponIds = array_unique($couponIds);
+
+        if (! empty($couponIds)) {
+            $prefix = DB::getTablePrefix();
+            $issuedCoupons = IssuedCoupon::select(DB::raw("
+                {$prefix}issued_coupons.promotion_id,
+                COUNT({$prefix}issued_coupons.issued_coupon_id) AS total_issued,
+                SUM({$prefix}issued_coupons.status = 'redeemed') AS total_redeemed
+            "))
+            ->whereIn("promotion_id", $couponIds)
+            ->whereIn("status", array('issued', 'redeemed'))
+            ->groupBy("promotion_id")
+            ->get();
+
+            $couponStats = array();
+            foreach ($issuedCoupons as $issued) {
+                $couponStats[$issued->promotion_id] = array(
+                    'total_issued' => $issued->total_issued,
+                    'total_redeemed' => $issued->total_redeemed
+                );
+            }
+
+            foreach ($coupons as $coupon) {
+                $coupon->total_issued = $couponStats[$coupon->promotion_id]['total_issued'];
+                $coupon->total_redeemed = $couponStats[$coupon->promotion_id]['total_redeemed'];
+            }
         }
+
+
+
         return $coupons;
     }
 
@@ -305,7 +313,7 @@ class CouponWalletListAPIController extends PubControllerAPI
             $coupon->skip($skip);
 
             $listcoupon = $coupon->get();
-            //$listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
+            $listcoupon = $this->getTotalIssuedAndRedeemed($listcoupon);
 
             $count = $this->calculateCount($prefix, $user);
 
