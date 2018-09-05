@@ -15,9 +15,9 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 {
     $paymentId = $payment->payment_transaction_id;
 
-    // Clean up payment if expired, failed, or denied.
-    if ($payment->expired() || $payment->failed() || $payment->denied()) {
-        Log::info("PaidCoupon: PaymentID: {$paymentId} failed/expired/denied.");
+    // Clean up payment if expired, failed, denied, or canceled.
+    if ($payment->expired() || $payment->failed() || $payment->denied() || $payment->canceled()) {
+        Log::info("PaidCoupon: PaymentID: {$paymentId} is {$payment->status}.");
 
         DB::connection()->beginTransaction();
 
