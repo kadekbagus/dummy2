@@ -271,10 +271,10 @@ class PaymentTransaction extends Eloquent
 
         $issuedCoupons = $this->issued_coupons;
 
-        if (empty($issuedCoupons)) {
+        if ($issuedCoupons->count() === 0) {
             $issuedCoupons = IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->get();
 
-            if (empty($issuedCoupons)) {
+            if ($issuedCoupons->count() === 0) {
                 Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Related issuedCoupon not found. Nothing to do.');
                 return;
             }
