@@ -6587,6 +6587,24 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'object_id'
             ),
+            // payment transaction canceled
+            '182' => array(
+                'name' => 'view_transaction_page_payment_canceled',
+                'name_long' => 'View Transaction Page Payment Canceled',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // click cancel payment from transaction detail page
+            '183' => array(
+                'name' => 'click_cancel_payment',
+                'name_long' => 'Click Cancel Payment',
+                'module_name' => 'Coupon',
+                'type' => 'click',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
         ),
     ),
 
