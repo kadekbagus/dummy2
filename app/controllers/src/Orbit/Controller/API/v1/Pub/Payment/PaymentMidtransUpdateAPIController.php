@@ -63,7 +63,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 ),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,failed,expired,dont-update,denied,suspicious'
+                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious'
                 ),
                 array(
                     'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
@@ -95,6 +95,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 PaymentTransaction::STATUS_EXPIRED,
                 PaymentTransaction::STATUS_FAILED,
                 PaymentTransaction::STATUS_DENIED,
+                PaymentTransaction::STATUS_CANCELED,
             ];
 
             // Assume status as success if it is success_no_coupon/success_no_coupon_failed,
