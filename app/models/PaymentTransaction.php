@@ -28,6 +28,7 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUCCESS            = 'success';
     const STATUS_DENIED             = 'denied';
     const STATUS_SUSPICIOUS         = 'suspicious';
+    const STATUS_CANCELED           = 'canceled';
 
     /**
      * It means we are in the process of getting coupon/voucher from Sepulsa.
@@ -151,6 +152,16 @@ class PaymentTransaction extends Eloquent
     public function failed()
     {
         return $this->status === self::STATUS_FAILED;
+    }
+
+    /**
+     * Determine if the payment is failed or not.
+     *
+     * @return [type] [description]
+     */
+    public function canceled()
+    {
+        return $this->status === self::STATUS_CANCELED;
     }
 
     /**
