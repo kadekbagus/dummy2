@@ -489,7 +489,7 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             } else {
-                $maximumRedeem = 0;
+                $maximumRedeem = count($arrayCouponCode);
             }
 
             // 3rd party coupon validation
@@ -3861,6 +3861,7 @@ class CouponAPIController extends ControllerAPI
                                         ->first();
 
             if ($paymentProvider === '0') {
+                $issuedcoupon->transaction_id = $transactionId;
                 $issuedcoupon->redeemed_date = date('Y-m-d H:i:s');
                 $issuedcoupon->redeem_retailer_id = $redeem_retailer_id;
                 $issuedcoupon->redeem_user_id = $redeem_user_id;
