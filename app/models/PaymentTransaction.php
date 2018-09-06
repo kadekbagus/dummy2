@@ -28,6 +28,7 @@ class PaymentTransaction extends Eloquent
     const STATUS_SUCCESS            = 'success';
     const STATUS_DENIED             = 'denied';
     const STATUS_SUSPICIOUS         = 'suspicious';
+    const STATUS_CANCELED           = 'canceled';
 
     /**
      * It means we are in the process of getting coupon/voucher from Sepulsa.
@@ -154,6 +155,16 @@ class PaymentTransaction extends Eloquent
     }
 
     /**
+     * Determine if the payment is failed or not.
+     *
+     * @return [type] [description]
+     */
+    public function canceled()
+    {
+        return $this->status === self::STATUS_CANCELED;
+    }
+
+    /**
      * Determine if the payment is denied or not.
      *
      * @return [type] [description]
@@ -260,10 +271,10 @@ class PaymentTransaction extends Eloquent
 
         $issuedCoupons = $this->issued_coupons;
 
-        if (empty($issuedCoupons)) {
+        if ($issuedCoupons->count() === 0) {
             $issuedCoupons = IssuedCoupon::where('transaction_id', $this->payment_transaction_id)->get();
 
-            if (empty($issuedCoupons)) {
+            if ($issuedCoupons->count() === 0) {
                 Log::info('Payment: Transaction ID ' . $this->payment_transaction_id . '. Related issuedCoupon not found. Nothing to do.');
                 return;
             }
