@@ -175,6 +175,18 @@ class GetCouponQueue
                         ->setLocation($this->mall)
                         ->responseOK()
                         ->save();
+
+                Activity::mobileci()
+                        ->setUser($payment->user)
+                        ->setActivityType('click')
+                        ->setActivityName('coupon_added_to_wallet');
+                        ->setActivityNameLong('Coupon Added to Wallet')
+                        ->setModuleName('Coupon')
+                        ->setObject($coupon)
+                        ->setNotes(Coupon::TYPE_SEPULSA)
+                        ->setLocation($this->mall)
+                        ->responseOK()
+                        ->save();
             }
             else {
                 // This means the TakeVoucher request failed.
@@ -294,6 +306,18 @@ class GetCouponQueue
                 $this->activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
                         ->setModuleName('Midtrans Transaction')
                         ->setObject($payment)
+                        ->setNotes($failureMessage)
+                        ->setLocation($this->mall)
+                        ->responseFailed()
+                        ->save();
+
+                Activity::mobileci()
+                        ->setUser($payment->user)
+                        ->setActivityType('click')
+                        ->setActivityName('coupon_added_to_wallet');
+                        ->setActivityNameLong('Coupon Added to Wallet')
+                        ->setModuleName('Coupon')
+                        ->setObject($payment->coupon)
                         ->setNotes($failureMessage)
                         ->setLocation($this->mall)
                         ->responseFailed()
