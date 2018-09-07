@@ -125,6 +125,18 @@ class GetCouponQueue
                         ->setLocation($mall)
                         ->responseOK()
                         ->save();
+
+                Activity::mobileci()
+                        ->setUser($payment->user)
+                        ->setActivityType('click')
+                        ->setActivityName('coupon_added_to_wallet');
+                        ->setActivityNameLong('Coupon Added to Wallet')
+                        ->setModuleName('Coupon')
+                        ->setObject($payment->coupon)
+                        ->setNotes(Coupon::TYPE_HOT_DEALS)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
             }
 
         } catch (Exception $e) {
@@ -149,6 +161,18 @@ class GetCouponQueue
                 $activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
                         ->setModuleName('Midtrans Transaction')
                         ->setObject($payment)
+                        ->setNotes($e->getMessage())
+                        ->setLocation($mall)
+                        ->responseFailed()
+                        ->save();
+
+                Activity::mobileci()
+                        ->setUser($payment->user)
+                        ->setActivityType('click')
+                        ->setActivityName('coupon_added_to_wallet');
+                        ->setActivityNameLong('Coupon Added to Wallet Failed')
+                        ->setModuleName('Coupon')
+                        ->setObject($payment->coupon)
                         ->setNotes($e->getMessage())
                         ->setLocation($mall)
                         ->responseFailed()
