@@ -257,10 +257,15 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // The job will be run forever until the transaction status is success, failed, expired or reached the maximum number of check.
                 if ($oldStatus === PaymentTransaction::STATUS_STARTING && $status === PaymentTransaction::STATUS_PENDING) {
                     $delay = Config::get('orbit.partners_api.midtrans.transaction_status_timeout', 60);
+                    $queueData = ['transactionId' => $payment_transaction_id, 'check' => 0];
+                    if (! empty($mall)) {
+                        $queueData['mall_id'] = $mall->merchant_id;
+                    }
+
                     Queue::later(
                         $delay,
                         'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
-                        ['transactionId' => $payment_transaction_id, 'check' => 0]
+                        $queueData
                     );
 
                     Log::info('PaidCoupon: First time TransactionStatus check for Payment: ' . $payment_transaction_id . ' is scheduled to run after ' . $delay . ' seconds.');
