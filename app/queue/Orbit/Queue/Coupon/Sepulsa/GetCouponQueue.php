@@ -15,6 +15,8 @@ use User;
 use PaymentTransaction;
 use IssuedCoupon;
 use Coupon;
+use Mall;
+use Activity;
 
 use Orbit\Helper\Sepulsa\API\TakeVoucher;
 use Orbit\Helper\Sepulsa\API\Responses\TakeVoucherResponse;
@@ -32,6 +34,10 @@ use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
  */
 class GetCouponQueue
 {
+    private $activity = null;
+
+    private $mall = null;
+
     /**
      * Get Sepulsa Voucher after payment completed.
      *
@@ -45,6 +51,13 @@ class GetCouponQueue
     public function fire($job, $data)
     {
         $notificationDelay = 1;
+
+        $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
+        $this->mall = Mall::where('merchant_id', $mallId)->first();
+
+        $this->activity = Activity::mobileci()
+                            ->setActivityType('transaction')
+                            ->setActivityName('transaction_status');
 
         try {
 
@@ -61,6 +74,8 @@ class GetCouponQueue
             if (empty($payment)) {
                 throw new Exception("Transaction {$paymentId} not found!");
             }
+
+            $this->activity->setUser($payment->user);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
@@ -151,6 +166,15 @@ class GetCouponQueue
                 $payment->user->notify(new SepulsaReceiptNotification($payment), $notificationDelay);
 
                 Log::info('PaidCoupon: Coupon issued for paymentID: ' . $paymentId);
+
+                // Log Activity
+                $this->activity->setActivityNameLong('Transaction is Successful')
+                        ->setModuleName('Midtrans Transaction')
+                        ->setObject($payment)
+                        ->setNotes(Coupon::TYPE_SEPULSA)
+                        ->setLocation($this->mall)
+                        ->responseOK()
+                        ->save();
             }
             else {
                 // This means the TakeVoucher request failed.
@@ -266,6 +290,14 @@ class GetCouponQueue
                 ));
 
                 $this->notifyFailedCoupon($payment, $failureMessage);
+
+                $this->activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
+                        ->setModuleName('Midtrans Transaction')
+                        ->setObject($payment)
+                        ->setNotes($failureMessage)
+                        ->setLocation($this->mall)
+                        ->responseFailed()
+                        ->save();
             }
         }
         else {
