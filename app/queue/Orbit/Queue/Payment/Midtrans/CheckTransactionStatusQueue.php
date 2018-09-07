@@ -6,6 +6,7 @@ use Queue;
 use Config;
 use Exception;
 use Event;
+use Mall;
 use Orbit\Helper\Util\JobBurier;
 
 use PaymentTransaction;
