@@ -239,8 +239,17 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                             ->responseOK()
                             ->save();
                 }
+                else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED) {
+                    $activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes('Failed to get coupon. Can not get reserved coupons for this transaction.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
 
-                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
+                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update, $mall]);
 
                 $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
