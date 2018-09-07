@@ -14,7 +14,7 @@ use Orbit\Helper\Midtrans\API\TransactionStatus;
 
 /**
  * Get transaction status from Midtrans and update our internal payment status if necessary.
- * 
+ *
  * @author Budi <budi@dominopos.com>
  */
 class CheckTransactionStatusQueue
@@ -23,7 +23,7 @@ class CheckTransactionStatusQueue
      * $data should have 2 items:
      * 1. transactionId -- the transaction ID we want to check. Should be equivalent with external_payment_transaction_id.
      * 2. check -- counter to track the number of check status API we've been calling for this transactionId.
-     * 
+     *
      * @param  [type] $job  [description]
      * @param  [type] $data [description]
      * @return [type]       [description]
@@ -37,6 +37,8 @@ class CheckTransactionStatusQueue
             DB::connection()->beginTransaction();
 
             $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'issued_coupon'])->find($data['transactionId']);
+            $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
+            $mall = Mall::where('merchant_id', $mallId)->first();
 
             if (empty($payment)) {
                 // If no transaction found, so we should not do/schedule any check.
@@ -53,7 +55,7 @@ class CheckTransactionStatusQueue
                 return;
             }
             else if ($payment->expired() || $payment->failed() || $payment->denied()) {
-                
+
                 $payment->cleanUp();
 
                 DB::connection()->commit();
@@ -103,7 +105,7 @@ class CheckTransactionStatusQueue
                 DB::connection()->commit();
 
                 // Fire event to get the coupon if necessary.
-                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment]);
+                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment, $mall]);
 
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
             }
@@ -123,7 +125,7 @@ class CheckTransactionStatusQueue
 
                 // Should we retry?
                 // @todo create a unified method here or somewhere, maybe.
-                if (in_array($e->getCode(), [500, 502, 503, 505]) && 
+                if (in_array($e->getCode(), [500, 502, 503, 505]) &&
                     $data['check'] < Config::get('orbit.partners_api.midtrans.transaction_status_max_retry', 60)) {
 
                     $this->retryChecking($data);
@@ -145,7 +147,7 @@ class CheckTransactionStatusQueue
 
     /**
      * Retry checking by pushing the this job again into the Queue.
-     * 
+     *
      * @param  [type] $data [description]
      * @return [type]       [description]
      */
@@ -157,7 +159,7 @@ class CheckTransactionStatusQueue
         Queue::later(
             $delay,
             'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
-            ['transactionId' => $data['transactionId'], 'check' => $data['check']]
+            $data
         );
 
         Log::info('Midtrans::CheckTransactionStatusQueue: Check #' . ($data['check'] + 1) . ' is scheduled to run after ' . $delay . ' seconds.');
