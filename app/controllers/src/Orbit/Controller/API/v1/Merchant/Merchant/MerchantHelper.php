@@ -219,7 +219,7 @@ class MerchantHelper
                 $newBaseMerchantTranslation->base_merchant_id = $baseMerchant->base_merchant_id;
                 $newBaseMerchantTranslation->language_id = $operation[1];
                 $newBaseMerchantTranslation->description = $operation[2]->description;
-                $newBaseMerchantTranslation->custom_title = $operation[2]->custom_title;
+                $newBaseMerchantTranslation->custom_title = isset($operation[2]->custom_title) ? $operation[2]->custom_title : null;
                 $newBaseMerchantTranslation->save();
                 $baseMerchantTranslations[] = $newBaseMerchantTranslation;
 
