@@ -33,7 +33,7 @@ use PartnerAffectedGroup;
 use PartnerCompetitor;
 use Country;
 use UserSponsor;
-
+use UserDetail;
 use CouponSearch;
 use AdvertStoreSearch as AdvertSearch;
 
@@ -131,7 +131,7 @@ class CouponListNewAPIController extends PubControllerAPI
             $viewType = OrbitInput::get('view_type', 'grid');
             $myCCFilter = OrbitInput::get('my_cc_filter', false);
             $withAdvert = (bool) OrbitInput::get('with_advert', true);
-            $gender = OrbitInput::get('gender', null);
+            $gender = OrbitInput::get('gender', 'all');
 
             $couponHelper = CouponHelper::create();
             $couponHelper->couponCustomValidator();
@@ -261,7 +261,18 @@ class CouponListNewAPIController extends PubControllerAPI
 
             // Filter by gender
             if (! empty($gender)) {
-                $this->searcher->filterByGender(strtolower($gender));
+                $filterGender = 'all';
+                if ($gender === 'mygender') {
+                    $userGender = UserDetail::select('gender')->where('user_id', '=', $user->user_id)->first();
+                    if ($userGender) {
+                        if (strtolower($userGender->gender) == 'm') {
+                            $filterGender = 'male';
+                        } else if (strtolower($userGender->gender) == 'f') {
+                            $filterGender = 'female';
+                        }
+                    }
+                }
+                $this->searcher->filterByGender(strtolower($filterGender));
             }
 
             // Filter by partner...
@@ -358,6 +369,7 @@ class CouponListNewAPIController extends PubControllerAPI
 
                 $withAdvert = FALSE;
             });
+
 
             if ($withCache) {
                 $serializedCacheKey = SimpleCache::transformDataToHash($cacheKey);
