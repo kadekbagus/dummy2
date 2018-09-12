@@ -16,7 +16,6 @@ use Carbon\Carbon;
 
 use Orbit\Helper\Notifications\CustomerNotification;
 use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
-use Orbit\Helper\Notifications\Contracts\InAppNotificationInterface;
 
 use Orbit\Notifications\Traits\HasPaymentTrait;
 use Orbit\Notifications\Traits\HasContactTrait;
