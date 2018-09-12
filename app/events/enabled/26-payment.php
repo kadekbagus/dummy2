@@ -41,11 +41,13 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
         }
 
         // Notify customer that the coupon is not available and the money will be refunded.
+        $paymentUser = new User;
+        $paymentUser->email = $payment->user_email;
         if ($payment->forSepulsa()) {
-            $payment->user->notify(new SepulsaCouponNotAvailableNotification($payment));
+            $paymentUser->notify(new SepulsaCouponNotAvailableNotification($payment));
         }
         else if ($payment->forHotDeals()) {
-            $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment));
+            $paymentUser->notify(new HotDealsCouponNotAvailableNotification($payment));
         }
     }
     else if ($payment->completed()) {
