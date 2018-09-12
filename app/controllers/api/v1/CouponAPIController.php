@@ -489,7 +489,7 @@ class CouponAPIController extends ControllerAPI
                     OrbitShopAPI::throwInvalidArgument($errorMessage);
                 }
             } else {
-                $maximumRedeem = 0;
+                $maximumRedeem = count($arrayCouponCode);
             }
 
             // 3rd party coupon validation
