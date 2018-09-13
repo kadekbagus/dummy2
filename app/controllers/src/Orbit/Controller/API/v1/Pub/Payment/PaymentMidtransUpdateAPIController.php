@@ -228,7 +228,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     // Send email to address that being used on checkout (can be different with user's email)
                     $paymentUser = new User;
                     $paymentUser->email = $payment_update->user_email;
-                    $paymentUser->notify(new PendingPaymentNotification($payment_update));
+                    $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.
