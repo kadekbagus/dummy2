@@ -610,10 +610,10 @@ class CouponSearch extends Search
     {
         switch ($gender){
             case 'male':
-                 $this->must([ 'match' => ['is_all_gender' => 'M'] ]);
+                 $this->mustNot(['match' => ['is_all_gender' => 'F']]);
                  break;
             case 'female':
-                 $this->must([ 'match' => ['is_all_gender' => 'F'] ]);
+                 $this->mustNot(['match' => ['is_all_gender' => 'M']]);
                  break;
             default:
                 // do nothing
