@@ -554,6 +554,7 @@ class StoreSynchronization
                                             'merchant_id' => $base_store_id,
                                             'merchant_language_id' => $base_translation->language_id,
                                             'description' => $base_translation->description,
+                                            'custom_title' => $base_translation->custom_title,
                                             'created_by' => 0,
                                             'modified_by' => 0,
                                            "created_at" => date("Y-m-d H:i:s"),
