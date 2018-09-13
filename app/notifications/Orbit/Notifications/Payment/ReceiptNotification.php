@@ -30,10 +30,6 @@ class ReceiptNotification extends CustomerNotification implements EmailNotificat
 {
     use HasPaymentTrait, HasContactTrait;
 
-    protected $payment = null;
-
-    protected $contact = null;
-
     protected $shouldQueue = true;
 
     function __construct($payment = null)

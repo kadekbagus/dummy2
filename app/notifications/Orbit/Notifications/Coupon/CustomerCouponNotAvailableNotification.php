@@ -19,12 +19,6 @@ class CustomerCouponNotAvailableNotification extends CustomerNotification implem
     use HasPaymentTrait, HasContactTrait;
 
     /**
-     * Required if we use HasPayment trait.
-     * @var null
-     */
-    protected $payment = null;
-
-    /**
      * Indicate if we should push this job to queue.
      * @var boolean
      */
@@ -47,7 +41,7 @@ class CustomerCouponNotAvailableNotification extends CustomerNotification implem
 
     /**
      * Get the email templates that will be used.
-     * 
+     *
      * @return [type] [description]
      */
     public function getEmailTemplates()
@@ -59,7 +53,7 @@ class CustomerCouponNotAvailableNotification extends CustomerNotification implem
 
     /**
      * Get the email data.
-     * 
+     *
      * @return [type] [description]
      */
     public function getEmailData()
@@ -77,7 +71,7 @@ class CustomerCouponNotAvailableNotification extends CustomerNotification implem
     /**
      * Notify via email.
      * This method act as custom Queue handler.
-     * 
+     *
      * @param  [type] $notifiable [description]
      * @return [type]             [description]
      */
