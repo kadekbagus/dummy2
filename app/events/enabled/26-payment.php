@@ -1,7 +1,5 @@
 <?php
 
-use Orbit\FakeJob;
-use Orbit\Queue\Coupon\HotDeals\GetCouponQueue as GetHotDealsCouponQueue;
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\Sepulsa\CouponNotAvailableNotification as SepulsaCouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
@@ -15,9 +13,11 @@ use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDea
  */
 Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTransaction $payment)
 {
-    // Clean up payment if expired, failed, or denied.
-    if ($payment->expired() || $payment->failed() || $payment->denied()) {
-        Log::info('PaidCoupon: PaymentID: ' . $payment->payment_transaction_id . ' failed/expired/denied.');
+    $paymentId = $payment->payment_transaction_id;
+
+    // Clean up payment if expired, failed, denied, or canceled.
+    if ($payment->expired() || $payment->failed() || $payment->denied() || $payment->canceled()) {
+        Log::info("PaidCoupon: PaymentID: {$paymentId} is {$payment->status}.");
 
         DB::connection()->beginTransaction();
 
@@ -28,35 +28,37 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
     else if ($payment->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON_FAILED) {
         // This might be occurred because there are 2 transactions with same coupon and user.
         // Only the first transaction which pending/paid should get the coupon.
-        Log::info("PaidCoupon: Payment {$payment->payment_transaction_id} success but can not issue coupon...");
+        Log::info("PaidCoupon: Payment {$paymentId} success but can not issue coupon...");
 
-        $failureMessage = "Transactions with the same user and coupon are still in progress.";
+        $failureMessage = "No issued_coupon is linked to the payment {$paymentId}.";
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
         // Notify Admin that the voucher is failed and customer's money should be refunded.
         foreach($adminEmails as $email) {
-            $devUser            = new User;
-            $devUser->email     = $email;
-            $devUser->notify(new CouponNotAvailableNotification($payment, $failureMessage));
+            $adminUser            = new User;
+            $adminUser->email     = $email;
+            $adminUser->notify(new CouponNotAvailableNotification($payment, $failureMessage));
         }
 
         // Notify customer that the coupon is not available and the money will be refunded.
+        $paymentUser = new User;
+        $paymentUser->email = $payment->user_email;
         if ($payment->forSepulsa()) {
-            $payment->user->notify(new SepulsaCouponNotAvailableNotification($payment));
+            $paymentUser->notify(new SepulsaCouponNotAvailableNotification($payment));
         }
         else if ($payment->forHotDeals()) {
-            $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment));
+            $paymentUser->notify(new HotDealsCouponNotAvailableNotification($payment));
         }
     }
     else if ($payment->completed()) {
-        Log::info('PaidCoupon: PaymentID: ' . $payment->payment_transaction_id . ' verified!');
+        Log::info("PaidCoupon: PaymentID: {$paymentId} verified!");
 
         // If we should delay the issuance...
         // TODO: maybe add new status to indicate that the coupon is in the process of issuing?
         if ($payment->forSepulsa() || $payment->paidWith(['bank_transfer', 'echannel'])) {
             $delay = Config::get('orbit.transaction.delay_before_issuing_coupon', 75);
 
-            Log::info('PaidCoupon: Issuing coupon for PaymentID ' . $payment->payment_transaction_id . ' after ' . $delay . ' seconds...');
+            Log::info("PaidCoupon: Issuing coupon for PaymentID {$paymentId} after {$delay} seconds...");
 
             // Determine which coupon we will issue...
             $queue = 'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue';
@@ -66,17 +68,17 @@ Event::listen('orbit.payment.postupdatepayment.after.commit', function(PaymentTr
 
             Queue::connection('sync')->later(
                 $delay, $queue,
-                ['paymentId' => $payment->payment_transaction_id, 'retries' => 0]
+                ['paymentId' => $paymentId, 'retries' => 0]
             );
         }
         else {
-            $fakeJob = new FakeJob();
             // Otherwise, issue the coupon right away!
-            Log::info('PaidCoupon: Issuing coupon directly for PaymentID ' . $payment->payment_transaction_id . '...');
+            Log::info("PaidCoupon: Issuing coupon directly for PaymentID {$paymentId} ...");
 
-            (new GetHotDealsCouponQueue())->fire($fakeJob, [
-                'paymentId' => $payment->payment_transaction_id
-            ]);
+            Queue::connection('sync')->push(
+                'Orbit\\Queue\\Coupon\\HotDeals\\GetCouponQueue',
+                ['paymentId' => $paymentId]
+            );
         }
     }
 });
