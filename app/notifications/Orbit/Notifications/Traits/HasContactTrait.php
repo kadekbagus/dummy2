@@ -7,13 +7,15 @@ use Illuminate\Support\Facades\Config;
  *
  * @author Budi <budi@dominopos.com>
  */
-trait HasContactTrait 
+trait HasContactTrait
 {
+    protected $contact = null;
+
     /**
      * Get the transaction data.
      *
      * @todo  return transaction as object instead of array. (need to adjust the view/email templates)
-     * 
+     *
      * @return [type] [description]
      */
     protected function getContactData()
