@@ -315,7 +315,7 @@ class GetCouponQueue
                         ->setUser($payment->user)
                         ->setActivityType('click')
                         ->setActivityName('coupon_added_to_wallet');
-                        ->setActivityNameLong('Coupon Added to Wallet')
+                        ->setActivityNameLong('Coupon Added to Wallet Failed')
                         ->setModuleName('Coupon')
                         ->setObject($payment->coupon)
                         ->setNotes($failureMessage)
