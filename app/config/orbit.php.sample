@@ -139,6 +139,11 @@ return array(
                  'type'  => 'basic'
             ],
 
+            'advert_malls' => [
+                'index' => 'advert_malls',
+                'type' => 'basic'
+            ],
+
             'news_mall_level_suggestions' => [
                  'index' => 'news_mall_level_suggestions',
                  'type'  => 'basic'

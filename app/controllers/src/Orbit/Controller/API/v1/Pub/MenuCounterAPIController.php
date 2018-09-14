@@ -35,6 +35,7 @@ use Carbon\Carbon as Carbon;
 use stdClass;
 use Country;
 use UserSponsor;
+use UserDetail;
 
 class MenuCounterAPIController extends PubControllerAPI
 {
@@ -443,17 +444,17 @@ class MenuCounterAPIController extends PubControllerAPI
                 }
             }
 
-            OrbitInput::get('gender', function($gender) use (&$genderFilter) {
+            OrbitInput::get('gender', function($gender) use (&$genderFilter, $user) {
                 $gender = strtolower($gender);
-                switch ($gender){
-                    case 'male':
-                         $genderFilter = ['match' => ['is_all_gender' => 'M']];
-                         break;
-                    case 'female':
-                         $genderFilter = ['match' => ['is_all_gender' => 'F']];
-                         break;
-                    default:
-                        // do nothing
+                if ($gender === 'mygender') {
+                    $userGender = UserDetail::select('gender')->where('user_id', '=', $user->user_id)->first();
+                    if ($userGender) {
+                        if (strtolower($userGender->gender) == 'm') {
+                            $genderFilter = ['match' => ['is_all_gender' => 'F']];
+                        } else if (strtolower($userGender->gender) == 'f') {
+                            $genderFilter = ['match' => ['is_all_gender' => 'M']];
+                        }
+                    }
                 }
             });
 
@@ -466,7 +467,7 @@ class MenuCounterAPIController extends PubControllerAPI
 
             // filter by gender
             if (! empty($genderFilter)) {
-                $couponJsonQuery['query']['bool']['must'][] = $genderFilter;
+                $couponJsonQuery['query']['bool']['must_not'][] = $genderFilter;
             }
 
             if (! empty($campaignCountryFilter)) {
