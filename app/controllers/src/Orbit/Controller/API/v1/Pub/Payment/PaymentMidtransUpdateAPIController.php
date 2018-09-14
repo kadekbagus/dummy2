@@ -25,6 +25,7 @@ use Orbit\Helper\Midtrans\API\TransactionCancel;
 
 use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
+use Orbit\Notifications\Payment\PendingPaymentNotification;
 
 /**
  * Controller for update payment with midtrans
@@ -63,7 +64,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 ),
                 array(
                     'payment_transaction_id'   => 'required|orbit.exist.payment_transaction_id',
-                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious'
+                    'status'                   => 'required|in:pending,success,canceled,failed,expired,denied,suspicious,abort'
                 ),
                 array(
                     'orbit.exist.payment_transaction_id' => 'payment transaction id not found'
@@ -96,6 +97,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 PaymentTransaction::STATUS_FAILED,
                 PaymentTransaction::STATUS_DENIED,
                 PaymentTransaction::STATUS_CANCELED,
+                PaymentTransaction::STATUS_ABORTED,
             ];
 
             // Assume status as success if it is success_no_coupon/success_no_coupon_failed,
@@ -222,6 +224,12 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     );
 
                     Log::info('PaidCoupon: First time TransactionStatus check for Payment: ' . $payment_transaction_id . ' is scheduled to run after ' . $delay . ' seconds.');
+
+                    // Notify customer for pending payment (to complete the payment).
+                    // Send email to address that being used on checkout (can be different with user's email)
+                    $paymentUser = new User;
+                    $paymentUser->email = $payment_update->user_email;
+                    $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.

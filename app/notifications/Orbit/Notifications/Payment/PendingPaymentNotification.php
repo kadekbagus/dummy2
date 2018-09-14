@@ -1,33 +1,36 @@
-<?php namespace Orbit\Notifications\Coupon;
+<?php namespace Orbit\Notifications\Payment;
 
-use Exception;
-use Log;
+use DB;
 use Mail;
 use Config;
-use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
+use Log;
+use Queue;
+use Exception;
+use Coupon;
+use PromotionRetailer;
+use PaymentTransaction;
+
+use Orbit\Helper\MongoDB\Client as MongoClient;
+use Orbit\Helper\Util\LandingPageUrlGenerator as LandingPageUrlGenerator;
+use Orbit\Helper\Util\CdnUrlGenerator;
+use Carbon\Carbon;
+
 use Orbit\Helper\Notifications\CustomerNotification;
-use Orbit\Notifications\Traits\HasContactTrait;
+use Orbit\Helper\Notifications\Contracts\EmailNotificationInterface;
+
 use Orbit\Notifications\Traits\HasPaymentTrait;
+use Orbit\Notifications\Traits\HasContactTrait;
 
 /**
- * Notify Admin that the coupon we try to issue is not available.
+ * Base Pending Payment Notification class.
  *
  * @author Budi <budi@dominopos.com>
  */
-class CustomerCouponNotAvailableNotification extends CustomerNotification implements EmailNotificationInterface
+class PendingPaymentNotification extends CustomerNotification implements EmailNotificationInterface
 {
     use HasPaymentTrait, HasContactTrait;
 
-    /**
-     * Indicate if we should push this job to queue.
-     * @var boolean
-     */
     protected $shouldQueue = true;
-
-    /**
-     * @var integer
-     */
-    protected $notificationDelay = 3;
 
     function __construct($payment = null)
     {
@@ -40,14 +43,16 @@ class CustomerCouponNotAvailableNotification extends CustomerNotification implem
     }
 
     /**
-     * Get the email templates that will be used.
+     * Get the email templates.
+     * At the moment we can use same template for both Sepulsa and Hot Deals.
+     * Can be overriden in each receipt class if needed.
      *
      * @return [type] [description]
      */
     public function getEmailTemplates()
     {
         return [
-            'html' => 'emails.coupon.customer-coupon-not-available',
+            'html' => 'emails.pending-payment.hot-deals',
         ];
     }
 
@@ -78,22 +83,22 @@ class CustomerCouponNotAvailableNotification extends CustomerNotification implem
     public function toEmail($job, $data)
     {
         try {
+            $payment = PaymentTransaction::with(['midtrans'])->findOrFail($data['transaction']['id']);
+            $data['paymentInfo'] = json_decode(unserialize($payment->midtrans->payment_midtrans_info), true);
+
             Mail::send($this->getEmailTemplates(), $data, function($mail) use ($data) {
                 $emailConfig = Config::get('orbit.registration.mobile.sender');
 
-                $subject = 'Coupon not Available';
+                $subject = trans('email-pending-payment.subject');
 
                 $mail->subject($subject);
                 $mail->from($emailConfig['email'], $emailConfig['name']);
                 $mail->to($data['recipientEmail']);
             });
-
         } catch (Exception $e) {
-            Log::info('CouponNotAvailable: email exception. File: ' . $e->getFile() . ', Lines:' . $e->getLine() . ', Message: ' . $e->getMessage());
-            Log::info('CouponNotAvailable: email data: ' . serialize($data));
+            Log::debug('Notification: PendingPayment email exception. Line:' . $e->getLine() . ', Message: ' . $e->getMessage());
         }
 
         $job->delete();
     }
-
 }
