@@ -300,7 +300,7 @@ class CouponWalletListAPIController extends PubControllerAPI
                     ->orderByRaw(DB::Raw("CASE WHEN campaign_status = 'ongoing' THEN 0 ELSE 1 END ASC"))
                     // This part for ordering coupon with maximum reach condition
                     // ->orderByRaw(DB::Raw("CASE WHEN total_redeemed = maximum_redeem THEN 0 ELSE 1 END DESC"))
-                    ->orderByRaw("is_exceeding_validity_date ASC")
+                    ->orderBy(DB::raw("is_exceeding_validity_date"), 'asc')
                     ->orderBy('issued_coupons.redeemed_date', 'desc')
                     ->orderBy('issued_coupons.issued_date', 'desc');
 
