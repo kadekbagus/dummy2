@@ -129,7 +129,7 @@ class GetCouponQueue
                 Activity::mobileci()
                         ->setUser($payment->user)
                         ->setActivityType('click')
-                        ->setActivityName('coupon_added_to_wallet');
+                        ->setActivityName('coupon_added_to_wallet')
                         ->setActivityNameLong('Coupon Added to Wallet')
                         ->setModuleName('Coupon')
                         ->setObject($payment->coupon)
@@ -169,7 +169,7 @@ class GetCouponQueue
                 Activity::mobileci()
                         ->setUser($payment->user)
                         ->setActivityType('click')
-                        ->setActivityName('coupon_added_to_wallet');
+                        ->setActivityName('coupon_added_to_wallet')
                         ->setActivityNameLong('Coupon Added to Wallet Failed')
                         ->setModuleName('Coupon')
                         ->setObject($payment->coupon)
