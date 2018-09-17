@@ -132,19 +132,19 @@ class CheckTransactionStatusQueue
 
                 DB::connection()->commit();
 
-                if ($payment_update->failed() || $payment_update->denied()) {
+                if ($payment->failed() || $payment->denied()) {
                     $activity->setActivityNameLong('Transaction is Failed')
                             ->setModuleName('Midtrans Transaction')
-                            ->setObject($payment_update)
+                            ->setObject($payment)
                             ->setNotes('Transaction is failed from Midtrans/Customer.')
                             ->setLocation($mall)
                             ->responseFailed()
                             ->save();
                 }
-                else if ($payment_update->expired()) {
+                else if ($payment->expired()) {
                     $activity->setActivityNameLong('Transaction is Expired')
                             ->setModuleName('Midtrans Transaction')
-                            ->setObject($payment_update)
+                            ->setObject($payment)
                             ->setNotes('Transaction is expired from Midtrans.')
                             ->setLocation($mall)
                             ->responseFailed()
