@@ -7,6 +7,7 @@ use Config;
 use Exception;
 use Event;
 use Mall;
+use Activity;
 use Orbit\Helper\Util\JobBurier;
 
 use PaymentTransaction;
@@ -37,7 +38,7 @@ class CheckTransactionStatusQueue
 
             DB::connection()->beginTransaction();
 
-            $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'issued_coupon'])->find($data['transactionId']);
+            $payment = PaymentTransaction::onWriteConnection()->with(['coupon', 'issued_coupon', 'user'])->find($data['transactionId']);
             $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
             $mall = Mall::where('merchant_id', $mallId)->first();
 
@@ -45,6 +46,11 @@ class CheckTransactionStatusQueue
                 // If no transaction found, so we should not do/schedule any check.
                 throw new Exception('Transaction ' . $data['transactionId'] . ' not found!');
             }
+
+            $activity = Activity::mobileci()
+                            ->setActivityType('transaction')
+                            ->setUser($payment->user)
+                            ->setActivityName('transaction_status');
 
             // If payment completed or expired then do nothing.
             // (It maybe completed by notification callback/ping from Midtrans)
@@ -60,6 +66,29 @@ class CheckTransactionStatusQueue
                 $payment->cleanUp();
 
                 DB::connection()->commit();
+
+                Log::info('Transaction is ' . $payment->status);
+
+                if ($payment->failed() || $payment->denied()) {
+                    Log::info('Transaction is Failed. Logging activity...');
+                    $activity->setActivityNameLong('Transaction is Failed')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment)
+                            ->setNotes('Transaction is failed from Midtrans/Customer.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
+                else if ($payment->expired()) {
+                    Log::info('Transaction is Expired. Logging activity...');
+                    $activity->setActivityNameLong('Transaction is Expired')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment)
+                            ->setNotes('Transaction is expired from Midtrans.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
 
                 $job->delete();
 
