@@ -5,31 +5,30 @@
  * @desc Controller for update payment with midtrans
  */
 
-use OrbitShop\API\v1\PubControllerAPI;
-use OrbitShop\API\v1\OrbitShopAPI;
-use Helper\EloquentRecordCounter as RecordCounter;
-use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use Carbon\Carbon as Carbon;
+use Config;
+use DB;
 use DominoPOS\OrbitACL\ACL;
 use DominoPOS\OrbitACL\Exception\ACLForbiddenException;
-use DB;
-use Validator;
-use Queue;
-use Log;
-use Config;
-use Exception;
-use PaymentTransaction;
-use IssuedCoupon;
-use User;
-use Mall;
-use Carbon\Carbon as Carbon;
-use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Event;
-
-use Orbit\Helper\Midtrans\API\TransactionStatus;
+use Exception;
+use Helper\EloquentRecordCounter as RecordCounter;
+use IssuedCoupon;
+use Log;
+use Mall;
+use OrbitShop\API\v1\Helper\Input as OrbitInput;
+use OrbitShop\API\v1\OrbitShopAPI;
+use OrbitShop\API\v1\PubControllerAPI;
+use Orbit\Controller\API\v1\Pub\Payment\PaymentHelper;
 use Orbit\Helper\Midtrans\API\TransactionCancel;
-
-use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
+use Orbit\Helper\Midtrans\API\TransactionStatus;
 use Orbit\Notifications\Payment\DeniedPaymentNotification;
+use Orbit\Notifications\Payment\SuspiciousPaymentNotification;
+use PaymentTransaction;
+use Queue;
+use User;
+use Validator;
+use Activity;
 
 class PaymentMidtransUpdateAPIController extends PubControllerAPI
 {
@@ -212,7 +211,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // Should be done before issuing coupon for the sake of activity ordering,
                 // or at the end before returning the response??
                 $mall = Mall::where('merchant_id', $mallId)->first();
-                if ($payment_update->status === PaymentTransaction::STATUS_FAILED) {
+                if ($payment_update->failed() || $payment_update->denied()) {
                     $activity->setActivityNameLong('Transaction is Failed')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
@@ -221,7 +220,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                             ->responseFailed()
                             ->save();
                 }
-                else if ($payment_update->status === PaymentTransaction::STATUS_EXPIRED) {
+                else if ($payment_update->expired()) {
                     $activity->setActivityNameLong('Transaction is Expired')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)

@@ -67,10 +67,8 @@ class CheckTransactionStatusQueue
 
                 DB::connection()->commit();
 
-                Log::info('Transaction is ' . $payment->status);
-
                 if ($payment->failed() || $payment->denied()) {
-                    Log::info('Transaction is Failed. Logging activity...');
+                    Log::info('Transaction is Failed');
                     $activity->setActivityNameLong('Transaction is Failed')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment)
@@ -80,7 +78,7 @@ class CheckTransactionStatusQueue
                             ->save();
                 }
                 else if ($payment->expired()) {
-                    Log::info('Transaction is Expired. Logging activity...');
+                    Log::info('Transaction is Expired');
                     $activity->setActivityNameLong('Transaction is Expired')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment)
@@ -133,6 +131,25 @@ class CheckTransactionStatusQueue
                 $payment->save();
 
                 DB::connection()->commit();
+
+                if ($payment_update->failed() || $payment_update->denied()) {
+                    $activity->setActivityNameLong('Transaction is Failed')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes('Transaction is failed from Midtrans/Customer.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
+                else if ($payment_update->expired()) {
+                    $activity->setActivityNameLong('Transaction is Expired')
+                            ->setModuleName('Midtrans Transaction')
+                            ->setObject($payment_update)
+                            ->setNotes('Transaction is expired from Midtrans.')
+                            ->setLocation($mall)
+                            ->responseFailed()
+                            ->save();
+                }
 
                 // Fire event to get the coupon if necessary.
                 Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment, $mall]);
