@@ -12,11 +12,14 @@ use User;
 use PaymentTransaction;
 use IssuedCoupon;
 use Coupon;
+use Mall;
+use Activity;
 
 // Notifications
 use Orbit\Notifications\Coupon\CouponNotAvailableNotification;
 use Orbit\Notifications\Coupon\HotDeals\ReceiptNotification;
 use Orbit\Notifications\Coupon\HotDeals\CouponNotAvailableNotification as HotDealsCouponNotAvailableNotification;
+
 
 /**
  * A job to get/issue Hot Deals Coupon after payment completed.
@@ -37,6 +40,12 @@ class GetCouponQueue
     public function fire($job, $data)
     {
         $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
+        $mallId = isset($data['mall_id']) ? $data['mall_id'] : null;
+        $mall = Mall::where('merchant_id', $mallId)->first();
+
+        $activity = Activity::mobileci()
+                            ->setActivityType('transaction')
+                            ->setActivityName('transaction_status');
 
         try {
             DB::connection()->beginTransaction();
@@ -46,6 +55,8 @@ class GetCouponQueue
             Log::info("PaidCoupon: Getting coupon PaymentID: {$paymentId}");
 
             $payment = PaymentTransaction::with(['details.coupon', 'user', 'issued_coupons'])->findOrFail($paymentId);
+
+            $activity->setUser($payment->user);
 
             // Dont issue coupon if after some delay the payment was canceled.
             if ($payment->denied() || $payment->failed() || $payment->expired()) {
@@ -98,6 +109,28 @@ class GetCouponQueue
 
                 // Notify Customer.
                 $payment->user->notify(new ReceiptNotification($payment));
+
+                // Log Activity
+                $activity->setActivityNameLong('Transaction is Successful')
+                        ->setModuleName('Midtrans Transaction')
+                        ->setObject($payment)
+                        ->setNotes(Coupon::TYPE_HOT_DEALS)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+
+                Activity::mobileci()
+                        ->setUser($payment->user)
+                        ->setActivityType('click')
+                        ->setActivityName('coupon_added_to_wallet')
+                        ->setActivityNameLong('Coupon Added to Wallet')
+                        ->setModuleName('Coupon')
+                        ->setObject($payment->coupon)
+                        ->setNotes(Coupon::TYPE_HOT_DEALS)
+                        ->setLocation($mall)
+                        ->responseOK()
+                        ->save();
+
             }
             else {
                 // Commit the changes ASAP.
