@@ -225,8 +225,8 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 else if ($payment_update->status === PaymentTransaction::STATUS_SUCCESS_NO_COUPON) {
                     $activity->setActivityNameLong('Transaction is Success - Getting Coupon')
                             ->setModuleName('Midtrans Transaction')
-                            ->setObject($payment_update)
                             ->setNotes($payment_update->details->first()->coupon->promotion_type)
+                            ->setObject($payment_update)
                             ->setLocation($mall)
                             ->responseOK()
                             ->save();
