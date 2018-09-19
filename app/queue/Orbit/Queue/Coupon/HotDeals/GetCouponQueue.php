@@ -157,6 +157,26 @@ class GetCouponQueue
 
                 // Notify customer that coupon is not available.
                 $payment->user->notify(new HotDealsCouponNotAvailableNotification($payment));
+
+                $activity->setActivityNameLong('Transaction is Success - Failed Getting Coupon')
+                         ->setModuleName('Midtrans Transaction')
+                         ->setObject($payment)
+                         ->setNotes($e->getMessage())
+                         ->setLocation($mall)
+                         ->responseFailed()
+                         ->save();
+
+                 Activity::mobileci()
+                         ->setUser($payment->user)
+                         ->setActivityType('click')
+                         ->setActivityName('coupon_added_to_wallet')
+                         ->setActivityNameLong('Coupon Added to Wallet Failed')
+                         ->setModuleName('Coupon')
+                         ->setObject($payment->details->first()->coupon)
+                         ->setNotes($e->getMessage())
+                         ->setLocation($mall)
+                         ->responseFailed()
+                         ->save();
             }
             else {
                 DB::connection()->rollBack();
