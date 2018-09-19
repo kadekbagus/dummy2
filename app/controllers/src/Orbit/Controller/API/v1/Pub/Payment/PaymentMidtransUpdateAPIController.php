@@ -203,7 +203,6 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                 // Log activity...
                 // Should be done before issuing coupon for the sake of activity ordering,
                 // or at the end before returning the response??
-                $mall = Mall::where('merchant_id', $mallId)->first();
                 if ($payment_update->failed() || $payment_update->denied()) {
                     $activity->setActivityNameLong('Transaction is Failed')
                             ->setModuleName('Midtrans Transaction')
@@ -226,7 +225,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Success - Getting Coupon')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
-                            ->setNotes($payment_update->coupon->promotion_type)
+                            ->setNotes($payment_update->details->first()->coupon->promotion_type)
                             ->setLocation($mall)
                             ->responseOK()
                             ->save();
@@ -241,7 +240,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                             ->save();
                 }
 
-                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update]);
+                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment_update, $mall]);
 
                 $adminEmails = Config::get('orbit.transaction.notify_emails', ['developer@dominopos.com']);
 
@@ -271,7 +270,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     $activity->setActivityNameLong('Transaction is Pending')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
-                            ->setNotes($payment_update->coupon->promotion_type)
+                            ->setNotes($payment_update->details->first()->coupon->promotion_type)
                             ->setLocation($mall)
                             ->responseOK()
                             ->save();
