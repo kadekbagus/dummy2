@@ -149,7 +149,7 @@ class CheckTransactionStatusQueue
                 }
 
                 // Fire event to get the coupon if necessary.
-                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment]);
+                Event::fire('orbit.payment.postupdatepayment.after.commit', [$payment, $mall]);
 
                 Log::info('Midtrans::CheckTransactionStatusQueue: Checking stopped.');
             }
@@ -203,7 +203,7 @@ class CheckTransactionStatusQueue
         Queue::later(
             $delay,
             'Orbit\\Queue\\Payment\\Midtrans\\CheckTransactionStatusQueue',
-            ['transactionId' => $data['transactionId'], 'check' => $data['check']]
+            $data
         );
 
         Log::info('Midtrans::CheckTransactionStatusQueue: Check #' . ($data['check'] + 1) . ' is scheduled to run after ' . $delay . ' seconds.');
