@@ -80,7 +80,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupons'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::with(['details.coupon', 'midtrans', 'issued_coupons', 'user'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 
@@ -266,7 +266,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                     // Send email to address that being used on checkout (can be different with user's email)
                     $paymentUser = new User;
                     $paymentUser->email = $payment_update->user_email;
-                    $paymentUser->notify(new PendingPaymentNotification($payment_update), 10);
+                    $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
 
                     $activity->setActivityNameLong('Transaction is Pending')
                             ->setModuleName('Midtrans Transaction')
