@@ -54,7 +54,7 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting coupon PaymentID: {$paymentId}");
 
-            $payment = PaymentTransaction::with(['details.coupon', 'user', 'issued_coupons'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.coupon', 'user', 'midtrans', 'issued_coupons'])->findOrFail($paymentId);
 
             $activity->setUser($payment->user);
 
@@ -125,7 +125,7 @@ class GetCouponQueue
                         ->setActivityName('coupon_added_to_wallet')
                         ->setActivityNameLong('Coupon Added to Wallet')
                         ->setModuleName('Coupon')
-                        ->setObject($payment->coupon)
+                        ->setObject($payment->details->first()->coupon)
                         ->setNotes(Coupon::TYPE_HOT_DEALS)
                         ->setLocation($mall)
                         ->responseOK()

@@ -66,7 +66,7 @@ class GetCouponQueue
 
             Log::info("PaidCoupon: Getting Sepulsa Voucher for payment {$paymentId}");
 
-            $payment = PaymentTransaction::with(['details.coupon', 'user', 'issued_coupons'])->findOrFail($paymentId);
+            $payment = PaymentTransaction::with(['details.coupon', 'user', 'midtrans', 'issued_coupons'])->findOrFail($paymentId);
 
             $this->activity->setUser($payment->user);
 
@@ -348,7 +348,7 @@ class GetCouponQueue
         foreach($adminEmails as $email) {
             $devUser            = new User;
             $devUser->email     = $email;
-            $devUser->notify(new CouponNotAvailableNotification($payment, $failureMessage), $delay);
+            $devUser->notify(new CouponNotAvailableNotification($payment, $failureMessage));
         }
 
         // Notify customer that the coupon is not available and the money will be refunded.
