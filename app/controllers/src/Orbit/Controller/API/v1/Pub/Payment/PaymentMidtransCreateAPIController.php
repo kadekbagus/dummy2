@@ -104,10 +104,11 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $this->beginTransaction();
 
             // Get coupon detail from DB.
-            $coupon = Coupon::select('price_selling')->find($object_id);
+            $coupon = Coupon::select('price_selling', 'promotion_id', 'promotion_type')->find($object_id);
 
             // Get mall timezone
             $mallTimeZone = 'Asia/Jakarta';
+            $mall = null;
             if ($mall_id !== 'gtm') {
                 $mall = Mall::where('merchant_id', $mall_id)->first();
                 if (!empty($mall)) {
@@ -171,7 +172,6 @@ class PaymentMidtransCreateAPIController extends PubControllerAPI
             $this->commit();
 
             // TODO: Log activity
-            $mall = Mall::where('merchant_id', $mallId)->first();
             $activity = Activity::mobileci()
                     ->setActivityType('transaction')
                     ->setUser($user)
