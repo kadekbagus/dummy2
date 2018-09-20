@@ -134,7 +134,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             if ($shouldUpdate) {
                 $activity = Activity::mobileci()
                                         ->setActivityType('transaction')
-                                        ->setUser($user)
+                                        ->setUser($payment_update->user)
                                         ->setActivityName('transaction_status');
 
                 $mall = Mall::where('merchant_id', $mallId)->first();
