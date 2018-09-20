@@ -262,12 +262,6 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
 
                     Log::info('PaidCoupon: First time TransactionStatus check for Payment: ' . $payment_transaction_id . ' is scheduled to run after ' . $delay . ' seconds.');
 
-                    // Notify customer for pending payment (to complete the payment).
-                    // Send email to address that being used on checkout (can be different with user's email)
-                    $paymentUser = new User;
-                    $paymentUser->email = $payment_update->user_email;
-                    $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
-
                     $activity->setActivityNameLong('Transaction is Pending')
                             ->setModuleName('Midtrans Transaction')
                             ->setObject($payment_update)
@@ -275,6 +269,12 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
                             ->setLocation($mall)
                             ->responseOK()
                             ->save();
+
+                    // Notify customer for pending payment (to complete the payment).
+                    // Send email to address that being used on checkout (can be different with user's email)
+                    $paymentUser = new User;
+                    $paymentUser->email = $payment_update->user_email;
+                    $paymentUser->notify(new PendingPaymentNotification($payment_update), 30);
                 }
 
                 // If previous status was success and now is denied, then send notification to admin.
