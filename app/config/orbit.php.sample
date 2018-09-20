@@ -6592,8 +6592,16 @@ return array(
                 'object_type' => 'Coupon',
                 'parameter_name' => 'object_id'
             ),
-            // payment transaction canceled
             '182' => array(
+                'name' => 'view_transaction_page_payment_successful_coupon_failed',
+                'name_long' => 'View Transaction Page Payment Success - Failed Getting Coupon',
+                'module_name' => 'Coupon',
+                'type' => 'view',
+                'object_type' => 'Coupon',
+                'parameter_name' => 'object_id'
+            ),
+            // payment transaction canceled
+            '183' => array(
                 'name' => 'view_transaction_page_payment_canceled',
                 'name_long' => 'View Transaction Page Payment Canceled',
                 'module_name' => 'Coupon',
@@ -6602,7 +6610,7 @@ return array(
                 'parameter_name' => 'object_id'
             ),
             // click cancel payment from transaction detail page
-            '183' => array(
+            '184' => array(
                 'name' => 'click_cancel_payment',
                 'name_long' => 'Click Cancel Payment',
                 'module_name' => 'Coupon',
@@ -7455,10 +7463,12 @@ return array(
 
     // Config related to transaction.
     'transaction' => [
+
         // Email addresses that will be notified if system can not issue coupon.
         'notify_emails' => [
             'developer@dominopos.com',
         ],
+
         // Delay before issuing coupon for ATM/Bank Transfer/Echannel (in seconds)
         'delay_before_issuing_coupon' => 60,
         // Maximum quantity per item that allowed to be purchased. Applied to all coupons.
