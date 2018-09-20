@@ -7,6 +7,7 @@ use Config;
 use Exception;
 use IssuedCoupon;
 use Coupon;
+use Activity;
 use Log;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Request;
