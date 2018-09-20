@@ -73,7 +73,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             $paymentDenied = false;
             $shouldUpdate = false;
 
-            $payment_update = PaymentTransaction::with(['coupon', 'issued_coupon'])->findOrFail($payment_transaction_id);
+            $payment_update = PaymentTransaction::with(['coupon', 'issued_coupon', 'user'])->findOrFail($payment_transaction_id);
 
             $oldStatus = $payment_update->status;
 
@@ -124,7 +124,7 @@ class PaymentMidtransUpdateAPIController extends PubControllerAPI
             if ($shouldUpdate) {
                 $activity = Activity::mobileci()
                                         ->setActivityType('transaction')
-                                        ->setUser($user)
+                                        ->setUser($payment->user)
                                         ->setActivityName('transaction_status');
 
                 $mall = Mall::where('merchant_id', $mallId)->first();
